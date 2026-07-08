@@ -76,7 +76,7 @@ type MockCommodityRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateCommodityStatusRequest
-func (_e *MockCommodityRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockCommodityRepository_BulkUpdateStatus_Call {
+func (_e *MockCommodityRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockCommodityRepository_BulkUpdateStatus_Call {
 	return &MockCommodityRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockCommodityRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *commodity.Commodity
-func (_e *MockCommodityRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockCommodityRepository_Create_Call {
+func (_e *MockCommodityRepository_Expecter) Create(ctx any, entity any) *MockCommodityRepository_Create_Call {
 	return &MockCommodityRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockCommodityRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCommodityByIDRequest
-func (_e *MockCommodityRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockCommodityRepository_GetByID_Call {
+func (_e *MockCommodityRepository_Expecter) GetByID(ctx any, req any) *MockCommodityRepository_GetByID_Call {
 	return &MockCommodityRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockCommodityRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCommoditiesByIDsRequest
-func (_e *MockCommodityRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockCommodityRepository_GetByIDs_Call {
+func (_e *MockCommodityRepository_Expecter) GetByIDs(ctx any, req any) *MockCommodityRepository_GetByIDs_Call {
 	return &MockCommodityRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockCommodityRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCommodityRequest
-func (_e *MockCommodityRepository_Expecter) List(ctx interface{}, req interface{}) *MockCommodityRepository_List_Call {
+func (_e *MockCommodityRepository_Expecter) List(ctx any, req any) *MockCommodityRepository_List_Call {
 	return &MockCommodityRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockCommodityRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CommoditySelectOptionsRequest
-func (_e *MockCommodityRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockCommodityRepository_SelectOptions_Call {
+func (_e *MockCommodityRepository_Expecter) SelectOptions(ctx any, req any) *MockCommodityRepository_SelectOptions_Call {
 	return &MockCommodityRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockCommodityRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *commodity.Commodity
-func (_e *MockCommodityRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockCommodityRepository_Update_Call {
+func (_e *MockCommodityRepository_Expecter) Update(ctx any, entity any) *MockCommodityRepository_Update_Call {
 	return &MockCommodityRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

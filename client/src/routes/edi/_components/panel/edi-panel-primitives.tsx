@@ -90,11 +90,3 @@ export function InfoTile({
     </div>
   );
 }
-
-export function EDIRawContent({ content }: { content: string }) {
-  return (
-    <pre className="max-h-72 overflow-auto rounded-md border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
-      {content}
-    </pre>
-  );
-}

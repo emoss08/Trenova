@@ -76,7 +76,7 @@ type MockJournalEntryRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetJournalEntryByIDRequest
-func (_e *MockJournalEntryRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockJournalEntryRepository_GetByID_Call {
+func (_e *MockJournalEntryRepository_Expecter) GetByID(ctx any, req any) *MockJournalEntryRepository_GetByID_Call {
 	return &MockJournalEntryRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockJournalEntryRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListJournalEntriesRequest
-func (_e *MockJournalEntryRepository_Expecter) List(ctx interface{}, req interface{}) *MockJournalEntryRepository_List_Call {
+func (_e *MockJournalEntryRepository_Expecter) List(ctx any, req any) *MockJournalEntryRepository_List_Call {
 	return &MockJournalEntryRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockJournalEntryRepository_MarkReversed_Call struct {
 // MarkReversed is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.MarkJournalEntryReversedRequest
-func (_e *MockJournalEntryRepository_Expecter) MarkReversed(ctx interface{}, req interface{}) *MockJournalEntryRepository_MarkReversed_Call {
+func (_e *MockJournalEntryRepository_Expecter) MarkReversed(ctx any, req any) *MockJournalEntryRepository_MarkReversed_Call {
 	return &MockJournalEntryRepository_MarkReversed_Call{Call: _e.mock.On("MarkReversed", ctx, req)}
 }
 

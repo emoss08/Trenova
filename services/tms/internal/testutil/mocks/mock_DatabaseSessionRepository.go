@@ -73,7 +73,7 @@ type MockDatabaseSessionRepository_ListBlocked_Call struct {
 
 // ListBlocked is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockDatabaseSessionRepository_Expecter) ListBlocked(ctx interface{}) *MockDatabaseSessionRepository_ListBlocked_Call {
+func (_e *MockDatabaseSessionRepository_Expecter) ListBlocked(ctx any) *MockDatabaseSessionRepository_ListBlocked_Call {
 	return &MockDatabaseSessionRepository_ListBlocked_Call{Call: _e.mock.On("ListBlocked", ctx)}
 }
 
@@ -136,7 +136,7 @@ type MockDatabaseSessionRepository_Terminate_Call struct {
 // Terminate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pid int64
-func (_e *MockDatabaseSessionRepository_Expecter) Terminate(ctx interface{}, pid interface{}) *MockDatabaseSessionRepository_Terminate_Call {
+func (_e *MockDatabaseSessionRepository_Expecter) Terminate(ctx any, pid any) *MockDatabaseSessionRepository_Terminate_Call {
 	return &MockDatabaseSessionRepository_Terminate_Call{Call: _e.mock.On("Terminate", ctx, pid)}
 }
 

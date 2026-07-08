@@ -51,6 +51,13 @@ type GetEDITransfersByIDsRequest struct {
 	TransferIDs []pulid.ID            `json:"transferIds"`
 }
 
+type ListActionableInboundEDITransfersByPartnerRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID  pulid.ID              `json:"partnerId"`
+	Statuses   []edi.TransferStatus  `json:"statuses"`
+	ExcludeIDs []pulid.ID            `json:"excludeIds"`
+}
+
 type EDILoadTenderTransferRepository interface {
 	GetInboundStatusCounts(
 		ctx context.Context,
@@ -104,4 +111,8 @@ type EDILoadTenderTransferRepository interface {
 		ctx context.Context,
 		req GetActionableInboundEDITransferByExternalReferenceRequest,
 	) (*edi.EDITransfer, error)
+	ListActionableInboundTransfersByPartner(
+		ctx context.Context,
+		req ListActionableInboundEDITransfersByPartnerRequest,
+	) ([]*edi.EDITransfer, error)
 }

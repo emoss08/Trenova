@@ -50,7 +50,7 @@ export function EDIOverview() {
   const rejectedAcks = countFor(summary.ackStatusCounts, "Rejected");
 
   return (
-    <div className="flex flex-col gap-6 px-3">
+    <div className="flex flex-col gap-6 p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           Counts, trends, and partner scorecards for the selected window.

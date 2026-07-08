@@ -74,7 +74,7 @@ type MockFormulaCalculator_Calculate_Call struct {
 // Calculate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *formulatemplatetypes.CalculateRequest
-func (_e *MockFormulaCalculator_Expecter) Calculate(ctx interface{}, req interface{}) *MockFormulaCalculator_Calculate_Call {
+func (_e *MockFormulaCalculator_Expecter) Calculate(ctx any, req any) *MockFormulaCalculator_Calculate_Call {
 	return &MockFormulaCalculator_Calculate_Call{Call: _e.mock.On("Calculate", ctx, req)}
 }
 

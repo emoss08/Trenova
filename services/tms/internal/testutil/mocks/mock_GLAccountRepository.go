@@ -76,7 +76,7 @@ type MockGLAccountRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateGLAccountStatusRequest
-func (_e *MockGLAccountRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockGLAccountRepository_BulkUpdateStatus_Call {
+func (_e *MockGLAccountRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockGLAccountRepository_BulkUpdateStatus_Call {
 	return &MockGLAccountRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockGLAccountRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *glaccount.GLAccount
-func (_e *MockGLAccountRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockGLAccountRepository_Create_Call {
+func (_e *MockGLAccountRepository_Expecter) Create(ctx any, entity any) *MockGLAccountRepository_Create_Call {
 	return &MockGLAccountRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -201,7 +201,7 @@ type MockGLAccountRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteGLAccountRequest
-func (_e *MockGLAccountRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockGLAccountRepository_Delete_Call {
+func (_e *MockGLAccountRepository_Expecter) Delete(ctx any, req any) *MockGLAccountRepository_Delete_Call {
 	return &MockGLAccountRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -269,7 +269,7 @@ type MockGLAccountRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetGLAccountByIDRequest
-func (_e *MockGLAccountRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockGLAccountRepository_GetByID_Call {
+func (_e *MockGLAccountRepository_Expecter) GetByID(ctx any, req any) *MockGLAccountRepository_GetByID_Call {
 	return &MockGLAccountRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockGLAccountRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetGLAccountsByIDsRequest
-func (_e *MockGLAccountRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockGLAccountRepository_GetByIDs_Call {
+func (_e *MockGLAccountRepository_Expecter) GetByIDs(ctx any, req any) *MockGLAccountRepository_GetByIDs_Call {
 	return &MockGLAccountRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -405,7 +405,7 @@ type MockGLAccountRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListGLAccountsRequest
-func (_e *MockGLAccountRepository_Expecter) List(ctx interface{}, req interface{}) *MockGLAccountRepository_List_Call {
+func (_e *MockGLAccountRepository_Expecter) List(ctx any, req any) *MockGLAccountRepository_List_Call {
 	return &MockGLAccountRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -473,7 +473,7 @@ type MockGLAccountRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GLAccountSelectOptionsRequest
-func (_e *MockGLAccountRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockGLAccountRepository_SelectOptions_Call {
+func (_e *MockGLAccountRepository_Expecter) SelectOptions(ctx any, req any) *MockGLAccountRepository_SelectOptions_Call {
 	return &MockGLAccountRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -541,7 +541,7 @@ type MockGLAccountRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *glaccount.GLAccount
-func (_e *MockGLAccountRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockGLAccountRepository_Update_Call {
+func (_e *MockGLAccountRepository_Expecter) Update(ctx any, entity any) *MockGLAccountRepository_Update_Call {
 	return &MockGLAccountRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

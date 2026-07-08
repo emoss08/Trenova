@@ -76,7 +76,7 @@ type MockDataRetentionRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDataRetentionRequest
-func (_e *MockDataRetentionRepository_Expecter) Get(ctx interface{}, req interface{}) *MockDataRetentionRepository_Get_Call {
+func (_e *MockDataRetentionRepository_Expecter) Get(ctx any, req any) *MockDataRetentionRepository_Get_Call {
 	return &MockDataRetentionRepository_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockDataRetentionRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockDataRetentionRepository_Expecter) List(ctx interface{}) *MockDataRetentionRepository_List_Call {
+func (_e *MockDataRetentionRepository_Expecter) List(ctx any) *MockDataRetentionRepository_List_Call {
 	return &MockDataRetentionRepository_List_Call{Call: _e.mock.On("List", ctx)}
 }
 
@@ -206,7 +206,7 @@ type MockDataRetentionRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.DataRetention
-func (_e *MockDataRetentionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDataRetentionRepository_Update_Call {
+func (_e *MockDataRetentionRepository_Expecter) Update(ctx any, entity any) *MockDataRetentionRepository_Update_Call {
 	return &MockDataRetentionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -274,7 +274,7 @@ type MockDataRetentionRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.DataRetention
-func (_e *MockDataRetentionRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockDataRetentionRepository_Upsert_Call {
+func (_e *MockDataRetentionRepository_Expecter) Upsert(ctx any, entity any) *MockDataRetentionRepository_Upsert_Call {
 	return &MockDataRetentionRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 

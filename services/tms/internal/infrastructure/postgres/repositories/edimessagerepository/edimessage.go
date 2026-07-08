@@ -75,6 +75,12 @@ func (r *repository) ListMessages(
 	if !req.PartnerID.IsNil() {
 		query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
 	}
+	if !req.TransferID.IsNil() {
+		query = query.Where(cols.TransferID.Eq(), req.TransferID)
+	}
+	if !req.InboundFileID.IsNil() {
+		query = query.Where(cols.InboundFileID.Eq(), req.InboundFileID)
+	}
 	if req.Status != "" {
 		query = query.Where(cols.Status.Eq(), req.Status)
 	}

@@ -77,7 +77,7 @@ type MockFormulaTemplateVersionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - version *formulatemplate.FormulaTemplateVersion
-func (_e *MockFormulaTemplateVersionRepository_Expecter) Create(ctx interface{}, version interface{}) *MockFormulaTemplateVersionRepository_Create_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) Create(ctx any, version any) *MockFormulaTemplateVersionRepository_Create_Call {
 	return &MockFormulaTemplateVersionRepository_Create_Call{Call: _e.mock.On("Create", ctx, version)}
 }
 
@@ -145,7 +145,7 @@ type MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call struct {
 // GetByTemplateAndVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetVersionRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetByTemplateAndVersion(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetByTemplateAndVersion(ctx any, req any) *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call {
 	return &MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call{Call: _e.mock.On("GetByTemplateAndVersion", ctx, req)}
 }
 
@@ -213,7 +213,7 @@ type MockFormulaTemplateVersionRepository_GetForkedTemplates_Call struct {
 // GetForkedTemplates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetForkedTemplatesRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetForkedTemplates(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_GetForkedTemplates_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetForkedTemplates(ctx any, req any) *MockFormulaTemplateVersionRepository_GetForkedTemplates_Call {
 	return &MockFormulaTemplateVersionRepository_GetForkedTemplates_Call{Call: _e.mock.On("GetForkedTemplates", ctx, req)}
 }
 
@@ -282,7 +282,7 @@ type MockFormulaTemplateVersionRepository_GetLatestVersion_Call struct {
 //   - ctx context.Context
 //   - templateID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetLatestVersion(ctx interface{}, templateID interface{}, tenantInfo interface{}) *MockFormulaTemplateVersionRepository_GetLatestVersion_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetLatestVersion(ctx any, templateID any, tenantInfo any) *MockFormulaTemplateVersionRepository_GetLatestVersion_Call {
 	return &MockFormulaTemplateVersionRepository_GetLatestVersion_Call{Call: _e.mock.On("GetLatestVersion", ctx, templateID, tenantInfo)}
 }
 
@@ -355,7 +355,7 @@ type MockFormulaTemplateVersionRepository_GetVersionRange_Call struct {
 // GetVersionRange is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetVersionRangeRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetVersionRange(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_GetVersionRange_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetVersionRange(ctx any, req any) *MockFormulaTemplateVersionRepository_GetVersionRange_Call {
 	return &MockFormulaTemplateVersionRepository_GetVersionRange_Call{Call: _e.mock.On("GetVersionRange", ctx, req)}
 }
 
@@ -423,7 +423,7 @@ type MockFormulaTemplateVersionRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListVersionsRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) List(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_List_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) List(ctx any, req any) *MockFormulaTemplateVersionRepository_List_Call {
 	return &MockFormulaTemplateVersionRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -491,7 +491,7 @@ type MockFormulaTemplateVersionRepository_UpdateTags_Call struct {
 // UpdateTags is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateVersionTagsRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) UpdateTags(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_UpdateTags_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) UpdateTags(ctx any, req any) *MockFormulaTemplateVersionRepository_UpdateTags_Call {
 	return &MockFormulaTemplateVersionRepository_UpdateTags_Call{Call: _e.mock.On("UpdateTags", ctx, req)}
 }
 

@@ -77,7 +77,7 @@ type MockExchangeRateRepository_CreateSettlementQuote_Call struct {
 // CreateSettlementQuote is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CreateSettlementQuoteRequest
-func (_e *MockExchangeRateRepository_Expecter) CreateSettlementQuote(ctx interface{}, req interface{}) *MockExchangeRateRepository_CreateSettlementQuote_Call {
+func (_e *MockExchangeRateRepository_Expecter) CreateSettlementQuote(ctx any, req any) *MockExchangeRateRepository_CreateSettlementQuote_Call {
 	return &MockExchangeRateRepository_CreateSettlementQuote_Call{Call: _e.mock.On("CreateSettlementQuote", ctx, req)}
 }
 
@@ -145,7 +145,7 @@ type MockExchangeRateRepository_GetLatestDate_Call struct {
 // GetLatestDate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockExchangeRateRepository_Expecter) GetLatestDate(ctx interface{}, tenantInfo interface{}) *MockExchangeRateRepository_GetLatestDate_Call {
+func (_e *MockExchangeRateRepository_Expecter) GetLatestDate(ctx any, tenantInfo any) *MockExchangeRateRepository_GetLatestDate_Call {
 	return &MockExchangeRateRepository_GetLatestDate_Call{Call: _e.mock.On("GetLatestDate", ctx, tenantInfo)}
 }
 
@@ -213,7 +213,7 @@ type MockExchangeRateRepository_GetRate_Call struct {
 // GetRate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetExchangeRateRequest
-func (_e *MockExchangeRateRepository_Expecter) GetRate(ctx interface{}, req interface{}) *MockExchangeRateRepository_GetRate_Call {
+func (_e *MockExchangeRateRepository_Expecter) GetRate(ctx any, req any) *MockExchangeRateRepository_GetRate_Call {
 	return &MockExchangeRateRepository_GetRate_Call{Call: _e.mock.On("GetRate", ctx, req)}
 }
 
@@ -270,7 +270,7 @@ type MockExchangeRateRepository_UpsertRates_Call struct {
 // UpsertRates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpsertExchangeRatesRequest
-func (_e *MockExchangeRateRepository_Expecter) UpsertRates(ctx interface{}, req interface{}) *MockExchangeRateRepository_UpsertRates_Call {
+func (_e *MockExchangeRateRepository_Expecter) UpsertRates(ctx any, req any) *MockExchangeRateRepository_UpsertRates_Call {
 	return &MockExchangeRateRepository_UpsertRates_Call{Call: _e.mock.On("UpsertRates", ctx, req)}
 }
 

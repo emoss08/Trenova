@@ -76,7 +76,7 @@ type MockDocumentControlRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.DocumentControl
-func (_e *MockDocumentControlRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentControlRepository_Create_Call {
+func (_e *MockDocumentControlRepository_Expecter) Create(ctx any, entity any) *MockDocumentControlRepository_Create_Call {
 	return &MockDocumentControlRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockDocumentControlRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentControlRequest
-func (_e *MockDocumentControlRepository_Expecter) Get(ctx interface{}, req interface{}) *MockDocumentControlRepository_Get_Call {
+func (_e *MockDocumentControlRepository_Expecter) Get(ctx any, req any) *MockDocumentControlRepository_Get_Call {
 	return &MockDocumentControlRepository_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -213,7 +213,7 @@ type MockDocumentControlRepository_GetOrCreate_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockDocumentControlRepository_Expecter) GetOrCreate(ctx interface{}, orgID interface{}, buID interface{}) *MockDocumentControlRepository_GetOrCreate_Call {
+func (_e *MockDocumentControlRepository_Expecter) GetOrCreate(ctx any, orgID any, buID any) *MockDocumentControlRepository_GetOrCreate_Call {
 	return &MockDocumentControlRepository_GetOrCreate_Call{Call: _e.mock.On("GetOrCreate", ctx, orgID, buID)}
 }
 
@@ -286,7 +286,7 @@ type MockDocumentControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.DocumentControl
-func (_e *MockDocumentControlRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentControlRepository_Update_Call {
+func (_e *MockDocumentControlRepository_Expecter) Update(ctx any, entity any) *MockDocumentControlRepository_Update_Call {
 	return &MockDocumentControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

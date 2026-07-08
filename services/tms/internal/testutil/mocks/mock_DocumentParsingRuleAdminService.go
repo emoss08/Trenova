@@ -77,7 +77,7 @@ type MockDocumentParsingRuleAdminService_CreateRuleSet_Call struct {
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleSet
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) CreateRuleSet(ctx interface{}, entity interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_CreateRuleSet_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) CreateRuleSet(ctx any, entity any, userID any) *MockDocumentParsingRuleAdminService_CreateRuleSet_Call {
 	return &MockDocumentParsingRuleAdminService_CreateRuleSet_Call{Call: _e.mock.On("CreateRuleSet", ctx, entity, userID)}
 }
 
@@ -151,7 +151,7 @@ type MockDocumentParsingRuleAdminService_CreateVersion_Call struct {
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleVersion
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) CreateVersion(ctx interface{}, entity interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_CreateVersion_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) CreateVersion(ctx any, entity any, userID any) *MockDocumentParsingRuleAdminService_CreateVersion_Call {
 	return &MockDocumentParsingRuleAdminService_CreateVersion_Call{Call: _e.mock.On("CreateVersion", ctx, entity, userID)}
 }
 
@@ -215,7 +215,7 @@ type MockDocumentParsingRuleAdminService_DeleteFixture_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) DeleteFixture(ctx interface{}, id interface{}, tenantInfo interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_DeleteFixture_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) DeleteFixture(ctx any, id any, tenantInfo any, userID any) *MockDocumentParsingRuleAdminService_DeleteFixture_Call {
 	return &MockDocumentParsingRuleAdminService_DeleteFixture_Call{Call: _e.mock.On("DeleteFixture", ctx, id, tenantInfo, userID)}
 }
 
@@ -284,7 +284,7 @@ type MockDocumentParsingRuleAdminService_DeleteRuleSet_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) DeleteRuleSet(ctx interface{}, id interface{}, tenantInfo interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_DeleteRuleSet_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) DeleteRuleSet(ctx any, id any, tenantInfo any, userID any) *MockDocumentParsingRuleAdminService_DeleteRuleSet_Call {
 	return &MockDocumentParsingRuleAdminService_DeleteRuleSet_Call{Call: _e.mock.On("DeleteRuleSet", ctx, id, tenantInfo, userID)}
 }
 
@@ -363,7 +363,7 @@ type MockDocumentParsingRuleAdminService_GetFixture_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentParsingRuleAdminService_Expecter) GetFixture(ctx interface{}, id interface{}, tenantInfo interface{}) *MockDocumentParsingRuleAdminService_GetFixture_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) GetFixture(ctx any, id any, tenantInfo any) *MockDocumentParsingRuleAdminService_GetFixture_Call {
 	return &MockDocumentParsingRuleAdminService_GetFixture_Call{Call: _e.mock.On("GetFixture", ctx, id, tenantInfo)}
 }
 
@@ -437,7 +437,7 @@ type MockDocumentParsingRuleAdminService_GetRuleSet_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentParsingRuleAdminService_Expecter) GetRuleSet(ctx interface{}, id interface{}, tenantInfo interface{}) *MockDocumentParsingRuleAdminService_GetRuleSet_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) GetRuleSet(ctx any, id any, tenantInfo any) *MockDocumentParsingRuleAdminService_GetRuleSet_Call {
 	return &MockDocumentParsingRuleAdminService_GetRuleSet_Call{Call: _e.mock.On("GetRuleSet", ctx, id, tenantInfo)}
 }
 
@@ -511,7 +511,7 @@ type MockDocumentParsingRuleAdminService_GetVersion_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentParsingRuleAdminService_Expecter) GetVersion(ctx interface{}, id interface{}, tenantInfo interface{}) *MockDocumentParsingRuleAdminService_GetVersion_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) GetVersion(ctx any, id any, tenantInfo any) *MockDocumentParsingRuleAdminService_GetVersion_Call {
 	return &MockDocumentParsingRuleAdminService_GetVersion_Call{Call: _e.mock.On("GetVersion", ctx, id, tenantInfo)}
 }
 
@@ -585,7 +585,7 @@ type MockDocumentParsingRuleAdminService_ListFixtures_Call struct {
 //   - ctx context.Context
 //   - ruleSetID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentParsingRuleAdminService_Expecter) ListFixtures(ctx interface{}, ruleSetID interface{}, tenantInfo interface{}) *MockDocumentParsingRuleAdminService_ListFixtures_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) ListFixtures(ctx any, ruleSetID any, tenantInfo any) *MockDocumentParsingRuleAdminService_ListFixtures_Call {
 	return &MockDocumentParsingRuleAdminService_ListFixtures_Call{Call: _e.mock.On("ListFixtures", ctx, ruleSetID, tenantInfo)}
 }
 
@@ -659,7 +659,7 @@ type MockDocumentParsingRuleAdminService_ListRuleSets_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - documentKind string
-func (_e *MockDocumentParsingRuleAdminService_Expecter) ListRuleSets(ctx interface{}, tenantInfo interface{}, documentKind interface{}) *MockDocumentParsingRuleAdminService_ListRuleSets_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) ListRuleSets(ctx any, tenantInfo any, documentKind any) *MockDocumentParsingRuleAdminService_ListRuleSets_Call {
 	return &MockDocumentParsingRuleAdminService_ListRuleSets_Call{Call: _e.mock.On("ListRuleSets", ctx, tenantInfo, documentKind)}
 }
 
@@ -733,7 +733,7 @@ type MockDocumentParsingRuleAdminService_ListVersions_Call struct {
 //   - ctx context.Context
 //   - ruleSetID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentParsingRuleAdminService_Expecter) ListVersions(ctx interface{}, ruleSetID interface{}, tenantInfo interface{}) *MockDocumentParsingRuleAdminService_ListVersions_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) ListVersions(ctx any, ruleSetID any, tenantInfo any) *MockDocumentParsingRuleAdminService_ListVersions_Call {
 	return &MockDocumentParsingRuleAdminService_ListVersions_Call{Call: _e.mock.On("ListVersions", ctx, ruleSetID, tenantInfo)}
 }
 
@@ -808,7 +808,7 @@ type MockDocumentParsingRuleAdminService_PublishVersion_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) PublishVersion(ctx interface{}, id interface{}, tenantInfo interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_PublishVersion_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) PublishVersion(ctx any, id any, tenantInfo any, userID any) *MockDocumentParsingRuleAdminService_PublishVersion_Call {
 	return &MockDocumentParsingRuleAdminService_PublishVersion_Call{Call: _e.mock.On("PublishVersion", ctx, id, tenantInfo, userID)}
 }
 
@@ -887,7 +887,7 @@ type MockDocumentParsingRuleAdminService_SaveFixture_Call struct {
 //   - ctx context.Context
 //   - entity *documentparsingrule.Fixture
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) SaveFixture(ctx interface{}, entity interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_SaveFixture_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) SaveFixture(ctx any, entity any, userID any) *MockDocumentParsingRuleAdminService_SaveFixture_Call {
 	return &MockDocumentParsingRuleAdminService_SaveFixture_Call{Call: _e.mock.On("SaveFixture", ctx, entity, userID)}
 }
 
@@ -961,7 +961,7 @@ type MockDocumentParsingRuleAdminService_UpdateRuleSet_Call struct {
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleSet
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) UpdateRuleSet(ctx interface{}, entity interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_UpdateRuleSet_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) UpdateRuleSet(ctx any, entity any, userID any) *MockDocumentParsingRuleAdminService_UpdateRuleSet_Call {
 	return &MockDocumentParsingRuleAdminService_UpdateRuleSet_Call{Call: _e.mock.On("UpdateRuleSet", ctx, entity, userID)}
 }
 
@@ -1035,7 +1035,7 @@ type MockDocumentParsingRuleAdminService_UpdateVersion_Call struct {
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleVersion
 //   - userID pulid.ID
-func (_e *MockDocumentParsingRuleAdminService_Expecter) UpdateVersion(ctx interface{}, entity interface{}, userID interface{}) *MockDocumentParsingRuleAdminService_UpdateVersion_Call {
+func (_e *MockDocumentParsingRuleAdminService_Expecter) UpdateVersion(ctx any, entity any, userID any) *MockDocumentParsingRuleAdminService_UpdateVersion_Call {
 	return &MockDocumentParsingRuleAdminService_UpdateVersion_Call{Call: _e.mock.On("UpdateVersion", ctx, entity, userID)}
 }
 

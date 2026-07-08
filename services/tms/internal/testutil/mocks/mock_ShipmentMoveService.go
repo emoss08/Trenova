@@ -75,7 +75,7 @@ type MockShipmentMoveService_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateMoveStatusRequest
-func (_e *MockShipmentMoveService_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockShipmentMoveService_BulkUpdateStatus_Call {
+func (_e *MockShipmentMoveService_Expecter) BulkUpdateStatus(ctx any, req any) *MockShipmentMoveService_BulkUpdateStatus_Call {
 	return &MockShipmentMoveService_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockShipmentMoveService_SplitMove_Call struct {
 // SplitMove is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SplitMoveRequest
-func (_e *MockShipmentMoveService_Expecter) SplitMove(ctx interface{}, req interface{}) *MockShipmentMoveService_SplitMove_Call {
+func (_e *MockShipmentMoveService_Expecter) SplitMove(ctx any, req any) *MockShipmentMoveService_SplitMove_Call {
 	return &MockShipmentMoveService_SplitMove_Call{Call: _e.mock.On("SplitMove", ctx, req)}
 }
 
@@ -211,7 +211,7 @@ type MockShipmentMoveService_UpdateStatus_Call struct {
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateMoveStatusRequest
-func (_e *MockShipmentMoveService_Expecter) UpdateStatus(ctx interface{}, req interface{}) *MockShipmentMoveService_UpdateStatus_Call {
+func (_e *MockShipmentMoveService_Expecter) UpdateStatus(ctx any, req any) *MockShipmentMoveService_UpdateStatus_Call {
 	return &MockShipmentMoveService_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
 }
 

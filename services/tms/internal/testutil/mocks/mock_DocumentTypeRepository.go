@@ -76,7 +76,7 @@ type MockDocumentTypeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documenttype.DocumentType
-func (_e *MockDocumentTypeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentTypeRepository_Create_Call {
+func (_e *MockDocumentTypeRepository_Expecter) Create(ctx any, entity any) *MockDocumentTypeRepository_Create_Call {
 	return &MockDocumentTypeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockDocumentTypeRepository_GetByCode_Call struct {
 // GetByCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentTypeByCodeRequest
-func (_e *MockDocumentTypeRepository_Expecter) GetByCode(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByCode_Call {
+func (_e *MockDocumentTypeRepository_Expecter) GetByCode(ctx any, req any) *MockDocumentTypeRepository_GetByCode_Call {
 	return &MockDocumentTypeRepository_GetByCode_Call{Call: _e.mock.On("GetByCode", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockDocumentTypeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentTypeByIDRequest
-func (_e *MockDocumentTypeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByID_Call {
+func (_e *MockDocumentTypeRepository_Expecter) GetByID(ctx any, req any) *MockDocumentTypeRepository_GetByID_Call {
 	return &MockDocumentTypeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockDocumentTypeRepository_GetByName_Call struct {
 // GetByName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentTypeByNameRequest
-func (_e *MockDocumentTypeRepository_Expecter) GetByName(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByName_Call {
+func (_e *MockDocumentTypeRepository_Expecter) GetByName(ctx any, req any) *MockDocumentTypeRepository_GetByName_Call {
 	return &MockDocumentTypeRepository_GetByName_Call{Call: _e.mock.On("GetByName", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockDocumentTypeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentTypesRequest
-func (_e *MockDocumentTypeRepository_Expecter) List(ctx interface{}, req interface{}) *MockDocumentTypeRepository_List_Call {
+func (_e *MockDocumentTypeRepository_Expecter) List(ctx any, req any) *MockDocumentTypeRepository_List_Call {
 	return &MockDocumentTypeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockDocumentTypeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockDocumentTypeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockDocumentTypeRepository_SelectOptions_Call {
+func (_e *MockDocumentTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockDocumentTypeRepository_SelectOptions_Call {
 	return &MockDocumentTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockDocumentTypeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documenttype.DocumentType
-func (_e *MockDocumentTypeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentTypeRepository_Update_Call {
+func (_e *MockDocumentTypeRepository_Expecter) Update(ctx any, entity any) *MockDocumentTypeRepository_Update_Call {
 	return &MockDocumentTypeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

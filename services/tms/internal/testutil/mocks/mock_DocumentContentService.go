@@ -68,7 +68,7 @@ type MockDocumentContentService_EnqueueExtraction_Call struct {
 //   - ctx context.Context
 //   - doc *document.Document
 //   - userID pulid.ID
-func (_e *MockDocumentContentService_Expecter) EnqueueExtraction(ctx interface{}, doc interface{}, userID interface{}) *MockDocumentContentService_EnqueueExtraction_Call {
+func (_e *MockDocumentContentService_Expecter) EnqueueExtraction(ctx any, doc any, userID any) *MockDocumentContentService_EnqueueExtraction_Call {
 	return &MockDocumentContentService_EnqueueExtraction_Call{Call: _e.mock.On("EnqueueExtraction", ctx, doc, userID)}
 }
 
@@ -142,7 +142,7 @@ type MockDocumentContentService_GetContent_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentContentService_Expecter) GetContent(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentContentService_GetContent_Call {
+func (_e *MockDocumentContentService_Expecter) GetContent(ctx any, documentID any, tenantInfo any) *MockDocumentContentService_GetContent_Call {
 	return &MockDocumentContentService_GetContent_Call{Call: _e.mock.On("GetContent", ctx, documentID, tenantInfo)}
 }
 
@@ -216,7 +216,7 @@ type MockDocumentContentService_GetShipmentDraft_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentContentService_Expecter) GetShipmentDraft(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentContentService_GetShipmentDraft_Call {
+func (_e *MockDocumentContentService_Expecter) GetShipmentDraft(ctx any, documentID any, tenantInfo any) *MockDocumentContentService_GetShipmentDraft_Call {
 	return &MockDocumentContentService_GetShipmentDraft_Call{Call: _e.mock.On("GetShipmentDraft", ctx, documentID, tenantInfo)}
 }
 
@@ -279,7 +279,7 @@ type MockDocumentContentService_Reextract_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentContentService_Expecter) Reextract(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentContentService_Reextract_Call {
+func (_e *MockDocumentContentService_Expecter) Reextract(ctx any, documentID any, tenantInfo any) *MockDocumentContentService_Reextract_Call {
 	return &MockDocumentContentService_Reextract_Call{Call: _e.mock.On("Reextract", ctx, documentID, tenantInfo)}
 }
 
@@ -355,7 +355,7 @@ type MockDocumentContentService_SearchDocuments_Call struct {
 //   - resourceType string
 //   - resourceID string
 //   - query string
-func (_e *MockDocumentContentService_Expecter) SearchDocuments(ctx interface{}, tenantInfo interface{}, resourceType interface{}, resourceID interface{}, query interface{}) *MockDocumentContentService_SearchDocuments_Call {
+func (_e *MockDocumentContentService_Expecter) SearchDocuments(ctx any, tenantInfo any, resourceType any, resourceID any, query any) *MockDocumentContentService_SearchDocuments_Call {
 	return &MockDocumentContentService_SearchDocuments_Call{Call: _e.mock.On("SearchDocuments", ctx, tenantInfo, resourceType, resourceID, query)}
 }
 

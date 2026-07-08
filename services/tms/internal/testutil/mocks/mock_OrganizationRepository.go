@@ -78,7 +78,7 @@ type MockOrganizationRepository_ClearLogoURL_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - version int64
-func (_e *MockOrganizationRepository_Expecter) ClearLogoURL(ctx interface{}, orgID interface{}, version interface{}) *MockOrganizationRepository_ClearLogoURL_Call {
+func (_e *MockOrganizationRepository_Expecter) ClearLogoURL(ctx any, orgID any, version any) *MockOrganizationRepository_ClearLogoURL_Call {
 	return &MockOrganizationRepository_ClearLogoURL_Call{Call: _e.mock.On("ClearLogoURL", ctx, orgID, version)}
 }
 
@@ -151,7 +151,7 @@ type MockOrganizationRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetOrganizationByIDRequest
-func (_e *MockOrganizationRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockOrganizationRepository_GetByID_Call {
+func (_e *MockOrganizationRepository_Expecter) GetByID(ctx any, req any) *MockOrganizationRepository_GetByID_Call {
 	return &MockOrganizationRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -219,7 +219,7 @@ type MockOrganizationRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetOrganizationsByIDsRequest
-func (_e *MockOrganizationRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockOrganizationRepository_GetByIDs_Call {
+func (_e *MockOrganizationRepository_Expecter) GetByIDs(ctx any, req any) *MockOrganizationRepository_GetByIDs_Call {
 	return &MockOrganizationRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -287,7 +287,7 @@ type MockOrganizationRepository_GetByLoginSlug_Call struct {
 // GetByLoginSlug is a helper method to define mock.On call
 //   - ctx context.Context
 //   - loginSlug string
-func (_e *MockOrganizationRepository_Expecter) GetByLoginSlug(ctx interface{}, loginSlug interface{}) *MockOrganizationRepository_GetByLoginSlug_Call {
+func (_e *MockOrganizationRepository_Expecter) GetByLoginSlug(ctx any, loginSlug any) *MockOrganizationRepository_GetByLoginSlug_Call {
 	return &MockOrganizationRepository_GetByLoginSlug_Call{Call: _e.mock.On("GetByLoginSlug", ctx, loginSlug)}
 }
 
@@ -355,7 +355,7 @@ type MockOrganizationRepository_ListLoginSlugsByPrefix_Call struct {
 // ListLoginSlugsByPrefix is a helper method to define mock.On call
 //   - ctx context.Context
 //   - prefix string
-func (_e *MockOrganizationRepository_Expecter) ListLoginSlugsByPrefix(ctx interface{}, prefix interface{}) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
+func (_e *MockOrganizationRepository_Expecter) ListLoginSlugsByPrefix(ctx any, prefix any) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
 	return &MockOrganizationRepository_ListLoginSlugsByPrefix_Call{Call: _e.mock.On("ListLoginSlugsByPrefix", ctx, prefix)}
 }
 
@@ -423,7 +423,7 @@ type MockOrganizationRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SelectOrganizationOptionsRequest
-func (_e *MockOrganizationRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockOrganizationRepository_SelectOptions_Call {
+func (_e *MockOrganizationRepository_Expecter) SelectOptions(ctx any, req any) *MockOrganizationRepository_SelectOptions_Call {
 	return &MockOrganizationRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -491,7 +491,7 @@ type MockOrganizationRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.Organization
-func (_e *MockOrganizationRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockOrganizationRepository_Update_Call {
+func (_e *MockOrganizationRepository_Expecter) Update(ctx any, entity any) *MockOrganizationRepository_Update_Call {
 	return &MockOrganizationRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

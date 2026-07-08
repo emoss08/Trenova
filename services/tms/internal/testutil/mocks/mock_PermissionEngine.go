@@ -75,7 +75,7 @@ type MockPermissionEngine_Check_Call struct {
 // Check is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.PermissionCheckRequest
-func (_e *MockPermissionEngine_Expecter) Check(ctx interface{}, req interface{}) *MockPermissionEngine_Check_Call {
+func (_e *MockPermissionEngine_Expecter) Check(ctx any, req any) *MockPermissionEngine_Check_Call {
 	return &MockPermissionEngine_Check_Call{Call: _e.mock.On("Check", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockPermissionEngine_CheckBatch_Call struct {
 // CheckBatch is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.BatchPermissionCheckRequest
-func (_e *MockPermissionEngine_Expecter) CheckBatch(ctx interface{}, req interface{}) *MockPermissionEngine_CheckBatch_Call {
+func (_e *MockPermissionEngine_Expecter) CheckBatch(ctx any, req any) *MockPermissionEngine_CheckBatch_Call {
 	return &MockPermissionEngine_CheckBatch_Call{Call: _e.mock.On("CheckBatch", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockPermissionEngine_GetEffectivePermissions_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockPermissionEngine_Expecter) GetEffectivePermissions(ctx interface{}, userID interface{}, orgID interface{}) *MockPermissionEngine_GetEffectivePermissions_Call {
+func (_e *MockPermissionEngine_Expecter) GetEffectivePermissions(ctx any, userID any, orgID any) *MockPermissionEngine_GetEffectivePermissions_Call {
 	return &MockPermissionEngine_GetEffectivePermissions_Call{Call: _e.mock.On("GetEffectivePermissions", ctx, userID, orgID)}
 }
 
@@ -286,7 +286,7 @@ type MockPermissionEngine_GetLightManifest_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockPermissionEngine_Expecter) GetLightManifest(ctx interface{}, userID interface{}, orgID interface{}) *MockPermissionEngine_GetLightManifest_Call {
+func (_e *MockPermissionEngine_Expecter) GetLightManifest(ctx any, userID any, orgID any) *MockPermissionEngine_GetLightManifest_Call {
 	return &MockPermissionEngine_GetLightManifest_Call{Call: _e.mock.On("GetLightManifest", ctx, userID, orgID)}
 }
 
@@ -361,7 +361,7 @@ type MockPermissionEngine_GetResourcePermissions_Call struct {
 //   - userID pulid.ID
 //   - orgID pulid.ID
 //   - resource string
-func (_e *MockPermissionEngine_Expecter) GetResourcePermissions(ctx interface{}, userID interface{}, orgID interface{}, resource interface{}) *MockPermissionEngine_GetResourcePermissions_Call {
+func (_e *MockPermissionEngine_Expecter) GetResourcePermissions(ctx any, userID any, orgID any, resource any) *MockPermissionEngine_GetResourcePermissions_Call {
 	return &MockPermissionEngine_GetResourcePermissions_Call{Call: _e.mock.On("GetResourcePermissions", ctx, userID, orgID, resource)}
 }
 
@@ -429,7 +429,7 @@ type MockPermissionEngine_InvalidateUser_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockPermissionEngine_Expecter) InvalidateUser(ctx interface{}, userID interface{}, orgID interface{}) *MockPermissionEngine_InvalidateUser_Call {
+func (_e *MockPermissionEngine_Expecter) InvalidateUser(ctx any, userID any, orgID any) *MockPermissionEngine_InvalidateUser_Call {
 	return &MockPermissionEngine_InvalidateUser_Call{Call: _e.mock.On("InvalidateUser", ctx, userID, orgID)}
 }
 
@@ -502,7 +502,7 @@ type MockPermissionEngine_SimulatePermissions_Call struct {
 // SimulatePermissions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.SimulatePermissionsRequest
-func (_e *MockPermissionEngine_Expecter) SimulatePermissions(ctx interface{}, req interface{}) *MockPermissionEngine_SimulatePermissions_Call {
+func (_e *MockPermissionEngine_Expecter) SimulatePermissions(ctx any, req any) *MockPermissionEngine_SimulatePermissions_Call {
 	return &MockPermissionEngine_SimulatePermissions_Call{Call: _e.mock.On("SimulatePermissions", ctx, req)}
 }
 

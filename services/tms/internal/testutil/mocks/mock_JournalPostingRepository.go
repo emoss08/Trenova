@@ -63,7 +63,7 @@ type MockJournalPostingRepository_CreatePosting_Call struct {
 // CreatePosting is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params repositories.CreateJournalPostingParams
-func (_e *MockJournalPostingRepository_Expecter) CreatePosting(ctx interface{}, params interface{}) *MockJournalPostingRepository_CreatePosting_Call {
+func (_e *MockJournalPostingRepository_Expecter) CreatePosting(ctx any, params any) *MockJournalPostingRepository_CreatePosting_Call {
 	return &MockJournalPostingRepository_CreatePosting_Call{Call: _e.mock.On("CreatePosting", ctx, params)}
 }
 

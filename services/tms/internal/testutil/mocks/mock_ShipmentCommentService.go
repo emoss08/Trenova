@@ -78,7 +78,7 @@ type MockShipmentCommentService_Create_Call struct {
 //   - ctx context.Context
 //   - entity *shipment.ShipmentComment
 //   - actor *services.RequestActor
-func (_e *MockShipmentCommentService_Expecter) Create(ctx interface{}, entity interface{}, actor interface{}) *MockShipmentCommentService_Create_Call {
+func (_e *MockShipmentCommentService_Expecter) Create(ctx any, entity any, actor any) *MockShipmentCommentService_Create_Call {
 	return &MockShipmentCommentService_Create_Call{Call: _e.mock.On("Create", ctx, entity, actor)}
 }
 
@@ -151,7 +151,7 @@ type MockShipmentCommentService_CreateSystem_Call struct {
 // CreateSystem is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.CreateSystemShipmentCommentRequest
-func (_e *MockShipmentCommentService_Expecter) CreateSystem(ctx interface{}, req interface{}) *MockShipmentCommentService_CreateSystem_Call {
+func (_e *MockShipmentCommentService_Expecter) CreateSystem(ctx any, req any) *MockShipmentCommentService_CreateSystem_Call {
 	return &MockShipmentCommentService_CreateSystem_Call{Call: _e.mock.On("CreateSystem", ctx, req)}
 }
 
@@ -209,7 +209,7 @@ type MockShipmentCommentService_Delete_Call struct {
 //   - ctx context.Context
 //   - req *repositories.DeleteShipmentCommentRequest
 //   - actor *services.RequestActor
-func (_e *MockShipmentCommentService_Expecter) Delete(ctx interface{}, req interface{}, actor interface{}) *MockShipmentCommentService_Delete_Call {
+func (_e *MockShipmentCommentService_Expecter) Delete(ctx any, req any, actor any) *MockShipmentCommentService_Delete_Call {
 	return &MockShipmentCommentService_Delete_Call{Call: _e.mock.On("Delete", ctx, req, actor)}
 }
 
@@ -280,7 +280,7 @@ type MockShipmentCommentService_GetCountByShipmentID_Call struct {
 // GetCountByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentCommentCountRequest
-func (_e *MockShipmentCommentService_Expecter) GetCountByShipmentID(ctx interface{}, req interface{}) *MockShipmentCommentService_GetCountByShipmentID_Call {
+func (_e *MockShipmentCommentService_Expecter) GetCountByShipmentID(ctx any, req any) *MockShipmentCommentService_GetCountByShipmentID_Call {
 	return &MockShipmentCommentService_GetCountByShipmentID_Call{Call: _e.mock.On("GetCountByShipmentID", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockShipmentCommentService_ListByShipmentID_Call struct {
 // ListByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentCommentsRequest
-func (_e *MockShipmentCommentService_Expecter) ListByShipmentID(ctx interface{}, req interface{}) *MockShipmentCommentService_ListByShipmentID_Call {
+func (_e *MockShipmentCommentService_Expecter) ListByShipmentID(ctx any, req any) *MockShipmentCommentService_ListByShipmentID_Call {
 	return &MockShipmentCommentService_ListByShipmentID_Call{Call: _e.mock.On("ListByShipmentID", ctx, req)}
 }
 
@@ -417,7 +417,7 @@ type MockShipmentCommentService_Update_Call struct {
 //   - ctx context.Context
 //   - entity *shipment.ShipmentComment
 //   - actor *services.RequestActor
-func (_e *MockShipmentCommentService_Expecter) Update(ctx interface{}, entity interface{}, actor interface{}) *MockShipmentCommentService_Update_Call {
+func (_e *MockShipmentCommentService_Expecter) Update(ctx any, entity any, actor any) *MockShipmentCommentService_Update_Call {
 	return &MockShipmentCommentService_Update_Call{Call: _e.mock.On("Update", ctx, entity, actor)}
 }
 

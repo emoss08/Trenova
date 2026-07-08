@@ -65,7 +65,7 @@ type MockFiscalPeriodRepository_BulkCreate_Call struct {
 // BulkCreate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkCreateFiscalPeriodsRequest
-func (_e *MockFiscalPeriodRepository_Expecter) BulkCreate(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_BulkCreate_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) BulkCreate(ctx any, req any) *MockFiscalPeriodRepository_BulkCreate_Call {
 	return &MockFiscalPeriodRepository_BulkCreate_Call{Call: _e.mock.On("BulkCreate", ctx, req)}
 }
 
@@ -133,7 +133,7 @@ type MockFiscalPeriodRepository_Close_Call struct {
 // Close is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CloseFiscalPeriodRequest
-func (_e *MockFiscalPeriodRepository_Expecter) Close(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_Close_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Close(ctx any, req any) *MockFiscalPeriodRepository_Close_Call {
 	return &MockFiscalPeriodRepository_Close_Call{Call: _e.mock.On("Close", ctx, req)}
 }
 
@@ -199,7 +199,7 @@ type MockFiscalPeriodRepository_CloseAllByFiscalYear_Call struct {
 // CloseAllByFiscalYear is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CloseAllByFiscalYearRequest
-func (_e *MockFiscalPeriodRepository_Expecter) CloseAllByFiscalYear(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_CloseAllByFiscalYear_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) CloseAllByFiscalYear(ctx any, req any) *MockFiscalPeriodRepository_CloseAllByFiscalYear_Call {
 	return &MockFiscalPeriodRepository_CloseAllByFiscalYear_Call{Call: _e.mock.On("CloseAllByFiscalYear", ctx, req)}
 }
 
@@ -267,7 +267,7 @@ type MockFiscalPeriodRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fiscalperiod.FiscalPeriod
-func (_e *MockFiscalPeriodRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockFiscalPeriodRepository_Create_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Create(ctx any, entity any) *MockFiscalPeriodRepository_Create_Call {
 	return &MockFiscalPeriodRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -324,7 +324,7 @@ type MockFiscalPeriodRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteFiscalPeriodRequest
-func (_e *MockFiscalPeriodRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_Delete_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Delete(ctx any, req any) *MockFiscalPeriodRepository_Delete_Call {
 	return &MockFiscalPeriodRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -392,7 +392,7 @@ type MockFiscalPeriodRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFiscalPeriodByIDRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_GetByID_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) GetByID(ctx any, req any) *MockFiscalPeriodRepository_GetByID_Call {
 	return &MockFiscalPeriodRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -460,7 +460,7 @@ type MockFiscalPeriodRepository_GetByIDForUpdate_Call struct {
 // GetByIDForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFiscalPeriodByIDRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetByIDForUpdate(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_GetByIDForUpdate_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) GetByIDForUpdate(ctx any, req any) *MockFiscalPeriodRepository_GetByIDForUpdate_Call {
 	return &MockFiscalPeriodRepository_GetByIDForUpdate_Call{Call: _e.mock.On("GetByIDForUpdate", ctx, req)}
 }
 
@@ -528,7 +528,7 @@ type MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call struct {
 // GetExpiredOpenPeriods is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetExpiredOpenPeriodsRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetExpiredOpenPeriods(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) GetExpiredOpenPeriods(ctx any, req any) *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call {
 	return &MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call{Call: _e.mock.On("GetExpiredOpenPeriods", ctx, req)}
 }
 
@@ -594,7 +594,7 @@ type MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call struct {
 // GetOpenPeriodsCountByFiscalYear is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetOpenPeriodsCountByFiscalYearRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetOpenPeriodsCountByFiscalYear(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) GetOpenPeriodsCountByFiscalYear(ctx any, req any) *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call {
 	return &MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call{Call: _e.mock.On("GetOpenPeriodsCountByFiscalYear", ctx, req)}
 }
 
@@ -662,7 +662,7 @@ type MockFiscalPeriodRepository_GetPeriodByDate_Call struct {
 // GetPeriodByDate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetPeriodByDateRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetPeriodByDate(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_GetPeriodByDate_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) GetPeriodByDate(ctx any, req any) *MockFiscalPeriodRepository_GetPeriodByDate_Call {
 	return &MockFiscalPeriodRepository_GetPeriodByDate_Call{Call: _e.mock.On("GetPeriodByDate", ctx, req)}
 }
 
@@ -730,7 +730,7 @@ type MockFiscalPeriodRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListFiscalPeriodsRequest
-func (_e *MockFiscalPeriodRepository_Expecter) List(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_List_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) List(ctx any, req any) *MockFiscalPeriodRepository_List_Call {
 	return &MockFiscalPeriodRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -798,7 +798,7 @@ type MockFiscalPeriodRepository_ListByFiscalYearID_Call struct {
 // ListByFiscalYearID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListByFiscalYearIDRequest
-func (_e *MockFiscalPeriodRepository_Expecter) ListByFiscalYearID(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_ListByFiscalYearID_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) ListByFiscalYearID(ctx any, req any) *MockFiscalPeriodRepository_ListByFiscalYearID_Call {
 	return &MockFiscalPeriodRepository_ListByFiscalYearID_Call{Call: _e.mock.On("ListByFiscalYearID", ctx, req)}
 }
 
@@ -866,7 +866,7 @@ type MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call struct {
 // ListByFiscalYearIDForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListByFiscalYearIDRequest
-func (_e *MockFiscalPeriodRepository_Expecter) ListByFiscalYearIDForUpdate(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) ListByFiscalYearIDForUpdate(ctx any, req any) *MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call {
 	return &MockFiscalPeriodRepository_ListByFiscalYearIDForUpdate_Call{Call: _e.mock.On("ListByFiscalYearIDForUpdate", ctx, req)}
 }
 
@@ -934,7 +934,7 @@ type MockFiscalPeriodRepository_Lock_Call struct {
 // Lock is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.LockFiscalPeriodRequest
-func (_e *MockFiscalPeriodRepository_Expecter) Lock(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_Lock_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Lock(ctx any, req any) *MockFiscalPeriodRepository_Lock_Call {
 	return &MockFiscalPeriodRepository_Lock_Call{Call: _e.mock.On("Lock", ctx, req)}
 }
 
@@ -1002,7 +1002,7 @@ type MockFiscalPeriodRepository_Reopen_Call struct {
 // Reopen is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ReopenFiscalPeriodRequest
-func (_e *MockFiscalPeriodRepository_Expecter) Reopen(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_Reopen_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Reopen(ctx any, req any) *MockFiscalPeriodRepository_Reopen_Call {
 	return &MockFiscalPeriodRepository_Reopen_Call{Call: _e.mock.On("Reopen", ctx, req)}
 }
 
@@ -1070,7 +1070,7 @@ type MockFiscalPeriodRepository_Unlock_Call struct {
 // Unlock is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.UnlockFiscalPeriodRequest
-func (_e *MockFiscalPeriodRepository_Expecter) Unlock(ctx interface{}, req interface{}) *MockFiscalPeriodRepository_Unlock_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Unlock(ctx any, req any) *MockFiscalPeriodRepository_Unlock_Call {
 	return &MockFiscalPeriodRepository_Unlock_Call{Call: _e.mock.On("Unlock", ctx, req)}
 }
 
@@ -1138,7 +1138,7 @@ type MockFiscalPeriodRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fiscalperiod.FiscalPeriod
-func (_e *MockFiscalPeriodRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockFiscalPeriodRepository_Update_Call {
+func (_e *MockFiscalPeriodRepository_Expecter) Update(ctx any, entity any) *MockFiscalPeriodRepository_Update_Call {
 	return &MockFiscalPeriodRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

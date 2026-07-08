@@ -66,7 +66,7 @@ type MockRBACRepository_DeleteRoleConstraint_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - constraintID pulid.ID
-func (_e *MockRBACRepository_Expecter) DeleteRoleConstraint(ctx interface{}, orgID interface{}, constraintID interface{}) *MockRBACRepository_DeleteRoleConstraint_Call {
+func (_e *MockRBACRepository_Expecter) DeleteRoleConstraint(ctx any, orgID any, constraintID any) *MockRBACRepository_DeleteRoleConstraint_Call {
 	return &MockRBACRepository_DeleteRoleConstraint_Call{Call: _e.mock.On("DeleteRoleConstraint", ctx, orgID, constraintID)}
 }
 
@@ -128,7 +128,7 @@ type MockRBACRepository_DeleteRoleHierarchyEdge_Call struct {
 // DeleteRoleHierarchyEdge is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteRoleHierarchyEdgeRequest
-func (_e *MockRBACRepository_Expecter) DeleteRoleHierarchyEdge(ctx interface{}, req interface{}) *MockRBACRepository_DeleteRoleHierarchyEdge_Call {
+func (_e *MockRBACRepository_Expecter) DeleteRoleHierarchyEdge(ctx any, req any) *MockRBACRepository_DeleteRoleHierarchyEdge_Call {
 	return &MockRBACRepository_DeleteRoleHierarchyEdge_Call{Call: _e.mock.On("DeleteRoleHierarchyEdge", ctx, req)}
 }
 
@@ -197,7 +197,7 @@ type MockRBACRepository_GetAuthorizedRoles_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockRBACRepository_Expecter) GetAuthorizedRoles(ctx interface{}, userID interface{}, orgID interface{}) *MockRBACRepository_GetAuthorizedRoles_Call {
+func (_e *MockRBACRepository_Expecter) GetAuthorizedRoles(ctx any, userID any, orgID any) *MockRBACRepository_GetAuthorizedRoles_Call {
 	return &MockRBACRepository_GetAuthorizedRoles_Call{Call: _e.mock.On("GetAuthorizedRoles", ctx, userID, orgID)}
 }
 
@@ -270,7 +270,7 @@ type MockRBACRepository_GetRoleClosure_Call struct {
 // GetRoleClosure is a helper method to define mock.On call
 //   - ctx context.Context
 //   - roleIDs []pulid.ID
-func (_e *MockRBACRepository_Expecter) GetRoleClosure(ctx interface{}, roleIDs interface{}) *MockRBACRepository_GetRoleClosure_Call {
+func (_e *MockRBACRepository_Expecter) GetRoleClosure(ctx any, roleIDs any) *MockRBACRepository_GetRoleClosure_Call {
 	return &MockRBACRepository_GetRoleClosure_Call{Call: _e.mock.On("GetRoleClosure", ctx, roleIDs)}
 }
 
@@ -339,7 +339,7 @@ type MockRBACRepository_GetRoleConstraint_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - constraintID pulid.ID
-func (_e *MockRBACRepository_Expecter) GetRoleConstraint(ctx interface{}, orgID interface{}, constraintID interface{}) *MockRBACRepository_GetRoleConstraint_Call {
+func (_e *MockRBACRepository_Expecter) GetRoleConstraint(ctx any, orgID any, constraintID any) *MockRBACRepository_GetRoleConstraint_Call {
 	return &MockRBACRepository_GetRoleConstraint_Call{Call: _e.mock.On("GetRoleConstraint", ctx, orgID, constraintID)}
 }
 
@@ -412,7 +412,7 @@ type MockRBACRepository_ListRoleConstraints_Call struct {
 // ListRoleConstraints is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListRoleConstraintsRequest
-func (_e *MockRBACRepository_Expecter) ListRoleConstraints(ctx interface{}, req interface{}) *MockRBACRepository_ListRoleConstraints_Call {
+func (_e *MockRBACRepository_Expecter) ListRoleConstraints(ctx any, req any) *MockRBACRepository_ListRoleConstraints_Call {
 	return &MockRBACRepository_ListRoleConstraints_Call{Call: _e.mock.On("ListRoleConstraints", ctx, req)}
 }
 
@@ -480,7 +480,7 @@ type MockRBACRepository_ListRoleHierarchyEdges_Call struct {
 // ListRoleHierarchyEdges is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
-func (_e *MockRBACRepository_Expecter) ListRoleHierarchyEdges(ctx interface{}, orgID interface{}) *MockRBACRepository_ListRoleHierarchyEdges_Call {
+func (_e *MockRBACRepository_Expecter) ListRoleHierarchyEdges(ctx any, orgID any) *MockRBACRepository_ListRoleHierarchyEdges_Call {
 	return &MockRBACRepository_ListRoleHierarchyEdges_Call{Call: _e.mock.On("ListRoleHierarchyEdges", ctx, orgID)}
 }
 
@@ -548,7 +548,7 @@ type MockRBACRepository_RunPreflight_Call struct {
 // RunPreflight is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
-func (_e *MockRBACRepository_Expecter) RunPreflight(ctx interface{}, orgID interface{}) *MockRBACRepository_RunPreflight_Call {
+func (_e *MockRBACRepository_Expecter) RunPreflight(ctx any, orgID any) *MockRBACRepository_RunPreflight_Call {
 	return &MockRBACRepository_RunPreflight_Call{Call: _e.mock.On("RunPreflight", ctx, orgID)}
 }
 
@@ -605,7 +605,7 @@ type MockRBACRepository_SaveRoleConstraint_Call struct {
 // SaveRoleConstraint is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SaveRoleConstraintRequest
-func (_e *MockRBACRepository_Expecter) SaveRoleConstraint(ctx interface{}, req interface{}) *MockRBACRepository_SaveRoleConstraint_Call {
+func (_e *MockRBACRepository_Expecter) SaveRoleConstraint(ctx any, req any) *MockRBACRepository_SaveRoleConstraint_Call {
 	return &MockRBACRepository_SaveRoleConstraint_Call{Call: _e.mock.On("SaveRoleConstraint", ctx, req)}
 }
 
@@ -662,7 +662,7 @@ type MockRBACRepository_UpsertRoleHierarchyEdge_Call struct {
 // UpsertRoleHierarchyEdge is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpsertRoleHierarchyEdgeRequest
-func (_e *MockRBACRepository_Expecter) UpsertRoleHierarchyEdge(ctx interface{}, req interface{}) *MockRBACRepository_UpsertRoleHierarchyEdge_Call {
+func (_e *MockRBACRepository_Expecter) UpsertRoleHierarchyEdge(ctx any, req any) *MockRBACRepository_UpsertRoleHierarchyEdge_Call {
 	return &MockRBACRepository_UpsertRoleHierarchyEdge_Call{Call: _e.mock.On("UpsertRoleHierarchyEdge", ctx, req)}
 }
 
@@ -731,7 +731,7 @@ type MockRBACRepository_ValidateDynamicSeparationOfDuty_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - roleIDs []pulid.ID
-func (_e *MockRBACRepository_Expecter) ValidateDynamicSeparationOfDuty(ctx interface{}, orgID interface{}, roleIDs interface{}) *MockRBACRepository_ValidateDynamicSeparationOfDuty_Call {
+func (_e *MockRBACRepository_Expecter) ValidateDynamicSeparationOfDuty(ctx any, orgID any, roleIDs any) *MockRBACRepository_ValidateDynamicSeparationOfDuty_Call {
 	return &MockRBACRepository_ValidateDynamicSeparationOfDuty_Call{Call: _e.mock.On("ValidateDynamicSeparationOfDuty", ctx, orgID, roleIDs)}
 }
 
@@ -806,7 +806,7 @@ type MockRBACRepository_ValidateStaticSeparationOfDuty_Call struct {
 //   - userID pulid.ID
 //   - orgID pulid.ID
 //   - roleIDs []pulid.ID
-func (_e *MockRBACRepository_Expecter) ValidateStaticSeparationOfDuty(ctx interface{}, userID interface{}, orgID interface{}, roleIDs interface{}) *MockRBACRepository_ValidateStaticSeparationOfDuty_Call {
+func (_e *MockRBACRepository_Expecter) ValidateStaticSeparationOfDuty(ctx any, userID any, orgID any, roleIDs any) *MockRBACRepository_ValidateStaticSeparationOfDuty_Call {
 	return &MockRBACRepository_ValidateStaticSeparationOfDuty_Call{Call: _e.mock.On("ValidateStaticSeparationOfDuty", ctx, userID, orgID, roleIDs)}
 }
 

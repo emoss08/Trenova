@@ -76,7 +76,7 @@ type MockEDIPartnerSettingRepository_GetActivePartnerSettingSchema_Call struct {
 // GetActivePartnerSettingSchema is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveEDIPartnerSettingSchemaRequest
-func (_e *MockEDIPartnerSettingRepository_Expecter) GetActivePartnerSettingSchema(ctx interface{}, req interface{}) *MockEDIPartnerSettingRepository_GetActivePartnerSettingSchema_Call {
+func (_e *MockEDIPartnerSettingRepository_Expecter) GetActivePartnerSettingSchema(ctx any, req any) *MockEDIPartnerSettingRepository_GetActivePartnerSettingSchema_Call {
 	return &MockEDIPartnerSettingRepository_GetActivePartnerSettingSchema_Call{Call: _e.mock.On("GetActivePartnerSettingSchema", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIPartnerSettingRepository_GetPartnerSettingSchema_Call struct {
 // GetPartnerSettingSchema is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIPartnerSettingSchemaRequest
-func (_e *MockEDIPartnerSettingRepository_Expecter) GetPartnerSettingSchema(ctx interface{}, req interface{}) *MockEDIPartnerSettingRepository_GetPartnerSettingSchema_Call {
+func (_e *MockEDIPartnerSettingRepository_Expecter) GetPartnerSettingSchema(ctx any, req any) *MockEDIPartnerSettingRepository_GetPartnerSettingSchema_Call {
 	return &MockEDIPartnerSettingRepository_GetPartnerSettingSchema_Call{Call: _e.mock.On("GetPartnerSettingSchema", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDIPartnerSettingRepository_ListPartnerSettingFields_Call struct {
 // ListPartnerSettingFields is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnerSettingFieldsRequest
-func (_e *MockEDIPartnerSettingRepository_Expecter) ListPartnerSettingFields(ctx interface{}, req interface{}) *MockEDIPartnerSettingRepository_ListPartnerSettingFields_Call {
+func (_e *MockEDIPartnerSettingRepository_Expecter) ListPartnerSettingFields(ctx any, req any) *MockEDIPartnerSettingRepository_ListPartnerSettingFields_Call {
 	return &MockEDIPartnerSettingRepository_ListPartnerSettingFields_Call{Call: _e.mock.On("ListPartnerSettingFields", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDIPartnerSettingRepository_ListPartnerSettingSchemas_Call struct {
 // ListPartnerSettingSchemas is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnerSettingSchemasRequest
-func (_e *MockEDIPartnerSettingRepository_Expecter) ListPartnerSettingSchemas(ctx interface{}, req interface{}) *MockEDIPartnerSettingRepository_ListPartnerSettingSchemas_Call {
+func (_e *MockEDIPartnerSettingRepository_Expecter) ListPartnerSettingSchemas(ctx any, req any) *MockEDIPartnerSettingRepository_ListPartnerSettingSchemas_Call {
 	return &MockEDIPartnerSettingRepository_ListPartnerSettingSchemas_Call{Call: _e.mock.On("ListPartnerSettingSchemas", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDIPartnerSettingRepository_SearchPartnerSettingFields_Call struct {
 // SearchPartnerSettingFields is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnerSettingFieldsRequest
-func (_e *MockEDIPartnerSettingRepository_Expecter) SearchPartnerSettingFields(ctx interface{}, req interface{}) *MockEDIPartnerSettingRepository_SearchPartnerSettingFields_Call {
+func (_e *MockEDIPartnerSettingRepository_Expecter) SearchPartnerSettingFields(ctx any, req any) *MockEDIPartnerSettingRepository_SearchPartnerSettingFields_Call {
 	return &MockEDIPartnerSettingRepository_SearchPartnerSettingFields_Call{Call: _e.mock.On("SearchPartnerSettingFields", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEDIPartnerSettingRepository_SelectPartnerSettingFieldOptions_Call struc
 // SelectPartnerSettingFieldOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnerSettingFieldsRequest
-func (_e *MockEDIPartnerSettingRepository_Expecter) SelectPartnerSettingFieldOptions(ctx interface{}, req interface{}) *MockEDIPartnerSettingRepository_SelectPartnerSettingFieldOptions_Call {
+func (_e *MockEDIPartnerSettingRepository_Expecter) SelectPartnerSettingFieldOptions(ctx any, req any) *MockEDIPartnerSettingRepository_SelectPartnerSettingFieldOptions_Call {
 	return &MockEDIPartnerSettingRepository_SelectPartnerSettingFieldOptions_Call{Call: _e.mock.On("SelectPartnerSettingFieldOptions", ctx, req)}
 }
 

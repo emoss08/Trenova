@@ -78,7 +78,7 @@ type MockManualJournalService_Approve_Call struct {
 //   - ctx context.Context
 //   - req *services.GetManualJournalRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) Approve(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_Approve_Call {
+func (_e *MockManualJournalService_Expecter) Approve(ctx any, req any, actor any) *MockManualJournalService_Approve_Call {
 	return &MockManualJournalService_Approve_Call{Call: _e.mock.On("Approve", ctx, req, actor)}
 }
 
@@ -152,7 +152,7 @@ type MockManualJournalService_Cancel_Call struct {
 //   - ctx context.Context
 //   - req *services.CancelManualJournalRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) Cancel(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_Cancel_Call {
+func (_e *MockManualJournalService_Expecter) Cancel(ctx any, req any, actor any) *MockManualJournalService_Cancel_Call {
 	return &MockManualJournalService_Cancel_Call{Call: _e.mock.On("Cancel", ctx, req, actor)}
 }
 
@@ -226,7 +226,7 @@ type MockManualJournalService_CreateDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.CreateManualJournalRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) CreateDraft(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_CreateDraft_Call {
+func (_e *MockManualJournalService_Expecter) CreateDraft(ctx any, req any, actor any) *MockManualJournalService_CreateDraft_Call {
 	return &MockManualJournalService_CreateDraft_Call{Call: _e.mock.On("CreateDraft", ctx, req, actor)}
 }
 
@@ -299,7 +299,7 @@ type MockManualJournalService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetManualJournalRequest
-func (_e *MockManualJournalService_Expecter) Get(ctx interface{}, req interface{}) *MockManualJournalService_Get_Call {
+func (_e *MockManualJournalService_Expecter) Get(ctx any, req any) *MockManualJournalService_Get_Call {
 	return &MockManualJournalService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -367,7 +367,7 @@ type MockManualJournalService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListManualJournalRequest
-func (_e *MockManualJournalService_Expecter) List(ctx interface{}, req interface{}) *MockManualJournalService_List_Call {
+func (_e *MockManualJournalService_Expecter) List(ctx any, req any) *MockManualJournalService_List_Call {
 	return &MockManualJournalService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -436,7 +436,7 @@ type MockManualJournalService_Post_Call struct {
 //   - ctx context.Context
 //   - req *services.GetManualJournalRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) Post(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_Post_Call {
+func (_e *MockManualJournalService_Expecter) Post(ctx any, req any, actor any) *MockManualJournalService_Post_Call {
 	return &MockManualJournalService_Post_Call{Call: _e.mock.On("Post", ctx, req, actor)}
 }
 
@@ -510,7 +510,7 @@ type MockManualJournalService_Reject_Call struct {
 //   - ctx context.Context
 //   - req *services.RejectManualJournalRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) Reject(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_Reject_Call {
+func (_e *MockManualJournalService_Expecter) Reject(ctx any, req any, actor any) *MockManualJournalService_Reject_Call {
 	return &MockManualJournalService_Reject_Call{Call: _e.mock.On("Reject", ctx, req, actor)}
 }
 
@@ -584,7 +584,7 @@ type MockManualJournalService_Submit_Call struct {
 //   - ctx context.Context
 //   - req *services.GetManualJournalRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) Submit(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_Submit_Call {
+func (_e *MockManualJournalService_Expecter) Submit(ctx any, req any, actor any) *MockManualJournalService_Submit_Call {
 	return &MockManualJournalService_Submit_Call{Call: _e.mock.On("Submit", ctx, req, actor)}
 }
 
@@ -658,7 +658,7 @@ type MockManualJournalService_UpdateDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.UpdateManualJournalDraftRequest
 //   - actor *services.RequestActor
-func (_e *MockManualJournalService_Expecter) UpdateDraft(ctx interface{}, req interface{}, actor interface{}) *MockManualJournalService_UpdateDraft_Call {
+func (_e *MockManualJournalService_Expecter) UpdateDraft(ctx any, req any, actor any) *MockManualJournalService_UpdateDraft_Call {
 	return &MockManualJournalService_UpdateDraft_Call{Call: _e.mock.On("UpdateDraft", ctx, req, actor)}
 }
 

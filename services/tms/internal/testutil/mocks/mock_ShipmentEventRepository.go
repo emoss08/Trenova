@@ -75,7 +75,7 @@ type MockShipmentEventRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetShipmentEventByIDRequest
-func (_e *MockShipmentEventRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentEventRepository_GetByID_Call {
+func (_e *MockShipmentEventRepository_Expecter) GetByID(ctx any, req any) *MockShipmentEventRepository_GetByID_Call {
 	return &MockShipmentEventRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -132,7 +132,7 @@ type MockShipmentEventRepository_Insert_Call struct {
 // Insert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmentevent.Event
-func (_e *MockShipmentEventRepository_Expecter) Insert(ctx interface{}, entity interface{}) *MockShipmentEventRepository_Insert_Call {
+func (_e *MockShipmentEventRepository_Expecter) Insert(ctx any, entity any) *MockShipmentEventRepository_Insert_Call {
 	return &MockShipmentEventRepository_Insert_Call{Call: _e.mock.On("Insert", ctx, entity)}
 }
 
@@ -200,7 +200,7 @@ type MockShipmentEventRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentEventsRequest
-func (_e *MockShipmentEventRepository_Expecter) List(ctx interface{}, req interface{}) *MockShipmentEventRepository_List_Call {
+func (_e *MockShipmentEventRepository_Expecter) List(ctx any, req any) *MockShipmentEventRepository_List_Call {
 	return &MockShipmentEventRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 

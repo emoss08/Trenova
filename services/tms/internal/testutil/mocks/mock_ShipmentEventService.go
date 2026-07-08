@@ -76,7 +76,7 @@ type MockShipmentEventService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentEventsRequest
-func (_e *MockShipmentEventService_Expecter) List(ctx interface{}, req interface{}) *MockShipmentEventService_List_Call {
+func (_e *MockShipmentEventService_Expecter) List(ctx any, req any) *MockShipmentEventService_List_Call {
 	return &MockShipmentEventService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -133,7 +133,7 @@ type MockShipmentEventService_Record_Call struct {
 // Record is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *services.RecordShipmentEventParams
-func (_e *MockShipmentEventService_Expecter) Record(ctx interface{}, params interface{}) *MockShipmentEventService_Record_Call {
+func (_e *MockShipmentEventService_Expecter) Record(ctx any, params any) *MockShipmentEventService_Record_Call {
 	return &MockShipmentEventService_Record_Call{Call: _e.mock.On("Record", ctx, params)}
 }
 

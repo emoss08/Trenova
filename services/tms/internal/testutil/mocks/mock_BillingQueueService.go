@@ -78,7 +78,7 @@ type MockBillingQueueService_AssignBiller_Call struct {
 //   - ctx context.Context
 //   - req *services.AssignBillerRequest
 //   - actor *services.RequestActor
-func (_e *MockBillingQueueService_Expecter) AssignBiller(ctx interface{}, req interface{}, actor interface{}) *MockBillingQueueService_AssignBiller_Call {
+func (_e *MockBillingQueueService_Expecter) AssignBiller(ctx any, req any, actor any) *MockBillingQueueService_AssignBiller_Call {
 	return &MockBillingQueueService_AssignBiller_Call{Call: _e.mock.On("AssignBiller", ctx, req, actor)}
 }
 
@@ -151,7 +151,7 @@ type MockBillingQueueService_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetBillingQueueItemByIDRequest
-func (_e *MockBillingQueueService_Expecter) GetByID(ctx interface{}, req interface{}) *MockBillingQueueService_GetByID_Call {
+func (_e *MockBillingQueueService_Expecter) GetByID(ctx any, req any) *MockBillingQueueService_GetByID_Call {
 	return &MockBillingQueueService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -219,7 +219,7 @@ type MockBillingQueueService_GetStats_Call struct {
 // GetStats is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetBillingQueueStatsRequest
-func (_e *MockBillingQueueService_Expecter) GetStats(ctx interface{}, req interface{}) *MockBillingQueueService_GetStats_Call {
+func (_e *MockBillingQueueService_Expecter) GetStats(ctx any, req any) *MockBillingQueueService_GetStats_Call {
 	return &MockBillingQueueService_GetStats_Call{Call: _e.mock.On("GetStats", ctx, req)}
 }
 
@@ -287,7 +287,7 @@ type MockBillingQueueService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListBillingQueueItemsRequest
-func (_e *MockBillingQueueService_Expecter) List(ctx interface{}, req interface{}) *MockBillingQueueService_List_Call {
+func (_e *MockBillingQueueService_Expecter) List(ctx any, req any) *MockBillingQueueService_List_Call {
 	return &MockBillingQueueService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -356,7 +356,7 @@ type MockBillingQueueService_TransferToBilling_Call struct {
 //   - ctx context.Context
 //   - req *services.TransferToBillingRequest
 //   - actor *services.RequestActor
-func (_e *MockBillingQueueService_Expecter) TransferToBilling(ctx interface{}, req interface{}, actor interface{}) *MockBillingQueueService_TransferToBilling_Call {
+func (_e *MockBillingQueueService_Expecter) TransferToBilling(ctx any, req any, actor any) *MockBillingQueueService_TransferToBilling_Call {
 	return &MockBillingQueueService_TransferToBilling_Call{Call: _e.mock.On("TransferToBilling", ctx, req, actor)}
 }
 
@@ -430,7 +430,7 @@ type MockBillingQueueService_UpdateCharges_Call struct {
 //   - ctx context.Context
 //   - req *services.UpdateChargesRequest
 //   - actor *services.RequestActor
-func (_e *MockBillingQueueService_Expecter) UpdateCharges(ctx interface{}, req interface{}, actor interface{}) *MockBillingQueueService_UpdateCharges_Call {
+func (_e *MockBillingQueueService_Expecter) UpdateCharges(ctx any, req any, actor any) *MockBillingQueueService_UpdateCharges_Call {
 	return &MockBillingQueueService_UpdateCharges_Call{Call: _e.mock.On("UpdateCharges", ctx, req, actor)}
 }
 
@@ -504,7 +504,7 @@ type MockBillingQueueService_UpdateStatus_Call struct {
 //   - ctx context.Context
 //   - req *services.UpdateBillingQueueStatusRequest
 //   - actor *services.RequestActor
-func (_e *MockBillingQueueService_Expecter) UpdateStatus(ctx interface{}, req interface{}, actor interface{}) *MockBillingQueueService_UpdateStatus_Call {
+func (_e *MockBillingQueueService_Expecter) UpdateStatus(ctx any, req any, actor any) *MockBillingQueueService_UpdateStatus_Call {
 	return &MockBillingQueueService_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req, actor)}
 }
 

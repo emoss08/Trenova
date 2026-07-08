@@ -73,7 +73,7 @@ type MockCustomFieldValueRepository_CountByDefinition_Call struct {
 // CountByDefinition is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetValuesByDefinitionRequest
-func (_e *MockCustomFieldValueRepository_Expecter) CountByDefinition(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_CountByDefinition_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) CountByDefinition(ctx any, req any) *MockCustomFieldValueRepository_CountByDefinition_Call {
 	return &MockCustomFieldValueRepository_CountByDefinition_Call{Call: _e.mock.On("CountByDefinition", ctx, req)}
 }
 
@@ -139,7 +139,7 @@ type MockCustomFieldValueRepository_CountResourcesByDefinition_Call struct {
 // CountResourcesByDefinition is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetValuesByDefinitionRequest
-func (_e *MockCustomFieldValueRepository_Expecter) CountResourcesByDefinition(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_CountResourcesByDefinition_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) CountResourcesByDefinition(ctx any, req any) *MockCustomFieldValueRepository_CountResourcesByDefinition_Call {
 	return &MockCustomFieldValueRepository_CountResourcesByDefinition_Call{Call: _e.mock.On("CountResourcesByDefinition", ctx, req)}
 }
 
@@ -196,7 +196,7 @@ type MockCustomFieldValueRepository_DeleteByResource_Call struct {
 // DeleteByResource is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetCustomFieldValuesByResourceRequest
-func (_e *MockCustomFieldValueRepository_Expecter) DeleteByResource(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_DeleteByResource_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) DeleteByResource(ctx any, req any) *MockCustomFieldValueRepository_DeleteByResource_Call {
 	return &MockCustomFieldValueRepository_DeleteByResource_Call{Call: _e.mock.On("DeleteByResource", ctx, req)}
 }
 
@@ -264,7 +264,7 @@ type MockCustomFieldValueRepository_GetByResource_Call struct {
 // GetByResource is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetCustomFieldValuesByResourceRequest
-func (_e *MockCustomFieldValueRepository_Expecter) GetByResource(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_GetByResource_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) GetByResource(ctx any, req any) *MockCustomFieldValueRepository_GetByResource_Call {
 	return &MockCustomFieldValueRepository_GetByResource_Call{Call: _e.mock.On("GetByResource", ctx, req)}
 }
 
@@ -332,7 +332,7 @@ type MockCustomFieldValueRepository_GetByResources_Call struct {
 // GetByResources is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetCustomFieldValuesByResourcesRequest
-func (_e *MockCustomFieldValueRepository_Expecter) GetByResources(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_GetByResources_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) GetByResources(ctx any, req any) *MockCustomFieldValueRepository_GetByResources_Call {
 	return &MockCustomFieldValueRepository_GetByResources_Call{Call: _e.mock.On("GetByResources", ctx, req)}
 }
 
@@ -400,7 +400,7 @@ type MockCustomFieldValueRepository_GetOptionUsageCounts_Call struct {
 // GetOptionUsageCounts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetOptionUsageRequest
-func (_e *MockCustomFieldValueRepository_Expecter) GetOptionUsageCounts(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_GetOptionUsageCounts_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) GetOptionUsageCounts(ctx any, req any) *MockCustomFieldValueRepository_GetOptionUsageCounts_Call {
 	return &MockCustomFieldValueRepository_GetOptionUsageCounts_Call{Call: _e.mock.On("GetOptionUsageCounts", ctx, req)}
 }
 
@@ -457,7 +457,7 @@ type MockCustomFieldValueRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpsertCustomFieldValuesRequest
-func (_e *MockCustomFieldValueRepository_Expecter) Upsert(ctx interface{}, req interface{}) *MockCustomFieldValueRepository_Upsert_Call {
+func (_e *MockCustomFieldValueRepository_Expecter) Upsert(ctx any, req any) *MockCustomFieldValueRepository_Upsert_Call {
 	return &MockCustomFieldValueRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, req)}
 }
 

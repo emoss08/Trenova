@@ -68,7 +68,7 @@ type MockInvoiceAdjustmentRepository_CreateAdjustmentArtifacts_Call struct {
 // CreateAdjustmentArtifacts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params repositories.CreateAdjustmentArtifactsParams
-func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateAdjustmentArtifacts(ctx interface{}, params interface{}) *MockInvoiceAdjustmentRepository_CreateAdjustmentArtifacts_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateAdjustmentArtifacts(ctx any, params any) *MockInvoiceAdjustmentRepository_CreateAdjustmentArtifacts_Call {
 	return &MockInvoiceAdjustmentRepository_CreateAdjustmentArtifacts_Call{Call: _e.mock.On("CreateAdjustmentArtifacts", ctx, params)}
 }
 
@@ -137,7 +137,7 @@ type MockInvoiceAdjustmentRepository_CreateBatch_Call struct {
 //   - ctx context.Context
 //   - batch *invoiceadjustment.InvoiceAdjustmentBatch
 //   - items []*invoiceadjustment.InvoiceAdjustmentBatchItem
-func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateBatch(ctx interface{}, batch interface{}, items interface{}) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateBatch(ctx any, batch any, items any) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
 	return &MockInvoiceAdjustmentRepository_CreateBatch_Call{Call: _e.mock.On("CreateBatch", ctx, batch, items)}
 }
 
@@ -210,7 +210,7 @@ type MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call struct {
 // CreateCorrectionGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
-func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateCorrectionGroup(ctx interface{}, group interface{}) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateCorrectionGroup(ctx any, group any) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
 	return &MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call{Call: _e.mock.On("CreateCorrectionGroup", ctx, group)}
 }
 
@@ -278,7 +278,7 @@ type MockInvoiceAdjustmentRepository_GetBatchByID_Call struct {
 // GetBatchByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetBatchRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetBatchByID(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetBatchByID(ctx any, req any) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
 	return &MockInvoiceAdjustmentRepository_GetBatchByID_Call{Call: _e.mock.On("GetBatchByID", ctx, req)}
 }
 
@@ -346,7 +346,7 @@ type MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call struct {
 // GetBatchByIdempotencyKey is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetBatchByIdempotencyRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetBatchByIdempotencyKey(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetBatchByIdempotencyKey(ctx any, req any) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
 	return &MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call{Call: _e.mock.On("GetBatchByIdempotencyKey", ctx, req)}
 }
 
@@ -414,7 +414,7 @@ type MockInvoiceAdjustmentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceAdjustmentRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetByID_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetByID(ctx any, req any) *MockInvoiceAdjustmentRepository_GetByID_Call {
 	return &MockInvoiceAdjustmentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -482,7 +482,7 @@ type MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call struct {
 // GetByIdempotencyKey is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceAdjustmentByIdempotencyRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetByIdempotencyKey(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetByIdempotencyKey(ctx any, req any) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
 	return &MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call{Call: _e.mock.On("GetByIdempotencyKey", ctx, req)}
 }
 
@@ -550,7 +550,7 @@ type MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call struct {
 // GetCorrectionGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCorrectionGroupRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetCorrectionGroup(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetCorrectionGroup(ctx any, req any) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
 	return &MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call{Call: _e.mock.On("GetCorrectionGroup", ctx, req)}
 }
 
@@ -618,7 +618,7 @@ type MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call struct
 // GetCorrectionGroupByRootInvoice is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCorrectionGroupByRootInvoiceRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetCorrectionGroupByRootInvoice(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetCorrectionGroupByRootInvoice(ctx any, req any) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
 	return &MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call{Call: _e.mock.On("GetCorrectionGroupByRootInvoice", ctx, req)}
 }
 
@@ -686,7 +686,7 @@ type MockInvoiceAdjustmentRepository_GetInvoiceLineCreditUsage_Call struct {
 // GetInvoiceLineCreditUsage is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceLineCreditUsageRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetInvoiceLineCreditUsage(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_GetInvoiceLineCreditUsage_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetInvoiceLineCreditUsage(ctx any, req any) *MockInvoiceAdjustmentRepository_GetInvoiceLineCreditUsage_Call {
 	return &MockInvoiceAdjustmentRepository_GetInvoiceLineCreditUsage_Call{Call: _e.mock.On("GetInvoiceLineCreditUsage", ctx, req)}
 }
 
@@ -755,7 +755,7 @@ type MockInvoiceAdjustmentRepository_GetLineage_Call struct {
 //   - ctx context.Context
 //   - correctionGroupID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetLineage(ctx interface{}, correctionGroupID interface{}, tenantInfo interface{}) *MockInvoiceAdjustmentRepository_GetLineage_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetLineage(ctx any, correctionGroupID any, tenantInfo any) *MockInvoiceAdjustmentRepository_GetLineage_Call {
 	return &MockInvoiceAdjustmentRepository_GetLineage_Call{Call: _e.mock.On("GetLineage", ctx, correctionGroupID, tenantInfo)}
 }
 
@@ -828,7 +828,7 @@ type MockInvoiceAdjustmentRepository_GetOperationsSummary_Call struct {
 // GetOperationsSummary is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockInvoiceAdjustmentRepository_Expecter) GetOperationsSummary(ctx interface{}, tenantInfo interface{}) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) GetOperationsSummary(ctx any, tenantInfo any) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
 	return &MockInvoiceAdjustmentRepository_GetOperationsSummary_Call{Call: _e.mock.On("GetOperationsSummary", ctx, tenantInfo)}
 }
 
@@ -896,7 +896,7 @@ type MockInvoiceAdjustmentRepository_ListApprovalQueue_Call struct {
 // ListApprovalQueue is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListApprovalQueueRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) ListApprovalQueue(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) ListApprovalQueue(ctx any, req any) *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call {
 	return &MockInvoiceAdjustmentRepository_ListApprovalQueue_Call{Call: _e.mock.On("ListApprovalQueue", ctx, req)}
 }
 
@@ -964,7 +964,7 @@ type MockInvoiceAdjustmentRepository_ListBatchQueue_Call struct {
 // ListBatchQueue is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListBatchQueueRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) ListBatchQueue(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) ListBatchQueue(ctx any, req any) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
 	return &MockInvoiceAdjustmentRepository_ListBatchQueue_Call{Call: _e.mock.On("ListBatchQueue", ctx, req)}
 }
 
@@ -1032,7 +1032,7 @@ type MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call struct {
 // ListReconciliationQueue is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListReconciliationQueueRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) ListReconciliationQueue(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) ListReconciliationQueue(ctx any, req any) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
 	return &MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call{Call: _e.mock.On("ListReconciliationQueue", ctx, req)}
 }
 
@@ -1100,7 +1100,7 @@ type MockInvoiceAdjustmentRepository_LockInvoiceForUpdate_Call struct {
 // LockInvoiceForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.LockInvoiceAdjustmentRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) LockInvoiceForUpdate(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_LockInvoiceForUpdate_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) LockInvoiceForUpdate(ctx any, req any) *MockInvoiceAdjustmentRepository_LockInvoiceForUpdate_Call {
 	return &MockInvoiceAdjustmentRepository_LockInvoiceForUpdate_Call{Call: _e.mock.On("LockInvoiceForUpdate", ctx, req)}
 }
 
@@ -1157,7 +1157,7 @@ type MockInvoiceAdjustmentRepository_ReplaceAdjustmentLines_Call struct {
 // ReplaceAdjustmentLines is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ReplaceAdjustmentLinesRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) ReplaceAdjustmentLines(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_ReplaceAdjustmentLines_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) ReplaceAdjustmentLines(ctx any, req any) *MockInvoiceAdjustmentRepository_ReplaceAdjustmentLines_Call {
 	return &MockInvoiceAdjustmentRepository_ReplaceAdjustmentLines_Call{Call: _e.mock.On("ReplaceAdjustmentLines", ctx, req)}
 }
 
@@ -1214,7 +1214,7 @@ type MockInvoiceAdjustmentRepository_ReplaceDocumentReferences_Call struct {
 // ReplaceDocumentReferences is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ReplaceDocumentReferencesRequest
-func (_e *MockInvoiceAdjustmentRepository_Expecter) ReplaceDocumentReferences(ctx interface{}, req interface{}) *MockInvoiceAdjustmentRepository_ReplaceDocumentReferences_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) ReplaceDocumentReferences(ctx any, req any) *MockInvoiceAdjustmentRepository_ReplaceDocumentReferences_Call {
 	return &MockInvoiceAdjustmentRepository_ReplaceDocumentReferences_Call{Call: _e.mock.On("ReplaceDocumentReferences", ctx, req)}
 }
 
@@ -1282,7 +1282,7 @@ type MockInvoiceAdjustmentRepository_UpdateAdjustment_Call struct {
 // UpdateAdjustment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - adjustment *invoiceadjustment.InvoiceAdjustment
-func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateAdjustment(ctx interface{}, adjustment interface{}) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateAdjustment(ctx any, adjustment any) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateAdjustment_Call{Call: _e.mock.On("UpdateAdjustment", ctx, adjustment)}
 }
 
@@ -1350,7 +1350,7 @@ type MockInvoiceAdjustmentRepository_UpdateBatch_Call struct {
 // UpdateBatch is a helper method to define mock.On call
 //   - ctx context.Context
 //   - batch *invoiceadjustment.InvoiceAdjustmentBatch
-func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateBatch(ctx interface{}, batch interface{}) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateBatch(ctx any, batch any) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateBatch_Call{Call: _e.mock.On("UpdateBatch", ctx, batch)}
 }
 
@@ -1418,7 +1418,7 @@ type MockInvoiceAdjustmentRepository_UpdateBatchItem_Call struct {
 // UpdateBatchItem is a helper method to define mock.On call
 //   - ctx context.Context
 //   - item *invoiceadjustment.InvoiceAdjustmentBatchItem
-func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateBatchItem(ctx interface{}, item interface{}) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateBatchItem(ctx any, item any) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateBatchItem_Call{Call: _e.mock.On("UpdateBatchItem", ctx, item)}
 }
 
@@ -1486,7 +1486,7 @@ type MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call struct {
 // UpdateCorrectionGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
-func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateCorrectionGroup(ctx interface{}, group interface{}) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
+func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateCorrectionGroup(ctx any, group any) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call{Call: _e.mock.On("UpdateCorrectionGroup", ctx, group)}
 }
 

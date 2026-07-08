@@ -2257,6 +2257,8 @@ func (h *Handler) listMessages(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 	partnerID, _ := pulid.MustParse(helpers.QueryString(c, "partnerId", ""))
+	transferID, _ := pulid.MustParse(helpers.QueryString(c, "transferId", ""))
+	inboundFileID, _ := pulid.MustParse(helpers.QueryString(c, "inboundFileId", ""))
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMessage], error) {
 		return h.service.ListMessages(
 			c.Request.Context(),
@@ -2267,6 +2269,8 @@ func (h *Handler) listMessages(c *gin.Context) {
 					helpers.QueryString(c, "direction", ""),
 				),
 				PartnerID:     partnerID,
+				TransferID:    transferID,
+				InboundFileID: inboundFileID,
 				Status:        edi.MessageStatus(helpers.QueryString(c, "status", "")),
 				Query:         helpers.QueryStringTrimmed(c, "query", ""),
 				GeneratedFrom: helpers.QueryInt64(c, "generatedFrom", 0),

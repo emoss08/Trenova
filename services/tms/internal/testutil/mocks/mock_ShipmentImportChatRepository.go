@@ -77,7 +77,7 @@ type MockShipmentImportChatRepository_AppendTurn_Call struct {
 // AppendTurn is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmentimportchat.Turn
-func (_e *MockShipmentImportChatRepository_Expecter) AppendTurn(ctx interface{}, entity interface{}) *MockShipmentImportChatRepository_AppendTurn_Call {
+func (_e *MockShipmentImportChatRepository_Expecter) AppendTurn(ctx any, entity any) *MockShipmentImportChatRepository_AppendTurn_Call {
 	return &MockShipmentImportChatRepository_AppendTurn_Call{Call: _e.mock.On("AppendTurn", ctx, entity)}
 }
 
@@ -145,7 +145,7 @@ type MockShipmentImportChatRepository_CreateConversation_Call struct {
 // CreateConversation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmentimportchat.Conversation
-func (_e *MockShipmentImportChatRepository_Expecter) CreateConversation(ctx interface{}, entity interface{}) *MockShipmentImportChatRepository_CreateConversation_Call {
+func (_e *MockShipmentImportChatRepository_Expecter) CreateConversation(ctx any, entity any) *MockShipmentImportChatRepository_CreateConversation_Call {
 	return &MockShipmentImportChatRepository_CreateConversation_Call{Call: _e.mock.On("CreateConversation", ctx, entity)}
 }
 
@@ -213,7 +213,7 @@ type MockShipmentImportChatRepository_GetConversationByDocument_Call struct {
 // GetConversationByDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetShipmentImportConversationRequest
-func (_e *MockShipmentImportChatRepository_Expecter) GetConversationByDocument(ctx interface{}, req interface{}) *MockShipmentImportChatRepository_GetConversationByDocument_Call {
+func (_e *MockShipmentImportChatRepository_Expecter) GetConversationByDocument(ctx any, req any) *MockShipmentImportChatRepository_GetConversationByDocument_Call {
 	return &MockShipmentImportChatRepository_GetConversationByDocument_Call{Call: _e.mock.On("GetConversationByDocument", ctx, req)}
 }
 
@@ -281,7 +281,7 @@ type MockShipmentImportChatRepository_ListTurns_Call struct {
 // ListTurns is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListShipmentImportTurnsRequest
-func (_e *MockShipmentImportChatRepository_Expecter) ListTurns(ctx interface{}, req interface{}) *MockShipmentImportChatRepository_ListTurns_Call {
+func (_e *MockShipmentImportChatRepository_Expecter) ListTurns(ctx any, req any) *MockShipmentImportChatRepository_ListTurns_Call {
 	return &MockShipmentImportChatRepository_ListTurns_Call{Call: _e.mock.On("ListTurns", ctx, req)}
 }
 
@@ -341,7 +341,7 @@ type MockShipmentImportChatRepository_UpdateActiveConversationStatusByDocument_C
 //   - tenantInfo pagination.TenantInfo
 //   - status shipmentimportchat.ConversationStatus
 //   - reason shipmentimportchat.ConversationStatusReason
-func (_e *MockShipmentImportChatRepository_Expecter) UpdateActiveConversationStatusByDocument(ctx interface{}, documentID interface{}, tenantInfo interface{}, status interface{}, reason interface{}) *MockShipmentImportChatRepository_UpdateActiveConversationStatusByDocument_Call {
+func (_e *MockShipmentImportChatRepository_Expecter) UpdateActiveConversationStatusByDocument(ctx any, documentID any, tenantInfo any, status any, reason any) *MockShipmentImportChatRepository_UpdateActiveConversationStatusByDocument_Call {
 	return &MockShipmentImportChatRepository_UpdateActiveConversationStatusByDocument_Call{Call: _e.mock.On("UpdateActiveConversationStatusByDocument", ctx, documentID, tenantInfo, status, reason)}
 }
 
@@ -424,7 +424,7 @@ type MockShipmentImportChatRepository_UpdateConversation_Call struct {
 // UpdateConversation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmentimportchat.Conversation
-func (_e *MockShipmentImportChatRepository_Expecter) UpdateConversation(ctx interface{}, entity interface{}) *MockShipmentImportChatRepository_UpdateConversation_Call {
+func (_e *MockShipmentImportChatRepository_Expecter) UpdateConversation(ctx any, entity any) *MockShipmentImportChatRepository_UpdateConversation_Call {
 	return &MockShipmentImportChatRepository_UpdateConversation_Call{Call: _e.mock.On("UpdateConversation", ctx, entity)}
 }
 

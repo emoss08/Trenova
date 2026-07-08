@@ -68,7 +68,7 @@ type MockDocumentParsingRuleRepository_ArchivePublishedVersions_Call struct {
 //   - ruleSetID pulid.ID
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockDocumentParsingRuleRepository_Expecter) ArchivePublishedVersions(ctx interface{}, ruleSetID interface{}, orgID interface{}, buID interface{}) *MockDocumentParsingRuleRepository_ArchivePublishedVersions_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) ArchivePublishedVersions(ctx any, ruleSetID any, orgID any, buID any) *MockDocumentParsingRuleRepository_ArchivePublishedVersions_Call {
 	return &MockDocumentParsingRuleRepository_ArchivePublishedVersions_Call{Call: _e.mock.On("ArchivePublishedVersions", ctx, ruleSetID, orgID, buID)}
 }
 
@@ -146,7 +146,7 @@ type MockDocumentParsingRuleRepository_CreateFixture_Call struct {
 // CreateFixture is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentparsingrule.Fixture
-func (_e *MockDocumentParsingRuleRepository_Expecter) CreateFixture(ctx interface{}, entity interface{}) *MockDocumentParsingRuleRepository_CreateFixture_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) CreateFixture(ctx any, entity any) *MockDocumentParsingRuleRepository_CreateFixture_Call {
 	return &MockDocumentParsingRuleRepository_CreateFixture_Call{Call: _e.mock.On("CreateFixture", ctx, entity)}
 }
 
@@ -214,7 +214,7 @@ type MockDocumentParsingRuleRepository_CreateRuleSet_Call struct {
 // CreateRuleSet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleSet
-func (_e *MockDocumentParsingRuleRepository_Expecter) CreateRuleSet(ctx interface{}, entity interface{}) *MockDocumentParsingRuleRepository_CreateRuleSet_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) CreateRuleSet(ctx any, entity any) *MockDocumentParsingRuleRepository_CreateRuleSet_Call {
 	return &MockDocumentParsingRuleRepository_CreateRuleSet_Call{Call: _e.mock.On("CreateRuleSet", ctx, entity)}
 }
 
@@ -282,7 +282,7 @@ type MockDocumentParsingRuleRepository_CreateVersion_Call struct {
 // CreateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleVersion
-func (_e *MockDocumentParsingRuleRepository_Expecter) CreateVersion(ctx interface{}, entity interface{}) *MockDocumentParsingRuleRepository_CreateVersion_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) CreateVersion(ctx any, entity any) *MockDocumentParsingRuleRepository_CreateVersion_Call {
 	return &MockDocumentParsingRuleRepository_CreateVersion_Call{Call: _e.mock.On("CreateVersion", ctx, entity)}
 }
 
@@ -339,7 +339,7 @@ type MockDocumentParsingRuleRepository_DeleteFixture_Call struct {
 // DeleteFixture is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentParsingRuleFixtureRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) DeleteFixture(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_DeleteFixture_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) DeleteFixture(ctx any, req any) *MockDocumentParsingRuleRepository_DeleteFixture_Call {
 	return &MockDocumentParsingRuleRepository_DeleteFixture_Call{Call: _e.mock.On("DeleteFixture", ctx, req)}
 }
 
@@ -396,7 +396,7 @@ type MockDocumentParsingRuleRepository_DeleteRuleSet_Call struct {
 // DeleteRuleSet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentParsingRuleSetRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) DeleteRuleSet(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_DeleteRuleSet_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) DeleteRuleSet(ctx any, req any) *MockDocumentParsingRuleRepository_DeleteRuleSet_Call {
 	return &MockDocumentParsingRuleRepository_DeleteRuleSet_Call{Call: _e.mock.On("DeleteRuleSet", ctx, req)}
 }
 
@@ -464,7 +464,7 @@ type MockDocumentParsingRuleRepository_GetFixture_Call struct {
 // GetFixture is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentParsingRuleFixtureRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) GetFixture(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_GetFixture_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) GetFixture(ctx any, req any) *MockDocumentParsingRuleRepository_GetFixture_Call {
 	return &MockDocumentParsingRuleRepository_GetFixture_Call{Call: _e.mock.On("GetFixture", ctx, req)}
 }
 
@@ -532,7 +532,7 @@ type MockDocumentParsingRuleRepository_GetRuleSet_Call struct {
 // GetRuleSet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentParsingRuleSetRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) GetRuleSet(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_GetRuleSet_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) GetRuleSet(ctx any, req any) *MockDocumentParsingRuleRepository_GetRuleSet_Call {
 	return &MockDocumentParsingRuleRepository_GetRuleSet_Call{Call: _e.mock.On("GetRuleSet", ctx, req)}
 }
 
@@ -600,7 +600,7 @@ type MockDocumentParsingRuleRepository_GetVersion_Call struct {
 // GetVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentParsingRuleVersionRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) GetVersion(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_GetVersion_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) GetVersion(ctx any, req any) *MockDocumentParsingRuleRepository_GetVersion_Call {
 	return &MockDocumentParsingRuleRepository_GetVersion_Call{Call: _e.mock.On("GetVersion", ctx, req)}
 }
 
@@ -676,7 +676,7 @@ type MockDocumentParsingRuleRepository_GetVersionWithRuleSet_Call struct {
 // GetVersionWithRuleSet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentParsingRuleVersionRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) GetVersionWithRuleSet(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_GetVersionWithRuleSet_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) GetVersionWithRuleSet(ctx any, req any) *MockDocumentParsingRuleRepository_GetVersionWithRuleSet_Call {
 	return &MockDocumentParsingRuleRepository_GetVersionWithRuleSet_Call{Call: _e.mock.On("GetVersionWithRuleSet", ctx, req)}
 }
 
@@ -744,7 +744,7 @@ type MockDocumentParsingRuleRepository_ListFixtures_Call struct {
 // ListFixtures is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListDocumentParsingRuleFixturesRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) ListFixtures(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_ListFixtures_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) ListFixtures(ctx any, req any) *MockDocumentParsingRuleRepository_ListFixtures_Call {
 	return &MockDocumentParsingRuleRepository_ListFixtures_Call{Call: _e.mock.On("ListFixtures", ctx, req)}
 }
 
@@ -813,7 +813,7 @@ type MockDocumentParsingRuleRepository_ListPublishedVersionsByDocumentKind_Call 
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - documentKind string
-func (_e *MockDocumentParsingRuleRepository_Expecter) ListPublishedVersionsByDocumentKind(ctx interface{}, tenantInfo interface{}, documentKind interface{}) *MockDocumentParsingRuleRepository_ListPublishedVersionsByDocumentKind_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) ListPublishedVersionsByDocumentKind(ctx any, tenantInfo any, documentKind any) *MockDocumentParsingRuleRepository_ListPublishedVersionsByDocumentKind_Call {
 	return &MockDocumentParsingRuleRepository_ListPublishedVersionsByDocumentKind_Call{Call: _e.mock.On("ListPublishedVersionsByDocumentKind", ctx, tenantInfo, documentKind)}
 }
 
@@ -886,7 +886,7 @@ type MockDocumentParsingRuleRepository_ListRuleSets_Call struct {
 // ListRuleSets is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListDocumentParsingRuleSetsRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) ListRuleSets(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_ListRuleSets_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) ListRuleSets(ctx any, req any) *MockDocumentParsingRuleRepository_ListRuleSets_Call {
 	return &MockDocumentParsingRuleRepository_ListRuleSets_Call{Call: _e.mock.On("ListRuleSets", ctx, req)}
 }
 
@@ -954,7 +954,7 @@ type MockDocumentParsingRuleRepository_ListVersions_Call struct {
 // ListVersions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListDocumentParsingRuleVersionsRequest
-func (_e *MockDocumentParsingRuleRepository_Expecter) ListVersions(ctx interface{}, req interface{}) *MockDocumentParsingRuleRepository_ListVersions_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) ListVersions(ctx any, req any) *MockDocumentParsingRuleRepository_ListVersions_Call {
 	return &MockDocumentParsingRuleRepository_ListVersions_Call{Call: _e.mock.On("ListVersions", ctx, req)}
 }
 
@@ -1022,7 +1022,7 @@ type MockDocumentParsingRuleRepository_NextVersionNumber_Call struct {
 //   - ruleSetID pulid.ID
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockDocumentParsingRuleRepository_Expecter) NextVersionNumber(ctx interface{}, ruleSetID interface{}, orgID interface{}, buID interface{}) *MockDocumentParsingRuleRepository_NextVersionNumber_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) NextVersionNumber(ctx any, ruleSetID any, orgID any, buID any) *MockDocumentParsingRuleRepository_NextVersionNumber_Call {
 	return &MockDocumentParsingRuleRepository_NextVersionNumber_Call{Call: _e.mock.On("NextVersionNumber", ctx, ruleSetID, orgID, buID)}
 }
 
@@ -1092,7 +1092,7 @@ type MockDocumentParsingRuleRepository_SetPublishedVersion_Call struct {
 //   - versionID pulid.ID
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockDocumentParsingRuleRepository_Expecter) SetPublishedVersion(ctx interface{}, ruleSetID interface{}, versionID interface{}, orgID interface{}, buID interface{}) *MockDocumentParsingRuleRepository_SetPublishedVersion_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) SetPublishedVersion(ctx any, ruleSetID any, versionID any, orgID any, buID any) *MockDocumentParsingRuleRepository_SetPublishedVersion_Call {
 	return &MockDocumentParsingRuleRepository_SetPublishedVersion_Call{Call: _e.mock.On("SetPublishedVersion", ctx, ruleSetID, versionID, orgID, buID)}
 }
 
@@ -1175,7 +1175,7 @@ type MockDocumentParsingRuleRepository_UpdateFixture_Call struct {
 // UpdateFixture is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentparsingrule.Fixture
-func (_e *MockDocumentParsingRuleRepository_Expecter) UpdateFixture(ctx interface{}, entity interface{}) *MockDocumentParsingRuleRepository_UpdateFixture_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) UpdateFixture(ctx any, entity any) *MockDocumentParsingRuleRepository_UpdateFixture_Call {
 	return &MockDocumentParsingRuleRepository_UpdateFixture_Call{Call: _e.mock.On("UpdateFixture", ctx, entity)}
 }
 
@@ -1243,7 +1243,7 @@ type MockDocumentParsingRuleRepository_UpdateRuleSet_Call struct {
 // UpdateRuleSet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleSet
-func (_e *MockDocumentParsingRuleRepository_Expecter) UpdateRuleSet(ctx interface{}, entity interface{}) *MockDocumentParsingRuleRepository_UpdateRuleSet_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) UpdateRuleSet(ctx any, entity any) *MockDocumentParsingRuleRepository_UpdateRuleSet_Call {
 	return &MockDocumentParsingRuleRepository_UpdateRuleSet_Call{Call: _e.mock.On("UpdateRuleSet", ctx, entity)}
 }
 
@@ -1311,7 +1311,7 @@ type MockDocumentParsingRuleRepository_UpdateVersion_Call struct {
 // UpdateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentparsingrule.RuleVersion
-func (_e *MockDocumentParsingRuleRepository_Expecter) UpdateVersion(ctx interface{}, entity interface{}) *MockDocumentParsingRuleRepository_UpdateVersion_Call {
+func (_e *MockDocumentParsingRuleRepository_Expecter) UpdateVersion(ctx any, entity any) *MockDocumentParsingRuleRepository_UpdateVersion_Call {
 	return &MockDocumentParsingRuleRepository_UpdateVersion_Call{Call: _e.mock.On("UpdateVersion", ctx, entity)}
 }
 

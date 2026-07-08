@@ -66,7 +66,7 @@ type MockDocumentSearchProjectionRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentSearchProjectionRepository_Expecter) Delete(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentSearchProjectionRepository_Delete_Call {
+func (_e *MockDocumentSearchProjectionRepository_Expecter) Delete(ctx any, documentID any, tenantInfo any) *MockDocumentSearchProjectionRepository_Delete_Call {
 	return &MockDocumentSearchProjectionRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, documentID, tenantInfo)}
 }
 
@@ -139,7 +139,7 @@ type MockDocumentSearchProjectionRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentsearchprojection.Projection
-func (_e *MockDocumentSearchProjectionRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockDocumentSearchProjectionRepository_Upsert_Call {
+func (_e *MockDocumentSearchProjectionRepository_Expecter) Upsert(ctx any, entity any) *MockDocumentSearchProjectionRepository_Upsert_Call {
 	return &MockDocumentSearchProjectionRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 

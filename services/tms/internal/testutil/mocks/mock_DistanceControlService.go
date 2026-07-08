@@ -76,7 +76,7 @@ type MockDistanceControlService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDistanceControlService_Expecter) Get(ctx interface{}, tenantInfo interface{}) *MockDistanceControlService_Get_Call {
+func (_e *MockDistanceControlService_Expecter) Get(ctx any, tenantInfo any) *MockDistanceControlService_Get_Call {
 	return &MockDistanceControlService_Get_Call{Call: _e.mock.On("Get", ctx, tenantInfo)}
 }
 
@@ -145,7 +145,7 @@ type MockDistanceControlService_Update_Call struct {
 //   - ctx context.Context
 //   - entity *distancecontrol.DistanceControl
 //   - userID pulid.ID
-func (_e *MockDistanceControlService_Expecter) Update(ctx interface{}, entity interface{}, userID interface{}) *MockDistanceControlService_Update_Call {
+func (_e *MockDistanceControlService_Expecter) Update(ctx any, entity any, userID any) *MockDistanceControlService_Update_Call {
 	return &MockDistanceControlService_Update_Call{Call: _e.mock.On("Update", ctx, entity, userID)}
 }
 

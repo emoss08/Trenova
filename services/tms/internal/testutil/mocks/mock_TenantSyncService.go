@@ -63,7 +63,7 @@ type MockTenantSyncService_SyncDelta_Call struct {
 // SyncDelta is a helper method to define mock.On call
 //   - context1 context.Context
 //   - tenantSyncDelta services.TenantSyncDelta
-func (_e *MockTenantSyncService_Expecter) SyncDelta(context1 interface{}, tenantSyncDelta interface{}) *MockTenantSyncService_SyncDelta_Call {
+func (_e *MockTenantSyncService_Expecter) SyncDelta(context1 any, tenantSyncDelta any) *MockTenantSyncService_SyncDelta_Call {
 	return &MockTenantSyncService_SyncDelta_Call{Call: _e.mock.On("SyncDelta", context1, tenantSyncDelta)}
 }
 
@@ -119,7 +119,7 @@ type MockTenantSyncService_SyncFull_Call struct {
 
 // SyncFull is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *MockTenantSyncService_Expecter) SyncFull(context1 interface{}) *MockTenantSyncService_SyncFull_Call {
+func (_e *MockTenantSyncService_Expecter) SyncFull(context1 any) *MockTenantSyncService_SyncFull_Call {
 	return &MockTenantSyncService_SyncFull_Call{Call: _e.mock.On("SyncFull", context1)}
 }
 

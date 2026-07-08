@@ -71,7 +71,7 @@ type MockAnalyticsRegistry_GetProvider_Call struct {
 
 // GetProvider is a helper method to define mock.On call
 //   - page services.AnalyticsPage
-func (_e *MockAnalyticsRegistry_Expecter) GetProvider(page interface{}) *MockAnalyticsRegistry_GetProvider_Call {
+func (_e *MockAnalyticsRegistry_Expecter) GetProvider(page any) *MockAnalyticsRegistry_GetProvider_Call {
 	return &MockAnalyticsRegistry_GetProvider_Call{Call: _e.mock.On("GetProvider", page)}
 }
 
@@ -111,7 +111,7 @@ type MockAnalyticsRegistry_RegisterProvider_Call struct {
 
 // RegisterProvider is a helper method to define mock.On call
 //   - provider services.AnalyticsPageProvider
-func (_e *MockAnalyticsRegistry_Expecter) RegisterProvider(provider interface{}) *MockAnalyticsRegistry_RegisterProvider_Call {
+func (_e *MockAnalyticsRegistry_Expecter) RegisterProvider(provider any) *MockAnalyticsRegistry_RegisterProvider_Call {
 	return &MockAnalyticsRegistry_RegisterProvider_Call{Call: _e.mock.On("RegisterProvider", provider)}
 }
 

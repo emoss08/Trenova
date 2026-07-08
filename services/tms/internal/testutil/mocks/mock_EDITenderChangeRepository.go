@@ -76,7 +76,7 @@ type MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call struct {
 // CreateTenderChangeIdempotent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.TenderChange
-func (_e *MockEDITenderChangeRepository_Expecter) CreateTenderChangeIdempotent(ctx interface{}, entity interface{}) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
+func (_e *MockEDITenderChangeRepository_Expecter) CreateTenderChangeIdempotent(ctx any, entity any) *MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call {
 	return &MockEDITenderChangeRepository_CreateTenderChangeIdempotent_Call{Call: _e.mock.On("CreateTenderChangeIdempotent", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDITenderChangeRepository_GetTenderChangeByID_Call struct {
 // GetTenderChangeByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITenderChangeByIDRequest
-func (_e *MockEDITenderChangeRepository_Expecter) GetTenderChangeByID(ctx interface{}, req interface{}) *MockEDITenderChangeRepository_GetTenderChangeByID_Call {
+func (_e *MockEDITenderChangeRepository_Expecter) GetTenderChangeByID(ctx any, req any) *MockEDITenderChangeRepository_GetTenderChangeByID_Call {
 	return &MockEDITenderChangeRepository_GetTenderChangeByID_Call{Call: _e.mock.On("GetTenderChangeByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call struc
 // GetTenderChangeByOutboundMessageID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITenderChangeByOutboundMessageIDRequest
-func (_e *MockEDITenderChangeRepository_Expecter) GetTenderChangeByOutboundMessageID(ctx interface{}, req interface{}) *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call {
+func (_e *MockEDITenderChangeRepository_Expecter) GetTenderChangeByOutboundMessageID(ctx any, req any) *MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call {
 	return &MockEDITenderChangeRepository_GetTenderChangeByOutboundMessageID_Call{Call: _e.mock.On("GetTenderChangeByOutboundMessageID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDITenderChangeRepository_ListTenderChanges_Call struct {
 // ListTenderChanges is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITenderChangesRequest
-func (_e *MockEDITenderChangeRepository_Expecter) ListTenderChanges(ctx interface{}, req interface{}) *MockEDITenderChangeRepository_ListTenderChanges_Call {
+func (_e *MockEDITenderChangeRepository_Expecter) ListTenderChanges(ctx any, req any) *MockEDITenderChangeRepository_ListTenderChanges_Call {
 	return &MockEDITenderChangeRepository_ListTenderChanges_Call{Call: _e.mock.On("ListTenderChanges", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockEDITenderChangeRepository_SupersedeActionableTenderChanges_Call struct 
 // SupersedeActionableTenderChanges is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.SupersedeActionableEDITenderChangesRequest
-func (_e *MockEDITenderChangeRepository_Expecter) SupersedeActionableTenderChanges(ctx interface{}, req interface{}) *MockEDITenderChangeRepository_SupersedeActionableTenderChanges_Call {
+func (_e *MockEDITenderChangeRepository_Expecter) SupersedeActionableTenderChanges(ctx any, req any) *MockEDITenderChangeRepository_SupersedeActionableTenderChanges_Call {
 	return &MockEDITenderChangeRepository_SupersedeActionableTenderChanges_Call{Call: _e.mock.On("SupersedeActionableTenderChanges", ctx, req)}
 }
 
@@ -405,7 +405,7 @@ type MockEDITenderChangeRepository_UpdateTenderChange_Call struct {
 // UpdateTenderChange is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.TenderChange
-func (_e *MockEDITenderChangeRepository_Expecter) UpdateTenderChange(ctx interface{}, entity interface{}) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
+func (_e *MockEDITenderChangeRepository_Expecter) UpdateTenderChange(ctx any, entity any) *MockEDITenderChangeRepository_UpdateTenderChange_Call {
 	return &MockEDITenderChangeRepository_UpdateTenderChange_Call{Call: _e.mock.On("UpdateTenderChange", ctx, entity)}
 }
 

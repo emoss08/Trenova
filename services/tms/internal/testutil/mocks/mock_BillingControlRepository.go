@@ -75,7 +75,7 @@ type MockBillingControlRepository_GetByOrgID_Call struct {
 // GetByOrgID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
-func (_e *MockBillingControlRepository_Expecter) GetByOrgID(ctx interface{}, orgID interface{}) *MockBillingControlRepository_GetByOrgID_Call {
+func (_e *MockBillingControlRepository_Expecter) GetByOrgID(ctx any, orgID any) *MockBillingControlRepository_GetByOrgID_Call {
 	return &MockBillingControlRepository_GetByOrgID_Call{Call: _e.mock.On("GetByOrgID", ctx, orgID)}
 }
 
@@ -143,7 +143,7 @@ type MockBillingControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - bc *tenant.BillingControl
-func (_e *MockBillingControlRepository_Expecter) Update(ctx interface{}, bc interface{}) *MockBillingControlRepository_Update_Call {
+func (_e *MockBillingControlRepository_Expecter) Update(ctx any, bc any) *MockBillingControlRepository_Update_Call {
 	return &MockBillingControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, bc)}
 }
 

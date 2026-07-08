@@ -77,7 +77,7 @@ type MockDocumentShipmentDraftRepository_GetByDocumentID_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentShipmentDraftRepository_Expecter) GetByDocumentID(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
+func (_e *MockDocumentShipmentDraftRepository_Expecter) GetByDocumentID(ctx any, documentID any, tenantInfo any) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
 	return &MockDocumentShipmentDraftRepository_GetByDocumentID_Call{Call: _e.mock.On("GetByDocumentID", ctx, documentID, tenantInfo)}
 }
 
@@ -150,7 +150,7 @@ type MockDocumentShipmentDraftRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentshipmentdraft.DocumentShipmentDraft
-func (_e *MockDocumentShipmentDraftRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockDocumentShipmentDraftRepository_Upsert_Call {
+func (_e *MockDocumentShipmentDraftRepository_Expecter) Upsert(ctx any, entity any) *MockDocumentShipmentDraftRepository_Upsert_Call {
 	return &MockDocumentShipmentDraftRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 

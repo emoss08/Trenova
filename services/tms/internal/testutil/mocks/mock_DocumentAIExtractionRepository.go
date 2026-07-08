@@ -76,7 +76,7 @@ type MockDocumentAIExtractionRepository_GetByDocumentExtractedAt_Call struct {
 // GetByDocumentExtractedAt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentAIExtractionRequest
-func (_e *MockDocumentAIExtractionRepository_Expecter) GetByDocumentExtractedAt(ctx interface{}, req interface{}) *MockDocumentAIExtractionRepository_GetByDocumentExtractedAt_Call {
+func (_e *MockDocumentAIExtractionRepository_Expecter) GetByDocumentExtractedAt(ctx any, req any) *MockDocumentAIExtractionRepository_GetByDocumentExtractedAt_Call {
 	return &MockDocumentAIExtractionRepository_GetByDocumentExtractedAt_Call{Call: _e.mock.On("GetByDocumentExtractedAt", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockDocumentAIExtractionRepository_ListPollable_Call struct {
 // ListPollable is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPollableDocumentAIExtractionRequest
-func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollable(ctx interface{}, req interface{}) *MockDocumentAIExtractionRepository_ListPollable_Call {
+func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollable(ctx any, req any) *MockDocumentAIExtractionRepository_ListPollable_Call {
 	return &MockDocumentAIExtractionRepository_ListPollable_Call{Call: _e.mock.On("ListPollable", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockDocumentAIExtractionRepository_ListPollableTenants_Call struct {
 // ListPollableTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPollableDocumentAIExtractionRequest
-func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollableTenants(ctx interface{}, req interface{}) *MockDocumentAIExtractionRepository_ListPollableTenants_Call {
+func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollableTenants(ctx any, req any) *MockDocumentAIExtractionRepository_ListPollableTenants_Call {
 	return &MockDocumentAIExtractionRepository_ListPollableTenants_Call{Call: _e.mock.On("ListPollableTenants", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockDocumentAIExtractionRepository_SavePending_Call struct {
 // SavePending is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentaiextraction.Extraction
-func (_e *MockDocumentAIExtractionRepository_Expecter) SavePending(ctx interface{}, entity interface{}) *MockDocumentAIExtractionRepository_SavePending_Call {
+func (_e *MockDocumentAIExtractionRepository_Expecter) SavePending(ctx any, entity any) *MockDocumentAIExtractionRepository_SavePending_Call {
 	return &MockDocumentAIExtractionRepository_SavePending_Call{Call: _e.mock.On("SavePending", ctx, entity)}
 }
 
@@ -348,7 +348,7 @@ type MockDocumentAIExtractionRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentaiextraction.Extraction
-func (_e *MockDocumentAIExtractionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentAIExtractionRepository_Update_Call {
+func (_e *MockDocumentAIExtractionRepository_Expecter) Update(ctx any, entity any) *MockDocumentAIExtractionRepository_Update_Call {
 	return &MockDocumentAIExtractionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

@@ -76,7 +76,7 @@ type MockInvoiceDocumentService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentByIDRequest
-func (_e *MockInvoiceDocumentService_Expecter) Get(ctx interface{}, req interface{}) *MockInvoiceDocumentService_Get_Call {
+func (_e *MockInvoiceDocumentService_Expecter) Get(ctx any, req any) *MockInvoiceDocumentService_Get_Call {
 	return &MockInvoiceDocumentService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockInvoiceDocumentService_GetDownloadContent_Call struct {
 // GetDownloadContent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentByIDRequest
-func (_e *MockInvoiceDocumentService_Expecter) GetDownloadContent(ctx interface{}, req interface{}) *MockInvoiceDocumentService_GetDownloadContent_Call {
+func (_e *MockInvoiceDocumentService_Expecter) GetDownloadContent(ctx any, req any) *MockInvoiceDocumentService_GetDownloadContent_Call {
 	return &MockInvoiceDocumentService_GetDownloadContent_Call{Call: _e.mock.On("GetDownloadContent", ctx, req)}
 }
 

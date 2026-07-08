@@ -80,7 +80,7 @@ type MockServiceFailureReasonCodeService_Activate_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureReasonCodeService_Expecter) Activate(ctx interface{}, id interface{}, tenantInfo interface{}, actor interface{}) *MockServiceFailureReasonCodeService_Activate_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) Activate(ctx any, id any, tenantInfo any, actor any) *MockServiceFailureReasonCodeService_Activate_Call {
 	return &MockServiceFailureReasonCodeService_Activate_Call{Call: _e.mock.On("Activate", ctx, id, tenantInfo, actor)}
 }
 
@@ -160,7 +160,7 @@ type MockServiceFailureReasonCodeService_Archive_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureReasonCodeService_Expecter) Archive(ctx interface{}, id interface{}, tenantInfo interface{}, actor interface{}) *MockServiceFailureReasonCodeService_Archive_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) Archive(ctx any, id any, tenantInfo any, actor any) *MockServiceFailureReasonCodeService_Archive_Call {
 	return &MockServiceFailureReasonCodeService_Archive_Call{Call: _e.mock.On("Archive", ctx, id, tenantInfo, actor)}
 }
 
@@ -239,7 +239,7 @@ type MockServiceFailureReasonCodeService_Create_Call struct {
 //   - ctx context.Context
 //   - entity *servicefailure.ReasonCode
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureReasonCodeService_Expecter) Create(ctx interface{}, entity interface{}, actor interface{}) *MockServiceFailureReasonCodeService_Create_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) Create(ctx any, entity any, actor any) *MockServiceFailureReasonCodeService_Create_Call {
 	return &MockServiceFailureReasonCodeService_Create_Call{Call: _e.mock.On("Create", ctx, entity, actor)}
 }
 
@@ -312,7 +312,7 @@ type MockServiceFailureReasonCodeService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetServiceFailureReasonCodeByIDRequest
-func (_e *MockServiceFailureReasonCodeService_Expecter) Get(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeService_Get_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) Get(ctx any, req any) *MockServiceFailureReasonCodeService_Get_Call {
 	return &MockServiceFailureReasonCodeService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -380,7 +380,7 @@ type MockServiceFailureReasonCodeService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListServiceFailureReasonCodesRequest
-func (_e *MockServiceFailureReasonCodeService_Expecter) List(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeService_List_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) List(ctx any, req any) *MockServiceFailureReasonCodeService_List_Call {
 	return &MockServiceFailureReasonCodeService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -449,7 +449,7 @@ type MockServiceFailureReasonCodeService_Reorder_Call struct {
 //   - ctx context.Context
 //   - req *repositories.ReorderServiceFailureReasonCodesRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureReasonCodeService_Expecter) Reorder(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureReasonCodeService_Reorder_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) Reorder(ctx any, req any, actor any) *MockServiceFailureReasonCodeService_Reorder_Call {
 	return &MockServiceFailureReasonCodeService_Reorder_Call{Call: _e.mock.On("Reorder", ctx, req, actor)}
 }
 
@@ -522,7 +522,7 @@ type MockServiceFailureReasonCodeService_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ServiceFailureReasonCodeSelectOptionsRequest
-func (_e *MockServiceFailureReasonCodeService_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeService_SelectOptions_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) SelectOptions(ctx any, req any) *MockServiceFailureReasonCodeService_SelectOptions_Call {
 	return &MockServiceFailureReasonCodeService_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -591,7 +591,7 @@ type MockServiceFailureReasonCodeService_Update_Call struct {
 //   - ctx context.Context
 //   - entity *servicefailure.ReasonCode
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureReasonCodeService_Expecter) Update(ctx interface{}, entity interface{}, actor interface{}) *MockServiceFailureReasonCodeService_Update_Call {
+func (_e *MockServiceFailureReasonCodeService_Expecter) Update(ctx any, entity any, actor any) *MockServiceFailureReasonCodeService_Update_Call {
 	return &MockServiceFailureReasonCodeService_Update_Call{Call: _e.mock.On("Update", ctx, entity, actor)}
 }
 

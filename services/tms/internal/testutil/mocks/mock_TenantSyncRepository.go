@@ -74,7 +74,7 @@ type MockTenantSyncRepository_ListBusinessUnits_Call struct {
 
 // ListBusinessUnits is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockTenantSyncRepository_Expecter) ListBusinessUnits(ctx interface{}) *MockTenantSyncRepository_ListBusinessUnits_Call {
+func (_e *MockTenantSyncRepository_Expecter) ListBusinessUnits(ctx any) *MockTenantSyncRepository_ListBusinessUnits_Call {
 	return &MockTenantSyncRepository_ListBusinessUnits_Call{Call: _e.mock.On("ListBusinessUnits", ctx)}
 }
 
@@ -137,7 +137,7 @@ type MockTenantSyncRepository_ListBusinessUnitsByID_Call struct {
 // ListBusinessUnitsByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ids []pulid.ID
-func (_e *MockTenantSyncRepository_Expecter) ListBusinessUnitsByID(ctx interface{}, ids interface{}) *MockTenantSyncRepository_ListBusinessUnitsByID_Call {
+func (_e *MockTenantSyncRepository_Expecter) ListBusinessUnitsByID(ctx any, ids any) *MockTenantSyncRepository_ListBusinessUnitsByID_Call {
 	return &MockTenantSyncRepository_ListBusinessUnitsByID_Call{Call: _e.mock.On("ListBusinessUnitsByID", ctx, ids)}
 }
 
@@ -204,7 +204,7 @@ type MockTenantSyncRepository_ListOrganizations_Call struct {
 
 // ListOrganizations is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockTenantSyncRepository_Expecter) ListOrganizations(ctx interface{}) *MockTenantSyncRepository_ListOrganizations_Call {
+func (_e *MockTenantSyncRepository_Expecter) ListOrganizations(ctx any) *MockTenantSyncRepository_ListOrganizations_Call {
 	return &MockTenantSyncRepository_ListOrganizations_Call{Call: _e.mock.On("ListOrganizations", ctx)}
 }
 
@@ -267,7 +267,7 @@ type MockTenantSyncRepository_ListOrganizationsByID_Call struct {
 // ListOrganizationsByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ids []pulid.ID
-func (_e *MockTenantSyncRepository_Expecter) ListOrganizationsByID(ctx interface{}, ids interface{}) *MockTenantSyncRepository_ListOrganizationsByID_Call {
+func (_e *MockTenantSyncRepository_Expecter) ListOrganizationsByID(ctx any, ids any) *MockTenantSyncRepository_ListOrganizationsByID_Call {
 	return &MockTenantSyncRepository_ListOrganizationsByID_Call{Call: _e.mock.On("ListOrganizationsByID", ctx, ids)}
 }
 

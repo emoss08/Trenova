@@ -76,7 +76,7 @@ type MockFormulaTemplateRepository_BulkDuplicate_Call struct {
 // BulkDuplicate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkDuplicateFormulaTemplateRequest
-func (_e *MockFormulaTemplateRepository_Expecter) BulkDuplicate(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_BulkDuplicate_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) BulkDuplicate(ctx any, req any) *MockFormulaTemplateRepository_BulkDuplicate_Call {
 	return &MockFormulaTemplateRepository_BulkDuplicate_Call{Call: _e.mock.On("BulkDuplicate", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockFormulaTemplateRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateFormulaTemplateStatusRequest
-func (_e *MockFormulaTemplateRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_BulkUpdateStatus_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockFormulaTemplateRepository_BulkUpdateStatus_Call {
 	return &MockFormulaTemplateRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockFormulaTemplateRepository_CountUsages_Call struct {
 // CountUsages is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetTemplateUsageRequest
-func (_e *MockFormulaTemplateRepository_Expecter) CountUsages(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_CountUsages_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) CountUsages(ctx any, req any) *MockFormulaTemplateRepository_CountUsages_Call {
 	return &MockFormulaTemplateRepository_CountUsages_Call{Call: _e.mock.On("CountUsages", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockFormulaTemplateRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *formulatemplate.FormulaTemplate
-func (_e *MockFormulaTemplateRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockFormulaTemplateRepository_Create_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) Create(ctx any, entity any) *MockFormulaTemplateRepository_Create_Call {
 	return &MockFormulaTemplateRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -348,7 +348,7 @@ type MockFormulaTemplateRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFormulaTemplateByIDRequest
-func (_e *MockFormulaTemplateRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_GetByID_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) GetByID(ctx any, req any) *MockFormulaTemplateRepository_GetByID_Call {
 	return &MockFormulaTemplateRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockFormulaTemplateRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFormulaTemplatesByIDsRequest
-func (_e *MockFormulaTemplateRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_GetByIDs_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) GetByIDs(ctx any, req any) *MockFormulaTemplateRepository_GetByIDs_Call {
 	return &MockFormulaTemplateRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockFormulaTemplateRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListFormulaTemplatesRequest
-func (_e *MockFormulaTemplateRepository_Expecter) List(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_List_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) List(ctx any, req any) *MockFormulaTemplateRepository_List_Call {
 	return &MockFormulaTemplateRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -552,7 +552,7 @@ type MockFormulaTemplateRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.FormulaTemplateSelectOptionsRequest
-func (_e *MockFormulaTemplateRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_SelectOptions_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) SelectOptions(ctx any, req any) *MockFormulaTemplateRepository_SelectOptions_Call {
 	return &MockFormulaTemplateRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -620,7 +620,7 @@ type MockFormulaTemplateRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *formulatemplate.FormulaTemplate
-func (_e *MockFormulaTemplateRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockFormulaTemplateRepository_Update_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) Update(ctx any, entity any) *MockFormulaTemplateRepository_Update_Call {
 	return &MockFormulaTemplateRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

@@ -76,7 +76,7 @@ type MockEDILoadTenderTransferRepository_CreateTransfer_Call struct {
 // CreateTransfer is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDITransfer
-func (_e *MockEDILoadTenderTransferRepository_Expecter) CreateTransfer(ctx interface{}, entity interface{}) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) CreateTransfer(ctx any, entity any) *MockEDILoadTenderTransferRepository_CreateTransfer_Call {
 	return &MockEDILoadTenderTransferRepository_CreateTransfer_Call{Call: _e.mock.On("CreateTransfer", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalR
 // GetActionableInboundTransferByExternalReference is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActionableInboundEDITransferByExternalReferenceRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) GetActionableInboundTransferByExternalReference(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) GetActionableInboundTransferByExternalReference(ctx any, req any) *MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call {
 	return &MockEDILoadTenderTransferRepository_GetActionableInboundTransferByExternalReference_Call{Call: _e.mock.On("GetActionableInboundTransferByExternalReference", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call struct {
 // GetInboundStatusCounts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITransferStatusCountsRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) GetInboundStatusCounts(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) GetInboundStatusCounts(ctx any, req any) *MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call {
 	return &MockEDILoadTenderTransferRepository_GetInboundStatusCounts_Call{Call: _e.mock.On("GetInboundStatusCounts", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDILoadTenderTransferRepository_GetTransferByID_Call struct {
 // GetTransferByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITransferByIDRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) GetTransferByID(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_GetTransferByID_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) GetTransferByID(ctx any, req any) *MockEDILoadTenderTransferRepository_GetTransferByID_Call {
 	return &MockEDILoadTenderTransferRepository_GetTransferByID_Call{Call: _e.mock.On("GetTransferByID", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call struct {
 // GetTransferForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITransferForUpdateRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) GetTransferForUpdate(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) GetTransferForUpdate(ctx any, req any) *MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call {
 	return &MockEDILoadTenderTransferRepository_GetTransferForUpdate_Call{Call: _e.mock.On("GetTransferForUpdate", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call struct {
 // GetTransfersByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITransfersByIDsRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) GetTransfersByIDs(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) GetTransfersByIDs(ctx any, req any) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
 	return &MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call{Call: _e.mock.On("GetTransfersByIDs", ctx, req)}
 }
 
@@ -444,6 +444,74 @@ func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) Return(eDI
 }
 
 func (_c *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDITransfersByIDsRequest) ([]*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_GetTransfersByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListActionableInboundTransfersByPartner provides a mock function for the type MockEDILoadTenderTransferRepository
+func (_mock *MockEDILoadTenderTransferRepository) ListActionableInboundTransfersByPartner(ctx context.Context, req repositories.ListActionableInboundEDITransfersByPartnerRequest) ([]*edi.EDITransfer, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListActionableInboundTransfersByPartner")
+	}
+
+	var r0 []*edi.EDITransfer
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListActionableInboundEDITransfersByPartnerRequest) ([]*edi.EDITransfer, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListActionableInboundEDITransfersByPartnerRequest) []*edi.EDITransfer); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDITransfer)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListActionableInboundEDITransfersByPartnerRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListActionableInboundTransfersByPartner'
+type MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call struct {
+	*mock.Call
+}
+
+// ListActionableInboundTransfersByPartner is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListActionableInboundEDITransfersByPartnerRequest
+func (_e *MockEDILoadTenderTransferRepository_Expecter) ListActionableInboundTransfersByPartner(ctx any, req any) *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call {
+	return &MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call{Call: _e.mock.On("ListActionableInboundTransfersByPartner", ctx, req)}
+}
+
+func (_c *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call) Run(run func(ctx context.Context, req repositories.ListActionableInboundEDITransfersByPartnerRequest)) *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListActionableInboundEDITransfersByPartnerRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListActionableInboundEDITransfersByPartnerRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call) Return(eDITransfers []*edi.EDITransfer, err error) *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call {
+	_c.Call.Return(eDITransfers, err)
+	return _c
+}
+
+func (_c *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListActionableInboundEDITransfersByPartnerRequest) ([]*edi.EDITransfer, error)) *MockEDILoadTenderTransferRepository_ListActionableInboundTransfersByPartner_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -484,7 +552,7 @@ type MockEDILoadTenderTransferRepository_ListInbound_Call struct {
 // ListInbound is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITransfersRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) ListInbound(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_ListInbound_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) ListInbound(ctx any, req any) *MockEDILoadTenderTransferRepository_ListInbound_Call {
 	return &MockEDILoadTenderTransferRepository_ListInbound_Call{Call: _e.mock.On("ListInbound", ctx, req)}
 }
 
@@ -552,7 +620,7 @@ type MockEDILoadTenderTransferRepository_ListInboundCursor_Call struct {
 // ListInboundCursor is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITransfersRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) ListInboundCursor(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_ListInboundCursor_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) ListInboundCursor(ctx any, req any) *MockEDILoadTenderTransferRepository_ListInboundCursor_Call {
 	return &MockEDILoadTenderTransferRepository_ListInboundCursor_Call{Call: _e.mock.On("ListInboundCursor", ctx, req)}
 }
 
@@ -620,7 +688,7 @@ type MockEDILoadTenderTransferRepository_ListOutbound_Call struct {
 // ListOutbound is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITransfersRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) ListOutbound(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_ListOutbound_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) ListOutbound(ctx any, req any) *MockEDILoadTenderTransferRepository_ListOutbound_Call {
 	return &MockEDILoadTenderTransferRepository_ListOutbound_Call{Call: _e.mock.On("ListOutbound", ctx, req)}
 }
 
@@ -688,7 +756,7 @@ type MockEDILoadTenderTransferRepository_ListOutboundCursor_Call struct {
 // ListOutboundCursor is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITransfersRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) ListOutboundCursor(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) ListOutboundCursor(ctx any, req any) *MockEDILoadTenderTransferRepository_ListOutboundCursor_Call {
 	return &MockEDILoadTenderTransferRepository_ListOutboundCursor_Call{Call: _e.mock.On("ListOutboundCursor", ctx, req)}
 }
 
@@ -756,7 +824,7 @@ type MockEDILoadTenderTransferRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EDITransferSelectOptionsRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_SelectOptions_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) SelectOptions(ctx any, req any) *MockEDILoadTenderTransferRepository_SelectOptions_Call {
 	return &MockEDILoadTenderTransferRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -824,7 +892,7 @@ type MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call struct {
 // SetApprovalWorkflowRunID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.SetEDITransferApprovalWorkflowRunIDRequest
-func (_e *MockEDILoadTenderTransferRepository_Expecter) SetApprovalWorkflowRunID(ctx interface{}, req interface{}) *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) SetApprovalWorkflowRunID(ctx any, req any) *MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call {
 	return &MockEDILoadTenderTransferRepository_SetApprovalWorkflowRunID_Call{Call: _e.mock.On("SetApprovalWorkflowRunID", ctx, req)}
 }
 
@@ -892,7 +960,7 @@ type MockEDILoadTenderTransferRepository_UpdateTransfer_Call struct {
 // UpdateTransfer is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDITransfer
-func (_e *MockEDILoadTenderTransferRepository_Expecter) UpdateTransfer(ctx interface{}, entity interface{}) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
+func (_e *MockEDILoadTenderTransferRepository_Expecter) UpdateTransfer(ctx any, entity any) *MockEDILoadTenderTransferRepository_UpdateTransfer_Call {
 	return &MockEDILoadTenderTransferRepository_UpdateTransfer_Call{Call: _e.mock.On("UpdateTransfer", ctx, entity)}
 }
 

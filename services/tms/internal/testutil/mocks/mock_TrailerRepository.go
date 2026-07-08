@@ -76,7 +76,7 @@ type MockTrailerRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateTrailerStatusRequest
-func (_e *MockTrailerRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockTrailerRepository_BulkUpdateStatus_Call {
+func (_e *MockTrailerRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockTrailerRepository_BulkUpdateStatus_Call {
 	return &MockTrailerRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockTrailerRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *trailer.Trailer
-func (_e *MockTrailerRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockTrailerRepository_Create_Call {
+func (_e *MockTrailerRepository_Expecter) Create(ctx any, entity any) *MockTrailerRepository_Create_Call {
 	return &MockTrailerRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockTrailerRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetTrailerByIDRequest
-func (_e *MockTrailerRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockTrailerRepository_GetByID_Call {
+func (_e *MockTrailerRepository_Expecter) GetByID(ctx any, req any) *MockTrailerRepository_GetByID_Call {
 	return &MockTrailerRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockTrailerRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetTrailersByIDsRequest
-func (_e *MockTrailerRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockTrailerRepository_GetByIDs_Call {
+func (_e *MockTrailerRepository_Expecter) GetByIDs(ctx any, req any) *MockTrailerRepository_GetByIDs_Call {
 	return &MockTrailerRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockTrailerRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListTrailersRequest
-func (_e *MockTrailerRepository_Expecter) List(ctx interface{}, req interface{}) *MockTrailerRepository_List_Call {
+func (_e *MockTrailerRepository_Expecter) List(ctx any, req any) *MockTrailerRepository_List_Call {
 	return &MockTrailerRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockTrailerRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockTrailerRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockTrailerRepository_SelectOptions_Call {
+func (_e *MockTrailerRepository_Expecter) SelectOptions(ctx any, req any) *MockTrailerRepository_SelectOptions_Call {
 	return &MockTrailerRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockTrailerRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *trailer.Trailer
-func (_e *MockTrailerRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockTrailerRepository_Update_Call {
+func (_e *MockTrailerRepository_Expecter) Update(ctx any, entity any) *MockTrailerRepository_Update_Call {
 	return &MockTrailerRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

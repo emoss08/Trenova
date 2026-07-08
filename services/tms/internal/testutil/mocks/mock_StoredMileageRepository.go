@@ -66,7 +66,7 @@ type MockStoredMileageRepository_BulkUpsert_Call struct {
 // BulkUpsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entities []*storedmileage.StoredMileage
-func (_e *MockStoredMileageRepository_Expecter) BulkUpsert(ctx interface{}, entities interface{}) *MockStoredMileageRepository_BulkUpsert_Call {
+func (_e *MockStoredMileageRepository_Expecter) BulkUpsert(ctx any, entities any) *MockStoredMileageRepository_BulkUpsert_Call {
 	return &MockStoredMileageRepository_BulkUpsert_Call{Call: _e.mock.On("BulkUpsert", ctx, entities)}
 }
 
@@ -123,7 +123,7 @@ type MockStoredMileageRepository_Deactivate_Call struct {
 // Deactivate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteStoredMileageRequest
-func (_e *MockStoredMileageRepository_Expecter) Deactivate(ctx interface{}, req interface{}) *MockStoredMileageRepository_Deactivate_Call {
+func (_e *MockStoredMileageRepository_Expecter) Deactivate(ctx any, req any) *MockStoredMileageRepository_Deactivate_Call {
 	return &MockStoredMileageRepository_Deactivate_Call{Call: _e.mock.On("Deactivate", ctx, req)}
 }
 
@@ -191,7 +191,7 @@ type MockStoredMileageRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetStoredMileageByIDRequest
-func (_e *MockStoredMileageRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockStoredMileageRepository_GetByID_Call {
+func (_e *MockStoredMileageRepository_Expecter) GetByID(ctx any, req any) *MockStoredMileageRepository_GetByID_Call {
 	return &MockStoredMileageRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -249,7 +249,7 @@ type MockStoredMileageRepository_IncrementHit_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockStoredMileageRepository_Expecter) IncrementHit(ctx interface{}, id interface{}, tenantInfo interface{}) *MockStoredMileageRepository_IncrementHit_Call {
+func (_e *MockStoredMileageRepository_Expecter) IncrementHit(ctx any, id any, tenantInfo any) *MockStoredMileageRepository_IncrementHit_Call {
 	return &MockStoredMileageRepository_IncrementHit_Call{Call: _e.mock.On("IncrementHit", ctx, id, tenantInfo)}
 }
 
@@ -322,7 +322,7 @@ type MockStoredMileageRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListStoredMileageRequest
-func (_e *MockStoredMileageRepository_Expecter) List(ctx interface{}, req interface{}) *MockStoredMileageRepository_List_Call {
+func (_e *MockStoredMileageRepository_Expecter) List(ctx any, req any) *MockStoredMileageRepository_List_Call {
 	return &MockStoredMileageRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -390,7 +390,7 @@ type MockStoredMileageRepository_Lookup_Call struct {
 // Lookup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.StoredMileageLookupRequest
-func (_e *MockStoredMileageRepository_Expecter) Lookup(ctx interface{}, req interface{}) *MockStoredMileageRepository_Lookup_Call {
+func (_e *MockStoredMileageRepository_Expecter) Lookup(ctx any, req any) *MockStoredMileageRepository_Lookup_Call {
 	return &MockStoredMileageRepository_Lookup_Call{Call: _e.mock.On("Lookup", ctx, req)}
 }
 

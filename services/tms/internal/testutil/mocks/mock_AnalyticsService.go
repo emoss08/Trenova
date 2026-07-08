@@ -74,7 +74,7 @@ type MockAnalyticsService_GetAnalytics_Call struct {
 // GetAnalytics is a helper method to define mock.On call
 //   - ctx context.Context
 //   - opts *services.AnalyticsRequestOptions
-func (_e *MockAnalyticsService_Expecter) GetAnalytics(ctx interface{}, opts interface{}) *MockAnalyticsService_GetAnalytics_Call {
+func (_e *MockAnalyticsService_Expecter) GetAnalytics(ctx any, opts any) *MockAnalyticsService_GetAnalytics_Call {
 	return &MockAnalyticsService_GetAnalytics_Call{Call: _e.mock.On("GetAnalytics", ctx, opts)}
 }
 

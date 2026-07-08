@@ -79,7 +79,7 @@ type MockDocumentContentRepository_GetByDocumentID_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentContentRepository_Expecter) GetByDocumentID(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentContentRepository_GetByDocumentID_Call {
+func (_e *MockDocumentContentRepository_Expecter) GetByDocumentID(ctx any, documentID any, tenantInfo any) *MockDocumentContentRepository_GetByDocumentID_Call {
 	return &MockDocumentContentRepository_GetByDocumentID_Call{Call: _e.mock.On("GetByDocumentID", ctx, documentID, tenantInfo)}
 }
 
@@ -153,7 +153,7 @@ type MockDocumentContentRepository_ListPagesByDocumentID_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentContentRepository_Expecter) ListPagesByDocumentID(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentContentRepository_ListPagesByDocumentID_Call {
+func (_e *MockDocumentContentRepository_Expecter) ListPagesByDocumentID(ctx any, documentID any, tenantInfo any) *MockDocumentContentRepository_ListPagesByDocumentID_Call {
 	return &MockDocumentContentRepository_ListPagesByDocumentID_Call{Call: _e.mock.On("ListPagesByDocumentID", ctx, documentID, tenantInfo)}
 }
 
@@ -226,7 +226,7 @@ type MockDocumentContentRepository_ListPendingExtraction_Call struct {
 // ListPendingExtraction is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPendingDocumentExtractionRequest
-func (_e *MockDocumentContentRepository_Expecter) ListPendingExtraction(ctx interface{}, req interface{}) *MockDocumentContentRepository_ListPendingExtraction_Call {
+func (_e *MockDocumentContentRepository_Expecter) ListPendingExtraction(ctx any, req any) *MockDocumentContentRepository_ListPendingExtraction_Call {
 	return &MockDocumentContentRepository_ListPendingExtraction_Call{Call: _e.mock.On("ListPendingExtraction", ctx, req)}
 }
 
@@ -294,7 +294,7 @@ type MockDocumentContentRepository_ListPendingExtractionTenants_Call struct {
 // ListPendingExtractionTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPendingDocumentExtractionRequest
-func (_e *MockDocumentContentRepository_Expecter) ListPendingExtractionTenants(ctx interface{}, req interface{}) *MockDocumentContentRepository_ListPendingExtractionTenants_Call {
+func (_e *MockDocumentContentRepository_Expecter) ListPendingExtractionTenants(ctx any, req any) *MockDocumentContentRepository_ListPendingExtractionTenants_Call {
 	return &MockDocumentContentRepository_ListPendingExtractionTenants_Call{Call: _e.mock.On("ListPendingExtractionTenants", ctx, req)}
 }
 
@@ -352,7 +352,7 @@ type MockDocumentContentRepository_ReplacePages_Call struct {
 //   - ctx context.Context
 //   - content *documentcontent.Content
 //   - pages []*documentcontent.Page
-func (_e *MockDocumentContentRepository_Expecter) ReplacePages(ctx interface{}, content interface{}, pages interface{}) *MockDocumentContentRepository_ReplacePages_Call {
+func (_e *MockDocumentContentRepository_Expecter) ReplacePages(ctx any, content any, pages any) *MockDocumentContentRepository_ReplacePages_Call {
 	return &MockDocumentContentRepository_ReplacePages_Call{Call: _e.mock.On("ReplacePages", ctx, content, pages)}
 }
 
@@ -425,7 +425,7 @@ type MockDocumentContentRepository_SearchByResource_Call struct {
 // SearchByResource is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.DocumentContentSearchRequest
-func (_e *MockDocumentContentRepository_Expecter) SearchByResource(ctx interface{}, req interface{}) *MockDocumentContentRepository_SearchByResource_Call {
+func (_e *MockDocumentContentRepository_Expecter) SearchByResource(ctx any, req any) *MockDocumentContentRepository_SearchByResource_Call {
 	return &MockDocumentContentRepository_SearchByResource_Call{Call: _e.mock.On("SearchByResource", ctx, req)}
 }
 
@@ -493,7 +493,7 @@ type MockDocumentContentRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentcontent.Content
-func (_e *MockDocumentContentRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockDocumentContentRepository_Upsert_Call {
+func (_e *MockDocumentContentRepository_Expecter) Upsert(ctx any, entity any) *MockDocumentContentRepository_Upsert_Call {
 	return &MockDocumentContentRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 

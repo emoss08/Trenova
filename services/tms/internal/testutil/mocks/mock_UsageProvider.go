@@ -74,7 +74,7 @@ type MockUsageProvider_CheckLimit_Call struct {
 // CheckLimit is a helper method to define mock.On call
 //   - context1 context.Context
 //   - usageLimitCheckRequest *services.UsageLimitCheckRequest
-func (_e *MockUsageProvider_Expecter) CheckLimit(context1 interface{}, usageLimitCheckRequest interface{}) *MockUsageProvider_CheckLimit_Call {
+func (_e *MockUsageProvider_Expecter) CheckLimit(context1 any, usageLimitCheckRequest any) *MockUsageProvider_CheckLimit_Call {
 	return &MockUsageProvider_CheckLimit_Call{Call: _e.mock.On("CheckLimit", context1, usageLimitCheckRequest)}
 }
 
@@ -142,7 +142,7 @@ type MockUsageProvider_RecordUsage_Call struct {
 // RecordUsage is a helper method to define mock.On call
 //   - context1 context.Context
 //   - usageRecordRequest *services.UsageRecordRequest
-func (_e *MockUsageProvider_Expecter) RecordUsage(context1 interface{}, usageRecordRequest interface{}) *MockUsageProvider_RecordUsage_Call {
+func (_e *MockUsageProvider_Expecter) RecordUsage(context1 any, usageRecordRequest any) *MockUsageProvider_RecordUsage_Call {
 	return &MockUsageProvider_RecordUsage_Call{Call: _e.mock.On("RecordUsage", context1, usageRecordRequest)}
 }
 

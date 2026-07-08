@@ -75,7 +75,7 @@ type MockDataTransformer_TransformAccessorialCharge_Call struct {
 // TransformAccessorialCharge is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accessorialcharge.AccessorialCharge
-func (_e *MockDataTransformer_Expecter) TransformAccessorialCharge(ctx interface{}, entity interface{}) *MockDataTransformer_TransformAccessorialCharge_Call {
+func (_e *MockDataTransformer_Expecter) TransformAccessorialCharge(ctx any, entity any) *MockDataTransformer_TransformAccessorialCharge_Call {
 	return &MockDataTransformer_TransformAccessorialCharge_Call{Call: _e.mock.On("TransformAccessorialCharge", ctx, entity)}
 }
 
@@ -132,7 +132,7 @@ type MockDataTransformer_TransformAccountType_Call struct {
 // TransformAccountType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accounttype.AccountType
-func (_e *MockDataTransformer_Expecter) TransformAccountType(ctx interface{}, entity interface{}) *MockDataTransformer_TransformAccountType_Call {
+func (_e *MockDataTransformer_Expecter) TransformAccountType(ctx any, entity any) *MockDataTransformer_TransformAccountType_Call {
 	return &MockDataTransformer_TransformAccountType_Call{Call: _e.mock.On("TransformAccountType", ctx, entity)}
 }
 
@@ -189,7 +189,7 @@ type MockDataTransformer_TransformCommodity_Call struct {
 // TransformCommodity is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *commodity.Commodity
-func (_e *MockDataTransformer_Expecter) TransformCommodity(ctx interface{}, entity interface{}) *MockDataTransformer_TransformCommodity_Call {
+func (_e *MockDataTransformer_Expecter) TransformCommodity(ctx any, entity any) *MockDataTransformer_TransformCommodity_Call {
 	return &MockDataTransformer_TransformCommodity_Call{Call: _e.mock.On("TransformCommodity", ctx, entity)}
 }
 
@@ -246,7 +246,7 @@ type MockDataTransformer_TransformCustomer_Call struct {
 // TransformCustomer is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customer.Customer
-func (_e *MockDataTransformer_Expecter) TransformCustomer(ctx interface{}, entity interface{}) *MockDataTransformer_TransformCustomer_Call {
+func (_e *MockDataTransformer_Expecter) TransformCustomer(ctx any, entity any) *MockDataTransformer_TransformCustomer_Call {
 	return &MockDataTransformer_TransformCustomer_Call{Call: _e.mock.On("TransformCustomer", ctx, entity)}
 }
 
@@ -303,7 +303,7 @@ type MockDataTransformer_TransformDocumentType_Call struct {
 // TransformDocumentType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documenttype.DocumentType
-func (_e *MockDataTransformer_Expecter) TransformDocumentType(ctx interface{}, entity interface{}) *MockDataTransformer_TransformDocumentType_Call {
+func (_e *MockDataTransformer_Expecter) TransformDocumentType(ctx any, entity any) *MockDataTransformer_TransformDocumentType_Call {
 	return &MockDataTransformer_TransformDocumentType_Call{Call: _e.mock.On("TransformDocumentType", ctx, entity)}
 }
 
@@ -360,7 +360,7 @@ type MockDataTransformer_TransformEquipmentType_Call struct {
 // TransformEquipmentType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *equipmenttype.EquipmentType
-func (_e *MockDataTransformer_Expecter) TransformEquipmentType(ctx interface{}, entity interface{}) *MockDataTransformer_TransformEquipmentType_Call {
+func (_e *MockDataTransformer_Expecter) TransformEquipmentType(ctx any, entity any) *MockDataTransformer_TransformEquipmentType_Call {
 	return &MockDataTransformer_TransformEquipmentType_Call{Call: _e.mock.On("TransformEquipmentType", ctx, entity)}
 }
 
@@ -417,7 +417,7 @@ type MockDataTransformer_TransformFiscalYear_Call struct {
 // TransformFiscalYear is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fiscalyear.FiscalYear
-func (_e *MockDataTransformer_Expecter) TransformFiscalYear(ctx interface{}, entity interface{}) *MockDataTransformer_TransformFiscalYear_Call {
+func (_e *MockDataTransformer_Expecter) TransformFiscalYear(ctx any, entity any) *MockDataTransformer_TransformFiscalYear_Call {
 	return &MockDataTransformer_TransformFiscalYear_Call{Call: _e.mock.On("TransformFiscalYear", ctx, entity)}
 }
 
@@ -474,7 +474,7 @@ type MockDataTransformer_TransformFleetCode_Call struct {
 // TransformFleetCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fleetcode.FleetCode
-func (_e *MockDataTransformer_Expecter) TransformFleetCode(ctx interface{}, entity interface{}) *MockDataTransformer_TransformFleetCode_Call {
+func (_e *MockDataTransformer_Expecter) TransformFleetCode(ctx any, entity any) *MockDataTransformer_TransformFleetCode_Call {
 	return &MockDataTransformer_TransformFleetCode_Call{Call: _e.mock.On("TransformFleetCode", ctx, entity)}
 }
 
@@ -531,7 +531,7 @@ type MockDataTransformer_TransformGLAccount_Call struct {
 // TransformGLAccount is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *glaccount.GLAccount
-func (_e *MockDataTransformer_Expecter) TransformGLAccount(ctx interface{}, entity interface{}) *MockDataTransformer_TransformGLAccount_Call {
+func (_e *MockDataTransformer_Expecter) TransformGLAccount(ctx any, entity any) *MockDataTransformer_TransformGLAccount_Call {
 	return &MockDataTransformer_TransformGLAccount_Call{Call: _e.mock.On("TransformGLAccount", ctx, entity)}
 }
 
@@ -588,7 +588,7 @@ type MockDataTransformer_TransformHazardousMaterial_Call struct {
 // TransformHazardousMaterial is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazardousmaterial.HazardousMaterial
-func (_e *MockDataTransformer_Expecter) TransformHazardousMaterial(ctx interface{}, entity interface{}) *MockDataTransformer_TransformHazardousMaterial_Call {
+func (_e *MockDataTransformer_Expecter) TransformHazardousMaterial(ctx any, entity any) *MockDataTransformer_TransformHazardousMaterial_Call {
 	return &MockDataTransformer_TransformHazardousMaterial_Call{Call: _e.mock.On("TransformHazardousMaterial", ctx, entity)}
 }
 
@@ -645,7 +645,7 @@ type MockDataTransformer_TransformLocation_Call struct {
 // TransformLocation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *location.Location
-func (_e *MockDataTransformer_Expecter) TransformLocation(ctx interface{}, entity interface{}) *MockDataTransformer_TransformLocation_Call {
+func (_e *MockDataTransformer_Expecter) TransformLocation(ctx any, entity any) *MockDataTransformer_TransformLocation_Call {
 	return &MockDataTransformer_TransformLocation_Call{Call: _e.mock.On("TransformLocation", ctx, entity)}
 }
 
@@ -702,7 +702,7 @@ type MockDataTransformer_TransformServiceType_Call struct {
 // TransformServiceType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *servicetype.ServiceType
-func (_e *MockDataTransformer_Expecter) TransformServiceType(ctx interface{}, entity interface{}) *MockDataTransformer_TransformServiceType_Call {
+func (_e *MockDataTransformer_Expecter) TransformServiceType(ctx any, entity any) *MockDataTransformer_TransformServiceType_Call {
 	return &MockDataTransformer_TransformServiceType_Call{Call: _e.mock.On("TransformServiceType", ctx, entity)}
 }
 
@@ -759,7 +759,7 @@ type MockDataTransformer_TransformShipmentType_Call struct {
 // TransformShipmentType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmenttype.ShipmentType
-func (_e *MockDataTransformer_Expecter) TransformShipmentType(ctx interface{}, entity interface{}) *MockDataTransformer_TransformShipmentType_Call {
+func (_e *MockDataTransformer_Expecter) TransformShipmentType(ctx any, entity any) *MockDataTransformer_TransformShipmentType_Call {
 	return &MockDataTransformer_TransformShipmentType_Call{Call: _e.mock.On("TransformShipmentType", ctx, entity)}
 }
 

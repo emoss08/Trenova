@@ -76,7 +76,7 @@ type MockEDITemplateRepository_ActivateTemplateVersion_Call struct {
 // ActivateTemplateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ActivateEDITemplateVersionRequest
-func (_e *MockEDITemplateRepository_Expecter) ActivateTemplateVersion(ctx interface{}, req interface{}) *MockEDITemplateRepository_ActivateTemplateVersion_Call {
+func (_e *MockEDITemplateRepository_Expecter) ActivateTemplateVersion(ctx any, req any) *MockEDITemplateRepository_ActivateTemplateVersion_Call {
 	return &MockEDITemplateRepository_ActivateTemplateVersion_Call{Call: _e.mock.On("ActivateTemplateVersion", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEDITemplateRepository_ArchiveTemplateVersion_Call struct {
 // ArchiveTemplateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ArchiveEDITemplateVersionRequest
-func (_e *MockEDITemplateRepository_Expecter) ArchiveTemplateVersion(ctx interface{}, req interface{}) *MockEDITemplateRepository_ArchiveTemplateVersion_Call {
+func (_e *MockEDITemplateRepository_Expecter) ArchiveTemplateVersion(ctx any, req any) *MockEDITemplateRepository_ArchiveTemplateVersion_Call {
 	return &MockEDITemplateRepository_ArchiveTemplateVersion_Call{Call: _e.mock.On("ArchiveTemplateVersion", ctx, req)}
 }
 
@@ -220,7 +220,7 @@ type MockEDITemplateRepository_CreateTemplate_Call struct {
 // CreateTemplate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CreateEDITemplateRequest
-func (_e *MockEDITemplateRepository_Expecter) CreateTemplate(ctx interface{}, req interface{}) *MockEDITemplateRepository_CreateTemplate_Call {
+func (_e *MockEDITemplateRepository_Expecter) CreateTemplate(ctx any, req any) *MockEDITemplateRepository_CreateTemplate_Call {
 	return &MockEDITemplateRepository_CreateTemplate_Call{Call: _e.mock.On("CreateTemplate", ctx, req)}
 }
 
@@ -288,7 +288,7 @@ type MockEDITemplateRepository_CreateTemplateVersion_Call struct {
 // CreateTemplateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CreateEDITemplateVersionRequest
-func (_e *MockEDITemplateRepository_Expecter) CreateTemplateVersion(ctx interface{}, req interface{}) *MockEDITemplateRepository_CreateTemplateVersion_Call {
+func (_e *MockEDITemplateRepository_Expecter) CreateTemplateVersion(ctx any, req any) *MockEDITemplateRepository_CreateTemplateVersion_Call {
 	return &MockEDITemplateRepository_CreateTemplateVersion_Call{Call: _e.mock.On("CreateTemplateVersion", ctx, req)}
 }
 
@@ -364,7 +364,7 @@ type MockEDITemplateRepository_EnsureBase204Template_Call struct {
 // EnsureBase204Template is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockEDITemplateRepository_Expecter) EnsureBase204Template(ctx interface{}, tenantInfo interface{}) *MockEDITemplateRepository_EnsureBase204Template_Call {
+func (_e *MockEDITemplateRepository_Expecter) EnsureBase204Template(ctx any, tenantInfo any) *MockEDITemplateRepository_EnsureBase204Template_Call {
 	return &MockEDITemplateRepository_EnsureBase204Template_Call{Call: _e.mock.On("EnsureBase204Template", ctx, tenantInfo)}
 }
 
@@ -441,7 +441,7 @@ type MockEDITemplateRepository_EnsureBaseTemplate_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - transactionSet edi.TransactionSet
-func (_e *MockEDITemplateRepository_Expecter) EnsureBaseTemplate(ctx interface{}, tenantInfo interface{}, transactionSet interface{}) *MockEDITemplateRepository_EnsureBaseTemplate_Call {
+func (_e *MockEDITemplateRepository_Expecter) EnsureBaseTemplate(ctx any, tenantInfo any, transactionSet any) *MockEDITemplateRepository_EnsureBaseTemplate_Call {
 	return &MockEDITemplateRepository_EnsureBaseTemplate_Call{Call: _e.mock.On("EnsureBaseTemplate", ctx, tenantInfo, transactionSet)}
 }
 
@@ -514,7 +514,7 @@ type MockEDITemplateRepository_GetActiveTemplateVersion_Call struct {
 // GetActiveTemplateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveEDITemplateVersionRequest
-func (_e *MockEDITemplateRepository_Expecter) GetActiveTemplateVersion(ctx interface{}, req interface{}) *MockEDITemplateRepository_GetActiveTemplateVersion_Call {
+func (_e *MockEDITemplateRepository_Expecter) GetActiveTemplateVersion(ctx any, req any) *MockEDITemplateRepository_GetActiveTemplateVersion_Call {
 	return &MockEDITemplateRepository_GetActiveTemplateVersion_Call{Call: _e.mock.On("GetActiveTemplateVersion", ctx, req)}
 }
 
@@ -582,7 +582,7 @@ type MockEDITemplateRepository_GetTemplateByID_Call struct {
 // GetTemplateByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITemplateByIDRequest
-func (_e *MockEDITemplateRepository_Expecter) GetTemplateByID(ctx interface{}, req interface{}) *MockEDITemplateRepository_GetTemplateByID_Call {
+func (_e *MockEDITemplateRepository_Expecter) GetTemplateByID(ctx any, req any) *MockEDITemplateRepository_GetTemplateByID_Call {
 	return &MockEDITemplateRepository_GetTemplateByID_Call{Call: _e.mock.On("GetTemplateByID", ctx, req)}
 }
 
@@ -650,7 +650,7 @@ type MockEDITemplateRepository_GetTemplateVersionByID_Call struct {
 // GetTemplateVersionByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITemplateVersionByIDRequest
-func (_e *MockEDITemplateRepository_Expecter) GetTemplateVersionByID(ctx interface{}, req interface{}) *MockEDITemplateRepository_GetTemplateVersionByID_Call {
+func (_e *MockEDITemplateRepository_Expecter) GetTemplateVersionByID(ctx any, req any) *MockEDITemplateRepository_GetTemplateVersionByID_Call {
 	return &MockEDITemplateRepository_GetTemplateVersionByID_Call{Call: _e.mock.On("GetTemplateVersionByID", ctx, req)}
 }
 
@@ -718,7 +718,7 @@ type MockEDITemplateRepository_ListTemplateScriptLibraries_Call struct {
 // ListTemplateScriptLibraries is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListEDITemplateScriptLibrariesRequest
-func (_e *MockEDITemplateRepository_Expecter) ListTemplateScriptLibraries(ctx interface{}, req interface{}) *MockEDITemplateRepository_ListTemplateScriptLibraries_Call {
+func (_e *MockEDITemplateRepository_Expecter) ListTemplateScriptLibraries(ctx any, req any) *MockEDITemplateRepository_ListTemplateScriptLibraries_Call {
 	return &MockEDITemplateRepository_ListTemplateScriptLibraries_Call{Call: _e.mock.On("ListTemplateScriptLibraries", ctx, req)}
 }
 
@@ -786,7 +786,7 @@ type MockEDITemplateRepository_ListTemplateVersions_Call struct {
 // ListTemplateVersions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListEDITemplateVersionsRequest
-func (_e *MockEDITemplateRepository_Expecter) ListTemplateVersions(ctx interface{}, req interface{}) *MockEDITemplateRepository_ListTemplateVersions_Call {
+func (_e *MockEDITemplateRepository_Expecter) ListTemplateVersions(ctx any, req any) *MockEDITemplateRepository_ListTemplateVersions_Call {
 	return &MockEDITemplateRepository_ListTemplateVersions_Call{Call: _e.mock.On("ListTemplateVersions", ctx, req)}
 }
 
@@ -854,7 +854,7 @@ type MockEDITemplateRepository_ListTemplates_Call struct {
 // ListTemplates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITemplatesRequest
-func (_e *MockEDITemplateRepository_Expecter) ListTemplates(ctx interface{}, req interface{}) *MockEDITemplateRepository_ListTemplates_Call {
+func (_e *MockEDITemplateRepository_Expecter) ListTemplates(ctx any, req any) *MockEDITemplateRepository_ListTemplates_Call {
 	return &MockEDITemplateRepository_ListTemplates_Call{Call: _e.mock.On("ListTemplates", ctx, req)}
 }
 
@@ -922,7 +922,7 @@ type MockEDITemplateRepository_ListTemplatesCursor_Call struct {
 // ListTemplatesCursor is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITemplatesRequest
-func (_e *MockEDITemplateRepository_Expecter) ListTemplatesCursor(ctx interface{}, req interface{}) *MockEDITemplateRepository_ListTemplatesCursor_Call {
+func (_e *MockEDITemplateRepository_Expecter) ListTemplatesCursor(ctx any, req any) *MockEDITemplateRepository_ListTemplatesCursor_Call {
 	return &MockEDITemplateRepository_ListTemplatesCursor_Call{Call: _e.mock.On("ListTemplatesCursor", ctx, req)}
 }
 
@@ -990,7 +990,7 @@ type MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call struct
 // ReplaceTemplateVersionScriptLibraries is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest
-func (_e *MockEDITemplateRepository_Expecter) ReplaceTemplateVersionScriptLibraries(ctx interface{}, req interface{}) *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call {
+func (_e *MockEDITemplateRepository_Expecter) ReplaceTemplateVersionScriptLibraries(ctx any, req any) *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call {
 	return &MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call{Call: _e.mock.On("ReplaceTemplateVersionScriptLibraries", ctx, req)}
 }
 
@@ -1058,7 +1058,7 @@ type MockEDITemplateRepository_ReplaceTemplateVersionSegments_Call struct {
 // ReplaceTemplateVersionSegments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ReplaceEDITemplateVersionSegmentsRequest
-func (_e *MockEDITemplateRepository_Expecter) ReplaceTemplateVersionSegments(ctx interface{}, req interface{}) *MockEDITemplateRepository_ReplaceTemplateVersionSegments_Call {
+func (_e *MockEDITemplateRepository_Expecter) ReplaceTemplateVersionSegments(ctx any, req any) *MockEDITemplateRepository_ReplaceTemplateVersionSegments_Call {
 	return &MockEDITemplateRepository_ReplaceTemplateVersionSegments_Call{Call: _e.mock.On("ReplaceTemplateVersionSegments", ctx, req)}
 }
 
@@ -1126,7 +1126,7 @@ type MockEDITemplateRepository_SelectTemplateOptions_Call struct {
 // SelectTemplateOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EDITemplateSelectOptionsRequest
-func (_e *MockEDITemplateRepository_Expecter) SelectTemplateOptions(ctx interface{}, req interface{}) *MockEDITemplateRepository_SelectTemplateOptions_Call {
+func (_e *MockEDITemplateRepository_Expecter) SelectTemplateOptions(ctx any, req any) *MockEDITemplateRepository_SelectTemplateOptions_Call {
 	return &MockEDITemplateRepository_SelectTemplateOptions_Call{Call: _e.mock.On("SelectTemplateOptions", ctx, req)}
 }
 
@@ -1194,7 +1194,7 @@ type MockEDITemplateRepository_UpdateTemplate_Call struct {
 // UpdateTemplate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDITemplate
-func (_e *MockEDITemplateRepository_Expecter) UpdateTemplate(ctx interface{}, entity interface{}) *MockEDITemplateRepository_UpdateTemplate_Call {
+func (_e *MockEDITemplateRepository_Expecter) UpdateTemplate(ctx any, entity any) *MockEDITemplateRepository_UpdateTemplate_Call {
 	return &MockEDITemplateRepository_UpdateTemplate_Call{Call: _e.mock.On("UpdateTemplate", ctx, entity)}
 }
 
@@ -1262,7 +1262,7 @@ type MockEDITemplateRepository_UpdateTemplateVersionMetadata_Call struct {
 // UpdateTemplateVersionMetadata is a helper method to define mock.On call
 //   - ctx context.Context
 //   - version *edi.EDITemplateVersion
-func (_e *MockEDITemplateRepository_Expecter) UpdateTemplateVersionMetadata(ctx interface{}, version interface{}) *MockEDITemplateRepository_UpdateTemplateVersionMetadata_Call {
+func (_e *MockEDITemplateRepository_Expecter) UpdateTemplateVersionMetadata(ctx any, version any) *MockEDITemplateRepository_UpdateTemplateVersionMetadata_Call {
 	return &MockEDITemplateRepository_UpdateTemplateVersionMetadata_Call{Call: _e.mock.On("UpdateTemplateVersionMetadata", ctx, version)}
 }
 

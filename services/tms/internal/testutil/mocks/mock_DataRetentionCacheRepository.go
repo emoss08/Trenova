@@ -76,7 +76,7 @@ type MockDataRetentionCacheRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDataRetentionRequest
-func (_e *MockDataRetentionCacheRepository_Expecter) Get(ctx interface{}, req interface{}) *MockDataRetentionCacheRepository_Get_Call {
+func (_e *MockDataRetentionCacheRepository_Expecter) Get(ctx any, req any) *MockDataRetentionCacheRepository_Get_Call {
 	return &MockDataRetentionCacheRepository_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -133,7 +133,7 @@ type MockDataRetentionCacheRepository_Invalidate_Call struct {
 // Invalidate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDataRetentionRequest
-func (_e *MockDataRetentionCacheRepository_Expecter) Invalidate(ctx interface{}, req interface{}) *MockDataRetentionCacheRepository_Invalidate_Call {
+func (_e *MockDataRetentionCacheRepository_Expecter) Invalidate(ctx any, req any) *MockDataRetentionCacheRepository_Invalidate_Call {
 	return &MockDataRetentionCacheRepository_Invalidate_Call{Call: _e.mock.On("Invalidate", ctx, req)}
 }
 
@@ -189,7 +189,7 @@ type MockDataRetentionCacheRepository_InvalidateAll_Call struct {
 
 // InvalidateAll is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockDataRetentionCacheRepository_Expecter) InvalidateAll(ctx interface{}) *MockDataRetentionCacheRepository_InvalidateAll_Call {
+func (_e *MockDataRetentionCacheRepository_Expecter) InvalidateAll(ctx any) *MockDataRetentionCacheRepository_InvalidateAll_Call {
 	return &MockDataRetentionCacheRepository_InvalidateAll_Call{Call: _e.mock.On("InvalidateAll", ctx)}
 }
 
@@ -251,7 +251,7 @@ type MockDataRetentionCacheRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockDataRetentionCacheRepository_Expecter) List(ctx interface{}) *MockDataRetentionCacheRepository_List_Call {
+func (_e *MockDataRetentionCacheRepository_Expecter) List(ctx any) *MockDataRetentionCacheRepository_List_Call {
 	return &MockDataRetentionCacheRepository_List_Call{Call: _e.mock.On("List", ctx)}
 }
 
@@ -303,7 +303,7 @@ type MockDataRetentionCacheRepository_Set_Call struct {
 // Set is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.DataRetention
-func (_e *MockDataRetentionCacheRepository_Expecter) Set(ctx interface{}, entity interface{}) *MockDataRetentionCacheRepository_Set_Call {
+func (_e *MockDataRetentionCacheRepository_Expecter) Set(ctx any, entity any) *MockDataRetentionCacheRepository_Set_Call {
 	return &MockDataRetentionCacheRepository_Set_Call{Call: _e.mock.On("Set", ctx, entity)}
 }
 
@@ -360,7 +360,7 @@ type MockDataRetentionCacheRepository_SetList_Call struct {
 // SetList is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entities []*tenant.DataRetention
-func (_e *MockDataRetentionCacheRepository_Expecter) SetList(ctx interface{}, entities interface{}) *MockDataRetentionCacheRepository_SetList_Call {
+func (_e *MockDataRetentionCacheRepository_Expecter) SetList(ctx any, entities any) *MockDataRetentionCacheRepository_SetList_Call {
 	return &MockDataRetentionCacheRepository_SetList_Call{Call: _e.mock.On("SetList", ctx, entities)}
 }
 

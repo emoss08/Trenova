@@ -77,7 +77,7 @@ type MockIAMRepository_CreateAccessPolicy_Call struct {
 // CreateAccessPolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.AccessPolicy
-func (_e *MockIAMRepository_Expecter) CreateAccessPolicy(ctx interface{}, entity interface{}) *MockIAMRepository_CreateAccessPolicy_Call {
+func (_e *MockIAMRepository_Expecter) CreateAccessPolicy(ctx any, entity any) *MockIAMRepository_CreateAccessPolicy_Call {
 	return &MockIAMRepository_CreateAccessPolicy_Call{Call: _e.mock.On("CreateAccessPolicy", ctx, entity)}
 }
 
@@ -145,7 +145,7 @@ type MockIAMRepository_CreateIdentityProvider_Call struct {
 // CreateIdentityProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.IdentityProvider
-func (_e *MockIAMRepository_Expecter) CreateIdentityProvider(ctx interface{}, entity interface{}) *MockIAMRepository_CreateIdentityProvider_Call {
+func (_e *MockIAMRepository_Expecter) CreateIdentityProvider(ctx any, entity any) *MockIAMRepository_CreateIdentityProvider_Call {
 	return &MockIAMRepository_CreateIdentityProvider_Call{Call: _e.mock.On("CreateIdentityProvider", ctx, entity)}
 }
 
@@ -213,7 +213,7 @@ type MockIAMRepository_CreateSCIMDirectory_Call struct {
 // CreateSCIMDirectory is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.SCIMDirectory
-func (_e *MockIAMRepository_Expecter) CreateSCIMDirectory(ctx interface{}, entity interface{}) *MockIAMRepository_CreateSCIMDirectory_Call {
+func (_e *MockIAMRepository_Expecter) CreateSCIMDirectory(ctx any, entity any) *MockIAMRepository_CreateSCIMDirectory_Call {
 	return &MockIAMRepository_CreateSCIMDirectory_Call{Call: _e.mock.On("CreateSCIMDirectory", ctx, entity)}
 }
 
@@ -281,7 +281,7 @@ type MockIAMRepository_CreateSCIMGroupRoleMapping_Call struct {
 // CreateSCIMGroupRoleMapping is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.SCIMGroupRoleMapping
-func (_e *MockIAMRepository_Expecter) CreateSCIMGroupRoleMapping(ctx interface{}, entity interface{}) *MockIAMRepository_CreateSCIMGroupRoleMapping_Call {
+func (_e *MockIAMRepository_Expecter) CreateSCIMGroupRoleMapping(ctx any, entity any) *MockIAMRepository_CreateSCIMGroupRoleMapping_Call {
 	return &MockIAMRepository_CreateSCIMGroupRoleMapping_Call{Call: _e.mock.On("CreateSCIMGroupRoleMapping", ctx, entity)}
 }
 
@@ -349,7 +349,7 @@ type MockIAMRepository_CreateSCIMToken_Call struct {
 // CreateSCIMToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.SCIMToken
-func (_e *MockIAMRepository_Expecter) CreateSCIMToken(ctx interface{}, entity interface{}) *MockIAMRepository_CreateSCIMToken_Call {
+func (_e *MockIAMRepository_Expecter) CreateSCIMToken(ctx any, entity any) *MockIAMRepository_CreateSCIMToken_Call {
 	return &MockIAMRepository_CreateSCIMToken_Call{Call: _e.mock.On("CreateSCIMToken", ctx, entity)}
 }
 
@@ -407,7 +407,7 @@ type MockIAMRepository_DeleteAccessPolicy_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMRepository_Expecter) DeleteAccessPolicy(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMRepository_DeleteAccessPolicy_Call {
+func (_e *MockIAMRepository_Expecter) DeleteAccessPolicy(ctx any, tenantInfo any, id any) *MockIAMRepository_DeleteAccessPolicy_Call {
 	return &MockIAMRepository_DeleteAccessPolicy_Call{Call: _e.mock.On("DeleteAccessPolicy", ctx, tenantInfo, id)}
 }
 
@@ -470,7 +470,7 @@ type MockIAMRepository_DeleteIdentityProvider_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMRepository_Expecter) DeleteIdentityProvider(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMRepository_DeleteIdentityProvider_Call {
+func (_e *MockIAMRepository_Expecter) DeleteIdentityProvider(ctx any, tenantInfo any, id any) *MockIAMRepository_DeleteIdentityProvider_Call {
 	return &MockIAMRepository_DeleteIdentityProvider_Call{Call: _e.mock.On("DeleteIdentityProvider", ctx, tenantInfo, id)}
 }
 
@@ -533,7 +533,7 @@ type MockIAMRepository_DeleteSCIMDirectory_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMRepository_Expecter) DeleteSCIMDirectory(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMRepository_DeleteSCIMDirectory_Call {
+func (_e *MockIAMRepository_Expecter) DeleteSCIMDirectory(ctx any, tenantInfo any, id any) *MockIAMRepository_DeleteSCIMDirectory_Call {
 	return &MockIAMRepository_DeleteSCIMDirectory_Call{Call: _e.mock.On("DeleteSCIMDirectory", ctx, tenantInfo, id)}
 }
 
@@ -596,7 +596,7 @@ type MockIAMRepository_DeleteSCIMGroupRoleMapping_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - sgrmID pulid.ID
-func (_e *MockIAMRepository_Expecter) DeleteSCIMGroupRoleMapping(ctx interface{}, tenantInfo interface{}, sgrmID interface{}) *MockIAMRepository_DeleteSCIMGroupRoleMapping_Call {
+func (_e *MockIAMRepository_Expecter) DeleteSCIMGroupRoleMapping(ctx any, tenantInfo any, sgrmID any) *MockIAMRepository_DeleteSCIMGroupRoleMapping_Call {
 	return &MockIAMRepository_DeleteSCIMGroupRoleMapping_Call{Call: _e.mock.On("DeleteSCIMGroupRoleMapping", ctx, tenantInfo, sgrmID)}
 }
 
@@ -670,7 +670,7 @@ type MockIAMRepository_GetIdentityProvider_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMRepository_Expecter) GetIdentityProvider(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMRepository_GetIdentityProvider_Call {
+func (_e *MockIAMRepository_Expecter) GetIdentityProvider(ctx any, tenantInfo any, id any) *MockIAMRepository_GetIdentityProvider_Call {
 	return &MockIAMRepository_GetIdentityProvider_Call{Call: _e.mock.On("GetIdentityProvider", ctx, tenantInfo, id)}
 }
 
@@ -743,7 +743,7 @@ type MockIAMRepository_GetSCIMDirectory_Call struct {
 // GetSCIMDirectory is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetSCIMDirectoryRequest
-func (_e *MockIAMRepository_Expecter) GetSCIMDirectory(ctx interface{}, req interface{}) *MockIAMRepository_GetSCIMDirectory_Call {
+func (_e *MockIAMRepository_Expecter) GetSCIMDirectory(ctx any, req any) *MockIAMRepository_GetSCIMDirectory_Call {
 	return &MockIAMRepository_GetSCIMDirectory_Call{Call: _e.mock.On("GetSCIMDirectory", ctx, req)}
 }
 
@@ -811,7 +811,7 @@ type MockIAMRepository_ListAccessPolicies_Call struct {
 // ListAccessPolicies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListIAMRequest
-func (_e *MockIAMRepository_Expecter) ListAccessPolicies(ctx interface{}, req interface{}) *MockIAMRepository_ListAccessPolicies_Call {
+func (_e *MockIAMRepository_Expecter) ListAccessPolicies(ctx any, req any) *MockIAMRepository_ListAccessPolicies_Call {
 	return &MockIAMRepository_ListAccessPolicies_Call{Call: _e.mock.On("ListAccessPolicies", ctx, req)}
 }
 
@@ -880,7 +880,7 @@ type MockIAMRepository_ListAuthEvents_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - limit int
-func (_e *MockIAMRepository_Expecter) ListAuthEvents(ctx interface{}, orgID interface{}, limit interface{}) *MockIAMRepository_ListAuthEvents_Call {
+func (_e *MockIAMRepository_Expecter) ListAuthEvents(ctx any, orgID any, limit any) *MockIAMRepository_ListAuthEvents_Call {
 	return &MockIAMRepository_ListAuthEvents_Call{Call: _e.mock.On("ListAuthEvents", ctx, orgID, limit)}
 }
 
@@ -953,7 +953,7 @@ type MockIAMRepository_ListEnabledAccessPolicies_Call struct {
 // ListEnabledAccessPolicies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.IAMPolicyLookupRequest
-func (_e *MockIAMRepository_Expecter) ListEnabledAccessPolicies(ctx interface{}, req interface{}) *MockIAMRepository_ListEnabledAccessPolicies_Call {
+func (_e *MockIAMRepository_Expecter) ListEnabledAccessPolicies(ctx any, req any) *MockIAMRepository_ListEnabledAccessPolicies_Call {
 	return &MockIAMRepository_ListEnabledAccessPolicies_Call{Call: _e.mock.On("ListEnabledAccessPolicies", ctx, req)}
 }
 
@@ -1021,7 +1021,7 @@ type MockIAMRepository_ListExternalIdentities_Call struct {
 // ListExternalIdentities is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListIAMRequest
-func (_e *MockIAMRepository_Expecter) ListExternalIdentities(ctx interface{}, req interface{}) *MockIAMRepository_ListExternalIdentities_Call {
+func (_e *MockIAMRepository_Expecter) ListExternalIdentities(ctx any, req any) *MockIAMRepository_ListExternalIdentities_Call {
 	return &MockIAMRepository_ListExternalIdentities_Call{Call: _e.mock.On("ListExternalIdentities", ctx, req)}
 }
 
@@ -1089,7 +1089,7 @@ type MockIAMRepository_ListIdentityProviders_Call struct {
 // ListIdentityProviders is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListIAMRequest
-func (_e *MockIAMRepository_Expecter) ListIdentityProviders(ctx interface{}, req interface{}) *MockIAMRepository_ListIdentityProviders_Call {
+func (_e *MockIAMRepository_Expecter) ListIdentityProviders(ctx any, req any) *MockIAMRepository_ListIdentityProviders_Call {
 	return &MockIAMRepository_ListIdentityProviders_Call{Call: _e.mock.On("ListIdentityProviders", ctx, req)}
 }
 
@@ -1158,7 +1158,7 @@ type MockIAMRepository_ListMFAAuthenticators_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - limit int
-func (_e *MockIAMRepository_Expecter) ListMFAAuthenticators(ctx interface{}, orgID interface{}, limit interface{}) *MockIAMRepository_ListMFAAuthenticators_Call {
+func (_e *MockIAMRepository_Expecter) ListMFAAuthenticators(ctx any, orgID any, limit any) *MockIAMRepository_ListMFAAuthenticators_Call {
 	return &MockIAMRepository_ListMFAAuthenticators_Call{Call: _e.mock.On("ListMFAAuthenticators", ctx, orgID, limit)}
 }
 
@@ -1233,7 +1233,7 @@ type MockIAMRepository_ListProvisioningAuditRecords_Call struct {
 //   - orgID pulid.ID
 //   - directoryID pulid.ID
 //   - limit int
-func (_e *MockIAMRepository_Expecter) ListProvisioningAuditRecords(ctx interface{}, orgID interface{}, directoryID interface{}, limit interface{}) *MockIAMRepository_ListProvisioningAuditRecords_Call {
+func (_e *MockIAMRepository_Expecter) ListProvisioningAuditRecords(ctx any, orgID any, directoryID any, limit any) *MockIAMRepository_ListProvisioningAuditRecords_Call {
 	return &MockIAMRepository_ListProvisioningAuditRecords_Call{Call: _e.mock.On("ListProvisioningAuditRecords", ctx, orgID, directoryID, limit)}
 }
 
@@ -1312,7 +1312,7 @@ type MockIAMRepository_ListRiskDecisions_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - limit int
-func (_e *MockIAMRepository_Expecter) ListRiskDecisions(ctx interface{}, orgID interface{}, limit interface{}) *MockIAMRepository_ListRiskDecisions_Call {
+func (_e *MockIAMRepository_Expecter) ListRiskDecisions(ctx any, orgID any, limit any) *MockIAMRepository_ListRiskDecisions_Call {
 	return &MockIAMRepository_ListRiskDecisions_Call{Call: _e.mock.On("ListRiskDecisions", ctx, orgID, limit)}
 }
 
@@ -1385,7 +1385,7 @@ type MockIAMRepository_ListSCIMDirectories_Call struct {
 // ListSCIMDirectories is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListSCIMDirectoryRequest
-func (_e *MockIAMRepository_Expecter) ListSCIMDirectories(ctx interface{}, req interface{}) *MockIAMRepository_ListSCIMDirectories_Call {
+func (_e *MockIAMRepository_Expecter) ListSCIMDirectories(ctx any, req any) *MockIAMRepository_ListSCIMDirectories_Call {
 	return &MockIAMRepository_ListSCIMDirectories_Call{Call: _e.mock.On("ListSCIMDirectories", ctx, req)}
 }
 
@@ -1453,7 +1453,7 @@ type MockIAMRepository_ListSCIMGroupRoleMappings_Call struct {
 // ListSCIMGroupRoleMappings is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListSCIMGroupRoleMappingsRequest
-func (_e *MockIAMRepository_Expecter) ListSCIMGroupRoleMappings(ctx interface{}, req interface{}) *MockIAMRepository_ListSCIMGroupRoleMappings_Call {
+func (_e *MockIAMRepository_Expecter) ListSCIMGroupRoleMappings(ctx any, req any) *MockIAMRepository_ListSCIMGroupRoleMappings_Call {
 	return &MockIAMRepository_ListSCIMGroupRoleMappings_Call{Call: _e.mock.On("ListSCIMGroupRoleMappings", ctx, req)}
 }
 
@@ -1522,7 +1522,7 @@ type MockIAMRepository_ListSCIMTokens_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - directoryID pulid.ID
-func (_e *MockIAMRepository_Expecter) ListSCIMTokens(ctx interface{}, orgID interface{}, directoryID interface{}) *MockIAMRepository_ListSCIMTokens_Call {
+func (_e *MockIAMRepository_Expecter) ListSCIMTokens(ctx any, orgID any, directoryID any) *MockIAMRepository_ListSCIMTokens_Call {
 	return &MockIAMRepository_ListSCIMTokens_Call{Call: _e.mock.On("ListSCIMTokens", ctx, orgID, directoryID)}
 }
 
@@ -1596,7 +1596,7 @@ type MockIAMRepository_RevokeSCIMToken_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - tokenID pulid.ID
-func (_e *MockIAMRepository_Expecter) RevokeSCIMToken(ctx interface{}, orgID interface{}, tokenID interface{}) *MockIAMRepository_RevokeSCIMToken_Call {
+func (_e *MockIAMRepository_Expecter) RevokeSCIMToken(ctx any, orgID any, tokenID any) *MockIAMRepository_RevokeSCIMToken_Call {
 	return &MockIAMRepository_RevokeSCIMToken_Call{Call: _e.mock.On("RevokeSCIMToken", ctx, orgID, tokenID)}
 }
 
@@ -1669,7 +1669,7 @@ type MockIAMRepository_UpdateAccessPolicy_Call struct {
 // UpdateAccessPolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.AccessPolicy
-func (_e *MockIAMRepository_Expecter) UpdateAccessPolicy(ctx interface{}, entity interface{}) *MockIAMRepository_UpdateAccessPolicy_Call {
+func (_e *MockIAMRepository_Expecter) UpdateAccessPolicy(ctx any, entity any) *MockIAMRepository_UpdateAccessPolicy_Call {
 	return &MockIAMRepository_UpdateAccessPolicy_Call{Call: _e.mock.On("UpdateAccessPolicy", ctx, entity)}
 }
 
@@ -1737,7 +1737,7 @@ type MockIAMRepository_UpdateIdentityProvider_Call struct {
 // UpdateIdentityProvider is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.IdentityProvider
-func (_e *MockIAMRepository_Expecter) UpdateIdentityProvider(ctx interface{}, entity interface{}) *MockIAMRepository_UpdateIdentityProvider_Call {
+func (_e *MockIAMRepository_Expecter) UpdateIdentityProvider(ctx any, entity any) *MockIAMRepository_UpdateIdentityProvider_Call {
 	return &MockIAMRepository_UpdateIdentityProvider_Call{Call: _e.mock.On("UpdateIdentityProvider", ctx, entity)}
 }
 
@@ -1805,7 +1805,7 @@ type MockIAMRepository_UpdateSCIMDirectory_Call struct {
 // UpdateSCIMDirectory is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.SCIMDirectory
-func (_e *MockIAMRepository_Expecter) UpdateSCIMDirectory(ctx interface{}, entity interface{}) *MockIAMRepository_UpdateSCIMDirectory_Call {
+func (_e *MockIAMRepository_Expecter) UpdateSCIMDirectory(ctx any, entity any) *MockIAMRepository_UpdateSCIMDirectory_Call {
 	return &MockIAMRepository_UpdateSCIMDirectory_Call{Call: _e.mock.On("UpdateSCIMDirectory", ctx, entity)}
 }
 
@@ -1873,7 +1873,7 @@ type MockIAMRepository_UpdateSCIMGroupRoleMapping_Call struct {
 // UpdateSCIMGroupRoleMapping is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *iam.SCIMGroupRoleMapping
-func (_e *MockIAMRepository_Expecter) UpdateSCIMGroupRoleMapping(ctx interface{}, entity interface{}) *MockIAMRepository_UpdateSCIMGroupRoleMapping_Call {
+func (_e *MockIAMRepository_Expecter) UpdateSCIMGroupRoleMapping(ctx any, entity any) *MockIAMRepository_UpdateSCIMGroupRoleMapping_Call {
 	return &MockIAMRepository_UpdateSCIMGroupRoleMapping_Call{Call: _e.mock.On("UpdateSCIMGroupRoleMapping", ctx, entity)}
 }
 

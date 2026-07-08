@@ -76,7 +76,7 @@ type MockFleetCodeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fleetcode.FleetCode
-func (_e *MockFleetCodeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockFleetCodeRepository_Create_Call {
+func (_e *MockFleetCodeRepository_Expecter) Create(ctx any, entity any) *MockFleetCodeRepository_Create_Call {
 	return &MockFleetCodeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockFleetCodeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFleetCodeByIDRequest
-func (_e *MockFleetCodeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockFleetCodeRepository_GetByID_Call {
+func (_e *MockFleetCodeRepository_Expecter) GetByID(ctx any, req any) *MockFleetCodeRepository_GetByID_Call {
 	return &MockFleetCodeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockFleetCodeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListFleetCodesRequest
-func (_e *MockFleetCodeRepository_Expecter) List(ctx interface{}, req interface{}) *MockFleetCodeRepository_List_Call {
+func (_e *MockFleetCodeRepository_Expecter) List(ctx any, req any) *MockFleetCodeRepository_List_Call {
 	return &MockFleetCodeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockFleetCodeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockFleetCodeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockFleetCodeRepository_SelectOptions_Call {
+func (_e *MockFleetCodeRepository_Expecter) SelectOptions(ctx any, req any) *MockFleetCodeRepository_SelectOptions_Call {
 	return &MockFleetCodeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockFleetCodeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fleetcode.FleetCode
-func (_e *MockFleetCodeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockFleetCodeRepository_Update_Call {
+func (_e *MockFleetCodeRepository_Expecter) Update(ctx any, entity any) *MockFleetCodeRepository_Update_Call {
 	return &MockFleetCodeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

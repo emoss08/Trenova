@@ -74,7 +74,7 @@ type MockAuditBufferRepository_Pop_Call struct {
 // Pop is a helper method to define mock.On call
 //   - ctx context.Context
 //   - count int
-func (_e *MockAuditBufferRepository_Expecter) Pop(ctx interface{}, count interface{}) *MockAuditBufferRepository_Pop_Call {
+func (_e *MockAuditBufferRepository_Expecter) Pop(ctx any, count any) *MockAuditBufferRepository_Pop_Call {
 	return &MockAuditBufferRepository_Pop_Call{Call: _e.mock.On("Pop", ctx, count)}
 }
 
@@ -143,7 +143,7 @@ type MockAuditBufferRepository_PopTenantBatches_Call struct {
 //   - ctx context.Context
 //   - batchSize int
 //   - totalLimit int
-func (_e *MockAuditBufferRepository_Expecter) PopTenantBatches(ctx interface{}, batchSize interface{}, totalLimit interface{}) *MockAuditBufferRepository_PopTenantBatches_Call {
+func (_e *MockAuditBufferRepository_Expecter) PopTenantBatches(ctx any, batchSize any, totalLimit any) *MockAuditBufferRepository_PopTenantBatches_Call {
 	return &MockAuditBufferRepository_PopTenantBatches_Call{Call: _e.mock.On("PopTenantBatches", ctx, batchSize, totalLimit)}
 }
 
@@ -205,7 +205,7 @@ type MockAuditBufferRepository_Push_Call struct {
 // Push is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entry *audit.Entry
-func (_e *MockAuditBufferRepository_Expecter) Push(ctx interface{}, entry interface{}) *MockAuditBufferRepository_Push_Call {
+func (_e *MockAuditBufferRepository_Expecter) Push(ctx any, entry any) *MockAuditBufferRepository_Push_Call {
 	return &MockAuditBufferRepository_Push_Call{Call: _e.mock.On("Push", ctx, entry)}
 }
 
@@ -262,7 +262,7 @@ type MockAuditBufferRepository_PushBatch_Call struct {
 // PushBatch is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entries []*audit.Entry
-func (_e *MockAuditBufferRepository_Expecter) PushBatch(ctx interface{}, entries interface{}) *MockAuditBufferRepository_PushBatch_Call {
+func (_e *MockAuditBufferRepository_Expecter) PushBatch(ctx any, entries any) *MockAuditBufferRepository_PushBatch_Call {
 	return &MockAuditBufferRepository_PushBatch_Call{Call: _e.mock.On("PushBatch", ctx, entries)}
 }
 
@@ -327,7 +327,7 @@ type MockAuditBufferRepository_Size_Call struct {
 
 // Size is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockAuditBufferRepository_Expecter) Size(ctx interface{}) *MockAuditBufferRepository_Size_Call {
+func (_e *MockAuditBufferRepository_Expecter) Size(ctx any) *MockAuditBufferRepository_Size_Call {
 	return &MockAuditBufferRepository_Size_Call{Call: _e.mock.On("Size", ctx)}
 }
 

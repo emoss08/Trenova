@@ -76,7 +76,7 @@ type MockDotHazmatReferenceRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDotHazmatReferenceByIDRequest
-func (_e *MockDotHazmatReferenceRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDotHazmatReferenceRepository_GetByID_Call {
+func (_e *MockDotHazmatReferenceRepository_Expecter) GetByID(ctx any, req any) *MockDotHazmatReferenceRepository_GetByID_Call {
 	return &MockDotHazmatReferenceRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockDotHazmatReferenceRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockDotHazmatReferenceRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockDotHazmatReferenceRepository_SelectOptions_Call {
+func (_e *MockDotHazmatReferenceRepository_Expecter) SelectOptions(ctx any, req any) *MockDotHazmatReferenceRepository_SelectOptions_Call {
 	return &MockDotHazmatReferenceRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 

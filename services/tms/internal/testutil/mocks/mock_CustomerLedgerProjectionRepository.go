@@ -63,7 +63,7 @@ type MockCustomerLedgerProjectionRepository_AppendEntries_Call struct {
 // AppendEntries is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entries []*customerledger.Entry
-func (_e *MockCustomerLedgerProjectionRepository_Expecter) AppendEntries(ctx interface{}, entries interface{}) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
+func (_e *MockCustomerLedgerProjectionRepository_Expecter) AppendEntries(ctx any, entries any) *MockCustomerLedgerProjectionRepository_AppendEntries_Call {
 	return &MockCustomerLedgerProjectionRepository_AppendEntries_Call{Call: _e.mock.On("AppendEntries", ctx, entries)}
 }
 

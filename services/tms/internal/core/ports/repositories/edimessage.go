@@ -14,6 +14,8 @@ type ListEDIMessagesRequest struct {
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
 	PartnerID      pulid.ID                 `json:"partnerId"`
+	TransferID     pulid.ID                 `json:"transferId"`
+	InboundFileID  pulid.ID                 `json:"inboundFileId"`
 	Status         edi.MessageStatus        `json:"status"`
 	Query          string                   `json:"query"`
 	GeneratedFrom  int64                    `json:"generatedFrom"`

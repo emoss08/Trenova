@@ -76,7 +76,7 @@ type MockDispatchControlRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *dispatchcontrol.DispatchControl
-func (_e *MockDispatchControlRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDispatchControlRepository_Create_Call {
+func (_e *MockDispatchControlRepository_Expecter) Create(ctx any, entity any) *MockDispatchControlRepository_Create_Call {
 	return &MockDispatchControlRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockDispatchControlRepository_GetByOrgID_Call struct {
 // GetByOrgID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDispatchControlRequest
-func (_e *MockDispatchControlRepository_Expecter) GetByOrgID(ctx interface{}, req interface{}) *MockDispatchControlRepository_GetByOrgID_Call {
+func (_e *MockDispatchControlRepository_Expecter) GetByOrgID(ctx any, req any) *MockDispatchControlRepository_GetByOrgID_Call {
 	return &MockDispatchControlRepository_GetByOrgID_Call{Call: _e.mock.On("GetByOrgID", ctx, req)}
 }
 
@@ -213,7 +213,7 @@ type MockDispatchControlRepository_GetOrCreate_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockDispatchControlRepository_Expecter) GetOrCreate(ctx interface{}, orgID interface{}, buID interface{}) *MockDispatchControlRepository_GetOrCreate_Call {
+func (_e *MockDispatchControlRepository_Expecter) GetOrCreate(ctx any, orgID any, buID any) *MockDispatchControlRepository_GetOrCreate_Call {
 	return &MockDispatchControlRepository_GetOrCreate_Call{Call: _e.mock.On("GetOrCreate", ctx, orgID, buID)}
 }
 
@@ -286,7 +286,7 @@ type MockDispatchControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *dispatchcontrol.DispatchControl
-func (_e *MockDispatchControlRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDispatchControlRepository_Update_Call {
+func (_e *MockDispatchControlRepository_Expecter) Update(ctx any, entity any) *MockDispatchControlRepository_Update_Call {
 	return &MockDispatchControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

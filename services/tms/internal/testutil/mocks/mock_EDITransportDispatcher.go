@@ -66,7 +66,7 @@ type MockEDITransportDispatcher_ArchiveInbound_Call struct {
 //   - method edi.ConnectionMethod
 //   - req *services.EDIInboundFetchRequest
 //   - remotePath string
-func (_e *MockEDITransportDispatcher_Expecter) ArchiveInbound(ctx interface{}, method interface{}, req interface{}, remotePath interface{}) *MockEDITransportDispatcher_ArchiveInbound_Call {
+func (_e *MockEDITransportDispatcher_Expecter) ArchiveInbound(ctx any, method any, req any, remotePath any) *MockEDITransportDispatcher_ArchiveInbound_Call {
 	return &MockEDITransportDispatcher_ArchiveInbound_Call{Call: _e.mock.On("ArchiveInbound", ctx, method, req, remotePath)}
 }
 
@@ -145,7 +145,7 @@ type MockEDITransportDispatcher_Deliver_Call struct {
 //   - ctx context.Context
 //   - method edi.ConnectionMethod
 //   - req *services.EDITransportRequest
-func (_e *MockEDITransportDispatcher_Expecter) Deliver(ctx interface{}, method interface{}, req interface{}) *MockEDITransportDispatcher_Deliver_Call {
+func (_e *MockEDITransportDispatcher_Expecter) Deliver(ctx any, method any, req any) *MockEDITransportDispatcher_Deliver_Call {
 	return &MockEDITransportDispatcher_Deliver_Call{Call: _e.mock.On("Deliver", ctx, method, req)}
 }
 
@@ -219,7 +219,7 @@ type MockEDITransportDispatcher_FetchInbound_Call struct {
 //   - ctx context.Context
 //   - method edi.ConnectionMethod
 //   - req *services.EDIInboundFetchRequest
-func (_e *MockEDITransportDispatcher_Expecter) FetchInbound(ctx interface{}, method interface{}, req interface{}) *MockEDITransportDispatcher_FetchInbound_Call {
+func (_e *MockEDITransportDispatcher_Expecter) FetchInbound(ctx any, method any, req any) *MockEDITransportDispatcher_FetchInbound_Call {
 	return &MockEDITransportDispatcher_FetchInbound_Call{Call: _e.mock.On("FetchInbound", ctx, method, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDITransportDispatcher_Supports_Call struct {
 
 // Supports is a helper method to define mock.On call
 //   - method edi.ConnectionMethod
-func (_e *MockEDITransportDispatcher_Expecter) Supports(method interface{}) *MockEDITransportDispatcher_Supports_Call {
+func (_e *MockEDITransportDispatcher_Expecter) Supports(method any) *MockEDITransportDispatcher_Supports_Call {
 	return &MockEDITransportDispatcher_Supports_Call{Call: _e.mock.On("Supports", method)}
 }
 
@@ -344,7 +344,7 @@ type MockEDITransportDispatcher_TestConnection_Call struct {
 //   - ctx context.Context
 //   - method edi.ConnectionMethod
 //   - req *services.EDITransportRequest
-func (_e *MockEDITransportDispatcher_Expecter) TestConnection(ctx interface{}, method interface{}, req interface{}) *MockEDITransportDispatcher_TestConnection_Call {
+func (_e *MockEDITransportDispatcher_Expecter) TestConnection(ctx any, method any, req any) *MockEDITransportDispatcher_TestConnection_Call {
 	return &MockEDITransportDispatcher_TestConnection_Call{Call: _e.mock.On("TestConnection", ctx, method, req)}
 }
 

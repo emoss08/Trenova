@@ -76,7 +76,7 @@ type MockDistanceOverrideRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distanceoverride.DistanceOverride
-func (_e *MockDistanceOverrideRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDistanceOverrideRepository_Create_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) Create(ctx any, entity any) *MockDistanceOverrideRepository_Create_Call {
 	return &MockDistanceOverrideRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -133,7 +133,7 @@ type MockDistanceOverrideRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteDistanceOverrideRequest
-func (_e *MockDistanceOverrideRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_Delete_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) Delete(ctx any, req any) *MockDistanceOverrideRepository_Delete_Call {
 	return &MockDistanceOverrideRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockDistanceOverrideRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDistanceOverrideByIDRequest
-func (_e *MockDistanceOverrideRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_GetByID_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) GetByID(ctx any, req any) *MockDistanceOverrideRepository_GetByID_Call {
 	return &MockDistanceOverrideRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -270,7 +270,7 @@ type MockDistanceOverrideRepository_GetByRouteSignature_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - routeSignature string
-func (_e *MockDistanceOverrideRepository_Expecter) GetByRouteSignature(ctx interface{}, tenantInfo interface{}, routeSignature interface{}) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) GetByRouteSignature(ctx any, tenantInfo any, routeSignature any) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
 	return &MockDistanceOverrideRepository_GetByRouteSignature_Call{Call: _e.mock.On("GetByRouteSignature", ctx, tenantInfo, routeSignature)}
 }
 
@@ -343,7 +343,7 @@ type MockDistanceOverrideRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDistanceOverrideRequest
-func (_e *MockDistanceOverrideRepository_Expecter) List(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_List_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) List(ctx any, req any) *MockDistanceOverrideRepository_List_Call {
 	return &MockDistanceOverrideRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -411,7 +411,7 @@ type MockDistanceOverrideRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distanceoverride.DistanceOverride
-func (_e *MockDistanceOverrideRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDistanceOverrideRepository_Update_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) Update(ctx any, entity any) *MockDistanceOverrideRepository_Update_Call {
 	return &MockDistanceOverrideRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

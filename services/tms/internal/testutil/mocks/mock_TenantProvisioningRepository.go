@@ -74,7 +74,7 @@ type MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call struct {
 // UpsertProvisioningSnapshot is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *tenant.ProvisioningRequest
-func (_e *MockTenantProvisioningRepository_Expecter) UpsertProvisioningSnapshot(ctx interface{}, req interface{}) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
+func (_e *MockTenantProvisioningRepository_Expecter) UpsertProvisioningSnapshot(ctx any, req any) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
 	return &MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call{Call: _e.mock.On("UpsertProvisioningSnapshot", ctx, req)}
 }
 

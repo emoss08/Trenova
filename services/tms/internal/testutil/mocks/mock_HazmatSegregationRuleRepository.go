@@ -76,7 +76,7 @@ type MockHazmatSegregationRuleRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazmatsegregationrule.HazmatSegregationRule
-func (_e *MockHazmatSegregationRuleRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockHazmatSegregationRuleRepository_Create_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) Create(ctx any, entity any) *MockHazmatSegregationRuleRepository_Create_Call {
 	return &MockHazmatSegregationRuleRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockHazmatSegregationRuleRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHazmatSegregationRuleByIDRequest
-func (_e *MockHazmatSegregationRuleRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockHazmatSegregationRuleRepository_GetByID_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) GetByID(ctx any, req any) *MockHazmatSegregationRuleRepository_GetByID_Call {
 	return &MockHazmatSegregationRuleRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockHazmatSegregationRuleRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListHazmatSegregationRuleRequest
-func (_e *MockHazmatSegregationRuleRepository_Expecter) List(ctx interface{}, req interface{}) *MockHazmatSegregationRuleRepository_List_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) List(ctx any, req any) *MockHazmatSegregationRuleRepository_List_Call {
 	return &MockHazmatSegregationRuleRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockHazmatSegregationRuleRepository_ListActiveByTenant_Call struct {
 // ListActiveByTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockHazmatSegregationRuleRepository_Expecter) ListActiveByTenant(ctx interface{}, tenantInfo interface{}) *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) ListActiveByTenant(ctx any, tenantInfo any) *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call {
 	return &MockHazmatSegregationRuleRepository_ListActiveByTenant_Call{Call: _e.mock.On("ListActiveByTenant", ctx, tenantInfo)}
 }
 
@@ -348,7 +348,7 @@ type MockHazmatSegregationRuleRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazmatsegregationrule.HazmatSegregationRule
-func (_e *MockHazmatSegregationRuleRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockHazmatSegregationRuleRepository_Update_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) Update(ctx any, entity any) *MockHazmatSegregationRuleRepository_Update_Call {
 	return &MockHazmatSegregationRuleRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

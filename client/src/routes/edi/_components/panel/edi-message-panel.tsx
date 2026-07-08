@@ -1,8 +1,5 @@
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import {
-  EDIMessageAckStatusBadge,
-  EDIMessageDeliveryStatusBadge,
-} from "@/components/status-badge";
+import { EDIMessageAckStatusBadge, EDIMessageDeliveryStatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -15,13 +12,9 @@ import type { EDIMessage, EDIMessageDeliveryStatus } from "@/types/edi";
 import { Operation, Resource } from "@/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { EDIRawX12Viewer } from "./edi-raw-x12-viewer";
 import { invalidateEDIMessages } from "./edi-panel-invalidation";
-import {
-  DetailField,
-  DetailSection,
-  EDIPartnerRef,
-  EDIRawContent,
-} from "./edi-panel-primitives";
+import { DetailField, DetailSection, EDIPartnerRef } from "./edi-panel-primitives";
 
 export const RETRYABLE_DELIVERY_STATUSES = new Set<EDIMessageDeliveryStatus>([
   "Queued",
@@ -169,7 +162,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
         </DetailSection>
         {detail.rawX12 && (
           <DetailSection title="Raw X12" fullWidth>
-            <EDIRawContent content={detail.rawX12} />
+            <EDIRawX12Viewer content={detail.rawX12} />
           </DetailSection>
         )}
       </div>

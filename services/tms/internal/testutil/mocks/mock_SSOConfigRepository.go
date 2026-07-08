@@ -76,7 +76,7 @@ type MockSSOConfigRepository_GetByOrganizationID_Call struct {
 //   - ctx context.Context
 //   - organizationID pulid.ID
 //   - provider tenant.SSOProvider
-func (_e *MockSSOConfigRepository_Expecter) GetByOrganizationID(ctx interface{}, organizationID interface{}, provider interface{}) *MockSSOConfigRepository_GetByOrganizationID_Call {
+func (_e *MockSSOConfigRepository_Expecter) GetByOrganizationID(ctx any, organizationID any, provider any) *MockSSOConfigRepository_GetByOrganizationID_Call {
 	return &MockSSOConfigRepository_GetByOrganizationID_Call{Call: _e.mock.On("GetByOrganizationID", ctx, organizationID, provider)}
 }
 
@@ -149,7 +149,7 @@ type MockSSOConfigRepository_GetEnabledByID_Call struct {
 // GetEnabledByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - providerID pulid.ID
-func (_e *MockSSOConfigRepository_Expecter) GetEnabledByID(ctx interface{}, providerID interface{}) *MockSSOConfigRepository_GetEnabledByID_Call {
+func (_e *MockSSOConfigRepository_Expecter) GetEnabledByID(ctx any, providerID any) *MockSSOConfigRepository_GetEnabledByID_Call {
 	return &MockSSOConfigRepository_GetEnabledByID_Call{Call: _e.mock.On("GetEnabledByID", ctx, providerID)}
 }
 
@@ -218,7 +218,7 @@ type MockSSOConfigRepository_GetEnabledByOrganizationID_Call struct {
 //   - ctx context.Context
 //   - organizationID pulid.ID
 //   - provider tenant.SSOProvider
-func (_e *MockSSOConfigRepository_Expecter) GetEnabledByOrganizationID(ctx interface{}, organizationID interface{}, provider interface{}) *MockSSOConfigRepository_GetEnabledByOrganizationID_Call {
+func (_e *MockSSOConfigRepository_Expecter) GetEnabledByOrganizationID(ctx any, organizationID any, provider any) *MockSSOConfigRepository_GetEnabledByOrganizationID_Call {
 	return &MockSSOConfigRepository_GetEnabledByOrganizationID_Call{Call: _e.mock.On("GetEnabledByOrganizationID", ctx, organizationID, provider)}
 }
 
@@ -291,7 +291,7 @@ type MockSSOConfigRepository_ListEnabledByOrganizationID_Call struct {
 // ListEnabledByOrganizationID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - organizationID pulid.ID
-func (_e *MockSSOConfigRepository_Expecter) ListEnabledByOrganizationID(ctx interface{}, organizationID interface{}) *MockSSOConfigRepository_ListEnabledByOrganizationID_Call {
+func (_e *MockSSOConfigRepository_Expecter) ListEnabledByOrganizationID(ctx any, organizationID any) *MockSSOConfigRepository_ListEnabledByOrganizationID_Call {
 	return &MockSSOConfigRepository_ListEnabledByOrganizationID_Call{Call: _e.mock.On("ListEnabledByOrganizationID", ctx, organizationID)}
 }
 
@@ -359,7 +359,7 @@ type MockSSOConfigRepository_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - config *tenant.SSOConfig
-func (_e *MockSSOConfigRepository_Expecter) Save(ctx interface{}, config interface{}) *MockSSOConfigRepository_Save_Call {
+func (_e *MockSSOConfigRepository_Expecter) Save(ctx any, config any) *MockSSOConfigRepository_Save_Call {
 	return &MockSSOConfigRepository_Save_Call{Call: _e.mock.On("Save", ctx, config)}
 }
 

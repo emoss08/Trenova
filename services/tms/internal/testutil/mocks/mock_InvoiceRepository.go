@@ -75,7 +75,7 @@ type MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call struct {
 // CountPostedReconciliationDiscrepancies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CountPostedInvoiceReconciliationDiscrepanciesRequest
-func (_e *MockInvoiceRepository_Expecter) CountPostedReconciliationDiscrepancies(ctx interface{}, req interface{}) *MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call {
+func (_e *MockInvoiceRepository_Expecter) CountPostedReconciliationDiscrepancies(ctx any, req any) *MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call {
 	return &MockInvoiceRepository_CountPostedReconciliationDiscrepancies_Call{Call: _e.mock.On("CountPostedReconciliationDiscrepancies", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockInvoiceRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *invoice.Invoice
-func (_e *MockInvoiceRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockInvoiceRepository_Create_Call {
+func (_e *MockInvoiceRepository_Expecter) Create(ctx any, entity any) *MockInvoiceRepository_Create_Call {
 	return &MockInvoiceRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -211,7 +211,7 @@ type MockInvoiceRepository_CreateDocumentShareToken_Call struct {
 // CreateDocumentShareToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token *invoice.DocumentShareToken
-func (_e *MockInvoiceRepository_Expecter) CreateDocumentShareToken(ctx interface{}, token interface{}) *MockInvoiceRepository_CreateDocumentShareToken_Call {
+func (_e *MockInvoiceRepository_Expecter) CreateDocumentShareToken(ctx any, token any) *MockInvoiceRepository_CreateDocumentShareToken_Call {
 	return &MockInvoiceRepository_CreateDocumentShareToken_Call{Call: _e.mock.On("CreateDocumentShareToken", ctx, token)}
 }
 
@@ -280,7 +280,7 @@ type MockInvoiceRepository_CreateEmailAttempt_Call struct {
 //   - ctx context.Context
 //   - attempt *invoice.EmailAttempt
 //   - attachments []*invoice.EmailAttemptAttachment
-func (_e *MockInvoiceRepository_Expecter) CreateEmailAttempt(ctx interface{}, attempt interface{}, attachments interface{}) *MockInvoiceRepository_CreateEmailAttempt_Call {
+func (_e *MockInvoiceRepository_Expecter) CreateEmailAttempt(ctx any, attempt any, attachments any) *MockInvoiceRepository_CreateEmailAttempt_Call {
 	return &MockInvoiceRepository_CreateEmailAttempt_Call{Call: _e.mock.On("CreateEmailAttempt", ctx, attempt, attachments)}
 }
 
@@ -353,7 +353,7 @@ type MockInvoiceRepository_GetByBillingQueueItemID_Call struct {
 // GetByBillingQueueItemID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceByBillingQueueItemIDRequest
-func (_e *MockInvoiceRepository_Expecter) GetByBillingQueueItemID(ctx interface{}, req interface{}) *MockInvoiceRepository_GetByBillingQueueItemID_Call {
+func (_e *MockInvoiceRepository_Expecter) GetByBillingQueueItemID(ctx any, req any) *MockInvoiceRepository_GetByBillingQueueItemID_Call {
 	return &MockInvoiceRepository_GetByBillingQueueItemID_Call{Call: _e.mock.On("GetByBillingQueueItemID", ctx, req)}
 }
 
@@ -421,7 +421,7 @@ type MockInvoiceRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceByIDRequest
-func (_e *MockInvoiceRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockInvoiceRepository_GetByID_Call {
+func (_e *MockInvoiceRepository_Expecter) GetByID(ctx any, req any) *MockInvoiceRepository_GetByID_Call {
 	return &MockInvoiceRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -489,7 +489,7 @@ type MockInvoiceRepository_GetDocumentShareToken_Call struct {
 // GetDocumentShareToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceDocumentShareTokenRequest
-func (_e *MockInvoiceRepository_Expecter) GetDocumentShareToken(ctx interface{}, req interface{}) *MockInvoiceRepository_GetDocumentShareToken_Call {
+func (_e *MockInvoiceRepository_Expecter) GetDocumentShareToken(ctx any, req any) *MockInvoiceRepository_GetDocumentShareToken_Call {
 	return &MockInvoiceRepository_GetDocumentShareToken_Call{Call: _e.mock.On("GetDocumentShareToken", ctx, req)}
 }
 
@@ -557,7 +557,7 @@ type MockInvoiceRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListInvoicesRequest
-func (_e *MockInvoiceRepository_Expecter) List(ctx interface{}, req interface{}) *MockInvoiceRepository_List_Call {
+func (_e *MockInvoiceRepository_Expecter) List(ctx any, req any) *MockInvoiceRepository_List_Call {
 	return &MockInvoiceRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -625,7 +625,7 @@ type MockInvoiceRepository_ListAttachments_Call struct {
 // ListAttachments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListInvoiceEmailAttemptsRequest
-func (_e *MockInvoiceRepository_Expecter) ListAttachments(ctx interface{}, req interface{}) *MockInvoiceRepository_ListAttachments_Call {
+func (_e *MockInvoiceRepository_Expecter) ListAttachments(ctx any, req any) *MockInvoiceRepository_ListAttachments_Call {
 	return &MockInvoiceRepository_ListAttachments_Call{Call: _e.mock.On("ListAttachments", ctx, req)}
 }
 
@@ -693,7 +693,7 @@ type MockInvoiceRepository_ListEmailAttempts_Call struct {
 // ListEmailAttempts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListInvoiceEmailAttemptsRequest
-func (_e *MockInvoiceRepository_Expecter) ListEmailAttempts(ctx interface{}, req interface{}) *MockInvoiceRepository_ListEmailAttempts_Call {
+func (_e *MockInvoiceRepository_Expecter) ListEmailAttempts(ctx any, req any) *MockInvoiceRepository_ListEmailAttempts_Call {
 	return &MockInvoiceRepository_ListEmailAttempts_Call{Call: _e.mock.On("ListEmailAttempts", ctx, req)}
 }
 
@@ -751,7 +751,7 @@ type MockInvoiceRepository_SyncEmailAttemptsForMessage_Call struct {
 //   - ctx context.Context
 //   - messageID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockInvoiceRepository_Expecter) SyncEmailAttemptsForMessage(ctx interface{}, messageID interface{}, tenantInfo interface{}) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+func (_e *MockInvoiceRepository_Expecter) SyncEmailAttemptsForMessage(ctx any, messageID any, tenantInfo any) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
 	return &MockInvoiceRepository_SyncEmailAttemptsForMessage_Call{Call: _e.mock.On("SyncEmailAttemptsForMessage", ctx, messageID, tenantInfo)}
 }
 
@@ -824,7 +824,7 @@ type MockInvoiceRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *invoice.Invoice
-func (_e *MockInvoiceRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockInvoiceRepository_Update_Call {
+func (_e *MockInvoiceRepository_Expecter) Update(ctx any, entity any) *MockInvoiceRepository_Update_Call {
 	return &MockInvoiceRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -892,7 +892,7 @@ type MockInvoiceRepository_UpdateDocumentShareToken_Call struct {
 // UpdateDocumentShareToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token *invoice.DocumentShareToken
-func (_e *MockInvoiceRepository_Expecter) UpdateDocumentShareToken(ctx interface{}, token interface{}) *MockInvoiceRepository_UpdateDocumentShareToken_Call {
+func (_e *MockInvoiceRepository_Expecter) UpdateDocumentShareToken(ctx any, token any) *MockInvoiceRepository_UpdateDocumentShareToken_Call {
 	return &MockInvoiceRepository_UpdateDocumentShareToken_Call{Call: _e.mock.On("UpdateDocumentShareToken", ctx, token)}
 }
 
@@ -960,7 +960,7 @@ type MockInvoiceRepository_UpsertAttachments_Call struct {
 // UpsertAttachments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.UpsertInvoiceAttachmentsRequest
-func (_e *MockInvoiceRepository_Expecter) UpsertAttachments(ctx interface{}, req interface{}) *MockInvoiceRepository_UpsertAttachments_Call {
+func (_e *MockInvoiceRepository_Expecter) UpsertAttachments(ctx any, req any) *MockInvoiceRepository_UpsertAttachments_Call {
 	return &MockInvoiceRepository_UpsertAttachments_Call{Call: _e.mock.On("UpsertAttachments", ctx, req)}
 }
 

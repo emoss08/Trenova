@@ -75,7 +75,7 @@ type MockEDITransport_Deliver_Call struct {
 // Deliver is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.EDITransportRequest
-func (_e *MockEDITransport_Expecter) Deliver(ctx interface{}, req interface{}) *MockEDITransport_Deliver_Call {
+func (_e *MockEDITransport_Expecter) Deliver(ctx any, req any) *MockEDITransport_Deliver_Call {
 	return &MockEDITransport_Deliver_Call{Call: _e.mock.On("Deliver", ctx, req)}
 }
 

@@ -63,7 +63,7 @@ type MockShipmentEventObserver_OnShipmentEvent_Call struct {
 // OnShipmentEvent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - event *shipmentevent.Event
-func (_e *MockShipmentEventObserver_Expecter) OnShipmentEvent(ctx interface{}, event interface{}) *MockShipmentEventObserver_OnShipmentEvent_Call {
+func (_e *MockShipmentEventObserver_Expecter) OnShipmentEvent(ctx any, event any) *MockShipmentEventObserver_OnShipmentEvent_Call {
 	return &MockShipmentEventObserver_OnShipmentEvent_Call{Call: _e.mock.On("OnShipmentEvent", ctx, event)}
 }
 

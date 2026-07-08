@@ -66,7 +66,7 @@ type MockRoleRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - role *permission.Role
-func (_e *MockRoleRepository_Expecter) Create(ctx interface{}, role interface{}) *MockRoleRepository_Create_Call {
+func (_e *MockRoleRepository_Expecter) Create(ctx any, role any) *MockRoleRepository_Create_Call {
 	return &MockRoleRepository_Create_Call{Call: _e.mock.On("Create", ctx, role)}
 }
 
@@ -123,7 +123,7 @@ type MockRoleRepository_CreateAssignment_Call struct {
 // CreateAssignment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - assignment *permission.UserRoleAssignment
-func (_e *MockRoleRepository_Expecter) CreateAssignment(ctx interface{}, assignment interface{}) *MockRoleRepository_CreateAssignment_Call {
+func (_e *MockRoleRepository_Expecter) CreateAssignment(ctx any, assignment any) *MockRoleRepository_CreateAssignment_Call {
 	return &MockRoleRepository_CreateAssignment_Call{Call: _e.mock.On("CreateAssignment", ctx, assignment)}
 }
 
@@ -180,7 +180,7 @@ type MockRoleRepository_CreateResourcePermission_Call struct {
 // CreateResourcePermission is a helper method to define mock.On call
 //   - ctx context.Context
 //   - rp *permission.ResourcePermission
-func (_e *MockRoleRepository_Expecter) CreateResourcePermission(ctx interface{}, rp interface{}) *MockRoleRepository_CreateResourcePermission_Call {
+func (_e *MockRoleRepository_Expecter) CreateResourcePermission(ctx any, rp any) *MockRoleRepository_CreateResourcePermission_Call {
 	return &MockRoleRepository_CreateResourcePermission_Call{Call: _e.mock.On("CreateResourcePermission", ctx, rp)}
 }
 
@@ -237,7 +237,7 @@ type MockRoleRepository_DeleteAssignment_Call struct {
 // DeleteAssignment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - assignmentID pulid.ID
-func (_e *MockRoleRepository_Expecter) DeleteAssignment(ctx interface{}, assignmentID interface{}) *MockRoleRepository_DeleteAssignment_Call {
+func (_e *MockRoleRepository_Expecter) DeleteAssignment(ctx any, assignmentID any) *MockRoleRepository_DeleteAssignment_Call {
 	return &MockRoleRepository_DeleteAssignment_Call{Call: _e.mock.On("DeleteAssignment", ctx, assignmentID)}
 }
 
@@ -294,7 +294,7 @@ type MockRoleRepository_DeleteResourcePermission_Call struct {
 // DeleteResourcePermission is a helper method to define mock.On call
 //   - ctx context.Context
 //   - resourceID pulid.ID
-func (_e *MockRoleRepository_Expecter) DeleteResourcePermission(ctx interface{}, resourceID interface{}) *MockRoleRepository_DeleteResourcePermission_Call {
+func (_e *MockRoleRepository_Expecter) DeleteResourcePermission(ctx any, resourceID any) *MockRoleRepository_DeleteResourcePermission_Call {
 	return &MockRoleRepository_DeleteResourcePermission_Call{Call: _e.mock.On("DeleteResourcePermission", ctx, resourceID)}
 }
 
@@ -362,7 +362,7 @@ type MockRoleRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetRoleByIDRequest
-func (_e *MockRoleRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockRoleRepository_GetByID_Call {
+func (_e *MockRoleRepository_Expecter) GetByID(ctx any, req any) *MockRoleRepository_GetByID_Call {
 	return &MockRoleRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -430,7 +430,7 @@ type MockRoleRepository_GetResourcePermissionsByRoleID_Call struct {
 // GetResourcePermissionsByRoleID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - roleID pulid.ID
-func (_e *MockRoleRepository_Expecter) GetResourcePermissionsByRoleID(ctx interface{}, roleID interface{}) *MockRoleRepository_GetResourcePermissionsByRoleID_Call {
+func (_e *MockRoleRepository_Expecter) GetResourcePermissionsByRoleID(ctx any, roleID any) *MockRoleRepository_GetResourcePermissionsByRoleID_Call {
 	return &MockRoleRepository_GetResourcePermissionsByRoleID_Call{Call: _e.mock.On("GetResourcePermissionsByRoleID", ctx, roleID)}
 }
 
@@ -498,7 +498,7 @@ type MockRoleRepository_GetRolesWithInheritance_Call struct {
 // GetRolesWithInheritance is a helper method to define mock.On call
 //   - ctx context.Context
 //   - roleIDs []pulid.ID
-func (_e *MockRoleRepository_Expecter) GetRolesWithInheritance(ctx interface{}, roleIDs interface{}) *MockRoleRepository_GetRolesWithInheritance_Call {
+func (_e *MockRoleRepository_Expecter) GetRolesWithInheritance(ctx any, roleIDs any) *MockRoleRepository_GetRolesWithInheritance_Call {
 	return &MockRoleRepository_GetRolesWithInheritance_Call{Call: _e.mock.On("GetRolesWithInheritance", ctx, roleIDs)}
 }
 
@@ -567,7 +567,7 @@ type MockRoleRepository_GetUserRoleAssignments_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockRoleRepository_Expecter) GetUserRoleAssignments(ctx interface{}, userID interface{}, orgID interface{}) *MockRoleRepository_GetUserRoleAssignments_Call {
+func (_e *MockRoleRepository_Expecter) GetUserRoleAssignments(ctx any, userID any, orgID any) *MockRoleRepository_GetUserRoleAssignments_Call {
 	return &MockRoleRepository_GetUserRoleAssignments_Call{Call: _e.mock.On("GetUserRoleAssignments", ctx, userID, orgID)}
 }
 
@@ -640,7 +640,7 @@ type MockRoleRepository_GetUsersWithRole_Call struct {
 // GetUsersWithRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - roleID pulid.ID
-func (_e *MockRoleRepository_Expecter) GetUsersWithRole(ctx interface{}, roleID interface{}) *MockRoleRepository_GetUsersWithRole_Call {
+func (_e *MockRoleRepository_Expecter) GetUsersWithRole(ctx any, roleID any) *MockRoleRepository_GetUsersWithRole_Call {
 	return &MockRoleRepository_GetUsersWithRole_Call{Call: _e.mock.On("GetUsersWithRole", ctx, roleID)}
 }
 
@@ -708,7 +708,7 @@ type MockRoleRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListRolesRequest
-func (_e *MockRoleRepository_Expecter) List(ctx interface{}, req interface{}) *MockRoleRepository_List_Call {
+func (_e *MockRoleRepository_Expecter) List(ctx any, req any) *MockRoleRepository_List_Call {
 	return &MockRoleRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -776,7 +776,7 @@ type MockRoleRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockRoleRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockRoleRepository_SelectOptions_Call {
+func (_e *MockRoleRepository_Expecter) SelectOptions(ctx any, req any) *MockRoleRepository_SelectOptions_Call {
 	return &MockRoleRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -833,7 +833,7 @@ type MockRoleRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - role *permission.Role
-func (_e *MockRoleRepository_Expecter) Update(ctx interface{}, role interface{}) *MockRoleRepository_Update_Call {
+func (_e *MockRoleRepository_Expecter) Update(ctx any, role any) *MockRoleRepository_Update_Call {
 	return &MockRoleRepository_Update_Call{Call: _e.mock.On("Update", ctx, role)}
 }
 
@@ -890,7 +890,7 @@ type MockRoleRepository_UpdateResourcePermission_Call struct {
 // UpdateResourcePermission is a helper method to define mock.On call
 //   - ctx context.Context
 //   - rp *permission.ResourcePermission
-func (_e *MockRoleRepository_Expecter) UpdateResourcePermission(ctx interface{}, rp interface{}) *MockRoleRepository_UpdateResourcePermission_Call {
+func (_e *MockRoleRepository_Expecter) UpdateResourcePermission(ctx any, rp any) *MockRoleRepository_UpdateResourcePermission_Call {
 	return &MockRoleRepository_UpdateResourcePermission_Call{Call: _e.mock.On("UpdateResourcePermission", ctx, rp)}
 }
 

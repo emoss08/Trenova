@@ -77,7 +77,7 @@ type MockShipmentRepository_AutoCancelShipments_Call struct {
 //   - ctx context.Context
 //   - req *repositories.AutoCancelShipmentsRequest
 //   - thresholdDays int8
-func (_e *MockShipmentRepository_Expecter) AutoCancelShipments(ctx interface{}, req interface{}, thresholdDays interface{}) *MockShipmentRepository_AutoCancelShipments_Call {
+func (_e *MockShipmentRepository_Expecter) AutoCancelShipments(ctx any, req any, thresholdDays any) *MockShipmentRepository_AutoCancelShipments_Call {
 	return &MockShipmentRepository_AutoCancelShipments_Call{Call: _e.mock.On("AutoCancelShipments", ctx, req, thresholdDays)}
 }
 
@@ -149,7 +149,7 @@ type MockShipmentRepository_AutoDelayShipments_Call struct {
 
 // AutoDelayShipments is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockShipmentRepository_Expecter) AutoDelayShipments(ctx interface{}) *MockShipmentRepository_AutoDelayShipments_Call {
+func (_e *MockShipmentRepository_Expecter) AutoDelayShipments(ctx any) *MockShipmentRepository_AutoDelayShipments_Call {
 	return &MockShipmentRepository_AutoDelayShipments_Call{Call: _e.mock.On("AutoDelayShipments", ctx)}
 }
 
@@ -212,7 +212,7 @@ type MockShipmentRepository_BulkDuplicate_Call struct {
 // BulkDuplicate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkDuplicateShipmentRequest
-func (_e *MockShipmentRepository_Expecter) BulkDuplicate(ctx interface{}, req interface{}) *MockShipmentRepository_BulkDuplicate_Call {
+func (_e *MockShipmentRepository_Expecter) BulkDuplicate(ctx any, req any) *MockShipmentRepository_BulkDuplicate_Call {
 	return &MockShipmentRepository_BulkDuplicate_Call{Call: _e.mock.On("BulkDuplicate", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockShipmentRepository_Cancel_Call struct {
 // Cancel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CancelShipmentRequest
-func (_e *MockShipmentRepository_Expecter) Cancel(ctx interface{}, req interface{}) *MockShipmentRepository_Cancel_Call {
+func (_e *MockShipmentRepository_Expecter) Cancel(ctx any, req any) *MockShipmentRepository_Cancel_Call {
 	return &MockShipmentRepository_Cancel_Call{Call: _e.mock.On("Cancel", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockShipmentRepository_CheckForDuplicateBOLs_Call struct {
 // CheckForDuplicateBOLs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.DuplicateBOLCheckRequest
-func (_e *MockShipmentRepository_Expecter) CheckForDuplicateBOLs(ctx interface{}, req interface{}) *MockShipmentRepository_CheckForDuplicateBOLs_Call {
+func (_e *MockShipmentRepository_Expecter) CheckForDuplicateBOLs(ctx any, req any) *MockShipmentRepository_CheckForDuplicateBOLs_Call {
 	return &MockShipmentRepository_CheckForDuplicateBOLs_Call{Call: _e.mock.On("CheckForDuplicateBOLs", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockShipmentRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Shipment
-func (_e *MockShipmentRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockShipmentRepository_Create_Call {
+func (_e *MockShipmentRepository_Expecter) Create(ctx any, entity any) *MockShipmentRepository_Create_Call {
 	return &MockShipmentRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -485,7 +485,7 @@ type MockShipmentRepository_DelayShipments_Call struct {
 //   - ctx context.Context
 //   - req *repositories.DelayShipmentsRequest
 //   - thresholdMinutes int16
-func (_e *MockShipmentRepository_Expecter) DelayShipments(ctx interface{}, req interface{}, thresholdMinutes interface{}) *MockShipmentRepository_DelayShipments_Call {
+func (_e *MockShipmentRepository_Expecter) DelayShipments(ctx any, req any, thresholdMinutes any) *MockShipmentRepository_DelayShipments_Call {
 	return &MockShipmentRepository_DelayShipments_Call{Call: _e.mock.On("DelayShipments", ctx, req, thresholdMinutes)}
 }
 
@@ -559,7 +559,7 @@ type MockShipmentRepository_GetAutoCancelableShipments_Call struct {
 //   - ctx context.Context
 //   - req *repositories.GetAutoCancelableShipmentsRequest
 //   - thresholdDays int8
-func (_e *MockShipmentRepository_Expecter) GetAutoCancelableShipments(ctx interface{}, req interface{}, thresholdDays interface{}) *MockShipmentRepository_GetAutoCancelableShipments_Call {
+func (_e *MockShipmentRepository_Expecter) GetAutoCancelableShipments(ctx any, req any, thresholdDays any) *MockShipmentRepository_GetAutoCancelableShipments_Call {
 	return &MockShipmentRepository_GetAutoCancelableShipments_Call{Call: _e.mock.On("GetAutoCancelableShipments", ctx, req, thresholdDays)}
 }
 
@@ -632,7 +632,7 @@ type MockShipmentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentByIDRequest
-func (_e *MockShipmentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentRepository_GetByID_Call {
+func (_e *MockShipmentRepository_Expecter) GetByID(ctx any, req any) *MockShipmentRepository_GetByID_Call {
 	return &MockShipmentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -700,7 +700,7 @@ type MockShipmentRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentsByIDsRequest
-func (_e *MockShipmentRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockShipmentRepository_GetByIDs_Call {
+func (_e *MockShipmentRepository_Expecter) GetByIDs(ctx any, req any) *MockShipmentRepository_GetByIDs_Call {
 	return &MockShipmentRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -769,7 +769,7 @@ type MockShipmentRepository_GetDelayedShipments_Call struct {
 //   - ctx context.Context
 //   - req *repositories.GetDelayedShipmentsRequest
 //   - thresholdMinutes int16
-func (_e *MockShipmentRepository_Expecter) GetDelayedShipments(ctx interface{}, req interface{}, thresholdMinutes interface{}) *MockShipmentRepository_GetDelayedShipments_Call {
+func (_e *MockShipmentRepository_Expecter) GetDelayedShipments(ctx any, req any, thresholdMinutes any) *MockShipmentRepository_GetDelayedShipments_Call {
 	return &MockShipmentRepository_GetDelayedShipments_Call{Call: _e.mock.On("GetDelayedShipments", ctx, req, thresholdMinutes)}
 }
 
@@ -842,7 +842,7 @@ type MockShipmentRepository_GetPreviousRates_Call struct {
 // GetPreviousRates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetPreviousRatesRequest
-func (_e *MockShipmentRepository_Expecter) GetPreviousRates(ctx interface{}, req interface{}) *MockShipmentRepository_GetPreviousRates_Call {
+func (_e *MockShipmentRepository_Expecter) GetPreviousRates(ctx any, req any) *MockShipmentRepository_GetPreviousRates_Call {
 	return &MockShipmentRepository_GetPreviousRates_Call{Call: _e.mock.On("GetPreviousRates", ctx, req)}
 }
 
@@ -910,7 +910,7 @@ type MockShipmentRepository_GetUnassigned_Call struct {
 // GetUnassigned is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetUnassignedShipmentsRequest
-func (_e *MockShipmentRepository_Expecter) GetUnassigned(ctx interface{}, req interface{}) *MockShipmentRepository_GetUnassigned_Call {
+func (_e *MockShipmentRepository_Expecter) GetUnassigned(ctx any, req any) *MockShipmentRepository_GetUnassigned_Call {
 	return &MockShipmentRepository_GetUnassigned_Call{Call: _e.mock.On("GetUnassigned", ctx, req)}
 }
 
@@ -978,7 +978,7 @@ type MockShipmentRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentsRequest
-func (_e *MockShipmentRepository_Expecter) List(ctx interface{}, req interface{}) *MockShipmentRepository_List_Call {
+func (_e *MockShipmentRepository_Expecter) List(ctx any, req any) *MockShipmentRepository_List_Call {
 	return &MockShipmentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -1046,7 +1046,7 @@ type MockShipmentRepository_ListAutoCancelShipmentTenants_Call struct {
 // ListAutoCancelShipmentTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - limit int
-func (_e *MockShipmentRepository_Expecter) ListAutoCancelShipmentTenants(ctx interface{}, limit interface{}) *MockShipmentRepository_ListAutoCancelShipmentTenants_Call {
+func (_e *MockShipmentRepository_Expecter) ListAutoCancelShipmentTenants(ctx any, limit any) *MockShipmentRepository_ListAutoCancelShipmentTenants_Call {
 	return &MockShipmentRepository_ListAutoCancelShipmentTenants_Call{Call: _e.mock.On("ListAutoCancelShipmentTenants", ctx, limit)}
 }
 
@@ -1114,7 +1114,7 @@ type MockShipmentRepository_ListAutoDelayShipmentTenants_Call struct {
 // ListAutoDelayShipmentTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - limit int
-func (_e *MockShipmentRepository_Expecter) ListAutoDelayShipmentTenants(ctx interface{}, limit interface{}) *MockShipmentRepository_ListAutoDelayShipmentTenants_Call {
+func (_e *MockShipmentRepository_Expecter) ListAutoDelayShipmentTenants(ctx any, limit any) *MockShipmentRepository_ListAutoDelayShipmentTenants_Call {
 	return &MockShipmentRepository_ListAutoDelayShipmentTenants_Call{Call: _e.mock.On("ListAutoDelayShipmentTenants", ctx, limit)}
 }
 
@@ -1181,7 +1181,7 @@ type MockShipmentRepository_RunAutoCancelShipments_Call struct {
 
 // RunAutoCancelShipments is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockShipmentRepository_Expecter) RunAutoCancelShipments(ctx interface{}) *MockShipmentRepository_RunAutoCancelShipments_Call {
+func (_e *MockShipmentRepository_Expecter) RunAutoCancelShipments(ctx any) *MockShipmentRepository_RunAutoCancelShipments_Call {
 	return &MockShipmentRepository_RunAutoCancelShipments_Call{Call: _e.mock.On("RunAutoCancelShipments", ctx)}
 }
 
@@ -1245,7 +1245,7 @@ type MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - limit int
-func (_e *MockShipmentRepository_Expecter) RunAutoCancelShipmentsForTenant(ctx interface{}, tenantInfo interface{}, limit interface{}) *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call {
+func (_e *MockShipmentRepository_Expecter) RunAutoCancelShipmentsForTenant(ctx any, tenantInfo any, limit any) *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call {
 	return &MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call{Call: _e.mock.On("RunAutoCancelShipmentsForTenant", ctx, tenantInfo, limit)}
 }
 
@@ -1319,7 +1319,7 @@ type MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - limit int
-func (_e *MockShipmentRepository_Expecter) RunAutoDelayShipmentsForTenant(ctx interface{}, tenantInfo interface{}, limit interface{}) *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call {
+func (_e *MockShipmentRepository_Expecter) RunAutoDelayShipmentsForTenant(ctx any, tenantInfo any, limit any) *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call {
 	return &MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call{Call: _e.mock.On("RunAutoDelayShipmentsForTenant", ctx, tenantInfo, limit)}
 }
 
@@ -1392,7 +1392,7 @@ type MockShipmentRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ShipmentSelectOptionsRequest
-func (_e *MockShipmentRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockShipmentRepository_SelectOptions_Call {
+func (_e *MockShipmentRepository_Expecter) SelectOptions(ctx any, req any) *MockShipmentRepository_SelectOptions_Call {
 	return &MockShipmentRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -1460,7 +1460,7 @@ type MockShipmentRepository_TransferOwnership_Call struct {
 // TransferOwnership is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.TransferOwnershipRequest
-func (_e *MockShipmentRepository_Expecter) TransferOwnership(ctx interface{}, req interface{}) *MockShipmentRepository_TransferOwnership_Call {
+func (_e *MockShipmentRepository_Expecter) TransferOwnership(ctx any, req any) *MockShipmentRepository_TransferOwnership_Call {
 	return &MockShipmentRepository_TransferOwnership_Call{Call: _e.mock.On("TransferOwnership", ctx, req)}
 }
 
@@ -1528,7 +1528,7 @@ type MockShipmentRepository_Uncancel_Call struct {
 // Uncancel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UncancelShipmentRequest
-func (_e *MockShipmentRepository_Expecter) Uncancel(ctx interface{}, req interface{}) *MockShipmentRepository_Uncancel_Call {
+func (_e *MockShipmentRepository_Expecter) Uncancel(ctx any, req any) *MockShipmentRepository_Uncancel_Call {
 	return &MockShipmentRepository_Uncancel_Call{Call: _e.mock.On("Uncancel", ctx, req)}
 }
 
@@ -1596,7 +1596,7 @@ type MockShipmentRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Shipment
-func (_e *MockShipmentRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockShipmentRepository_Update_Call {
+func (_e *MockShipmentRepository_Expecter) Update(ctx any, entity any) *MockShipmentRepository_Update_Call {
 	return &MockShipmentRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -1664,7 +1664,7 @@ type MockShipmentRepository_UpdateDerivedState_Call struct {
 // UpdateDerivedState is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Shipment
-func (_e *MockShipmentRepository_Expecter) UpdateDerivedState(ctx interface{}, entity interface{}) *MockShipmentRepository_UpdateDerivedState_Call {
+func (_e *MockShipmentRepository_Expecter) UpdateDerivedState(ctx any, entity any) *MockShipmentRepository_UpdateDerivedState_Call {
 	return &MockShipmentRepository_UpdateDerivedState_Call{Call: _e.mock.On("UpdateDerivedState", ctx, entity)}
 }
 
@@ -1732,7 +1732,7 @@ type MockShipmentRepository_UpdateOperationalLifecycle_Call struct {
 // UpdateOperationalLifecycle is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Shipment
-func (_e *MockShipmentRepository_Expecter) UpdateOperationalLifecycle(ctx interface{}, entity interface{}) *MockShipmentRepository_UpdateOperationalLifecycle_Call {
+func (_e *MockShipmentRepository_Expecter) UpdateOperationalLifecycle(ctx any, entity any) *MockShipmentRepository_UpdateOperationalLifecycle_Call {
 	return &MockShipmentRepository_UpdateOperationalLifecycle_Call{Call: _e.mock.On("UpdateOperationalLifecycle", ctx, entity)}
 }
 
@@ -1800,7 +1800,7 @@ type MockShipmentRepository_UpdateStatus_Call struct {
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateShipmentStatusRequest
-func (_e *MockShipmentRepository_Expecter) UpdateStatus(ctx interface{}, req interface{}) *MockShipmentRepository_UpdateStatus_Call {
+func (_e *MockShipmentRepository_Expecter) UpdateStatus(ctx any, req any) *MockShipmentRepository_UpdateStatus_Call {
 	return &MockShipmentRepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
 }
 

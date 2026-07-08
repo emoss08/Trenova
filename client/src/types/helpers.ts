@@ -22,6 +22,21 @@ export const stringArraySchema = z
   .nullish()
   .transform((value) => value ?? []);
 
+export const nullableArraySchema = <T extends z.ZodTypeAny>(item: T) =>
+  z
+    .array(item)
+    .nullish()
+    .transform((value) => value ?? []);
+
+export const nullableEnumSchema = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => (value === "" ? null : value), schema.nullish());
+
+export const enumWithFallback = <T extends z.ZodTypeAny>(schema: T, fallback: z.input<T>) =>
+  z.preprocess(
+    (value) => (value === "" || value == null ? undefined : value),
+    schema.default(fallback),
+  );
+
 export const tenantInfoSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
