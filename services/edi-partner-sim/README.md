@@ -65,6 +65,24 @@ can be run repeatedly without colliding with earlier partners.
 | `GET`  | `/control/sftp/inbound` | List the SFTP inbound + archive directories |
 | `GET`  | `/control/sftp/outbound` | List files Trenova pushed to the SFTP outbound directory |
 
+### Where the SFTP files land
+
+With `task sim` the mailbox is a stable `./.sim-sftp/` directory
+(`inbound/`, `outbound/`, `archive/`), so you can watch it directly:
+
+```bash
+ls -la ./.sim-sftp/outbound      # 204s Trenova delivered over SFTP
+cat ./.sim-sftp/outbound/*.x12   # the raw X12
+ls -la ./.sim-sftp/archive       # inbound files Trenova polled and archived
+```
+
+Or over the control API without touching disk:
+
+```bash
+curl -s localhost:9210/control/sftp/outbound | jq
+curl -s localhost:9210/control/sftp/inbound  | jq
+```
+
 ## Flags
 
 `cmd/edi-partner-sim`: `-listen`, `-as2-id`, `-remote-as2-id`, `-trenova-inbound`,
