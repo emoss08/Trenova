@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -31,6 +32,8 @@ var (
 	ErrKeyManagerDisabled = errors.New("encryption key manager is disabled")
 	ErrUnknownKeyID       = errors.New("unknown encryption key id")
 )
+
+var aadHashKey = []byte("trenova:aad-hash:v1")
 
 type Params struct {
 	fx.In
@@ -352,8 +355,9 @@ func (a AAD) Bytes() []byte {
 }
 
 func (a AAD) Hash() string {
-	sum := sha256.Sum256(a.Bytes())
-	return base64.StdEncoding.EncodeToString(sum[:])
+	mac := hmac.New(sha256.New, aadHashKey)
+	mac.Write(a.Bytes())
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func decodeEnvelope(ciphertext string) (envelope, error) {
