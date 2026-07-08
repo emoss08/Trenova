@@ -118,7 +118,7 @@ type MockSearchRepository_Search_Call struct {
 // Search is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.SearchRequest
-func (_e *MockSearchRepository_Expecter) Search(ctx interface{}, req interface{}) *MockSearchRepository_Search_Call {
+func (_e *MockSearchRepository_Expecter) Search(ctx any, req any) *MockSearchRepository_Search_Call {
 	return &MockSearchRepository_Search_Call{Call: _e.mock.On("Search", ctx, req)}
 }
 

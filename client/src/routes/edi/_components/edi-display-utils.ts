@@ -1,9 +1,22 @@
 import { formatToUserTimezone } from "@/lib/date";
 import type { EDIMappingEntityType, EDIMappingResolution, EDITransfer } from "@/types/edi";
 
+type LoadTenderPayload = EDITransfer["tenderPayload"];
 type LoadTenderStop = EDITransfer["tenderPayload"]["moves"][number]["stops"][number];
 type LoadTenderCommodity = EDITransfer["tenderPayload"]["commodities"][number];
 type LoadTenderCharge = EDITransfer["tenderPayload"]["additionalCharges"][number];
+
+export function normalizeTenderPayload(payload: LoadTenderPayload): LoadTenderPayload {
+  return {
+    ...payload,
+    moves: (payload.moves ?? []).map((move) => ({
+      ...move,
+      stops: move.stops ?? [],
+    })),
+    commodities: payload.commodities ?? [],
+    additionalCharges: payload.additionalCharges ?? [],
+  };
+}
 
 export type TargetLookupSelection = {
   targetId: string;

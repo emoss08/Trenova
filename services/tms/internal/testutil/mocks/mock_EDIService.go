@@ -76,7 +76,7 @@ type MockEDIService_BuildShipmentStatusPayloadForServiceFailure_Call struct {
 // BuildShipmentStatusPayloadForServiceFailure is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.BuildServiceFailureEDIPayloadRequest
-func (_e *MockEDIService_Expecter) BuildShipmentStatusPayloadForServiceFailure(ctx interface{}, req interface{}) *MockEDIService_BuildShipmentStatusPayloadForServiceFailure_Call {
+func (_e *MockEDIService_Expecter) BuildShipmentStatusPayloadForServiceFailure(ctx any, req any) *MockEDIService_BuildShipmentStatusPayloadForServiceFailure_Call {
 	return &MockEDIService_BuildShipmentStatusPayloadForServiceFailure_Call{Call: _e.mock.On("BuildShipmentStatusPayloadForServiceFailure", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIService_GenerateDocument_Call struct {
 // GenerateDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GenerateEDIDocumentRequest
-func (_e *MockEDIService_Expecter) GenerateDocument(ctx interface{}, req interface{}) *MockEDIService_GenerateDocument_Call {
+func (_e *MockEDIService_Expecter) GenerateDocument(ctx any, req any) *MockEDIService_GenerateDocument_Call {
 	return &MockEDIService_GenerateDocument_Call{Call: _e.mock.On("GenerateDocument", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDIService_GenerateServiceFailure214ForLifecycle_Call struct {
 // GenerateServiceFailure214ForLifecycle is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.ServiceFailure214LifecycleRequest
-func (_e *MockEDIService_Expecter) GenerateServiceFailure214ForLifecycle(ctx interface{}, req interface{}) *MockEDIService_GenerateServiceFailure214ForLifecycle_Call {
+func (_e *MockEDIService_Expecter) GenerateServiceFailure214ForLifecycle(ctx any, req any) *MockEDIService_GenerateServiceFailure214ForLifecycle_Call {
 	return &MockEDIService_GenerateServiceFailure214ForLifecycle_Call{Call: _e.mock.On("GenerateServiceFailure214ForLifecycle", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDIService_GetServiceFailure214Status_Call struct {
 // GetServiceFailure214Status is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetServiceFailure214StatusRequest
-func (_e *MockEDIService_Expecter) GetServiceFailure214Status(ctx interface{}, req interface{}) *MockEDIService_GetServiceFailure214Status_Call {
+func (_e *MockEDIService_Expecter) GetServiceFailure214Status(ctx any, req any) *MockEDIService_GetServiceFailure214Status_Call {
 	return &MockEDIService_GetServiceFailure214Status_Call{Call: _e.mock.On("GetServiceFailure214Status", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDIService_PreviewDocument_Call struct {
 // PreviewDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.PreviewEDIDocumentRequest
-func (_e *MockEDIService_Expecter) PreviewDocument(ctx interface{}, req interface{}) *MockEDIService_PreviewDocument_Call {
+func (_e *MockEDIService_Expecter) PreviewDocument(ctx any, req any) *MockEDIService_PreviewDocument_Call {
 	return &MockEDIService_PreviewDocument_Call{Call: _e.mock.On("PreviewDocument", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEDIService_PreviewServiceFailure214ForLifecycle_Call struct {
 // PreviewServiceFailure214ForLifecycle is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.ServiceFailure214LifecycleRequest
-func (_e *MockEDIService_Expecter) PreviewServiceFailure214ForLifecycle(ctx interface{}, req interface{}) *MockEDIService_PreviewServiceFailure214ForLifecycle_Call {
+func (_e *MockEDIService_Expecter) PreviewServiceFailure214ForLifecycle(ctx any, req any) *MockEDIService_PreviewServiceFailure214ForLifecycle_Call {
 	return &MockEDIService_PreviewServiceFailure214ForLifecycle_Call{Call: _e.mock.On("PreviewServiceFailure214ForLifecycle", ctx, req)}
 }
 

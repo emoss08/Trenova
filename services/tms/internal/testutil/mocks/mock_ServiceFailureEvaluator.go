@@ -75,7 +75,7 @@ type MockServiceFailureEvaluator_EvaluateShipment_Call struct {
 //   - ctx context.Context
 //   - req *services.EvaluateShipmentServiceFailuresRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureEvaluator_Expecter) EvaluateShipment(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureEvaluator_EvaluateShipment_Call {
+func (_e *MockServiceFailureEvaluator_Expecter) EvaluateShipment(ctx any, req any, actor any) *MockServiceFailureEvaluator_EvaluateShipment_Call {
 	return &MockServiceFailureEvaluator_EvaluateShipment_Call{Call: _e.mock.On("EvaluateShipment", ctx, req, actor)}
 }
 
@@ -149,7 +149,7 @@ type MockServiceFailureEvaluator_EvaluateStop_Call struct {
 //   - ctx context.Context
 //   - req *services.EvaluateStopServiceFailuresRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureEvaluator_Expecter) EvaluateStop(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureEvaluator_EvaluateStop_Call {
+func (_e *MockServiceFailureEvaluator_Expecter) EvaluateStop(ctx any, req any, actor any) *MockServiceFailureEvaluator_EvaluateStop_Call {
 	return &MockServiceFailureEvaluator_EvaluateStop_Call{Call: _e.mock.On("EvaluateStop", ctx, req, actor)}
 }
 

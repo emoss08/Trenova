@@ -74,7 +74,7 @@ type MockAIDocumentService_ExtractRateConfirmation_Call struct {
 // ExtractRateConfirmation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.AIExtractRequest
-func (_e *MockAIDocumentService_Expecter) ExtractRateConfirmation(ctx interface{}, req interface{}) *MockAIDocumentService_ExtractRateConfirmation_Call {
+func (_e *MockAIDocumentService_Expecter) ExtractRateConfirmation(ctx any, req any) *MockAIDocumentService_ExtractRateConfirmation_Call {
 	return &MockAIDocumentService_ExtractRateConfirmation_Call{Call: _e.mock.On("ExtractRateConfirmation", ctx, req)}
 }
 
@@ -142,7 +142,7 @@ type MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call struct 
 // PollRateConfirmationBackgroundExtraction is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.AIBackgroundExtractPollRequest
-func (_e *MockAIDocumentService_Expecter) PollRateConfirmationBackgroundExtraction(ctx interface{}, req interface{}) *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call {
+func (_e *MockAIDocumentService_Expecter) PollRateConfirmationBackgroundExtraction(ctx any, req any) *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call {
 	return &MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call{Call: _e.mock.On("PollRateConfirmationBackgroundExtraction", ctx, req)}
 }
 
@@ -210,7 +210,7 @@ type MockAIDocumentService_RouteDocument_Call struct {
 // RouteDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.AIRouteRequest
-func (_e *MockAIDocumentService_Expecter) RouteDocument(ctx interface{}, req interface{}) *MockAIDocumentService_RouteDocument_Call {
+func (_e *MockAIDocumentService_Expecter) RouteDocument(ctx any, req any) *MockAIDocumentService_RouteDocument_Call {
 	return &MockAIDocumentService_RouteDocument_Call{Call: _e.mock.On("RouteDocument", ctx, req)}
 }
 
@@ -278,7 +278,7 @@ type MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call struc
 // SubmitRateConfirmationBackgroundExtraction is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.AIExtractRequest
-func (_e *MockAIDocumentService_Expecter) SubmitRateConfirmationBackgroundExtraction(ctx interface{}, req interface{}) *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call {
+func (_e *MockAIDocumentService_Expecter) SubmitRateConfirmationBackgroundExtraction(ctx any, req any) *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call {
 	return &MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call{Call: _e.mock.On("SubmitRateConfirmationBackgroundExtraction", ctx, req)}
 }
 

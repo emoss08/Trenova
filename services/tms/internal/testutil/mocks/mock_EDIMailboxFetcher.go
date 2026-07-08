@@ -64,7 +64,7 @@ type MockEDIMailboxFetcher_ArchiveInboundFile_Call struct {
 //   - ctx context.Context
 //   - req *services.EDIInboundFetchRequest
 //   - remotePath string
-func (_e *MockEDIMailboxFetcher_Expecter) ArchiveInboundFile(ctx interface{}, req interface{}, remotePath interface{}) *MockEDIMailboxFetcher_ArchiveInboundFile_Call {
+func (_e *MockEDIMailboxFetcher_Expecter) ArchiveInboundFile(ctx any, req any, remotePath any) *MockEDIMailboxFetcher_ArchiveInboundFile_Call {
 	return &MockEDIMailboxFetcher_ArchiveInboundFile_Call{Call: _e.mock.On("ArchiveInboundFile", ctx, req, remotePath)}
 }
 
@@ -137,7 +137,7 @@ type MockEDIMailboxFetcher_FetchInboundFiles_Call struct {
 // FetchInboundFiles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.EDIInboundFetchRequest
-func (_e *MockEDIMailboxFetcher_Expecter) FetchInboundFiles(ctx interface{}, req interface{}) *MockEDIMailboxFetcher_FetchInboundFiles_Call {
+func (_e *MockEDIMailboxFetcher_Expecter) FetchInboundFiles(ctx any, req any) *MockEDIMailboxFetcher_FetchInboundFiles_Call {
 	return &MockEDIMailboxFetcher_FetchInboundFiles_Call{Call: _e.mock.On("FetchInboundFiles", ctx, req)}
 }
 

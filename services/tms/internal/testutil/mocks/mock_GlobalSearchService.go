@@ -74,7 +74,7 @@ type MockGlobalSearchService_Search_Call struct {
 // Search is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GlobalSearchRequest
-func (_e *MockGlobalSearchService_Expecter) Search(ctx interface{}, req interface{}) *MockGlobalSearchService_Search_Call {
+func (_e *MockGlobalSearchService_Expecter) Search(ctx any, req any) *MockGlobalSearchService_Search_Call {
 	return &MockGlobalSearchService_Search_Call{Call: _e.mock.On("Search", ctx, req)}
 }
 

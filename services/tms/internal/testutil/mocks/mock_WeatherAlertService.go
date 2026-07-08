@@ -63,7 +63,7 @@ type MockWeatherAlertService_ExpireStaleWeatherAlerts_Call struct {
 
 // ExpireStaleWeatherAlerts is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockWeatherAlertService_Expecter) ExpireStaleWeatherAlerts(ctx interface{}) *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call {
+func (_e *MockWeatherAlertService_Expecter) ExpireStaleWeatherAlerts(ctx any) *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call {
 	return &MockWeatherAlertService_ExpireStaleWeatherAlerts_Call{Call: _e.mock.On("ExpireStaleWeatherAlerts", ctx)}
 }
 
@@ -126,7 +126,7 @@ type MockWeatherAlertService_GetActiveAlerts_Call struct {
 // GetActiveAlerts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockWeatherAlertService_Expecter) GetActiveAlerts(ctx interface{}, tenantInfo interface{}) *MockWeatherAlertService_GetActiveAlerts_Call {
+func (_e *MockWeatherAlertService_Expecter) GetActiveAlerts(ctx any, tenantInfo any) *MockWeatherAlertService_GetActiveAlerts_Call {
 	return &MockWeatherAlertService_GetActiveAlerts_Call{Call: _e.mock.On("GetActiveAlerts", ctx, tenantInfo)}
 }
 
@@ -194,7 +194,7 @@ type MockWeatherAlertService_GetAlertDetail_Call struct {
 // GetAlertDetail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetWeatherAlertDetailRequest
-func (_e *MockWeatherAlertService_Expecter) GetAlertDetail(ctx interface{}, req interface{}) *MockWeatherAlertService_GetAlertDetail_Call {
+func (_e *MockWeatherAlertService_Expecter) GetAlertDetail(ctx any, req any) *MockWeatherAlertService_GetAlertDetail_Call {
 	return &MockWeatherAlertService_GetAlertDetail_Call{Call: _e.mock.On("GetAlertDetail", ctx, req)}
 }
 
@@ -262,7 +262,7 @@ type MockWeatherAlertService_ListWeatherAlertTenants_Call struct {
 // ListWeatherAlertTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - limit int
-func (_e *MockWeatherAlertService_Expecter) ListWeatherAlertTenants(ctx interface{}, limit interface{}) *MockWeatherAlertService_ListWeatherAlertTenants_Call {
+func (_e *MockWeatherAlertService_Expecter) ListWeatherAlertTenants(ctx any, limit any) *MockWeatherAlertService_ListWeatherAlertTenants_Call {
 	return &MockWeatherAlertService_ListWeatherAlertTenants_Call{Call: _e.mock.On("ListWeatherAlertTenants", ctx, limit)}
 }
 
@@ -318,7 +318,7 @@ type MockWeatherAlertService_PollNWSAlerts_Call struct {
 
 // PollNWSAlerts is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockWeatherAlertService_Expecter) PollNWSAlerts(ctx interface{}) *MockWeatherAlertService_PollNWSAlerts_Call {
+func (_e *MockWeatherAlertService_Expecter) PollNWSAlerts(ctx any) *MockWeatherAlertService_PollNWSAlerts_Call {
 	return &MockWeatherAlertService_PollNWSAlerts_Call{Call: _e.mock.On("PollNWSAlerts", ctx)}
 }
 
@@ -370,7 +370,7 @@ type MockWeatherAlertService_PollNWSAlertsForTenant_Call struct {
 // PollNWSAlertsForTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockWeatherAlertService_Expecter) PollNWSAlertsForTenant(ctx interface{}, tenantInfo interface{}) *MockWeatherAlertService_PollNWSAlertsForTenant_Call {
+func (_e *MockWeatherAlertService_Expecter) PollNWSAlertsForTenant(ctx any, tenantInfo any) *MockWeatherAlertService_PollNWSAlertsForTenant_Call {
 	return &MockWeatherAlertService_PollNWSAlertsForTenant_Call{Call: _e.mock.On("PollNWSAlertsForTenant", ctx, tenantInfo)}
 }
 

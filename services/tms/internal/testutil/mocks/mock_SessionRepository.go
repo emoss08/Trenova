@@ -64,7 +64,7 @@ type MockSessionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - session1 *session.Session
-func (_e *MockSessionRepository_Expecter) Create(ctx interface{}, session1 interface{}) *MockSessionRepository_Create_Call {
+func (_e *MockSessionRepository_Expecter) Create(ctx any, session1 any) *MockSessionRepository_Create_Call {
 	return &MockSessionRepository_Create_Call{Call: _e.mock.On("Create", ctx, session1)}
 }
 
@@ -121,7 +121,7 @@ type MockSessionRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID pulid.ID
-func (_e *MockSessionRepository_Expecter) Delete(ctx interface{}, sessionID interface{}) *MockSessionRepository_Delete_Call {
+func (_e *MockSessionRepository_Expecter) Delete(ctx any, sessionID any) *MockSessionRepository_Delete_Call {
 	return &MockSessionRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, sessionID)}
 }
 
@@ -189,7 +189,7 @@ type MockSessionRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID pulid.ID
-func (_e *MockSessionRepository_Expecter) Get(ctx interface{}, sessionID interface{}) *MockSessionRepository_Get_Call {
+func (_e *MockSessionRepository_Expecter) Get(ctx any, sessionID any) *MockSessionRepository_Get_Call {
 	return &MockSessionRepository_Get_Call{Call: _e.mock.On("Get", ctx, sessionID)}
 }
 
@@ -246,7 +246,7 @@ type MockSessionRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - session1 *session.Session
-func (_e *MockSessionRepository_Expecter) Update(ctx interface{}, session1 interface{}) *MockSessionRepository_Update_Call {
+func (_e *MockSessionRepository_Expecter) Update(ctx any, session1 any) *MockSessionRepository_Update_Call {
 	return &MockSessionRepository_Update_Call{Call: _e.mock.On("Update", ctx, session1)}
 }
 

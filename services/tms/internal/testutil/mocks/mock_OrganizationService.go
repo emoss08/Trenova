@@ -78,7 +78,7 @@ type MockOrganizationService_DeleteLogo_Call struct {
 // DeleteLogo is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.DeleteLogoRequest
-func (_e *MockOrganizationService_Expecter) DeleteLogo(ctx interface{}, req interface{}) *MockOrganizationService_DeleteLogo_Call {
+func (_e *MockOrganizationService_Expecter) DeleteLogo(ctx any, req any) *MockOrganizationService_DeleteLogo_Call {
 	return &MockOrganizationService_DeleteLogo_Call{Call: _e.mock.On("DeleteLogo", ctx, req)}
 }
 
@@ -146,7 +146,7 @@ type MockOrganizationService_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetOrganizationByIDRequest
-func (_e *MockOrganizationService_Expecter) GetByID(ctx interface{}, req interface{}) *MockOrganizationService_GetByID_Call {
+func (_e *MockOrganizationService_Expecter) GetByID(ctx any, req any) *MockOrganizationService_GetByID_Call {
 	return &MockOrganizationService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -214,7 +214,7 @@ type MockOrganizationService_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.GetOrganizationsByIDsRequest
-func (_e *MockOrganizationService_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockOrganizationService_GetByIDs_Call {
+func (_e *MockOrganizationService_Expecter) GetByIDs(ctx any, req any) *MockOrganizationService_GetByIDs_Call {
 	return &MockOrganizationService_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -282,7 +282,7 @@ type MockOrganizationService_GetLogoURL_Call struct {
 // GetLogoURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.GetLogoURLRequest
-func (_e *MockOrganizationService_Expecter) GetLogoURL(ctx interface{}, req interface{}) *MockOrganizationService_GetLogoURL_Call {
+func (_e *MockOrganizationService_Expecter) GetLogoURL(ctx any, req any) *MockOrganizationService_GetLogoURL_Call {
 	return &MockOrganizationService_GetLogoURL_Call{Call: _e.mock.On("GetLogoURL", ctx, req)}
 }
 
@@ -350,7 +350,7 @@ type MockOrganizationService_GetMicrosoftSSOConfig_Call struct {
 // GetMicrosoftSSOConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - organizationID pulid.ID
-func (_e *MockOrganizationService_Expecter) GetMicrosoftSSOConfig(ctx interface{}, organizationID interface{}) *MockOrganizationService_GetMicrosoftSSOConfig_Call {
+func (_e *MockOrganizationService_Expecter) GetMicrosoftSSOConfig(ctx any, organizationID any) *MockOrganizationService_GetMicrosoftSSOConfig_Call {
 	return &MockOrganizationService_GetMicrosoftSSOConfig_Call{Call: _e.mock.On("GetMicrosoftSSOConfig", ctx, organizationID)}
 }
 
@@ -418,7 +418,7 @@ type MockOrganizationService_GetOktaSSOConfig_Call struct {
 // GetOktaSSOConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - organizationID pulid.ID
-func (_e *MockOrganizationService_Expecter) GetOktaSSOConfig(ctx interface{}, organizationID interface{}) *MockOrganizationService_GetOktaSSOConfig_Call {
+func (_e *MockOrganizationService_Expecter) GetOktaSSOConfig(ctx any, organizationID any) *MockOrganizationService_GetOktaSSOConfig_Call {
 	return &MockOrganizationService_GetOktaSSOConfig_Call{Call: _e.mock.On("GetOktaSSOConfig", ctx, organizationID)}
 }
 
@@ -486,7 +486,7 @@ type MockOrganizationService_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SelectOrganizationOptionsRequest
-func (_e *MockOrganizationService_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockOrganizationService_SelectOptions_Call {
+func (_e *MockOrganizationService_Expecter) SelectOptions(ctx any, req any) *MockOrganizationService_SelectOptions_Call {
 	return &MockOrganizationService_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -554,7 +554,7 @@ type MockOrganizationService_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.Organization
-func (_e *MockOrganizationService_Expecter) Update(ctx interface{}, entity interface{}) *MockOrganizationService_Update_Call {
+func (_e *MockOrganizationService_Expecter) Update(ctx any, entity any) *MockOrganizationService_Update_Call {
 	return &MockOrganizationService_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -623,7 +623,7 @@ type MockOrganizationService_UploadLogo_Call struct {
 //   - ctx context.Context
 //   - req *services.UploadLogoRequest
 //   - userID pulid.ID
-func (_e *MockOrganizationService_Expecter) UploadLogo(ctx interface{}, req interface{}, userID interface{}) *MockOrganizationService_UploadLogo_Call {
+func (_e *MockOrganizationService_Expecter) UploadLogo(ctx any, req any, userID any) *MockOrganizationService_UploadLogo_Call {
 	return &MockOrganizationService_UploadLogo_Call{Call: _e.mock.On("UploadLogo", ctx, req, userID)}
 }
 
@@ -697,7 +697,7 @@ type MockOrganizationService_UpsertMicrosoftSSOConfig_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - config *services.MicrosoftSSOConfig
-func (_e *MockOrganizationService_Expecter) UpsertMicrosoftSSOConfig(ctx interface{}, tenantInfo interface{}, config interface{}) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
+func (_e *MockOrganizationService_Expecter) UpsertMicrosoftSSOConfig(ctx any, tenantInfo any, config any) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
 	return &MockOrganizationService_UpsertMicrosoftSSOConfig_Call{Call: _e.mock.On("UpsertMicrosoftSSOConfig", ctx, tenantInfo, config)}
 }
 
@@ -771,7 +771,7 @@ type MockOrganizationService_UpsertOktaSSOConfig_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - config *services.OktaSSOConfig
-func (_e *MockOrganizationService_Expecter) UpsertOktaSSOConfig(ctx interface{}, tenantInfo interface{}, config interface{}) *MockOrganizationService_UpsertOktaSSOConfig_Call {
+func (_e *MockOrganizationService_Expecter) UpsertOktaSSOConfig(ctx any, tenantInfo any, config any) *MockOrganizationService_UpsertOktaSSOConfig_Call {
 	return &MockOrganizationService_UpsertOktaSSOConfig_Call{Call: _e.mock.On("UpsertOktaSSOConfig", ctx, tenantInfo, config)}
 }
 

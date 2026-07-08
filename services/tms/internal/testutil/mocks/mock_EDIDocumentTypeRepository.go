@@ -76,7 +76,7 @@ type MockEDIDocumentTypeRepository_ListDocumentTypes_Call struct {
 // ListDocumentTypes is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListEDIDocumentTypesRequest
-func (_e *MockEDIDocumentTypeRepository_Expecter) ListDocumentTypes(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
+func (_e *MockEDIDocumentTypeRepository_Expecter) ListDocumentTypes(ctx any, req any) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
 	return &MockEDIDocumentTypeRepository_ListDocumentTypes_Call{Call: _e.mock.On("ListDocumentTypes", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call struct {
 // SelectDocumentTypeOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EDIDocumentTypeSelectOptionsRequest
-func (_e *MockEDIDocumentTypeRepository_Expecter) SelectDocumentTypeOptions(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call {
+func (_e *MockEDIDocumentTypeRepository_Expecter) SelectDocumentTypeOptions(ctx any, req any) *MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call {
 	return &MockEDIDocumentTypeRepository_SelectDocumentTypeOptions_Call{Call: _e.mock.On("SelectDocumentTypeOptions", ctx, req)}
 }
 

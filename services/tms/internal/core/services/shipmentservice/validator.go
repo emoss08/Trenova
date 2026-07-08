@@ -83,7 +83,7 @@ func newValidatorBuilder(
 			"Service type does not exist in your organization",
 			func(s *shipment.Shipment) pulid.ID { return s.ServiceTypeID },
 		).
-		WithReferenceCheck(
+		WithOptionalReferenceCheck(
 			"shipmentTypeId",
 			"shipment_types",
 			"Shipment type does not exist in your organization",

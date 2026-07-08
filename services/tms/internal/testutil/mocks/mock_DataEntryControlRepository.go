@@ -76,7 +76,7 @@ type MockDataEntryControlRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *dataentrycontrol.DataEntryControl
-func (_e *MockDataEntryControlRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDataEntryControlRepository_Create_Call {
+func (_e *MockDataEntryControlRepository_Expecter) Create(ctx any, entity any) *MockDataEntryControlRepository_Create_Call {
 	return &MockDataEntryControlRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockDataEntryControlRepository_GetByOrgID_Call struct {
 // GetByOrgID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDataEntryControlRequest
-func (_e *MockDataEntryControlRepository_Expecter) GetByOrgID(ctx interface{}, req interface{}) *MockDataEntryControlRepository_GetByOrgID_Call {
+func (_e *MockDataEntryControlRepository_Expecter) GetByOrgID(ctx any, req any) *MockDataEntryControlRepository_GetByOrgID_Call {
 	return &MockDataEntryControlRepository_GetByOrgID_Call{Call: _e.mock.On("GetByOrgID", ctx, req)}
 }
 
@@ -213,7 +213,7 @@ type MockDataEntryControlRepository_GetOrCreate_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockDataEntryControlRepository_Expecter) GetOrCreate(ctx interface{}, orgID interface{}, buID interface{}) *MockDataEntryControlRepository_GetOrCreate_Call {
+func (_e *MockDataEntryControlRepository_Expecter) GetOrCreate(ctx any, orgID any, buID any) *MockDataEntryControlRepository_GetOrCreate_Call {
 	return &MockDataEntryControlRepository_GetOrCreate_Call{Call: _e.mock.On("GetOrCreate", ctx, orgID, buID)}
 }
 
@@ -286,7 +286,7 @@ type MockDataEntryControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *dataentrycontrol.DataEntryControl
-func (_e *MockDataEntryControlRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDataEntryControlRepository_Update_Call {
+func (_e *MockDataEntryControlRepository_Expecter) Update(ctx any, entity any) *MockDataEntryControlRepository_Update_Call {
 	return &MockDataEntryControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

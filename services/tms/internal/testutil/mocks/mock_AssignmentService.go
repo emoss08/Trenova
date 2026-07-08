@@ -76,7 +76,7 @@ type MockAssignmentService_AssignToMove_Call struct {
 // AssignToMove is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.AssignShipmentMoveRequest
-func (_e *MockAssignmentService_Expecter) AssignToMove(ctx interface{}, req interface{}) *MockAssignmentService_AssignToMove_Call {
+func (_e *MockAssignmentService_Expecter) AssignToMove(ctx any, req any) *MockAssignmentService_AssignToMove_Call {
 	return &MockAssignmentService_AssignToMove_Call{Call: _e.mock.On("AssignToMove", ctx, req)}
 }
 
@@ -133,7 +133,7 @@ type MockAssignmentService_CheckWorkerCompliance_Call struct {
 // CheckWorkerCompliance is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CheckWorkerComplianceRequest
-func (_e *MockAssignmentService_Expecter) CheckWorkerCompliance(ctx interface{}, req interface{}) *MockAssignmentService_CheckWorkerCompliance_Call {
+func (_e *MockAssignmentService_Expecter) CheckWorkerCompliance(ctx any, req any) *MockAssignmentService_CheckWorkerCompliance_Call {
 	return &MockAssignmentService_CheckWorkerCompliance_Call{Call: _e.mock.On("CheckWorkerCompliance", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockAssignmentService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetAssignmentByIDRequest
-func (_e *MockAssignmentService_Expecter) Get(ctx interface{}, req interface{}) *MockAssignmentService_Get_Call {
+func (_e *MockAssignmentService_Expecter) Get(ctx any, req any) *MockAssignmentService_Get_Call {
 	return &MockAssignmentService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -269,7 +269,7 @@ type MockAssignmentService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAssignmentsRequest
-func (_e *MockAssignmentService_Expecter) List(ctx interface{}, req interface{}) *MockAssignmentService_List_Call {
+func (_e *MockAssignmentService_Expecter) List(ctx any, req any) *MockAssignmentService_List_Call {
 	return &MockAssignmentService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockAssignmentService_Reassign_Call struct {
 // Reassign is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ReassignShipmentMoveRequest
-func (_e *MockAssignmentService_Expecter) Reassign(ctx interface{}, req interface{}) *MockAssignmentService_Reassign_Call {
+func (_e *MockAssignmentService_Expecter) Reassign(ctx any, req any) *MockAssignmentService_Reassign_Call {
 	return &MockAssignmentService_Reassign_Call{Call: _e.mock.On("Reassign", ctx, req)}
 }
 
@@ -394,7 +394,7 @@ type MockAssignmentService_Unassign_Call struct {
 // Unassign is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UnassignShipmentMoveRequest
-func (_e *MockAssignmentService_Expecter) Unassign(ctx interface{}, req interface{}) *MockAssignmentService_Unassign_Call {
+func (_e *MockAssignmentService_Expecter) Unassign(ctx any, req any) *MockAssignmentService_Unassign_Call {
 	return &MockAssignmentService_Unassign_Call{Call: _e.mock.On("Unassign", ctx, req)}
 }
 

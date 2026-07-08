@@ -74,7 +74,7 @@ type MockAccountsReceivableRepository_GetCustomerAging_Call struct {
 // GetCustomerAging is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetARCustomerAgingRequest
-func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerAging(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerAging(ctx any, req any) *MockAccountsReceivableRepository_GetCustomerAging_Call {
 	return &MockAccountsReceivableRepository_GetCustomerAging_Call{Call: _e.mock.On("GetCustomerAging", ctx, req)}
 }
 
@@ -140,7 +140,7 @@ type MockAccountsReceivableRepository_GetCustomerName_Call struct {
 // GetCustomerName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetARCustomerNameRequest
-func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerName(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_GetCustomerName_Call {
+func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerName(ctx any, req any) *MockAccountsReceivableRepository_GetCustomerName_Call {
 	return &MockAccountsReceivableRepository_GetCustomerName_Call{Call: _e.mock.On("GetCustomerName", ctx, req)}
 }
 
@@ -208,7 +208,7 @@ type MockAccountsReceivableRepository_ListARAging_Call struct {
 // ListARAging is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListARAgingRequest
-func (_e *MockAccountsReceivableRepository_Expecter) ListARAging(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_ListARAging_Call {
+func (_e *MockAccountsReceivableRepository_Expecter) ListARAging(ctx any, req any) *MockAccountsReceivableRepository_ListARAging_Call {
 	return &MockAccountsReceivableRepository_ListARAging_Call{Call: _e.mock.On("ListARAging", ctx, req)}
 }
 
@@ -276,7 +276,7 @@ type MockAccountsReceivableRepository_ListCustomerLedger_Call struct {
 // ListCustomerLedger is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListCustomerLedgerRequest
-func (_e *MockAccountsReceivableRepository_Expecter) ListCustomerLedger(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+func (_e *MockAccountsReceivableRepository_Expecter) ListCustomerLedger(ctx any, req any) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
 	return &MockAccountsReceivableRepository_ListCustomerLedger_Call{Call: _e.mock.On("ListCustomerLedger", ctx, req)}
 }
 
@@ -344,7 +344,7 @@ type MockAccountsReceivableRepository_ListOpenItems_Call struct {
 // ListOpenItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListAROpenItemsRequest
-func (_e *MockAccountsReceivableRepository_Expecter) ListOpenItems(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_ListOpenItems_Call {
+func (_e *MockAccountsReceivableRepository_Expecter) ListOpenItems(ctx any, req any) *MockAccountsReceivableRepository_ListOpenItems_Call {
 	return &MockAccountsReceivableRepository_ListOpenItems_Call{Call: _e.mock.On("ListOpenItems", ctx, req)}
 }
 

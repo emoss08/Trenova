@@ -64,7 +64,7 @@ type MockSSOLoginStateRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - state string
-func (_e *MockSSOLoginStateRepository_Expecter) Delete(ctx interface{}, state interface{}) *MockSSOLoginStateRepository_Delete_Call {
+func (_e *MockSSOLoginStateRepository_Expecter) Delete(ctx any, state any) *MockSSOLoginStateRepository_Delete_Call {
 	return &MockSSOLoginStateRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, state)}
 }
 
@@ -132,7 +132,7 @@ type MockSSOLoginStateRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - state string
-func (_e *MockSSOLoginStateRepository_Expecter) Get(ctx interface{}, state interface{}) *MockSSOLoginStateRepository_Get_Call {
+func (_e *MockSSOLoginStateRepository_Expecter) Get(ctx any, state any) *MockSSOLoginStateRepository_Get_Call {
 	return &MockSSOLoginStateRepository_Get_Call{Call: _e.mock.On("Get", ctx, state)}
 }
 
@@ -190,7 +190,7 @@ type MockSSOLoginStateRepository_Save_Call struct {
 //   - ctx context.Context
 //   - state *repositories.SSOLoginState
 //   - ttl time.Duration
-func (_e *MockSSOLoginStateRepository_Expecter) Save(ctx interface{}, state interface{}, ttl interface{}) *MockSSOLoginStateRepository_Save_Call {
+func (_e *MockSSOLoginStateRepository_Expecter) Save(ctx any, state any, ttl any) *MockSSOLoginStateRepository_Save_Call {
 	return &MockSSOLoginStateRepository_Save_Call{Call: _e.mock.On("Save", ctx, state, ttl)}
 }
 

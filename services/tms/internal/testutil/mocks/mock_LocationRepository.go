@@ -76,7 +76,7 @@ type MockLocationRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateLocationStatusRequest
-func (_e *MockLocationRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockLocationRepository_BulkUpdateStatus_Call {
+func (_e *MockLocationRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockLocationRepository_BulkUpdateStatus_Call {
 	return &MockLocationRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockLocationRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *location.Location
-func (_e *MockLocationRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockLocationRepository_Create_Call {
+func (_e *MockLocationRepository_Expecter) Create(ctx any, entity any) *MockLocationRepository_Create_Call {
 	return &MockLocationRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockLocationRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetLocationByIDRequest
-func (_e *MockLocationRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockLocationRepository_GetByID_Call {
+func (_e *MockLocationRepository_Expecter) GetByID(ctx any, req any) *MockLocationRepository_GetByID_Call {
 	return &MockLocationRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockLocationRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetLocationsByIDsRequest
-func (_e *MockLocationRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockLocationRepository_GetByIDs_Call {
+func (_e *MockLocationRepository_Expecter) GetByIDs(ctx any, req any) *MockLocationRepository_GetByIDs_Call {
 	return &MockLocationRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockLocationRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListLocationRequest
-func (_e *MockLocationRepository_Expecter) List(ctx interface{}, req interface{}) *MockLocationRepository_List_Call {
+func (_e *MockLocationRepository_Expecter) List(ctx any, req any) *MockLocationRepository_List_Call {
 	return &MockLocationRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockLocationRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.LocationSelectOptionsRequest
-func (_e *MockLocationRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockLocationRepository_SelectOptions_Call {
+func (_e *MockLocationRepository_Expecter) SelectOptions(ctx any, req any) *MockLocationRepository_SelectOptions_Call {
 	return &MockLocationRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockLocationRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *location.Location
-func (_e *MockLocationRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockLocationRepository_Update_Call {
+func (_e *MockLocationRepository_Expecter) Update(ctx any, entity any) *MockLocationRepository_Update_Call {
 	return &MockLocationRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

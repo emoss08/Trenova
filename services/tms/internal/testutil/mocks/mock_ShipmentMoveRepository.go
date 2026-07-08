@@ -76,7 +76,7 @@ type MockShipmentMoveRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateMoveStatusRequest
-func (_e *MockShipmentMoveRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockShipmentMoveRepository_BulkUpdateStatus_Call {
+func (_e *MockShipmentMoveRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockShipmentMoveRepository_BulkUpdateStatus_Call {
 	return &MockShipmentMoveRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockShipmentMoveRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetMoveByIDRequest
-func (_e *MockShipmentMoveRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentMoveRepository_GetByID_Call {
+func (_e *MockShipmentMoveRepository_Expecter) GetByID(ctx any, req any) *MockShipmentMoveRepository_GetByID_Call {
 	return &MockShipmentMoveRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockShipmentMoveRepository_GetMovesByShipmentID_Call struct {
 // GetMovesByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetMovesByShipmentIDRequest
-func (_e *MockShipmentMoveRepository_Expecter) GetMovesByShipmentID(ctx interface{}, req interface{}) *MockShipmentMoveRepository_GetMovesByShipmentID_Call {
+func (_e *MockShipmentMoveRepository_Expecter) GetMovesByShipmentID(ctx any, req any) *MockShipmentMoveRepository_GetMovesByShipmentID_Call {
 	return &MockShipmentMoveRepository_GetMovesByShipmentID_Call{Call: _e.mock.On("GetMovesByShipmentID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockShipmentMoveRepository_SplitMove_Call struct {
 // SplitMove is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SplitMoveRequest
-func (_e *MockShipmentMoveRepository_Expecter) SplitMove(ctx interface{}, req interface{}) *MockShipmentMoveRepository_SplitMove_Call {
+func (_e *MockShipmentMoveRepository_Expecter) SplitMove(ctx any, req any) *MockShipmentMoveRepository_SplitMove_Call {
 	return &MockShipmentMoveRepository_SplitMove_Call{Call: _e.mock.On("SplitMove", ctx, req)}
 }
 
@@ -338,7 +338,7 @@ type MockShipmentMoveRepository_SyncForShipment_Call struct {
 //   - ctx context.Context
 //   - tx bun.IDB
 //   - entity *shipment.Shipment
-func (_e *MockShipmentMoveRepository_Expecter) SyncForShipment(ctx interface{}, tx interface{}, entity interface{}) *MockShipmentMoveRepository_SyncForShipment_Call {
+func (_e *MockShipmentMoveRepository_Expecter) SyncForShipment(ctx any, tx any, entity any) *MockShipmentMoveRepository_SyncForShipment_Call {
 	return &MockShipmentMoveRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, tx, entity)}
 }
 
@@ -411,7 +411,7 @@ type MockShipmentMoveRepository_UpdateStatus_Call struct {
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateMoveStatusRequest
-func (_e *MockShipmentMoveRepository_Expecter) UpdateStatus(ctx interface{}, req interface{}) *MockShipmentMoveRepository_UpdateStatus_Call {
+func (_e *MockShipmentMoveRepository_Expecter) UpdateStatus(ctx any, req any) *MockShipmentMoveRepository_UpdateStatus_Call {
 	return &MockShipmentMoveRepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
 }
 

@@ -76,7 +76,7 @@ type MockBankReceiptRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *bankreceipt.BankReceipt
-func (_e *MockBankReceiptRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockBankReceiptRepository_Create_Call {
+func (_e *MockBankReceiptRepository_Expecter) Create(ctx any, entity any) *MockBankReceiptRepository_Create_Call {
 	return &MockBankReceiptRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockBankReceiptRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetBankReceiptByIDRequest
-func (_e *MockBankReceiptRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockBankReceiptRepository_GetByID_Call {
+func (_e *MockBankReceiptRepository_Expecter) GetByID(ctx any, req any) *MockBankReceiptRepository_GetByID_Call {
 	return &MockBankReceiptRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockBankReceiptRepository_GetSummary_Call struct {
 // GetSummary is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetBankReceiptSummaryRequest
-func (_e *MockBankReceiptRepository_Expecter) GetSummary(ctx interface{}, req interface{}) *MockBankReceiptRepository_GetSummary_Call {
+func (_e *MockBankReceiptRepository_Expecter) GetSummary(ctx any, req any) *MockBankReceiptRepository_GetSummary_Call {
 	return &MockBankReceiptRepository_GetSummary_Call{Call: _e.mock.On("GetSummary", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockBankReceiptRepository_ListByImportBatchID_Call struct {
 // ListByImportBatchID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListBankReceiptsByImportBatchRequest
-func (_e *MockBankReceiptRepository_Expecter) ListByImportBatchID(ctx interface{}, req interface{}) *MockBankReceiptRepository_ListByImportBatchID_Call {
+func (_e *MockBankReceiptRepository_Expecter) ListByImportBatchID(ctx any, req any) *MockBankReceiptRepository_ListByImportBatchID_Call {
 	return &MockBankReceiptRepository_ListByImportBatchID_Call{Call: _e.mock.On("ListByImportBatchID", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockBankReceiptRepository_ListExceptions_Call struct {
 // ListExceptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptRepository_Expecter) ListExceptions(ctx interface{}, tenantInfo interface{}) *MockBankReceiptRepository_ListExceptions_Call {
+func (_e *MockBankReceiptRepository_Expecter) ListExceptions(ctx any, tenantInfo any) *MockBankReceiptRepository_ListExceptions_Call {
 	return &MockBankReceiptRepository_ListExceptions_Call{Call: _e.mock.On("ListExceptions", ctx, tenantInfo)}
 }
 
@@ -416,7 +416,7 @@ type MockBankReceiptRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *bankreceipt.BankReceipt
-func (_e *MockBankReceiptRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockBankReceiptRepository_Update_Call {
+func (_e *MockBankReceiptRepository_Expecter) Update(ctx any, entity any) *MockBankReceiptRepository_Update_Call {
 	return &MockBankReceiptRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

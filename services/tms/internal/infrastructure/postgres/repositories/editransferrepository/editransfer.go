@@ -285,6 +285,32 @@ func (r *repository) GetActionableInboundTransferByExternalReference(
 	return entity, nil
 }
 
+func (r *repository) ListActionableInboundTransfersByPartner(
+	ctx context.Context,
+	req repositories.ListActionableInboundEDITransfersByPartnerRequest,
+) ([]*edi.EDITransfer, error) {
+	entities := make([]*edi.EDITransfer, 0)
+	cols := buncolgen.EDITransferColumns
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where(cols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.TargetBusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.TargetPartnerID.Eq(), req.PartnerID).
+		Where(cols.Status.In(), bun.List(req.Statuses)).
+		Order(cols.CreatedAt.OrderAsc())
+	if len(req.ExcludeIDs) > 0 {
+		query = query.Where(cols.ID.NotIn(), bun.List(req.ExcludeIDs))
+	}
+
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) CreateTransfer(
 	ctx context.Context,
 	entity *edi.EDITransfer,

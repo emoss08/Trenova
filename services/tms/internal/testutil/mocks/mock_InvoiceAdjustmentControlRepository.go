@@ -75,7 +75,7 @@ type MockInvoiceAdjustmentControlRepository_GetByOrgID_Call struct {
 // GetByOrgID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
-func (_e *MockInvoiceAdjustmentControlRepository_Expecter) GetByOrgID(ctx interface{}, orgID interface{}) *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call {
+func (_e *MockInvoiceAdjustmentControlRepository_Expecter) GetByOrgID(ctx any, orgID any) *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call {
 	return &MockInvoiceAdjustmentControlRepository_GetByOrgID_Call{Call: _e.mock.On("GetByOrgID", ctx, orgID)}
 }
 
@@ -143,7 +143,7 @@ type MockInvoiceAdjustmentControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - control *tenant.InvoiceAdjustmentControl
-func (_e *MockInvoiceAdjustmentControlRepository_Expecter) Update(ctx interface{}, control interface{}) *MockInvoiceAdjustmentControlRepository_Update_Call {
+func (_e *MockInvoiceAdjustmentControlRepository_Expecter) Update(ctx any, control any) *MockInvoiceAdjustmentControlRepository_Update_Call {
 	return &MockInvoiceAdjustmentControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, control)}
 }
 

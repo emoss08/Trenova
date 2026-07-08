@@ -77,7 +77,7 @@ type MockTCASubscriptionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tablechangealert.TCASubscription
-func (_e *MockTCASubscriptionRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockTCASubscriptionRepository_Create_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) Create(ctx any, entity any) *MockTCASubscriptionRepository_Create_Call {
 	return &MockTCASubscriptionRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -135,7 +135,7 @@ type MockTCASubscriptionRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockTCASubscriptionRepository_Expecter) Delete(ctx interface{}, id interface{}, tenantInfo interface{}) *MockTCASubscriptionRepository_Delete_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) Delete(ctx any, id any, tenantInfo any) *MockTCASubscriptionRepository_Delete_Call {
 	return &MockTCASubscriptionRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, tenantInfo)}
 }
 
@@ -208,7 +208,7 @@ type MockTCASubscriptionRepository_FindMatchingSubscriptions_Call struct {
 // FindMatchingSubscriptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.FindMatchingTCASubscriptionsRequest
-func (_e *MockTCASubscriptionRepository_Expecter) FindMatchingSubscriptions(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_FindMatchingSubscriptions_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) FindMatchingSubscriptions(ctx any, req any) *MockTCASubscriptionRepository_FindMatchingSubscriptions_Call {
 	return &MockTCASubscriptionRepository_FindMatchingSubscriptions_Call{Call: _e.mock.On("FindMatchingSubscriptions", ctx, req)}
 }
 
@@ -276,7 +276,7 @@ type MockTCASubscriptionRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetTCASubscriptionByIDRequest
-func (_e *MockTCASubscriptionRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_GetByID_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) GetByID(ctx any, req any) *MockTCASubscriptionRepository_GetByID_Call {
 	return &MockTCASubscriptionRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -344,7 +344,7 @@ type MockTCASubscriptionRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListTCASubscriptionsRequest
-func (_e *MockTCASubscriptionRepository_Expecter) List(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_List_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) List(ctx any, req any) *MockTCASubscriptionRepository_List_Call {
 	return &MockTCASubscriptionRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -412,7 +412,7 @@ type MockTCASubscriptionRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tablechangealert.TCASubscription
-func (_e *MockTCASubscriptionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockTCASubscriptionRepository_Update_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) Update(ctx any, entity any) *MockTCASubscriptionRepository_Update_Call {
 	return &MockTCASubscriptionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

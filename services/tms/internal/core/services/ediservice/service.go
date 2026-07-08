@@ -292,6 +292,25 @@ func (s *Service) SaveMappingProfile(
 	ctx context.Context,
 	req *repositories.SaveMappingItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
+	var items []*edi.EDIMappingProfileItem
+	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		items, txErr = s.saveMappingItems(txCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+		return s.syncActionableTransferMappings(txCtx, req.TenantInfo, req.PartnerID)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (s *Service) saveMappingItems(
+	ctx context.Context,
+	req *repositories.SaveMappingItemsRequest,
+) ([]*edi.EDIMappingProfileItem, error) {
 	if multiErr := s.validator.ValidateMappingItems(req.Items); multiErr != nil {
 		return nil, multiErr
 	}
@@ -307,21 +326,57 @@ func (s *Service) SaveMappingProfileItems(
 		return nil, multiErr
 	}
 
-	return s.mappingProfileRepo.SaveMappingProfileItems(ctx, req)
+	var items []*edi.EDIMappingProfileItem
+	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		items, txErr = s.mappingProfileRepo.SaveMappingProfileItems(txCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+		if len(items) == 0 {
+			return nil
+		}
+		return s.syncActionableTransferMappings(txCtx, req.TenantInfo, items[0].EDIPartnerID)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func (s *Service) DeleteMappingItem(
 	ctx context.Context,
 	req repositories.DeleteMappingItemRequest,
 ) error {
-	return s.mappingProfileRepo.DeleteMappingItem(ctx, req)
+	return s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err := s.mappingProfileRepo.DeleteMappingItem(txCtx, req); err != nil {
+			return err
+		}
+		return s.syncActionableTransferMappings(txCtx, req.TenantInfo, req.PartnerID)
+	})
 }
 
 func (s *Service) DeleteMappingProfileItem(
 	ctx context.Context,
 	req repositories.DeleteMappingProfileItemRequest,
 ) error {
-	return s.mappingProfileRepo.DeleteMappingProfileItem(ctx, req)
+	profile, err := s.mappingProfileRepo.GetMappingProfileByID(
+		ctx,
+		repositories.GetMappingProfileByIDRequest{
+			ProfileID:  req.ProfileID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if txErr := s.mappingProfileRepo.DeleteMappingProfileItem(txCtx, req); txErr != nil {
+			return txErr
+		}
+		return s.syncActionableTransferMappings(txCtx, req.TenantInfo, profile.EDIPartnerID)
+	})
 }
 
 //nolint:cyclop,funlen,nestif // Tender submission keeps the transaction and non-transaction paths explicit.
@@ -638,12 +693,20 @@ func (s *Service) ApproveTransfer(
 		original = &originalCopy
 
 		if len(req.Mappings) > 0 {
-			if _, err = s.SaveMappingProfile(txCtx, &repositories.SaveMappingItemsRequest{
+			if _, err = s.saveMappingItems(txCtx, &repositories.SaveMappingItemsRequest{
 				PartnerID:  transfer.TargetPartnerID,
 				TenantInfo: req.TenantInfo,
 				ActorID:    actor.UserID,
 				Items:      req.Mappings,
 			}); err != nil {
+				return err
+			}
+			if err = s.syncActionableTransferMappings(
+				txCtx,
+				req.TenantInfo,
+				transfer.TargetPartnerID,
+				transfer.ID,
+			); err != nil {
 				return err
 			}
 		}

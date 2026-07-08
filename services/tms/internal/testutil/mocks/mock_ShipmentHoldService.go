@@ -78,7 +78,7 @@ type MockShipmentHoldService_Create_Call struct {
 //   - ctx context.Context
 //   - req *repositories.CreateShipmentHoldRequest
 //   - actor *services.RequestActor
-func (_e *MockShipmentHoldService_Expecter) Create(ctx interface{}, req interface{}, actor interface{}) *MockShipmentHoldService_Create_Call {
+func (_e *MockShipmentHoldService_Expecter) Create(ctx any, req any, actor any) *MockShipmentHoldService_Create_Call {
 	return &MockShipmentHoldService_Create_Call{Call: _e.mock.On("Create", ctx, req, actor)}
 }
 
@@ -151,7 +151,7 @@ type MockShipmentHoldService_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentHoldByIDRequest
-func (_e *MockShipmentHoldService_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentHoldService_GetByID_Call {
+func (_e *MockShipmentHoldService_Expecter) GetByID(ctx any, req any) *MockShipmentHoldService_GetByID_Call {
 	return &MockShipmentHoldService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -219,7 +219,7 @@ type MockShipmentHoldService_ListByShipmentID_Call struct {
 // ListByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentHoldsRequest
-func (_e *MockShipmentHoldService_Expecter) ListByShipmentID(ctx interface{}, req interface{}) *MockShipmentHoldService_ListByShipmentID_Call {
+func (_e *MockShipmentHoldService_Expecter) ListByShipmentID(ctx any, req any) *MockShipmentHoldService_ListByShipmentID_Call {
 	return &MockShipmentHoldService_ListByShipmentID_Call{Call: _e.mock.On("ListByShipmentID", ctx, req)}
 }
 
@@ -288,7 +288,7 @@ type MockShipmentHoldService_Release_Call struct {
 //   - ctx context.Context
 //   - req *repositories.ReleaseShipmentHoldRequest
 //   - actor *services.RequestActor
-func (_e *MockShipmentHoldService_Expecter) Release(ctx interface{}, req interface{}, actor interface{}) *MockShipmentHoldService_Release_Call {
+func (_e *MockShipmentHoldService_Expecter) Release(ctx any, req any, actor any) *MockShipmentHoldService_Release_Call {
 	return &MockShipmentHoldService_Release_Call{Call: _e.mock.On("Release", ctx, req, actor)}
 }
 
@@ -362,7 +362,7 @@ type MockShipmentHoldService_Update_Call struct {
 //   - ctx context.Context
 //   - req *repositories.UpdateShipmentHoldRequest
 //   - actor *services.RequestActor
-func (_e *MockShipmentHoldService_Expecter) Update(ctx interface{}, req interface{}, actor interface{}) *MockShipmentHoldService_Update_Call {
+func (_e *MockShipmentHoldService_Expecter) Update(ctx any, req any, actor any) *MockShipmentHoldService_Update_Call {
 	return &MockShipmentHoldService_Update_Call{Call: _e.mock.On("Update", ctx, req, actor)}
 }
 

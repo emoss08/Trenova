@@ -75,7 +75,7 @@ type MockDocumentParsingRuleRuntime_ApplyPublished_Call struct {
 //   - ctx context.Context
 //   - input *services.DocumentParsingRuntimeInput
 //   - baseline *services.DocumentParsingAnalysis
-func (_e *MockDocumentParsingRuleRuntime_Expecter) ApplyPublished(ctx interface{}, input interface{}, baseline interface{}) *MockDocumentParsingRuleRuntime_ApplyPublished_Call {
+func (_e *MockDocumentParsingRuleRuntime_Expecter) ApplyPublished(ctx any, input any, baseline any) *MockDocumentParsingRuleRuntime_ApplyPublished_Call {
 	return &MockDocumentParsingRuleRuntime_ApplyPublished_Call{Call: _e.mock.On("ApplyPublished", ctx, input, baseline)}
 }
 
@@ -148,7 +148,7 @@ type MockDocumentParsingRuleRuntime_SimulateVersion_Call struct {
 // SimulateVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.DocumentParsingSimulationRequest
-func (_e *MockDocumentParsingRuleRuntime_Expecter) SimulateVersion(ctx interface{}, req interface{}) *MockDocumentParsingRuleRuntime_SimulateVersion_Call {
+func (_e *MockDocumentParsingRuleRuntime_Expecter) SimulateVersion(ctx any, req any) *MockDocumentParsingRuleRuntime_SimulateVersion_Call {
 	return &MockDocumentParsingRuleRuntime_SimulateVersion_Call{Call: _e.mock.On("SimulateVersion", ctx, req)}
 }
 

@@ -77,7 +77,7 @@ type MockCustomerRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateCustomerStatusRequest
-func (_e *MockCustomerRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockCustomerRepository_BulkUpdateStatus_Call {
+func (_e *MockCustomerRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockCustomerRepository_BulkUpdateStatus_Call {
 	return &MockCustomerRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -145,7 +145,7 @@ type MockCustomerRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customer.Customer
-func (_e *MockCustomerRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockCustomerRepository_Create_Call {
+func (_e *MockCustomerRepository_Expecter) Create(ctx any, entity any) *MockCustomerRepository_Create_Call {
 	return &MockCustomerRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -213,7 +213,7 @@ type MockCustomerRepository_GetBillingProfile_Call struct {
 // GetBillingProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cusID pulid.ID
-func (_e *MockCustomerRepository_Expecter) GetBillingProfile(ctx interface{}, cusID interface{}) *MockCustomerRepository_GetBillingProfile_Call {
+func (_e *MockCustomerRepository_Expecter) GetBillingProfile(ctx any, cusID any) *MockCustomerRepository_GetBillingProfile_Call {
 	return &MockCustomerRepository_GetBillingProfile_Call{Call: _e.mock.On("GetBillingProfile", ctx, cusID)}
 }
 
@@ -281,7 +281,7 @@ type MockCustomerRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCustomerByIDRequest
-func (_e *MockCustomerRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockCustomerRepository_GetByID_Call {
+func (_e *MockCustomerRepository_Expecter) GetByID(ctx any, req any) *MockCustomerRepository_GetByID_Call {
 	return &MockCustomerRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -349,7 +349,7 @@ type MockCustomerRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCustomersByIDsRequest
-func (_e *MockCustomerRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockCustomerRepository_GetByIDs_Call {
+func (_e *MockCustomerRepository_Expecter) GetByIDs(ctx any, req any) *MockCustomerRepository_GetByIDs_Call {
 	return &MockCustomerRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -417,7 +417,7 @@ type MockCustomerRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCustomerRequest
-func (_e *MockCustomerRepository_Expecter) List(ctx interface{}, req interface{}) *MockCustomerRepository_List_Call {
+func (_e *MockCustomerRepository_Expecter) List(ctx any, req any) *MockCustomerRepository_List_Call {
 	return &MockCustomerRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -485,7 +485,7 @@ type MockCustomerRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CustomerSelectOptionsRequest
-func (_e *MockCustomerRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockCustomerRepository_SelectOptions_Call {
+func (_e *MockCustomerRepository_Expecter) SelectOptions(ctx any, req any) *MockCustomerRepository_SelectOptions_Call {
 	return &MockCustomerRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -553,7 +553,7 @@ type MockCustomerRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customer.Customer
-func (_e *MockCustomerRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockCustomerRepository_Update_Call {
+func (_e *MockCustomerRepository_Expecter) Update(ctx any, entity any) *MockCustomerRepository_Update_Call {
 	return &MockCustomerRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

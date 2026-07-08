@@ -76,7 +76,7 @@ type MockEDIPartnerDocumentProfileRepository_CreatePartnerDocumentProfile_Call s
 // CreatePartnerDocumentProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDIPartnerDocumentProfile
-func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) CreatePartnerDocumentProfile(ctx interface{}, entity interface{}) *MockEDIPartnerDocumentProfileRepository_CreatePartnerDocumentProfile_Call {
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) CreatePartnerDocumentProfile(ctx any, entity any) *MockEDIPartnerDocumentProfileRepository_CreatePartnerDocumentProfile_Call {
 	return &MockEDIPartnerDocumentProfileRepository_CreatePartnerDocumentProfile_Call{Call: _e.mock.On("CreatePartnerDocumentProfile", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIPartnerDocumentProfileRepository_GetActivePartnerDocumentProfile_Cal
 // GetActivePartnerDocumentProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveEDIPartnerDocumentProfileRequest
-func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) GetActivePartnerDocumentProfile(ctx interface{}, req interface{}) *MockEDIPartnerDocumentProfileRepository_GetActivePartnerDocumentProfile_Call {
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) GetActivePartnerDocumentProfile(ctx any, req any) *MockEDIPartnerDocumentProfileRepository_GetActivePartnerDocumentProfile_Call {
 	return &MockEDIPartnerDocumentProfileRepository_GetActivePartnerDocumentProfile_Call{Call: _e.mock.On("GetActivePartnerDocumentProfile", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDIPartnerDocumentProfileRepository_GetPartnerDocumentProfileByID_Call 
 // GetPartnerDocumentProfileByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIPartnerDocumentProfileByIDRequest
-func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) GetPartnerDocumentProfileByID(ctx interface{}, req interface{}) *MockEDIPartnerDocumentProfileRepository_GetPartnerDocumentProfileByID_Call {
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) GetPartnerDocumentProfileByID(ctx any, req any) *MockEDIPartnerDocumentProfileRepository_GetPartnerDocumentProfileByID_Call {
 	return &MockEDIPartnerDocumentProfileRepository_GetPartnerDocumentProfileByID_Call{Call: _e.mock.On("GetPartnerDocumentProfileByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDIPartnerDocumentProfileRepository_ListPartnerDocumentProfiles_Call st
 // ListPartnerDocumentProfiles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnerDocumentProfilesRequest
-func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) ListPartnerDocumentProfiles(ctx interface{}, req interface{}) *MockEDIPartnerDocumentProfileRepository_ListPartnerDocumentProfiles_Call {
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) ListPartnerDocumentProfiles(ctx any, req any) *MockEDIPartnerDocumentProfileRepository_ListPartnerDocumentProfiles_Call {
 	return &MockEDIPartnerDocumentProfileRepository_ListPartnerDocumentProfiles_Call{Call: _e.mock.On("ListPartnerDocumentProfiles", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions
 // SelectPartnerDocumentProfileOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest
-func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) SelectPartnerDocumentProfileOptions(ctx interface{}, req interface{}) *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call {
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) SelectPartnerDocumentProfileOptions(ctx any, req any) *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call {
 	return &MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call{Call: _e.mock.On("SelectPartnerDocumentProfileOptions", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEDIPartnerDocumentProfileRepository_UpdatePartnerDocumentProfile_Call s
 // UpdatePartnerDocumentProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDIPartnerDocumentProfile
-func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) UpdatePartnerDocumentProfile(ctx interface{}, entity interface{}) *MockEDIPartnerDocumentProfileRepository_UpdatePartnerDocumentProfile_Call {
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) UpdatePartnerDocumentProfile(ctx any, entity any) *MockEDIPartnerDocumentProfileRepository_UpdatePartnerDocumentProfile_Call {
 	return &MockEDIPartnerDocumentProfileRepository_UpdatePartnerDocumentProfile_Call{Call: _e.mock.On("UpdatePartnerDocumentProfile", ctx, entity)}
 }
 

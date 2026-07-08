@@ -77,7 +77,7 @@ type MockAssignmentRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Assignment
-func (_e *MockAssignmentRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockAssignmentRepository_Create_Call {
+func (_e *MockAssignmentRepository_Expecter) Create(ctx any, entity any) *MockAssignmentRepository_Create_Call {
 	return &MockAssignmentRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -147,7 +147,7 @@ type MockAssignmentRepository_FindInProgressByTractorID_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - tractorID pulid.ID
 //   - excludeMoveID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) FindInProgressByTractorID(ctx interface{}, tenantInfo interface{}, tractorID interface{}, excludeMoveID interface{}) *MockAssignmentRepository_FindInProgressByTractorID_Call {
+func (_e *MockAssignmentRepository_Expecter) FindInProgressByTractorID(ctx any, tenantInfo any, tractorID any, excludeMoveID any) *MockAssignmentRepository_FindInProgressByTractorID_Call {
 	return &MockAssignmentRepository_FindInProgressByTractorID_Call{Call: _e.mock.On("FindInProgressByTractorID", ctx, tenantInfo, tractorID, excludeMoveID)}
 }
 
@@ -227,7 +227,7 @@ type MockAssignmentRepository_FindInProgressByTrailerID_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - trailerID pulid.ID
 //   - excludeMoveID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) FindInProgressByTrailerID(ctx interface{}, tenantInfo interface{}, trailerID interface{}, excludeMoveID interface{}) *MockAssignmentRepository_FindInProgressByTrailerID_Call {
+func (_e *MockAssignmentRepository_Expecter) FindInProgressByTrailerID(ctx any, tenantInfo any, trailerID any, excludeMoveID any) *MockAssignmentRepository_FindInProgressByTrailerID_Call {
 	return &MockAssignmentRepository_FindInProgressByTrailerID_Call{Call: _e.mock.On("FindInProgressByTrailerID", ctx, tenantInfo, trailerID, excludeMoveID)}
 }
 
@@ -306,7 +306,7 @@ type MockAssignmentRepository_FindNearestActualEventByPrimaryWorkerID_Call struc
 //   - ctx context.Context
 //   - req repositories.FindNearestActualTimelineEventRequest
 //   - workerID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) FindNearestActualEventByPrimaryWorkerID(ctx interface{}, req interface{}, workerID interface{}) *MockAssignmentRepository_FindNearestActualEventByPrimaryWorkerID_Call {
+func (_e *MockAssignmentRepository_Expecter) FindNearestActualEventByPrimaryWorkerID(ctx any, req any, workerID any) *MockAssignmentRepository_FindNearestActualEventByPrimaryWorkerID_Call {
 	return &MockAssignmentRepository_FindNearestActualEventByPrimaryWorkerID_Call{Call: _e.mock.On("FindNearestActualEventByPrimaryWorkerID", ctx, req, workerID)}
 }
 
@@ -380,7 +380,7 @@ type MockAssignmentRepository_FindNearestActualEventByTractorID_Call struct {
 //   - ctx context.Context
 //   - req repositories.FindNearestActualTimelineEventRequest
 //   - tractorID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) FindNearestActualEventByTractorID(ctx interface{}, req interface{}, tractorID interface{}) *MockAssignmentRepository_FindNearestActualEventByTractorID_Call {
+func (_e *MockAssignmentRepository_Expecter) FindNearestActualEventByTractorID(ctx any, req any, tractorID any) *MockAssignmentRepository_FindNearestActualEventByTractorID_Call {
 	return &MockAssignmentRepository_FindNearestActualEventByTractorID_Call{Call: _e.mock.On("FindNearestActualEventByTractorID", ctx, req, tractorID)}
 }
 
@@ -454,7 +454,7 @@ type MockAssignmentRepository_FindOverlappingActualWindowByPrimaryWorkerID_Call 
 //   - ctx context.Context
 //   - req repositories.FindOverlappingActualTimelineWindowRequest
 //   - workerID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) FindOverlappingActualWindowByPrimaryWorkerID(ctx interface{}, req interface{}, workerID interface{}) *MockAssignmentRepository_FindOverlappingActualWindowByPrimaryWorkerID_Call {
+func (_e *MockAssignmentRepository_Expecter) FindOverlappingActualWindowByPrimaryWorkerID(ctx any, req any, workerID any) *MockAssignmentRepository_FindOverlappingActualWindowByPrimaryWorkerID_Call {
 	return &MockAssignmentRepository_FindOverlappingActualWindowByPrimaryWorkerID_Call{Call: _e.mock.On("FindOverlappingActualWindowByPrimaryWorkerID", ctx, req, workerID)}
 }
 
@@ -528,7 +528,7 @@ type MockAssignmentRepository_FindOverlappingActualWindowByTractorID_Call struct
 //   - ctx context.Context
 //   - req repositories.FindOverlappingActualTimelineWindowRequest
 //   - tractorID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) FindOverlappingActualWindowByTractorID(ctx interface{}, req interface{}, tractorID interface{}) *MockAssignmentRepository_FindOverlappingActualWindowByTractorID_Call {
+func (_e *MockAssignmentRepository_Expecter) FindOverlappingActualWindowByTractorID(ctx any, req any, tractorID any) *MockAssignmentRepository_FindOverlappingActualWindowByTractorID_Call {
 	return &MockAssignmentRepository_FindOverlappingActualWindowByTractorID_Call{Call: _e.mock.On("FindOverlappingActualWindowByTractorID", ctx, req, tractorID)}
 }
 
@@ -601,7 +601,7 @@ type MockAssignmentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetAssignmentByIDRequest
-func (_e *MockAssignmentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockAssignmentRepository_GetByID_Call {
+func (_e *MockAssignmentRepository_Expecter) GetByID(ctx any, req any) *MockAssignmentRepository_GetByID_Call {
 	return &MockAssignmentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -670,7 +670,7 @@ type MockAssignmentRepository_GetByMoveID_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - moveID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) GetByMoveID(ctx interface{}, tenantInfo interface{}, moveID interface{}) *MockAssignmentRepository_GetByMoveID_Call {
+func (_e *MockAssignmentRepository_Expecter) GetByMoveID(ctx any, tenantInfo any, moveID any) *MockAssignmentRepository_GetByMoveID_Call {
 	return &MockAssignmentRepository_GetByMoveID_Call{Call: _e.mock.On("GetByMoveID", ctx, tenantInfo, moveID)}
 }
 
@@ -744,7 +744,7 @@ type MockAssignmentRepository_GetMoveByID_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - moveID pulid.ID
-func (_e *MockAssignmentRepository_Expecter) GetMoveByID(ctx interface{}, tenantInfo interface{}, moveID interface{}) *MockAssignmentRepository_GetMoveByID_Call {
+func (_e *MockAssignmentRepository_Expecter) GetMoveByID(ctx any, tenantInfo any, moveID any) *MockAssignmentRepository_GetMoveByID_Call {
 	return &MockAssignmentRepository_GetMoveByID_Call{Call: _e.mock.On("GetMoveByID", ctx, tenantInfo, moveID)}
 }
 
@@ -817,7 +817,7 @@ type MockAssignmentRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAssignmentsRequest
-func (_e *MockAssignmentRepository_Expecter) List(ctx interface{}, req interface{}) *MockAssignmentRepository_List_Call {
+func (_e *MockAssignmentRepository_Expecter) List(ctx any, req any) *MockAssignmentRepository_List_Call {
 	return &MockAssignmentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -885,7 +885,7 @@ type MockAssignmentRepository_Unassign_Call struct {
 // Unassign is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Assignment
-func (_e *MockAssignmentRepository_Expecter) Unassign(ctx interface{}, entity interface{}) *MockAssignmentRepository_Unassign_Call {
+func (_e *MockAssignmentRepository_Expecter) Unassign(ctx any, entity any) *MockAssignmentRepository_Unassign_Call {
 	return &MockAssignmentRepository_Unassign_Call{Call: _e.mock.On("Unassign", ctx, entity)}
 }
 
@@ -953,7 +953,7 @@ type MockAssignmentRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Assignment
-func (_e *MockAssignmentRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockAssignmentRepository_Update_Call {
+func (_e *MockAssignmentRepository_Expecter) Update(ctx any, entity any) *MockAssignmentRepository_Update_Call {
 	return &MockAssignmentRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

@@ -76,7 +76,7 @@ type MockShipmentCommentRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.ShipmentComment
-func (_e *MockShipmentCommentRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockShipmentCommentRepository_Create_Call {
+func (_e *MockShipmentCommentRepository_Expecter) Create(ctx any, entity any) *MockShipmentCommentRepository_Create_Call {
 	return &MockShipmentCommentRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -133,7 +133,7 @@ type MockShipmentCommentRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.DeleteShipmentCommentRequest
-func (_e *MockShipmentCommentRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockShipmentCommentRepository_Delete_Call {
+func (_e *MockShipmentCommentRepository_Expecter) Delete(ctx any, req any) *MockShipmentCommentRepository_Delete_Call {
 	return &MockShipmentCommentRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockShipmentCommentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentCommentByIDRequest
-func (_e *MockShipmentCommentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentCommentRepository_GetByID_Call {
+func (_e *MockShipmentCommentRepository_Expecter) GetByID(ctx any, req any) *MockShipmentCommentRepository_GetByID_Call {
 	return &MockShipmentCommentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -267,7 +267,7 @@ type MockShipmentCommentRepository_GetCountByShipmentID_Call struct {
 // GetCountByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentCommentCountRequest
-func (_e *MockShipmentCommentRepository_Expecter) GetCountByShipmentID(ctx interface{}, req interface{}) *MockShipmentCommentRepository_GetCountByShipmentID_Call {
+func (_e *MockShipmentCommentRepository_Expecter) GetCountByShipmentID(ctx any, req any) *MockShipmentCommentRepository_GetCountByShipmentID_Call {
 	return &MockShipmentCommentRepository_GetCountByShipmentID_Call{Call: _e.mock.On("GetCountByShipmentID", ctx, req)}
 }
 
@@ -335,7 +335,7 @@ type MockShipmentCommentRepository_ListByShipmentID_Call struct {
 // ListByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentCommentsRequest
-func (_e *MockShipmentCommentRepository_Expecter) ListByShipmentID(ctx interface{}, req interface{}) *MockShipmentCommentRepository_ListByShipmentID_Call {
+func (_e *MockShipmentCommentRepository_Expecter) ListByShipmentID(ctx any, req any) *MockShipmentCommentRepository_ListByShipmentID_Call {
 	return &MockShipmentCommentRepository_ListByShipmentID_Call{Call: _e.mock.On("ListByShipmentID", ctx, req)}
 }
 
@@ -403,7 +403,7 @@ type MockShipmentCommentRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.ShipmentComment
-func (_e *MockShipmentCommentRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockShipmentCommentRepository_Update_Call {
+func (_e *MockShipmentCommentRepository_Expecter) Update(ctx any, entity any) *MockShipmentCommentRepository_Update_Call {
 	return &MockShipmentCommentRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

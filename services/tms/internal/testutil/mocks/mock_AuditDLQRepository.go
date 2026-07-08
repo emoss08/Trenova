@@ -72,7 +72,7 @@ type MockAuditDLQRepository_Count_Call struct {
 
 // Count is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockAuditDLQRepository_Expecter) Count(ctx interface{}) *MockAuditDLQRepository_Count_Call {
+func (_e *MockAuditDLQRepository_Expecter) Count(ctx any) *MockAuditDLQRepository_Count_Call {
 	return &MockAuditDLQRepository_Count_Call{Call: _e.mock.On("Count", ctx)}
 }
 
@@ -133,7 +133,7 @@ type MockAuditDLQRepository_CountByStatus_Call struct {
 // CountByStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - status audit.DLQStatus
-func (_e *MockAuditDLQRepository_Expecter) CountByStatus(ctx interface{}, status interface{}) *MockAuditDLQRepository_CountByStatus_Call {
+func (_e *MockAuditDLQRepository_Expecter) CountByStatus(ctx any, status any) *MockAuditDLQRepository_CountByStatus_Call {
 	return &MockAuditDLQRepository_CountByStatus_Call{Call: _e.mock.On("CountByStatus", ctx, status)}
 }
 
@@ -199,7 +199,7 @@ type MockAuditDLQRepository_DeleteRecovered_Call struct {
 // DeleteRecovered is a helper method to define mock.On call
 //   - ctx context.Context
 //   - olderThan int64
-func (_e *MockAuditDLQRepository_Expecter) DeleteRecovered(ctx interface{}, olderThan interface{}) *MockAuditDLQRepository_DeleteRecovered_Call {
+func (_e *MockAuditDLQRepository_Expecter) DeleteRecovered(ctx any, olderThan any) *MockAuditDLQRepository_DeleteRecovered_Call {
 	return &MockAuditDLQRepository_DeleteRecovered_Call{Call: _e.mock.On("DeleteRecovered", ctx, olderThan)}
 }
 
@@ -267,7 +267,7 @@ type MockAuditDLQRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id pulid.ID
-func (_e *MockAuditDLQRepository_Expecter) GetByID(ctx interface{}, id interface{}) *MockAuditDLQRepository_GetByID_Call {
+func (_e *MockAuditDLQRepository_Expecter) GetByID(ctx any, id any) *MockAuditDLQRepository_GetByID_Call {
 	return &MockAuditDLQRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
 }
 
@@ -335,7 +335,7 @@ type MockAuditDLQRepository_GetPendingEntries_Call struct {
 // GetPendingEntries is a helper method to define mock.On call
 //   - ctx context.Context
 //   - limit int
-func (_e *MockAuditDLQRepository_Expecter) GetPendingEntries(ctx interface{}, limit interface{}) *MockAuditDLQRepository_GetPendingEntries_Call {
+func (_e *MockAuditDLQRepository_Expecter) GetPendingEntries(ctx any, limit any) *MockAuditDLQRepository_GetPendingEntries_Call {
 	return &MockAuditDLQRepository_GetPendingEntries_Call{Call: _e.mock.On("GetPendingEntries", ctx, limit)}
 }
 
@@ -392,7 +392,7 @@ type MockAuditDLQRepository_Insert_Call struct {
 // Insert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entry *audit.DLQEntry
-func (_e *MockAuditDLQRepository_Expecter) Insert(ctx interface{}, entry interface{}) *MockAuditDLQRepository_Insert_Call {
+func (_e *MockAuditDLQRepository_Expecter) Insert(ctx any, entry any) *MockAuditDLQRepository_Insert_Call {
 	return &MockAuditDLQRepository_Insert_Call{Call: _e.mock.On("Insert", ctx, entry)}
 }
 
@@ -449,7 +449,7 @@ type MockAuditDLQRepository_InsertBatch_Call struct {
 // InsertBatch is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entries []*audit.DLQEntry
-func (_e *MockAuditDLQRepository_Expecter) InsertBatch(ctx interface{}, entries interface{}) *MockAuditDLQRepository_InsertBatch_Call {
+func (_e *MockAuditDLQRepository_Expecter) InsertBatch(ctx any, entries any) *MockAuditDLQRepository_InsertBatch_Call {
 	return &MockAuditDLQRepository_InsertBatch_Call{Call: _e.mock.On("InsertBatch", ctx, entries)}
 }
 
@@ -507,7 +507,7 @@ type MockAuditDLQRepository_MarkAsFailed_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - errMsg string
-func (_e *MockAuditDLQRepository_Expecter) MarkAsFailed(ctx interface{}, id interface{}, errMsg interface{}) *MockAuditDLQRepository_MarkAsFailed_Call {
+func (_e *MockAuditDLQRepository_Expecter) MarkAsFailed(ctx any, id any, errMsg any) *MockAuditDLQRepository_MarkAsFailed_Call {
 	return &MockAuditDLQRepository_MarkAsFailed_Call{Call: _e.mock.On("MarkAsFailed", ctx, id, errMsg)}
 }
 
@@ -569,7 +569,7 @@ type MockAuditDLQRepository_MarkAsRecovered_Call struct {
 // MarkAsRecovered is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ids []pulid.ID
-func (_e *MockAuditDLQRepository_Expecter) MarkAsRecovered(ctx interface{}, ids interface{}) *MockAuditDLQRepository_MarkAsRecovered_Call {
+func (_e *MockAuditDLQRepository_Expecter) MarkAsRecovered(ctx any, ids any) *MockAuditDLQRepository_MarkAsRecovered_Call {
 	return &MockAuditDLQRepository_MarkAsRecovered_Call{Call: _e.mock.On("MarkAsRecovered", ctx, ids)}
 }
 
@@ -626,7 +626,7 @@ type MockAuditDLQRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entry *audit.DLQEntry
-func (_e *MockAuditDLQRepository_Expecter) Update(ctx interface{}, entry interface{}) *MockAuditDLQRepository_Update_Call {
+func (_e *MockAuditDLQRepository_Expecter) Update(ctx any, entry any) *MockAuditDLQRepository_Update_Call {
 	return &MockAuditDLQRepository_Update_Call{Call: _e.mock.On("Update", ctx, entry)}
 }
 

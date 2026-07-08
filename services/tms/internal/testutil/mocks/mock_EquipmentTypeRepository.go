@@ -76,7 +76,7 @@ type MockEquipmentTypeRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateEquipmentTypeStatusRequest
-func (_e *MockEquipmentTypeRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockEquipmentTypeRepository_BulkUpdateStatus_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockEquipmentTypeRepository_BulkUpdateStatus_Call {
 	return &MockEquipmentTypeRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEquipmentTypeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *equipmenttype.EquipmentType
-func (_e *MockEquipmentTypeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockEquipmentTypeRepository_Create_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) Create(ctx any, entity any) *MockEquipmentTypeRepository_Create_Call {
 	return &MockEquipmentTypeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockEquipmentTypeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEquipmentTypeByIDRequest
-func (_e *MockEquipmentTypeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockEquipmentTypeRepository_GetByID_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) GetByID(ctx any, req any) *MockEquipmentTypeRepository_GetByID_Call {
 	return &MockEquipmentTypeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEquipmentTypeRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEquipmentTypesByIDsRequest
-func (_e *MockEquipmentTypeRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockEquipmentTypeRepository_GetByIDs_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) GetByIDs(ctx any, req any) *MockEquipmentTypeRepository_GetByIDs_Call {
 	return &MockEquipmentTypeRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEquipmentTypeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEquipmentTypesRequest
-func (_e *MockEquipmentTypeRepository_Expecter) List(ctx interface{}, req interface{}) *MockEquipmentTypeRepository_List_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) List(ctx any, req any) *MockEquipmentTypeRepository_List_Call {
 	return &MockEquipmentTypeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEquipmentTypeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EquipmentTypeSelectOptionsRequest
-func (_e *MockEquipmentTypeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockEquipmentTypeRepository_SelectOptions_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockEquipmentTypeRepository_SelectOptions_Call {
 	return &MockEquipmentTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockEquipmentTypeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *equipmenttype.EquipmentType
-func (_e *MockEquipmentTypeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockEquipmentTypeRepository_Update_Call {
+func (_e *MockEquipmentTypeRepository_Expecter) Update(ctx any, entity any) *MockEquipmentTypeRepository_Update_Call {
 	return &MockEquipmentTypeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

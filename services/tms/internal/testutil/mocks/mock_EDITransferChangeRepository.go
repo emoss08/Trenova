@@ -76,7 +76,7 @@ type MockEDITransferChangeRepository_CreateTransferChange_Call struct {
 // CreateTransferChange is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.TransferChange
-func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChange(ctx interface{}, entity interface{}) *MockEDITransferChangeRepository_CreateTransferChange_Call {
+func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChange(ctx any, entity any) *MockEDITransferChangeRepository_CreateTransferChange_Call {
 	return &MockEDITransferChangeRepository_CreateTransferChange_Call{Call: _e.mock.On("CreateTransferChange", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call struct 
 // CreateTransferChangeIdempotent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.TransferChange
-func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChangeIdempotent(ctx interface{}, entity interface{}) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChangeIdempotent(ctx any, entity any) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
 	return &MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call{Call: _e.mock.On("CreateTransferChangeIdempotent", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockEDITransferChangeRepository_GetTransferChangeByID_Call struct {
 // GetTransferChangeByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITransferChangeByIDRequest
-func (_e *MockEDITransferChangeRepository_Expecter) GetTransferChangeByID(ctx interface{}, req interface{}) *MockEDITransferChangeRepository_GetTransferChangeByID_Call {
+func (_e *MockEDITransferChangeRepository_Expecter) GetTransferChangeByID(ctx any, req any) *MockEDITransferChangeRepository_GetTransferChangeByID_Call {
 	return &MockEDITransferChangeRepository_GetTransferChangeByID_Call{Call: _e.mock.On("GetTransferChangeByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDITransferChangeRepository_ListTransferChanges_Call struct {
 // ListTransferChanges is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITransferChangesRequest
-func (_e *MockEDITransferChangeRepository_Expecter) ListTransferChanges(ctx interface{}, req interface{}) *MockEDITransferChangeRepository_ListTransferChanges_Call {
+func (_e *MockEDITransferChangeRepository_Expecter) ListTransferChanges(ctx any, req any) *MockEDITransferChangeRepository_ListTransferChanges_Call {
 	return &MockEDITransferChangeRepository_ListTransferChanges_Call{Call: _e.mock.On("ListTransferChanges", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDITransferChangeRepository_UpdateTransferChange_Call struct {
 // UpdateTransferChange is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.TransferChange
-func (_e *MockEDITransferChangeRepository_Expecter) UpdateTransferChange(ctx interface{}, entity interface{}) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
+func (_e *MockEDITransferChangeRepository_Expecter) UpdateTransferChange(ctx any, entity any) *MockEDITransferChangeRepository_UpdateTransferChange_Call {
 	return &MockEDITransferChangeRepository_UpdateTransferChange_Call{Call: _e.mock.On("UpdateTransferChange", ctx, entity)}
 }
 

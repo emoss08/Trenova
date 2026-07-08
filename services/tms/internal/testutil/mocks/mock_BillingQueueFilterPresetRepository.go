@@ -75,7 +75,7 @@ type MockBillingQueueFilterPresetRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *billingqueuefilterpreset.BillingQueueFilterPreset
-func (_e *MockBillingQueueFilterPresetRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockBillingQueueFilterPresetRepository_Create_Call {
+func (_e *MockBillingQueueFilterPresetRepository_Expecter) Create(ctx any, entity any) *MockBillingQueueFilterPresetRepository_Create_Call {
 	return &MockBillingQueueFilterPresetRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -132,7 +132,7 @@ type MockBillingQueueFilterPresetRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.DeleteBillingQueueFilterPresetRequest
-func (_e *MockBillingQueueFilterPresetRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockBillingQueueFilterPresetRepository_Delete_Call {
+func (_e *MockBillingQueueFilterPresetRepository_Expecter) Delete(ctx any, req any) *MockBillingQueueFilterPresetRepository_Delete_Call {
 	return &MockBillingQueueFilterPresetRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -200,7 +200,7 @@ type MockBillingQueueFilterPresetRepository_ListByUserID_Call struct {
 // ListByUserID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListBillingQueueFilterPresetsRequest
-func (_e *MockBillingQueueFilterPresetRepository_Expecter) ListByUserID(ctx interface{}, req interface{}) *MockBillingQueueFilterPresetRepository_ListByUserID_Call {
+func (_e *MockBillingQueueFilterPresetRepository_Expecter) ListByUserID(ctx any, req any) *MockBillingQueueFilterPresetRepository_ListByUserID_Call {
 	return &MockBillingQueueFilterPresetRepository_ListByUserID_Call{Call: _e.mock.On("ListByUserID", ctx, req)}
 }
 
@@ -268,7 +268,7 @@ type MockBillingQueueFilterPresetRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *billingqueuefilterpreset.BillingQueueFilterPreset
-func (_e *MockBillingQueueFilterPresetRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockBillingQueueFilterPresetRepository_Update_Call {
+func (_e *MockBillingQueueFilterPresetRepository_Expecter) Update(ctx any, entity any) *MockBillingQueueFilterPresetRepository_Update_Call {
 	return &MockBillingQueueFilterPresetRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

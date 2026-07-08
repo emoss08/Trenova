@@ -79,7 +79,7 @@ type MockIAMService_CreateAccessPolicy_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - entity *iam.AccessPolicy
-func (_e *MockIAMService_Expecter) CreateAccessPolicy(ctx interface{}, tenantInfo interface{}, entity interface{}) *MockIAMService_CreateAccessPolicy_Call {
+func (_e *MockIAMService_Expecter) CreateAccessPolicy(ctx any, tenantInfo any, entity any) *MockIAMService_CreateAccessPolicy_Call {
 	return &MockIAMService_CreateAccessPolicy_Call{Call: _e.mock.On("CreateAccessPolicy", ctx, tenantInfo, entity)}
 }
 
@@ -153,7 +153,7 @@ type MockIAMService_CreateIdentityProvider_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - req *services.IdentityProviderRequest
-func (_e *MockIAMService_Expecter) CreateIdentityProvider(ctx interface{}, tenantInfo interface{}, req interface{}) *MockIAMService_CreateIdentityProvider_Call {
+func (_e *MockIAMService_Expecter) CreateIdentityProvider(ctx any, tenantInfo any, req any) *MockIAMService_CreateIdentityProvider_Call {
 	return &MockIAMService_CreateIdentityProvider_Call{Call: _e.mock.On("CreateIdentityProvider", ctx, tenantInfo, req)}
 }
 
@@ -227,7 +227,7 @@ type MockIAMService_CreateSCIMDirectory_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - entity *iam.SCIMDirectory
-func (_e *MockIAMService_Expecter) CreateSCIMDirectory(ctx interface{}, tenantInfo interface{}, entity interface{}) *MockIAMService_CreateSCIMDirectory_Call {
+func (_e *MockIAMService_Expecter) CreateSCIMDirectory(ctx any, tenantInfo any, entity any) *MockIAMService_CreateSCIMDirectory_Call {
 	return &MockIAMService_CreateSCIMDirectory_Call{Call: _e.mock.On("CreateSCIMDirectory", ctx, tenantInfo, entity)}
 }
 
@@ -302,7 +302,7 @@ type MockIAMService_CreateSCIMGroupRoleMapping_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - directoryID pulid.ID
 //   - entity *iam.SCIMGroupRoleMapping
-func (_e *MockIAMService_Expecter) CreateSCIMGroupRoleMapping(ctx interface{}, tenantInfo interface{}, directoryID interface{}, entity interface{}) *MockIAMService_CreateSCIMGroupRoleMapping_Call {
+func (_e *MockIAMService_Expecter) CreateSCIMGroupRoleMapping(ctx any, tenantInfo any, directoryID any, entity any) *MockIAMService_CreateSCIMGroupRoleMapping_Call {
 	return &MockIAMService_CreateSCIMGroupRoleMapping_Call{Call: _e.mock.On("CreateSCIMGroupRoleMapping", ctx, tenantInfo, directoryID, entity)}
 }
 
@@ -382,7 +382,7 @@ type MockIAMService_CreateSCIMToken_Call struct {
 //   - orgID pulid.ID
 //   - directoryID pulid.ID
 //   - req *services.SCIMTokenCreateRequest
-func (_e *MockIAMService_Expecter) CreateSCIMToken(ctx interface{}, orgID interface{}, directoryID interface{}, req interface{}) *MockIAMService_CreateSCIMToken_Call {
+func (_e *MockIAMService_Expecter) CreateSCIMToken(ctx any, orgID any, directoryID any, req any) *MockIAMService_CreateSCIMToken_Call {
 	return &MockIAMService_CreateSCIMToken_Call{Call: _e.mock.On("CreateSCIMToken", ctx, orgID, directoryID, req)}
 }
 
@@ -450,7 +450,7 @@ type MockIAMService_DeleteAccessPolicy_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMService_Expecter) DeleteAccessPolicy(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMService_DeleteAccessPolicy_Call {
+func (_e *MockIAMService_Expecter) DeleteAccessPolicy(ctx any, tenantInfo any, id any) *MockIAMService_DeleteAccessPolicy_Call {
 	return &MockIAMService_DeleteAccessPolicy_Call{Call: _e.mock.On("DeleteAccessPolicy", ctx, tenantInfo, id)}
 }
 
@@ -513,7 +513,7 @@ type MockIAMService_DeleteIdentityProvider_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMService_Expecter) DeleteIdentityProvider(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMService_DeleteIdentityProvider_Call {
+func (_e *MockIAMService_Expecter) DeleteIdentityProvider(ctx any, tenantInfo any, id any) *MockIAMService_DeleteIdentityProvider_Call {
 	return &MockIAMService_DeleteIdentityProvider_Call{Call: _e.mock.On("DeleteIdentityProvider", ctx, tenantInfo, id)}
 }
 
@@ -576,7 +576,7 @@ type MockIAMService_DeleteSCIMDirectory_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMService_Expecter) DeleteSCIMDirectory(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMService_DeleteSCIMDirectory_Call {
+func (_e *MockIAMService_Expecter) DeleteSCIMDirectory(ctx any, tenantInfo any, id any) *MockIAMService_DeleteSCIMDirectory_Call {
 	return &MockIAMService_DeleteSCIMDirectory_Call{Call: _e.mock.On("DeleteSCIMDirectory", ctx, tenantInfo, id)}
 }
 
@@ -639,7 +639,7 @@ type MockIAMService_DeleteSCIMGroupRoleMapping_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockIAMService_Expecter) DeleteSCIMGroupRoleMapping(ctx interface{}, tenantInfo interface{}, id interface{}) *MockIAMService_DeleteSCIMGroupRoleMapping_Call {
+func (_e *MockIAMService_Expecter) DeleteSCIMGroupRoleMapping(ctx any, tenantInfo any, id any) *MockIAMService_DeleteSCIMGroupRoleMapping_Call {
 	return &MockIAMService_DeleteSCIMGroupRoleMapping_Call{Call: _e.mock.On("DeleteSCIMGroupRoleMapping", ctx, tenantInfo, id)}
 }
 
@@ -712,7 +712,7 @@ type MockIAMService_ListAccessPolicies_Call struct {
 // ListAccessPolicies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockIAMService_Expecter) ListAccessPolicies(ctx interface{}, tenantInfo interface{}) *MockIAMService_ListAccessPolicies_Call {
+func (_e *MockIAMService_Expecter) ListAccessPolicies(ctx any, tenantInfo any) *MockIAMService_ListAccessPolicies_Call {
 	return &MockIAMService_ListAccessPolicies_Call{Call: _e.mock.On("ListAccessPolicies", ctx, tenantInfo)}
 }
 
@@ -781,7 +781,7 @@ type MockIAMService_ListAuthEvents_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - limit int
-func (_e *MockIAMService_Expecter) ListAuthEvents(ctx interface{}, orgID interface{}, limit interface{}) *MockIAMService_ListAuthEvents_Call {
+func (_e *MockIAMService_Expecter) ListAuthEvents(ctx any, orgID any, limit any) *MockIAMService_ListAuthEvents_Call {
 	return &MockIAMService_ListAuthEvents_Call{Call: _e.mock.On("ListAuthEvents", ctx, orgID, limit)}
 }
 
@@ -854,7 +854,7 @@ type MockIAMService_ListExternalIdentities_Call struct {
 // ListExternalIdentities is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockIAMService_Expecter) ListExternalIdentities(ctx interface{}, tenantInfo interface{}) *MockIAMService_ListExternalIdentities_Call {
+func (_e *MockIAMService_Expecter) ListExternalIdentities(ctx any, tenantInfo any) *MockIAMService_ListExternalIdentities_Call {
 	return &MockIAMService_ListExternalIdentities_Call{Call: _e.mock.On("ListExternalIdentities", ctx, tenantInfo)}
 }
 
@@ -922,7 +922,7 @@ type MockIAMService_ListIdentityProviders_Call struct {
 // ListIdentityProviders is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockIAMService_Expecter) ListIdentityProviders(ctx interface{}, tenantInfo interface{}) *MockIAMService_ListIdentityProviders_Call {
+func (_e *MockIAMService_Expecter) ListIdentityProviders(ctx any, tenantInfo any) *MockIAMService_ListIdentityProviders_Call {
 	return &MockIAMService_ListIdentityProviders_Call{Call: _e.mock.On("ListIdentityProviders", ctx, tenantInfo)}
 }
 
@@ -991,7 +991,7 @@ type MockIAMService_ListMFAAuthenticators_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - limit int
-func (_e *MockIAMService_Expecter) ListMFAAuthenticators(ctx interface{}, orgID interface{}, limit interface{}) *MockIAMService_ListMFAAuthenticators_Call {
+func (_e *MockIAMService_Expecter) ListMFAAuthenticators(ctx any, orgID any, limit any) *MockIAMService_ListMFAAuthenticators_Call {
 	return &MockIAMService_ListMFAAuthenticators_Call{Call: _e.mock.On("ListMFAAuthenticators", ctx, orgID, limit)}
 }
 
@@ -1066,7 +1066,7 @@ type MockIAMService_ListProvisioningAuditRecords_Call struct {
 //   - orgID pulid.ID
 //   - directoryID pulid.ID
 //   - limit int
-func (_e *MockIAMService_Expecter) ListProvisioningAuditRecords(ctx interface{}, orgID interface{}, directoryID interface{}, limit interface{}) *MockIAMService_ListProvisioningAuditRecords_Call {
+func (_e *MockIAMService_Expecter) ListProvisioningAuditRecords(ctx any, orgID any, directoryID any, limit any) *MockIAMService_ListProvisioningAuditRecords_Call {
 	return &MockIAMService_ListProvisioningAuditRecords_Call{Call: _e.mock.On("ListProvisioningAuditRecords", ctx, orgID, directoryID, limit)}
 }
 
@@ -1145,7 +1145,7 @@ type MockIAMService_ListRiskDecisions_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - limit int
-func (_e *MockIAMService_Expecter) ListRiskDecisions(ctx interface{}, orgID interface{}, limit interface{}) *MockIAMService_ListRiskDecisions_Call {
+func (_e *MockIAMService_Expecter) ListRiskDecisions(ctx any, orgID any, limit any) *MockIAMService_ListRiskDecisions_Call {
 	return &MockIAMService_ListRiskDecisions_Call{Call: _e.mock.On("ListRiskDecisions", ctx, orgID, limit)}
 }
 
@@ -1218,7 +1218,7 @@ type MockIAMService_ListSCIMDirectories_Call struct {
 // ListSCIMDirectories is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListSCIMDirectoryRequest
-func (_e *MockIAMService_Expecter) ListSCIMDirectories(ctx interface{}, req interface{}) *MockIAMService_ListSCIMDirectories_Call {
+func (_e *MockIAMService_Expecter) ListSCIMDirectories(ctx any, req any) *MockIAMService_ListSCIMDirectories_Call {
 	return &MockIAMService_ListSCIMDirectories_Call{Call: _e.mock.On("ListSCIMDirectories", ctx, req)}
 }
 
@@ -1286,7 +1286,7 @@ type MockIAMService_ListSCIMGroupRoleMappings_Call struct {
 // ListSCIMGroupRoleMappings is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListSCIMGroupRoleMappingsRequest
-func (_e *MockIAMService_Expecter) ListSCIMGroupRoleMappings(ctx interface{}, req interface{}) *MockIAMService_ListSCIMGroupRoleMappings_Call {
+func (_e *MockIAMService_Expecter) ListSCIMGroupRoleMappings(ctx any, req any) *MockIAMService_ListSCIMGroupRoleMappings_Call {
 	return &MockIAMService_ListSCIMGroupRoleMappings_Call{Call: _e.mock.On("ListSCIMGroupRoleMappings", ctx, req)}
 }
 
@@ -1355,7 +1355,7 @@ type MockIAMService_ListSCIMTokens_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - directoryID pulid.ID
-func (_e *MockIAMService_Expecter) ListSCIMTokens(ctx interface{}, orgID interface{}, directoryID interface{}) *MockIAMService_ListSCIMTokens_Call {
+func (_e *MockIAMService_Expecter) ListSCIMTokens(ctx any, orgID any, directoryID any) *MockIAMService_ListSCIMTokens_Call {
 	return &MockIAMService_ListSCIMTokens_Call{Call: _e.mock.On("ListSCIMTokens", ctx, orgID, directoryID)}
 }
 
@@ -1429,7 +1429,7 @@ type MockIAMService_RevokeSCIMToken_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - tokenID pulid.ID
-func (_e *MockIAMService_Expecter) RevokeSCIMToken(ctx interface{}, orgID interface{}, tokenID interface{}) *MockIAMService_RevokeSCIMToken_Call {
+func (_e *MockIAMService_Expecter) RevokeSCIMToken(ctx any, orgID any, tokenID any) *MockIAMService_RevokeSCIMToken_Call {
 	return &MockIAMService_RevokeSCIMToken_Call{Call: _e.mock.On("RevokeSCIMToken", ctx, orgID, tokenID)}
 }
 
@@ -1504,7 +1504,7 @@ type MockIAMService_UpdateAccessPolicy_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
 //   - entity *iam.AccessPolicy
-func (_e *MockIAMService_Expecter) UpdateAccessPolicy(ctx interface{}, tenantInfo interface{}, id interface{}, entity interface{}) *MockIAMService_UpdateAccessPolicy_Call {
+func (_e *MockIAMService_Expecter) UpdateAccessPolicy(ctx any, tenantInfo any, id any, entity any) *MockIAMService_UpdateAccessPolicy_Call {
 	return &MockIAMService_UpdateAccessPolicy_Call{Call: _e.mock.On("UpdateAccessPolicy", ctx, tenantInfo, id, entity)}
 }
 
@@ -1584,7 +1584,7 @@ type MockIAMService_UpdateIdentityProvider_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
 //   - req *services.IdentityProviderRequest
-func (_e *MockIAMService_Expecter) UpdateIdentityProvider(ctx interface{}, tenantInfo interface{}, id interface{}, req interface{}) *MockIAMService_UpdateIdentityProvider_Call {
+func (_e *MockIAMService_Expecter) UpdateIdentityProvider(ctx any, tenantInfo any, id any, req any) *MockIAMService_UpdateIdentityProvider_Call {
 	return &MockIAMService_UpdateIdentityProvider_Call{Call: _e.mock.On("UpdateIdentityProvider", ctx, tenantInfo, id, req)}
 }
 
@@ -1664,7 +1664,7 @@ type MockIAMService_UpdateSCIMDirectory_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
 //   - entity *iam.SCIMDirectory
-func (_e *MockIAMService_Expecter) UpdateSCIMDirectory(ctx interface{}, tenantInfo interface{}, id interface{}, entity interface{}) *MockIAMService_UpdateSCIMDirectory_Call {
+func (_e *MockIAMService_Expecter) UpdateSCIMDirectory(ctx any, tenantInfo any, id any, entity any) *MockIAMService_UpdateSCIMDirectory_Call {
 	return &MockIAMService_UpdateSCIMDirectory_Call{Call: _e.mock.On("UpdateSCIMDirectory", ctx, tenantInfo, id, entity)}
 }
 
@@ -1744,7 +1744,7 @@ type MockIAMService_UpdateSCIMGroupRoleMapping_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
 //   - entity *iam.SCIMGroupRoleMapping
-func (_e *MockIAMService_Expecter) UpdateSCIMGroupRoleMapping(ctx interface{}, tenantInfo interface{}, id interface{}, entity interface{}) *MockIAMService_UpdateSCIMGroupRoleMapping_Call {
+func (_e *MockIAMService_Expecter) UpdateSCIMGroupRoleMapping(ctx any, tenantInfo any, id any, entity any) *MockIAMService_UpdateSCIMGroupRoleMapping_Call {
 	return &MockIAMService_UpdateSCIMGroupRoleMapping_Call{Call: _e.mock.On("UpdateSCIMGroupRoleMapping", ctx, tenantInfo, id, entity)}
 }
 

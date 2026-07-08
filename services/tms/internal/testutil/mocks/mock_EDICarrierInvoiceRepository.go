@@ -76,7 +76,7 @@ type MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call struct {
 // CreateCarrierInvoice is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.CarrierInvoice
-func (_e *MockEDICarrierInvoiceRepository_Expecter) CreateCarrierInvoice(ctx interface{}, entity interface{}) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
+func (_e *MockEDICarrierInvoiceRepository_Expecter) CreateCarrierInvoice(ctx any, entity any) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
 	return &MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call{Call: _e.mock.On("CreateCarrierInvoice", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call struct {
 // GetCarrierInvoiceByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDICarrierInvoiceByIDRequest
-func (_e *MockEDICarrierInvoiceRepository_Expecter) GetCarrierInvoiceByID(ctx interface{}, req interface{}) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call {
+func (_e *MockEDICarrierInvoiceRepository_Expecter) GetCarrierInvoiceByID(ctx any, req any) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call {
 	return &MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call{Call: _e.mock.On("GetCarrierInvoiceByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call struct {
 // ListCarrierInvoices is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDICarrierInvoicesRequest
-func (_e *MockEDICarrierInvoiceRepository_Expecter) ListCarrierInvoices(ctx interface{}, req interface{}) *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call {
+func (_e *MockEDICarrierInvoiceRepository_Expecter) ListCarrierInvoices(ctx any, req any) *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call {
 	return &MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call{Call: _e.mock.On("ListCarrierInvoices", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call struct {
 // UpdateCarrierInvoice is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.CarrierInvoice
-func (_e *MockEDICarrierInvoiceRepository_Expecter) UpdateCarrierInvoice(ctx interface{}, entity interface{}) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
+func (_e *MockEDICarrierInvoiceRepository_Expecter) UpdateCarrierInvoice(ctx any, entity any) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
 	return &MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call{Call: _e.mock.On("UpdateCarrierInvoice", ctx, entity)}
 }
 

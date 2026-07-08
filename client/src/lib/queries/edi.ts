@@ -25,6 +25,11 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["mapping-preview", transferId],
     queryFn: async () => apiService.ediService.getMappingPreview(transferId),
   }),
+  transferMessages: (transferId: string) => ({
+    queryKey: ["transfer-messages", transferId],
+    queryFn: async () =>
+      apiService.ediService.listMessages(`?transferId=${transferId}&limit=50`),
+  }),
   templates: (filters: EDITemplateListFilters = {}) => ({
     queryKey: ["templates", filters],
     queryFn: async () =>
@@ -77,7 +82,7 @@ export const edi = createQueryKeys("edi", {
     queryFn: async () => apiService.ediService.getTestCase(testCaseId),
   }),
   summary: (sinceHours: number | null = null) => ({
-    queryKey: ["summary", sinceHours],
+    queryKey: ["summary", sinceHours ?? "all"],
     queryFn: async () =>
       requestGraphQL({
         document: EdiSummaryDocument,
@@ -86,7 +91,7 @@ export const edi = createQueryKeys("edi", {
       }),
   }),
   partnerScorecards: (sinceHours: number | null = null) => ({
-    queryKey: ["partner-scorecards", sinceHours],
+    queryKey: ["partner-scorecards", sinceHours ?? "all"],
     queryFn: async () =>
       requestGraphQL({
         document: EdiPartnerScorecardsDocument,
@@ -95,7 +100,7 @@ export const edi = createQueryKeys("edi", {
       }),
   }),
   volumeSeries: (sinceHours: number | null = null) => ({
-    queryKey: ["volume-series", sinceHours],
+    queryKey: ["volume-series", sinceHours ?? "all"],
     queryFn: async () =>
       requestGraphQL({
         document: EdiVolumeSeriesDocument,

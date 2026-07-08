@@ -78,7 +78,7 @@ type MockCustomerPaymentService_ApplyUnapplied_Call struct {
 //   - ctx context.Context
 //   - req *services.ApplyCustomerPaymentRequest
 //   - actor *services.RequestActor
-func (_e *MockCustomerPaymentService_Expecter) ApplyUnapplied(ctx interface{}, req interface{}, actor interface{}) *MockCustomerPaymentService_ApplyUnapplied_Call {
+func (_e *MockCustomerPaymentService_Expecter) ApplyUnapplied(ctx any, req any, actor any) *MockCustomerPaymentService_ApplyUnapplied_Call {
 	return &MockCustomerPaymentService_ApplyUnapplied_Call{Call: _e.mock.On("ApplyUnapplied", ctx, req, actor)}
 }
 
@@ -151,7 +151,7 @@ type MockCustomerPaymentService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetCustomerPaymentRequest
-func (_e *MockCustomerPaymentService_Expecter) Get(ctx interface{}, req interface{}) *MockCustomerPaymentService_Get_Call {
+func (_e *MockCustomerPaymentService_Expecter) Get(ctx any, req any) *MockCustomerPaymentService_Get_Call {
 	return &MockCustomerPaymentService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -219,7 +219,7 @@ type MockCustomerPaymentService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCustomerPaymentsRequest
-func (_e *MockCustomerPaymentService_Expecter) List(ctx interface{}, req interface{}) *MockCustomerPaymentService_List_Call {
+func (_e *MockCustomerPaymentService_Expecter) List(ctx any, req any) *MockCustomerPaymentService_List_Call {
 	return &MockCustomerPaymentService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -288,7 +288,7 @@ type MockCustomerPaymentService_PostAndApply_Call struct {
 //   - ctx context.Context
 //   - req *services.PostCustomerPaymentRequest
 //   - actor *services.RequestActor
-func (_e *MockCustomerPaymentService_Expecter) PostAndApply(ctx interface{}, req interface{}, actor interface{}) *MockCustomerPaymentService_PostAndApply_Call {
+func (_e *MockCustomerPaymentService_Expecter) PostAndApply(ctx any, req any, actor any) *MockCustomerPaymentService_PostAndApply_Call {
 	return &MockCustomerPaymentService_PostAndApply_Call{Call: _e.mock.On("PostAndApply", ctx, req, actor)}
 }
 
@@ -362,7 +362,7 @@ type MockCustomerPaymentService_Reverse_Call struct {
 //   - ctx context.Context
 //   - req *services.ReverseCustomerPaymentRequest
 //   - actor *services.RequestActor
-func (_e *MockCustomerPaymentService_Expecter) Reverse(ctx interface{}, req interface{}, actor interface{}) *MockCustomerPaymentService_Reverse_Call {
+func (_e *MockCustomerPaymentService_Expecter) Reverse(ctx any, req any, actor any) *MockCustomerPaymentService_Reverse_Call {
 	return &MockCustomerPaymentService_Reverse_Call{Call: _e.mock.On("Reverse", ctx, req, actor)}
 }
 

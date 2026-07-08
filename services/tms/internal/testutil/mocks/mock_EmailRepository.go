@@ -76,7 +76,7 @@ type MockEmailRepository_CreateAttachments_Call struct {
 // CreateAttachments is a helper method to define mock.On call
 //   - context1 context.Context
 //   - attachments []*email.Attachment
-func (_e *MockEmailRepository_Expecter) CreateAttachments(context1 interface{}, attachments interface{}) *MockEmailRepository_CreateAttachments_Call {
+func (_e *MockEmailRepository_Expecter) CreateAttachments(context1 any, attachments any) *MockEmailRepository_CreateAttachments_Call {
 	return &MockEmailRepository_CreateAttachments_Call{Call: _e.mock.On("CreateAttachments", context1, attachments)}
 }
 
@@ -142,7 +142,7 @@ type MockEmailRepository_CreateEvent_Call struct {
 // CreateEvent is a helper method to define mock.On call
 //   - context1 context.Context
 //   - event *email.Event
-func (_e *MockEmailRepository_Expecter) CreateEvent(context1 interface{}, event interface{}) *MockEmailRepository_CreateEvent_Call {
+func (_e *MockEmailRepository_Expecter) CreateEvent(context1 any, event any) *MockEmailRepository_CreateEvent_Call {
 	return &MockEmailRepository_CreateEvent_Call{Call: _e.mock.On("CreateEvent", context1, event)}
 }
 
@@ -210,7 +210,7 @@ type MockEmailRepository_CreateMessage_Call struct {
 // CreateMessage is a helper method to define mock.On call
 //   - context1 context.Context
 //   - message *email.Message
-func (_e *MockEmailRepository_Expecter) CreateMessage(context1 interface{}, message interface{}) *MockEmailRepository_CreateMessage_Call {
+func (_e *MockEmailRepository_Expecter) CreateMessage(context1 any, message any) *MockEmailRepository_CreateMessage_Call {
 	return &MockEmailRepository_CreateMessage_Call{Call: _e.mock.On("CreateMessage", context1, message)}
 }
 
@@ -278,7 +278,7 @@ type MockEmailRepository_CreateProfile_Call struct {
 // CreateProfile is a helper method to define mock.On call
 //   - context1 context.Context
 //   - profile *email.Profile
-func (_e *MockEmailRepository_Expecter) CreateProfile(context1 interface{}, profile interface{}) *MockEmailRepository_CreateProfile_Call {
+func (_e *MockEmailRepository_Expecter) CreateProfile(context1 any, profile any) *MockEmailRepository_CreateProfile_Call {
 	return &MockEmailRepository_CreateProfile_Call{Call: _e.mock.On("CreateProfile", context1, profile)}
 }
 
@@ -346,7 +346,7 @@ type MockEmailRepository_CreateSuppression_Call struct {
 // CreateSuppression is a helper method to define mock.On call
 //   - context1 context.Context
 //   - suppression *email.Suppression
-func (_e *MockEmailRepository_Expecter) CreateSuppression(context1 interface{}, suppression interface{}) *MockEmailRepository_CreateSuppression_Call {
+func (_e *MockEmailRepository_Expecter) CreateSuppression(context1 any, suppression any) *MockEmailRepository_CreateSuppression_Call {
 	return &MockEmailRepository_CreateSuppression_Call{Call: _e.mock.On("CreateSuppression", context1, suppression)}
 }
 
@@ -403,7 +403,7 @@ type MockEmailRepository_DeleteProfile_Call struct {
 // DeleteProfile is a helper method to define mock.On call
 //   - context1 context.Context
 //   - getEmailEntityRequest repositories.GetEmailEntityRequest
-func (_e *MockEmailRepository_Expecter) DeleteProfile(context1 interface{}, getEmailEntityRequest interface{}) *MockEmailRepository_DeleteProfile_Call {
+func (_e *MockEmailRepository_Expecter) DeleteProfile(context1 any, getEmailEntityRequest any) *MockEmailRepository_DeleteProfile_Call {
 	return &MockEmailRepository_DeleteProfile_Call{Call: _e.mock.On("DeleteProfile", context1, getEmailEntityRequest)}
 }
 
@@ -460,7 +460,7 @@ type MockEmailRepository_DeleteSuppression_Call struct {
 // DeleteSuppression is a helper method to define mock.On call
 //   - context1 context.Context
 //   - getEmailEntityRequest repositories.GetEmailEntityRequest
-func (_e *MockEmailRepository_Expecter) DeleteSuppression(context1 interface{}, getEmailEntityRequest interface{}) *MockEmailRepository_DeleteSuppression_Call {
+func (_e *MockEmailRepository_Expecter) DeleteSuppression(context1 any, getEmailEntityRequest any) *MockEmailRepository_DeleteSuppression_Call {
 	return &MockEmailRepository_DeleteSuppression_Call{Call: _e.mock.On("DeleteSuppression", context1, getEmailEntityRequest)}
 }
 
@@ -529,7 +529,7 @@ type MockEmailRepository_GetAssignedProfile_Call struct {
 //   - context1 context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - purpose email.Purpose
-func (_e *MockEmailRepository_Expecter) GetAssignedProfile(context1 interface{}, tenantInfo interface{}, purpose interface{}) *MockEmailRepository_GetAssignedProfile_Call {
+func (_e *MockEmailRepository_Expecter) GetAssignedProfile(context1 any, tenantInfo any, purpose any) *MockEmailRepository_GetAssignedProfile_Call {
 	return &MockEmailRepository_GetAssignedProfile_Call{Call: _e.mock.On("GetAssignedProfile", context1, tenantInfo, purpose)}
 }
 
@@ -602,7 +602,7 @@ type MockEmailRepository_GetEmailWebhookConfig_Call struct {
 // GetEmailWebhookConfig is a helper method to define mock.On call
 //   - context1 context.Context
 //   - getEmailWebhookConfigRequest repositories.GetEmailWebhookConfigRequest
-func (_e *MockEmailRepository_Expecter) GetEmailWebhookConfig(context1 interface{}, getEmailWebhookConfigRequest interface{}) *MockEmailRepository_GetEmailWebhookConfig_Call {
+func (_e *MockEmailRepository_Expecter) GetEmailWebhookConfig(context1 any, getEmailWebhookConfigRequest any) *MockEmailRepository_GetEmailWebhookConfig_Call {
 	return &MockEmailRepository_GetEmailWebhookConfig_Call{Call: _e.mock.On("GetEmailWebhookConfig", context1, getEmailWebhookConfigRequest)}
 }
 
@@ -670,7 +670,7 @@ type MockEmailRepository_GetMessage_Call struct {
 // GetMessage is a helper method to define mock.On call
 //   - context1 context.Context
 //   - getEmailEntityRequest repositories.GetEmailEntityRequest
-func (_e *MockEmailRepository_Expecter) GetMessage(context1 interface{}, getEmailEntityRequest interface{}) *MockEmailRepository_GetMessage_Call {
+func (_e *MockEmailRepository_Expecter) GetMessage(context1 any, getEmailEntityRequest any) *MockEmailRepository_GetMessage_Call {
 	return &MockEmailRepository_GetMessage_Call{Call: _e.mock.On("GetMessage", context1, getEmailEntityRequest)}
 }
 
@@ -738,7 +738,7 @@ type MockEmailRepository_GetMessageByProviderID_Call struct {
 // GetMessageByProviderID is a helper method to define mock.On call
 //   - context1 context.Context
 //   - getEmailMessageByProviderIDRequest repositories.GetEmailMessageByProviderIDRequest
-func (_e *MockEmailRepository_Expecter) GetMessageByProviderID(context1 interface{}, getEmailMessageByProviderIDRequest interface{}) *MockEmailRepository_GetMessageByProviderID_Call {
+func (_e *MockEmailRepository_Expecter) GetMessageByProviderID(context1 any, getEmailMessageByProviderIDRequest any) *MockEmailRepository_GetMessageByProviderID_Call {
 	return &MockEmailRepository_GetMessageByProviderID_Call{Call: _e.mock.On("GetMessageByProviderID", context1, getEmailMessageByProviderIDRequest)}
 }
 
@@ -806,7 +806,7 @@ type MockEmailRepository_GetProfile_Call struct {
 // GetProfile is a helper method to define mock.On call
 //   - context1 context.Context
 //   - getEmailEntityRequest repositories.GetEmailEntityRequest
-func (_e *MockEmailRepository_Expecter) GetProfile(context1 interface{}, getEmailEntityRequest interface{}) *MockEmailRepository_GetProfile_Call {
+func (_e *MockEmailRepository_Expecter) GetProfile(context1 any, getEmailEntityRequest any) *MockEmailRepository_GetProfile_Call {
 	return &MockEmailRepository_GetProfile_Call{Call: _e.mock.On("GetProfile", context1, getEmailEntityRequest)}
 }
 
@@ -873,7 +873,7 @@ type MockEmailRepository_HasSuppression_Call struct {
 //   - context1 context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - s string
-func (_e *MockEmailRepository_Expecter) HasSuppression(context1 interface{}, tenantInfo interface{}, s interface{}) *MockEmailRepository_HasSuppression_Call {
+func (_e *MockEmailRepository_Expecter) HasSuppression(context1 any, tenantInfo any, s any) *MockEmailRepository_HasSuppression_Call {
 	return &MockEmailRepository_HasSuppression_Call{Call: _e.mock.On("HasSuppression", context1, tenantInfo, s)}
 }
 
@@ -946,7 +946,7 @@ type MockEmailRepository_ListAssignments_Call struct {
 // ListAssignments is a helper method to define mock.On call
 //   - context1 context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockEmailRepository_Expecter) ListAssignments(context1 interface{}, tenantInfo interface{}) *MockEmailRepository_ListAssignments_Call {
+func (_e *MockEmailRepository_Expecter) ListAssignments(context1 any, tenantInfo any) *MockEmailRepository_ListAssignments_Call {
 	return &MockEmailRepository_ListAssignments_Call{Call: _e.mock.On("ListAssignments", context1, tenantInfo)}
 }
 
@@ -1014,7 +1014,7 @@ type MockEmailRepository_ListAttachments_Call struct {
 // ListAttachments is a helper method to define mock.On call
 //   - context1 context.Context
 //   - listEmailAttachmentsRequest repositories.ListEmailAttachmentsRequest
-func (_e *MockEmailRepository_Expecter) ListAttachments(context1 interface{}, listEmailAttachmentsRequest interface{}) *MockEmailRepository_ListAttachments_Call {
+func (_e *MockEmailRepository_Expecter) ListAttachments(context1 any, listEmailAttachmentsRequest any) *MockEmailRepository_ListAttachments_Call {
 	return &MockEmailRepository_ListAttachments_Call{Call: _e.mock.On("ListAttachments", context1, listEmailAttachmentsRequest)}
 }
 
@@ -1082,7 +1082,7 @@ type MockEmailRepository_ListMessages_Call struct {
 // ListMessages is a helper method to define mock.On call
 //   - context1 context.Context
 //   - listEmailMessagesRequest *repositories.ListEmailMessagesRequest
-func (_e *MockEmailRepository_Expecter) ListMessages(context1 interface{}, listEmailMessagesRequest interface{}) *MockEmailRepository_ListMessages_Call {
+func (_e *MockEmailRepository_Expecter) ListMessages(context1 any, listEmailMessagesRequest any) *MockEmailRepository_ListMessages_Call {
 	return &MockEmailRepository_ListMessages_Call{Call: _e.mock.On("ListMessages", context1, listEmailMessagesRequest)}
 }
 
@@ -1150,7 +1150,7 @@ type MockEmailRepository_ListProfiles_Call struct {
 // ListProfiles is a helper method to define mock.On call
 //   - context1 context.Context
 //   - listEmailProfilesRequest *repositories.ListEmailProfilesRequest
-func (_e *MockEmailRepository_Expecter) ListProfiles(context1 interface{}, listEmailProfilesRequest interface{}) *MockEmailRepository_ListProfiles_Call {
+func (_e *MockEmailRepository_Expecter) ListProfiles(context1 any, listEmailProfilesRequest any) *MockEmailRepository_ListProfiles_Call {
 	return &MockEmailRepository_ListProfiles_Call{Call: _e.mock.On("ListProfiles", context1, listEmailProfilesRequest)}
 }
 
@@ -1218,7 +1218,7 @@ type MockEmailRepository_ListSuppressions_Call struct {
 // ListSuppressions is a helper method to define mock.On call
 //   - context1 context.Context
 //   - listEmailSuppressionsRequest *repositories.ListEmailSuppressionsRequest
-func (_e *MockEmailRepository_Expecter) ListSuppressions(context1 interface{}, listEmailSuppressionsRequest interface{}) *MockEmailRepository_ListSuppressions_Call {
+func (_e *MockEmailRepository_Expecter) ListSuppressions(context1 any, listEmailSuppressionsRequest any) *MockEmailRepository_ListSuppressions_Call {
 	return &MockEmailRepository_ListSuppressions_Call{Call: _e.mock.On("ListSuppressions", context1, listEmailSuppressionsRequest)}
 }
 
@@ -1286,7 +1286,7 @@ type MockEmailRepository_SelectProfileOptions_Call struct {
 // SelectProfileOptions is a helper method to define mock.On call
 //   - context1 context.Context
 //   - emailProfileSelectOptionsRequest *repositories.EmailProfileSelectOptionsRequest
-func (_e *MockEmailRepository_Expecter) SelectProfileOptions(context1 interface{}, emailProfileSelectOptionsRequest interface{}) *MockEmailRepository_SelectProfileOptions_Call {
+func (_e *MockEmailRepository_Expecter) SelectProfileOptions(context1 any, emailProfileSelectOptionsRequest any) *MockEmailRepository_SelectProfileOptions_Call {
 	return &MockEmailRepository_SelectProfileOptions_Call{Call: _e.mock.On("SelectProfileOptions", context1, emailProfileSelectOptionsRequest)}
 }
 
@@ -1354,7 +1354,7 @@ type MockEmailRepository_UpdateMessage_Call struct {
 // UpdateMessage is a helper method to define mock.On call
 //   - context1 context.Context
 //   - message *email.Message
-func (_e *MockEmailRepository_Expecter) UpdateMessage(context1 interface{}, message interface{}) *MockEmailRepository_UpdateMessage_Call {
+func (_e *MockEmailRepository_Expecter) UpdateMessage(context1 any, message any) *MockEmailRepository_UpdateMessage_Call {
 	return &MockEmailRepository_UpdateMessage_Call{Call: _e.mock.On("UpdateMessage", context1, message)}
 }
 
@@ -1422,7 +1422,7 @@ type MockEmailRepository_UpdateProfile_Call struct {
 // UpdateProfile is a helper method to define mock.On call
 //   - context1 context.Context
 //   - profile *email.Profile
-func (_e *MockEmailRepository_Expecter) UpdateProfile(context1 interface{}, profile interface{}) *MockEmailRepository_UpdateProfile_Call {
+func (_e *MockEmailRepository_Expecter) UpdateProfile(context1 any, profile any) *MockEmailRepository_UpdateProfile_Call {
 	return &MockEmailRepository_UpdateProfile_Call{Call: _e.mock.On("UpdateProfile", context1, profile)}
 }
 
@@ -1491,7 +1491,7 @@ type MockEmailRepository_UpsertAssignments_Call struct {
 //   - context1 context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - profileAssignments []*email.ProfileAssignment
-func (_e *MockEmailRepository_Expecter) UpsertAssignments(context1 interface{}, tenantInfo interface{}, profileAssignments interface{}) *MockEmailRepository_UpsertAssignments_Call {
+func (_e *MockEmailRepository_Expecter) UpsertAssignments(context1 any, tenantInfo any, profileAssignments any) *MockEmailRepository_UpsertAssignments_Call {
 	return &MockEmailRepository_UpsertAssignments_Call{Call: _e.mock.On("UpsertAssignments", context1, tenantInfo, profileAssignments)}
 }
 

@@ -76,7 +76,7 @@ type MockEDISourceContextRepository_GetActiveSourceContextSchema_Call struct {
 // GetActiveSourceContextSchema is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveEDISourceContextSchemaRequest
-func (_e *MockEDISourceContextRepository_Expecter) GetActiveSourceContextSchema(ctx interface{}, req interface{}) *MockEDISourceContextRepository_GetActiveSourceContextSchema_Call {
+func (_e *MockEDISourceContextRepository_Expecter) GetActiveSourceContextSchema(ctx any, req any) *MockEDISourceContextRepository_GetActiveSourceContextSchema_Call {
 	return &MockEDISourceContextRepository_GetActiveSourceContextSchema_Call{Call: _e.mock.On("GetActiveSourceContextSchema", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEDISourceContextRepository_GetSourceContextSchema_Call struct {
 // GetSourceContextSchema is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDISourceContextSchemaRequest
-func (_e *MockEDISourceContextRepository_Expecter) GetSourceContextSchema(ctx interface{}, req interface{}) *MockEDISourceContextRepository_GetSourceContextSchema_Call {
+func (_e *MockEDISourceContextRepository_Expecter) GetSourceContextSchema(ctx any, req any) *MockEDISourceContextRepository_GetSourceContextSchema_Call {
 	return &MockEDISourceContextRepository_GetSourceContextSchema_Call{Call: _e.mock.On("GetSourceContextSchema", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDISourceContextRepository_ListSourceContextFields_Call struct {
 // ListSourceContextFields is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDISourceContextFieldsRequest
-func (_e *MockEDISourceContextRepository_Expecter) ListSourceContextFields(ctx interface{}, req interface{}) *MockEDISourceContextRepository_ListSourceContextFields_Call {
+func (_e *MockEDISourceContextRepository_Expecter) ListSourceContextFields(ctx any, req any) *MockEDISourceContextRepository_ListSourceContextFields_Call {
 	return &MockEDISourceContextRepository_ListSourceContextFields_Call{Call: _e.mock.On("ListSourceContextFields", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDISourceContextRepository_ListSourceContextSchemas_Call struct {
 // ListSourceContextSchemas is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDISourceContextSchemasRequest
-func (_e *MockEDISourceContextRepository_Expecter) ListSourceContextSchemas(ctx interface{}, req interface{}) *MockEDISourceContextRepository_ListSourceContextSchemas_Call {
+func (_e *MockEDISourceContextRepository_Expecter) ListSourceContextSchemas(ctx any, req any) *MockEDISourceContextRepository_ListSourceContextSchemas_Call {
 	return &MockEDISourceContextRepository_ListSourceContextSchemas_Call{Call: _e.mock.On("ListSourceContextSchemas", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDISourceContextRepository_SearchSourceContextFields_Call struct {
 // SearchSourceContextFields is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDISourceContextFieldsRequest
-func (_e *MockEDISourceContextRepository_Expecter) SearchSourceContextFields(ctx interface{}, req interface{}) *MockEDISourceContextRepository_SearchSourceContextFields_Call {
+func (_e *MockEDISourceContextRepository_Expecter) SearchSourceContextFields(ctx any, req any) *MockEDISourceContextRepository_SearchSourceContextFields_Call {
 	return &MockEDISourceContextRepository_SearchSourceContextFields_Call{Call: _e.mock.On("SearchSourceContextFields", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEDISourceContextRepository_SelectSourceContextFieldOptions_Call struct 
 // SelectSourceContextFieldOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDISourceContextFieldsRequest
-func (_e *MockEDISourceContextRepository_Expecter) SelectSourceContextFieldOptions(ctx interface{}, req interface{}) *MockEDISourceContextRepository_SelectSourceContextFieldOptions_Call {
+func (_e *MockEDISourceContextRepository_Expecter) SelectSourceContextFieldOptions(ctx any, req any) *MockEDISourceContextRepository_SelectSourceContextFieldOptions_Call {
 	return &MockEDISourceContextRepository_SelectSourceContextFieldOptions_Call{Call: _e.mock.On("SelectSourceContextFieldOptions", ctx, req)}
 }
 

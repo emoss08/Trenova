@@ -76,7 +76,7 @@ type MockDocumentPacketRuleRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentpacketrule.DocumentPacketRule
-func (_e *MockDocumentPacketRuleRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentPacketRuleRepository_Create_Call {
+func (_e *MockDocumentPacketRuleRepository_Expecter) Create(ctx any, entity any) *MockDocumentPacketRuleRepository_Create_Call {
 	return &MockDocumentPacketRuleRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -133,7 +133,7 @@ type MockDocumentPacketRuleRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentPacketRuleByIDRequest
-func (_e *MockDocumentPacketRuleRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockDocumentPacketRuleRepository_Delete_Call {
+func (_e *MockDocumentPacketRuleRepository_Expecter) Delete(ctx any, req any) *MockDocumentPacketRuleRepository_Delete_Call {
 	return &MockDocumentPacketRuleRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockDocumentPacketRuleRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentPacketRuleByIDRequest
-func (_e *MockDocumentPacketRuleRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDocumentPacketRuleRepository_GetByID_Call {
+func (_e *MockDocumentPacketRuleRepository_Expecter) GetByID(ctx any, req any) *MockDocumentPacketRuleRepository_GetByID_Call {
 	return &MockDocumentPacketRuleRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -269,7 +269,7 @@ type MockDocumentPacketRuleRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentPacketRulesRequest
-func (_e *MockDocumentPacketRuleRepository_Expecter) List(ctx interface{}, req interface{}) *MockDocumentPacketRuleRepository_List_Call {
+func (_e *MockDocumentPacketRuleRepository_Expecter) List(ctx any, req any) *MockDocumentPacketRuleRepository_List_Call {
 	return &MockDocumentPacketRuleRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockDocumentPacketRuleRepository_ListByResourceType_Call struct {
 // ListByResourceType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentPacketRulesByResourceRequest
-func (_e *MockDocumentPacketRuleRepository_Expecter) ListByResourceType(ctx interface{}, req interface{}) *MockDocumentPacketRuleRepository_ListByResourceType_Call {
+func (_e *MockDocumentPacketRuleRepository_Expecter) ListByResourceType(ctx any, req any) *MockDocumentPacketRuleRepository_ListByResourceType_Call {
 	return &MockDocumentPacketRuleRepository_ListByResourceType_Call{Call: _e.mock.On("ListByResourceType", ctx, req)}
 }
 
@@ -405,7 +405,7 @@ type MockDocumentPacketRuleRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentpacketrule.DocumentPacketRule
-func (_e *MockDocumentPacketRuleRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentPacketRuleRepository_Update_Call {
+func (_e *MockDocumentPacketRuleRepository_Expecter) Update(ctx any, entity any) *MockDocumentPacketRuleRepository_Update_Call {
 	return &MockDocumentPacketRuleRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

@@ -77,7 +77,7 @@ type MockBillingQueueRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *billingqueue.BillingQueueItem
-func (_e *MockBillingQueueRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockBillingQueueRepository_Create_Call {
+func (_e *MockBillingQueueRepository_Expecter) Create(ctx any, entity any) *MockBillingQueueRepository_Create_Call {
 	return &MockBillingQueueRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -145,7 +145,7 @@ type MockBillingQueueRepository_ExistsByShipmentAndType_Call struct {
 //   - tenantInfo pagination.TenantInfo
 //   - shipmentID pulid.ID
 //   - billType billingqueue.BillType
-func (_e *MockBillingQueueRepository_Expecter) ExistsByShipmentAndType(ctx interface{}, tenantInfo interface{}, shipmentID interface{}, billType interface{}) *MockBillingQueueRepository_ExistsByShipmentAndType_Call {
+func (_e *MockBillingQueueRepository_Expecter) ExistsByShipmentAndType(ctx any, tenantInfo any, shipmentID any, billType any) *MockBillingQueueRepository_ExistsByShipmentAndType_Call {
 	return &MockBillingQueueRepository_ExistsByShipmentAndType_Call{Call: _e.mock.On("ExistsByShipmentAndType", ctx, tenantInfo, shipmentID, billType)}
 }
 
@@ -223,7 +223,7 @@ type MockBillingQueueRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetBillingQueueItemByIDRequest
-func (_e *MockBillingQueueRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockBillingQueueRepository_GetByID_Call {
+func (_e *MockBillingQueueRepository_Expecter) GetByID(ctx any, req any) *MockBillingQueueRepository_GetByID_Call {
 	return &MockBillingQueueRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -291,7 +291,7 @@ type MockBillingQueueRepository_GetStatusCounts_Call struct {
 // GetStatusCounts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetBillingQueueStatsRequest
-func (_e *MockBillingQueueRepository_Expecter) GetStatusCounts(ctx interface{}, req interface{}) *MockBillingQueueRepository_GetStatusCounts_Call {
+func (_e *MockBillingQueueRepository_Expecter) GetStatusCounts(ctx any, req any) *MockBillingQueueRepository_GetStatusCounts_Call {
 	return &MockBillingQueueRepository_GetStatusCounts_Call{Call: _e.mock.On("GetStatusCounts", ctx, req)}
 }
 
@@ -359,7 +359,7 @@ type MockBillingQueueRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListBillingQueueItemsRequest
-func (_e *MockBillingQueueRepository_Expecter) List(ctx interface{}, req interface{}) *MockBillingQueueRepository_List_Call {
+func (_e *MockBillingQueueRepository_Expecter) List(ctx any, req any) *MockBillingQueueRepository_List_Call {
 	return &MockBillingQueueRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -427,7 +427,7 @@ type MockBillingQueueRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *billingqueue.BillingQueueItem
-func (_e *MockBillingQueueRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockBillingQueueRepository_Update_Call {
+func (_e *MockBillingQueueRepository_Expecter) Update(ctx any, entity any) *MockBillingQueueRepository_Update_Call {
 	return &MockBillingQueueRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

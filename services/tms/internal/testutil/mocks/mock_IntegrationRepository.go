@@ -76,7 +76,7 @@ type MockIntegrationRepository_GetByType_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - typ integration.Type
-func (_e *MockIntegrationRepository_Expecter) GetByType(ctx interface{}, tenantInfo interface{}, typ interface{}) *MockIntegrationRepository_GetByType_Call {
+func (_e *MockIntegrationRepository_Expecter) GetByType(ctx any, tenantInfo any, typ any) *MockIntegrationRepository_GetByType_Call {
 	return &MockIntegrationRepository_GetByType_Call{Call: _e.mock.On("GetByType", ctx, tenantInfo, typ)}
 }
 
@@ -149,7 +149,7 @@ type MockIntegrationRepository_ListByTenant_Call struct {
 // ListByTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockIntegrationRepository_Expecter) ListByTenant(ctx interface{}, tenantInfo interface{}) *MockIntegrationRepository_ListByTenant_Call {
+func (_e *MockIntegrationRepository_Expecter) ListByTenant(ctx any, tenantInfo any) *MockIntegrationRepository_ListByTenant_Call {
 	return &MockIntegrationRepository_ListByTenant_Call{Call: _e.mock.On("ListByTenant", ctx, tenantInfo)}
 }
 
@@ -217,7 +217,7 @@ type MockIntegrationRepository_ListEnabledByType_Call struct {
 // ListEnabledByType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - typ integration.Type
-func (_e *MockIntegrationRepository_Expecter) ListEnabledByType(ctx interface{}, typ interface{}) *MockIntegrationRepository_ListEnabledByType_Call {
+func (_e *MockIntegrationRepository_Expecter) ListEnabledByType(ctx any, typ any) *MockIntegrationRepository_ListEnabledByType_Call {
 	return &MockIntegrationRepository_ListEnabledByType_Call{Call: _e.mock.On("ListEnabledByType", ctx, typ)}
 }
 
@@ -285,7 +285,7 @@ type MockIntegrationRepository_Upsert_Call struct {
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *integration.Integration
-func (_e *MockIntegrationRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockIntegrationRepository_Upsert_Call {
+func (_e *MockIntegrationRepository_Expecter) Upsert(ctx any, entity any) *MockIntegrationRepository_Upsert_Call {
 	return &MockIntegrationRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 

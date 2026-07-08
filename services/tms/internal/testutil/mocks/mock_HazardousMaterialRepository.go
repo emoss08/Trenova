@@ -76,7 +76,7 @@ type MockHazardousMaterialRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateHazardousMaterialStatusRequest
-func (_e *MockHazardousMaterialRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_BulkUpdateStatus_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockHazardousMaterialRepository_BulkUpdateStatus_Call {
 	return &MockHazardousMaterialRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockHazardousMaterialRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazardousmaterial.HazardousMaterial
-func (_e *MockHazardousMaterialRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockHazardousMaterialRepository_Create_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) Create(ctx any, entity any) *MockHazardousMaterialRepository_Create_Call {
 	return &MockHazardousMaterialRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockHazardousMaterialRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHazardousMaterialByIDRequest
-func (_e *MockHazardousMaterialRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_GetByID_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) GetByID(ctx any, req any) *MockHazardousMaterialRepository_GetByID_Call {
 	return &MockHazardousMaterialRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockHazardousMaterialRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHazardousMaterialsByIDsRequest
-func (_e *MockHazardousMaterialRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_GetByIDs_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) GetByIDs(ctx any, req any) *MockHazardousMaterialRepository_GetByIDs_Call {
 	return &MockHazardousMaterialRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockHazardousMaterialRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListHazardousMaterialsRequest
-func (_e *MockHazardousMaterialRepository_Expecter) List(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_List_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) List(ctx any, req any) *MockHazardousMaterialRepository_List_Call {
 	return &MockHazardousMaterialRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockHazardousMaterialRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.HazardousMaterialSelectOptionsRequest
-func (_e *MockHazardousMaterialRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_SelectOptions_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) SelectOptions(ctx any, req any) *MockHazardousMaterialRepository_SelectOptions_Call {
 	return &MockHazardousMaterialRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockHazardousMaterialRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazardousmaterial.HazardousMaterial
-func (_e *MockHazardousMaterialRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockHazardousMaterialRepository_Update_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) Update(ctx any, entity any) *MockHazardousMaterialRepository_Update_Call {
 	return &MockHazardousMaterialRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

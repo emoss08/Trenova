@@ -68,7 +68,7 @@ type MockTableConfigurationRepository_ClearDefaultForResource_Call struct {
 //   - userID pulid.ID
 //   - resource string
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockTableConfigurationRepository_Expecter) ClearDefaultForResource(ctx interface{}, userID interface{}, resource interface{}, tenantInfo interface{}) *MockTableConfigurationRepository_ClearDefaultForResource_Call {
+func (_e *MockTableConfigurationRepository_Expecter) ClearDefaultForResource(ctx any, userID any, resource any, tenantInfo any) *MockTableConfigurationRepository_ClearDefaultForResource_Call {
 	return &MockTableConfigurationRepository_ClearDefaultForResource_Call{Call: _e.mock.On("ClearDefaultForResource", ctx, userID, resource, tenantInfo)}
 }
 
@@ -146,7 +146,7 @@ type MockTableConfigurationRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tableconfiguration.TableConfiguration
-func (_e *MockTableConfigurationRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockTableConfigurationRepository_Create_Call {
+func (_e *MockTableConfigurationRepository_Expecter) Create(ctx any, entity any) *MockTableConfigurationRepository_Create_Call {
 	return &MockTableConfigurationRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -204,7 +204,7 @@ type MockTableConfigurationRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockTableConfigurationRepository_Expecter) Delete(ctx interface{}, id interface{}, tenantInfo interface{}) *MockTableConfigurationRepository_Delete_Call {
+func (_e *MockTableConfigurationRepository_Expecter) Delete(ctx any, id any, tenantInfo any) *MockTableConfigurationRepository_Delete_Call {
 	return &MockTableConfigurationRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, tenantInfo)}
 }
 
@@ -277,7 +277,7 @@ type MockTableConfigurationRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetTableConfigurationByIDRequest
-func (_e *MockTableConfigurationRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockTableConfigurationRepository_GetByID_Call {
+func (_e *MockTableConfigurationRepository_Expecter) GetByID(ctx any, req any) *MockTableConfigurationRepository_GetByID_Call {
 	return &MockTableConfigurationRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -345,7 +345,7 @@ type MockTableConfigurationRepository_GetDefaultForResource_Call struct {
 // GetDefaultForResource is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDefaultTableConfigurationRequest
-func (_e *MockTableConfigurationRepository_Expecter) GetDefaultForResource(ctx interface{}, req interface{}) *MockTableConfigurationRepository_GetDefaultForResource_Call {
+func (_e *MockTableConfigurationRepository_Expecter) GetDefaultForResource(ctx any, req any) *MockTableConfigurationRepository_GetDefaultForResource_Call {
 	return &MockTableConfigurationRepository_GetDefaultForResource_Call{Call: _e.mock.On("GetDefaultForResource", ctx, req)}
 }
 
@@ -413,7 +413,7 @@ type MockTableConfigurationRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListTableConfigurationsRequest
-func (_e *MockTableConfigurationRepository_Expecter) List(ctx interface{}, req interface{}) *MockTableConfigurationRepository_List_Call {
+func (_e *MockTableConfigurationRepository_Expecter) List(ctx any, req any) *MockTableConfigurationRepository_List_Call {
 	return &MockTableConfigurationRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -481,7 +481,7 @@ type MockTableConfigurationRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tableconfiguration.TableConfiguration
-func (_e *MockTableConfigurationRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockTableConfigurationRepository_Update_Call {
+func (_e *MockTableConfigurationRepository_Expecter) Update(ctx any, entity any) *MockTableConfigurationRepository_Update_Call {
 	return &MockTableConfigurationRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

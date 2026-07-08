@@ -76,7 +76,7 @@ type MockShipmentHoldRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.ShipmentHold
-func (_e *MockShipmentHoldRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockShipmentHoldRepository_Create_Call {
+func (_e *MockShipmentHoldRepository_Expecter) Create(ctx any, entity any) *MockShipmentHoldRepository_Create_Call {
 	return &MockShipmentHoldRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockShipmentHoldRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetShipmentHoldByIDRequest
-func (_e *MockShipmentHoldRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentHoldRepository_GetByID_Call {
+func (_e *MockShipmentHoldRepository_Expecter) GetByID(ctx any, req any) *MockShipmentHoldRepository_GetByID_Call {
 	return &MockShipmentHoldRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -210,7 +210,7 @@ type MockShipmentHoldRepository_HasActiveDeliveryHold_Call struct {
 // HasActiveDeliveryHold is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ActiveShipmentHoldRequest
-func (_e *MockShipmentHoldRepository_Expecter) HasActiveDeliveryHold(ctx interface{}, req interface{}) *MockShipmentHoldRepository_HasActiveDeliveryHold_Call {
+func (_e *MockShipmentHoldRepository_Expecter) HasActiveDeliveryHold(ctx any, req any) *MockShipmentHoldRepository_HasActiveDeliveryHold_Call {
 	return &MockShipmentHoldRepository_HasActiveDeliveryHold_Call{Call: _e.mock.On("HasActiveDeliveryHold", ctx, req)}
 }
 
@@ -276,7 +276,7 @@ type MockShipmentHoldRepository_HasActiveDispatchHold_Call struct {
 // HasActiveDispatchHold is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ActiveShipmentHoldRequest
-func (_e *MockShipmentHoldRepository_Expecter) HasActiveDispatchHold(ctx interface{}, req interface{}) *MockShipmentHoldRepository_HasActiveDispatchHold_Call {
+func (_e *MockShipmentHoldRepository_Expecter) HasActiveDispatchHold(ctx any, req any) *MockShipmentHoldRepository_HasActiveDispatchHold_Call {
 	return &MockShipmentHoldRepository_HasActiveDispatchHold_Call{Call: _e.mock.On("HasActiveDispatchHold", ctx, req)}
 }
 
@@ -344,7 +344,7 @@ type MockShipmentHoldRepository_ListByShipmentID_Call struct {
 // ListByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentHoldsRequest
-func (_e *MockShipmentHoldRepository_Expecter) ListByShipmentID(ctx interface{}, req interface{}) *MockShipmentHoldRepository_ListByShipmentID_Call {
+func (_e *MockShipmentHoldRepository_Expecter) ListByShipmentID(ctx any, req any) *MockShipmentHoldRepository_ListByShipmentID_Call {
 	return &MockShipmentHoldRepository_ListByShipmentID_Call{Call: _e.mock.On("ListByShipmentID", ctx, req)}
 }
 
@@ -412,7 +412,7 @@ type MockShipmentHoldRepository_Release_Call struct {
 // Release is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.ShipmentHold
-func (_e *MockShipmentHoldRepository_Expecter) Release(ctx interface{}, entity interface{}) *MockShipmentHoldRepository_Release_Call {
+func (_e *MockShipmentHoldRepository_Expecter) Release(ctx any, entity any) *MockShipmentHoldRepository_Release_Call {
 	return &MockShipmentHoldRepository_Release_Call{Call: _e.mock.On("Release", ctx, entity)}
 }
 
@@ -480,7 +480,7 @@ type MockShipmentHoldRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.ShipmentHold
-func (_e *MockShipmentHoldRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockShipmentHoldRepository_Update_Call {
+func (_e *MockShipmentHoldRepository_Expecter) Update(ctx any, entity any) *MockShipmentHoldRepository_Update_Call {
 	return &MockShipmentHoldRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

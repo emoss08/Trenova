@@ -76,7 +76,7 @@ type MockFiscalYearRepository_Activate_Call struct {
 // Activate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ActivateFiscalYearRequest
-func (_e *MockFiscalYearRepository_Expecter) Activate(ctx interface{}, req interface{}) *MockFiscalYearRepository_Activate_Call {
+func (_e *MockFiscalYearRepository_Expecter) Activate(ctx any, req any) *MockFiscalYearRepository_Activate_Call {
 	return &MockFiscalYearRepository_Activate_Call{Call: _e.mock.On("Activate", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockFiscalYearRepository_Close_Call struct {
 // Close is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CloseFiscalYearRequest
-func (_e *MockFiscalYearRepository_Expecter) Close(ctx interface{}, req interface{}) *MockFiscalYearRepository_Close_Call {
+func (_e *MockFiscalYearRepository_Expecter) Close(ctx any, req any) *MockFiscalYearRepository_Close_Call {
 	return &MockFiscalYearRepository_Close_Call{Call: _e.mock.On("Close", ctx, req)}
 }
 
@@ -210,7 +210,7 @@ type MockFiscalYearRepository_CountByTenant_Call struct {
 // CountByTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CountFiscalYearsByTenantRequest
-func (_e *MockFiscalYearRepository_Expecter) CountByTenant(ctx interface{}, req interface{}) *MockFiscalYearRepository_CountByTenant_Call {
+func (_e *MockFiscalYearRepository_Expecter) CountByTenant(ctx any, req any) *MockFiscalYearRepository_CountByTenant_Call {
 	return &MockFiscalYearRepository_CountByTenant_Call{Call: _e.mock.On("CountByTenant", ctx, req)}
 }
 
@@ -278,7 +278,7 @@ type MockFiscalYearRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fiscalyear.FiscalYear
-func (_e *MockFiscalYearRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockFiscalYearRepository_Create_Call {
+func (_e *MockFiscalYearRepository_Expecter) Create(ctx any, entity any) *MockFiscalYearRepository_Create_Call {
 	return &MockFiscalYearRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -335,7 +335,7 @@ type MockFiscalYearRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteFiscalYearRequest
-func (_e *MockFiscalYearRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockFiscalYearRepository_Delete_Call {
+func (_e *MockFiscalYearRepository_Expecter) Delete(ctx any, req any) *MockFiscalYearRepository_Delete_Call {
 	return &MockFiscalYearRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -403,7 +403,7 @@ type MockFiscalYearRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFiscalYearByIDRequest
-func (_e *MockFiscalYearRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockFiscalYearRepository_GetByID_Call {
+func (_e *MockFiscalYearRepository_Expecter) GetByID(ctx any, req any) *MockFiscalYearRepository_GetByID_Call {
 	return &MockFiscalYearRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -471,7 +471,7 @@ type MockFiscalYearRepository_GetByIDForUpdate_Call struct {
 // GetByIDForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFiscalYearByIDRequest
-func (_e *MockFiscalYearRepository_Expecter) GetByIDForUpdate(ctx interface{}, req interface{}) *MockFiscalYearRepository_GetByIDForUpdate_Call {
+func (_e *MockFiscalYearRepository_Expecter) GetByIDForUpdate(ctx any, req any) *MockFiscalYearRepository_GetByIDForUpdate_Call {
 	return &MockFiscalYearRepository_GetByIDForUpdate_Call{Call: _e.mock.On("GetByIDForUpdate", ctx, req)}
 }
 
@@ -539,7 +539,7 @@ type MockFiscalYearRepository_GetCurrentFiscalYear_Call struct {
 // GetCurrentFiscalYear is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCurrentFiscalYearRequest
-func (_e *MockFiscalYearRepository_Expecter) GetCurrentFiscalYear(ctx interface{}, req interface{}) *MockFiscalYearRepository_GetCurrentFiscalYear_Call {
+func (_e *MockFiscalYearRepository_Expecter) GetCurrentFiscalYear(ctx any, req any) *MockFiscalYearRepository_GetCurrentFiscalYear_Call {
 	return &MockFiscalYearRepository_GetCurrentFiscalYear_Call{Call: _e.mock.On("GetCurrentFiscalYear", ctx, req)}
 }
 
@@ -607,7 +607,7 @@ type MockFiscalYearRepository_GetCurrentFiscalYearForUpdate_Call struct {
 // GetCurrentFiscalYearForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCurrentFiscalYearRequest
-func (_e *MockFiscalYearRepository_Expecter) GetCurrentFiscalYearForUpdate(ctx interface{}, req interface{}) *MockFiscalYearRepository_GetCurrentFiscalYearForUpdate_Call {
+func (_e *MockFiscalYearRepository_Expecter) GetCurrentFiscalYearForUpdate(ctx any, req any) *MockFiscalYearRepository_GetCurrentFiscalYearForUpdate_Call {
 	return &MockFiscalYearRepository_GetCurrentFiscalYearForUpdate_Call{Call: _e.mock.On("GetCurrentFiscalYearForUpdate", ctx, req)}
 }
 
@@ -675,7 +675,7 @@ type MockFiscalYearRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListFiscalYearsRequest
-func (_e *MockFiscalYearRepository_Expecter) List(ctx interface{}, req interface{}) *MockFiscalYearRepository_List_Call {
+func (_e *MockFiscalYearRepository_Expecter) List(ctx any, req any) *MockFiscalYearRepository_List_Call {
 	return &MockFiscalYearRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -743,7 +743,7 @@ type MockFiscalYearRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fiscalyear.FiscalYear
-func (_e *MockFiscalYearRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockFiscalYearRepository_Update_Call {
+func (_e *MockFiscalYearRepository_Expecter) Update(ctx any, entity any) *MockFiscalYearRepository_Update_Call {
 	return &MockFiscalYearRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

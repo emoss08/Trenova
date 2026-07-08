@@ -77,7 +77,7 @@ type MockBankReceiptWorkItemRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *bankreceiptworkitem.WorkItem
-func (_e *MockBankReceiptWorkItemRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockBankReceiptWorkItemRepository_Create_Call {
+func (_e *MockBankReceiptWorkItemRepository_Expecter) Create(ctx any, entity any) *MockBankReceiptWorkItemRepository_Create_Call {
 	return &MockBankReceiptWorkItemRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -146,7 +146,7 @@ type MockBankReceiptWorkItemRepository_GetActiveByReceiptID_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - bankReceiptID pulid.ID
-func (_e *MockBankReceiptWorkItemRepository_Expecter) GetActiveByReceiptID(ctx interface{}, tenantInfo interface{}, bankReceiptID interface{}) *MockBankReceiptWorkItemRepository_GetActiveByReceiptID_Call {
+func (_e *MockBankReceiptWorkItemRepository_Expecter) GetActiveByReceiptID(ctx any, tenantInfo any, bankReceiptID any) *MockBankReceiptWorkItemRepository_GetActiveByReceiptID_Call {
 	return &MockBankReceiptWorkItemRepository_GetActiveByReceiptID_Call{Call: _e.mock.On("GetActiveByReceiptID", ctx, tenantInfo, bankReceiptID)}
 }
 
@@ -219,7 +219,7 @@ type MockBankReceiptWorkItemRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetBankReceiptWorkItemByIDRequest
-func (_e *MockBankReceiptWorkItemRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockBankReceiptWorkItemRepository_GetByID_Call {
+func (_e *MockBankReceiptWorkItemRepository_Expecter) GetByID(ctx any, req any) *MockBankReceiptWorkItemRepository_GetByID_Call {
 	return &MockBankReceiptWorkItemRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -287,7 +287,7 @@ type MockBankReceiptWorkItemRepository_ListActive_Call struct {
 // ListActive is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptWorkItemRepository_Expecter) ListActive(ctx interface{}, tenantInfo interface{}) *MockBankReceiptWorkItemRepository_ListActive_Call {
+func (_e *MockBankReceiptWorkItemRepository_Expecter) ListActive(ctx any, tenantInfo any) *MockBankReceiptWorkItemRepository_ListActive_Call {
 	return &MockBankReceiptWorkItemRepository_ListActive_Call{Call: _e.mock.On("ListActive", ctx, tenantInfo)}
 }
 
@@ -355,7 +355,7 @@ type MockBankReceiptWorkItemRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *bankreceiptworkitem.WorkItem
-func (_e *MockBankReceiptWorkItemRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockBankReceiptWorkItemRepository_Update_Call {
+func (_e *MockBankReceiptWorkItemRepository_Expecter) Update(ctx any, entity any) *MockBankReceiptWorkItemRepository_Update_Call {
 	return &MockBankReceiptWorkItemRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

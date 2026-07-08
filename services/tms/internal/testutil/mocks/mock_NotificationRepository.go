@@ -76,7 +76,7 @@ type MockNotificationRepository_CountUnread_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockNotificationRepository_Expecter) CountUnread(ctx interface{}, userID interface{}, tenantInfo interface{}) *MockNotificationRepository_CountUnread_Call {
+func (_e *MockNotificationRepository_Expecter) CountUnread(ctx any, userID any, tenantInfo any) *MockNotificationRepository_CountUnread_Call {
 	return &MockNotificationRepository_CountUnread_Call{Call: _e.mock.On("CountUnread", ctx, userID, tenantInfo)}
 }
 
@@ -149,7 +149,7 @@ type MockNotificationRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *notification.Notification
-func (_e *MockNotificationRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockNotificationRepository_Create_Call {
+func (_e *MockNotificationRepository_Expecter) Create(ctx any, entity any) *MockNotificationRepository_Create_Call {
 	return &MockNotificationRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -215,7 +215,7 @@ type MockNotificationRepository_ExistsRecent_Call struct {
 // ExistsRecent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ExistsRecentNotificationRequest
-func (_e *MockNotificationRepository_Expecter) ExistsRecent(ctx interface{}, req interface{}) *MockNotificationRepository_ExistsRecent_Call {
+func (_e *MockNotificationRepository_Expecter) ExistsRecent(ctx any, req any) *MockNotificationRepository_ExistsRecent_Call {
 	return &MockNotificationRepository_ExistsRecent_Call{Call: _e.mock.On("ExistsRecent", ctx, req)}
 }
 
@@ -283,7 +283,7 @@ type MockNotificationRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListNotificationsRequest
-func (_e *MockNotificationRepository_Expecter) List(ctx interface{}, req interface{}) *MockNotificationRepository_List_Call {
+func (_e *MockNotificationRepository_Expecter) List(ctx any, req any) *MockNotificationRepository_List_Call {
 	return &MockNotificationRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -341,7 +341,7 @@ type MockNotificationRepository_MarkAllAsRead_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockNotificationRepository_Expecter) MarkAllAsRead(ctx interface{}, userID interface{}, tenantInfo interface{}) *MockNotificationRepository_MarkAllAsRead_Call {
+func (_e *MockNotificationRepository_Expecter) MarkAllAsRead(ctx any, userID any, tenantInfo any) *MockNotificationRepository_MarkAllAsRead_Call {
 	return &MockNotificationRepository_MarkAllAsRead_Call{Call: _e.mock.On("MarkAllAsRead", ctx, userID, tenantInfo)}
 }
 
@@ -403,7 +403,7 @@ type MockNotificationRepository_MarkAsRead_Call struct {
 // MarkAsRead is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.MarkNotificationsReadRequest
-func (_e *MockNotificationRepository_Expecter) MarkAsRead(ctx interface{}, req interface{}) *MockNotificationRepository_MarkAsRead_Call {
+func (_e *MockNotificationRepository_Expecter) MarkAsRead(ctx any, req any) *MockNotificationRepository_MarkAsRead_Call {
 	return &MockNotificationRepository_MarkAsRead_Call{Call: _e.mock.On("MarkAsRead", ctx, req)}
 }
 

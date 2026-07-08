@@ -75,7 +75,7 @@ type MockStoredMileageBufferRepository_PopTenantBatches_Call struct {
 //   - ctx context.Context
 //   - batchSize int
 //   - totalLimit int
-func (_e *MockStoredMileageBufferRepository_Expecter) PopTenantBatches(ctx interface{}, batchSize interface{}, totalLimit interface{}) *MockStoredMileageBufferRepository_PopTenantBatches_Call {
+func (_e *MockStoredMileageBufferRepository_Expecter) PopTenantBatches(ctx any, batchSize any, totalLimit any) *MockStoredMileageBufferRepository_PopTenantBatches_Call {
 	return &MockStoredMileageBufferRepository_PopTenantBatches_Call{Call: _e.mock.On("PopTenantBatches", ctx, batchSize, totalLimit)}
 }
 
@@ -137,7 +137,7 @@ type MockStoredMileageBufferRepository_Push_Call struct {
 // Push is a helper method to define mock.On call
 //   - ctx context.Context
 //   - candidate *storedmileage.StoredMileage
-func (_e *MockStoredMileageBufferRepository_Expecter) Push(ctx interface{}, candidate interface{}) *MockStoredMileageBufferRepository_Push_Call {
+func (_e *MockStoredMileageBufferRepository_Expecter) Push(ctx any, candidate any) *MockStoredMileageBufferRepository_Push_Call {
 	return &MockStoredMileageBufferRepository_Push_Call{Call: _e.mock.On("Push", ctx, candidate)}
 }
 
@@ -202,7 +202,7 @@ type MockStoredMileageBufferRepository_Size_Call struct {
 
 // Size is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockStoredMileageBufferRepository_Expecter) Size(ctx interface{}) *MockStoredMileageBufferRepository_Size_Call {
+func (_e *MockStoredMileageBufferRepository_Expecter) Size(ctx any) *MockStoredMileageBufferRepository_Size_Call {
 	return &MockStoredMileageBufferRepository_Size_Call{Call: _e.mock.On("Size", ctx)}
 }
 

@@ -9,10 +9,18 @@ import type { DataTablePanelProps } from "@/types/data-table";
 import type { EDIMappingProfileItem, EDITransfer, EDITransferStatus } from "@/types/edi";
 import { Operation, Resource } from "@/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightIcon, CheckIcon, PackageIcon, RouteIcon, XIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  FileTextIcon,
+  PackageIcon,
+  RouteIcon,
+  XIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { mappingKey } from "../edi-display-utils";
+import { TransferDocuments } from "./edi-transfer-documents";
 import { invalidateEDITransfers } from "./edi-panel-invalidation";
 import { EDIReasonDialog } from "./edi-reason-dialog";
 import { MappingReview } from "./edi-transfer-mapping-review";
@@ -63,8 +71,7 @@ export function EDITransferReviewPanel({
   });
 
   const rejectMutation = useApiMutation({
-    mutationFn: (reason: string) =>
-      apiService.ediService.rejectTransfer(transfer!.id, { reason }),
+    mutationFn: (reason: string) => apiService.ediService.rejectTransfer(transfer!.id, { reason }),
     onSuccess: async () => {
       toast.success("EDI transfer rejected");
       setRejectDialogOpen(false);
@@ -94,7 +101,7 @@ export function EDITransferReviewPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      size={direction === "inbound" ? "2xl" : "xl"}
+      size="xl"
       title={direction === "inbound" ? "Review Inbound Load Tender" : "Review Outbound Load Tender"}
       description={
         transfer?.tenderPayload.bol ? `BOL ${transfer.tenderPayload.bol}` : "Load tender"
@@ -147,6 +154,10 @@ export function EDITransferReviewPanel({
                 <ArrowRightIcon data-icon="inline-start" />
                 Mappings
               </TabsTrigger>
+              <TabsTrigger value="documents">
+                <FileTextIcon data-icon="inline-start" />
+                Documents
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="tender" className="mt-0 space-y-3">
               <TenderRouteReview transfer={transfer} mappingRows={mappingRows} />
@@ -162,6 +173,9 @@ export function EDITransferReviewPanel({
                 setInlineMappings={setInlineMappings}
                 unresolved={unresolved}
               />
+            </TabsContent>
+            <TabsContent value="documents" className="mt-0 space-y-3">
+              <TransferDocuments transfer={transfer} />
             </TabsContent>
           </Tabs>
         </EDITransferPanelContent>

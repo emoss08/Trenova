@@ -74,7 +74,7 @@ type MockGLBalanceRepository_ListTrialBalanceByPeriod_Call struct {
 // ListTrialBalanceByPeriod is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListTrialBalanceByPeriodRequest
-func (_e *MockGLBalanceRepository_Expecter) ListTrialBalanceByPeriod(ctx interface{}, req interface{}) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
+func (_e *MockGLBalanceRepository_Expecter) ListTrialBalanceByPeriod(ctx any, req any) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
 	return &MockGLBalanceRepository_ListTrialBalanceByPeriod_Call{Call: _e.mock.On("ListTrialBalanceByPeriod", ctx, req)}
 }
 

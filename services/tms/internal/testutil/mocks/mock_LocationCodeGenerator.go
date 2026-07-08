@@ -73,7 +73,7 @@ type MockLocationCodeGenerator_BuildPrefix_Call struct {
 // BuildPrefix is a helper method to define mock.On call
 //   - input services.LocationCodeInput
 //   - strategy *tenant.LocationCodeStrategy
-func (_e *MockLocationCodeGenerator_Expecter) BuildPrefix(input interface{}, strategy interface{}) *MockLocationCodeGenerator_BuildPrefix_Call {
+func (_e *MockLocationCodeGenerator_Expecter) BuildPrefix(input any, strategy any) *MockLocationCodeGenerator_BuildPrefix_Call {
 	return &MockLocationCodeGenerator_BuildPrefix_Call{Call: _e.mock.On("BuildPrefix", input, strategy)}
 }
 
@@ -139,7 +139,7 @@ type MockLocationCodeGenerator_Generate_Call struct {
 // Generate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.LocationCodeGenerateRequest
-func (_e *MockLocationCodeGenerator_Expecter) Generate(ctx interface{}, req interface{}) *MockLocationCodeGenerator_Generate_Call {
+func (_e *MockLocationCodeGenerator_Expecter) Generate(ctx any, req any) *MockLocationCodeGenerator_Generate_Call {
 	return &MockLocationCodeGenerator_Generate_Call{Call: _e.mock.On("Generate", ctx, req)}
 }
 

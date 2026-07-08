@@ -76,7 +76,7 @@ type MockAccessorialChargeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accessorialcharge.AccessorialCharge
-func (_e *MockAccessorialChargeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockAccessorialChargeRepository_Create_Call {
+func (_e *MockAccessorialChargeRepository_Expecter) Create(ctx any, entity any) *MockAccessorialChargeRepository_Create_Call {
 	return &MockAccessorialChargeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockAccessorialChargeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetAccessorialChargeByIDRequest
-func (_e *MockAccessorialChargeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockAccessorialChargeRepository_GetByID_Call {
+func (_e *MockAccessorialChargeRepository_Expecter) GetByID(ctx any, req any) *MockAccessorialChargeRepository_GetByID_Call {
 	return &MockAccessorialChargeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockAccessorialChargeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAccessorialChargeRequest
-func (_e *MockAccessorialChargeRepository_Expecter) List(ctx interface{}, req interface{}) *MockAccessorialChargeRepository_List_Call {
+func (_e *MockAccessorialChargeRepository_Expecter) List(ctx any, req any) *MockAccessorialChargeRepository_List_Call {
 	return &MockAccessorialChargeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockAccessorialChargeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockAccessorialChargeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockAccessorialChargeRepository_SelectOptions_Call {
+func (_e *MockAccessorialChargeRepository_Expecter) SelectOptions(ctx any, req any) *MockAccessorialChargeRepository_SelectOptions_Call {
 	return &MockAccessorialChargeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockAccessorialChargeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accessorialcharge.AccessorialCharge
-func (_e *MockAccessorialChargeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockAccessorialChargeRepository_Update_Call {
+func (_e *MockAccessorialChargeRepository_Expecter) Update(ctx any, entity any) *MockAccessorialChargeRepository_Update_Call {
 	return &MockAccessorialChargeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

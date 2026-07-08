@@ -76,7 +76,7 @@ type MockEDIConnectionRepository_AcceptInternalConnection_Call struct {
 // AcceptInternalConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CreateInternalEDIConnectionAcceptanceRequest
-func (_e *MockEDIConnectionRepository_Expecter) AcceptInternalConnection(ctx interface{}, req interface{}) *MockEDIConnectionRepository_AcceptInternalConnection_Call {
+func (_e *MockEDIConnectionRepository_Expecter) AcceptInternalConnection(ctx any, req any) *MockEDIConnectionRepository_AcceptInternalConnection_Call {
 	return &MockEDIConnectionRepository_AcceptInternalConnection_Call{Call: _e.mock.On("AcceptInternalConnection", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIConnectionRepository_CreateConnection_Call struct {
 // CreateConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDIConnection
-func (_e *MockEDIConnectionRepository_Expecter) CreateConnection(ctx interface{}, entity interface{}) *MockEDIConnectionRepository_CreateConnection_Call {
+func (_e *MockEDIConnectionRepository_Expecter) CreateConnection(ctx any, entity any) *MockEDIConnectionRepository_CreateConnection_Call {
 	return &MockEDIConnectionRepository_CreateConnection_Call{Call: _e.mock.On("CreateConnection", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockEDIConnectionRepository_GetActiveConnectionForPartner_Call struct {
 // GetActiveConnectionForPartner is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveEDIConnectionForPartnerRequest
-func (_e *MockEDIConnectionRepository_Expecter) GetActiveConnectionForPartner(ctx interface{}, req interface{}) *MockEDIConnectionRepository_GetActiveConnectionForPartner_Call {
+func (_e *MockEDIConnectionRepository_Expecter) GetActiveConnectionForPartner(ctx any, req any) *MockEDIConnectionRepository_GetActiveConnectionForPartner_Call {
 	return &MockEDIConnectionRepository_GetActiveConnectionForPartner_Call{Call: _e.mock.On("GetActiveConnectionForPartner", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDIConnectionRepository_GetConnectionByID_Call struct {
 // GetConnectionByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIConnectionByIDRequest
-func (_e *MockEDIConnectionRepository_Expecter) GetConnectionByID(ctx interface{}, req interface{}) *MockEDIConnectionRepository_GetConnectionByID_Call {
+func (_e *MockEDIConnectionRepository_Expecter) GetConnectionByID(ctx any, req any) *MockEDIConnectionRepository_GetConnectionByID_Call {
 	return &MockEDIConnectionRepository_GetConnectionByID_Call{Call: _e.mock.On("GetConnectionByID", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockEDIConnectionRepository_GetConnectionForUpdate_Call struct {
 // GetConnectionForUpdate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIConnectionForUpdateRequest
-func (_e *MockEDIConnectionRepository_Expecter) GetConnectionForUpdate(ctx interface{}, req interface{}) *MockEDIConnectionRepository_GetConnectionForUpdate_Call {
+func (_e *MockEDIConnectionRepository_Expecter) GetConnectionForUpdate(ctx any, req any) *MockEDIConnectionRepository_GetConnectionForUpdate_Call {
 	return &MockEDIConnectionRepository_GetConnectionForUpdate_Call{Call: _e.mock.On("GetConnectionForUpdate", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockEDIConnectionRepository_ListConnections_Call struct {
 // ListConnections is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIConnectionsRequest
-func (_e *MockEDIConnectionRepository_Expecter) ListConnections(ctx interface{}, req interface{}) *MockEDIConnectionRepository_ListConnections_Call {
+func (_e *MockEDIConnectionRepository_Expecter) ListConnections(ctx any, req any) *MockEDIConnectionRepository_ListConnections_Call {
 	return &MockEDIConnectionRepository_ListConnections_Call{Call: _e.mock.On("ListConnections", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockEDIConnectionRepository_UpdateConnection_Call struct {
 // UpdateConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDIConnection
-func (_e *MockEDIConnectionRepository_Expecter) UpdateConnection(ctx interface{}, entity interface{}) *MockEDIConnectionRepository_UpdateConnection_Call {
+func (_e *MockEDIConnectionRepository_Expecter) UpdateConnection(ctx any, entity any) *MockEDIConnectionRepository_UpdateConnection_Call {
 	return &MockEDIConnectionRepository_UpdateConnection_Call{Call: _e.mock.On("UpdateConnection", ctx, entity)}
 }
 

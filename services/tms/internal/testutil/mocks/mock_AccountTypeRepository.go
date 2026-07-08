@@ -76,7 +76,7 @@ type MockAccountTypeRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateAccountTypeStatusRequest
-func (_e *MockAccountTypeRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockAccountTypeRepository_BulkUpdateStatus_Call {
+func (_e *MockAccountTypeRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockAccountTypeRepository_BulkUpdateStatus_Call {
 	return &MockAccountTypeRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockAccountTypeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accounttype.AccountType
-func (_e *MockAccountTypeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockAccountTypeRepository_Create_Call {
+func (_e *MockAccountTypeRepository_Expecter) Create(ctx any, entity any) *MockAccountTypeRepository_Create_Call {
 	return &MockAccountTypeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockAccountTypeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetAccountTypeByIDRequest
-func (_e *MockAccountTypeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockAccountTypeRepository_GetByID_Call {
+func (_e *MockAccountTypeRepository_Expecter) GetByID(ctx any, req any) *MockAccountTypeRepository_GetByID_Call {
 	return &MockAccountTypeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockAccountTypeRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetAccountTypesByIDsRequest
-func (_e *MockAccountTypeRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockAccountTypeRepository_GetByIDs_Call {
+func (_e *MockAccountTypeRepository_Expecter) GetByIDs(ctx any, req any) *MockAccountTypeRepository_GetByIDs_Call {
 	return &MockAccountTypeRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockAccountTypeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAccountTypesRequest
-func (_e *MockAccountTypeRepository_Expecter) List(ctx interface{}, req interface{}) *MockAccountTypeRepository_List_Call {
+func (_e *MockAccountTypeRepository_Expecter) List(ctx any, req any) *MockAccountTypeRepository_List_Call {
 	return &MockAccountTypeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockAccountTypeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.AccountTypeSelectOptionsRequest
-func (_e *MockAccountTypeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockAccountTypeRepository_SelectOptions_Call {
+func (_e *MockAccountTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockAccountTypeRepository_SelectOptions_Call {
 	return &MockAccountTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockAccountTypeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accounttype.AccountType
-func (_e *MockAccountTypeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockAccountTypeRepository_Update_Call {
+func (_e *MockAccountTypeRepository_Expecter) Update(ctx any, entity any) *MockAccountTypeRepository_Update_Call {
 	return &MockAccountTypeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

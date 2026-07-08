@@ -77,7 +77,7 @@ type MockAuthService_ActivateSessionRoles_Call struct {
 // ActivateSessionRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.ActivateSessionRolesRequest
-func (_e *MockAuthService_Expecter) ActivateSessionRoles(ctx interface{}, req interface{}) *MockAuthService_ActivateSessionRoles_Call {
+func (_e *MockAuthService_Expecter) ActivateSessionRoles(ctx any, req any) *MockAuthService_ActivateSessionRoles_Call {
 	return &MockAuthService_ActivateSessionRoles_Call{Call: _e.mock.On("ActivateSessionRoles", ctx, req)}
 }
 
@@ -147,7 +147,7 @@ type MockAuthService_AuthenticateAPIKey_Call struct {
 //   - token string
 //   - ipAddress string
 //   - userAgent string
-func (_e *MockAuthService_Expecter) AuthenticateAPIKey(ctx interface{}, token interface{}, ipAddress interface{}, userAgent interface{}) *MockAuthService_AuthenticateAPIKey_Call {
+func (_e *MockAuthService_Expecter) AuthenticateAPIKey(ctx any, token any, ipAddress any, userAgent any) *MockAuthService_AuthenticateAPIKey_Call {
 	return &MockAuthService_AuthenticateAPIKey_Call{Call: _e.mock.On("AuthenticateAPIKey", ctx, token, ipAddress, userAgent)}
 }
 
@@ -225,7 +225,7 @@ type MockAuthService_GetSSOLoginState_Call struct {
 // GetSSOLoginState is a helper method to define mock.On call
 //   - ctx context.Context
 //   - state string
-func (_e *MockAuthService_Expecter) GetSSOLoginState(ctx interface{}, state interface{}) *MockAuthService_GetSSOLoginState_Call {
+func (_e *MockAuthService_Expecter) GetSSOLoginState(ctx any, state any) *MockAuthService_GetSSOLoginState_Call {
 	return &MockAuthService_GetSSOLoginState_Call{Call: _e.mock.On("GetSSOLoginState", ctx, state)}
 }
 
@@ -293,7 +293,7 @@ type MockAuthService_GetTenantLoginMetadata_Call struct {
 // GetTenantLoginMetadata is a helper method to define mock.On call
 //   - ctx context.Context
 //   - organizationSlug string
-func (_e *MockAuthService_Expecter) GetTenantLoginMetadata(ctx interface{}, organizationSlug interface{}) *MockAuthService_GetTenantLoginMetadata_Call {
+func (_e *MockAuthService_Expecter) GetTenantLoginMetadata(ctx any, organizationSlug any) *MockAuthService_GetTenantLoginMetadata_Call {
 	return &MockAuthService_GetTenantLoginMetadata_Call{Call: _e.mock.On("GetTenantLoginMetadata", ctx, organizationSlug)}
 }
 
@@ -361,7 +361,7 @@ type MockAuthService_HandleSSOCallback_Call struct {
 // HandleSSOCallback is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.SSOCallbackRequest
-func (_e *MockAuthService_Expecter) HandleSSOCallback(ctx interface{}, req interface{}) *MockAuthService_HandleSSOCallback_Call {
+func (_e *MockAuthService_Expecter) HandleSSOCallback(ctx any, req any) *MockAuthService_HandleSSOCallback_Call {
 	return &MockAuthService_HandleSSOCallback_Call{Call: _e.mock.On("HandleSSOCallback", ctx, req)}
 }
 
@@ -429,7 +429,7 @@ type MockAuthService_ListAuthProviders_Call struct {
 // ListAuthProviders is a helper method to define mock.On call
 //   - ctx context.Context
 //   - organizationSlug string
-func (_e *MockAuthService_Expecter) ListAuthProviders(ctx interface{}, organizationSlug interface{}) *MockAuthService_ListAuthProviders_Call {
+func (_e *MockAuthService_Expecter) ListAuthProviders(ctx any, organizationSlug any) *MockAuthService_ListAuthProviders_Call {
 	return &MockAuthService_ListAuthProviders_Call{Call: _e.mock.On("ListAuthProviders", ctx, organizationSlug)}
 }
 
@@ -497,7 +497,7 @@ type MockAuthService_ListAuthorizedSessionRoles_Call struct {
 // ListAuthorizedSessionRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID pulid.ID
-func (_e *MockAuthService_Expecter) ListAuthorizedSessionRoles(ctx interface{}, sessionID interface{}) *MockAuthService_ListAuthorizedSessionRoles_Call {
+func (_e *MockAuthService_Expecter) ListAuthorizedSessionRoles(ctx any, sessionID any) *MockAuthService_ListAuthorizedSessionRoles_Call {
 	return &MockAuthService_ListAuthorizedSessionRoles_Call{Call: _e.mock.On("ListAuthorizedSessionRoles", ctx, sessionID)}
 }
 
@@ -565,7 +565,7 @@ type MockAuthService_Login_Call struct {
 // Login is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.LoginRequest
-func (_e *MockAuthService_Expecter) Login(ctx interface{}, req interface{}) *MockAuthService_Login_Call {
+func (_e *MockAuthService_Expecter) Login(ctx any, req any) *MockAuthService_Login_Call {
 	return &MockAuthService_Login_Call{Call: _e.mock.On("Login", ctx, req)}
 }
 
@@ -622,7 +622,7 @@ type MockAuthService_Logout_Call struct {
 // Logout is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID pulid.ID
-func (_e *MockAuthService_Expecter) Logout(ctx interface{}, sessionID interface{}) *MockAuthService_Logout_Call {
+func (_e *MockAuthService_Expecter) Logout(ctx any, sessionID any) *MockAuthService_Logout_Call {
 	return &MockAuthService_Logout_Call{Call: _e.mock.On("Logout", ctx, sessionID)}
 }
 
@@ -688,7 +688,7 @@ type MockAuthService_StartSSOLogin_Call struct {
 // StartSSOLogin is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req services.StartSSOLoginRequest
-func (_e *MockAuthService_Expecter) StartSSOLogin(ctx interface{}, req interface{}) *MockAuthService_StartSSOLogin_Call {
+func (_e *MockAuthService_Expecter) StartSSOLogin(ctx any, req any) *MockAuthService_StartSSOLogin_Call {
 	return &MockAuthService_StartSSOLogin_Call{Call: _e.mock.On("StartSSOLogin", ctx, req)}
 }
 
@@ -756,7 +756,7 @@ type MockAuthService_ValidateSession_Call struct {
 // ValidateSession is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sessionID pulid.ID
-func (_e *MockAuthService_Expecter) ValidateSession(ctx interface{}, sessionID interface{}) *MockAuthService_ValidateSession_Call {
+func (_e *MockAuthService_Expecter) ValidateSession(ctx any, sessionID any) *MockAuthService_ValidateSession_Call {
 	return &MockAuthService_ValidateSession_Call{Call: _e.mock.On("ValidateSession", ctx, sessionID)}
 }
 

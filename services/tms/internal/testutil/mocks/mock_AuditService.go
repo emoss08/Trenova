@@ -78,7 +78,7 @@ type MockAuditService_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetAuditEntryByIDOptions
-func (_e *MockAuditService_Expecter) GetByID(ctx interface{}, req interface{}) *MockAuditService_GetByID_Call {
+func (_e *MockAuditService_Expecter) GetByID(ctx any, req any) *MockAuditService_GetByID_Call {
 	return &MockAuditService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -146,7 +146,7 @@ type MockAuditService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAuditEntriesRequest
-func (_e *MockAuditService_Expecter) List(ctx interface{}, req interface{}) *MockAuditService_List_Call {
+func (_e *MockAuditService_Expecter) List(ctx any, req any) *MockAuditService_List_Call {
 	return &MockAuditService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -214,7 +214,7 @@ type MockAuditService_ListByResourceID_Call struct {
 // ListByResourceID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListByResourceIDRequest
-func (_e *MockAuditService_Expecter) ListByResourceID(ctx interface{}, req interface{}) *MockAuditService_ListByResourceID_Call {
+func (_e *MockAuditService_Expecter) ListByResourceID(ctx any, req any) *MockAuditService_ListByResourceID_Call {
 	return &MockAuditService_ListByResourceID_Call{Call: _e.mock.On("ListByResourceID", ctx, req)}
 }
 
@@ -277,9 +277,9 @@ type MockAuditService_LogAction_Call struct {
 // LogAction is a helper method to define mock.On call
 //   - params *services.LogActionParams
 //   - opts ...services.LogOption
-func (_e *MockAuditService_Expecter) LogAction(params interface{}, opts ...interface{}) *MockAuditService_LogAction_Call {
+func (_e *MockAuditService_Expecter) LogAction(params any, opts ...any) *MockAuditService_LogAction_Call {
 	return &MockAuditService_LogAction_Call{Call: _e.mock.On("LogAction",
-		append([]interface{}{params}, opts...)...)}
+		append([]any{params}, opts...)...)}
 }
 
 func (_c *MockAuditService_LogAction_Call) Run(run func(params *services.LogActionParams, opts ...services.LogOption)) *MockAuditService_LogAction_Call {
@@ -336,7 +336,7 @@ type MockAuditService_LogActions_Call struct {
 
 // LogActions is a helper method to define mock.On call
 //   - entries []services.BulkLogEntry
-func (_e *MockAuditService_Expecter) LogActions(entries interface{}) *MockAuditService_LogActions_Call {
+func (_e *MockAuditService_Expecter) LogActions(entries any) *MockAuditService_LogActions_Call {
 	return &MockAuditService_LogActions_Call{Call: _e.mock.On("LogActions", entries)}
 }
 
@@ -388,7 +388,7 @@ type MockAuditService_RegisterSensitiveFields_Call struct {
 // RegisterSensitiveFields is a helper method to define mock.On call
 //   - resource permission.Resource
 //   - fields []services.SensitiveField
-func (_e *MockAuditService_Expecter) RegisterSensitiveFields(resource interface{}, fields interface{}) *MockAuditService_RegisterSensitiveFields_Call {
+func (_e *MockAuditService_Expecter) RegisterSensitiveFields(resource any, fields any) *MockAuditService_RegisterSensitiveFields_Call {
 	return &MockAuditService_RegisterSensitiveFields_Call{Call: _e.mock.On("RegisterSensitiveFields", resource, fields)}
 }
 

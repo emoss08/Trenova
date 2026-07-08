@@ -76,7 +76,7 @@ type MockRoleAssignmentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetRoleAssignmentByIDRequest
-func (_e *MockRoleAssignmentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockRoleAssignmentRepository_GetByID_Call {
+func (_e *MockRoleAssignmentRepository_Expecter) GetByID(ctx any, req any) *MockRoleAssignmentRepository_GetByID_Call {
 	return &MockRoleAssignmentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockRoleAssignmentRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListRoleAssignmentsRequest
-func (_e *MockRoleAssignmentRepository_Expecter) List(ctx interface{}, req interface{}) *MockRoleAssignmentRepository_List_Call {
+func (_e *MockRoleAssignmentRepository_Expecter) List(ctx any, req any) *MockRoleAssignmentRepository_List_Call {
 	return &MockRoleAssignmentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 

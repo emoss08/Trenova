@@ -76,7 +76,7 @@ type MockBankReceiptBatchRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *bankreceiptbatch.BankReceiptBatch
-func (_e *MockBankReceiptBatchRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockBankReceiptBatchRepository_Create_Call {
+func (_e *MockBankReceiptBatchRepository_Expecter) Create(ctx any, entity any) *MockBankReceiptBatchRepository_Create_Call {
 	return &MockBankReceiptBatchRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockBankReceiptBatchRepository_DistinctSources_Call struct {
 // DistinctSources is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockBankReceiptBatchRepository_Expecter) DistinctSources(ctx interface{}, req interface{}) *MockBankReceiptBatchRepository_DistinctSources_Call {
+func (_e *MockBankReceiptBatchRepository_Expecter) DistinctSources(ctx any, req any) *MockBankReceiptBatchRepository_DistinctSources_Call {
 	return &MockBankReceiptBatchRepository_DistinctSources_Call{Call: _e.mock.On("DistinctSources", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockBankReceiptBatchRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetBankReceiptBatchByIDRequest
-func (_e *MockBankReceiptBatchRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockBankReceiptBatchRepository_GetByID_Call {
+func (_e *MockBankReceiptBatchRepository_Expecter) GetByID(ctx any, req any) *MockBankReceiptBatchRepository_GetByID_Call {
 	return &MockBankReceiptBatchRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockBankReceiptBatchRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptBatchRepository_Expecter) List(ctx interface{}, tenantInfo interface{}) *MockBankReceiptBatchRepository_List_Call {
+func (_e *MockBankReceiptBatchRepository_Expecter) List(ctx any, tenantInfo any) *MockBankReceiptBatchRepository_List_Call {
 	return &MockBankReceiptBatchRepository_List_Call{Call: _e.mock.On("List", ctx, tenantInfo)}
 }
 
@@ -348,7 +348,7 @@ type MockBankReceiptBatchRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *bankreceiptbatch.BankReceiptBatch
-func (_e *MockBankReceiptBatchRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockBankReceiptBatchRepository_Update_Call {
+func (_e *MockBankReceiptBatchRepository_Expecter) Update(ctx any, entity any) *MockBankReceiptBatchRepository_Update_Call {
 	return &MockBankReceiptBatchRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

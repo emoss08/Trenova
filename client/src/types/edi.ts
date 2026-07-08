@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { nullableStringSchema } from "./helpers";
+import {
+  enumWithFallback,
+  nullableArraySchema,
+  nullableEnumSchema,
+  nullableStringSchema,
+} from "./helpers";
 import { createLimitOffsetResponse } from "./server";
 
 export const ediPartnerKindSchema = z.enum(["Internal", "External"]);
@@ -251,7 +256,7 @@ export const ediCommunicationProfileSchema = z.object({
   name: z.string(),
   description: z.string().nullish(),
   config: z.record(z.string(), z.unknown()).default({}),
-  secretState: z.array(ediCommunicationProfileSecretStateSchema).default([]),
+  secretState: nullableArraySchema(ediCommunicationProfileSecretStateSchema),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -338,7 +343,7 @@ export const loadTenderMoveSchema = z.object({
   loaded: z.boolean(),
   sequence: z.number(),
   distance: nullableNumberSchema,
-  stops: z.array(loadTenderStopSchema).default([]),
+  stops: nullableArraySchema(loadTenderStopSchema),
 });
 
 export type LoadTenderMove = z.infer<typeof loadTenderMoveSchema>;
@@ -367,7 +372,7 @@ export const loadTenderChargeSchema = z.object({
 export type LoadTenderCharge = z.infer<typeof loadTenderChargeSchema>;
 
 const loadTenderPayloadSchema = z.object({
-  shipmentId: z.string(),
+  shipmentId: z.string().nullish(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),
   serviceTypeId: z.string().nullish(),
@@ -389,9 +394,9 @@ const loadTenderPayloadSchema = z.object({
   totalChargeAmount: z.unknown().nullish(),
   ratingUnit: nullableNumberSchema,
   ratingDetail: z.record(z.string(), z.unknown()).nullish(),
-  moves: z.array(loadTenderMoveSchema).default([]),
-  commodities: z.array(loadTenderCommoditySchema).default([]),
-  additionalCharges: z.array(loadTenderChargeSchema).default([]),
+  moves: nullableArraySchema(loadTenderMoveSchema),
+  commodities: nullableArraySchema(loadTenderCommoditySchema),
+  additionalCharges: nullableArraySchema(loadTenderChargeSchema),
   requiredMappingEntityIds: z.record(z.string(), z.array(z.string())).nullish(),
 });
 
@@ -470,11 +475,11 @@ export const ediTransferSchema = z.object({
   targetOrganizationId: z.string(),
   sourcePartnerId: z.string(),
   targetPartnerId: z.string(),
-  sourceShipmentId: z.string(),
+  sourceShipmentId: z.string().nullish(),
   targetShipmentId: z.string().nullish(),
   status: ediTransferStatusSchema,
   tenderPayload: loadTenderPayloadSchema,
-  mappingSnapshot: z.array(ediMappingResolutionSchema).default([]),
+  mappingSnapshot: nullableArraySchema(ediMappingResolutionSchema),
   rejectionReason: z.string().nullish(),
   failureReason: z.string().nullish(),
   approvalWorkflowId: z.string().nullish(),
@@ -788,7 +793,7 @@ export const ediAcknowledgmentConfigSchema = z.object({
   expected: z.boolean().default(false),
   type: z.string().default("None"),
   slaInMinutes: z.number().default(0),
-  missingAckSeverity: ediValidationSeveritySchema.default("Warning"),
+  missingAckSeverity: enumWithFallback(ediValidationSeveritySchema, "Warning"),
 });
 
 export const serviceFailure214PartnerSettingsSchema = z
@@ -959,14 +964,14 @@ export const ediMessageSchema = z.object({
   segmentCount: z.number(),
   rawX12: z.string(),
   payloadSnapshot: ediDocumentPayloadSchema.nullish(),
-  deliveryStatus: ediMessageDeliveryStatusSchema.nullish(),
+  deliveryStatus: nullableEnumSchema(ediMessageDeliveryStatusSchema),
   deliveryRemotePath: z.string().nullish(),
   deliveryAttempts: z.number().default(0),
   deliveryLastAttemptAt: nullableNumberSchema,
   deliverySentAt: nullableNumberSchema,
   rawPurgedAt: nullableNumberSchema,
   deliveryLastError: z.string().nullish(),
-  ackStatus: ediMessageAcknowledgmentStatusSchema.nullish(),
+  ackStatus: nullableEnumSchema(ediMessageAcknowledgmentStatusSchema),
   ackMessageId: z.string().nullish(),
   ackReceivedAt: nullableNumberSchema,
   ackLastError: z.string().nullish(),

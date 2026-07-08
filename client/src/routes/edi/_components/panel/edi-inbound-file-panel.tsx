@@ -17,12 +17,8 @@ import { Operation, Resource } from "@/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { invalidateEDIInboundFiles } from "./edi-panel-invalidation";
-import {
-  DetailField,
-  DetailSection,
-  EDIPartnerRef,
-  EDIRawContent,
-} from "./edi-panel-primitives";
+import { DetailField, DetailSection, EDIPartnerRef } from "./edi-panel-primitives";
+import { EDIRawX12Viewer } from "./edi-raw-x12-viewer";
 
 export const REPROCESSABLE_STATUSES = new Set<EDIInboundFileStatus>([
   "Quarantined",
@@ -148,7 +144,7 @@ export function InboundFilePanel({
         )}
         {detail.rawContent && (
           <DetailSection title="Raw Content" fullWidth>
-            <EDIRawContent content={detail.rawContent} />
+            <EDIRawX12Viewer content={detail.rawContent} />
           </DetailSection>
         )}
       </div>

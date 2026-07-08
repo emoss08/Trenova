@@ -76,7 +76,7 @@ type MockEquipmentContinuityRepository_Advance_Call struct {
 // Advance is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CreateEquipmentContinuityRequest
-func (_e *MockEquipmentContinuityRepository_Expecter) Advance(ctx interface{}, req interface{}) *MockEquipmentContinuityRepository_Advance_Call {
+func (_e *MockEquipmentContinuityRepository_Expecter) Advance(ctx any, req any) *MockEquipmentContinuityRepository_Advance_Call {
 	return &MockEquipmentContinuityRepository_Advance_Call{Call: _e.mock.On("Advance", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEquipmentContinuityRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id pulid.ID
-func (_e *MockEquipmentContinuityRepository_Expecter) GetByID(ctx interface{}, id interface{}) *MockEquipmentContinuityRepository_GetByID_Call {
+func (_e *MockEquipmentContinuityRepository_Expecter) GetByID(ctx any, id any) *MockEquipmentContinuityRepository_GetByID_Call {
 	return &MockEquipmentContinuityRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
 }
 
@@ -212,7 +212,7 @@ type MockEquipmentContinuityRepository_GetCurrent_Call struct {
 // GetCurrent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCurrentEquipmentContinuityRequest
-func (_e *MockEquipmentContinuityRepository_Expecter) GetCurrent(ctx interface{}, req interface{}) *MockEquipmentContinuityRepository_GetCurrent_Call {
+func (_e *MockEquipmentContinuityRepository_Expecter) GetCurrent(ctx any, req any) *MockEquipmentContinuityRepository_GetCurrent_Call {
 	return &MockEquipmentContinuityRepository_GetCurrent_Call{Call: _e.mock.On("GetCurrent", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEquipmentContinuityRepository_GetEffectiveCurrent_Call struct {
 // GetEffectiveCurrent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCurrentEquipmentContinuityRequest
-func (_e *MockEquipmentContinuityRepository_Expecter) GetEffectiveCurrent(ctx interface{}, req interface{}) *MockEquipmentContinuityRepository_GetEffectiveCurrent_Call {
+func (_e *MockEquipmentContinuityRepository_Expecter) GetEffectiveCurrent(ctx any, req any) *MockEquipmentContinuityRepository_GetEffectiveCurrent_Call {
 	return &MockEquipmentContinuityRepository_GetEffectiveCurrent_Call{Call: _e.mock.On("GetEffectiveCurrent", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockEquipmentContinuityRepository_RollbackCurrentByMove_Call struct {
 // RollbackCurrentByMove is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.RollbackEquipmentContinuityByMoveRequest
-func (_e *MockEquipmentContinuityRepository_Expecter) RollbackCurrentByMove(ctx interface{}, req interface{}) *MockEquipmentContinuityRepository_RollbackCurrentByMove_Call {
+func (_e *MockEquipmentContinuityRepository_Expecter) RollbackCurrentByMove(ctx any, req any) *MockEquipmentContinuityRepository_RollbackCurrentByMove_Call {
 	return &MockEquipmentContinuityRepository_RollbackCurrentByMove_Call{Call: _e.mock.On("RollbackCurrentByMove", ctx, req)}
 }
 
@@ -394,7 +394,7 @@ type MockEquipmentContinuityRepository_RollbackCurrentByShipment_Call struct {
 // RollbackCurrentByShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.RollbackEquipmentContinuityByShipmentRequest
-func (_e *MockEquipmentContinuityRepository_Expecter) RollbackCurrentByShipment(ctx interface{}, req interface{}) *MockEquipmentContinuityRepository_RollbackCurrentByShipment_Call {
+func (_e *MockEquipmentContinuityRepository_Expecter) RollbackCurrentByShipment(ctx any, req any) *MockEquipmentContinuityRepository_RollbackCurrentByShipment_Call {
 	return &MockEquipmentContinuityRepository_RollbackCurrentByShipment_Call{Call: _e.mock.On("RollbackCurrentByShipment", ctx, req)}
 }
 

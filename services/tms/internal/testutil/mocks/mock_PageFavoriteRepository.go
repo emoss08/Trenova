@@ -77,7 +77,7 @@ type MockPageFavoriteRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *pagefavorite.PageFavorite
-func (_e *MockPageFavoriteRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockPageFavoriteRepository_Create_Call {
+func (_e *MockPageFavoriteRepository_Expecter) Create(ctx any, entity any) *MockPageFavoriteRepository_Create_Call {
 	return &MockPageFavoriteRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -135,7 +135,7 @@ type MockPageFavoriteRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockPageFavoriteRepository_Expecter) Delete(ctx interface{}, id interface{}, tenantInfo interface{}) *MockPageFavoriteRepository_Delete_Call {
+func (_e *MockPageFavoriteRepository_Expecter) Delete(ctx any, id any, tenantInfo any) *MockPageFavoriteRepository_Delete_Call {
 	return &MockPageFavoriteRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, tenantInfo)}
 }
 
@@ -214,7 +214,7 @@ type MockPageFavoriteRepository_GetByURL_Call struct {
 // GetByURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetPageFavoriteByURLRequest
-func (_e *MockPageFavoriteRepository_Expecter) GetByURL(ctx interface{}, req interface{}) *MockPageFavoriteRepository_GetByURL_Call {
+func (_e *MockPageFavoriteRepository_Expecter) GetByURL(ctx any, req any) *MockPageFavoriteRepository_GetByURL_Call {
 	return &MockPageFavoriteRepository_GetByURL_Call{Call: _e.mock.On("GetByURL", ctx, req)}
 }
 
@@ -282,7 +282,7 @@ type MockPageFavoriteRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPageFavoritesRequest
-func (_e *MockPageFavoriteRepository_Expecter) List(ctx interface{}, req interface{}) *MockPageFavoriteRepository_List_Call {
+func (_e *MockPageFavoriteRepository_Expecter) List(ctx any, req any) *MockPageFavoriteRepository_List_Call {
 	return &MockPageFavoriteRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 

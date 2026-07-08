@@ -49,7 +49,7 @@ type MockUsageRecorder_RecordUsage_Call struct {
 
 // RecordUsage is a helper method to define mock.On call
 //   - event services.APIKeyUsageEvent
-func (_e *MockUsageRecorder_Expecter) RecordUsage(event interface{}) *MockUsageRecorder_RecordUsage_Call {
+func (_e *MockUsageRecorder_Expecter) RecordUsage(event any) *MockUsageRecorder_RecordUsage_Call {
 	return &MockUsageRecorder_RecordUsage_Call{Call: _e.mock.On("RecordUsage", event)}
 }
 

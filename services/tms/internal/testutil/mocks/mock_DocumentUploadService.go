@@ -75,7 +75,7 @@ type MockDocumentUploadService_CreateSession_Call struct {
 // CreateSession is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.CreateSessionRequest
-func (_e *MockDocumentUploadService_Expecter) CreateSession(ctx interface{}, req interface{}) *MockDocumentUploadService_CreateSession_Call {
+func (_e *MockDocumentUploadService_Expecter) CreateSession(ctx any, req any) *MockDocumentUploadService_CreateSession_Call {
 	return &MockDocumentUploadService_CreateSession_Call{Call: _e.mock.On("CreateSession", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockDocumentUploadService_UploadPart_Call struct {
 // UploadPart is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.UploadPartRequest
-func (_e *MockDocumentUploadService_Expecter) UploadPart(ctx interface{}, req interface{}) *MockDocumentUploadService_UploadPart_Call {
+func (_e *MockDocumentUploadService_Expecter) UploadPart(ctx any, req any) *MockDocumentUploadService_UploadPart_Call {
 	return &MockDocumentUploadService_UploadPart_Call{Call: _e.mock.On("UploadPart", ctx, req)}
 }
 

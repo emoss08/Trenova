@@ -76,7 +76,7 @@ type MockWorkerRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *worker.Worker
-func (_e *MockWorkerRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockWorkerRepository_Create_Call {
+func (_e *MockWorkerRepository_Expecter) Create(ctx any, entity any) *MockWorkerRepository_Create_Call {
 	return &MockWorkerRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockWorkerRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetWorkerByIDRequest
-func (_e *MockWorkerRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockWorkerRepository_GetByID_Call {
+func (_e *MockWorkerRepository_Expecter) GetByID(ctx any, req any) *MockWorkerRepository_GetByID_Call {
 	return &MockWorkerRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockWorkerRepository_GetWorkerSyncReadinessCounts_Call struct {
 // GetWorkerSyncReadinessCounts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockWorkerRepository_Expecter) GetWorkerSyncReadinessCounts(ctx interface{}, tenantInfo interface{}) *MockWorkerRepository_GetWorkerSyncReadinessCounts_Call {
+func (_e *MockWorkerRepository_Expecter) GetWorkerSyncReadinessCounts(ctx any, tenantInfo any) *MockWorkerRepository_GetWorkerSyncReadinessCounts_Call {
 	return &MockWorkerRepository_GetWorkerSyncReadinessCounts_Call{Call: _e.mock.On("GetWorkerSyncReadinessCounts", ctx, tenantInfo)}
 }
 
@@ -280,7 +280,7 @@ type MockWorkerRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListWorkersRequest
-func (_e *MockWorkerRepository_Expecter) List(ctx interface{}, req interface{}) *MockWorkerRepository_List_Call {
+func (_e *MockWorkerRepository_Expecter) List(ctx any, req any) *MockWorkerRepository_List_Call {
 	return &MockWorkerRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockWorkerRepository_ListWorkerSyncDrifts_Call struct {
 // ListWorkerSyncDrifts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockWorkerRepository_Expecter) ListWorkerSyncDrifts(ctx interface{}, tenantInfo interface{}) *MockWorkerRepository_ListWorkerSyncDrifts_Call {
+func (_e *MockWorkerRepository_Expecter) ListWorkerSyncDrifts(ctx any, tenantInfo any) *MockWorkerRepository_ListWorkerSyncDrifts_Call {
 	return &MockWorkerRepository_ListWorkerSyncDrifts_Call{Call: _e.mock.On("ListWorkerSyncDrifts", ctx, tenantInfo)}
 }
 
@@ -406,7 +406,7 @@ type MockWorkerRepository_ReplaceWorkerSyncDrifts_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - drifts []repositories.WorkerSyncDriftRecord
-func (_e *MockWorkerRepository_Expecter) ReplaceWorkerSyncDrifts(ctx interface{}, tenantInfo interface{}, drifts interface{}) *MockWorkerRepository_ReplaceWorkerSyncDrifts_Call {
+func (_e *MockWorkerRepository_Expecter) ReplaceWorkerSyncDrifts(ctx any, tenantInfo any, drifts any) *MockWorkerRepository_ReplaceWorkerSyncDrifts_Call {
 	return &MockWorkerRepository_ReplaceWorkerSyncDrifts_Call{Call: _e.mock.On("ReplaceWorkerSyncDrifts", ctx, tenantInfo, drifts)}
 }
 
@@ -479,7 +479,7 @@ type MockWorkerRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.WorkerSelectOptionsRequest
-func (_e *MockWorkerRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockWorkerRepository_SelectOptions_Call {
+func (_e *MockWorkerRepository_Expecter) SelectOptions(ctx any, req any) *MockWorkerRepository_SelectOptions_Call {
 	return &MockWorkerRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -547,7 +547,7 @@ type MockWorkerRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *worker.Worker
-func (_e *MockWorkerRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockWorkerRepository_Update_Call {
+func (_e *MockWorkerRepository_Expecter) Update(ctx any, entity any) *MockWorkerRepository_Update_Call {
 	return &MockWorkerRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

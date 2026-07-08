@@ -75,7 +75,7 @@ type MockEDIControlNumberRepository_AllocateControlNumbers_Call struct {
 // AllocateControlNumbers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.AllocateEDIControlNumbersRequest
-func (_e *MockEDIControlNumberRepository_Expecter) AllocateControlNumbers(ctx interface{}, req interface{}) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
+func (_e *MockEDIControlNumberRepository_Expecter) AllocateControlNumbers(ctx any, req any) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
 	return &MockEDIControlNumberRepository_AllocateControlNumbers_Call{Call: _e.mock.On("AllocateControlNumbers", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockEDIControlNumberRepository_ResetControlNumber_Call struct {
 // ResetControlNumber is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ResetEDIControlNumberRequest
-func (_e *MockEDIControlNumberRepository_Expecter) ResetControlNumber(ctx interface{}, req interface{}) *MockEDIControlNumberRepository_ResetControlNumber_Call {
+func (_e *MockEDIControlNumberRepository_Expecter) ResetControlNumber(ctx any, req any) *MockEDIControlNumberRepository_ResetControlNumber_Call {
 	return &MockEDIControlNumberRepository_ResetControlNumber_Call{Call: _e.mock.On("ResetControlNumber", ctx, req)}
 }
 
@@ -165,8 +165,8 @@ func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) Return(sequence *edi.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_ResetControlNumber_Call {
-	_c.Call.Return(sequence, err)
+func (_c *MockEDIControlNumberRepository_ResetControlNumber_Call) Return(eDIControlNumberSequence *edi.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_ResetControlNumber_Call {
+	_c.Call.Return(eDIControlNumberSequence, err)
 	return _c
 }
 

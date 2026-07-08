@@ -73,7 +73,7 @@ type MockRealtimeService_CreateTokenRequest_Call struct {
 
 // CreateTokenRequest is a helper method to define mock.On call
 //   - req *services.CreateRealtimeTokenRequest
-func (_e *MockRealtimeService_Expecter) CreateTokenRequest(req interface{}) *MockRealtimeService_CreateTokenRequest_Call {
+func (_e *MockRealtimeService_Expecter) CreateTokenRequest(req any) *MockRealtimeService_CreateTokenRequest_Call {
 	return &MockRealtimeService_CreateTokenRequest_Call{Call: _e.mock.On("CreateTokenRequest", req)}
 }
 
@@ -125,7 +125,7 @@ type MockRealtimeService_PublishResourceInvalidation_Call struct {
 // PublishResourceInvalidation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.PublishResourceInvalidationRequest
-func (_e *MockRealtimeService_Expecter) PublishResourceInvalidation(ctx interface{}, req interface{}) *MockRealtimeService_PublishResourceInvalidation_Call {
+func (_e *MockRealtimeService_Expecter) PublishResourceInvalidation(ctx any, req any) *MockRealtimeService_PublishResourceInvalidation_Call {
 	return &MockRealtimeService_PublishResourceInvalidation_Call{Call: _e.mock.On("PublishResourceInvalidation", ctx, req)}
 }
 
