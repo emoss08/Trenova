@@ -198,6 +198,29 @@ func (s *Service) recordPollOutcome(
 	}
 }
 
+func (s *Service) PollAndProcessMailbox(
+	ctx context.Context,
+	req *PollMailboxRequest,
+) (*PollMailboxResult, error) {
+	result, err := s.PollMailbox(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for _, fileID := range result.StagedFileIDs {
+		if _, procErr := s.ProcessInboundFile(ctx, &ProcessInboundFileRequest{
+			FileID:     fileID,
+			TenantInfo: req.TenantInfo,
+		}); procErr != nil {
+			s.l.Error(
+				"failed to process staged inbound EDI file during manual poll",
+				zap.String("fileId", fileID.String()),
+				zap.Error(procErr),
+			)
+		}
+	}
+	return result, nil
+}
+
 func (s *Service) stageInboundFile(
 	ctx context.Context,
 	profile *edi.EDICommunicationProfile,

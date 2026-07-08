@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,15 +29,62 @@ func run() int {
 		"Trenova AS2 inbound receiver URL",
 	)
 	autoAck := flag.Bool("auto-ack", true, "automatically send a 997 for received documents")
+	identityDir := flag.String(
+		"identity-dir",
+		"",
+		"directory to persist the AS2 keypair and SFTP host key across restarts (empty = ephemeral)",
+	)
+	sftpListen := flag.String(
+		"sftp-listen",
+		":9222",
+		"address the SFTP mailbox listens on (empty to disable)",
+	)
+	sftpUser := flag.String("sftp-user", "trenova", "SFTP username Trenova authenticates with")
+	sftpPassword := flag.String(
+		"sftp-password",
+		"trenova-sim",
+		"SFTP password Trenova authenticates with",
+	)
+	sftpRoot := flag.String("sftp-root", "", "SFTP mailbox root directory (empty = temp dir)")
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
+	var sftpServer *sim.SFTPServer
+	if strings.TrimSpace(*sftpListen) != "" {
+		created, err := sim.NewSFTPServer(sim.SFTPOptions{
+			Listen:      *sftpListen,
+			Username:    *sftpUser,
+			Password:    *sftpPassword,
+			RootDir:     *sftpRoot,
+			IdentityDir: *identityDir,
+			Logger:      logger,
+		})
+		if err != nil {
+			logger.Error("failed to initialize SFTP mailbox", "error", err)
+			return 1
+		}
+		sftpServer = created
+		go func() {
+			logger.Info("SFTP mailbox listening",
+				"address", sftpServer.Addr(),
+				"username", *sftpUser,
+				"inbound", sftpServer.InboundDir(),
+				"outbound", sftpServer.OutboundDir(),
+			)
+			if err := sftpServer.Serve(); err != nil {
+				logger.Error("SFTP mailbox failed", "error", err)
+			}
+		}()
+	}
 
 	server, err := sim.NewServer(sim.Options{
 		AS2ID:           *as2ID,
 		RemoteAS2ID:     *remoteAS2ID,
 		TrenovaInbound:  *trenovaInbound,
 		AutoAcknowledge: *autoAck,
+		IdentityDir:     *identityDir,
+		SFTP:            sftpServer,
 		Logger:          logger,
 	})
 	if err != nil {

@@ -266,6 +266,11 @@ func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) 
 		h.testCommunicationProfileConnection,
 	)
 	profiles.POST(
+		"/:profileID/poll/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.pollCommunicationProfile,
+	)
+	profiles.POST(
 		"/inspect-certificate/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.inspectCertificate,
@@ -2409,6 +2414,31 @@ func (h *Handler) retryMessageDelivery(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) pollCommunicationProfile(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	profileID, err := pulid.MustParse(c.Param("profileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	result, err := h.inboundService.PollAndProcessMailbox(
+		c.Request.Context(),
+		&ediinboundservice.PollMailboxRequest{
+			ProfileID: profileID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) testCommunicationProfileConnection(c *gin.Context) {

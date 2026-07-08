@@ -515,6 +515,270 @@ func (r *runner) run(email, password, inboundURL string) bool {
 		return nil
 	})
 
+	if !r.runSFTP(suffix, shipmentID) {
+		return false
+	}
+
+	return true
+}
+
+//nolint:funlen // The SFTP phase is a second linear scenario over the same session.
+func (r *runner) runSFTP(suffix, shipmentID string) bool {
+	fmt.Println("\n--- SFTP mailbox phase ---")
+
+	var sftpInfo struct {
+		Host              string `json:"host"`
+		Port              string `json:"port"`
+		Username          string `json:"username"`
+		Password          string `json:"password"`
+		KnownHostKey      string `json:"knownHostKey"`
+		InboundDirectory  string `json:"inboundDirectory"`
+		OutboundDirectory string `json:"outboundDirectory"`
+		ArchiveDirectory  string `json:"archiveDirectory"`
+	}
+	if !r.step("read simulator SFTP mailbox configuration", func() error {
+		return r.getJSON(r.simBase+"/control/sftp", &sftpInfo)
+	}) {
+		return false
+	}
+
+	var partner struct {
+		ID string `json:"id"`
+	}
+	if !r.step("create external partner for SFTP", func() error {
+		return r.postJSON(r.apiBase+"/edi/partners/", map[string]any{
+			"kind":               "External",
+			"status":             "Active",
+			"code":               "SFTP" + suffix,
+			"name":               "SFTP Partner Simulator " + suffix,
+			"country":            "US",
+			"contactName":        "SFTP Operator",
+			"contactEmail":       "sftp@partner.example",
+			"timezone":           "America/Chicago",
+			"enabledForInbound":  true,
+			"enabledForOutbound": true,
+			"settings":           map[string]any{},
+		}, &partner)
+	}) {
+		return false
+	}
+
+	var profile struct {
+		ID string `json:"id"`
+	}
+	if !r.step("create SFTP communication profile", func() error {
+		return r.postJSON(r.apiBase+"/edi/communication-profiles/", map[string]any{
+			"ediPartnerId": partner.ID,
+			"method":       "SFTP",
+			"status":       "Active",
+			"name":         "Simulator SFTP " + suffix,
+			"config": map[string]any{
+				"host":                 sftpInfo.Host,
+				"port":                 sftpInfo.Port,
+				"username":             sftpInfo.Username,
+				"authMode":             "password",
+				"knownHostKey":         sftpInfo.KnownHostKey,
+				"inboundDirectory":     sftpInfo.InboundDirectory,
+				"outboundDirectory":    sftpInfo.OutboundDirectory,
+				"archiveDirectory":     sftpInfo.ArchiveDirectory,
+				"fileNamingPattern":    "{partnerId}-{transactionSet}-{messageId}.x12",
+				"isaSenderQualifier":   "ZZ",
+				"isaSenderId":          "TRENOVA",
+				"isaReceiverQualifier": "ZZ",
+				"isaReceiverId":        "SFTPSIM" + suffix,
+				"gsSenderId":           "TRENOVA",
+				"gsReceiverId":         "SFTPSIM" + suffix,
+				"x12Version":           "004010",
+				"environment":          "test",
+			},
+			"secrets": map[string]string{
+				"password": sftpInfo.Password,
+			},
+		}, &profile)
+	}) {
+		return false
+	}
+
+	r.step("SFTP test-connection reports success", func() error {
+		var result struct {
+			Success bool `json:"success"`
+			Checks  []struct {
+				Name    string `json:"name"`
+				Status  string `json:"status"`
+				Message string `json:"message"`
+			} `json:"checks"`
+		}
+		if err := r.postJSON(
+			r.apiBase+"/edi/communication-profiles/"+profile.ID+"/test-connection/",
+			map[string]any{},
+			&result,
+		); err != nil {
+			return err
+		}
+		for _, check := range result.Checks {
+			fmt.Printf("      · %-22s %-8s %s\n", check.Name, check.Status, check.Message)
+		}
+		if !result.Success {
+			return fmt.Errorf("SFTP connection test reported failure")
+		}
+		return nil
+	})
+
+	var documentProfile struct {
+		ID string `json:"id"`
+	}
+	if !r.step("create outbound 204 document profile for SFTP", func() error {
+		return r.postJSON(r.apiBase+"/edi/document-profiles/", map[string]any{
+			"ediPartnerId":   partner.ID,
+			"name":           "SFTP 204 Outbound " + suffix,
+			"status":         "Active",
+			"validationMode": "WarnOnly",
+			"acknowledgment": map[string]any{"expected": false, "type": "None"},
+			"partnerSettings": map[string]any{
+				"carrier": map[string]any{"scac": "SIML"},
+			},
+		}, &documentProfile)
+	}) {
+		return false
+	}
+
+	var message struct {
+		ID string `json:"id"`
+	}
+	if !r.step("generate outbound 204 for SFTP delivery", func() error {
+		return r.postJSON(r.apiBase+"/edi/documents/generate/", map[string]any{
+			"partnerDocumentProfileId": documentProfile.ID,
+			"ediPartnerId":             partner.ID,
+			"shipmentId":               shipmentID,
+			"transactionSet":           "204",
+			"direction":                "Outbound",
+		}, &message)
+	}) {
+		return false
+	}
+
+	r.step("message is pushed to the SFTP outbound mailbox (Sent)", func() error {
+		if err := r.pollMessage(message.ID, 90*time.Second, func(m map[string]any) (bool, error) {
+			status, _ := m["deliveryStatus"].(string)
+			switch status {
+			case "Sent":
+				return true, nil
+			case "Failed", "DeadLettered":
+				return false, fmt.Errorf("delivery ended in %s: %v", status, m["deliveryLastError"])
+			default:
+				return false, nil
+			}
+		}); err != nil {
+			return err
+		}
+		var outbound struct {
+			Files []struct {
+				Name     string `json:"name"`
+				Contents string `json:"contents"`
+			} `json:"files"`
+		}
+		if err := r.getJSON(r.simBase+"/control/sftp/outbound", &outbound); err != nil {
+			return err
+		}
+		for _, file := range outbound.Files {
+			if strings.Contains(file.Contents, "ST*204") {
+				fmt.Printf("      · outbound file %s (%d bytes)\n", file.Name, len(file.Contents))
+				return nil
+			}
+		}
+		return fmt.Errorf("no 204 file landed in the SFTP outbound directory")
+	})
+
+	tenderRef := "SFTP" + suffix
+	r.step("drop an inbound 204 into the SFTP mailbox", func() error {
+		payload := sim.BuildLoadTender204(sim.BuildLoadTenderInput{
+			SenderID:      "SFTPSIM" + suffix,
+			ReceiverID:    "TRENOVA",
+			ControlNumber: time.Now().Unix() % 1000000,
+			ShipmentID:    tenderRef,
+		})
+		var drop struct {
+			FileName string `json:"fileName"`
+		}
+		return r.postJSON(r.simBase+"/control/sftp/drop", map[string]any{
+			"fileName": "inbound-204-" + suffix + ".edi",
+			"payload":  payload,
+		}, &drop)
+	})
+
+	if !r.step("manual poll picks up and processes the file", func() error {
+		var result struct {
+			StagedFileIDs []string `json:"stagedFileIds"`
+			SkippedFiles  int      `json:"skippedFiles"`
+		}
+		if err := r.postJSON(
+			r.apiBase+"/edi/communication-profiles/"+profile.ID+"/poll/",
+			map[string]any{},
+			&result,
+		); err != nil {
+			return err
+		}
+		if len(result.StagedFileIDs) == 0 {
+			return fmt.Errorf("poll staged no files (skipped=%d)", result.SkippedFiles)
+		}
+		fmt.Printf("      · staged %d file(s) via poll\n", len(result.StagedFileIDs))
+		return nil
+	}) {
+		return false
+	}
+
+	r.step("polled inbound file is processed", func() error {
+		var files struct {
+			Results []struct {
+				Status        string `json:"status"`
+				FailureReason string `json:"failureReason"`
+				Method        string `json:"method"`
+			} `json:"results"`
+		}
+		if err := r.getJSON(
+			r.apiBase+"/edi/inbound-files/?limit=10&partnerId="+partner.ID,
+			&files,
+		); err != nil {
+			return err
+		}
+		for _, file := range files.Results {
+			if file.Method != "SFTP" {
+				continue
+			}
+			switch file.Status {
+			case "Processed", "PartiallyProcessed":
+				fmt.Printf("      · SFTP inbound file status %s\n", file.Status)
+				return nil
+			case "Quarantined":
+				return fmt.Errorf("inbound file quarantined: %s", file.FailureReason)
+			}
+		}
+		return fmt.Errorf("no processed SFTP inbound file for the partner")
+	})
+
+	r.step("processed file was archived on the mailbox", func() error {
+		var mailbox struct {
+			Inbound []struct {
+				Name string `json:"name"`
+			} `json:"inbound"`
+			Archive []struct {
+				Name string `json:"name"`
+			} `json:"archive"`
+		}
+		if err := r.getJSON(r.simBase+"/control/sftp/inbound", &mailbox); err != nil {
+			return err
+		}
+		if len(mailbox.Archive) == 0 {
+			return fmt.Errorf("no files were archived after polling")
+		}
+		fmt.Printf(
+			"      · inbound dir has %d file(s), archive has %d\n",
+			len(mailbox.Inbound),
+			len(mailbox.Archive),
+		)
+		return nil
+	})
+
 	return true
 }
 

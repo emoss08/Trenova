@@ -6,8 +6,11 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -23,6 +26,46 @@ func NewIdentity(commonName string) (*Identity, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generate simulator key: %w", err)
 	}
+	return identityFromKey(commonName, key)
+}
+
+// LoadOrCreateIdentity loads the AS2 certificate/key from dir if present, otherwise
+// generates a fresh identity and persists it so restarts keep the same keypair (and
+// therefore keep working against communication profiles created in an earlier run).
+func LoadOrCreateIdentity(dir, commonName string) (*Identity, error) {
+	if dir == "" {
+		return NewIdentity(commonName)
+	}
+	certPath := filepath.Join(dir, "as2-cert.pem")
+	keyPath := filepath.Join(dir, "as2-key.pem")
+
+	certPEM, certErr := os.ReadFile(certPath)
+	keyPEM, keyErr := os.ReadFile(keyPath)
+	if certErr == nil && keyErr == nil {
+		identity, err := identityFromPEM(certPEM, keyPEM)
+		if err != nil {
+			return nil, fmt.Errorf("load persisted AS2 identity: %w", err)
+		}
+		return identity, nil
+	}
+
+	identity, err := NewIdentity(commonName)
+	if err != nil {
+		return nil, err
+	}
+	if mkErr := os.MkdirAll(dir, 0o700); mkErr != nil {
+		return nil, fmt.Errorf("create identity directory: %w", mkErr)
+	}
+	if writeErr := os.WriteFile(certPath, []byte(identity.CertificatePEM), 0o600); writeErr != nil {
+		return nil, fmt.Errorf("persist AS2 certificate: %w", writeErr)
+	}
+	if writeErr := os.WriteFile(keyPath, []byte(identity.KeyPEM), 0o600); writeErr != nil {
+		return nil, fmt.Errorf("persist AS2 key: %w", writeErr)
+	}
+	return identity, nil
+}
+
+func identityFromKey(commonName string, key *rsa.PrivateKey) (*Identity, error) {
 	serial, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
 		return nil, fmt.Errorf("generate certificate serial: %w", err)
@@ -55,5 +98,34 @@ func NewIdentity(commonName string) (*Identity, error) {
 		Key:            key,
 		CertificatePEM: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})),
 		KeyPEM:         string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})),
+	}, nil
+}
+
+func identityFromPEM(certPEM, keyPEM []byte) (*Identity, error) {
+	certBlock, _ := pem.Decode(certPEM)
+	if certBlock == nil {
+		return nil, errors.New("certificate PEM is invalid")
+	}
+	certificate, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse certificate: %w", err)
+	}
+	keyBlock, _ := pem.Decode(keyPEM)
+	if keyBlock == nil {
+		return nil, errors.New("key PEM is invalid")
+	}
+	parsed, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse key: %w", err)
+	}
+	key, ok := parsed.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("persisted key is not an RSA private key")
+	}
+	return &Identity{
+		Certificate:    certificate,
+		Key:            key,
+		CertificatePEM: string(certPEM),
+		KeyPEM:         string(keyPEM),
 	}, nil
 }

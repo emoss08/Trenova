@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -28,6 +29,8 @@ type Options struct {
 	RemoteAS2ID     string
 	TrenovaInbound  string
 	AutoAcknowledge bool
+	IdentityDir     string
+	SFTP            *SFTPServer
 	Logger          *slog.Logger
 }
 
@@ -58,6 +61,8 @@ type Server struct {
 	logger   *slog.Logger
 	client   *http.Client
 
+	sftp *SFTPServer
+
 	mu             sync.RWMutex
 	as2ID          string
 	remoteAS2ID    string
@@ -70,8 +75,12 @@ type Server struct {
 	controlNumber atomic.Int64
 }
 
+//nolint:gocritic // Options is a constructor value struct by design.
 func NewServer(options Options) (*Server, error) {
-	identity, err := NewIdentity(strings.ToLower(options.AS2ID) + ".edi-partner-sim.local")
+	identity, err := LoadOrCreateIdentity(
+		options.IdentityDir,
+		strings.ToLower(options.AS2ID)+".edi-partner-sim.local",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +89,7 @@ func NewServer(options Options) (*Server, error) {
 		identity:       identity,
 		logger:         options.Logger,
 		client:         &http.Client{Timeout: sendTimeout},
+		sftp:           options.SFTP,
 		as2ID:          options.AS2ID,
 		remoteAS2ID:    options.RemoteAS2ID,
 		trenovaInbound: options.TrenovaInbound,
@@ -102,6 +112,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /control/send", s.handleSend)
 	mux.HandleFunc("POST /control/send-tender", s.handleSendTender)
 	mux.HandleFunc("POST /control/reset", s.handleReset)
+	mux.HandleFunc("GET /control/sftp", s.handleSFTPInfo)
+	mux.HandleFunc("POST /control/sftp/drop", s.handleSFTPDrop)
+	mux.HandleFunc("GET /control/sftp/outbound", s.handleSFTPOutbound)
+	mux.HandleFunc("GET /control/sftp/inbound", s.handleSFTPInbound)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -467,6 +481,94 @@ func (s *Server) handleReset(w http.ResponseWriter, _ *http.Request) {
 	s.received = make([]*ReceivedDocument, 0)
 	s.sent = make([]*SentRecord, 0)
 	s.writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
+}
+
+func (s *Server) handleSFTPInfo(w http.ResponseWriter, r *http.Request) {
+	if s.sftp == nil {
+		s.writeError(w, http.StatusNotFound, "SFTP is not enabled on this simulator")
+		return
+	}
+	host, port, err := net.SplitHostPort(s.sftp.Addr())
+	if err != nil {
+		host = "localhost"
+		port = ""
+	}
+	if host == "::" || host == "0.0.0.0" || host == "" {
+		host = "localhost"
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"host":              host,
+		"port":              port,
+		"username":          s.sftp.options.Username,
+		"password":          s.sftp.options.Password,
+		"knownHostKey":      s.sftp.HostAuthorizedKey(),
+		"inboundDirectory":  s.sftp.InboundDir(),
+		"outboundDirectory": s.sftp.OutboundDir(),
+		"archiveDirectory":  s.sftp.ArchiveDir(),
+	})
+	_ = r
+}
+
+type sftpDropRequest struct {
+	FileName string `json:"fileName"`
+	Payload  string `json:"payload"`
+}
+
+func (s *Server) handleSFTPDrop(w http.ResponseWriter, r *http.Request) {
+	if s.sftp == nil {
+		s.writeError(w, http.StatusNotFound, "SFTP is not enabled on this simulator")
+		return
+	}
+	req := new(sftpDropRequest)
+	if err := decodeJSON(r.Body, req); err != nil {
+		s.writeError(w, http.StatusBadRequest, "invalid JSON body: "+err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Payload) == "" {
+		s.writeError(w, http.StatusBadRequest, "payload is required")
+		return
+	}
+	name := strings.TrimSpace(req.FileName)
+	if name == "" {
+		name = fmt.Sprintf("sim-%d.edi", s.controlNumber.Add(1))
+	}
+	path, err := s.sftp.DropInbound(name, []byte(req.Payload))
+	if err != nil {
+		s.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"path": path, "fileName": name})
+}
+
+func (s *Server) handleSFTPOutbound(w http.ResponseWriter, _ *http.Request) {
+	if s.sftp == nil {
+		s.writeError(w, http.StatusNotFound, "SFTP is not enabled on this simulator")
+		return
+	}
+	files, err := s.sftp.ListDir(s.sftp.OutboundDir())
+	if err != nil {
+		s.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"files": files})
+}
+
+func (s *Server) handleSFTPInbound(w http.ResponseWriter, _ *http.Request) {
+	if s.sftp == nil {
+		s.writeError(w, http.StatusNotFound, "SFTP is not enabled on this simulator")
+		return
+	}
+	inbound, err := s.sftp.ListDir(s.sftp.InboundDir())
+	if err != nil {
+		s.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	archive, err := s.sftp.ListDir(s.sftp.ArchiveDir())
+	if err != nil {
+		s.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"inbound": inbound, "archive": archive})
 }
 
 func (s *Server) writeJSON(w http.ResponseWriter, status int, payload any) {

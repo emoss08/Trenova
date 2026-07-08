@@ -11,8 +11,13 @@ The simulator behaves like an external trading partner:
   every received transaction set (so ack reconciliation can be tested).
 - Sends inbound `204` load tenders (and arbitrary X12 payloads) into Trenova's AS2
   inbound receiver on demand.
-- Exposes a small control API to configure certificates/identity and inspect what it
-  has received and sent.
+- Runs an embedded **SSH/SFTP mailbox** (host-key pinned, password auth) so Trenova
+  can push outbound files to it and poll inbound files from it — the mailbox pickup
+  path, not just the AS2 HTTP push path.
+- Persists its AS2 keypair and SFTP host key to disk (`-identity-dir`) so restarts
+  keep the same identity and don't invalidate communication profiles created earlier.
+- Exposes a small control API to configure certificates/identity, drop/inspect SFTP
+  mailbox files, and inspect what it has received and sent.
 
 ## Binaries
 
@@ -33,7 +38,7 @@ exists.
 ```bash
 # terminal 1 — start the simulator
 task sim              # from services/edi-partner-sim, or:
-go run ./cmd/edi-partner-sim -listen :9210
+go run ./cmd/edi-partner-sim -listen :9210 -sftp-listen :9222 -identity-dir ./.sim-identity
 
 # terminal 2 — run the end-to-end scenario
 task e2e              # or:
@@ -55,10 +60,15 @@ can be run repeatedly without colliding with earlier partners.
 | `POST` | `/control/send-tender` | Send an inbound 204 load tender to Trenova |
 | `POST` | `/control/reset` | Clear received/sent history |
 | `POST` | `/as2` | The AS2 receiver Trenova posts outbound documents to |
+| `GET`  | `/control/sftp` | SFTP host/port/credentials, host key (for `knownHostKey`), and the mailbox directory paths |
+| `POST` | `/control/sftp/drop` | Drop a file into the SFTP inbound directory for Trenova to poll |
+| `GET`  | `/control/sftp/inbound` | List the SFTP inbound + archive directories |
+| `GET`  | `/control/sftp/outbound` | List files Trenova pushed to the SFTP outbound directory |
 
 ## Flags
 
 `cmd/edi-partner-sim`: `-listen`, `-as2-id`, `-remote-as2-id`, `-trenova-inbound`,
-`-auto-ack`.
+`-auto-ack`, `-identity-dir` (persist keys), `-sftp-listen`, `-sftp-user`,
+`-sftp-password`, `-sftp-root`.
 
 `cmd/edi-e2e`: `-api`, `-sim`, `-email`, `-password`, `-inbound`.
