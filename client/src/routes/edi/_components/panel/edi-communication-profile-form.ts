@@ -19,6 +19,12 @@ const x12EnvelopeKeys: ProfileConfigKey[] = [
   "acknowledgmentPreference",
 ];
 
+const deliveryRetryKeys: ProfileConfigKey[] = [
+  "retryMaxAttempts",
+  "retryInitialIntervalSeconds",
+  "retryMaxIntervalSeconds",
+];
+
 const sftpEndpointKeys: ProfileConfigKey[] = [
   "host",
   "port",
@@ -48,15 +54,17 @@ const configKeysByMethod: Record<CommunicationProfileMethod, ProfileConfigKey[]>
     "requireSignedInbound",
     "requireEncryptedInbound",
     "basicAuthUsername",
+    ...deliveryRetryKeys,
     ...x12EnvelopeKeys,
   ],
-  SFTP: [...sftpEndpointKeys, ...x12EnvelopeKeys],
+  SFTP: [...sftpEndpointKeys, ...deliveryRetryKeys, ...x12EnvelopeKeys],
   VAN: [
     "providerName",
     "mailboxId",
     "accountId",
     "contactEmail",
     ...sftpEndpointKeys,
+    ...deliveryRetryKeys,
     ...x12EnvelopeKeys,
   ],
 };
@@ -88,6 +96,9 @@ export function getProfileFormDefaults(
       requireSignedInbound: stringConfig(config, "requireSignedInbound", "auto"),
       requireEncryptedInbound: stringConfig(config, "requireEncryptedInbound", "auto"),
       basicAuthUsername: stringConfig(config, "basicAuthUsername"),
+      retryMaxAttempts: stringConfig(config, "retryMaxAttempts"),
+      retryInitialIntervalSeconds: stringConfig(config, "retryInitialIntervalSeconds"),
+      retryMaxIntervalSeconds: stringConfig(config, "retryMaxIntervalSeconds"),
       host: stringConfig(config, "host"),
       port: stringConfig(config, "port", "22"),
       username: stringConfig(config, "username"),

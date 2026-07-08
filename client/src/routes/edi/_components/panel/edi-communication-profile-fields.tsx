@@ -172,6 +172,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
+        <DeliveryRetrySection control={control} />
       </>
     );
   }
@@ -180,6 +181,7 @@ export function TransportProfileFields({
     return (
       <>
         <SftpEndpointSections control={control} title="SFTP Endpoint" />
+        <DeliveryRetrySection control={control} />
         <EDIEmptyState
           message={`Save a ${authMode === "password" ? "password" : "private key"} in the Secrets tab before activating this profile.`}
         />
@@ -216,10 +218,50 @@ export function TransportProfileFields({
         </FormGroup>
       </FormSection>
       <SftpEndpointSections control={control} title="VAN Gateway Endpoint" />
+      <DeliveryRetrySection control={control} />
       <EDIEmptyState
         message={`Save a ${authMode === "password" ? "password" : "private key"} in the Secrets tab before activating this profile.`}
       />
     </>
+  );
+}
+
+function DeliveryRetrySection({ control }: ProfileFieldsProps) {
+  return (
+    <FormSection title="Delivery Retry" className="rounded-md border bg-muted/20 p-3">
+      <FormGroup cols={3}>
+        <FormControl>
+          <InputField
+            control={control}
+            name="config.retryMaxAttempts"
+            label="Max Attempts"
+            type="number"
+            placeholder="6"
+            description="Delivery attempts before the message is dead-lettered. Defaults to 6."
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            name="config.retryInitialIntervalSeconds"
+            label="Initial Backoff (seconds)"
+            type="number"
+            placeholder="30"
+            description="Wait before the first retry; doubles each attempt. Defaults to 30 seconds."
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            name="config.retryMaxIntervalSeconds"
+            label="Max Backoff (seconds)"
+            type="number"
+            placeholder="900"
+            description="Upper bound on the retry backoff. Defaults to 900 seconds (15 minutes)."
+          />
+        </FormControl>
+      </FormGroup>
+    </FormSection>
   );
 }
 

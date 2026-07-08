@@ -79,6 +79,10 @@ func (s *Service) routeAcknowledgment(
 				original.ID,
 				err.Error(),
 			))
+			continue
+		}
+		if original.DeliverySentAt != nil && now >= *original.DeliverySentAt {
+			s.metrics.RecordAckLatency(string(ackStatus), float64(now-*original.DeliverySentAt))
 		}
 	}
 	return warnings

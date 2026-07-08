@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -75,6 +76,7 @@ type Params struct {
 	DB                  coreports.DBConnection
 	Coordinator         *shipmentstate.Coordinator
 	Transport           services.EDITransportDispatcher
+	Metrics             *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
@@ -114,11 +116,17 @@ type Service struct {
 	coordinator         *shipmentstate.Coordinator
 	transport           services.EDITransportDispatcher
 	lifecycleApplier    *internaledilifecycle.Applier
+	metrics             *metrics.EDI
 }
 
 func New(p Params) *Service {
+	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	if p.Metrics != nil {
+		ediMetrics = p.Metrics.EDI
+	}
 	return &Service{
 		l:                   p.Logger.Named("service.edi"),
+		metrics:             ediMetrics,
 		partnerRepo:         p.PartnerRepo,
 		mappingProfileRepo:  p.MappingProfileRepo,
 		connectionRepo:      p.ConnectionRepo,

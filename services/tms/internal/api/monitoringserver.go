@@ -6,9 +6,11 @@ import (
 	"encoding/json" //nolint:depguard // this is fine
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"go.uber.org/fx"
@@ -18,19 +20,25 @@ import (
 type MonitoringServerParams struct {
 	fx.In
 
-	Config   *config.Config
-	Logger   *zap.Logger
-	LC       fx.Lifecycle
-	Metrics  *metrics.Registry
-	Database ports.DBConnection
+	Config         *config.Config
+	Logger         *zap.Logger
+	LC             fx.Lifecycle
+	Metrics        *metrics.Registry
+	Database       ports.DBConnection
+	EDIMessageRepo repositories.EDIMessageRepository              `optional:"true"`
+	EDIInboundRepo repositories.EDIInboundFileRepository          `optional:"true"`
+	EDIProfileRepo repositories.EDICommunicationProfileRepository `optional:"true"`
 }
 
 type MonitoringServer struct {
-	server   *http.Server
-	cfg      *config.Config
-	logger   *zap.Logger
-	metrics  *metrics.Registry
-	database ports.DBConnection
+	server         *http.Server
+	cfg            *config.Config
+	logger         *zap.Logger
+	metrics        *metrics.Registry
+	database       ports.DBConnection
+	ediMessageRepo repositories.EDIMessageRepository
+	ediInboundRepo repositories.EDIInboundFileRepository
+	ediProfileRepo repositories.EDICommunicationProfileRepository
 }
 
 type monitoringCheck struct {
@@ -48,10 +56,13 @@ func NewMonitoringServer(p MonitoringServerParams) *MonitoringServer {
 	addr := fmt.Sprintf("%s:%d", p.Config.Monitoring.Metrics.GetHost(), p.Config.Monitoring.Metrics.Port)
 
 	s := &MonitoringServer{
-		cfg:      p.Config,
-		logger:   p.Logger.Named("monitoring-server"),
-		metrics:  p.Metrics,
-		database: p.Database,
+		cfg:            p.Config,
+		logger:         p.Logger.Named("monitoring-server"),
+		metrics:        p.Metrics,
+		database:       p.Database,
+		ediMessageRepo: p.EDIMessageRepo,
+		ediInboundRepo: p.EDIInboundRepo,
+		ediProfileRepo: p.EDIProfileRepo,
 	}
 
 	mux := http.NewServeMux()
@@ -108,6 +119,7 @@ func (s *MonitoringServer) handleHealth(w http.ResponseWriter, r *http.Request) 
 			Status: "up",
 		},
 		"database": s.databaseCheck(r.Context()),
+		"edi":      s.ediCheck(r.Context()),
 	}
 
 	statusCode := http.StatusOK
@@ -172,6 +184,74 @@ func (s *MonitoringServer) databaseCheck(ctx context.Context) monitoringCheck {
 	return monitoringCheck{
 		Status: "up",
 	}
+}
+
+const (
+	ediHealthLookback       = 24 * time.Hour
+	ediHealthPollStaleAfter = 30 * time.Minute
+)
+
+func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
+	if s.ediMessageRepo == nil || s.ediInboundRepo == nil || s.ediProfileRepo == nil {
+		return monitoringCheck{
+			Status:  "up",
+			Message: "EDI repositories are not configured; check skipped",
+		}
+	}
+
+	now := time.Now()
+	issues := make([]string, 0, 3)
+
+	deadLettered, err := s.ediMessageRepo.CountDeadLetteredSince(
+		ctx,
+		now.Add(-ediHealthLookback).Unix(),
+	)
+	switch {
+	case err != nil:
+		issues = append(issues, "dead-letter backlog could not be read: "+err.Error())
+	case deadLettered > 0:
+		issues = append(issues, fmt.Sprintf(
+			"%d message(s) dead-lettered in the last 24h",
+			deadLettered,
+		))
+	}
+
+	quarantined, err := s.ediInboundRepo.CountQuarantinedSince(
+		ctx,
+		now.Add(-ediHealthLookback).Unix(),
+	)
+	switch {
+	case err != nil:
+		issues = append(issues, "quarantine backlog could not be read: "+err.Error())
+	case quarantined > 0:
+		issues = append(issues, fmt.Sprintf(
+			"%d inbound file(s) quarantined in the last 24h",
+			quarantined,
+		))
+	}
+
+	staleProfiles, err := s.ediProfileRepo.CountStaleInboundPollingProfiles(
+		ctx,
+		now.Add(-ediHealthPollStaleAfter).Unix(),
+	)
+	switch {
+	case err != nil:
+		issues = append(issues, "mailbox poll status could not be read: "+err.Error())
+	case staleProfiles > 0:
+		issues = append(issues, fmt.Sprintf(
+			"%d polling profile(s) have not reached their mailbox in over %s",
+			staleProfiles,
+			ediHealthPollStaleAfter,
+		))
+	}
+
+	if len(issues) > 0 {
+		return monitoringCheck{
+			Status:  "degraded",
+			Message: strings.Join(issues, "; "),
+		}
+	}
+	return monitoringCheck{Status: "up"}
 }
 
 func (s *MonitoringServer) writeJSON(

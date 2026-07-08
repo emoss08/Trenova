@@ -212,6 +212,52 @@ func (r *repository) ListInboundPollingProfiles(
 	return entities, nil
 }
 
+func (r *repository) RecordInboundPollOutcome(
+	ctx context.Context,
+	req repositories.RecordEDIProfilePollOutcomeRequest,
+) error {
+	cols := buncolgen.EDICommunicationProfileColumns
+	update := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*edi.EDICommunicationProfile)(nil)).
+		Set("last_poll_attempt_at = ?", req.PolledAt).
+		Where(cols.ID.Eq(), req.ProfileID).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+	if req.Success {
+		update = update.
+			Set("last_poll_success_at = ?", req.PolledAt).
+			Set("last_poll_error = NULL")
+	} else {
+		update = update.Set("last_poll_error = ?", req.Error)
+	}
+	_, err := update.Exec(ctx)
+	return err
+}
+
+func (r *repository) CountStaleInboundPollingProfiles(
+	ctx context.Context,
+	staleBefore int64,
+) (int64, error) {
+	cols := buncolgen.EDICommunicationProfileColumns
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDICommunicationProfile)(nil)).
+		Where(cols.Status.Eq(), domaintypes.StatusActive).
+		Where(cols.Method.In(), bun.List([]edi.ConnectionMethod{
+			edi.ConnectionMethodSFTP,
+			edi.ConnectionMethodVAN,
+		})).
+		Where("ecp.edi_partner_id IS NOT NULL").
+		Where("COALESCE(TRIM(ecp.config->>'inboundDirectory'), '') <> ''").
+		Where("COALESCE(ecp.last_poll_success_at, ecp.created_at) < ?", staleBefore).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return int64(count), nil
+}
+
 func (r *repository) GetActiveAS2ProfileByIdentifiers(
 	ctx context.Context,
 	req repositories.GetActiveAS2ProfileByIdentifiersRequest,

@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -27,6 +29,20 @@ var deliverableMethods = []edi.ConnectionMethod{
 }
 
 func (s *Service) DeliverMessage(
+	ctx context.Context,
+	payload *DeliverEDIMessageWorkflowPayload,
+) (*DeliverEDIMessageWorkflowResult, error) {
+	return observability.RunWithSpanReturn(
+		ctx,
+		"edi.deliver_message",
+		func(ctx context.Context) (*DeliverEDIMessageWorkflowResult, error) {
+			return s.deliverMessage(ctx, payload)
+		},
+	)
+}
+
+//nolint:funlen // Delivery walks load, secrets, transport send, and terminal-state persistence sequentially.
+func (s *Service) deliverMessage(
 	ctx context.Context,
 	payload *DeliverEDIMessageWorkflowPayload,
 ) (*DeliverEDIMessageWorkflowResult, error) {
@@ -61,6 +77,7 @@ func (s *Service) DeliverMessage(
 		return nil, err
 	}
 
+	transportStartedAt := time.Now()
 	transportResult, deliveryErr := s.transport.Deliver(
 		ctx,
 		profile.Method,
@@ -71,6 +88,7 @@ func (s *Service) DeliverMessage(
 			Contents: message.RawX12,
 		},
 	)
+	transportSeconds := time.Since(transportStartedAt).Seconds()
 	remotePath := ""
 	as2MessageID := ""
 	as2MIC := ""
@@ -81,9 +99,20 @@ func (s *Service) DeliverMessage(
 		as2MIC = transportResult.MIC
 		pending = transportResult.Pending
 	}
+	deliveryMetricStatus := deliveryStatusLabel(deliveryErr, pending)
+	s.metrics.RecordDelivery(
+		message.EDIPartnerID.String(),
+		string(message.TransactionSet),
+		string(profile.Method),
+		deliveryMetricStatus,
+		transportSeconds,
+	)
 	if deliveryErr != nil {
 		s.recordDeliveryFailure(ctx, message, remotePath, &now, deliveryErr)
 		return nil, deliveryErr
+	}
+	if profile.Method == edi.ConnectionMethodAS2 && !pending {
+		s.metrics.RecordMDNRoundTrip("sync", transportSeconds)
 	}
 
 	if pending {
@@ -133,6 +162,17 @@ func (s *Service) DeliverMessage(
 		DeliveryStatus: message.DeliveryStatus,
 		RemotePath:     remotePath,
 	}, nil
+}
+
+func deliveryStatusLabel(deliveryErr error, pending bool) string {
+	switch {
+	case deliveryErr != nil:
+		return "failed"
+	case pending:
+		return "pending"
+	default:
+		return "sent"
+	}
 }
 
 func (s *Service) loadDeliverableMessage(
@@ -238,6 +278,7 @@ func (s *Service) MarkMessageDeadLettered(
 	if err != nil {
 		return err
 	}
+	s.metrics.RecordDeadLetter(message.EDIPartnerID.String(), string(message.TransactionSet))
 	s.NotifyOperationalFailure(ctx, &EDIOperationalAlert{
 		OrganizationID: message.OrganizationID,
 		BusinessUnitID: message.BusinessUnitID,
@@ -296,7 +337,8 @@ func (s *Service) RetryMessageDelivery(
 			"Only queued, failed, or dead-lettered EDI messages can be retried",
 		)
 	}
-	if _, err = s.deliveryProfileForMessage(ctx, message); err != nil {
+	profile, err := s.deliveryProfileForMessage(ctx, message)
+	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, errortypes.NewValidationError(
 				"messageId",
@@ -321,7 +363,7 @@ func (s *Service) RetryMessageDelivery(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.startDeliveryWorkflow(ctx, message); err != nil {
+	if err = s.startDeliveryWorkflow(ctx, message, profile); err != nil {
 		return nil, err
 	}
 	return message, nil
@@ -346,7 +388,8 @@ func (s *Service) queueMessageForDelivery(
 	if partner.Kind != edi.PartnerKindExternal {
 		return nil
 	}
-	if _, err = s.deliveryProfileForMessage(ctx, message); err != nil {
+	profile, err := s.deliveryProfileForMessage(ctx, message)
+	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil
 		}
@@ -368,16 +411,23 @@ func (s *Service) queueMessageForDelivery(
 		}
 		*message = *updated
 	}
-	return s.startDeliveryWorkflow(ctx, message)
+	return s.startDeliveryWorkflow(ctx, message, profile)
 }
 
-func (s *Service) startDeliveryWorkflow(ctx context.Context, message *edi.EDIMessage) error {
+func (s *Service) startDeliveryWorkflow(
+	ctx context.Context,
+	message *edi.EDIMessage,
+	profile *edi.EDICommunicationProfile,
+) error {
 	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
 		return errortypes.NewBusinessError("EDI delivery workflow is not configured")
 	}
 	payload := &DeliverEDIMessageWorkflowPayload{
 		MessageID:  message.ID,
 		TenantInfo: messageTenantInfo(message),
+	}
+	if profile != nil {
+		payload.RetryPolicy = editransport.DeliveryRetryPolicyFromConfig(profile.Config)
 	}
 	_, err := s.workflowStarter.StartWorkflow(
 		ctx,

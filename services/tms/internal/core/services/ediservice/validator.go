@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"slices"
 	"strings"
@@ -368,7 +369,72 @@ func (v *Validator) validateProfileConfig(
 		requireConfigString(multiErr, entity.Config, "gsReceiverId", "GS receiver ID is required")
 		requireConfigString(multiErr, entity.Config, "x12Version", "X12 version is required")
 		requireConfigString(multiErr, entity.Config, "environment", "Environment is required")
+		validateDeliveryRetryConfig(multiErr, entity.Config)
 	}
+}
+
+func validateDeliveryRetryConfig(multiErr *errortypes.MultiError, config map[string]any) {
+	validateRetryConfigInt(
+		multiErr,
+		config,
+		editransport.ConfigKeyRetryMaxAttempts,
+		editransport.MinDeliveryMaxAttempts,
+		editransport.MaxDeliveryMaxAttempts,
+		fmt.Sprintf(
+			"Retry max attempts must be a whole number between %d and %d",
+			editransport.MinDeliveryMaxAttempts,
+			editransport.MaxDeliveryMaxAttempts,
+		),
+	)
+	initial, initialSet := validateRetryConfigInt(
+		multiErr,
+		config,
+		editransport.ConfigKeyRetryInitialIntervalSeconds,
+		editransport.MinDeliveryIntervalSeconds,
+		editransport.MaxDeliveryIntervalSeconds,
+		fmt.Sprintf(
+			"Retry initial interval must be between %d and %d seconds",
+			editransport.MinDeliveryIntervalSeconds,
+			editransport.MaxDeliveryIntervalSeconds,
+		),
+	)
+	maximum, maximumSet := validateRetryConfigInt(
+		multiErr,
+		config,
+		editransport.ConfigKeyRetryMaxIntervalSeconds,
+		editransport.MinDeliveryIntervalSeconds,
+		editransport.MaxDeliveryIntervalSeconds,
+		fmt.Sprintf(
+			"Retry max interval must be between %d and %d seconds",
+			editransport.MinDeliveryIntervalSeconds,
+			editransport.MaxDeliveryIntervalSeconds,
+		),
+	)
+	if initialSet && maximumSet && maximum < initial {
+		multiErr.Add(
+			"config."+editransport.ConfigKeyRetryMaxIntervalSeconds,
+			errortypes.ErrInvalid,
+			"Retry max interval must be greater than or equal to the initial interval",
+		)
+	}
+}
+
+func validateRetryConfigInt(
+	multiErr *errortypes.MultiError,
+	config map[string]any,
+	key string,
+	minValue, maxValue int64,
+	message string,
+) (int64, bool) {
+	if maputils.StringValue(config, key) == "" {
+		return 0, false
+	}
+	value, ok := maputils.IntValue(config, key)
+	if !ok || value < minValue || value > maxValue {
+		multiErr.Add("config."+key, errortypes.ErrInvalid, message)
+		return 0, false
+	}
+	return value, true
 }
 
 func requireConfigString(

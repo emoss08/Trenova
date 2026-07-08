@@ -71,6 +71,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 		return nil
 	}
 
+	sentAttemptAt := message.DeliveryLastAttemptAt
 	message, err = s.messageRepo.UpdateMessageDelivery(
 		ctx,
 		&repositories.UpdateEDIMessageDeliveryRequest{
@@ -84,6 +85,9 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 	)
 	if err != nil {
 		return err
+	}
+	if sentAttemptAt != nil && now >= *sentAttemptAt {
+		s.metrics.RecordMDNRoundTrip("async", float64(now-*sentAttemptAt))
 	}
 	s.l.Info(
 		"AS2 async MDN resolved outbound message delivery",

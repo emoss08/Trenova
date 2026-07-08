@@ -57,6 +57,9 @@ The module supports two exchange styles end to end:
 | Failure alerting | Implemented | Dead-lettered messages and quarantined inbound files raise high-priority in-app notifications (org/BU-scoped, realtime push) with deep links; alerts are throttled per partner and event type within a 15-minute window via notification correlation IDs. |
 | Test-case management | Implemented | `/edi/test-cases` provides full CRUD over certification scenarios (document profile + payload + expected diagnostics) with a Run Preview action that renders the payload through the partner template and opens the X12 inspector. |
 | Audit logging | Implemented | Partner, connection, profile, transfer, and change actions log audit events with actor context. |
+| Observability | Implemented | Prometheus metrics under `trenova_edi_*` (delivery duration/attempts per partner+transaction set, dead-letters, 997/999 ack latency, AS2 MDN round-trip, inbound staging/parse/outcomes, mailbox poll outcomes), OTel spans around deliver/receive/parse (`edi.deliver_message`, `edi.receive_as2_message`, `edi.process_inbound_file`), Temporal worker metrics interceptors, and an `edi` entry in the monitoring health endpoint (dead-letter/quarantine backlog over 24h + stale mailbox polls over 30m → `degraded`). |
+| Delivery retry configuration | Implemented | Per-communication-profile `retryMaxAttempts`/`retryInitialIntervalSeconds`/`retryMaxIntervalSeconds` config keys (validated, surfaced in the profile panel for AS2/SFTP/VAN) feed the Temporal delivery retry policy; unset values fall back to the defaults (6 attempts, 30s→15m, ×2 backoff). |
+| Retention & purge | Implemented | Per-org `data_retention.edi_inbound_file_retention_period` / `edi_message_retention_period` (days, 0 = keep forever). The nightly `edi-raw-retention-purge` Temporal schedule (03:00) blanks `raw_content` on Processed/Duplicate inbound files and `raw_x12`+`payload_snapshot` on Sent/inbound messages past the window, stamping `raw_purged_at` while keeping all metadata, reconciliation, and audit rows. Failed/DeadLettered messages and reprocessable files are never purged so retry/reprocess keep working. |
 
 ## Not Implemented
 
@@ -78,6 +81,11 @@ The module supports two exchange styles end to end:
   received transactions to their source file).
 - `edi_inbound_files`: staged mailbox files with checksums, ISA identity,
   processing status, and failure reasons.
+- **PII note:** `edi_inbound_files.raw_content` and `edi_messages.raw_x12` /
+  `payload_snapshot` contain full X12 payloads, including shipper/consignee
+  names, addresses, and contact details. Configure the per-org EDI retention
+  windows in `data_retention` so raw payloads are purged after the compliance
+  window; metadata and reconciliation records survive the purge.
 - `edi_load_tender_transfers`, `edi_shipment_links`, `edi_tender_recipients`,
   `edi_tender_changes`, `edi_transfer_changes`: tender lifecycle, linkage, and
   change tracking (`inbound_message_id` marks external inbound transfers).

@@ -3,6 +3,7 @@ package edijobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"go.uber.org/fx"
@@ -12,22 +13,31 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	EDIService     *ediservice.Service
-	InboundService *ediinboundservice.Service
-	Logger         *zap.Logger
+	EDIService        *ediservice.Service
+	InboundService    *ediinboundservice.Service
+	DataRetentionRepo repositories.DataRetentionRepository
+	InboundFileRepo   repositories.EDIInboundFileRepository
+	MessageRepo       repositories.EDIMessageRepository
+	Logger            *zap.Logger
 }
 
 type Activities struct {
-	ediService     *ediservice.Service
-	inboundService *ediinboundservice.Service
-	logger         *zap.Logger
+	ediService        *ediservice.Service
+	inboundService    *ediinboundservice.Service
+	dataRetentionRepo repositories.DataRetentionRepository
+	inboundFileRepo   repositories.EDIInboundFileRepository
+	messageRepo       repositories.EDIMessageRepository
+	logger            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		ediService:     p.EDIService,
-		inboundService: p.InboundService,
-		logger:         p.Logger.Named("edi-activities"),
+		ediService:        p.EDIService,
+		inboundService:    p.InboundService,
+		dataRetentionRepo: p.DataRetentionRepo,
+		inboundFileRepo:   p.InboundFileRepo,
+		messageRepo:       p.MessageRepo,
+		logger:            p.Logger.Named("edi-activities"),
 	}
 }
 

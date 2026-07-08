@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -51,6 +52,31 @@ func TestDeliverEDIMessageWorkflow_Success(t *testing.T) {
 	require.NoError(t, env.GetWorkflowResult(result))
 	require.Equal(t, edi.MessageDeliveryStatusSent, result.DeliveryStatus)
 	env.AssertNotCalled(t, "MarkEDIMessageDeadLetteredActivity")
+}
+
+func TestDeliverEDIMessageWorkflow_HonorsConfiguredRetryPolicy(t *testing.T) {
+	env := newDeliverWorkflowTestEnv(t)
+	payload := deliverWorkflowPayload()
+	payload.RetryPolicy = &editransport.DeliveryRetryPolicy{
+		MaxAttempts:            2,
+		InitialIntervalSeconds: 5,
+		MaxIntervalSeconds:     10,
+	}
+	var a *Activities
+	deliveryErr := errors.New("connect SFTP server: connection refused")
+
+	env.OnActivity(a.DeliverEDIMessageActivity, mock.Anything, mock.Anything).
+		Return(nil, deliveryErr).
+		Times(2)
+	env.OnActivity(a.MarkEDIMessageDeadLetteredActivity, mock.Anything, mock.Anything).
+		Return(nil).
+		Once()
+
+	env.ExecuteWorkflow(DeliverEDIMessageWorkflow, payload)
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.Error(t, env.GetWorkflowError())
+	env.AssertExpectations(t)
 }
 
 func TestDeliverEDIMessageWorkflow_DeadLettersAfterExhaustedRetries(t *testing.T) {

@@ -42,6 +42,7 @@ type EDIMessage struct {
 	SegmentCount             int64                       `json:"segmentCount"             bun:"segment_count,type:BIGINT,notnull"`
 	RawX12                   string                      `json:"rawX12"                   bun:"raw_x12,type:TEXT,notnull"`
 	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot"          bun:"payload_snapshot,type:JSONB,notnull"`
+	RawPurgedAt              *int64                      `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
 	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           bun:"delivery_status,type:edi_message_delivery_status_enum,nullzero"`
 	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       bun:"delivery_remote_path,type:TEXT,nullzero"`
 	DeliveryAttempts         int64                       `json:"deliveryAttempts"         bun:"delivery_attempts,type:BIGINT,notnull,default:0"`

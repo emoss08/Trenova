@@ -126,6 +126,54 @@ func (r *repository) UpdateInboundFile(
 	return entity, nil
 }
 
+func (r *repository) PurgeRawContentBefore(
+	ctx context.Context,
+	req repositories.PurgeEDIRawPayloadsRequest,
+) (int64, error) {
+	cols := buncolgen.EDIInboundFileColumns
+	subquery := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIInboundFile)(nil)).
+		Column("id").
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.ReceivedAt.Lt(), req.Before).
+		Where(cols.Status.In(), bun.List([]edi.InboundFileStatus{
+			edi.InboundFileStatusProcessed,
+			edi.InboundFileStatusDuplicate,
+		})).
+		Where("eif.raw_purged_at IS NULL").
+		Limit(req.Limit)
+
+	result, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*edi.EDIInboundFile)(nil)).
+		Set("raw_content = ''").
+		Set("raw_purged_at = ?", req.PurgedAt).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where("eif.id IN (?)", subquery).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+func (r *repository) CountQuarantinedSince(ctx context.Context, since int64) (int64, error) {
+	cols := buncolgen.EDIInboundFileColumns
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIInboundFile)(nil)).
+		Where(cols.Status.Eq(), edi.InboundFileStatusQuarantined).
+		Where(cols.UpdatedAt.Gte(), since).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return int64(count), nil
+}
+
 func (r *repository) ExistsByChecksum(
 	ctx context.Context,
 	req repositories.ExistsEDIInboundFileByChecksumRequest,
