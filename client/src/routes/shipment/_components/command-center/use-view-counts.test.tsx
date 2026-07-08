@@ -6,14 +6,10 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSavedViewCounts } from "./use-view-counts";
 
-const getAnalyticsMock = vi.hoisted(() => vi.fn());
+const getShipmentSavedViewCountsGraphQLMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    analyticService: {
-      get: getAnalyticsMock,
-    },
-  },
+vi.mock("@/lib/graphql/shipment", () => ({
+  getShipmentSavedViewCountsGraphQL: getShipmentSavedViewCountsGraphQLMock,
 }));
 
 function createWrapper() {
@@ -37,15 +33,12 @@ describe("useSavedViewCounts", () => {
   });
 
   it("loads saved view counts with one analytics query", async () => {
-    getAnalyticsMock.mockResolvedValue({
-      page: "shipment-management",
-      savedViewCounts: {
-        all: 10,
-        transit: 4,
-        "at-risk": 2,
-        unassigned: 3,
-        "delivering-today": 1,
-      },
+    getShipmentSavedViewCountsGraphQLMock.mockResolvedValue({
+      all: 10,
+      transit: 4,
+      atRisk: 2,
+      unassigned: 3,
+      deliveringToday: 1,
     });
     useAuthStore.setState({
       user: { timezone: "America/Chicago" } as User,
@@ -65,11 +58,7 @@ describe("useSavedViewCounts", () => {
         "delivering-today": 1,
       });
     });
-    expect(getAnalyticsMock).toHaveBeenCalledTimes(1);
-    expect(getAnalyticsMock).toHaveBeenCalledWith({
-      page: "shipment-management",
-      include: "savedViewCounts",
-      timezone: "America/Chicago",
-    });
+    expect(getShipmentSavedViewCountsGraphQLMock).toHaveBeenCalledTimes(1);
+    expect(getShipmentSavedViewCountsGraphQLMock).toHaveBeenCalledWith("America/Chicago");
   });
 });

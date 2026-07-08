@@ -40,6 +40,7 @@ type entityWithRelationship struct {
 	ID        string `json:"id"        bun:"id,pk"`
 	Name      string `json:"name"      bun:"name"`
 	RelatedID string `json:"relatedId" bun:"related_id"`
+	CreatedAt int64  `json:"createdAt" bun:"created_at"`
 }
 
 func (e *entityWithRelationship) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

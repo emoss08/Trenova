@@ -313,23 +313,23 @@ func (_c *MockEquipmentTypeRepository_GetByIDs_Call) RunAndReturn(run func(ctx c
 }
 
 // List provides a mock function for the type MockEquipmentTypeRepository
-func (_mock *MockEquipmentTypeRepository) List(ctx context.Context, req *repositories.ListEquipmentTypesRequest) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
+func (_mock *MockEquipmentTypeRepository) List(ctx context.Context, req *repositories.ListEquipmentTypesRequest) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*equipmenttype.EquipmentType]
+	var r0 *pagination.CursorListResult[*equipmenttype.EquipmentType]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentTypesRequest) (*pagination.ListResult[*equipmenttype.EquipmentType], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentTypesRequest) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentTypesRequest) *pagination.ListResult[*equipmenttype.EquipmentType]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentTypesRequest) *pagination.CursorListResult[*equipmenttype.EquipmentType]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*equipmenttype.EquipmentType])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*equipmenttype.EquipmentType])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEquipmentTypesRequest) error); ok {
@@ -370,12 +370,12 @@ func (_c *MockEquipmentTypeRepository_List_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockEquipmentTypeRepository_List_Call) Return(listResult *pagination.ListResult[*equipmenttype.EquipmentType], err error) *MockEquipmentTypeRepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockEquipmentTypeRepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*equipmenttype.EquipmentType], err error) *MockEquipmentTypeRepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockEquipmentTypeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEquipmentTypesRequest) (*pagination.ListResult[*equipmenttype.EquipmentType], error)) *MockEquipmentTypeRepository_List_Call {
+func (_c *MockEquipmentTypeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEquipmentTypesRequest) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error)) *MockEquipmentTypeRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

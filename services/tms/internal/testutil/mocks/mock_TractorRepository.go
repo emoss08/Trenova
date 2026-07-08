@@ -313,23 +313,23 @@ func (_c *MockTractorRepository_GetByIDs_Call) RunAndReturn(run func(ctx context
 }
 
 // List provides a mock function for the type MockTractorRepository
-func (_mock *MockTractorRepository) List(ctx context.Context, req *repositories.ListTractorsRequest) (*pagination.ListResult[*tractor.Tractor], error) {
+func (_mock *MockTractorRepository) List(ctx context.Context, req *repositories.ListTractorsRequest) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*tractor.Tractor]
+	var r0 *pagination.CursorListResult[*tractor.Tractor]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTractorsRequest) (*pagination.ListResult[*tractor.Tractor], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTractorsRequest) (*pagination.CursorListResult[*tractor.Tractor], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTractorsRequest) *pagination.ListResult[*tractor.Tractor]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTractorsRequest) *pagination.CursorListResult[*tractor.Tractor]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*tractor.Tractor])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*tractor.Tractor])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListTractorsRequest) error); ok {
@@ -370,12 +370,12 @@ func (_c *MockTractorRepository_List_Call) Run(run func(ctx context.Context, req
 	return _c
 }
 
-func (_c *MockTractorRepository_List_Call) Return(listResult *pagination.ListResult[*tractor.Tractor], err error) *MockTractorRepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockTractorRepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*tractor.Tractor], err error) *MockTractorRepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockTractorRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTractorsRequest) (*pagination.ListResult[*tractor.Tractor], error)) *MockTractorRepository_List_Call {
+func (_c *MockTractorRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTractorsRequest) (*pagination.CursorListResult[*tractor.Tractor], error)) *MockTractorRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

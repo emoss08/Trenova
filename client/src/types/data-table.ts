@@ -2,6 +2,7 @@ import type { ColumnDef, Row, Table } from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
 import { z } from "zod";
 import type { SelectOption } from "./fields";
+import type { GraphQLExecutableDocument } from "./graphql";
 import type { API_ENDPOINTS } from "./server";
 
 export type TableSheetProps = {
@@ -77,14 +78,11 @@ export type AddRecordAction = {
 export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
-  link: API_ENDPOINTS;
-  detailLink?: API_ENDPOINTS;
   queryKey: string;
+  graphql: DataTableGraphQLConfig<TData>;
   resource?: string;
   TableModal?: React.ComponentType<TableSheetProps>;
   TablePanel?: React.ComponentType<DataTablePanelProps<TData>>;
-  exportModelName: string;
-  extraSearchParams?: Record<string, any>;
   initialPageSize?: number;
   includeHeader?: boolean;
   includeOptions?: boolean;
@@ -92,14 +90,40 @@ export type DataTableProps<TData extends Record<string, any>> = {
   getRowClassName?: (row: Row<TData>) => string;
   enableRowSelection?: boolean;
   dockActions?: DockAction<TData>[];
+  refetchIntervalMs?: number;
   onAddRecord?: () => void;
   addRecordActions?: AddRecordAction[];
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
-  preferDetailRowForEdit?: boolean;
   enableCreateAction?: boolean;
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
+};
+
+export type DataTableGraphQLExtraVariableParams = {
+  pageSize: number;
+  options?: DataTableQueryOptions;
+};
+
+export type DataTableGraphQLConfig<
+  TData extends Record<string, any>,
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  document: GraphQLExecutableDocument;
+  operationName: string;
+  connectionKey: string;
+  extraVariables?:
+    | Partial<Omit<TVariables, "input">>
+    | ((params: DataTableGraphQLExtraVariableParams) => Partial<Omit<TVariables, "input">>);
+  mapNode?: (node: unknown) => TData;
+};
+
+export type DataTableQueryOptions = {
+  query?: string;
+  fieldFilters?: FieldFilter[];
+  filterGroups?: FilterGroup[];
+  sort?: SortField[];
+  cursor?: string | null;
 };
 
 export type DataTableBodyProps<TData extends Record<string, any>> = {

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import type { ApiRequestError } from "@/lib/api";
-import { apiService } from "@/services/api";
+import { rejectWorkerPTO } from "@/lib/graphql/worker-mutations";
 import type { TableSheetProps } from "@/types/data-table";
 import {
   ptoRejectionRequestSchema,
@@ -46,7 +46,7 @@ export function PTORejectionDialog({
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: PTORejectionRequest) => {
-      await apiService.workerService.rejectPTO(values.ptoId, values.reason);
+      await rejectWorkerPTO(values.ptoId, values.reason);
     },
     onSuccess: () => {
       toast.success("PTO rejected successfully", {

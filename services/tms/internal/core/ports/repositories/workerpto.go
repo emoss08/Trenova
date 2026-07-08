@@ -10,6 +10,7 @@ import (
 
 type ListPTORequest struct {
 	Filter        *pagination.QueryOptions `json:"filter"`
+	Cursor        pagination.CursorInfo    `json:"cursor"`
 	Status        string                   `json:"status"`        // Filter by PTO status (Requested, Approved, Rejected, Cancelled)
 	Type          string                   `json:"type"`          // Filter by PTO type (Vacation, Sick, etc.)
 	StartDateFrom int64                    `json:"startDateFrom"` // Filter PTO starting from this date
@@ -35,6 +36,7 @@ type ListWorkerPTOFilterOptions struct {
 }
 type ListUpcomingPTORequest struct {
 	Filter                     *pagination.QueryOptions `json:"filter"`
+	Cursor                     pagination.CursorInfo    `json:"cursor"`
 	ListWorkerPTOFilterOptions `json:"filterOptions"`
 }
 
@@ -77,11 +79,11 @@ type WorkerPTORepository interface {
 	List(
 		ctx context.Context,
 		req *ListPTORequest,
-	) (*pagination.ListResult[*worker.WorkerPTO], error)
+	) (*pagination.CursorListResult[*worker.WorkerPTO], error)
 	ListUpcoming(
 		ctx context.Context,
 		req *ListUpcomingPTORequest,
-	) (*pagination.ListResult[*worker.WorkerPTO], error)
+	) (*pagination.CursorListResult[*worker.WorkerPTO], error)
 	GetByID(
 		ctx context.Context,
 		req *GetPTOByIDRequest,

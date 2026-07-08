@@ -1,0 +1,41 @@
+fragment OrganizationSettingsStateFields on UsState {
+  id
+  name
+  abbreviation
+}
+
+fragment OrganizationSettingsFields on Organization {
+  id
+  version
+  createdAt
+  updatedAt
+  bucketName
+  businessUnitId
+  loginSlug
+  name
+  scacCode
+  dotNumber
+  logoUrl
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  timezone
+  taxId
+  state {
+    ...OrganizationSettingsStateFields
+  }
+}
+
+query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
+  organization(id: $id, includeState: $includeState, includeBu: $includeBu) {
+    ...OrganizationSettingsFields
+  }
+}
+
+mutation UpdateOrganizationSettings($id: ID!, $input: OrganizationInput!) {
+  updateOrganization(id: $id, input: $input) {
+    ...OrganizationSettingsFields
+  }
+}

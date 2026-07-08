@@ -54,7 +54,7 @@ func (r *repository) ListTransferChanges(
 	if req.ShipmentLinkID.IsNotNil() {
 		query = query.Where(cols.ShipmentLinkID.Eq(), req.ShipmentLinkID)
 	}
-	total, err := querybuilder.ApplyFilters(query, "etc", req.Filter, (*edi.TransferChange)(nil)).
+	total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etc", req.Filter, (*edi.TransferChange)(nil)).
 		Order(cols.CreatedAt.OrderDesc()).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).

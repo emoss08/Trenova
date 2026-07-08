@@ -13,6 +13,7 @@ type Params = {
   endDate: number;
   type?: string;
   workerId?: Worker["id"];
+  fleetCodeId?: string;
 };
 
 export type ApprovedPTOAnalyticsState = {
@@ -31,6 +32,7 @@ export function useApprovedPTOAnalytics({
   endDate,
   type,
   workerId,
+  fleetCodeId,
 }: Params): ApprovedPTOAnalyticsState {
   const user = useAuthStore((state) => state.user);
 
@@ -50,13 +52,14 @@ export function useApprovedPTOAnalytics({
     ...queries.worker.listUpcomingPTO({
       filter: {
         limit: 1,
-        offset: 0,
+        after: null,
       },
       type: type as PTOType,
       status: "Requested",
       startDate,
       endDate,
       workerId,
+      fleetCodeId,
       timezone: user?.timezone,
     }),
     staleTime: 5 * 60 * 1000,

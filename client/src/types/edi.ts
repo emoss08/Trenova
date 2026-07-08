@@ -65,7 +65,13 @@ export type EDITemplateStatus = z.infer<typeof ediTemplateStatusSchema>;
 export const ediValidationModeSchema = z.enum(["Strict", "WarnOnly", "Disabled"]);
 export const ediValidationSeveritySchema = z.enum(["Info", "Warning", "Error"]);
 export const ediMessageStatusSchema = z.enum(["Generated", "Failed"]);
-export const ediMessageDeliveryStatusSchema = z.enum(["Queued", "Sending", "Sent", "Failed"]);
+export const ediMessageDeliveryStatusSchema = z.enum([
+  "Queued",
+  "Sending",
+  "Sent",
+  "Failed",
+  "DeadLettered",
+]);
 export const ediMessageAcknowledgmentStatusSchema = z.enum([
   "NotExpected",
   "Pending",
@@ -73,6 +79,18 @@ export const ediMessageAcknowledgmentStatusSchema = z.enum([
   "Rejected",
   "Failed",
 ]);
+export const ediInboundFileStatusSchema = z.enum([
+  "Received",
+  "Parsed",
+  "Processed",
+  "PartiallyProcessed",
+  "Quarantined",
+  "Duplicate",
+]);
+export type EDIInboundFileStatus = z.infer<typeof ediInboundFileStatusSchema>;
+export type EDITransferStatus = z.infer<typeof ediTransferStatusSchema>;
+export type EDIMessageDeliveryStatus = z.infer<typeof ediMessageDeliveryStatusSchema>;
+export type EDIMessageAcknowledgmentStatus = z.infer<typeof ediMessageAcknowledgmentStatusSchema>;
 export const ediSourceContextDataTypeSchema = z.enum([
   "string",
   "number",
@@ -140,7 +158,6 @@ export const ediPartnerSchema = z.object({
   customerId: z.string().nullish(),
   defaultTransportId: z.string().nullish(),
   defaultMappingProfileId: z.string().nullish(),
-  defaultValidationProfileId: z.string().nullish(),
   timezone: z.string().nullish(),
   country: z.string(),
   contactName: z.string().nullish(),
@@ -265,7 +282,11 @@ export const ediMappingProfileSchema = z.object({
   ediPartnerId: z.string(),
   name: z.string(),
   description: nullableStringSchema,
+  version: z.number().default(0),
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
   entries: z.array(ediMappingProfileItemSchema).default([]),
+  partner: z.object({ id: z.string(), code: z.string(), name: z.string() }).nullish(),
 });
 
 export type EDIMappingProfile = z.infer<typeof ediMappingProfileSchema>;
@@ -748,7 +769,9 @@ export const ediPartnerSettingSchemaSchema = z.object({
 export type EDIPartnerSettingSchema = z.infer<typeof ediPartnerSettingSchemaSchema>;
 
 export const ediX12EnvelopeSettingsSchema = z.object({
+  interchangeSenderQualifier: z.string().default("ZZ"),
   interchangeSenderId: z.string().default("TRENOVA"),
+  interchangeReceiverQualifier: z.string().default("ZZ"),
   interchangeReceiverId: z.string().default("PARTNER"),
   applicationSenderCode: z.string().default("TRENOVA"),
   applicationReceiverCode: z.string().default("PARTNER"),
@@ -856,17 +879,74 @@ export const ediDocumentPreviewSchema = z.object({
 
 export type EDIDocumentPreview = z.infer<typeof ediDocumentPreviewSchema>;
 
+export const ediConnectionCheckSchema = z.object({
+  name: z.string(),
+  status: z.enum(["passed", "warning", "failed"]),
+  message: z.string().nullish(),
+});
+
+export type EDIConnectionCheck = z.infer<typeof ediConnectionCheckSchema>;
+
+export const ediConnectionTestResultSchema = z.object({
+  success: z.boolean(),
+  checks: z.array(ediConnectionCheckSchema),
+});
+
+export type EDIConnectionTestResult = z.infer<typeof ediConnectionTestResultSchema>;
+
+export const ediCertificateSummarySchema = z.object({
+  subject: z.string(),
+  issuer: z.string(),
+  serialNumber: z.string(),
+  notBefore: z.number(),
+  notAfter: z.number(),
+  expiresInDays: z.number(),
+  expired: z.boolean(),
+  sha256Fingerprint: z.string(),
+});
+
+export type EDICertificateSummary = z.infer<typeof ediCertificateSummarySchema>;
+
+export const ediPartnerReadinessItemSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  complete: z.boolean(),
+});
+
+export const ediPartnerReadinessSchema = z.object({
+  partnerId: z.string(),
+  ready: z.boolean(),
+  completedCount: z.number(),
+  totalCount: z.number(),
+  items: z.array(ediPartnerReadinessItemSchema),
+});
+
+export type EDIPartnerReadiness = z.infer<typeof ediPartnerReadinessSchema>;
+
+export const ediBulkActionResultSchema = z.object({
+  succeeded: z.array(z.string()),
+  failed: z.array(
+    z.object({
+      id: z.string(),
+      error: z.string(),
+    }),
+  ),
+});
+
+export type EDIBulkActionResult = z.infer<typeof ediBulkActionResultSchema>;
+
 export const ediMessageSchema = z.object({
   id: z.string(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),
   ediPartnerId: z.string(),
   documentTypeId: z.string(),
-  partnerDocumentProfileId: z.string(),
-  templateId: z.string(),
-  templateVersionId: z.string(),
+  partnerDocumentProfileId: z.string().nullish(),
+  templateId: z.string().nullish(),
+  templateVersionId: z.string().nullish(),
   shipmentId: z.string().nullish(),
   transferId: z.string().nullish(),
+  inboundFileId: z.string().nullish(),
   direction: ediDocumentDirectionSchema,
   standard: ediStandardSchema,
   transactionSet: ediTransactionSetSchema,
@@ -884,6 +964,7 @@ export const ediMessageSchema = z.object({
   deliveryAttempts: z.number().default(0),
   deliveryLastAttemptAt: nullableNumberSchema,
   deliverySentAt: nullableNumberSchema,
+  rawPurgedAt: nullableNumberSchema,
   deliveryLastError: z.string().nullish(),
   ackStatus: ediMessageAcknowledgmentStatusSchema.nullish(),
   ackMessageId: z.string().nullish(),
@@ -901,6 +982,38 @@ export const ediMessageSchema = z.object({
 });
 
 export type EDIMessage = z.infer<typeof ediMessageSchema>;
+
+export const ediInboundFileSchema = z.object({
+  id: z.string(),
+  businessUnitId: z.string().nullish(),
+  organizationId: z.string().nullish(),
+  communicationProfileId: z.string(),
+  ediPartnerId: z.string().nullish(),
+  method: ediConnectionMethodSchema,
+  remotePath: z.string(),
+  fileName: z.string(),
+  checksum: z.string(),
+  sizeBytes: z.number().default(0),
+  rawContent: z.string().nullish(),
+  interchangeControlNumber: z.string().nullish(),
+  isaSenderQualifier: z.string().nullish(),
+  isaSenderId: z.string().nullish(),
+  isaReceiverQualifier: z.string().nullish(),
+  isaReceiverId: z.string().nullish(),
+  status: ediInboundFileStatusSchema,
+  failureReason: z.string().nullish(),
+  transactionCount: z.number().default(0),
+  receivedAt: z.number(),
+  processedAt: nullableNumberSchema,
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+  partner: ediPartnerSchema.nullish(),
+  communicationProfile: ediCommunicationProfileSchema.nullish(),
+  messages: z.array(ediMessageSchema).nullish(),
+});
+
+export type EDIInboundFile = z.infer<typeof ediInboundFileSchema>;
 
 export const ediInspectionDiagnosticSourceSchema = z.enum([
   "inspection",
@@ -1049,20 +1162,44 @@ export const ediTestCaseSchema = z.object({
   payload: ediDocumentPayloadSchema,
   expectedWarnings: z.number(),
   expectedErrors: z.number(),
+  expectedWarningCodes: z.array(z.string()).default([]),
+  expectedErrorCodes: z.array(z.string()).default([]),
+  lastRunAt: z.number().nullish(),
+  lastRunPassed: z.boolean().nullish(),
+  lastRunWarnings: z.number().default(0),
+  lastRunErrors: z.number().default(0),
+  version: z.number().default(0),
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
 });
 
 export type EDITestCase = z.infer<typeof ediTestCaseSchema>;
 
-export const ediPartnerListSchema = createLimitOffsetResponse(ediPartnerSchema);
+export type EDITestCaseRow = Omit<EDITestCase, "payload"> & {
+  documentProfile?: {
+    id: string;
+    name: string;
+    direction: z.infer<typeof ediDocumentDirectionSchema>;
+    transactionSet: string;
+    partner?: { id: string; code: string; name: string } | null;
+  } | null;
+};
+
+export type SaveEDITestCaseRequest = {
+  partnerDocumentProfileId: string;
+  name: string;
+  description?: string;
+  payload: EDIDocumentPayload;
+  expectedWarnings: number;
+  expectedErrors: number;
+  expectedWarningCodes: string[];
+  expectedErrorCodes: string[];
+  version?: number;
+};
+
 export const ediConnectionListSchema = createLimitOffsetResponse(ediConnectionSchema);
-export const ediCommunicationProfileListSchema = createLimitOffsetResponse(
-  ediCommunicationProfileSchema,
-);
-export const ediTransferListSchema = createLimitOffsetResponse(ediTransferSchema);
-export const ediMappingProfileListSchema = createLimitOffsetResponse(ediMappingProfileSchema);
 export const ediShipmentLinkListSchema = createLimitOffsetResponse(ediShipmentLinkSchema);
 export const ediTransferChangeListSchema = createLimitOffsetResponse(ediTransferChangeSchema);
-export const ediPartnerSelectOptionListSchema = createLimitOffsetResponse(ediPartnerSchema);
 export const ediTemplateListSchema = createLimitOffsetResponse(ediTemplateSchema);
 export const ediSourceContextSchemaListSchema = createLimitOffsetResponse(
   ediSourceContextSchemaSchema,
@@ -1119,7 +1256,6 @@ export type UpsertEDIPartnerRequest = {
   customerId?: string;
   defaultTransportId?: string;
   defaultMappingProfileId?: string;
-  defaultValidationProfileId?: string;
   timezone?: string;
   country?: string;
   contactName?: string;

@@ -1,10 +1,8 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
+import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@/types/data-table";
-import {
-  equipmentTypeSchema,
-  type EquipmentType,
-} from "@/types/equipment-type";
+import { equipmentTypeSchema, type EquipmentType } from "@/types/equipment-type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { EquipTypeForm } from "./equipment-type-form";
@@ -34,11 +32,17 @@ export function EquipmentTypePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/equipment-types/"
         queryKey="equipment-type-list"
         title="Equipment Type"
         fieldKey="code"
         formComponent={<EquipTypeForm />}
+        mutationFn={(values, currentRow) => {
+          if (!currentRow.id) {
+            throw new Error("No Equipment Type ID selected");
+          }
+
+          return apiService.equipmentTypeService.update(currentRow.id, values);
+        }}
       />
     );
   }
@@ -48,10 +52,10 @@ export function EquipmentTypePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/equipment-types/"
       queryKey="equipment-type-list"
       title="Equipment Type"
       formComponent={<EquipTypeForm />}
+      mutationFn={(values) => apiService.equipmentTypeService.create(values)}
     />
   );
 }

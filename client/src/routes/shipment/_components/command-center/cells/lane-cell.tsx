@@ -1,15 +1,19 @@
-import { cn } from "@/lib/utils";
 import {
   getDestinationLocation,
   getOriginLocation,
   getShipmentProgress,
   getTotalMiles,
 } from "@/lib/shipment-utils";
+import { cn } from "@/lib/utils";
 import type { Shipment } from "@/types/shipment";
 import { ArrowRight } from "lucide-react";
 import { useCommandCenterStore } from "../store";
 
-type LaneToneClass = "lane-bar-default" | "lane-bar-success" | "lane-bar-warning" | "lane-bar-danger";
+type LaneToneClass =
+  | "lane-bar-default"
+  | "lane-bar-success"
+  | "lane-bar-warning"
+  | "lane-bar-danger";
 
 function toneClass(status: Shipment["status"]): LaneToneClass {
   switch (status) {
@@ -36,8 +40,7 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
   const destinationCode = destinationLocation?.code ?? "—";
   const miles = getTotalMiles(shipment);
   const progress = getShipmentProgress(shipment.status);
-  const commodityName =
-    shipment.commodities?.[0]?.commodity?.name ?? null;
+  const commodityName = shipment.commodities?.[0]?.commodity?.name ?? null;
 
   return (
     <div className="flex flex-col gap-1">
@@ -54,7 +57,7 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
         <span className="truncate font-table text-[11.5px] font-semibold tabular-nums">
           {destinationCode}
         </span>
-        <div className={cn("lane-bar ml-1 max-w-[80px] flex-1", toneClass(shipment.status))}>
+        <div className={cn("lane-bar ml-1 max-w-20 flex-1", toneClass(shipment.status))}>
           <span style={{ width: `${progress.value}%` }} />
         </div>
         <span className="font-table text-[9.5px] text-muted-foreground tabular-nums">

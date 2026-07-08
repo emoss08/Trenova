@@ -141,10 +141,7 @@ func (p *Payment) SyncAmounts() {
 		applied += app.AppliedAmountMinor
 	}
 	p.AppliedAmountMinor = applied
-	p.UnappliedAmountMinor = p.AmountMinor - applied
-	if p.UnappliedAmountMinor < 0 {
-		p.UnappliedAmountMinor = 0
-	}
+	p.UnappliedAmountMinor = max(p.AmountMinor-applied, 0)
 	if strings.TrimSpace(p.CurrencyCode) == "" {
 		p.CurrencyCode = money.DefaultCurrencyCode
 	}

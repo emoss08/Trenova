@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -25,44 +26,46 @@ type Params struct {
 	fx.In
 
 	Service              *ediservice.Service
+	InboundService       *ediinboundservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *ediservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service        *ediservice.Service
+	inboundService *ediinboundservice.Service
+	eh             *helpers.ErrorHandler
+	pm             *middleware.PermissionMiddleware
 }
 
 type partnerRequest struct {
-	Kind                       edi.PartnerKind `json:"kind"`
-	Status                     string          `json:"status"`
-	Code                       string          `json:"code"`
-	Name                       string          `json:"name"`
-	Description                string          `json:"description"`
-	InternalOrganizationID     pulid.ID        `json:"internalOrganizationId"`
-	EDIConnectionID            pulid.ID        `json:"ediConnectionId"`
-	CustomerID                 pulid.ID        `json:"customerId"`
-	DefaultTransportID         pulid.ID        `json:"defaultTransportId"`
-	DefaultMappingProfileID    pulid.ID        `json:"defaultMappingProfileId"`
-	DefaultValidationProfileID pulid.ID        `json:"defaultValidationProfileId"`
-	Timezone                   string          `json:"timezone"`
-	Country                    string          `json:"country"`
-	ContactName                string          `json:"contactName"`
-	ContactEmail               string          `json:"contactEmail"`
-	ContactPhone               string          `json:"contactPhone"`
-	EnabledForInbound          *bool           `json:"enabledForInbound"`
-	EnabledForOutbound         *bool           `json:"enabledForOutbound"`
-	Settings                   map[string]any  `json:"settings"`
-	Version                    int64           `json:"version"`
+	Kind                    edi.PartnerKind `json:"kind"`
+	Status                  string          `json:"status"`
+	Code                    string          `json:"code"`
+	Name                    string          `json:"name"`
+	Description             string          `json:"description"`
+	InternalOrganizationID  pulid.ID        `json:"internalOrganizationId"`
+	EDIConnectionID         pulid.ID        `json:"ediConnectionId"`
+	CustomerID              pulid.ID        `json:"customerId"`
+	DefaultTransportID      pulid.ID        `json:"defaultTransportId"`
+	DefaultMappingProfileID pulid.ID        `json:"defaultMappingProfileId"`
+	Timezone                string          `json:"timezone"`
+	Country                 string          `json:"country"`
+	ContactName             string          `json:"contactName"`
+	ContactEmail            string          `json:"contactEmail"`
+	ContactPhone            string          `json:"contactPhone"`
+	EnabledForInbound       *bool           `json:"enabledForInbound"`
+	EnabledForOutbound      *bool           `json:"enabledForOutbound"`
+	Settings                map[string]any  `json:"settings"`
+	Version                 int64           `json:"version"`
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:        p.Service,
+		inboundService: p.InboundService,
+		eh:             p.ErrorHandler,
+		pm:             p.PermissionMiddleware,
 	}
 }
 
@@ -81,12 +84,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerDocumentProfileRoutes(api.Group("/document-profiles"))
 	h.registerDocumentRoutes(api.Group("/documents"))
 	h.registerMessageRoutes(api.Group("/messages"))
+	h.registerInboundFileRoutes(api.Group("/inbound-files"))
 	h.registerX12Routes(api.Group("/x12"))
 	h.registerTestCaseRoutes(api.Group("/test-cases"))
 	api.POST(
 		"/load-tenders/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
 		h.submitLoadTender,
+	)
+	api.POST(
+		"/control-numbers/reset/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.resetControlNumber,
 	)
 	h.registerTransferRoutes(api.Group("/transfers"))
 	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
@@ -99,6 +108,11 @@ func (h *Handler) registerPartnerRoutes(partners *gin.RouterGroup) {
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.listPartners,
+	)
+	partners.GET(
+		"/:partnerID/readiness/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getPartnerReadiness,
 	)
 	partners.GET(
 		"/select-options/",
@@ -179,7 +193,7 @@ func (h *Handler) registerMappingProfileRoutes(mappingProfiles *gin.RouterGroup)
 func (h *Handler) registerConnectionRoutes(connections *gin.RouterGroup) {
 	connections.GET(
 		"/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		// h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.listConnections,
 	)
 	connections.POST(
@@ -194,7 +208,7 @@ func (h *Handler) registerConnectionRoutes(connections *gin.RouterGroup) {
 	)
 	connections.POST(
 		"/:connectionID/accept/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		// h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.acceptConnection,
 	)
 	connections.POST(
@@ -245,6 +259,21 @@ func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) 
 		"/:profileID/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.updateCommunicationProfile,
+	)
+	profiles.POST(
+		"/:profileID/test-connection/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.testCommunicationProfileConnection,
+	)
+	profiles.POST(
+		"/:profileID/poll/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.pollCommunicationProfile,
+	)
+	profiles.POST(
+		"/inspect-certificate/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.inspectCertificate,
 	)
 }
 
@@ -485,6 +514,44 @@ func (h *Handler) registerMessageRoutes(messages *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.inspectMessage,
 	)
+	messages.POST(
+		"/:messageID/retry-delivery/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.retryMessageDelivery,
+	)
+	messages.POST(
+		"/:messageID/replay/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.replayMessageDelivery,
+	)
+	messages.POST(
+		"/bulk-retry-delivery/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkRetryMessageDelivery,
+	)
+}
+
+func (h *Handler) registerInboundFileRoutes(inboundFiles *gin.RouterGroup) {
+	inboundFiles.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.listInboundFiles,
+	)
+	inboundFiles.GET(
+		"/:fileID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getInboundFile,
+	)
+	inboundFiles.POST(
+		"/:fileID/reprocess/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.reprocessInboundFile,
+	)
+	inboundFiles.POST(
+		"/bulk-reprocess/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkReprocessInboundFiles,
+	)
 }
 
 func (h *Handler) registerX12Routes(x12 *gin.RouterGroup) {
@@ -500,6 +567,26 @@ func (h *Handler) registerTestCaseRoutes(testCases *gin.RouterGroup) {
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.listTestCases,
+	)
+	testCases.POST(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
+		h.createTestCase,
+	)
+	testCases.GET(
+		"/:testCaseID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getTestCase,
+	)
+	testCases.PUT(
+		"/:testCaseID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.updateTestCase,
+	)
+	testCases.DELETE(
+		"/:testCaseID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpDelete),
+		h.deleteTestCase,
 	)
 	testCases.POST(
 		"/:testCaseID/preview/",
@@ -533,6 +620,16 @@ func (h *Handler) registerTransferRoutes(transfers *gin.RouterGroup) {
 		"/:transferID/reject/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.rejectTransfer,
+	)
+	transfers.POST(
+		"/bulk-approve/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkApproveTransfers,
+	)
+	transfers.POST(
+		"/bulk-reject/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkRejectTransfers,
 	)
 	transfers.POST(
 		"/:transferID/cancel/",
@@ -751,26 +848,25 @@ func (r *partnerRequest) toEntity(defaultEnabled bool) *edi.EDIPartner {
 	}
 
 	return &edi.EDIPartner{
-		Kind:                       r.Kind,
-		Status:                     domaintypes.Status(r.Status),
-		Code:                       r.Code,
-		Name:                       r.Name,
-		Description:                r.Description,
-		InternalOrganizationID:     r.InternalOrganizationID,
-		EDIConnectionID:            r.EDIConnectionID,
-		CustomerID:                 r.CustomerID,
-		DefaultTransportID:         r.DefaultTransportID,
-		DefaultMappingProfileID:    r.DefaultMappingProfileID,
-		DefaultValidationProfileID: r.DefaultValidationProfileID,
-		Timezone:                   r.Timezone,
-		Country:                    r.Country,
-		ContactName:                r.ContactName,
-		ContactEmail:               r.ContactEmail,
-		ContactPhone:               r.ContactPhone,
-		EnabledForInbound:          enabledForInbound,
-		EnabledForOutbound:         enabledForOutbound,
-		Settings:                   r.Settings,
-		Version:                    r.Version,
+		Kind:                    r.Kind,
+		Status:                  domaintypes.Status(r.Status),
+		Code:                    r.Code,
+		Name:                    r.Name,
+		Description:             r.Description,
+		InternalOrganizationID:  r.InternalOrganizationID,
+		EDIConnectionID:         r.EDIConnectionID,
+		CustomerID:              r.CustomerID,
+		DefaultTransportID:      r.DefaultTransportID,
+		DefaultMappingProfileID: r.DefaultMappingProfileID,
+		Timezone:                r.Timezone,
+		Country:                 r.Country,
+		ContactName:             r.ContactName,
+		ContactEmail:            r.ContactEmail,
+		ContactPhone:            r.ContactPhone,
+		EnabledForInbound:       enabledForInbound,
+		EnabledForOutbound:      enabledForOutbound,
+		Settings:                r.Settings,
+		Version:                 r.Version,
 	}
 }
 
@@ -2228,6 +2324,332 @@ func (h *Handler) inspectMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, inspection)
 }
 
+func (h *Handler) listInboundFiles(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewQueryOptions(c, authCtx)
+	partnerID, _ := pulid.MustParse(helpers.QueryString(c, "partnerId", ""))
+	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIInboundFile], error) {
+		return h.inboundService.ListInboundFiles(
+			c.Request.Context(),
+			&repositories.ListEDIInboundFilesRequest{
+				Filter:    req,
+				Status:    edi.InboundFileStatus(helpers.QueryString(c, "status", "")),
+				PartnerID: partnerID,
+			},
+		)
+	})
+}
+
+func (h *Handler) getInboundFile(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	fileID, err := pulid.MustParse(c.Param("fileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	file, err := h.inboundService.GetInboundFile(
+		c.Request.Context(),
+		repositories.GetEDIInboundFileByIDRequest{
+			ID: fileID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			IncludeMessages: true,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, file)
+}
+
+func (h *Handler) reprocessInboundFile(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	fileID, err := pulid.MustParse(c.Param("fileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	file, err := h.inboundService.ProcessInboundFile(
+		c.Request.Context(),
+		&ediinboundservice.ProcessInboundFileRequest{
+			FileID: fileID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			Reprocess: true,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, file)
+}
+
+func (h *Handler) retryMessageDelivery(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	messageID, err := pulid.MustParse(c.Param("messageID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	message, err := h.service.RetryMessageDelivery(
+		c.Request.Context(),
+		&ediservice.RetryMessageDeliveryRequest{
+			MessageID: messageID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) pollCommunicationProfile(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	profileID, err := pulid.MustParse(c.Param("profileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	result, err := h.inboundService.PollAndProcessMailbox(
+		c.Request.Context(),
+		&ediinboundservice.PollMailboxRequest{
+			ProfileID: profileID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) testCommunicationProfileConnection(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	profileID, err := pulid.MustParse(c.Param("profileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	result, err := h.service.TestCommunicationProfileConnection(
+		c.Request.Context(),
+		&ediservice.TestCommunicationProfileConnectionRequest{
+			ProfileID: profileID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+type inspectCertificateRequest struct {
+	Certificate string `json:"certificate"`
+}
+
+func (h *Handler) inspectCertificate(c *gin.Context) {
+	req := new(inspectCertificateRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	summary, err := h.service.InspectAS2Certificate(req.Certificate)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, summary)
+}
+
+func (h *Handler) getPartnerReadiness(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	partnerID, err := pulid.MustParse(c.Param("partnerID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	states, err := h.service.GetPartnerReadiness(
+		c.Request.Context(),
+		&ediservice.GetEDIPartnerReadinessRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			PartnerIDs: []pulid.ID{partnerID},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if len(states) == 0 {
+		h.eh.HandleError(c, errortypes.NewNotFoundError("EDIPartner not found"))
+		return
+	}
+	c.JSON(http.StatusOK, states[0])
+}
+
+func (h *Handler) replayMessageDelivery(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	messageID, err := pulid.MustParse(c.Param("messageID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	message, err := h.service.ReplayMessageDelivery(
+		c.Request.Context(),
+		&ediservice.RetryMessageDeliveryRequest{
+			MessageID: messageID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) resetControlNumber(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(repositories.ResetEDIControlNumberRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	sequence, err := h.service.ResetControlNumber(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, sequence)
+}
+
+func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.BulkRetryMessageDeliveryRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.service.BulkRetryMessageDelivery(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) bulkReprocessInboundFiles(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediinboundservice.BulkReprocessInboundFilesRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.inboundService.BulkReprocessInboundFiles(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) bulkApproveTransfers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.BulkApproveTransfersRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.service.BulkApproveTransfers(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) bulkRejectTransfers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.BulkRejectTransfersRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.service.BulkRejectTransfers(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
 func (h *Handler) inspectX12(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(ediservice.InspectX12Request)
@@ -2261,6 +2683,133 @@ func (h *Handler) listTestCases(c *gin.Context) {
 			},
 		)
 	})
+}
+
+type testCaseRequest struct {
+	PartnerDocumentProfileID pulid.ID            `json:"partnerDocumentProfileId"`
+	Name                     string              `json:"name"`
+	Description              string              `json:"description"`
+	Payload                  edi.DocumentPayload `json:"payload"`
+	ExpectedWarnings         int                 `json:"expectedWarnings"`
+	ExpectedErrors           int                 `json:"expectedErrors"`
+	ExpectedWarningCodes     []string            `json:"expectedWarningCodes"`
+	ExpectedErrorCodes       []string            `json:"expectedErrorCodes"`
+	Version                  int64               `json:"version"`
+}
+
+func (r *testCaseRequest) toServiceRequest(
+	testCaseID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) *ediservice.SaveEDITestCaseRequest {
+	return &ediservice.SaveEDITestCaseRequest{
+		TenantInfo:               tenantInfo,
+		ID:                       testCaseID,
+		PartnerDocumentProfileID: r.PartnerDocumentProfileID,
+		Name:                     r.Name,
+		Description:              r.Description,
+		Payload:                  r.Payload,
+		ExpectedWarnings:         r.ExpectedWarnings,
+		ExpectedErrors:           r.ExpectedErrors,
+		ExpectedWarningCodes:     r.ExpectedWarningCodes,
+		ExpectedErrorCodes:       r.ExpectedErrorCodes,
+		Version:                  r.Version,
+	}
+}
+
+func (h *Handler) createTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(testCaseRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	created, err := h.service.CreateTestCase(
+		c.Request.Context(),
+		req.toServiceRequest(pulid.Nil, pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		}),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, created)
+}
+
+func (h *Handler) getTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	testCaseID, err := pulid.MustParse(c.Param("testCaseID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	testCase, err := h.service.GetTestCase(
+		c.Request.Context(),
+		repositories.GetEDITestCaseByIDRequest{
+			ID: testCaseID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, testCase)
+}
+
+func (h *Handler) updateTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	testCaseID, err := pulid.MustParse(c.Param("testCaseID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(testCaseRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	updated, err := h.service.UpdateTestCase(
+		c.Request.Context(),
+		req.toServiceRequest(testCaseID, pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		}),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, updated)
+}
+
+func (h *Handler) deleteTestCase(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	testCaseID, err := pulid.MustParse(c.Param("testCaseID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if err = h.service.DeleteTestCase(
+		c.Request.Context(),
+		repositories.DeleteEDITestCaseRequest{
+			ID: testCaseID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) previewTestCase(c *gin.Context) {

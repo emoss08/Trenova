@@ -2,10 +2,16 @@ package ediservice
 
 import (
 	"errors"
+	"fmt"
+	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/maputils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -59,7 +65,7 @@ func (v *Validator) ValidateConnection(entity *edi.EDIConnection) *errortypes.Mu
 				edi.ConnectionMethodAS2,
 				edi.ConnectionMethodSFTP,
 				edi.ConnectionMethodVAN,
-			),
+			).Error("Method must be Internal, AS2, SFTP, or VAN"),
 		),
 		validation.Field(
 			&entity.Status,
@@ -139,7 +145,7 @@ func (v *Validator) ValidateCommunicationProfile(
 				edi.ConnectionMethodAS2,
 				edi.ConnectionMethodSFTP,
 				edi.ConnectionMethodVAN,
-			),
+			).Error("Method must be Internal, AS2, SFTP, or VAN"),
 		),
 		validation.Field(
 			&entity.Name,
@@ -264,6 +270,16 @@ func validateEnvelope(multiErr *errortypes.MultiError, envelope *edi.X12Envelope
 		envelope.InterchangeReceiverID,
 		"ISA receiver ID is required",
 	)
+	validateISAQualifier(
+		multiErr,
+		"envelope.interchangeSenderQualifier",
+		envelope.InterchangeSenderQualifier,
+	)
+	validateISAQualifier(
+		multiErr,
+		"envelope.interchangeReceiverQualifier",
+		envelope.InterchangeReceiverQualifier,
+	)
 	requireSeparator(multiErr, "envelope.elementSeparator", envelope.ElementSeparator)
 	requireSeparator(multiErr, "envelope.segmentTerminator", envelope.SegmentTerminator)
 	requireSeparator(multiErr, "envelope.componentSeparator", envelope.ComponentSeparator)
@@ -316,6 +332,7 @@ func (v *Validator) validateProfileConfig(
 		requireConfigString(multiErr, entity.Config, "partnerAS2Id", "Partner AS2 ID is required")
 		requireConfigString(multiErr, entity.Config, "endpointUrl", "Endpoint URL is required")
 		requireConfigString(multiErr, entity.Config, "mdnMode", "MDN mode is required")
+		v.validateAS2ProfileConfig(entity, multiErr)
 	case edi.ConnectionMethodSFTP:
 		requireConfigString(multiErr, entity.Config, "host", "Host is required")
 		requireConfigString(multiErr, entity.Config, "port", "Port is required")
@@ -331,11 +348,16 @@ func (v *Validator) validateProfileConfig(
 	case edi.ConnectionMethodVAN:
 		requireConfigString(multiErr, entity.Config, "providerName", "Provider name is required")
 		requireConfigString(multiErr, entity.Config, "mailboxId", "Mailbox ID is required")
+		requireConfigString(multiErr, entity.Config, "host", "Host is required")
+		requireConfigString(multiErr, entity.Config, "port", "Port is required")
+		requireConfigString(multiErr, entity.Config, "username", "Username is required")
+		requireConfigString(multiErr, entity.Config, "authMode", "Authentication mode is required")
+		requireConfigString(multiErr, entity.Config, "knownHostKey", "Known host key is required")
 		requireAnySecret(
 			multiErr,
 			entity.EncryptedSecrets,
-			[]string{"credential", "token"},
-			"VAN credential or token secret is required",
+			[]string{"password", "privateKey"},
+			"VAN password or private key secret is required",
 		)
 	}
 	if entity.Method != edi.ConnectionMethodInternal {
@@ -357,6 +379,80 @@ func (v *Validator) validateProfileConfig(
 		requireConfigString(multiErr, entity.Config, "gsReceiverId", "GS receiver ID is required")
 		requireConfigString(multiErr, entity.Config, "x12Version", "X12 version is required")
 		requireConfigString(multiErr, entity.Config, "environment", "Environment is required")
+		validateDeliveryRetryConfig(multiErr, entity.Config)
+	}
+}
+
+func validateDeliveryRetryConfig(multiErr *errortypes.MultiError, config map[string]any) {
+	validateRetryConfigInt(
+		multiErr,
+		config,
+		editransport.ConfigKeyRetryMaxAttempts,
+		editransport.MinDeliveryMaxAttempts,
+		editransport.MaxDeliveryMaxAttempts,
+		fmt.Sprintf(
+			"Retry max attempts must be a whole number between %d and %d",
+			editransport.MinDeliveryMaxAttempts,
+			editransport.MaxDeliveryMaxAttempts,
+		),
+	)
+	initial, initialSet := validateRetryConfigInt(
+		multiErr,
+		config,
+		editransport.ConfigKeyRetryInitialIntervalSeconds,
+		editransport.MinDeliveryIntervalSeconds,
+		editransport.MaxDeliveryIntervalSeconds,
+		fmt.Sprintf(
+			"Retry initial interval must be between %d and %d seconds",
+			editransport.MinDeliveryIntervalSeconds,
+			editransport.MaxDeliveryIntervalSeconds,
+		),
+	)
+	maximum, maximumSet := validateRetryConfigInt(
+		multiErr,
+		config,
+		editransport.ConfigKeyRetryMaxIntervalSeconds,
+		editransport.MinDeliveryIntervalSeconds,
+		editransport.MaxDeliveryIntervalSeconds,
+		fmt.Sprintf(
+			"Retry max interval must be between %d and %d seconds",
+			editransport.MinDeliveryIntervalSeconds,
+			editransport.MaxDeliveryIntervalSeconds,
+		),
+	)
+	if initialSet && maximumSet && maximum < initial {
+		multiErr.Add(
+			"config."+editransport.ConfigKeyRetryMaxIntervalSeconds,
+			errortypes.ErrInvalid,
+			"Retry max interval must be greater than or equal to the initial interval",
+		)
+	}
+}
+
+func validateRetryConfigInt(
+	multiErr *errortypes.MultiError,
+	config map[string]any,
+	key string,
+	minValue, maxValue int64,
+	message string,
+) (int64, bool) {
+	if maputils.StringValue(config, key) == "" {
+		return 0, false
+	}
+	value, ok := maputils.IntValue(config, key)
+	if !ok || value < minValue || value > maxValue {
+		multiErr.Add("config."+key, errortypes.ErrInvalid, message)
+		return 0, false
+	}
+	return value, true
+}
+
+func validateISAQualifier(multiErr *errortypes.MultiError, field, value string) {
+	if value == "" {
+		return
+	}
+	if len(value) != 2 {
+		multiErr.Add(field, errortypes.ErrInvalid, "ISA qualifier must be exactly 2 characters")
 	}
 }
 
@@ -423,4 +519,138 @@ func (v *Validator) ValidateMappingItems(
 	}
 
 	return nil
+}
+
+func (v *Validator) validateAS2ProfileConfig(
+	entity *edi.EDICommunicationProfile,
+	multiErr *errortypes.MultiError,
+) {
+	mdnMode := strings.ToLower(maputils.StringValue(entity.Config, editransport.ConfigKeyMDNMode))
+	if mdnMode != "" && mdnMode != editransport.MDNModeSync &&
+		mdnMode != editransport.MDNModeAsync {
+		multiErr.Add("config.mdnMode", errortypes.ErrInvalid, "MDN mode must be sync or async")
+	}
+	if mdnMode == editransport.MDNModeAsync {
+		requireConfigString(
+			multiErr,
+			entity.Config,
+			editransport.ConfigKeyMDNURL,
+			"Async MDN return URL is required when MDN mode is async",
+		)
+	}
+	if endpointURL := maputils.StringValue(
+		entity.Config,
+		editransport.ConfigKeyEndpointURL,
+	); endpointURL != "" {
+		if parsed, err := url.Parse(endpointURL); err != nil || parsed.Scheme == "" ||
+			parsed.Host == "" {
+			multiErr.Add(
+				"config.endpointUrl",
+				errortypes.ErrInvalid,
+				"Endpoint URL must be a valid absolute URL",
+			)
+		}
+	}
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeySigningAlgorithm,
+		[]string{
+			as2.SigningAlgorithmSHA1,
+			as2.SigningAlgorithmSHA256,
+			as2.SigningAlgorithmSHA384,
+			as2.SigningAlgorithmSHA512,
+		},
+		"Signing algorithm must be sha1, sha256, sha384, or sha512",
+	)
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyEncryptionAlgorithm,
+		[]string{
+			as2.EncryptionAlgorithmTripleDES,
+			as2.EncryptionAlgorithmAES128CBC,
+			as2.EncryptionAlgorithmAES256CBC,
+			as2.EncryptionAlgorithmAES128GCM,
+			as2.EncryptionAlgorithmAES256GCM,
+		},
+		"Encryption algorithm must be 3des, aes128-cbc, aes256-cbc, aes128-gcm, or aes256-gcm",
+	)
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyCompressionAlgorithm,
+		[]string{"none", editransport.CompressionZlib},
+		"Compression algorithm must be none or zlib",
+	)
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyRequireSignedInbound,
+		[]string{editransport.AS2InboundRequirementAuto, "true", "false"},
+		"Require signed inbound must be auto, true, or false",
+	)
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyRequireEncryptedInbound,
+		[]string{editransport.AS2InboundRequirementAuto, "true", "false"},
+		"Require encrypted inbound must be auto, true, or false",
+	)
+	validateAS2Certificate(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyLocalCertificate,
+		"config.localCertificate",
+	)
+	validateAS2Certificate(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyPartnerSigningCertificate,
+		"config.partnerSigningCertificate",
+	)
+	validateAS2Certificate(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyPartnerEncryptionCertificate,
+		"config.partnerEncryptionCertificate",
+	)
+	if maputils.StringValue(entity.Config, editransport.ConfigKeyLocalCertificate) != "" {
+		requireAnySecret(
+			multiErr,
+			entity.EncryptedSecrets,
+			[]string{editransport.SecretKeyAS2PrivateKey},
+			"AS2 private key secret is required when a local certificate is configured",
+		)
+	}
+}
+
+func validateAS2Algorithm(
+	multiErr *errortypes.MultiError,
+	config map[string]any,
+	key string,
+	allowed []string,
+	message string,
+) {
+	value := strings.ToLower(maputils.StringValue(config, key))
+	if value == "" {
+		return
+	}
+	if !slices.Contains(allowed, value) {
+		multiErr.Add("config."+key, errortypes.ErrInvalid, message)
+	}
+}
+
+func validateAS2Certificate(
+	multiErr *errortypes.MultiError,
+	config map[string]any,
+	key, field string,
+) {
+	pemData := maputils.StringValue(config, key)
+	if pemData == "" {
+		return
+	}
+	if _, err := as2.ParseCertificate([]byte(pemData)); err != nil {
+		multiErr.Add(field, errortypes.ErrInvalid, "Certificate must be a valid PEM certificate")
+	}
 }

@@ -11,6 +11,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
 import { useDebounce } from "@/hooks/use-debounce";
 import { API_BASE_URL } from "@/lib/constants";
+import {
+  fetchGraphQLSelectOptions,
+  selectOptionFiltersFromSearchParams,
+  type GraphQLSelectOptionsConfig,
+} from "@/lib/graphql/select-options";
 import { cn, pluralize, toTitleCase } from "@/lib/utils";
 import type { GenericLimitOffsetResponse } from "@/types/server";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,6 +88,7 @@ export function AutocompleteCommandContent<TOption>({
   clearable,
   onOptionChange,
   extraSearchParams,
+  graphql,
   onChange,
   popoutLink,
   onClear,
@@ -105,6 +111,7 @@ export function AutocompleteCommandContent<TOption>({
   selectedOption: TOption | null;
   onOptionChange?: (option: TOption | null) => void;
   extraSearchParams?: Record<string, string | string[]>;
+  graphql?: GraphQLSelectOptionsConfig;
   initialLimit?: number;
   popoutLink?: string;
   onClear?: () => void;
@@ -126,6 +133,7 @@ export function AutocompleteCommandContent<TOption>({
     debouncedSearchTerm,
     page,
     extraSearchParams,
+    graphql,
     initialLimit,
   ];
   const getSearchQueryKey = useCallback(
@@ -135,14 +143,28 @@ export function AutocompleteCommandContent<TOption>({
       debouncedSearchTerm,
       targetPage,
       extraSearchParams,
+      graphql,
       initialLimit,
     ],
-    [link, debouncedSearchTerm, extraSearchParams, initialLimit],
+    [link, debouncedSearchTerm, extraSearchParams, graphql, initialLimit],
   );
 
   const { isLoading, isError, data } = useQuery({
     queryKey: searchQueryKey,
     queryFn: async () => {
+      if (graphql) {
+        return (await fetchGraphQLSelectOptions({
+          resource: graphql.resource,
+          query: debouncedSearchTerm,
+          page,
+          initialLimit,
+          filters: {
+            ...selectOptionFiltersFromSearchParams(extraSearchParams),
+            ...graphql.filters,
+          },
+        })) as GenericLimitOffsetResponse<TOption>;
+      }
+
       const response = await fetchOptions<TOption>(
         link,
         debouncedSearchTerm,
@@ -185,9 +207,7 @@ export function AutocompleteCommandContent<TOption>({
       : aggregatedOptions;
 
     if (value && selectedOption && open) {
-      const optionExists = filteredOptions.some(
-        (opt) => getOptionValue(opt).toString() === value,
-      );
+      const optionExists = filteredOptions.some((opt) => getOptionValue(opt).toString() === value);
       if (!optionExists) {
         return [selectedOption, ...filteredOptions];
       }
@@ -359,7 +379,7 @@ export function AutocompleteCommandContent<TOption>({
         id={listboxId}
         ref={commandListCallbackRef}
         onScroll={handleScrollEnd}
-        className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-h-62.5 overflow-y-auto"
+        className="max-h-62.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent overflow-y-auto"
       >
         {isError && <div className="p-4 text-center text-destructive">Failed to fetch options</div>}
         {!isLoading && data && options.length === 0 && (

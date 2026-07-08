@@ -10,10 +10,16 @@ import (
 
 type ListEDITestCasesRequest struct {
 	Filter                   *pagination.QueryOptions `json:"filter"`
+	Cursor                   pagination.CursorInfo    `json:"-"`
 	PartnerDocumentProfileID pulid.ID                 `json:"partnerDocumentProfileId"`
 }
 
 type GetEDITestCaseByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type DeleteEDITestCaseRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
@@ -23,6 +29,22 @@ type EDITestCaseRepository interface {
 		ctx context.Context,
 		req *ListEDITestCasesRequest,
 	) (*pagination.ListResult[*edi.EDITestCase], error)
+	ListTestCasesCursor(
+		ctx context.Context,
+		req *ListEDITestCasesRequest,
+	) (*pagination.CursorListResult[*edi.EDITestCase], error)
 	GetTestCaseByID(ctx context.Context, req GetEDITestCaseByIDRequest) (*edi.EDITestCase, error)
 	CreateTestCase(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)
+	UpdateTestCase(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)
+	DeleteTestCase(ctx context.Context, req DeleteEDITestCaseRequest) error
+	RecordTestCaseRun(ctx context.Context, req *RecordEDITestCaseRunRequest) error
+}
+
+type RecordEDITestCaseRunRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	RanAt      int64
+	Passed     bool
+	Warnings   int
+	Errors     int
 }

@@ -1,6 +1,8 @@
 package accountingcontrolpolicyservice
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
@@ -69,13 +71,7 @@ func (s *Service) CanUseAutomaticSourcePosting(
 		return false
 	}
 
-	for _, configured := range control.AutoPostSourceEvents {
-		if configured == event {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(control.AutoPostSourceEvents, event)
 }
 
 func (s *Service) ValidateManualPeriodClose(control *tenant.AccountingControl) error {

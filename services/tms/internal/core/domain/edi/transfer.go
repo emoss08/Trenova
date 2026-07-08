@@ -3,6 +3,8 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -95,7 +97,8 @@ type MappingResolution struct {
 }
 
 type EDITransfer struct {
-	bun.BaseModel `json:"-" bun:"table:edi_load_tender_transfers,alias:eltt"`
+	bun.BaseModel             `json:"-" bun:"table:edi_load_tender_transfers,alias:eltt"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                    pulid.ID            `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
 	SourceOrganizationID  pulid.ID            `json:"sourceOrganizationId"  bun:"source_organization_id,type:VARCHAR(100),notnull"`
@@ -104,8 +107,9 @@ type EDITransfer struct {
 	TargetBusinessUnitID  pulid.ID            `json:"targetBusinessUnitId"  bun:"target_business_unit_id,type:VARCHAR(100),notnull"`
 	SourcePartnerID       pulid.ID            `json:"sourcePartnerId"       bun:"source_partner_id,type:VARCHAR(100),notnull"`
 	TargetPartnerID       pulid.ID            `json:"targetPartnerId"       bun:"target_partner_id,type:VARCHAR(100),notnull"`
-	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      bun:"source_shipment_id,type:VARCHAR(100),notnull"`
+	SourceShipmentID      pulid.ID            `json:"sourceShipmentId"      bun:"source_shipment_id,type:VARCHAR(100),nullzero"`
 	TargetShipmentID      pulid.ID            `json:"targetShipmentId"      bun:"target_shipment_id,type:VARCHAR(100),nullzero"`
+	InboundMessageID      pulid.ID            `json:"inboundMessageId"      bun:"inbound_message_id,type:VARCHAR(100),nullzero"`
 	Status                TransferStatus      `json:"status"                bun:"status,type:edi_load_tender_transfer_status_enum,notnull"`
 	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         bun:"tender_payload,type:JSONB,notnull"`
 	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       bun:"mapping_snapshot,type:JSONB,notnull,default:'[]'::jsonb"`
@@ -163,4 +167,21 @@ func (t *EDITransfer) GetOrganizationID() pulid.ID {
 
 func (t *EDITransfer) GetBusinessUnitID() pulid.ID {
 	return t.TargetBusinessUnitID
+}
+
+func (t *EDITransfer) GetTableName() string {
+	return "edi_load_tender_transfers"
+}
+
+func (t *EDITransfer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "eltt",
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
+		},
+	}
+}
+
+func (t *EDITransfer) GetCreatedAt() int64 {
+	return t.CreatedAt
 }

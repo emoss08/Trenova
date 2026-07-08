@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -15,7 +16,8 @@ var (
 )
 
 type EDITemplate struct {
-	bun.BaseModel `json:"-" bun:"table:edi_templates,alias:et"`
+	bun.BaseModel             `json:"-" bun:"table:edi_templates,alias:et"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -30,6 +32,7 @@ type EDITemplate struct {
 	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector   string            `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	DocumentType  *EDIDocumentType      `json:"documentType,omitempty"  bun:"rel:belongs-to,join:document_type_id=id"`
 	ActiveVersion *EDITemplateVersion   `json:"activeVersion,omitempty" bun:"rel:has-one,join:id=template_id"`
@@ -53,6 +56,10 @@ func (t *EDITemplate) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 func (t *EDITemplate) GetID() pulid.ID {
 	return t.ID
+}
+
+func (t *EDITemplate) GetCreatedAt() int64 {
+	return t.CreatedAt
 }
 
 func (t *EDITemplate) GetOrganizationID() pulid.ID {

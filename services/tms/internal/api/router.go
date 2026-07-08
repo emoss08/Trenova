@@ -4,6 +4,7 @@ package api
 import (
 	"time"
 
+	graphqlapi "github.com/emoss08/trenova/internal/api/graphql"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialchargehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
@@ -119,6 +121,7 @@ type RouterParams struct {
 	ErrorHandler                    *helpers.ErrorHandler
 	DocsHandler                     *docshandler.Handler
 	OrganizationHandler             *organizationhandler.Handler
+	DataRetentionHandler            *dataretentionhandler.Handler
 	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
@@ -134,6 +137,7 @@ type RouterParams struct {
 	FleetCodeHandler                *fleetcodehandler.Handler
 	TractorHandler                  *tractorhandler.Handler
 	TrailerHandler                  *trailerhandler.Handler
+	GraphQLHandler                  *graphqlapi.Handler
 	WorkerHandler                   *workerhandler.Handler
 	PermissionHandler               *permissionhandler.Handler
 	PlatformCatalogHandler          *platformcataloghandler.Handler
@@ -217,6 +221,7 @@ type Router struct {
 	errorHandler                    *helpers.ErrorHandler
 	docsHandler                     *docshandler.Handler
 	organizationHandler             *organizationhandler.Handler
+	dataRetentionHandler            *dataretentionhandler.Handler
 	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
@@ -240,6 +245,7 @@ type Router struct {
 	fleetCodeHandler                *fleetcodehandler.Handler
 	tractorHandler                  *tractorhandler.Handler
 	trailerHandler                  *trailerhandler.Handler
+	graphQLHandler                  *graphqlapi.Handler
 	workerHandler                   *workerhandler.Handler
 	permissionHandler               *permissionhandler.Handler
 	platformCatalogHandler          *platformcataloghandler.Handler
@@ -317,6 +323,7 @@ func NewRouter(p RouterParams) *Router {
 		errorHandler:                    p.ErrorHandler,
 		docsHandler:                     p.DocsHandler,
 		organizationHandler:             p.OrganizationHandler,
+		dataRetentionHandler:            p.DataRetentionHandler,
 		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
@@ -340,6 +347,7 @@ func NewRouter(p RouterParams) *Router {
 		fleetCodeHandler:                p.FleetCodeHandler,
 		tractorHandler:                  p.TractorHandler,
 		trailerHandler:                  p.TrailerHandler,
+		graphQLHandler:                  p.GraphQLHandler,
 		workerHandler:                   p.WorkerHandler,
 		permissionHandler:               p.PermissionHandler,
 		platformCatalogHandler:          p.PlatformCatalogHandler,
@@ -457,9 +465,18 @@ func (r *Router) setupMiddleware() {
 }
 
 func (r *Router) setupRoutes() {
+	r.setupGraphQLRoutes(r.s.router.Group(""))
+
 	v1 := r.s.router.Group("/api/v1")
 	r.setupProtectedRoutes(v1)
 	r.setupPublicRoutes(v1)
+}
+
+func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {
+	r.graphQLHandler.RegisterPlaygroundRoutes(rg)
+
+	protected := r.protectedGroup(rg)
+	r.graphQLHandler.RegisterRoutes(protected)
 }
 
 func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
@@ -469,16 +486,15 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
+	r.ediHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
 func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
-	protected := rg.Group("")
-	protected.Use(r.authMiddleware.RequireAuth())
-	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
-	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	protected := r.protectedGroup(rg)
 
 	r.organizationHandler.RegisterRoutes(protected)
+	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
@@ -561,4 +577,12 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.tableChangeAlertHandler.RegisterRoutes(protected)
 	r.notificationHandler.RegisterRoutes(protected)
 	r.documentPacketRuleHandler.RegisterRoutes(protected)
+}
+
+func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
+	protected := rg.Group("")
+	protected.Use(r.authMiddleware.RequireAuth())
+	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
+	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	return protected
 }

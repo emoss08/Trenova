@@ -79,13 +79,13 @@ func (f fakeWorkflowRun) GetRunID() string {
 	return f.runID
 }
 
-func (f fakeWorkflowRun) Get(context.Context, interface{}) error {
+func (f fakeWorkflowRun) Get(context.Context, any) error {
 	return nil
 }
 
 func (f fakeWorkflowRun) GetWithOptions(
 	context.Context,
-	interface{},
+	any,
 	client.WorkflowRunGetOptions,
 ) error {
 	return nil
@@ -2120,8 +2120,9 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	assert.Equal(t, int64(1_700_001_000), date)
 }
 
+//go:fix inline
 func int64Ptr(v int64) *int64 {
-	return &v
+	return new(v)
 }
 
 func testPNGLogo(t *testing.T) []byte {

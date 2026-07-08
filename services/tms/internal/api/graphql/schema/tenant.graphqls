@@ -1,0 +1,83 @@
+enum TimeFormat {
+  TwelveHour
+  TwentyFourHour
+}
+
+type BusinessUnit {
+  id: ID!
+  name: String!
+  code: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type Organization {
+  id: ID!
+  stateId: ID!
+  businessUnitId: ID!
+  name: String!
+  loginSlug: String!
+  scacCode: String!
+  dotNumber: String!
+  logoUrl: String!
+  bucketName: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  postalCode: String!
+  timezone: String!
+  taxId: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  state: UsState
+  businessUnit: BusinessUnit
+}
+
+input OrganizationInput {
+  version: Int!
+  name: String!
+  loginSlug: String
+  scacCode: String!
+  dotNumber: String!
+  logoUrl: String
+  bucketName: String
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  timezone: String!
+  taxId: String
+}
+
+type User {
+  id: ID!
+  businessUnitId: ID!
+  currentOrganizationId: ID!
+  status: EntityStatus!
+  name: String!
+  username: String!
+  timeFormat: TimeFormat!
+  emailAddress: String!
+  profilePicUrl: String!
+  thumbnailUrl: String!
+  timezone: String!
+  isLocked: Boolean!
+  mustChangePassword: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  lastLoginAt: Int
+  businessUnit: BusinessUnit
+  currentOrganization: Organization
+}
+
+extend type Query {
+  organization(id: ID!, includeState: Boolean = true, includeBu: Boolean = false): Organization!
+}
+
+extend type Mutation {
+  updateOrganization(id: ID!, input: OrganizationInput!): Organization!
+}

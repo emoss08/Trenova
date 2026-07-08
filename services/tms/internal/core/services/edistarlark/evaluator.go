@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 	"time"
@@ -166,9 +167,7 @@ func BuildContextFromPayload(
 	if err != nil {
 		return nil, err
 	}
-	for key, value := range document {
-		ctx[key] = value
-	}
+	maps.Copy(ctx, document)
 	return ctx, nil
 }
 
@@ -337,9 +336,7 @@ func (e *Evaluator) evalLibraries(
 	req EvalRequest,
 ) (starlark.StringDict, []Diagnostic) {
 	globals := make(starlark.StringDict, len(e.predeclared)+len(req.Libraries))
-	for name, value := range e.predeclared {
-		globals[name] = value
-	}
+	maps.Copy(globals, e.predeclared)
 
 	if len(req.Libraries) == 0 {
 		return globals, nil
@@ -367,9 +364,7 @@ func (e *Evaluator) evalLibraries(
 				diagnostic(libraryReq, classifyLibraryError(err), err.Error()),
 			}
 		}
-		for name, value := range libraryGlobals {
-			globals[name] = value
-		}
+		maps.Copy(globals, libraryGlobals)
 	}
 	return globals, nil
 }
@@ -389,9 +384,7 @@ func (e *Evaluator) evalInlineScript(
 	if err != nil {
 		return nil, err
 	}
-	for name, value := range inlineGlobals {
-		globals[name] = value
-	}
+	maps.Copy(globals, inlineGlobals)
 	return globals, nil
 }
 

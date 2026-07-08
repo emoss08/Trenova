@@ -11,7 +11,7 @@ import {
   statusChoices,
   workerTypeChoices,
 } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { patchWorker } from "@/lib/graphql/worker-mutations";
 import type { FleetCode } from "@/types/fleet-code";
 import type { UsState } from "@/types/us-state";
 import type { DriverType, Worker, WorkerType } from "@/types/worker";
@@ -26,7 +26,7 @@ function WorkerStatusCell({ row }: { row: Worker }) {
   const handleStatusChange = useCallback(
     async (newStatus: Worker["status"]) => {
       if (!row.id) return;
-      await apiService.workerService.patch(row.id, {
+      await patchWorker(row.id, {
         status: newStatus,
       });
 
@@ -54,7 +54,7 @@ function WorkerTypeCell({ row }: { row: Worker }) {
   const handleTypeChange = useCallback(
     async (newType: WorkerType) => {
       if (!row.id) return;
-      await apiService.workerService.patch(row.id, {
+      await patchWorker(row.id, {
         type: newType,
       });
 
@@ -82,7 +82,7 @@ function DriverTypeCell({ row }: { row: Worker }) {
   const handleDriverTypeChange = useCallback(
     async (newDriverType: DriverType) => {
       if (!row.id) return;
-      await apiService.workerService.patch(row.id, {
+      await patchWorker(row.id, {
         driverType: newDriverType,
       });
 
@@ -202,7 +202,7 @@ export function getColumns(): ColumnDef<Worker>[] {
         label: "Fleet Code",
         apiField: "fleetCode.code",
         filterable: true,
-        sortable: true,
+        sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
       },
@@ -233,7 +233,7 @@ export function getColumns(): ColumnDef<Worker>[] {
         label: "State",
         apiField: "state.abbreviation",
         filterable: true,
-        sortable: true,
+        sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
       },
@@ -256,7 +256,7 @@ export function getColumns(): ColumnDef<Worker>[] {
         label: "Compliance",
         apiField: "profile.complianceStatus",
         filterable: true,
-        sortable: true,
+        sortable: false,
         filterType: "select",
         filterOptions: complianceStatusChoices,
         defaultFilterOperator: "eq",

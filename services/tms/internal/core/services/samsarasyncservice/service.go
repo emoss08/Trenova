@@ -652,18 +652,23 @@ func (s *Service) listWorkersForSamsaraSync(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.Worker, error) {
-	offset := 0
+	after := ""
 	workers := make([]*worker.Worker, 0)
 
 	for {
+		cursorInfo, err := pagination.NewCursorInfo(samsaraWorkerSyncPageLimit, after)
+		if err != nil {
+			return nil, err
+		}
+
 		page, err := s.repo.List(ctx, &repositories.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{
-					Limit:  samsaraWorkerSyncPageLimit,
-					Offset: offset,
+					Limit: samsaraWorkerSyncPageLimit,
 				},
 			},
+			Cursor: cursorInfo,
 		})
 		if err != nil {
 			return nil, err
@@ -673,12 +678,18 @@ func (s *Service) listWorkersForSamsaraSync(
 		}
 
 		workers = append(workers, page.Items...)
-		offset += len(page.Items)
-		if page.Total > 0 && offset >= page.Total {
+		if !page.HasNextPage {
 			break
 		}
-		if len(page.Items) < samsaraWorkerSyncPageLimit {
-			break
+
+		last := page.Items[len(page.Items)-1]
+		if len(page.CursorSort) > 0 {
+			after, err = pagination.EncodeCursorFromEntityWithSort(last, page.CursorSort)
+		} else {
+			after, err = pagination.EncodeCursorFromEntity(last)
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
 

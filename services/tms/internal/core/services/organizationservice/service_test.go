@@ -38,6 +38,17 @@ func (m *mockOrganizationRepo) GetByID(
 	return args.Get(0).(*tenant.Organization), args.Error(1)
 }
 
+func (m *mockOrganizationRepo) GetByIDs(
+	ctx context.Context,
+	req repositories.GetOrganizationsByIDsRequest,
+) ([]*tenant.Organization, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*tenant.Organization), args.Error(1)
+}
+
 func (m *mockOrganizationRepo) SelectOptions(
 	ctx context.Context,
 	req *repositories.SelectOrganizationOptionsRequest,
@@ -258,6 +269,70 @@ func TestGetByID_NotFound(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Equal(t, notFoundErr, err)
+	deps.repo.AssertExpectations(t)
+}
+
+func TestGetByIDs_SkipsMissingOrganizations(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	ctx := t.Context()
+	firstOrg := newTestOrganization()
+	secondOrg := newTestOrganization()
+	missingOrgID := pulid.MustNew("org_")
+	tenantInfo := pagination.TenantInfo{
+		BuID:   firstOrg.BusinessUnitID,
+		UserID: pulid.MustNew("usr_"),
+	}
+	req := services.GetOrganizationsByIDsRequest{
+		TenantInfo:      tenantInfo,
+		OrganizationIDs: []pulid.ID{firstOrg.ID, missingOrgID, secondOrg.ID},
+		IncludeState:    true,
+		IncludeBU:       true,
+	}
+	repoReq := repositories.GetOrganizationsByIDsRequest{
+		TenantInfo:      tenantInfo,
+		OrganizationIDs: req.OrganizationIDs,
+		IncludeState:    true,
+		IncludeBU:       true,
+	}
+
+	deps.repo.On("GetByIDs", mock.Anything, repoReq).
+		Return([]*tenant.Organization{firstOrg, secondOrg}, nil).
+		Once()
+
+	result, err := deps.svc.GetByIDs(ctx, req)
+
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, firstOrg.ID, result[0].ID)
+	assert.Equal(t, secondOrg.ID, result[1].ID)
+	deps.repo.AssertExpectations(t)
+}
+
+func TestGetByIDs_ReturnsRepositoryError(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	tenantInfo := pagination.TenantInfo{
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	req := services.GetOrganizationsByIDsRequest{
+		TenantInfo:      tenantInfo,
+		OrganizationIDs: []pulid.ID{orgID},
+	}
+	repoReq := repositories.GetOrganizationsByIDsRequest{
+		TenantInfo:      tenantInfo,
+		OrganizationIDs: []pulid.ID{orgID},
+	}
+	repoErr := errors.New("database error")
+	deps.repo.On("GetByIDs", mock.Anything, repoReq).Return(nil, repoErr).Once()
+
+	result, err := deps.svc.GetByIDs(ctx, req)
+
+	require.ErrorIs(t, err, repoErr)
+	assert.Nil(t, result)
 	deps.repo.AssertExpectations(t)
 }
 

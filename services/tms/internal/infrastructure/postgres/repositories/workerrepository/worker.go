@@ -37,20 +37,22 @@ func New(p Params) repositories.WorkerRepository {
 	}
 }
 
-func (r *repository) filterQuery(
+func (r *repository) cursorFilterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListWorkersRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFilters(
 		q,
 		buncolgen.WorkerTable.Alias,
 		req.Filter,
+		req.Cursor,
 		(*worker.Worker)(nil),
 	)
+	if err != nil {
+		return q, err
+	}
 
-	q = q.Order(buncolgen.WorkerColumns.CreatedAt.OrderDesc())
-
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q, nil
 }
 
 func (r *repository) SelectOptions(
@@ -64,8 +66,10 @@ func (r *repository) SelectOptions(
 		&dbhelper.SelectOptionsConfig{
 			ColumnRefs: []buncolgen.Column{
 				buncolgen.WorkerColumns.ID,
+				buncolgen.WorkerColumns.CreatedAt,
 				buncolgen.WorkerColumns.FirstName,
 				buncolgen.WorkerColumns.LastName,
+				buncolgen.WorkerColumns.FleetCodeID,
 				buncolgen.WorkerColumns.Status,
 			},
 			OrgColumnRef: &buncolgen.WorkerColumns.OrganizationID,
@@ -76,7 +80,9 @@ func (r *repository) SelectOptions(
 			},
 			EntityName: "Worker",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive)
+				return q.
+					Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
+					Relation(buncolgen.WorkerRelations.FleetCode)
 			},
 		},
 	)
@@ -85,30 +91,52 @@ func (r *repository) SelectOptions(
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListWorkersRequest,
-) (*pagination.ListResult[*worker.Worker], error) {
+) (*pagination.CursorListResult[*worker.Worker], error) {
 	log := r.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
 	)
 
-	entities := make([]*worker.Worker, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DBForContext(ctx).
 		NewSelect().
-		Model(&entities).
-		Relation(buncolgen.WorkerRelations.State).
-		Relation(buncolgen.WorkerRelations.Profile).
+		Model((*worker.Worker)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
+			return querybuilder.ApplyFiltersWithoutSort(
+				sq,
+				buncolgen.WorkerTable.Alias,
+				req.Filter,
+				(*worker.Worker)(nil),
+			)
+		}).
+		Count(ctx)
 	if err != nil {
-		log.Error("failed to scan and count workers", zap.Error(err))
+		log.Error("failed to count workers", zap.Error(err))
 		return nil, err
 	}
 
-	return &pagination.ListResult[*worker.Worker]{
-		Items: entities,
-		Total: total,
-	}, nil
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.Worker]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*worker.Worker) *bun.SelectQuery {
+			return r.db.DBForContext(ctx).
+				NewSelect().
+				Model(items).
+				ColumnExpr(buncolgen.WorkerTable.All()).
+				Relation(buncolgen.WorkerRelations.FleetCode).
+				Relation(buncolgen.WorkerRelations.State).
+				Relation(buncolgen.WorkerRelations.Profile)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.cursorFilterQuery(sq, req)
+		},
+	})
+	if err != nil {
+		log.Error("failed to scan workers", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) GetByID(

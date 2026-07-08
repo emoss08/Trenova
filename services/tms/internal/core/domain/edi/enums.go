@@ -145,11 +145,37 @@ const (
 type MessageDeliveryStatus string
 
 const (
-	MessageDeliveryStatusQueued  = MessageDeliveryStatus("Queued")
-	MessageDeliveryStatusSending = MessageDeliveryStatus("Sending")
-	MessageDeliveryStatusSent    = MessageDeliveryStatus("Sent")
-	MessageDeliveryStatusFailed  = MessageDeliveryStatus("Failed")
+	MessageDeliveryStatusQueued       = MessageDeliveryStatus("Queued")
+	MessageDeliveryStatusSending      = MessageDeliveryStatus("Sending")
+	MessageDeliveryStatusSent         = MessageDeliveryStatus("Sent")
+	MessageDeliveryStatusFailed       = MessageDeliveryStatus("Failed")
+	MessageDeliveryStatusDeadLettered = MessageDeliveryStatus("DeadLettered")
 )
+
+func (s MessageDeliveryStatus) IsRetryable() bool {
+	return s == MessageDeliveryStatusFailed || s == MessageDeliveryStatusDeadLettered
+}
+
+func (s MessageDeliveryStatus) IsDeliverable() bool {
+	return s == MessageDeliveryStatusQueued ||
+		s == MessageDeliveryStatusSending ||
+		s == MessageDeliveryStatusFailed
+}
+
+type InboundFileStatus string
+
+const (
+	InboundFileStatusReceived           = InboundFileStatus("Received")
+	InboundFileStatusParsed             = InboundFileStatus("Parsed")
+	InboundFileStatusProcessed          = InboundFileStatus("Processed")
+	InboundFileStatusPartiallyProcessed = InboundFileStatus("PartiallyProcessed")
+	InboundFileStatusQuarantined        = InboundFileStatus("Quarantined")
+	InboundFileStatusDuplicate          = InboundFileStatus("Duplicate")
+)
+
+func (s InboundFileStatus) IsReprocessable() bool {
+	return s == InboundFileStatusQuarantined || s == InboundFileStatusPartiallyProcessed
+}
 
 type MessageAcknowledgmentStatus string
 

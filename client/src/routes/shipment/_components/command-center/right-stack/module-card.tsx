@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -62,19 +63,27 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
             </span>
           )}
         </div>
+
         <div className="flex items-center gap-1">
           {rightSlot}
-          <Button
-            variant="ghost"
-            size="icon-xxs"
-            aria-label={`Hide ${title}`}
-            onClick={() => hide(id)}
-          >
-            <MinusIcon className="size-2.5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-xxs"
+                  aria-label={`Hide ${title}`}
+                  onClick={() => hide(id)}
+                >
+                  <MinusIcon className="size-2.5" />
+                </Button>
+              }
+            />
+            <TooltipContent side="left">Hide Panel</TooltipContent>
+          </Tooltip>
         </div>
       </header>
-      <ScrollArea className="min-h-0 flex-1">
+      <ScrollArea className="min-h-0 flex-1" maskVariant="card">
         <div className="flex flex-col px-3 py-1">{children}</div>
       </ScrollArea>
     </section>

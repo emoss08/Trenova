@@ -372,8 +372,8 @@ func routeMatches(method, routePattern string, ref RouteRef) bool {
 	if refPath == "" {
 		return false
 	}
-	if strings.HasSuffix(refPath, "*") {
-		return strings.HasPrefix(routePattern, strings.TrimSuffix(refPath, "*"))
+	if before, ok := strings.CutSuffix(refPath, "*"); ok {
+		return strings.HasPrefix(routePattern, before)
 	}
 	if strings.HasSuffix(refPath, "/") {
 		return routePattern == refPath || strings.HasPrefix(routePattern, refPath)

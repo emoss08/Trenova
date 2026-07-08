@@ -10,6 +10,7 @@ import (
 
 type ListEDITemplatesRequest struct {
 	Filter         *pagination.QueryOptions `json:"filter"`
+	Cursor         pagination.CursorInfo    `json:"cursor"`
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
 	Status         edi.TemplateStatus       `json:"status"`
@@ -95,6 +96,10 @@ type EDITemplateRepository interface {
 		ctx context.Context,
 		req *ListEDITemplatesRequest,
 	) (*pagination.ListResult[*edi.EDITemplate], error)
+	ListTemplatesCursor(
+		ctx context.Context,
+		req *ListEDITemplatesRequest,
+	) (*pagination.CursorListResult[*edi.EDITemplate], error)
 	SelectTemplateOptions(
 		ctx context.Context,
 		req *EDITemplateSelectOptionsRequest,
@@ -148,5 +153,10 @@ type EDITemplateRepository interface {
 	EnsureBase204Template(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
+	) (*edi.EDITemplate, *edi.EDITemplateVersion, error)
+	EnsureBaseTemplate(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		transactionSet edi.TransactionSet,
 	) (*edi.EDITemplate, *edi.EDITemplateVersion, error)
 }

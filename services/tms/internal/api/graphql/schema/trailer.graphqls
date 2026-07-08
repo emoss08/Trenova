@@ -1,0 +1,120 @@
+enum EquipmentStatus {
+  Available
+  OutOfService
+  AtMaintenance
+  Sold
+}
+
+type TrailerEdge {
+  node: Trailer!
+  cursor: String!
+}
+
+type TrailerConnection {
+  edges: [TrailerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type Trailer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  equipmentTypeId: ID!
+  equipmentManufacturerId: ID!
+  registrationStateId: ID
+  fleetCodeId: ID
+  status: EquipmentStatus!
+  equipmentStatus: EquipmentStatus!
+  code: String!
+  model: String!
+  make: String!
+  year: Int
+  licensePlateNumber: String!
+  vin: String!
+  registrationNumber: String!
+  maxLoadWeight: Int
+  lastInspectionDate: Int
+  registrationExpiry: Int
+  lastKnownLocationId: ID
+  lastKnownLocationName: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  customFields: JSON
+  businessUnit: BusinessUnit
+  organization: Organization
+  equipmentType: EquipmentType
+  equipmentManufacturer: EquipmentManufacturer
+  fleetCode: FleetCode
+  registrationState: UsState
+  lastKnownLocation: LocationReference
+}
+
+input TrailerInput {
+  equipmentTypeId: ID!
+  equipmentManufacturerId: ID!
+  registrationStateId: ID
+  fleetCodeId: ID
+  status: EquipmentStatus = Available
+  code: String!
+  model: String
+  make: String
+  year: Int
+  licensePlateNumber: String
+  vin: String
+  registrationNumber: String
+  maxLoadWeight: Int
+  lastInspectionDate: Int
+  registrationExpiry: Int
+  version: Int
+  customFields: JSON
+}
+
+input TrailerPatchInput {
+  equipmentTypeId: ID
+  equipmentManufacturerId: ID
+  registrationStateId: ID @goField(omittable: true)
+  fleetCodeId: ID @goField(omittable: true)
+  status: EquipmentStatus
+  code: String
+  model: String
+  make: String
+  year: Int
+  licensePlateNumber: String
+  vin: String
+  registrationNumber: String
+  maxLoadWeight: Int
+  lastInspectionDate: Int
+  registrationExpiry: Int
+  version: Int
+  customFields: JSON
+}
+
+input BulkUpdateTrailerStatusInput {
+  trailerIds: [ID!]!
+  status: EquipmentStatus!
+}
+
+input LocateTrailerInput {
+  trailerId: ID!
+  newLocationId: ID!
+}
+
+type Query {
+  trailers(
+    input: DataTableConnectionInput!
+    status: EquipmentStatus
+    includeEquipmentDetails: Boolean = false
+    includeFleetDetails: Boolean = false
+  ): TrailerConnection!
+  trailer(id: ID!): Trailer
+}
+
+type Mutation {
+  createTrailer(input: TrailerInput!): Trailer!
+  updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+  patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
+  bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
+  locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+}

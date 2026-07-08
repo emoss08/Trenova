@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
 )
 
 type resolvedDocumentContext struct {
@@ -508,6 +510,15 @@ func (s *Service) GenerateDocument(
 	if err = s.upsertExternalTenderRecipient(ctx, created, resolved.profile); err != nil {
 		return nil, err
 	}
+	if !req.DisableDeliveryQueue {
+		if err = s.queueMessageForDelivery(ctx, created); err != nil {
+			s.l.Warn(
+				"failed to queue EDI message for delivery",
+				zap.String("messageId", created.ID.String()),
+				zap.Error(err),
+			)
+		}
+	}
 	return created, nil
 }
 
@@ -616,11 +627,39 @@ func (s *Service) PreviewTestCase(
 	if err != nil {
 		return nil, err
 	}
-	return s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
+	preview, err := s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
 		TenantInfo:               tenantInfo,
 		PartnerDocumentProfileID: testCase.PartnerDocumentProfileID,
 		Payload:                  &testCase.Payload,
 	})
+	if err != nil {
+		return nil, err
+	}
+	s.recordTestCaseRun(ctx, testCase, tenantInfo, preview)
+	return preview, nil
+}
+
+func (s *Service) recordTestCaseRun(
+	ctx context.Context,
+	testCase *edi.EDITestCase,
+	tenantInfo pagination.TenantInfo,
+	preview *EDIDocumentPreview,
+) {
+	verdict := EvaluateTestCaseRun(testCase, preview.Diagnostics)
+	if err := s.testCaseRepo.RecordTestCaseRun(ctx, &repositories.RecordEDITestCaseRunRequest{
+		ID:         testCase.ID,
+		TenantInfo: tenantInfo,
+		RanAt:      timeutils.NowUnix(),
+		Passed:     verdict.Passed,
+		Warnings:   verdict.Warnings,
+		Errors:     verdict.Errors,
+	}); err != nil {
+		s.l.Warn(
+			"failed to record EDI test case run outcome",
+			zap.String("testCaseId", testCase.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func mergeEDIDiagnostics(

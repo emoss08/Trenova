@@ -1,0 +1,263 @@
+fragment WorkerFleetCodeFields on FleetCode {
+  id
+  code
+  color
+}
+
+fragment WorkerUsStateFields on UsState {
+  id
+  name
+  abbreviation
+}
+
+fragment WorkerProfileTableFields on WorkerProfile {
+  id
+  workerId
+  businessUnitId
+  organizationId
+  licenseStateId
+  dob
+  licenseNumber
+  cdlClass
+  cdlRestrictions
+  endorsement
+  hazmatExpiry
+  licenseExpiry
+  medicalCardExpiry
+  medicalExaminerName
+  medicalExaminerNpi
+  twicCardNumber
+  twicExpiry
+  hireDate
+  terminationDate
+  physicalDueDate
+  mvrDueDate
+  complianceStatus
+  isQualified
+  disqualificationReason
+  lastComplianceCheck
+  lastMvrCheck
+  lastDrugTest
+  eldExempt
+  shortHaulExempt
+  version
+  createdAt
+  updatedAt
+  licenseState {
+    ...WorkerUsStateFields
+  }
+}
+
+fragment WorkerTableRowFields on Worker {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  fleetCodeId
+  managerId
+  status
+  type
+  driverType
+  profilePicUrl
+  firstName
+  lastName
+  wholeName
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  email
+  phoneNumber
+  emergencyContactName
+  emergencyContactPhone
+  externalId
+  assignmentBlocked
+  gender
+  canBeAssigned
+  availableForDispatch
+  version
+  createdAt
+  updatedAt
+  customFields
+  fleetCode {
+    ...WorkerFleetCodeFields
+  }
+  state {
+    ...WorkerUsStateFields
+  }
+  profile {
+    ...WorkerProfileTableFields
+  }
+}
+
+fragment WorkerPtoWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+
+fragment WorkerPtoRowFields on WorkerPTO {
+  id
+  workerId
+  organizationId
+  businessUnitId
+  approverId
+  rejectorId
+  status
+  type
+  startDate
+  endDate
+  reason
+  version
+  createdAt
+  updatedAt
+  worker {
+    ...WorkerPtoWorkerFields
+  }
+}
+
+fragment WorkerDataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+
+query WorkerTable(
+  $first: Int!
+  $after: String
+  $query: String
+  $fieldFilters: [FieldFilterInput!]
+  $filterGroups: [FilterGroupInput!]
+  $sort: [SortFieldInput!]
+) {
+  workers(
+    first: $first
+    after: $after
+    query: $query
+    fieldFilters: $fieldFilters
+    filterGroups: $filterGroups
+    sort: $sort
+  ) {
+    edges {
+      node {
+        ...WorkerTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...WorkerDataTablePageInfoFields
+    }
+  }
+}
+
+query WorkerPtoTable(
+  $first: Int!
+  $after: String
+  $query: String
+  $fieldFilters: [FieldFilterInput!]
+  $filterGroups: [FilterGroupInput!]
+  $sort: [SortFieldInput!]
+  $includeWorker: Boolean = true
+) {
+  workerPTOEntries(
+    first: $first
+    after: $after
+    query: $query
+    fieldFilters: $fieldFilters
+    filterGroups: $filterGroups
+    sort: $sort
+    includeWorker: $includeWorker
+  ) {
+    edges {
+      node {
+        ...WorkerPtoRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...WorkerDataTablePageInfoFields
+    }
+  }
+}
+
+query UpcomingWorkerPto(
+  $first: Int!
+  $after: String
+  $status: PTOStatus
+  $type: PTOType
+  $startDate: Int
+  $endDate: Int
+  $workerId: ID
+  $fleetCodeId: ID
+  $timezone: String
+) {
+  upcomingWorkerPTO(
+    first: $first
+    after: $after
+    status: $status
+    type: $type
+    startDate: $startDate
+    endDate: $endDate
+    workerId: $workerId
+    fleetCodeId: $fleetCodeId
+    timezone: $timezone
+  ) {
+    edges {
+      node {
+        ...WorkerPtoRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...WorkerDataTablePageInfoFields
+    }
+  }
+}
+
+query WorkerPtoChartData(
+  $startDateFrom: Int!
+  $startDateTo: Int!
+  $type: PTOType
+  $workerId: ID
+  $timezone: String
+) {
+  workerPTOChartData(
+    startDateFrom: $startDateFrom
+    startDateTo: $startDateTo
+    type: $type
+    workerId: $workerId
+    timezone: $timezone
+  ) {
+    date
+    vacation
+    sick
+    holiday
+    bereavement
+    maternity
+    paternity
+    personal
+    workers
+  }
+}
+
+mutation PatchWorker(
+  $id: ID!
+  $input: WorkerPatchInput!
+) {
+  patchWorker(id: $id, input: $input) {
+    ...WorkerTableRowFields
+  }
+}
+
+mutation ApproveWorkerPto($id: ID!) {
+  approveWorkerPTO(id: $id) {
+    ...WorkerPtoRowFields
+  }
+}
+
+mutation RejectWorkerPto($id: ID!, $reason: String!) {
+  rejectWorkerPTO(id: $id, reason: $reason) {
+    ...WorkerPtoRowFields
+  }
+}

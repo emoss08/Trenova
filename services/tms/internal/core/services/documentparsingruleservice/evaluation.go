@@ -3,6 +3,7 @@ package documentparsingruleservice
 
 import (
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"strconv"
@@ -194,7 +195,7 @@ func extractSections( //nolint:gocognit // legacy workflow
 	for _, definition := range definitions {
 		for _, page := range pages {
 			lines := splitLines(page.Text)
-			for idx := 0; idx < len(lines); idx++ {
+			for idx := range lines {
 				if !lineMatchesAny(lines[idx], definition.StartAnchors) {
 					continue
 				}
@@ -631,9 +632,8 @@ func mergeAnalyses(
 		Metadata:          candidate.Metadata,
 	}
 
-	for key, field := range baseline.Fields { //nolint:gocritic // stable API shape
-		merged.Fields[key] = field
-	}
+	//nolint:gocritic // stable API shape
+	maps.Copy(merged.Fields, baseline.Fields)
 	for key, field := range candidate.Fields { //nolint:gocritic // stable API shape
 		if existing, ok := merged.Fields[key]; ok && strings.TrimSpace(existing.Value) != "" &&
 			strings.TrimSpace(field.Value) != "" &&

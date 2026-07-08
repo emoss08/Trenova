@@ -2,14 +2,31 @@ package edi
 
 import (
 	"context"
+	"strings"
 
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
+var _ domaintypes.PostgresSearchable = (*EDIMappingProfile)(nil)
+
+const maxMappingSourceIDLength = 100
+
+func MappingSourceID(value string) pulid.ID {
+	normalized := strings.ToUpper(strings.Join(strings.Fields(strings.TrimSpace(value)), " "))
+	if len(normalized) > maxMappingSourceIDLength {
+		normalized = normalized[:maxMappingSourceIDLength]
+	}
+	return pulid.ID(normalized)
+}
+
 type EDIMappingProfile struct {
 	bun.BaseModel `json:"-" bun:"table:edi_mapping_profiles,alias:emp"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -17,6 +34,8 @@ type EDIMappingProfile struct {
 	EDIPartnerID   pulid.ID `json:"ediPartnerId"   bun:"edi_partner_id,type:VARCHAR(100),notnull"`
 	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
 	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero"`
+	SearchVector   string   `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank           string   `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
 	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -39,6 +58,29 @@ func (p *EDIMappingProfile) BeforeAppendModel(_ context.Context, query bun.Query
 	}
 
 	return nil
+}
+
+func (p *EDIMappingProfile) GetID() pulid.ID {
+	return p.ID
+}
+
+func (p *EDIMappingProfile) GetCreatedAt() int64 {
+	return p.CreatedAt
+}
+
+func (p *EDIMappingProfile) GetTableName() string {
+	return "edi_mapping_profiles"
+}
+
+func (p *EDIMappingProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "emp",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText},
+			{Name: "description", Type: domaintypes.FieldTypeText},
+		},
+	}
 }
 
 type EDIMappingProfileItem struct {

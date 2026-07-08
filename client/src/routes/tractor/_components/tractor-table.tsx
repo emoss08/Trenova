@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
 import { getColumns } from "./tractor-columns";
 import { TractorPanel } from "./tractor-panel";
 
@@ -58,19 +59,13 @@ export default function Table() {
   return (
     <DataTable<Tractor>
       name="Tractor"
-      link="/tractors/"
       queryKey="tractor-list"
-      exportModelName="tractor"
+      graphql={equipmentTableGraphQLConfigs.tractor}
       resource={Resource.Tractor}
       columns={columns}
       dockActions={dockActions}
       enableRowSelection
       TablePanel={TractorPanel}
-      extraSearchParams={{
-        includeFleetDetails: true,
-        includeEquipmentDetails: true,
-        includeWorkerDetails: true,
-      }}
     />
   );
 }

@@ -396,6 +396,88 @@ func (_c *MockEDITemplateRepository_EnsureBase204Template_Call) RunAndReturn(run
 	return _c
 }
 
+// EnsureBaseTemplate provides a mock function for the type MockEDITemplateRepository
+func (_mock *MockEDITemplateRepository) EnsureBaseTemplate(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	ret := _mock.Called(ctx, tenantInfo, transactionSet)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnsureBaseTemplate")
+	}
+
+	var r0 *edi.EDITemplate
+	var r1 *edi.EDITemplateVersion
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) (*edi.EDITemplate, *edi.EDITemplateVersion, error)); ok {
+		return returnFunc(ctx, tenantInfo, transactionSet)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) *edi.EDITemplate); ok {
+		r0 = returnFunc(ctx, tenantInfo, transactionSet)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDITemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) *edi.EDITemplateVersion); ok {
+		r1 = returnFunc(ctx, tenantInfo, transactionSet)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*edi.EDITemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) error); ok {
+		r2 = returnFunc(ctx, tenantInfo, transactionSet)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockEDITemplateRepository_EnsureBaseTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnsureBaseTemplate'
+type MockEDITemplateRepository_EnsureBaseTemplate_Call struct {
+	*mock.Call
+}
+
+// EnsureBaseTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - transactionSet edi.TransactionSet
+func (_e *MockEDITemplateRepository_Expecter) EnsureBaseTemplate(ctx interface{}, tenantInfo interface{}, transactionSet interface{}) *MockEDITemplateRepository_EnsureBaseTemplate_Call {
+	return &MockEDITemplateRepository_EnsureBaseTemplate_Call{Call: _e.mock.On("EnsureBaseTemplate", ctx, tenantInfo, transactionSet)}
+}
+
+func (_c *MockEDITemplateRepository_EnsureBaseTemplate_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet)) *MockEDITemplateRepository_EnsureBaseTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 edi.TransactionSet
+		if args[2] != nil {
+			arg2 = args[2].(edi.TransactionSet)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_EnsureBaseTemplate_Call) Return(eDITemplate *edi.EDITemplate, eDITemplateVersion *edi.EDITemplateVersion, err error) *MockEDITemplateRepository_EnsureBaseTemplate_Call {
+	_c.Call.Return(eDITemplate, eDITemplateVersion, err)
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_EnsureBaseTemplate_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet) (*edi.EDITemplate, *edi.EDITemplateVersion, error)) *MockEDITemplateRepository_EnsureBaseTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetActiveTemplateVersion provides a mock function for the type MockEDITemplateRepository
 func (_mock *MockEDITemplateRepository) GetActiveTemplateVersion(ctx context.Context, req repositories.GetActiveEDITemplateVersionRequest) (*edi.EDITemplateVersion, error) {
 	ret := _mock.Called(ctx, req)
@@ -800,6 +882,74 @@ func (_c *MockEDITemplateRepository_ListTemplates_Call) Return(listResult *pagin
 }
 
 func (_c *MockEDITemplateRepository_ListTemplates_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITemplatesRequest) (*pagination.ListResult[*edi.EDITemplate], error)) *MockEDITemplateRepository_ListTemplates_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListTemplatesCursor provides a mock function for the type MockEDITemplateRepository
+func (_mock *MockEDITemplateRepository) ListTemplatesCursor(ctx context.Context, req *repositories.ListEDITemplatesRequest) (*pagination.CursorListResult[*edi.EDITemplate], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListTemplatesCursor")
+	}
+
+	var r0 *pagination.CursorListResult[*edi.EDITemplate]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDITemplatesRequest) (*pagination.CursorListResult[*edi.EDITemplate], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDITemplatesRequest) *pagination.CursorListResult[*edi.EDITemplate]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDITemplate])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDITemplatesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDITemplateRepository_ListTemplatesCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTemplatesCursor'
+type MockEDITemplateRepository_ListTemplatesCursor_Call struct {
+	*mock.Call
+}
+
+// ListTemplatesCursor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDITemplatesRequest
+func (_e *MockEDITemplateRepository_Expecter) ListTemplatesCursor(ctx interface{}, req interface{}) *MockEDITemplateRepository_ListTemplatesCursor_Call {
+	return &MockEDITemplateRepository_ListTemplatesCursor_Call{Call: _e.mock.On("ListTemplatesCursor", ctx, req)}
+}
+
+func (_c *MockEDITemplateRepository_ListTemplatesCursor_Call) Run(run func(ctx context.Context, req *repositories.ListEDITemplatesRequest)) *MockEDITemplateRepository_ListTemplatesCursor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDITemplatesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDITemplatesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_ListTemplatesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDITemplate], err error) *MockEDITemplateRepository_ListTemplatesCursor_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_ListTemplatesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITemplatesRequest) (*pagination.CursorListResult[*edi.EDITemplate], error)) *MockEDITemplateRepository_ListTemplatesCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }

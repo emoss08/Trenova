@@ -48,10 +48,20 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/organization/data-retention",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
+            async lazy() {
+              const { DataRetentionPage } =
+                await import("@/routes/organization/data-retention/page");
+              return { Component: DataRetentionPage };
+            },
+          },
+          {
             path: "/organization/email-profiles",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailProfile)),
             async lazy() {
-              const { EmailProfilesPage } = await import("@/routes/organization/email-profiles/page");
+              const { EmailProfilesPage } =
+                await import("@/routes/organization/email-profiles/page");
               return { Component: EmailProfilesPage };
             },
           },
@@ -129,6 +139,14 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/edi/overview",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIOverviewPage } = await import("@/routes/edi/page");
+              return { Component: EDIOverviewPage };
+            },
+          },
+          {
             path: "/edi/partners",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
             async lazy() {
@@ -174,6 +192,30 @@ const routes: RouteObject[] = [
             async lazy() {
               const { EDIOutboundTransfersPage } = await import("@/routes/edi/page");
               return { Component: EDIOutboundTransfersPage };
+            },
+          },
+          {
+            path: "/edi/messages",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIMessagesPage } = await import("@/routes/edi/page");
+              return { Component: EDIMessagesPage };
+            },
+          },
+          {
+            path: "/edi/inbound-files",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIInboundFilesPage } = await import("@/routes/edi/page");
+              return { Component: EDIInboundFilesPage };
+            },
+          },
+          {
+            path: "/edi/test-cases",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDITestCasesPage } = await import("@/routes/edi/page");
+              return { Component: EDITestCasesPage };
             },
           },
           {
@@ -674,9 +716,8 @@ const routes: RouteObject[] = [
                   createPermissionLoader(Resource.ServiceFailureReasonCode),
                 ),
                 async lazy() {
-                  const { ServiceFailureReasonCodesPage } = await import(
-                    "@/routes/service-failure-reason-code/page"
-                  );
+                  const { ServiceFailureReasonCodesPage } =
+                    await import("@/routes/service-failure-reason-code/page");
                   return { Component: ServiceFailureReasonCodesPage };
                 },
               },

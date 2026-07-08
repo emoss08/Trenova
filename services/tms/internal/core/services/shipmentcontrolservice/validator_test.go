@@ -103,8 +103,8 @@ func validShipmentControl() *tenant.ShipmentControl {
 		OrganizationID:              pulid.MustNew("org_"),
 		MaxShipmentWeightLimit:      80000,
 		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: int16Ptr(30),
-		DetentionThreshold:          int16Ptr(30),
+		AutoDelayShipmentsThreshold: new(int16(30)),
+		DetentionThreshold:          new(int16(30)),
 		AutoCancelShipments:         false,
 		AllowMoveRemovals:           true,
 	}

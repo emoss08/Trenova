@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distancecalculationservice"
@@ -43,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
@@ -213,7 +215,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazardousmaterialservice.New,
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
+	dataretentionservice.New,
 	ediservice.New,
+	ediinboundservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
 	fx.Annotate(
 		func(s *ediservice.Service) services.ShipmentMutationObserver { return s },

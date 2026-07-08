@@ -98,7 +98,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListTrailersRequest,
-) (*pagination.ListResult[*trailer.Trailer], error) {
+) (*pagination.CursorListResult[*trailer.Trailer], error) {
 	log := s.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
@@ -109,27 +109,11 @@ func (s *Service) List(
 		return nil, err
 	}
 
-	if len(result.Items) > 0 {
-		resourceIDs := make([]string, 0, len(result.Items))
-		for _, t := range result.Items {
-			resourceIDs = append(resourceIDs, t.GetResourceID())
-		}
-
-		customFieldsMap, cfErr := s.customFieldsValuesService.GetForResources(
-			ctx,
-			req.Filter.TenantInfo,
-			"trailer",
-			resourceIDs,
-		)
-		if cfErr != nil {
-			log.Warn("failed to load custom fields for trailers", zap.Error(cfErr))
-		} else {
-			for _, t := range result.Items {
-				if fields, ok := customFieldsMap[t.GetResourceID()]; ok {
-					t.CustomFields = fields
-				}
-			}
-		}
+	if req.IncludeCustomFields {
+		err = s.attachCustomFields(ctx, req.Filter.TenantInfo, result.Items)
+	}
+	if err != nil {
+		log.Warn("failed to load custom fields for trailers", zap.Error(err))
 	}
 
 	return result, nil
@@ -151,19 +135,73 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	customFields, cfErr := s.customFieldsValuesService.GetForResource(
-		ctx,
-		req.TenantInfo,
-		entity.GetResourceType(),
-		entity.GetResourceID(),
-	)
-	if cfErr != nil {
-		s.l.Warn("failed to load custom fields for trailer", zap.Error(cfErr))
-	} else {
-		entity.CustomFields = customFields
+	if req.IncludeCustomFields {
+		customFields, cfErr := s.customFieldsValuesService.GetForResource(
+			ctx,
+			req.TenantInfo,
+			entity.GetResourceType(),
+			entity.GetResourceID(),
+		)
+		if cfErr != nil {
+			s.l.Warn("failed to load custom fields for trailer", zap.Error(cfErr))
+		} else {
+			entity.CustomFields = customFields
+		}
 	}
 
 	return entity, nil
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req repositories.GetTrailersByIDsRequest,
+) ([]*trailer.Trailer, error) {
+	entities, err := s.repo.GetByIDs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.IncludeCustomFields {
+		err = s.attachCustomFields(ctx, req.TenantInfo, entities)
+	}
+	if err != nil {
+		s.l.Warn("failed to load custom fields for trailers", zap.Error(err))
+	}
+
+	return entities, nil
+}
+
+func (s *Service) attachCustomFields(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entities []*trailer.Trailer,
+) error {
+	if len(entities) == 0 {
+		return nil
+	}
+
+	resourceIDs := make([]string, 0, len(entities))
+	for _, t := range entities {
+		resourceIDs = append(resourceIDs, t.GetResourceID())
+	}
+
+	customFieldsMap, err := s.customFieldsValuesService.GetForResources(
+		ctx,
+		tenantInfo,
+		"trailer",
+		resourceIDs,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, t := range entities {
+		if fields, ok := customFieldsMap[t.GetResourceID()]; ok {
+			t.CustomFields = fields
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) Create(

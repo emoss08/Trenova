@@ -108,6 +108,74 @@ func (_c *MockEDICommunicationProfileRepository_CreateProfile_Call) RunAndReturn
 	return _c
 }
 
+// GetActiveAS2ProfileByIdentifiers provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) GetActiveAS2ProfileByIdentifiers(ctx context.Context, req repositories.GetActiveAS2ProfileByIdentifiersRequest) (*edi.EDICommunicationProfile, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetActiveAS2ProfileByIdentifiers")
+	}
+
+	var r0 *edi.EDICommunicationProfile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetActiveAS2ProfileByIdentifiersRequest) (*edi.EDICommunicationProfile, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetActiveAS2ProfileByIdentifiersRequest) *edi.EDICommunicationProfile); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDICommunicationProfile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetActiveAS2ProfileByIdentifiersRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActiveAS2ProfileByIdentifiers'
+type MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call struct {
+	*mock.Call
+}
+
+// GetActiveAS2ProfileByIdentifiers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetActiveAS2ProfileByIdentifiersRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) GetActiveAS2ProfileByIdentifiers(ctx interface{}, req interface{}) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+	return &MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call{Call: _e.mock.On("GetActiveAS2ProfileByIdentifiers", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call) Run(run func(ctx context.Context, req repositories.GetActiveAS2ProfileByIdentifiersRequest)) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetActiveAS2ProfileByIdentifiersRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetActiveAS2ProfileByIdentifiersRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call) Return(eDICommunicationProfile *edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+	_c.Call.Return(eDICommunicationProfile, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetActiveAS2ProfileByIdentifiersRequest) (*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetActiveProfileByPartner provides a mock function for the type MockEDICommunicationProfileRepository
 func (_mock *MockEDICommunicationProfileRepository) GetActiveProfileByPartner(ctx context.Context, req repositories.GetActiveEDICommunicationProfileByPartnerRequest) (*edi.EDICommunicationProfile, error) {
 	ret := _mock.Called(ctx, req)
@@ -244,6 +312,68 @@ func (_c *MockEDICommunicationProfileRepository_GetProfileByID_Call) RunAndRetur
 	return _c
 }
 
+// ListInboundPollingProfiles provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) ListInboundPollingProfiles(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListInboundPollingProfiles")
+	}
+
+	var r0 []*edi.EDICommunicationProfile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*edi.EDICommunicationProfile, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*edi.EDICommunicationProfile); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDICommunicationProfile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListInboundPollingProfiles'
+type MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call struct {
+	*mock.Call
+}
+
+// ListInboundPollingProfiles is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockEDICommunicationProfileRepository_Expecter) ListInboundPollingProfiles(ctx interface{}) *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call {
+	return &MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call{Call: _e.mock.On("ListInboundPollingProfiles", ctx)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call) Run(run func(ctx context.Context)) *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call) Return(eDICommunicationProfiles []*edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call {
+	_c.Call.Return(eDICommunicationProfiles, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call) RunAndReturn(run func(ctx context.Context) ([]*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_ListInboundPollingProfiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListProfiles provides a mock function for the type MockEDICommunicationProfileRepository
 func (_mock *MockEDICommunicationProfileRepository) ListProfiles(ctx context.Context, req *repositories.ListEDICommunicationProfilesRequest) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	ret := _mock.Called(ctx, req)
@@ -308,6 +438,74 @@ func (_c *MockEDICommunicationProfileRepository_ListProfiles_Call) Return(listRe
 }
 
 func (_c *MockEDICommunicationProfileRepository_ListProfiles_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDICommunicationProfilesRequest) (*pagination.ListResult[*edi.EDICommunicationProfile], error)) *MockEDICommunicationProfileRepository_ListProfiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListProfilesCursor provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) ListProfilesCursor(ctx context.Context, req *repositories.ListEDICommunicationProfilesRequest) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListProfilesCursor")
+	}
+
+	var r0 *pagination.CursorListResult[*edi.EDICommunicationProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDICommunicationProfilesRequest) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDICommunicationProfilesRequest) *pagination.CursorListResult[*edi.EDICommunicationProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDICommunicationProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDICommunicationProfilesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_ListProfilesCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListProfilesCursor'
+type MockEDICommunicationProfileRepository_ListProfilesCursor_Call struct {
+	*mock.Call
+}
+
+// ListProfilesCursor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDICommunicationProfilesRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) ListProfilesCursor(ctx interface{}, req interface{}) *MockEDICommunicationProfileRepository_ListProfilesCursor_Call {
+	return &MockEDICommunicationProfileRepository_ListProfilesCursor_Call{Call: _e.mock.On("ListProfilesCursor", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListProfilesCursor_Call) Run(run func(ctx context.Context, req *repositories.ListEDICommunicationProfilesRequest)) *MockEDICommunicationProfileRepository_ListProfilesCursor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDICommunicationProfilesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDICommunicationProfilesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListProfilesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDICommunicationProfile], err error) *MockEDICommunicationProfileRepository_ListProfilesCursor_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_ListProfilesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDICommunicationProfilesRequest) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error)) *MockEDICommunicationProfileRepository_ListProfilesCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -444,6 +642,129 @@ func (_c *MockEDICommunicationProfileRepository_UpdateProfile_Call) Return(eDICo
 }
 
 func (_c *MockEDICommunicationProfileRepository_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDICommunicationProfile) (*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_UpdateProfile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RecordInboundPollOutcome provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) RecordInboundPollOutcome(ctx context.Context, req repositories.RecordEDIProfilePollOutcomeRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordInboundPollOutcome")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.RecordEDIProfilePollOutcomeRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordInboundPollOutcome'
+type MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call struct {
+	*mock.Call
+}
+
+// RecordInboundPollOutcome is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.RecordEDIProfilePollOutcomeRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) RecordInboundPollOutcome(ctx interface{}, req interface{}) *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call {
+	return &MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call{Call: _e.mock.On("RecordInboundPollOutcome", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call) Run(run func(ctx context.Context, req repositories.RecordEDIProfilePollOutcomeRequest)) *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.RecordEDIProfilePollOutcomeRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.RecordEDIProfilePollOutcomeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call) Return(err error) *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call) RunAndReturn(run func(ctx context.Context, req repositories.RecordEDIProfilePollOutcomeRequest) error) *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountStaleInboundPollingProfiles provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) CountStaleInboundPollingProfiles(ctx context.Context, staleBefore int64) (int64, error) {
+	ret := _mock.Called(ctx, staleBefore)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountStaleInboundPollingProfiles")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
+		return returnFunc(ctx, staleBefore)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
+		r0 = returnFunc(ctx, staleBefore)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = returnFunc(ctx, staleBefore)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountStaleInboundPollingProfiles'
+type MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call struct {
+	*mock.Call
+}
+
+// CountStaleInboundPollingProfiles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - staleBefore int64
+func (_e *MockEDICommunicationProfileRepository_Expecter) CountStaleInboundPollingProfiles(ctx interface{}, staleBefore interface{}) *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call {
+	return &MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call{Call: _e.mock.On("CountStaleInboundPollingProfiles", ctx, staleBefore)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call) Run(run func(ctx context.Context, staleBefore int64)) *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call) Return(n int64, err error) *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call) RunAndReturn(run func(ctx context.Context, staleBefore int64) (int64, error)) *MockEDICommunicationProfileRepository_CountStaleInboundPollingProfiles_Call {
 	_c.Call.Return(run)
 	return _c
 }

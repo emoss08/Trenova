@@ -7,6 +7,12 @@ import {
   type ShipmentStatus,
   type ShipmentTenderStatus,
 } from "@/types/shipment";
+import type {
+  EDIInboundFileStatus,
+  EDIMessageAcknowledgmentStatus,
+  EDIMessageDeliveryStatus,
+  EDITransferStatus,
+} from "@/types/edi";
 import type { PTOStatus, PTOType } from "@/types/worker";
 import type { VariantProps } from "class-variance-authority";
 import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
@@ -476,5 +482,249 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
     >
       {statusAttributes[status].text}
     </span>
+  );
+}
+
+export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus | string }) {
+  if (!status) return null;
+
+  const attrs: Record<EDITransferStatus, BadgeAttrProps> = {
+    Submitted: {
+      variant: "purple",
+      text: "Submitted",
+      description: "Tender has been submitted and is awaiting review by the receiving side.",
+    },
+    MappingRequired: {
+      variant: "warning",
+      text: "Mapping Required",
+      description: "Tender references entities that are not mapped for this partner yet.",
+    },
+    PendingApproval: {
+      variant: "info",
+      text: "Pending Approval",
+      description: "Tender is ready for the receiving organization to approve or reject.",
+    },
+    Processing: {
+      variant: "secondary",
+      text: "Processing",
+      description: "Approval is running and the target shipment is being created.",
+    },
+    Approved: {
+      variant: "active",
+      text: "Approved",
+      description: "Tender was accepted and the target shipment has been created.",
+    },
+    Rejected: {
+      variant: "inactive",
+      text: "Rejected",
+      description: "Tender was rejected by the receiving side.",
+    },
+    Expired: {
+      variant: "outline",
+      text: "Expired",
+      description: "Tender expired before it was actioned.",
+    },
+    Canceled: {
+      variant: "outline",
+      text: "Canceled",
+      description: "Tender was canceled or superseded.",
+    },
+    Failed: {
+      variant: "inactive",
+      text: "Failed",
+      description: "Tender processing failed. Review the failure reason for details.",
+    },
+  };
+  const attr = attrs[status as EDITransferStatus];
+  if (!attr) {
+    return <Badge variant="outline">{status}</Badge>;
+  }
+  return (
+    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+      {attr.text}
+    </Badge>
+  );
+}
+
+export function EDIPartnerReadinessBadge({
+  ready,
+  completedCount,
+  totalCount,
+}: {
+  ready: boolean;
+  completedCount: number;
+  totalCount: number;
+}) {
+  if (ready) {
+    return (
+      <Badge variant="active" className="max-h-5" title="All onboarding checklist items are complete.">
+        Ready
+      </Badge>
+    );
+  }
+  return (
+    <Badge
+      variant="warning"
+      className="max-h-5 tabular-nums"
+      title="Open the partner to see the remaining onboarding checklist items."
+    >
+      {completedCount}/{totalCount} ready
+    </Badge>
+  );
+}
+
+export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
+  return (
+    <Badge
+      variant={passed ? "active" : "inactive"}
+      className="max-h-5"
+      title={
+        passed
+          ? "The preview diagnostics match the expected warning and error counts."
+          : "The preview diagnostics do not match the expected warning and error counts."
+      }
+    >
+      {passed ? "Pass" : "Fail"}
+    </Badge>
+  );
+}
+
+export function EDIMessageDeliveryStatusBadge({
+  status,
+}: {
+  status?: EDIMessageDeliveryStatus | string | null;
+}) {
+  if (!status) return null;
+
+  const attrs: Record<EDIMessageDeliveryStatus, BadgeAttrProps> = {
+    Queued: {
+      variant: "purple",
+      text: "Queued",
+      description: "Message is queued for delivery to the trading partner.",
+    },
+    Sending: {
+      variant: "info",
+      text: "Sending",
+      description: "Delivery to the trading partner is in progress.",
+    },
+    Sent: {
+      variant: "active",
+      text: "Sent",
+      description: "Message was delivered to the trading partner.",
+    },
+    Failed: {
+      variant: "warning",
+      text: "Failed",
+      description: "The last delivery attempt failed. Retries are scheduled automatically.",
+    },
+    DeadLettered: {
+      variant: "inactive",
+      text: "Dead Lettered",
+      description: "Delivery retries were exhausted. Retry manually after fixing the cause.",
+    },
+  };
+  const attr = attrs[status as EDIMessageDeliveryStatus];
+  if (!attr) {
+    return <Badge variant="outline">{status}</Badge>;
+  }
+  return (
+    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+      {attr.text}
+    </Badge>
+  );
+}
+
+export function EDIMessageAckStatusBadge({
+  status,
+}: {
+  status?: EDIMessageAcknowledgmentStatus | string | null;
+}) {
+  if (!status) return null;
+
+  const attrs: Record<EDIMessageAcknowledgmentStatus, BadgeAttrProps> = {
+    NotExpected: {
+      variant: "outline",
+      text: "Not Expected",
+      description: "No acknowledgment is expected for this message.",
+    },
+    Pending: {
+      variant: "warning",
+      text: "Ack Pending",
+      description: "Waiting for the trading partner to acknowledge this message.",
+    },
+    Accepted: {
+      variant: "active",
+      text: "Accepted",
+      description: "The trading partner acknowledged and accepted this message.",
+    },
+    Rejected: {
+      variant: "inactive",
+      text: "Rejected",
+      description: "The trading partner rejected this message. Review the acknowledgment errors.",
+    },
+    Failed: {
+      variant: "inactive",
+      text: "Ack Failed",
+      description: "Acknowledgment processing failed.",
+    },
+  };
+  const attr = attrs[status as EDIMessageAcknowledgmentStatus];
+  if (!attr) {
+    return <Badge variant="outline">{status}</Badge>;
+  }
+  return (
+    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+      {attr.text}
+    </Badge>
+  );
+}
+
+export function EDIInboundFileStatusBadge({
+  status,
+}: {
+  status?: EDIInboundFileStatus | string;
+}) {
+  if (!status) return null;
+
+  const attrs: Record<EDIInboundFileStatus, BadgeAttrProps> = {
+    Received: {
+      variant: "purple",
+      text: "Received",
+      description: "File was pulled from the partner mailbox and is awaiting processing.",
+    },
+    Parsed: {
+      variant: "info",
+      text: "Parsed",
+      description: "File envelope was parsed and transactions are being processed.",
+    },
+    Processed: {
+      variant: "active",
+      text: "Processed",
+      description: "Every transaction in this file was processed successfully.",
+    },
+    PartiallyProcessed: {
+      variant: "warning",
+      text: "Partial",
+      description: "Some transactions processed with warnings. Review the failure reason.",
+    },
+    Quarantined: {
+      variant: "inactive",
+      text: "Quarantined",
+      description: "The file could not be processed. Fix the cause and reprocess.",
+    },
+    Duplicate: {
+      variant: "outline",
+      text: "Duplicate",
+      description: "This interchange was already processed and was skipped.",
+    },
+  };
+  const attr = attrs[status as EDIInboundFileStatus];
+  if (!attr) {
+    return <Badge variant="outline">{status}</Badge>;
+  }
+  return (
+    <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
+      {attr.text}
+    </Badge>
   );
 }

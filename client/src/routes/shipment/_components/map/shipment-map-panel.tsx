@@ -14,7 +14,6 @@ import { MapControls } from "./map-controls";
 import { MapZoomControls } from "./map-zoom-controls";
 import { collectGeofencesFromLocations } from "./normalize-geofence";
 import { OWMTileLayer, type OWMLayerId } from "./owm-tile-layer";
-import { ShipmentMapLegend } from "./shipment-map-legend";
 import { ShipmentRouteOverlay } from "./shipment-route-overlay";
 import { TrafficLayer } from "./traffic-layer";
 import { HighlightAutoPan } from "./use-highlight-pan";
@@ -138,7 +137,7 @@ export default function ShipmentMapPanel({
             : "h-[clamp(420px,calc(100vh-380px),540px)]",
         )}
       >
-        <div className="flex h-9 shrink-0 items-center justify-between border-b border-border bg-background/95 px-2.5">
+        <div className="flex h-9 shrink-0 items-center justify-between border-b border-border bg-card px-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <span className="text-xs font-semibold text-foreground">Live Map</span>
             <span className="shrink truncate rounded-md border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
@@ -205,7 +204,6 @@ export default function ShipmentMapPanel({
             unitCount={mapShipments.length}
             dataUpdatedAt={mapShipmentsQuery.dataUpdatedAt}
           />
-          <ShipmentMapLegend />
         </div>
       </div>
     </APIProvider>
@@ -233,7 +231,7 @@ function LiveMapSyncOverlay({
 
   return (
     <div className="pointer-events-none absolute top-3 left-3 z-10 flex items-center gap-1.5">
-      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-card/80 px-2 py-1 font-mono text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm">
+      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 font-mono text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm">
         <span
           aria-hidden
           className={cn(
@@ -243,7 +241,7 @@ function LiveMapSyncOverlay({
         />
         {live ? "LIVE" : "OFFLINE"} · {unitCount} units
       </span>
-      <span className="rounded-md border border-border bg-card/80 px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+      <span className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
         synced {formatElapsedTime(syncedAt, now)}
       </span>
     </div>

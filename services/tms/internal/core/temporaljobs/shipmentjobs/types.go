@@ -9,7 +9,6 @@ import (
 const BulkDuplicateShipmentsWorkflowName = "BulkDuplicateShipmentsWorkflow"
 const AutoDelayShipmentsWorkflowName = "AutoDelayShipmentsWorkflow"
 const AutoCancelShipmentsWorkflowName = "AutoCancelShipmentsWorkflow"
-const DeleteAuditEntriesWorkflowName = "DleteAuditEntriesWorkflow"
 
 type BulkDuplicateShipmentsPayload struct {
 	temporaltype.BasePayload

@@ -86,7 +86,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Produce json
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
+// @Param after query string false "Cursor for the next page"
 // @Param classes query []string false "Filter by equipment class" collectionFormat(multi) Enums(Tractor,Trailer,Container,Other)
 // @Success 200 {object} pagination.Response[[]equipmenttype.EquipmentType]
 // @Failure 400 {object} helpers.ProblemDetail
@@ -99,15 +99,16 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
+		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListEquipmentTypesRequest{
 					Filter:  req,
+					Cursor:  cursor,
 					Classes: helpers.QuerySlice(c, "classes", []string{}),
 				},
 			)

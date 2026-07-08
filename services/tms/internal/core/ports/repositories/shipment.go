@@ -19,11 +19,13 @@ type ShipmentOptions struct {
 
 type ListShipmentsRequest struct {
 	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"cursor"`
 	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
 }
 
 type GetUnassignedShipmentsRequest struct {
 	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"cursor"`
 	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
 }
 
@@ -448,6 +450,10 @@ type GetShipmentsByIDsRequest struct {
 	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
 }
 
+type ShipmentSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+}
+
 type UpdateShipmentStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ShipmentID pulid.ID              `json:"shipmentId"`
@@ -459,7 +465,7 @@ type ShipmentRepository interface {
 	List(
 		ctx context.Context,
 		req *ListShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	GetByID(
 		ctx context.Context,
 		req *GetShipmentByIDRequest,
@@ -468,6 +474,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *GetShipmentsByIDsRequest,
 	) ([]*shipment.Shipment, error)
+	SelectOptions(
+		ctx context.Context,
+		req *ShipmentSelectOptionsRequest,
+	) (*pagination.ListResult[*shipment.Shipment], error)
 	GetPreviousRates(
 		ctx context.Context,
 		req *GetPreviousRatesRequest,
@@ -479,7 +489,7 @@ type ShipmentRepository interface {
 	GetUnassigned(
 		ctx context.Context,
 		req *GetUnassignedShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,

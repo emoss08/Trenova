@@ -1,0 +1,223 @@
+fragment EquipmentTypeTableFields on EquipmentType {
+  id
+  code
+  color
+}
+
+fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}
+
+fragment EquipmentManufacturerTableFields on EquipmentManufacturer {
+  id
+  name
+}
+
+fragment FleetCodeTableFields on FleetCode {
+  id
+  code
+  color
+}
+
+fragment UsStateTableFields on UsState {
+  id
+  name
+  abbreviation
+}
+
+fragment WorkerTableReferenceFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+}
+
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+
+fragment TractorTableRowFields on Tractor {
+  id
+  businessUnitId
+  organizationId
+  primaryWorkerId
+  equipmentTypeId
+  equipmentManufacturerId
+  stateId
+  fleetCodeId
+  secondaryWorkerId
+  status
+  code
+  model
+  make
+  year
+  licensePlateNumber
+  registrationNumber
+  registrationExpiry
+  vin
+  lastKnownLocationId
+  lastKnownLocationName
+  version
+  createdAt
+  updatedAt
+  customFields
+  equipmentType {
+    ...EquipmentTypeTableFields
+  }
+  equipmentManufacturer {
+    ...EquipmentManufacturerTableFields
+  }
+  fleetCode {
+    ...FleetCodeTableFields
+  }
+  state {
+    ...UsStateTableFields
+  }
+  primaryWorker {
+    ...WorkerTableReferenceFields
+  }
+  secondaryWorker {
+    ...WorkerTableReferenceFields
+  }
+}
+
+fragment TrailerTableRowFields on Trailer {
+  id
+  businessUnitId
+  organizationId
+  equipmentTypeId
+  equipmentManufacturerId
+  registrationStateId
+  fleetCodeId
+  status
+  code
+  model
+  make
+  year
+  licensePlateNumber
+  vin
+  registrationNumber
+  maxLoadWeight
+  lastInspectionDate
+  registrationExpiry
+  lastKnownLocationId
+  lastKnownLocationName
+  version
+  createdAt
+  updatedAt
+  customFields
+  equipmentType {
+    ...EquipmentTypeTableFields
+  }
+  equipmentManufacturer {
+    ...EquipmentManufacturerTableFields
+  }
+  fleetCode {
+    ...FleetCodeTableFields
+  }
+  registrationState {
+    ...UsStateTableFields
+  }
+}
+
+query TractorTable(
+  $input: DataTableConnectionInput!
+  $includeEquipmentDetails: Boolean = true
+  $includeFleetDetails: Boolean = true
+  $includeWorkerDetails: Boolean = true
+) {
+  tractors(
+    input: $input
+    includeEquipmentDetails: $includeEquipmentDetails
+    includeFleetDetails: $includeFleetDetails
+    includeWorkerDetails: $includeWorkerDetails
+  ) {
+    edges {
+      node {
+        ...TractorTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query TrailerTable(
+  $input: DataTableConnectionInput!
+  $includeEquipmentDetails: Boolean = true
+  $includeFleetDetails: Boolean = true
+) {
+  trailers(
+    input: $input
+    includeEquipmentDetails: $includeEquipmentDetails
+    includeFleetDetails: $includeFleetDetails
+  ) {
+    edges {
+      node {
+        ...TrailerTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {
+  equipmentTypes(input: $input, classes: $classes) {
+    edges {
+      node {
+        ...EquipmentTypeConfigurationRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query EquipmentType($id: ID!) {
+  equipmentType(id: $id) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation CreateEquipmentType($input: EquipmentTypeInput!) {
+  createEquipmentType(input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation UpdateEquipmentType($id: ID!, $input: EquipmentTypeInput!) {
+  updateEquipmentType(id: $id, input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation PatchEquipmentType($id: ID!, $input: EquipmentTypePatchInput!) {
+  patchEquipmentType(id: $id, input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation BulkUpdateEquipmentTypeStatus($input: BulkUpdateEquipmentTypeStatusInput!) {
+  bulkUpdateEquipmentTypeStatus(input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}

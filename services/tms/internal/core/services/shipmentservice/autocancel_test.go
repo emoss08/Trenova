@@ -148,6 +148,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 }
 
 //go:fix inline
+//go:fix inline
 func ptrInt8(v int8) *int8 {
-	return &v
+	return new(v)
 }

@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { listShipmentEventsGraphQL } from "@/lib/graphql/shipment";
 import { safeParse } from "@/lib/parse";
 import {
   shipmentEventListSchema,
@@ -15,25 +15,7 @@ export type ListShipmentEventsParams = {
 
 export class ShipmentEventService {
   public async list(params: ListShipmentEventsParams = {}): Promise<ShipmentEventList> {
-    const search = new URLSearchParams();
-    if (params.shipmentId) {
-      search.set("shipmentId", params.shipmentId);
-    }
-    if (params.types && params.types.length > 0) {
-      search.set("types", params.types.join(","));
-    }
-    if (typeof params.limit === "number") {
-      search.set("limit", String(params.limit));
-    }
-    if (typeof params.before === "number") {
-      search.set("before", String(params.before));
-    }
-
-    const query = search.toString();
-    const response = await api.get<ShipmentEventList>(
-      `/shipment-events/${query ? `?${query}` : ""}`,
-    );
-
+    const response = await listShipmentEventsGraphQL(params);
     return safeParse(shipmentEventListSchema, response, "Shipment Event");
   }
 }

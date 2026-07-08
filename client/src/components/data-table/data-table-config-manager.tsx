@@ -29,9 +29,15 @@ export default function DataTableConfigManager({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button variant="outline" size="sm">
-            <BookmarkIcon className="size-4" />
-            <span className="hidden pt-0.5 lg:inline">Views</span>
+          <Button
+            variant="ghost"
+            size="xs"
+            className="flex flex-row gap-1 group data-popup-open:bg-secondary"
+          >
+            <BookmarkIcon className="size-3.5 mb-0.5 group-hover:text-foreground text-muted-foreground group-data-popup-open:text-foreground" />
+            <span className="hidden lg:inline text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground">
+              Views
+            </span>
           </Button>
         }
       />
@@ -46,9 +52,7 @@ export default function DataTableConfigManager({
           </div>
         ) : (
           <div className="flex flex-col">
-            <h3 className="border-b border-border p-1 text-sm font-medium">
-              My Views
-            </h3>
+            <h3 className="border-b border-border p-1 text-sm font-medium">My Views</h3>
             <ScrollArea className="flex max-h-[calc(100vh-15rem)] flex-1 flex-col px-1 pt-1">
               {data?.results?.map((config) => (
                 <DataTableConfigItem

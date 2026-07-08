@@ -105,7 +105,30 @@ func IntValue(v any) int {
 		return int(value)
 	case float64:
 		return int(value)
+	case float32:
+		return int(value)
 	default:
 		return 0
+	}
+}
+
+func IntPtrValue(v any) *int {
+	switch value := v.(type) {
+	case int:
+		return &value
+	case int32:
+		converted := int(value)
+		return &converted
+	case int64:
+		converted := int(value)
+		return &converted
+	case float64:
+		converted := int(value)
+		return &converted
+	case float32:
+		converted := int(value)
+		return &converted
+	default:
+		return nil
 	}
 }

@@ -10,6 +10,7 @@ import (
 
 type ListEDITransfersRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
 }
 
 type GetEDITransferByIDRequest struct {
@@ -30,11 +31,43 @@ type SetEDITransferApprovalWorkflowRunIDRequest struct {
 	RunID      string                `json:"runId"`
 }
 
+type GetActionableInboundEDITransferByExternalReferenceRequest struct {
+	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID         pulid.ID              `json:"partnerId"`
+	ExternalReference string                `json:"externalReference"`
+}
+
+type GetEDITransferStatusCountsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Since      int64                 `json:"since"`
+}
+
+type EDITransferSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+}
+
+type GetEDITransfersByIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	TransferIDs []pulid.ID            `json:"transferIds"`
+}
+
 type EDILoadTenderTransferRepository interface {
+	GetInboundStatusCounts(
+		ctx context.Context,
+		req GetEDITransferStatusCountsRequest,
+	) (map[edi.TransferStatus]int, error)
 	ListInbound(
 		ctx context.Context,
 		req *ListEDITransfersRequest,
 	) (*pagination.ListResult[*edi.EDITransfer], error)
+	ListInboundCursor(
+		ctx context.Context,
+		req *ListEDITransfersRequest,
+	) (*pagination.CursorListResult[*edi.EDITransfer], error)
+	ListOutboundCursor(
+		ctx context.Context,
+		req *ListEDITransfersRequest,
+	) (*pagination.CursorListResult[*edi.EDITransfer], error)
 	ListOutbound(
 		ctx context.Context,
 		req *ListEDITransfersRequest,
@@ -43,6 +76,14 @@ type EDILoadTenderTransferRepository interface {
 		ctx context.Context,
 		req GetEDITransferByIDRequest,
 	) (*edi.EDITransfer, error)
+	GetTransfersByIDs(
+		ctx context.Context,
+		req GetEDITransfersByIDsRequest,
+	) ([]*edi.EDITransfer, error)
+	SelectOptions(
+		ctx context.Context,
+		req *EDITransferSelectOptionsRequest,
+	) (*pagination.ListResult[*edi.EDITransfer], error)
 	GetTransferForUpdate(
 		ctx context.Context,
 		req GetEDITransferForUpdateRequest,
@@ -58,5 +99,9 @@ type EDILoadTenderTransferRepository interface {
 	SetApprovalWorkflowRunID(
 		ctx context.Context,
 		req SetEDITransferApprovalWorkflowRunIDRequest,
+	) (*edi.EDITransfer, error)
+	GetActionableInboundTransferByExternalReference(
+		ctx context.Context,
+		req GetActionableInboundEDITransferByExternalReferenceRequest,
 	) (*edi.EDITransfer, error)
 }

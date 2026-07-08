@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { workerTableGraphQLConfigs } from "@/lib/graphql/worker-table";
 import { Resource } from "@/types/permission";
 import type { WorkerPTO } from "@/types/worker";
 import { useMemo } from "react";
@@ -11,14 +12,10 @@ export default function PTODataTable() {
     <DataTable<WorkerPTO>
       queryKey="worker-pto-list"
       name="Worker PTO"
-      link="/worker-pto/"
-      exportModelName="worker-pto"
       resource={Resource.WorkerPTO}
       columns={columns}
+      graphql={workerTableGraphQLConfigs.pto}
       enableRowSelection
-      extraSearchParams={{
-        includeWorker: true,
-      }}
     />
   );
 }

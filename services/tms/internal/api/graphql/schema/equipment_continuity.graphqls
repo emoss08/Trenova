@@ -1,0 +1,15 @@
+type EquipmentContinuity {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  equipmentType: String!
+  equipmentId: ID!
+  sourceShipmentId: ID
+  sourceShipmentMoveId: ID
+  currentLocationId: ID
+  currentLocationName: String!
+  isCurrent: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}

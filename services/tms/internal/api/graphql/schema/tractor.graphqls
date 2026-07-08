@@ -1,0 +1,116 @@
+type TractorEdge {
+  node: Tractor!
+  cursor: String!
+}
+
+type TractorConnection {
+  edges: [TractorEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type Tractor {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  primaryWorkerId: ID!
+  equipmentTypeId: ID!
+  equipmentManufacturerId: ID!
+  stateId: ID
+  fleetCodeId: ID
+  secondaryWorkerId: ID
+  status: EquipmentStatus!
+  equipmentStatus: EquipmentStatus!
+  code: String!
+  model: String!
+  make: String!
+  year: Int
+  licensePlateNumber: String!
+  registrationNumber: String!
+  registrationExpiry: Int
+  vin: String!
+  lastKnownLocationId: ID
+  lastKnownLocationName: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  customFields: JSON
+  businessUnit: BusinessUnit
+  organization: Organization
+  equipmentType: EquipmentType
+  equipmentManufacturer: EquipmentManufacturer
+  fleetCode: FleetCode
+  state: UsState
+  primaryWorker: Worker
+  secondaryWorker: Worker
+  lastKnownLocation: LocationReference
+}
+
+input TractorInput {
+  primaryWorkerId: ID!
+  equipmentTypeId: ID!
+  equipmentManufacturerId: ID!
+  stateId: ID
+  fleetCodeId: ID
+  secondaryWorkerId: ID
+  status: EquipmentStatus = Available
+  code: String!
+  model: String
+  make: String
+  year: Int
+  licensePlateNumber: String
+  registrationNumber: String
+  registrationExpiry: Int
+  vin: String
+  version: Int
+  customFields: JSON
+}
+
+input TractorPatchInput {
+  primaryWorkerId: ID
+  equipmentTypeId: ID
+  equipmentManufacturerId: ID
+  stateId: ID @goField(omittable: true)
+  fleetCodeId: ID @goField(omittable: true)
+  secondaryWorkerId: ID @goField(omittable: true)
+  status: EquipmentStatus
+  code: String
+  model: String
+  make: String
+  year: Int
+  licensePlateNumber: String
+  registrationNumber: String
+  registrationExpiry: Int
+  vin: String
+  version: Int
+  customFields: JSON
+}
+
+input BulkUpdateTractorStatusInput {
+  tractorIds: [ID!]!
+  status: EquipmentStatus!
+}
+
+input LocateTractorInput {
+  tractorId: ID!
+  newLocationId: ID!
+}
+
+extend type Query {
+  tractors(
+    input: DataTableConnectionInput!
+    status: EquipmentStatus
+    includeEquipmentDetails: Boolean = false
+    includeFleetDetails: Boolean = false
+    includeWorkerDetails: Boolean = false
+  ): TractorConnection!
+  tractor(id: ID!): Tractor
+}
+
+extend type Mutation {
+  createTractor(input: TractorInput!): Tractor!
+  updateTractor(id: ID!, input: TractorInput!): Tractor!
+  patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
+  bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
+  locateTractor(input: LocateTractorInput!): EquipmentContinuity!
+}

@@ -14,7 +14,9 @@ type GetMappingProfileRequest struct {
 }
 
 type ListEDIMappingProfilesRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
+	Filter    *pagination.QueryOptions `json:"filter"`
+	Cursor    pagination.CursorInfo    `json:"cursor"`
+	PartnerID pulid.ID                 `json:"partnerId"`
 }
 
 type EDIMappingProfileSelectOptionsRequest struct {
@@ -69,6 +71,10 @@ type EDIMappingProfileRepository interface {
 		ctx context.Context,
 		req *ListEDIMappingProfilesRequest,
 	) (*pagination.ListResult[*edi.EDIMappingProfile], error)
+	ListMappingProfilesCursor(
+		ctx context.Context,
+		req *ListEDIMappingProfilesRequest,
+	) (*pagination.CursorListResult[*edi.EDIMappingProfile], error)
 	SelectMappingProfileOptions(
 		ctx context.Context,
 		req *EDIMappingProfileSelectOptionsRequest,

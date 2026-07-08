@@ -3,7 +3,7 @@ package editemplaterepository
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -38,13 +40,6 @@ func New(p Params) repositories.EDITemplateRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-template-repository"),
 	}
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *repositories.ListEDITemplatesRequest,
-) *bun.SelectQuery {
-	return nil
 }
 
 func (r *repository) List(
@@ -92,6 +87,71 @@ func (r *repository) ListTemplates(
 	req *repositories.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return r.List(ctx, req)
+}
+
+func (r *repository) ListTemplatesCursor(
+	ctx context.Context,
+	req *repositories.ListEDITemplatesRequest,
+) (*pagination.CursorListResult[*edi.EDITemplate], error) {
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*edi.EDITemplate)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = querybuilder.ApplyFiltersWithoutSort(sq, "et", req.Filter, (*edi.EDITemplate)(nil))
+			return applyTemplateListFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDITemplate]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*edi.EDITemplate) *bun.SelectQuery {
+			rel := buncolgen.EDITemplateRelations
+			return dba.
+				NewSelect().
+				Model(entities).
+				ColumnExpr(buncolgen.EDITemplateTable.All()).
+				Relation(rel.DocumentType).
+				Relation(rel.Versions, func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order(buncolgen.EDITemplateVersionColumns.VersionNumber.OrderDesc())
+				})
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			sq, applyErr := querybuilder.ApplyCursorFilters(
+				sq,
+				"et",
+				req.Filter,
+				req.Cursor,
+				(*edi.EDITemplate)(nil),
+			)
+			if applyErr != nil {
+				return sq, applyErr
+			}
+			return applyTemplateListFilters(sq, req), nil
+		},
+	})
+}
+
+func applyTemplateListFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEDITemplatesRequest,
+) *bun.SelectQuery {
+	cols := buncolgen.EDITemplateColumns
+	if req.TransactionSet != "" {
+		q = q.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+	}
+	if req.Direction != "" {
+		q = q.Where(cols.Direction.Eq(), req.Direction)
+	}
+	if req.Status != "" {
+		q = q.Where(cols.Status.Eq(), req.Status)
+	}
+	return q
 }
 
 func (r *repository) listDocumentTypes(
@@ -777,8 +837,17 @@ func (r *repository) EnsureBase204Template(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	return r.EnsureBaseTemplate(ctx, tenantInfo, edi.TransactionSet204)
+}
+
+func (r *repository) EnsureBaseTemplate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	transactionSet edi.TransactionSet,
+) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 	template := new(edi.EDITemplate)
 	version := new(edi.EDITemplateVersion)
+	templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 		cols := buncolgen.EDITemplateColumns
 
@@ -788,9 +857,9 @@ func (r *repository) EnsureBase204Template(
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.EDITemplateScopeTenant(sq, tenantInfo).
 					Where(cols.Standard.Eq(), edi.EDIStandardX12).
-					Where(cols.TransactionSet.Eq(), edi.TransactionSet204).
+					Where(cols.TransactionSet.Eq(), transactionSet).
 					Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
-					Where(cols.Name.Eq(), "Base X12 204 Outbound")
+					Where(cols.Name.Eq(), templateName)
 			}).
 			Limit(1).
 			Scan(c)
@@ -814,25 +883,28 @@ func (r *repository) EnsureBase204Template(
 
 		documentTypes, err := r.listDocumentTypes(c, repositories.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet204,
+			TransactionSet: transactionSet,
 			Direction:      edi.DocumentDirectionOutbound,
 		})
 		if err != nil {
 			return err
 		}
 		if len(documentTypes) == 0 {
-			return errors.New("x12 204 outbound document type is not seeded")
+			return fmt.Errorf("x12 %s outbound document type is not seeded", transactionSet)
 		}
 
 		template = &edi.EDITemplate{
 			BusinessUnitID: tenantInfo.BuID,
 			OrganizationID: tenantInfo.OrgID,
 			DocumentTypeID: documentTypes[0].ID,
-			Name:           "Base X12 204 Outbound",
-			Description:    "Tenant-scoped base outbound X12 204 template",
+			Name:           templateName,
+			Description: fmt.Sprintf(
+				"Tenant-scoped base outbound X12 %s template",
+				transactionSet,
+			),
 			Direction:      edi.DocumentDirectionOutbound,
 			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet204,
+			TransactionSet: transactionSet,
 			Status:         edi.TemplateStatusActive,
 		}
 		if _, err = r.db.DBForContext(c).
@@ -843,18 +915,26 @@ func (r *repository) EnsureBase204Template(
 			return err
 		}
 
+		x12Version := edi.DefaultX12204Version
+		if transactionSet == edi.TransactionSet999 {
+			x12Version = "005010"
+		}
 		activatedAt := timeutils.NowUnix()
 		version = &edi.EDITemplateVersion{
 			BusinessUnitID:    tenantInfo.BuID,
 			OrganizationID:    tenantInfo.OrgID,
 			TemplateID:        template.ID,
 			VersionNumber:     1,
-			X12Version:        edi.DefaultX12204Version,
-			FunctionalGroupID: "SM",
+			X12Version:        x12Version,
+			FunctionalGroupID: edi.FunctionalGroupDefault(transactionSet),
 			Status:            edi.TemplateStatusActive,
 			IsActive:          true,
-			Notes:             "Seeded base 004010 Motor Carrier Load Tender profile",
-			ActivatedAt:       &activatedAt,
+			Notes: fmt.Sprintf(
+				"Seeded base %s X12 %s outbound profile",
+				x12Version,
+				transactionSet,
+			),
+			ActivatedAt: &activatedAt,
 		}
 		if _, err = r.db.DBForContext(c).
 			NewInsert().
@@ -864,7 +944,10 @@ func (r *repository) EnsureBase204Template(
 			return err
 		}
 
-		segments := editemplates.Base204Segments(tenantInfo, version.ID)
+		segments, err := editemplates.StarterSegments(tenantInfo, version.ID, transactionSet)
+		if err != nil {
+			return err
+		}
 		if _, err = r.db.DBForContext(c).NewInsert().Model(&segments).Exec(c); err != nil {
 			return err
 		}

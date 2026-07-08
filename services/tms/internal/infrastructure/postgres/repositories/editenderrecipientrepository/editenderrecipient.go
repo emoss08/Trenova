@@ -68,6 +68,34 @@ func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 	return entities, err
 }
 
+func (r *repository) GetActiveExternalRecipientByShipmentReference(
+	ctx context.Context,
+	req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest,
+) (*edi.TenderRecipient, error) {
+	entity := new(edi.TenderRecipient)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
+		Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
+		Where("etr.edi_partner_id = ?", req.PartnerID).
+		Where("etr.recipient_kind = ?", edi.TenderRecipientKindExternal).
+		Where("etr.status = ?", edi.TenderRecipientStatusActive).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				WhereOr("etr.source_shipment_id = ?", req.Reference).
+				WhereOr("etr.latest_baseline_payload->>'bol' = ?", req.Reference).
+				WhereOr("etr.latest_baseline_payload->>'shipmentId' = ?", req.Reference)
+		}).
+		Order("etr.created_at DESC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
+	}
+	return entity, nil
+}
+
 func (r *repository) UpsertTenderRecipient(
 	ctx context.Context,
 	req repositories.UpsertEDITenderRecipientRequest,
@@ -90,11 +118,11 @@ func (r *repository) UpsertTenderRecipient(
 		Set("latest_baseline_hash = EXCLUDED.latest_baseline_hash").
 		Set("baseline_recorded_at = EXCLUDED.baseline_recorded_at").
 		Set("baseline_status = EXCLUDED.baseline_status").
-		Set("original_transfer_id = COALESCE(NULLIF(EXCLUDED.original_transfer_id, ''), edi_tender_recipients.original_transfer_id)").
-		Set("shipment_link_id = COALESCE(NULLIF(EXCLUDED.shipment_link_id, ''), edi_tender_recipients.shipment_link_id)").
-		Set("original_message_id = COALESCE(NULLIF(EXCLUDED.original_message_id, ''), edi_tender_recipients.original_message_id)").
-		Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), edi_tender_recipients.partner_document_profile_id)").
-		Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), edi_tender_recipients.communication_profile_id)").
+		Set("original_transfer_id = COALESCE(NULLIF(EXCLUDED.original_transfer_id, ''), etr.original_transfer_id)").
+		Set("shipment_link_id = COALESCE(NULLIF(EXCLUDED.shipment_link_id, ''), etr.shipment_link_id)").
+		Set("original_message_id = COALESCE(NULLIF(EXCLUDED.original_message_id, ''), etr.original_message_id)").
+		Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), etr.partner_document_profile_id)").
+		Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), etr.communication_profile_id)").
 		Set("status = ?", edi.TenderRecipientStatusActive).
 		Set("updated_at = extract(epoch from current_timestamp)::bigint").
 		Returning("*").

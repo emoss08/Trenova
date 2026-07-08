@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -293,10 +295,344 @@ func (r *repository) UpdateMessageDelivery(
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
 		Returning("*")
+	if req.AS2MessageID != "" {
+		query = query.Set("as2_message_id = ?", req.AS2MessageID)
+	}
+	if req.AS2MIC != "" {
+		query = query.Set("as2_mic = ?", req.AS2MIC)
+	}
 	if req.IncrementAttempts {
 		query = query.Set("delivery_attempts = delivery_attempts + 1")
 	}
 	results, err := query.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = dberror.CheckRowsAffected(results, "EDIMessage", req.ID.String()); err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func (r *repository) GetOutboundMessageByAS2MessageID(
+	ctx context.Context,
+	as2MessageID string,
+) (*edi.EDIMessage, error) {
+	entity := new(edi.EDIMessage)
+	cols := buncolgen.EDIMessageColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.AS2MessageID.Eq(), as2MessageID).
+		Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+	}
+	return entity, nil
+}
+
+func (r *repository) GetDeliveryStatusCounts(
+	ctx context.Context,
+	req repositories.GetEDIMessageStatusCountsRequest,
+) (map[edi.MessageDeliveryStatus]int, error) {
+	cols := buncolgen.EDIMessageColumns
+	var rows []struct {
+		DeliveryStatus edi.MessageDeliveryStatus `bun:"delivery_status"`
+		Count          int                       `bun:"count"`
+	}
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr(cols.DeliveryStatus.Qualified()).
+		ColumnExpr("COUNT(*) AS count").
+		Where(cols.DeliveryStatus.IsNotNull()).
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		GroupExpr(cols.DeliveryStatus.Qualified())
+	if req.Since > 0 {
+		query = query.Where(cols.GeneratedAt.Gte(), req.Since)
+	}
+	if err := query.Scan(ctx, &rows); err != nil {
+		return nil, err
+	}
+	counts := make(map[edi.MessageDeliveryStatus]int, len(rows))
+	for _, row := range rows {
+		counts[row.DeliveryStatus] = row.Count
+	}
+	return counts, nil
+}
+
+func (r *repository) GetAckStatusCounts(
+	ctx context.Context,
+	req repositories.GetEDIMessageStatusCountsRequest,
+) (map[edi.MessageAcknowledgmentStatus]int, error) {
+	cols := buncolgen.EDIMessageColumns
+	var rows []struct {
+		AckStatus edi.MessageAcknowledgmentStatus `bun:"ack_status"`
+		Count     int                             `bun:"count"`
+	}
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr(cols.AckStatus.Qualified()).
+		ColumnExpr("COUNT(*) AS count").
+		Where(cols.AckStatus.IsNotNull()).
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		GroupExpr(cols.AckStatus.Qualified())
+	if req.Since > 0 {
+		query = query.Where(cols.GeneratedAt.Gte(), req.Since)
+	}
+	if err := query.Scan(ctx, &rows); err != nil {
+		return nil, err
+	}
+	counts := make(map[edi.MessageAcknowledgmentStatus]int, len(rows))
+	for _, row := range rows {
+		counts[row.AckStatus] = row.Count
+	}
+	return counts, nil
+}
+
+const scorecardPendingDeliveryFilter = "emsg.direction = 'Outbound' AND " +
+	"emsg.delivery_status IN ('Queued', 'Sending', 'Failed')"
+
+func (r *repository) GetPartnerScorecards(
+	ctx context.Context,
+	req *repositories.GetEDIPartnerScorecardsRequest,
+) ([]*repositories.EDIPartnerScorecardRow, error) {
+	rows := make([]*repositories.EDIPartnerScorecardRow, 0)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr("emsg.edi_partner_id AS partner_id").
+		ColumnExpr("MAX(ep.name) AS partner_name").
+		ColumnExpr("MAX(ep.code) AS partner_code").
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Outbound') AS outbound_total").
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Sent') AS sent_count",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Failed') AS failed_count",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'DeadLettered') AS dead_lettered_count",
+		).
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
+		ColumnExpr(
+			"AVG(emsg.ack_received_at - emsg.delivery_sent_at) FILTER (WHERE emsg.ack_received_at IS NOT NULL AND emsg.delivery_sent_at IS NOT NULL) AS avg_ack_seconds",
+		).
+		ColumnExpr(
+			"percentile_cont(0.95) WITHIN GROUP (ORDER BY emsg.ack_received_at - emsg.delivery_sent_at) FILTER (WHERE emsg.ack_received_at IS NOT NULL AND emsg.delivery_sent_at IS NOT NULL) AS p95_ack_seconds",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.ack_status = 'Pending' AND emsg.generated_at < ?) AS overdue_ack_count",
+			req.OverdueAckPendingSince,
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE "+scorecardPendingDeliveryFilter+" AND emsg.generated_at < ?) AS pending_over_4h_count",
+			req.PendingOver4hBefore,
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE "+scorecardPendingDeliveryFilter+" AND emsg.generated_at < ?) AS pending_over_24h_count",
+			req.PendingOver24hBefore,
+		).
+		ColumnExpr(
+			"MIN(emsg.generated_at) FILTER (WHERE " + scorecardPendingDeliveryFilter + ") AS oldest_pending_at",
+		).
+		Join("JOIN edi_partners AS ep ON ep.id = emsg.edi_partner_id").
+		JoinOn("ep.organization_id = emsg.organization_id").
+		JoinOn("ep.business_unit_id = emsg.business_unit_id").
+		Where("emsg.edi_partner_id IS NOT NULL").
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		GroupExpr("emsg.edi_partner_id").
+		OrderExpr("MAX(ep.name) ASC")
+	if req.Since > 0 {
+		query = query.Where(buncolgen.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
+	}
+	if err := query.Scan(ctx, &rows); err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *repository) GetVolumeSeries(
+	ctx context.Context,
+	req repositories.GetEDIVolumeSeriesRequest,
+) ([]*repositories.EDIVolumePoint, error) {
+	bucket := req.BucketSeconds
+	if bucket <= 0 {
+		bucket = 3600
+	}
+	points := make([]*repositories.EDIVolumePoint, 0)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr("(emsg.generated_at / ?) * ? AS bucket_start", bucket, bucket).
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Outbound') AS outbound_count").
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Sent') AS sent_count",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status IN ('Failed', 'DeadLettered')) AS failed_count",
+		).
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		GroupExpr("1").
+		OrderExpr("1 ASC")
+	if req.Since > 0 {
+		query = query.Where(buncolgen.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
+	}
+	if err := query.Scan(ctx, &points); err != nil {
+		return nil, err
+	}
+	return points, nil
+}
+
+func (r *repository) GetOverdueAckCount(
+	ctx context.Context,
+	req repositories.GetEDIOverdueAckCountRequest,
+) (int, error) {
+	cols := buncolgen.EDIMessageColumns
+	return r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
+		Where(cols.GeneratedAt.Lt(), req.PendingSince).
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		Count(ctx)
+}
+
+func (r *repository) ListRecentDeadLettered(
+	ctx context.Context,
+	req *repositories.ListRecentEDIMessageFailuresRequest,
+) ([]*edi.EDIMessage, error) {
+	cols := buncolgen.EDIMessageColumns
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	entities := make([]*edi.EDIMessage, 0, limit)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ExcludeColumn("raw_x12", "payload_snapshot").
+		Relation("Partner").
+		Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		Order(cols.UpdatedAt.OrderDesc()).
+		Limit(limit).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *repository) PurgeRawX12Before(
+	ctx context.Context,
+	req repositories.PurgeEDIRawPayloadsRequest,
+) (int64, error) {
+	cols := buncolgen.EDIMessageColumns
+	subquery := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		Column("id").
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.CreatedAt.Lt(), req.Before).
+		Where("emsg.raw_purged_at IS NULL").
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where(cols.Direction.Eq(), edi.DocumentDirectionInbound).
+				WhereOr(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusSent)
+		}).
+		Limit(req.Limit)
+
+	result, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*edi.EDIMessage)(nil)).
+		Set("raw_x12 = ''").
+		Set("payload_snapshot = '{}'::jsonb").
+		Set("raw_purged_at = ?", req.PurgedAt).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where("emsg.id IN (?)", subquery).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (int64, error) {
+	cols := buncolgen.EDIMessageColumns
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
+		Where(cols.UpdatedAt.Gte(), since).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return int64(count), nil
+}
+
+func (r *repository) GetOutboundMessageForAck(
+	ctx context.Context,
+	req repositories.GetEDIOutboundMessageForAckRequest,
+) (*edi.EDIMessage, error) {
+	entity := new(edi.EDIMessage)
+	cols := buncolgen.EDIMessageColumns
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+		Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(
+			"ltrim(emsg.group_control_number, '0') = ltrim(?, '0')",
+			req.GroupControlNumber,
+		).
+		Where(
+			"ltrim(emsg.transaction_control_number, '0') = ltrim(?, '0')",
+			req.TransactionControlNumber,
+		)
+	if req.TransactionSet != "" {
+		query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+	}
+	err := query.
+		Order(cols.GeneratedAt.OrderDesc()).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+	}
+	return entity, nil
+}
+
+func (r *repository) UpdateMessageAcknowledgment(
+	ctx context.Context,
+	req *repositories.UpdateEDIMessageAcknowledgmentRequest,
+) (*edi.EDIMessage, error) {
+	if req == nil {
+		return nil, errors.New("EDI message acknowledgment update request is required")
+	}
+	entity := new(edi.EDIMessage)
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		Set("ack_status = ?", req.AckStatus).
+		Set("ack_message_id = ?", req.AckMessageID).
+		Set("ack_received_at = ?", req.AckReceivedAt).
+		Set("ack_last_error = ?", req.AckLastError).
+		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Where("id = ?", req.ID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Returning("*").
+		Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -323,4 +659,73 @@ func applyMessageArchiveSearch(query *bun.SelectQuery, search string) *bun.Selec
 			WhereOr(cols.GroupControlNumber.LowerLike(), term).
 			WhereOr(cols.TransactionControlNumber.LowerLike(), term)
 	})
+}
+
+func (r *repository) ListMessagesCursor(
+	ctx context.Context,
+	req *repositories.ListEDIMessagesRequest,
+) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = querybuilder.ApplyFiltersWithoutSort(
+				sq,
+				"emsg",
+				req.Filter,
+				(*edi.EDIMessage)(nil),
+			)
+			return applyMessageListFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMessage]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*edi.EDIMessage) *bun.SelectQuery {
+			return dba.
+				NewSelect().
+				Model(entities).
+				ExcludeColumn("raw_x12", "payload_snapshot").
+				Relation(buncolgen.EDIMessageRelations.Partner)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			sq, applyErr := querybuilder.ApplyCursorFilters(
+				sq,
+				"emsg",
+				req.Filter,
+				req.Cursor,
+				(*edi.EDIMessage)(nil),
+			)
+			if applyErr != nil {
+				return sq, applyErr
+			}
+			return applyMessageListFilters(sq, req), nil
+		},
+	})
+}
+
+func applyMessageListFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEDIMessagesRequest,
+) *bun.SelectQuery {
+	cols := buncolgen.EDIMessageColumns
+	if req.TransactionSet != "" {
+		q = q.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+	}
+	if req.Direction != "" {
+		q = q.Where(cols.Direction.Eq(), req.Direction)
+	}
+	if req.PartnerID.IsNotNil() {
+		q = q.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+	}
+	if req.Status != "" {
+		q = q.Where(cols.Status.Eq(), req.Status)
+	}
+	return q
 }

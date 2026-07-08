@@ -68,9 +68,10 @@ func TestEquipmentTypeHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
+	total := 1
 	repo := mocks.NewMockEquipmentTypeRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*equipmenttype.EquipmentType]{
+		Return(&pagination.CursorListResult[*equipmenttype.EquipmentType]{
 			Items: []*equipmenttype.EquipmentType{
 				{
 					ID:             etID,
@@ -81,7 +82,7 @@ func TestEquipmentTypeHandler_List_Success(t *testing.T) {
 					Status:         domaintypes.StatusActive,
 				},
 			},
-			Total: 1,
+			TotalCount: &total,
 		}, nil)
 
 	handler := setupEquipTypeHandler(t, repo)
@@ -96,21 +97,18 @@ func TestEquipmentTypeHandler_List_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp pagination.Response[[]map[string]any]
+	var resp pagination.CursorResponse[[]map[string]any]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, 1, resp.Count)
+	require.NotNil(t, resp.TotalCount)
+	assert.Equal(t, 1, *resp.TotalCount)
 	assert.Len(t, resp.Results, 1)
 }
 
-func TestEquipmentTypeHandler_List_WithPagination(t *testing.T) {
+func TestEquipmentTypeHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockEquipmentTypeRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*equipmenttype.EquipmentType]{
-			Items: []*equipmenttype.EquipmentType{},
-			Total: 100,
-		}, nil)
 
 	handler := setupEquipTypeHandler(t, repo)
 
@@ -123,11 +121,8 @@ func TestEquipmentTypeHandler_List_WithPagination(t *testing.T) {
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp pagination.Response[[]map[string]any]
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 100, resp.Count)
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+	repo.AssertNotCalled(t, "List", mock.Anything, mock.Anything)
 }
 
 func TestEquipmentTypeHandler_Get_Success(t *testing.T) {

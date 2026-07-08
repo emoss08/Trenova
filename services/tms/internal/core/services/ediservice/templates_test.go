@@ -959,6 +959,8 @@ func testSourceContextIndex() *sourceContextIndex {
 		sourceContextField("partner.carrier.scac", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
 		sourceContextField("partner.contact.name", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
 		sourceContextField("partner.contact.phone", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.interchangeSenderQualifier", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.interchangeReceiverQualifier", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
 		sourceContextField("runtime.interchangeSenderId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
 		sourceContextField("runtime.interchangeReceiverId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
 		sourceContextField("runtime.interchangeDate", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),

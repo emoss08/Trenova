@@ -1,0 +1,18 @@
+query SelectOptions($input: SelectOptionsInput!) {
+  selectOptions(input: $input) {
+    edges {
+      node {
+        id
+        label
+        description
+        meta
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}

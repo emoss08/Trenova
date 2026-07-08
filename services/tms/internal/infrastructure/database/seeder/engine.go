@@ -73,7 +73,7 @@ func (e *Engine) Execute(ctx context.Context, opts ExecuteOptions) (*ExecutionRe
 			return nil, fmt.Errorf("failed to check seed status for %s: %w", seed.Name(), err)
 		}
 
-		if applied && !opts.Force {
+		if applied && !opts.Force && !isRepeatable(seed) {
 			skipped = append(skipped, seed.Name())
 			continue
 		}

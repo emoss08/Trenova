@@ -69,6 +69,18 @@ func (s *service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *service) GetByIDs(
+	ctx context.Context,
+	req services.GetOrganizationsByIDsRequest,
+) ([]*tenant.Organization, error) {
+	return s.repo.GetByIDs(ctx, repositories.GetOrganizationsByIDsRequest{
+		TenantInfo:      req.TenantInfo,
+		OrganizationIDs: req.OrganizationIDs,
+		IncludeState:    req.IncludeState,
+		IncludeBU:       req.IncludeBU,
+	})
+}
+
 func (s *service) SelectOptions(
 	ctx context.Context,
 	req *repositories.SelectOrganizationOptionsRequest,

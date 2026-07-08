@@ -124,9 +124,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	entity := newTestEntity()
-	expected := &pagination.ListResult[*trailer.Trailer]{
-		Items: []*trailer.Trailer{entity},
-		Total: 1,
+	expected := &pagination.CursorListResult[*trailer.Trailer]{
+		Items:       []*trailer.Trailer{entity},
+		HasNextPage: false,
 	}
 	req := &repositories.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{
@@ -134,6 +134,9 @@ func TestList_Success(t *testing.T) {
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			},
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
 		},
 	}
 
@@ -144,8 +147,8 @@ func TestList_Success(t *testing.T) {
 	result, err := deps.svc.List(ctx, req)
 
 	require.NoError(t, err)
-	assert.Equal(t, 1, result.Total)
 	assert.Len(t, result.Items, 1)
+	assert.False(t, result.HasNextPage)
 	deps.repo.AssertExpectations(t)
 	deps.valueRepo.AssertExpectations(t)
 }
@@ -155,9 +158,9 @@ func TestList_EmptyResult(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	expected := &pagination.ListResult[*trailer.Trailer]{
-		Items: []*trailer.Trailer{},
-		Total: 0,
+	expected := &pagination.CursorListResult[*trailer.Trailer]{
+		Items:       []*trailer.Trailer{},
+		HasNextPage: false,
 	}
 	req := &repositories.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{},
@@ -168,8 +171,8 @@ func TestList_EmptyResult(t *testing.T) {
 	result, err := deps.svc.List(ctx, req)
 
 	require.NoError(t, err)
-	assert.Equal(t, 0, result.Total)
 	assert.Empty(t, result.Items)
+	assert.False(t, result.HasNextPage)
 	deps.repo.AssertExpectations(t)
 	deps.valueRepo.AssertNotCalled(t, "GetByResources")
 }
@@ -185,6 +188,9 @@ func TestGet_Success(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
 		},
 	}
 
@@ -601,8 +607,9 @@ func (testDBConnection) WithTx(
 	return fn(ctx, bun.Tx{})
 }
 
+//go:fix inline
 func ptrInt16Trailer(v int16) *int16 {
-	return &v
+	return new(v)
 }
 
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
@@ -818,9 +825,9 @@ func TestList_CustomFieldsError(t *testing.T) {
 	ctx := t.Context()
 
 	entity := newTestEntity()
-	expected := &pagination.ListResult[*trailer.Trailer]{
-		Items: []*trailer.Trailer{entity},
-		Total: 1,
+	expected := &pagination.CursorListResult[*trailer.Trailer]{
+		Items:       []*trailer.Trailer{entity},
+		HasNextPage: false,
 	}
 	req := &repositories.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{
@@ -828,6 +835,9 @@ func TestList_CustomFieldsError(t *testing.T) {
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			},
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
 		},
 	}
 
@@ -838,7 +848,8 @@ func TestList_CustomFieldsError(t *testing.T) {
 	result, err := deps.svc.List(ctx, req)
 
 	require.NoError(t, err)
-	assert.Equal(t, 1, result.Total)
+	assert.Len(t, result.Items, 1)
+	assert.False(t, result.HasNextPage)
 	deps.repo.AssertExpectations(t)
 }
 
@@ -877,6 +888,9 @@ func TestGet_CustomFieldsError(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
 		},
 	}
 
@@ -1204,6 +1218,7 @@ func TestBulkUpdateStatus_AuditLogError(t *testing.T) {
 	deps.audit.AssertExpectations(t)
 }
 
+//go:fix inline
 func int64PtrTrailer(v int64) *int64 {
-	return &v
+	return new(v)
 }

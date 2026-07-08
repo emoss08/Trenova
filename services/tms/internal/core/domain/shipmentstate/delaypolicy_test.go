@@ -59,6 +59,7 @@ func TestIsStopOverdue_FallsBackToScheduledStart(t *testing.T) {
 	assert.True(t, IsStopOverdue(stop, 101+(30*60), 30))
 }
 
+//go:fix inline
 func int64Ptr(v int64) *int64 {
-	return &v
+	return new(v)
 }

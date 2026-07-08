@@ -10,6 +10,7 @@ import (
 
 type ListWorkersRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"cursor"`
 }
 
 type WorkerSelectOptionsRequest struct {
@@ -51,7 +52,7 @@ type WorkerRepository interface {
 	List(
 		ctx context.Context,
 		req *ListWorkersRequest,
-	) (*pagination.ListResult[*worker.Worker], error)
+	) (*pagination.CursorListResult[*worker.Worker], error)
 	SelectOptions(
 		ctx context.Context,
 		req *WorkerSelectOptionsRequest,

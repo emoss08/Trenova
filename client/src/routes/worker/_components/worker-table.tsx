@@ -1,10 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
-import {
-  driverTypeChoices,
-  statusChoices,
-  workerTypeChoices,
-} from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { driverTypeChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
+import { patchWorker } from "@/lib/graphql/worker-mutations";
+import { workerTableGraphQLConfigs } from "@/lib/graphql/worker-table";
 import type { DockAction } from "@/types/data-table";
 import { Resource } from "@/types/permission";
 import type { Worker } from "@/types/worker";
@@ -15,8 +12,6 @@ import { toast } from "sonner";
 import { getColumns } from "./worker-columns";
 import { WorkerPanel } from "./worker-panel";
 
-
-
 export default function WorkerTable() {
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
@@ -24,7 +19,7 @@ export default function WorkerTable() {
   const handleBulkStatusUpdate = useCallback(
     async (rows: Worker[], status: string) => {
       const updatePromises = rows.map((r) =>
-        apiService.workerService.patch(r.id, {
+        patchWorker(r.id, {
           status: status as Worker["status"],
         }),
       );
@@ -47,7 +42,7 @@ export default function WorkerTable() {
   const handleBulkTypeUpdate = useCallback(
     async (rows: Worker[], type: string) => {
       const updatePromises = rows.map((r) =>
-        apiService.workerService.patch(r.id, {
+        patchWorker(r.id, {
           type: type as Worker["type"],
         }),
       );
@@ -70,7 +65,7 @@ export default function WorkerTable() {
   const handleBulkDriverTypeUpdate = useCallback(
     async (rows: Worker[], driverType: string) => {
       const updatePromises = rows.map((r) =>
-        apiService.workerService.patch(r.id, {
+        patchWorker(r.id, {
           driverType: driverType as Worker["driverType"],
         }),
       );
@@ -129,19 +124,13 @@ export default function WorkerTable() {
   return (
     <DataTable<Worker>
       name="Worker"
-      link="/workers/"
       queryKey="worker-list"
-      exportModelName="worker"
       resource={Resource.Worker}
       columns={columns}
+      graphql={workerTableGraphQLConfigs.worker}
       dockActions={dockActions}
       enableRowSelection
       TablePanel={WorkerPanel}
-      extraSearchParams={{
-        includeFleetDetails: true,
-        includeStateDetails: true,
-        includeProfileDetails: true,
-      }}
     />
   );
 }

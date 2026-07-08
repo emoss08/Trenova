@@ -25,3 +25,11 @@ func FloatValue(v any) float64 {
 		return 0
 	}
 }
+
+func FloatPtrValue(v any) *float64 {
+	if v == nil {
+		return nil
+	}
+	converted := FloatValue(v)
+	return &converted
+}

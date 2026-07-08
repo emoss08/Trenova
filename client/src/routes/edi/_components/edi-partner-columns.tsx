@@ -1,5 +1,8 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { EDIPartnerReadinessBadge, StatusBadge } from "@/components/status-badge";
+import { useQuery } from "@tanstack/react-query";
+import { partnerReadinessQueryOptions } from "./edi-partner-readiness";
 import { Badge } from "@/components/ui/badge";
 import { statusChoices } from "@/lib/choices";
 import type { EDIPartner } from "@/types/edi";
@@ -69,13 +72,19 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
       },
     },
     {
+      id: "readiness",
+      header: "Readiness",
+      cell: ({ row }) => <PartnerReadinessCell partnerId={row.original.id ?? ""} />,
+      size: 120,
+      enableSorting: false,
+      meta: {
+        label: "Readiness",
+      },
+    },
+    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <Badge variant={row.original.status === "Active" ? "active" : "outline"}>
-          {row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 120,
       meta: {
         label: "Status",
@@ -141,4 +150,23 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
       },
     },
   ];
+}
+
+function PartnerReadinessCell({ partnerId }: { partnerId: string }) {
+  const { data, isPending, isError } = useQuery({
+    ...partnerReadinessQueryOptions(partnerId),
+    enabled: partnerId !== "",
+  });
+  if (partnerId === "" || isError) return <DataTablePlaceholder />;
+  if (isPending) {
+    return <span className="text-xs text-muted-foreground">…</span>;
+  }
+  if (!data) return <DataTablePlaceholder />;
+  return (
+    <EDIPartnerReadinessBadge
+      ready={data.ready}
+      completedCount={data.completedCount}
+      totalCount={data.totalCount}
+    />
+  );
 }

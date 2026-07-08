@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -19,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,6 +55,8 @@ type Params struct {
 	ControlNumberRepo   repositories.EDIControlNumberRepository
 	MessageRepo         repositories.EDIMessageRepository
 	TestCaseRepo        repositories.EDITestCaseRepository
+	CarrierInvoiceRepo  repositories.EDICarrierInvoiceRepository
+	InboundFileRepo     repositories.EDIInboundFileRepository
 	InvoiceRepo         repositories.InvoiceRepository
 	ShipmentEventRepo   repositories.ShipmentEventRepository
 	ServiceFailureRepo  repositories.ServiceFailureRepository
@@ -66,10 +70,13 @@ type Params struct {
 	ShipmentSvc         services.ShipmentService
 	WorkflowStarter     services.WorkflowStarter
 	AuditService        services.AuditService
+	Notifications       *notificationservice.Service
 	Encryption          *encryptionservice.Service
 	Validator           *Validator
 	DB                  coreports.DBConnection
 	Coordinator         *shipmentstate.Coordinator
+	Transport           services.EDITransportDispatcher
+	Metrics             *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
@@ -87,6 +94,8 @@ type Service struct {
 	controlNumberRepo   repositories.EDIControlNumberRepository
 	messageRepo         repositories.EDIMessageRepository
 	testCaseRepo        repositories.EDITestCaseRepository
+	carrierInvoiceRepo  repositories.EDICarrierInvoiceRepository
+	inboundFileRepo     repositories.EDIInboundFileRepository
 	invoiceRepo         repositories.InvoiceRepository
 	shipmentEventRepo   repositories.ShipmentEventRepository
 	serviceFailureRepo  repositories.ServiceFailureRepository
@@ -100,16 +109,24 @@ type Service struct {
 	shipmentSvc         services.ShipmentService
 	workflowStarter     services.WorkflowStarter
 	auditService        services.AuditService
+	notifications       *notificationservice.Service
 	encryption          *encryptionservice.Service
 	validator           *Validator
 	db                  coreports.DBConnection
 	coordinator         *shipmentstate.Coordinator
+	transport           services.EDITransportDispatcher
 	lifecycleApplier    *internaledilifecycle.Applier
+	metrics             *metrics.EDI
 }
 
 func New(p Params) *Service {
+	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	if p.Metrics != nil {
+		ediMetrics = p.Metrics.EDI
+	}
 	return &Service{
 		l:                   p.Logger.Named("service.edi"),
+		metrics:             ediMetrics,
 		partnerRepo:         p.PartnerRepo,
 		mappingProfileRepo:  p.MappingProfileRepo,
 		connectionRepo:      p.ConnectionRepo,
@@ -123,6 +140,8 @@ func New(p Params) *Service {
 		controlNumberRepo:   p.ControlNumberRepo,
 		messageRepo:         p.MessageRepo,
 		testCaseRepo:        p.TestCaseRepo,
+		carrierInvoiceRepo:  p.CarrierInvoiceRepo,
+		inboundFileRepo:     p.InboundFileRepo,
 		invoiceRepo:         p.InvoiceRepo,
 		shipmentEventRepo:   p.ShipmentEventRepo,
 		serviceFailureRepo:  p.ServiceFailureRepo,
@@ -136,10 +155,12 @@ func New(p Params) *Service {
 		shipmentSvc:         p.ShipmentSvc,
 		workflowStarter:     p.WorkflowStarter,
 		auditService:        p.AuditService,
+		notifications:       p.Notifications,
 		encryption:          p.Encryption,
 		validator:           p.Validator,
 		db:                  p.DB,
 		coordinator:         p.Coordinator,
+		transport:           p.Transport,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,
@@ -540,6 +561,20 @@ func (s *Service) GetTransfer(
 	return s.transferRepo.GetTransferByID(ctx, req)
 }
 
+func (s *Service) GetTransfersByIDs(
+	ctx context.Context,
+	req repositories.GetEDITransfersByIDsRequest,
+) ([]*edi.EDITransfer, error) {
+	return s.transferRepo.GetTransfersByIDs(ctx, req)
+}
+
+func (s *Service) TransferSelectOptions(
+	ctx context.Context,
+	req *repositories.EDITransferSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDITransfer], error) {
+	return s.transferRepo.SelectOptions(ctx, req)
+}
+
 func (s *Service) MappingPreview(
 	ctx context.Context,
 	req repositories.GetEDITransferByIDRequest,
@@ -757,6 +792,7 @@ func (s *Service) ProcessLoadTenderApproval(
 ) (*ApproveLoadTenderTransferWorkflowResult, error) {
 	result := new(ApproveLoadTenderTransferWorkflowResult)
 	var processingErr error
+	var approvedTransfer *edi.EDITransfer
 
 	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
@@ -858,6 +894,30 @@ func (s *Service) ProcessLoadTenderApproval(
 		transfer.MappingSnapshot = preview.All
 		transfer.ProcessedAt = &now
 
+		if transfer.InboundMessageID.IsNotNil() {
+			updated, updateErr := s.transferRepo.UpdateTransfer(txCtx, transfer)
+			if updateErr != nil {
+				return updateErr
+			}
+			approvedTransfer = updated
+			if commentErr := s.createSystemShipmentComment(
+				txCtx,
+				createdShipment.ID,
+				pagination.TenantInfo{
+					OrgID: transfer.TargetOrganizationID,
+					BuID:  transfer.TargetBusinessUnitID,
+				},
+				"Shipment created from accepted external EDI load tender.",
+				map[string]any{"transferId": transfer.ID},
+			); commentErr != nil {
+				return commentErr
+			}
+			result.TransferID = updated.ID
+			result.TargetShipmentID = updated.TargetShipmentID
+			result.ProcessedAt = now
+			return nil
+		}
+
 		if err = s.setShipmentTenderStatus(
 			txCtx,
 			transfer.SourceShipmentID,
@@ -936,6 +996,9 @@ func (s *Service) ProcessLoadTenderApproval(
 	if processingErr != nil {
 		return nil, processingErr
 	}
+	if approvedTransfer != nil {
+		s.generateExternalTenderResponse(ctx, approvedTransfer, payload.Actor.UserID)
+	}
 
 	return result, nil
 }
@@ -1003,6 +1066,10 @@ func (s *Service) RejectTransfer(
 			return err
 		}
 
+		if transfer.SourceShipmentID.IsNil() {
+			return nil
+		}
+
 		if err = s.setShipmentTenderStatus(
 			txCtx,
 			transfer.SourceShipmentID,
@@ -1030,6 +1097,9 @@ func (s *Service) RejectTransfer(
 		return nil, err
 	}
 
+	if updated.InboundMessageID.IsNotNil() {
+		s.generateExternalTenderResponse(ctx, updated, actor.UserID)
+	}
 	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender rejected")
 	return updated, nil
 }
@@ -1140,6 +1210,10 @@ func (s *Service) ExpireTransfer(
 			return err
 		}
 
+		if transfer.SourceShipmentID.IsNil() {
+			return nil
+		}
+
 		sourceTenant := pagination.TenantInfo{
 			OrgID: transfer.SourceOrganizationID,
 			BuID:  transfer.SourceBusinessUnitID,
@@ -1244,6 +1318,9 @@ func (s *Service) reviewTransferChange(
 			"EDI transfer change has already been reviewed",
 		)
 	}
+	if err = s.validateTransferChangeReviewer(ctx, change, req.TenantInfo); err != nil {
+		return nil, err
+	}
 
 	var updated *edi.TransferChange
 	now := timeutils.NowUnix()
@@ -1293,6 +1370,35 @@ func (s *Service) reviewTransferChange(
 		"EDI transfer change reviewed",
 	)
 	return updated, nil
+}
+
+func (s *Service) validateTransferChangeReviewer(
+	ctx context.Context,
+	change *edi.TransferChange,
+	tenantInfo pagination.TenantInfo,
+) error {
+	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
+		ctx,
+		repositories.GetEDIShipmentLinkByIDRequest{
+			ID:         change.ShipmentLinkID,
+			TenantInfo: tenantInfo,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	reviewerOrgID := link.TargetOrganizationID
+	if change.Direction == edi.TransferChangeDirectionTargetToSource {
+		reviewerOrgID = link.SourceOrganizationID
+	}
+	if tenantInfo.OrgID != reviewerOrgID || tenantInfo.BuID != link.BusinessUnitID {
+		return errortypes.NewValidationError(
+			"tenantInfo",
+			errortypes.ErrInvalidOperation,
+			"Only the organization receiving this EDI transfer change can review it",
+		)
+	}
+	return nil
 }
 
 func (s *Service) commentTransferChangeReview(
@@ -1372,7 +1478,7 @@ func (s *Service) buildMappingPreview(
 	all := make([]edi.MappingResolution, 0, len(sourceIDs))
 	for _, entityType := range requiredEntityTypes(required) {
 		ids := append([]pulid.ID(nil), required[entityType]...)
-		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+		slices.Sort(ids)
 		for _, sourceID := range ids {
 			resolution := edi.MappingResolution{
 				EntityType:  entityType,
@@ -1757,8 +1863,9 @@ func (s *Service) createSystemShipmentComment(
 	return err
 }
 
+//go:fix inline
 func tenderStatusPtr(status shipment.TenderStatus) *shipment.TenderStatus {
-	return &status
+	return new(status)
 }
 
 func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {

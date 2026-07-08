@@ -15,6 +15,7 @@ import {
 import { timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
+import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
 import { queries } from "@/lib/queries";
 import { isAbsoluteUrl } from "@/lib/utils";
 import { apiService } from "@/services/api";
@@ -80,7 +81,7 @@ export default function OrganizationSettingsForm() {
   const { mutateAsync: updateOrganization } = useOptimisticMutation({
     queryKey: queries.organization.detail(organizationId).queryKey,
     mutationFn: (values: OrganizationSettings) =>
-      apiService.organizationService.update(organizationId, values),
+      updateOrganizationSettingsGraphQL(organizationId, values),
     resourceName: "Organization Settings",
     resetForm: reset,
     setFormError: setError,

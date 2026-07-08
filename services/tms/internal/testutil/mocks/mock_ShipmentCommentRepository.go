@@ -300,23 +300,23 @@ func (_c *MockShipmentCommentRepository_GetCountByShipmentID_Call) RunAndReturn(
 }
 
 // ListByShipmentID provides a mock function for the type MockShipmentCommentRepository
-func (_mock *MockShipmentCommentRepository) ListByShipmentID(ctx context.Context, req *repositories.ListShipmentCommentsRequest) (*pagination.ListResult[*shipment.ShipmentComment], error) {
+func (_mock *MockShipmentCommentRepository) ListByShipmentID(ctx context.Context, req *repositories.ListShipmentCommentsRequest) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByShipmentID")
 	}
 
-	var r0 *pagination.ListResult[*shipment.ShipmentComment]
+	var r0 *pagination.CursorListResult[*shipment.ShipmentComment]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentCommentsRequest) (*pagination.ListResult[*shipment.ShipmentComment], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentCommentsRequest) (*pagination.CursorListResult[*shipment.ShipmentComment], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentCommentsRequest) *pagination.ListResult[*shipment.ShipmentComment]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentCommentsRequest) *pagination.CursorListResult[*shipment.ShipmentComment]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.ShipmentComment])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*shipment.ShipmentComment])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListShipmentCommentsRequest) error); ok {
@@ -357,12 +357,12 @@ func (_c *MockShipmentCommentRepository_ListByShipmentID_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockShipmentCommentRepository_ListByShipmentID_Call) Return(listResult *pagination.ListResult[*shipment.ShipmentComment], err error) *MockShipmentCommentRepository_ListByShipmentID_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockShipmentCommentRepository_ListByShipmentID_Call) Return(cursorListResult *pagination.CursorListResult[*shipment.ShipmentComment], err error) *MockShipmentCommentRepository_ListByShipmentID_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockShipmentCommentRepository_ListByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentCommentsRequest) (*pagination.ListResult[*shipment.ShipmentComment], error)) *MockShipmentCommentRepository_ListByShipmentID_Call {
+func (_c *MockShipmentCommentRepository_ListByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentCommentsRequest) (*pagination.CursorListResult[*shipment.ShipmentComment], error)) *MockShipmentCommentRepository_ListByShipmentID_Call {
 	_c.Call.Return(run)
 	return _c
 }

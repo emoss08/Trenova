@@ -1,0 +1,279 @@
+schema:
+  - internal/api/graphql/schema/*.graphqls
+
+exec:
+  filename: internal/api/graphql/generated/generated.go
+  package: generated
+
+model:
+  filename: internal/api/graphql/gqlmodel/models_gen.go
+  package: gqlmodel
+
+resolver:
+  layout: follow-schema
+  dir: internal/api/graphql/resolver
+  package: resolver
+  filename_template: "{name}.resolvers.go"
+
+autobind: []
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/emoss08/trenova/shared/pulid.ID
+  JSON:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
+  EntityStatus:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.Status
+  EquipmentStatus:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.EquipmentStatus
+  EquipmentClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmenttype.Class
+  FacilityType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/locationcategory.FacilityType
+  LocationCategoryType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/locationcategory.Category
+  LocationGeofenceType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/geofence.Type
+  GeofenceVertex:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/geofence.Vertex
+  Trailer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/trailer.Trailer
+    fields:
+      registrationStateId:
+        resolver: true
+      fleetCodeId:
+        resolver: true
+      equipmentStatus:
+        resolver: true
+      lastKnownLocationId:
+        resolver: true
+      lastKnownLocation:
+        resolver: true
+  Tractor:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tractor.Tractor
+    fields:
+      stateId:
+        resolver: true
+      fleetCodeId:
+        resolver: true
+      secondaryWorkerId:
+        resolver: true
+      equipmentStatus:
+        resolver: true
+      lastKnownLocationId:
+        resolver: true
+      lastKnownLocation:
+        resolver: true
+  Worker:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Worker
+    fields:
+      fleetCodeId:
+        resolver: true
+      managerId:
+        resolver: true
+  WorkerProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerProfile
+    fields:
+      licenseStateId:
+        resolver: true
+      medicalExaminerNpi:
+        fieldName: MedicalExaminerNPI
+      twicCardNumber:
+        fieldName: TWICCardNumber
+      twicExpiry:
+        fieldName: TWICExpiry
+      lastMvrCheck:
+        fieldName: LastMVRCheck
+      eldExempt:
+        fieldName: ELDExempt
+  WorkerPTO:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPTO
+    fields:
+      approverId:
+        resolver: true
+      rejectorId:
+        resolver: true
+  WorkerType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerType
+  DriverType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DriverType
+  WorkerGender:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Gender
+  CDLClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CDLClass
+  EndorsementType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.EndorsementType
+  ComplianceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ComplianceStatus
+  PTOStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOStatus
+  PTOType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOType
+  PTOChartDataPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.PTOChartDataPoint
+  BillingQueueStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.Status
+  BillType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.BillType
+  BillingQueueExceptionReasonCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.ExceptionReasonCode
+  EquipmentType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType
+  EdiPartnerKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.PartnerKind
+  EdiConnectionMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.ConnectionMethod
+  EdiConnectionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.ConnectionStatus
+  EdiTransferStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.TransferStatus
+  EdiDocumentDirection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.DocumentDirection
+  EdiMessageStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MessageStatus
+  EdiMessageDeliveryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MessageDeliveryStatus
+  EdiMessageAckStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MessageAcknowledgmentStatus
+  EdiInboundFileStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.InboundFileStatus
+  EdiTemplateStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.TemplateStatus
+  EdiStandard:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIStandard
+  EdiMappingEntityType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MappingEntityType
+  EdiConnection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIConnection
+  EdiPartner:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIPartner
+  EdiCommunicationProfileSecretState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.CommunicationProfileSecretState
+  EdiCommunicationProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDICommunicationProfile
+  EdiTransfer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITransfer
+  EdiMessage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIMessage
+  EdiTestCase:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITestCase
+  EdiPartnerDocumentProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIPartnerDocumentProfile
+  EdiInboundFile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIInboundFile
+  EdiTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITemplate
+  EdiTemplateVersion:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITemplateVersion
+  EdiMappingProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIMappingProfile
+  EdiMappingProfileItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIMappingProfileItem
+  EquipmentManufacturer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer.EquipmentManufacturer
+  FleetCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fleetcode.FleetCode
+  BusinessUnit:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.BusinessUnit
+  Organization:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.Organization
+    fields:
+      dotNumber:
+        fieldName: DOTNumber
+      logoUrl:
+        fieldName: LogoURL
+  User:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.User
+    fields:
+      timeFormat:
+        resolver: true
+      profilePicUrl:
+        fieldName: ProfilePicURL
+      thumbnailUrl:
+        fieldName: ThumbnailURL
+      businessUnit:
+        resolver: true
+      currentOrganization:
+        resolver: true
+  UsState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/usstate.UsState
+    fields:
+      countryIso3:
+        fieldName: CountryIso3
+  Location:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/location.Location
+  LocationCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/locationcategory.LocationCategory
+  EquipmentContinuity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity.EquipmentContinuity
+    fields:
+      sourceShipmentId:
+        resolver: true
+      sourceShipmentMoveId:
+        resolver: true
+      currentLocationId:
+        resolver: true
+      currentLocationName:
+        resolver: true

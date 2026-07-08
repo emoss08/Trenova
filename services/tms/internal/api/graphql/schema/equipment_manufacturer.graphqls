@@ -1,0 +1,59 @@
+type EquipmentManufacturerEdge {
+  node: EquipmentManufacturer!
+  cursor: String!
+}
+
+type EquipmentManufacturerConnection {
+  edges: [EquipmentManufacturerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EquipmentManufacturer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  name: String!
+  description: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+input EquipmentManufacturerInput {
+  status: EntityStatus!
+  name: String!
+  description: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input EquipmentManufacturerPatchInput {
+  status: EntityStatus
+  name: String
+  description: String
+  version: Int
+}
+
+input BulkUpdateEquipmentManufacturerStatusInput {
+  equipmentManufacturerIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Query {
+  equipmentManufacturers(
+    input: DataTableConnectionInput!
+  ): EquipmentManufacturerConnection!
+  equipmentManufacturer(id: ID!): EquipmentManufacturer
+}
+
+extend type Mutation {
+  createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
+  updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
+  patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
+  bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
+}

@@ -671,7 +671,7 @@ func drawPlainAddressLines(pdf *gofpdf.Fpdf, width float64, block invoicePDFAddr
 	lines = stringutils.FilterEmpty(lines)
 	pdf.SetTextColor(0, 0, 0)
 	pdf.SetFont("Helvetica", "", 8.2)
-	for i := 0; i < lineCount; i++ {
+	for i := range lineCount {
 		if i >= len(lines) {
 			break
 		}
@@ -791,7 +791,7 @@ func drawTextBox(pdf *gofpdf.Fpdf, box invoicePDFBox, lines []string) {
 	pdf.SetFont("Helvetica", "B", 8.2)
 	pdf.CellFormat(box.Width, 4.7, box.Title, "1", 1, "", false, 0, "")
 	pdf.SetFont("Helvetica", "", 8)
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		value := ""
 		if i < len(lines) {
 			value = lines[i]

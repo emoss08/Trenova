@@ -333,7 +333,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 			Pieces:      3,
 			Weight:      700,
 			Commodity: &commodity.Commodity{
-				LinearFeetPerUnit: ptrFloat(1.5),
+				LinearFeetPerUnit: new(1.5),
 			},
 		},
 	}
@@ -429,7 +429,7 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 		Return([]*commodity.Commodity{
 			{
 				ID:                firstCommodityID,
-				LinearFeetPerUnit: ptrFloat(1.25),
+				LinearFeetPerUnit: new(1.25),
 				HazardousMaterial: &hazardousmaterial.HazardousMaterial{ID: pulid.MustNew("hm_")},
 			},
 			{
@@ -572,13 +572,15 @@ func (s *stubFormulaTemplateRepository) SelectOptions(
 }
 
 //go:fix inline
+//go:fix inline
 func ptrFloat64(value float64) *float64 {
-	return &value
+	return new(value)
 }
 
 //go:fix inline
+//go:fix inline
 func ptrFloat(value float64) *float64 {
-	return &value
+	return new(value)
 }
 
 var _ repositories.FormulaTemplateRepository = (*stubFormulaTemplateRepository)(nil)

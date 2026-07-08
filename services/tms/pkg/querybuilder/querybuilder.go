@@ -647,6 +647,26 @@ func (qb *QueryBuilder) ApplyTextSearch(
 	return qb.applySimpleSearch(searchQuery, searchableFields)
 }
 
+func (qb *QueryBuilder) ApplyTextSearchFilter(
+	searchQuery string,
+	searchableFields []string,
+) *QueryBuilder {
+	if searchQuery == "" {
+		return qb
+	}
+
+	if qb.searchConfig != nil && qb.searchConfig.UseSearchVector {
+		tableAlias := qb.tableAlias
+		if tableAlias != "" {
+			tableAlias += "."
+		}
+		qb.buildSearchVectorConditions(searchQuery, tableAlias)
+		return qb
+	}
+
+	return qb.applySimpleSearch(searchQuery, searchableFields)
+}
+
 func (qb *QueryBuilder) applyPostgresTextSearch(searchQuery string) *QueryBuilder {
 	if qb.searchConfig == nil || searchQuery == "" {
 		return qb
@@ -893,9 +913,11 @@ func (qb *QueryBuilder) ApplyFilterGroups(groups []domaintypes.FilterGroup) *Que
 func (qb *QueryBuilder) buildFilterCondition(
 	filter domaintypes.FieldFilter,
 ) (condition string, args []any) {
-	dbField := qb.getDBField(filter.Field)
-	fieldRef := qb.getFieldReference(dbField)
-	isEnum := qb.isEnumField(filter.Field)
+	fieldRef, isEnum, ok := qb.filterFieldReference(filter.Field)
+	if !ok {
+		qb.invalidFields = append(qb.invalidFields, filter.Field)
+		return "", nil
+	}
 
 	isStringOp := qb.isStringOperation(filter.Operator)
 	isInOp := filter.Operator == dbtype.OpIn || filter.Operator == dbtype.OpNotIn
@@ -904,6 +926,27 @@ func (qb *QueryBuilder) buildFilterCondition(
 	}
 
 	return qb.buildConditionStatement(filter.Operator, fieldRef, filter.Value)
+}
+
+func (qb *QueryBuilder) filterFieldReference(field string) (string, bool, bool) {
+	if qb.traversalEnabled && strings.Contains(field, ".") {
+		if nestedDef, exists := qb.fieldConfig.NestedFields[field]; exists {
+			qb.applyNestedFieldJoins(nestedDef.RequiredJoins)
+			return nestedDef.DatabaseField, nestedDef.IsEnum, true
+		}
+
+		if qb.entity != nil && qb.searchConfig != nil {
+			sqlField, joinDefs := qb.resolveNestedField(field)
+			if sqlField == "" {
+				return "", false, false
+			}
+			qb.applyNestedFieldJoins(joinDefs)
+			return sqlField, qb.isCustomRelationshipEnum(field), true
+		}
+	}
+
+	dbField := qb.getDBField(field)
+	return qb.getFieldReference(dbField), qb.isEnumField(field), true
 }
 
 func (qb *QueryBuilder) buildConditionStatement( //nolint:cyclop,funlen // operator handling requires many cases

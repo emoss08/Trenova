@@ -1,7 +1,8 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TextShimmer } from "@/components/ui/text-shimmer";
+import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
 import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
+import { useAuthStore } from "@/stores/auth-store";
 import type { PTOFilter, PTOType } from "@/types/worker";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -19,6 +20,7 @@ import { UpcomingPTOCard } from "./upcoming-pto-card";
 
 export function RequestedPTOOverview() {
   const [searchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
+  const user = useAuthStore((state) => state.user);
 
   const query = useInfiniteQuery({
     queryKey: [
@@ -29,25 +31,24 @@ export function RequestedPTOOverview() {
         startDate: searchParams?.requestPTOFilters?.startDate,
         endDate: searchParams?.requestPTOFilters?.endDate,
         workerId: searchParams?.requestPTOFilters?.workerId,
+        fleetCodeId: searchParams?.requestPTOFilters?.fleetCodeId,
+        timezone: user?.timezone,
       },
     ],
     queryFn: async ({ pageParam }) => {
-      return await apiService.workerService.listUpcomingPTO({
-        filter: { limit: 20, offset: pageParam },
+      return await fetchUpcomingWorkerPTO({
+        filter: { limit: 20, after: pageParam },
         type: searchParams?.requestPTOFilters?.type as PTOType | undefined,
         status: "Requested",
         startDate: searchParams?.requestPTOFilters?.startDate,
         endDate: searchParams?.requestPTOFilters?.endDate,
         workerId: searchParams?.requestPTOFilters?.workerId,
+        fleetCodeId: searchParams?.requestPTOFilters?.fleetCodeId,
+        timezone: user?.timezone,
       });
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === 20) {
-        return lastPageParam + 20;
-      }
-      return undefined;
-    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

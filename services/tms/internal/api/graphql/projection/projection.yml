@@ -1,0 +1,57 @@
+aliases:
+  EquipmentContinuity:
+    currentLocationName: currentLocationId
+  Tractor:
+    equipmentStatus: status
+  Trailer:
+    equipmentStatus: status
+
+virtuals:
+  Location:
+    - geofenceVertices
+  Shipment:
+    - customer
+    - formulaTemplate
+    - sourceDocumentId
+  ShipmentAdditionalCharge:
+    - accessorialCharge
+  ShipmentCommodity:
+    - commodity
+  ShipmentComment:
+    - mentionedUserIds
+  ShipmentEvent:
+    - shipment
+  Tractor:
+    - customFields
+  Trailer:
+    - customFields
+  Worker:
+    - customFields
+
+specials:
+  Tractor:
+    lastKnownLocation:
+      - lastKnownLocation
+      - lastKnownLocationId
+      - lastKnownLocationName
+  Trailer:
+    lastKnownLocation:
+      - lastKnownLocation
+      - lastKnownLocationId
+      - lastKnownLocationName
+
+gates:
+  Tractor:
+    equipmentManufacturer: equipmentDetails
+    equipmentType: equipmentDetails
+    fleetCode: fleetDetails
+    primaryWorker: workerDetails
+    secondaryWorker: workerDetails
+  Trailer:
+    equipmentManufacturer: equipmentDetails
+    equipmentType: equipmentDetails
+    fleetCode: fleetDetails
+
+always:
+  ShipmentEvent:
+    - occurredAt

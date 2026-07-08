@@ -17,7 +17,16 @@ type MarkNotificationsReadRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type ExistsRecentNotificationRequest struct {
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+	EventType      string   `json:"eventType"`
+	CorrelationID  string   `json:"correlationId"`
+	Since          int64    `json:"since"`
+}
+
 type NotificationRepository interface {
+	ExistsRecent(ctx context.Context, req ExistsRecentNotificationRequest) (bool, error)
 	Create(
 		ctx context.Context,
 		entity *notification.Notification,

@@ -120,7 +120,7 @@ func CreateShipmentGraph(
 				ScheduleType:         shipment.StopScheduleTypeOpen,
 				Sequence:             0,
 				ScheduledWindowStart: now + int64(idx*10_000),
-				ScheduledWindowEnd:   int64Ptr(now + int64(idx*10_000) + 1_800),
+				ScheduledWindowEnd:   new(now + int64(idx*10_000) + 1_800),
 			},
 			{
 				ID:                   pulid.MustNew("stp_"),
@@ -133,7 +133,7 @@ func CreateShipmentGraph(
 				ScheduleType:         shipment.StopScheduleTypeOpen,
 				Sequence:             1,
 				ScheduledWindowStart: now + int64(idx*10_000) + 7_200,
-				ScheduledWindowEnd:   int64Ptr(now + int64(idx*10_000) + 9_000),
+				ScheduledWindowEnd:   new(now + int64(idx*10_000) + 9_000),
 			},
 		}
 		_, err = db.NewInsert().Model(&stops).Exec(ctx)
@@ -398,11 +398,13 @@ func MustCreateHazmatSegregationRule(
 }
 
 //go:fix inline
+//go:fix inline
 func float64Ptr(v float64) *float64 {
-	return &v
+	return new(v)
 }
 
 //go:fix inline
+//go:fix inline
 func int64Ptr(v int64) *int64 {
-	return &v
+	return new(v)
 }

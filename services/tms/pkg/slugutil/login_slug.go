@@ -33,10 +33,7 @@ func CandidateLoginSlug(base string, sequence int) string {
 	}
 
 	suffix := "-" + strconv.Itoa(sequence)
-	maxBaseLength := LoginSlugMaxLength - len(suffix)
-	if maxBaseLength < 1 {
-		maxBaseLength = 1
-	}
+	maxBaseLength := max(LoginSlugMaxLength-len(suffix), 1)
 
 	if len(base) > maxBaseLength {
 		base = strings.Trim(base[:maxBaseLength], "-")

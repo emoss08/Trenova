@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"context"
+	"maps"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -55,6 +57,80 @@ func (s *Service) GetCommunicationProfile(
 	}
 
 	return profileWithSecretState(profile), nil
+}
+
+type TestCommunicationProfileConnectionRequest struct {
+	ProfileID  pulid.ID              `json:"-"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
+type TestCommunicationProfileConnectionResult struct {
+	Success bool                          `json:"success"`
+	Checks  []services.EDIConnectionCheck `json:"checks"`
+}
+
+func (s *Service) TestCommunicationProfileConnection(
+	ctx context.Context,
+	req *TestCommunicationProfileConnectionRequest,
+) (*TestCommunicationProfileConnectionResult, error) {
+	profile, err := s.profileRepo.GetProfileByID(
+		ctx,
+		repositories.GetEDICommunicationProfileByIDRequest{
+			ID:         req.ProfileID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if profile.Method == edi.ConnectionMethodInternal {
+		return nil, errortypes.NewValidationError(
+			"method",
+			errortypes.ErrInvalidOperation,
+			"Internal communication profiles do not have an external connection to test",
+		)
+	}
+	secrets, err := s.ProfileTransportSecrets(profile)
+	if err != nil {
+		return nil, err
+	}
+	checks, err := s.transport.TestConnection(
+		ctx,
+		profile.Method,
+		&services.EDITransportRequest{Profile: profile, Secrets: secrets},
+	)
+	if err != nil {
+		return nil, errortypes.NewBusinessError(err.Error())
+	}
+	result := &TestCommunicationProfileConnectionResult{Success: true, Checks: checks}
+	for _, check := range checks {
+		if check.Status == services.EDIConnectionCheckFailed {
+			result.Success = false
+			break
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) InspectAS2Certificate(pemData string) (*as2.CertificateSummary, error) {
+	trimmed := strings.TrimSpace(pemData)
+	if trimmed == "" {
+		return nil, errortypes.NewValidationError(
+			"certificate",
+			errortypes.ErrRequired,
+			"Certificate PEM is required",
+		)
+	}
+	certificate, err := as2.ParseCertificate([]byte(trimmed))
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"certificate",
+			errortypes.ErrInvalid,
+			"Certificate must be a valid PEM certificate",
+		)
+	}
+	summary := as2.SummarizeCertificate(certificate)
+	return &summary, nil
 }
 
 func (s *Service) CreateCommunicationProfile(
@@ -255,9 +331,7 @@ func (s *Service) resolveProfileSecrets(
 ) (map[string]string, error) {
 	secrets := map[string]string{}
 	if existing != nil {
-		for key, value := range existing.EncryptedSecrets {
-			secrets[key] = value
-		}
+		maps.Copy(secrets, existing.EncryptedSecrets)
 	}
 
 	for key, value := range req.Secrets {
@@ -283,7 +357,9 @@ func (s *Service) encryptProfileSecret(
 	value string,
 ) (string, error) {
 	if s.encryption == nil {
-		return value, nil
+		return "", errortypes.NewBusinessError(
+			"EDI communication profile secrets cannot be saved because the encryption service is not configured",
+		)
 	}
 
 	resourceID := profileID.String() + ":" + key

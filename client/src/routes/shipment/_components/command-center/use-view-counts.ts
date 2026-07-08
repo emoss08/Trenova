@@ -1,6 +1,5 @@
-import { apiService } from "@/services/api";
+import { getShipmentSavedViewCountsGraphQL } from "@/lib/graphql/shipment";
 import { useAuthStore } from "@/stores/auth-store";
-import { shipmentSavedViewCountsAnalyticsSchema } from "@/types/analytics";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { SAVED_VIEWS, type SavedViewId } from "./saved-views";
@@ -19,12 +18,14 @@ export function useSavedViewCounts(enabled = true): Record<SavedViewId, number |
   const { data } = useQuery({
     queryKey: ["analytics", "shipment-management", "saved-view-counts", timezone],
     queryFn: async () => {
-      const response = await apiService.analyticService.get({
-        page: "shipment-management",
-        include: "savedViewCounts",
-        timezone,
-      });
-      return shipmentSavedViewCountsAnalyticsSchema.parse(response).savedViewCounts;
+      const counts = await getShipmentSavedViewCountsGraphQL(timezone);
+      return {
+        all: counts?.all ?? 0,
+        transit: counts?.transit ?? 0,
+        "at-risk": counts?.atRisk ?? 0,
+        unassigned: counts?.unassigned ?? 0,
+        "delivering-today": counts?.deliveringToday ?? 0,
+      };
     },
     staleTime: 30_000,
     retry: false,

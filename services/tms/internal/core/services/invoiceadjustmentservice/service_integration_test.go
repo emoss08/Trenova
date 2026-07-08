@@ -1103,7 +1103,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			temporalStarter := &fakeWorkflowStarter{enabled: true}
 			h.service = h.buildService(temporalStarter, decimal.NewFromInt(100))
 			items := make([]*servicesports.InvoiceAdjustmentRequest, 0, batchInlineThreshold+1)
-			for i := 0; i < batchInlineThreshold+1; i++ {
+			for i := range batchInlineThreshold + 1 {
 				items = append(items, &servicesports.InvoiceAdjustmentRequest{
 					InvoiceID:      first.ID,
 					Kind:           invoiceadjustment.KindCreditOnly,
@@ -1508,7 +1508,7 @@ func (h *integrationHarness) createPostedInvoice(
 			timeutils.NowUnix(),
 			invoice.PaymentTermNet30,
 		),
-		PostedAt:           ptrInt64(timeutils.NowUnix()),
+		PostedAt:           new(timeutils.NowUnix()),
 		ShipmentProNumber:  h.shipmentPro,
 		ShipmentBOL:        h.shipmentBOL,
 		BillToName:         h.customerName,
@@ -1562,8 +1562,9 @@ func makeInvoiceLine(
 	}
 }
 
+//go:fix inline
 func ptrInt64(value int64) *int64 {
-	return &value
+	return new(value)
 }
 
 func (h *integrationHarness) createDocument(

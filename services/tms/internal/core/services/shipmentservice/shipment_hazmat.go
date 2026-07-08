@@ -93,7 +93,7 @@ func evaluateHazmatConflicts(
 ) []hazmatConflict {
 	conflicts := make([]hazmatConflict, 0)
 
-	for i := 0; i < len(candidates); i++ {
+	for i := range candidates {
 		leftCandidate := candidates[i]
 		leftCommodity, ok := hazmatCommodities[leftCandidate.commodityID]
 		if !ok {

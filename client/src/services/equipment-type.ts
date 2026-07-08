@@ -1,29 +1,77 @@
-import { api } from "@/lib/api";
+import {
+  BulkUpdateEquipmentTypeStatusDocument,
+  CreateEquipmentTypeDocument,
+  PatchEquipmentTypeDocument,
+  UpdateEquipmentTypeDocument,
+  type BulkUpdateEquipmentTypeStatusMutation,
+  type CreateEquipmentTypeMutation,
+  type EquipmentTypeInput,
+  type PatchEquipmentTypeMutation,
+  type UpdateEquipmentTypeMutation,
+} from "@/graphql/generated/graphql";
+import { requestGraphQL } from "@/lib/graphql";
 import { safeParse } from "@/lib/parse";
 import {
   bulkUpdateEquipmentTypeStatusResponseSchema,
   equipmentTypeSchema,
   type BulkUpdateEquipmentTypeStatusRequest,
-  type BulkUpdateEquipmentTypeStatusResponse,
   type EquipmentType,
 } from "@/types/equipment-type";
 
-export class EquipmentTypeService {
-  public async bulkUpdateStatus(request: BulkUpdateEquipmentTypeStatusRequest) {
-    const response = await api.post<BulkUpdateEquipmentTypeStatusResponse>(
-      "/equipment-types/bulk-update-status",
-      request,
-    );
+function toEquipmentTypeInput(data: EquipmentType): EquipmentTypeInput {
+  return {
+    status: data.status,
+    code: data.code,
+    description: data.description ?? null,
+    class: data.class,
+    color: data.color ?? null,
+    interiorLength: data.interiorLength ?? null,
+    version: data.version,
+  };
+}
 
-    return safeParse(bulkUpdateEquipmentTypeStatusResponseSchema, response, "BulkUpdateEquipmentTypeStatus");
+export class EquipmentTypeService {
+  public async create(data: EquipmentType) {
+    const response = (await requestGraphQL({
+      document: CreateEquipmentTypeDocument,
+      operationName: "CreateEquipmentType",
+      variables: { input: toEquipmentTypeInput(data) },
+    })) as CreateEquipmentTypeMutation;
+
+    return safeParse(equipmentTypeSchema, response.createEquipmentType, "EquipmentType");
   }
 
-  public async patch(id: EquipmentType["id"], data: Partial<EquipmentType>) {
-    const response = await api.patch<EquipmentType>(
-      `/equipment-types/${id}`,
-      data,
-    );
+  public async update(id: NonNullable<EquipmentType["id"]>, data: EquipmentType) {
+    const response = (await requestGraphQL({
+      document: UpdateEquipmentTypeDocument,
+      operationName: "UpdateEquipmentType",
+      variables: { id, input: toEquipmentTypeInput(data) },
+    })) as UpdateEquipmentTypeMutation;
 
-    return safeParse(equipmentTypeSchema, response, "EquipmentType");
+    return safeParse(equipmentTypeSchema, response.updateEquipmentType, "EquipmentType");
+  }
+
+  public async bulkUpdateStatus(request: BulkUpdateEquipmentTypeStatusRequest) {
+    const response = (await requestGraphQL({
+      document: BulkUpdateEquipmentTypeStatusDocument,
+      operationName: "BulkUpdateEquipmentTypeStatus",
+      variables: { input: request },
+    })) as BulkUpdateEquipmentTypeStatusMutation;
+
+    return safeParse(
+      bulkUpdateEquipmentTypeStatusResponseSchema,
+      response.bulkUpdateEquipmentTypeStatus,
+      "BulkUpdateEquipmentTypeStatus",
+    );
+  }
+
+  public async patch(id: NonNullable<EquipmentType["id"]>, data: Partial<EquipmentType>) {
+    const response = (await requestGraphQL({
+      document: PatchEquipmentTypeDocument,
+      operationName: "PatchEquipmentType",
+      variables: { id, input: data },
+    })) as PatchEquipmentTypeMutation;
+
+    return safeParse(equipmentTypeSchema, response.patchEquipmentType, "EquipmentType");
   }
 }

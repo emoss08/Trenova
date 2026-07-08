@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,11 +18,13 @@ import (
 var (
 	_ bun.BeforeAppendModelHook          = (*WorkerPTO)(nil)
 	_ domaintypes.PostgresSearchable     = (*WorkerPTO)(nil)
+	_ pagination.CursorEntity            = (*WorkerPTO)(nil)
 	_ validationframework.TenantedEntity = (*WorkerPTO)(nil)
 )
 
 type WorkerPTO struct {
-	bun.BaseModel `bun:"table:worker_pto,alias:wpto" json:"-"`
+	bun.BaseModel             `bun:"table:worker_pto,alias:wpto" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	WorkerID       pulid.ID  `json:"workerId"       bun:"worker_id,pk,type:VARCHAR(100),notnull"`
@@ -136,6 +139,10 @@ func (wpto *WorkerPTO) BeforeAppendModel(_ context.Context, query bun.Query) err
 
 func (wpto *WorkerPTO) GetID() pulid.ID {
 	return wpto.ID
+}
+
+func (wpto *WorkerPTO) GetCreatedAt() int64 {
+	return wpto.CreatedAt
 }
 
 func (wpto *WorkerPTO) GetResourceType() string {

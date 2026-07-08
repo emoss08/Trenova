@@ -13,6 +13,12 @@
       "vite/client",
       "google.maps",
     ],
+    "plugins": [
+      {
+        "name": "@0no-co/graphqlsp",
+        "schema": "./src/graphql/schema.graphql"
+      }
+    ],
     "skipLibCheck": true,
     "paths": {
       "@/*": [

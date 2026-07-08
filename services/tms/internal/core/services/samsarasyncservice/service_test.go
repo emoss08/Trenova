@@ -135,9 +135,10 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 			},
 		}
 
-		repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*worker.Worker]{
-			Items: []*worker.Worker{w},
-			Total: 1,
+		total := 1
+		repo.On("List", mock.Anything, mock.Anything).Return(&pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{w},
+			TotalCount: &total,
 		}, nil).Once()
 		repo.On("Update", mock.Anything, mock.Anything).Return(
 			func(_ context.Context, entity *worker.Worker) *worker.Worker { return entity },
@@ -177,9 +178,10 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 			},
 		}
 
-		repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*worker.Worker]{
-			Items: []*worker.Worker{w},
-			Total: 1,
+		total := 1
+		repo.On("List", mock.Anything, mock.Anything).Return(&pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{w},
+			TotalCount: &total,
 		}, nil).Once()
 
 		result, err := svc.SyncWorkersToSamsara(t.Context(), pagination.TenantInfo{
@@ -216,9 +218,10 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 			},
 		}
 
-		repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*worker.Worker]{
-			Items: []*worker.Worker{w},
-			Total: 1,
+		total := 1
+		repo.On("List", mock.Anything, mock.Anything).Return(&pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{w},
+			TotalCount: &total,
 		}, nil).Once()
 		repo.On("Update", mock.Anything, mock.Anything).Return(
 			func(_ context.Context, entity *worker.Worker) *worker.Worker { return entity },

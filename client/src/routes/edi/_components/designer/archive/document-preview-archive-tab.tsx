@@ -1,5 +1,9 @@
+import {
+  ControlledEDIDocumentProfileAutocompleteField,
+  ControlledEDIPartnerAutocompleteField,
+  ControlledEDITemplateAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,18 +39,12 @@ import {
   DownloadIcon,
   EyeIcon,
   FileCode2Icon,
-  InfoIcon,
   PlayIcon,
   RefreshCwIcon,
-  ShieldCheckIcon,
+  ShieldCheckIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  ControlledEDIDocumentProfileAutocompleteField,
-  ControlledEDIPartnerAutocompleteField,
-  ControlledEDITemplateAutocompleteField,
-} from "@/components/autocomplete-fields";
 import { formatUnix } from "../../edi-display-utils";
 import { ControlledSelectField } from "../components/designer-fields";
 import {
@@ -58,9 +56,6 @@ import {
   parseSettings,
   profileToDraft,
 } from "../components/designer-shared";
-import MessageInspectorSheet from "../inspector/message-inspector-sheet";
-import { controlNumberText } from "../inspector/components/control-numbers-tab";
-import type { InspectorTab } from "../inspector/components/inspector-tabs";
 import { useDocumentArchiveUrlState } from "../hooks/use-edi-designer-url-state";
 import {
   useGenerateEDIDocumentMutation,
@@ -70,6 +65,9 @@ import {
   useSaveEDIDocumentProfileMutation,
 } from "../hooks/use-edi-document-mutations";
 import { useEDIDocumentArchiveQueries } from "../hooks/use-edi-document-queries";
+import { controlNumberText } from "../inspector/components/control-numbers-tab";
+import type { InspectorTab } from "../inspector/components/inspector-tabs";
+import MessageInspectorSheet from "../inspector/message-inspector-sheet";
 import { AckEditor } from "../profile/ack-editor";
 import { EnvelopeEditor } from "../profile/envelope-editor";
 import {
@@ -172,19 +170,18 @@ export function DocumentPreviewArchiveTab() {
       }),
     [archiveDirection, archiveTransactionSet, partnerId],
   );
-  const documentContextQueryString = useMemo(
-    () =>
-      buildEDIDocumentContextQuery({
-        limit: 100,
-        transactionSet: archiveTransactionSet,
-        direction: archiveDirection,
-      }),
+  const templateFilters = useMemo(
+    () => ({
+      limit: 100,
+      transactionSet: archiveTransactionSet,
+      direction: archiveDirection,
+    }),
     [archiveDirection, archiveTransactionSet],
   );
   const { profilesQuery, templatesQuery, messagesQuery } = useEDIDocumentArchiveQueries({
     messagesQueryString,
     profilesQueryString: profileContextQueryString,
-    templatesQueryString: documentContextQueryString,
+    templateFilters,
   });
   const queriedSelectedProfile =
     profilesQuery.data?.results.find((profile) => profile.id === profileId) ?? null;
@@ -203,7 +200,7 @@ export function DocumentPreviewArchiveTab() {
   const documentContextLabel = [
     selectedPartnerLabel || "No partner selected",
     selectedDocumentProfile?.name ??
-      (!!partnerId && !profileId ? "New profile draft" : "No profile"),
+    (!!partnerId && !profileId ? "New profile draft" : "No profile"),
     activeTemplate?.name ?? "No template",
     activeTemplate?.activeVersion?.versionNumber
       ? `v${activeTemplate.activeVersion.versionNumber}`
@@ -218,10 +215,6 @@ export function DocumentPreviewArchiveTab() {
   const sourceTransactionSet = sourceContext.transactionSet;
   const sourceDirection = sourceContext.direction;
   const hasSourceValue = hasEDIDocumentSourceValue(sourceValues, sourceTransactionSet);
-  const matchingProfiles = profilesQuery.data?.results ?? [];
-  const selectedPartnerHasNoProfiles =
-    !!partnerId && !profileId && !profilesQuery.isLoading && matchingProfiles.length === 0;
-  const isCreatingProfile = !!partnerId && !profileId;
   const invalidateDocumentProfiles = useInvalidateEDIDocumentProfiles();
   const invalidateMessageArchive = useInvalidateEDIMessageArchive();
 
@@ -272,6 +265,7 @@ export function DocumentPreviewArchiveTab() {
           <div className="flex flex-col gap-3 p-3">
             <ControlledEDIPartnerAutocompleteField
               value={partnerId}
+              placeholder="Select a partner..."
               onValueChange={(nextPartnerId) => {
                 setPartnerId(nextPartnerId);
                 setProfileId("");
@@ -299,10 +293,9 @@ export function DocumentPreviewArchiveTab() {
               direction={archiveDirection}
               disabled={!partnerId}
               placeholder={partnerId ? "Select document profile" : "Select a partner first."}
-              description={!partnerId ? "Select a partner first." : undefined}
               noResultsMessage="No document profiles match this partner and document context."
             />
-            {selectedPartnerHasNoProfiles && (
+            {/* {selectedPartnerHasNoProfiles && (
               <Alert variant="info" className="py-2 text-xs">
                 <InfoIcon className="size-4" />
                 <AlertDescription className="text-xs">
@@ -318,7 +311,7 @@ export function DocumentPreviewArchiveTab() {
                   New profile for selected partner. Save Profile will create and select it.
                 </AlertDescription>
               </Alert>
-            )}
+            )} */}
             <InputBlock
               label="Profile Name"
               value={profileDraft.name}
@@ -446,7 +439,7 @@ export function DocumentPreviewArchiveTab() {
                 {documentContextLabel}
               </div>
             </div>
-            <div className="flex flex-row items-start justify-between gap-2">
+            <div className="flex flex-row items-start justify-between gap-2 px-2">
               <DocumentSourceControls
                 transactionSet={sourceTransactionSet}
                 values={sourceValues}

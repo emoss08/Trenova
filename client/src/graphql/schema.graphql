@@ -1,0 +1,2477 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+scalar Any
+
+enum AssignmentStatus {
+  Canceled
+  Completed
+  InProgress
+  New
+}
+
+enum BillType {
+  CreditMemo
+  DebitMemo
+  Invoice
+}
+
+enum BillingQueueExceptionReasonCode {
+  AccessorialDispute
+  CustomerInformationError
+  DuplicateCharge
+  IncorrectRates
+  MissingDocumentation
+  MissingReferenceNumber
+  Other
+  RateNotOnFile
+  ServiceFailure
+  WeightDiscrepancy
+}
+
+type BillingQueueItem {
+  """
+  Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
+  """
+  adjustmentContext: JSON!
+  assignedBiller: User
+  assignedBillerId: ID
+  billType: BillType!
+  businessUnitId: ID!
+  cancelReason: String!
+  canceledAt: Int
+  canceledBy: User
+  canceledById: ID
+  correctionGroupId: ID
+  createdAt: Int!
+  exceptionNotes: String!
+  exceptionReasonCode: BillingQueueExceptionReasonCode
+  id: ID!
+  isAdjustmentOrigin: Boolean!
+  number: String!
+  organizationId: ID!
+  rebillStrategy: String
+  requiresReplacementReview: Boolean!
+  rerateVariancePercent: String!
+  reviewCompletedAt: Int
+  reviewNotes: String!
+  reviewStartedAt: Int
+  shipment: Shipment
+  shipmentId: ID!
+  sourceCreditMemoInvoiceId: ID
+  sourceInvoiceAdjustmentId: ID
+  sourceInvoiceId: ID
+  status: BillingQueueStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum BillingQueueStatus {
+  Approved
+  Canceled
+  Exception
+  InReview
+  OnHold
+  Posted
+  ReadyForReview
+  SentBackToOps
+}
+
+input BulkUpdateEquipmentManufacturerStatusInput {
+  equipmentManufacturerIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateEquipmentTypeStatusInput {
+  equipmentTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateTractorStatusInput {
+  status: EquipmentStatus!
+  tractorIds: [ID!]!
+}
+
+input BulkUpdateTrailerStatusInput {
+  status: EquipmentStatus!
+  trailerIds: [ID!]!
+}
+
+type BusinessUnit {
+  code: String!
+  createdAt: Int!
+  id: ID!
+  name: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum CDLClass {
+  A
+  B
+  C
+}
+
+enum ComplianceStatus {
+  Compliant
+  NonCompliant
+  Pending
+}
+
+input DataTableConnectionInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  query: String
+  sort: [SortFieldInput!]
+}
+
+enum DriverType {
+  Local
+  OTR
+  Regional
+  Team
+}
+
+type EdiCommunicationProfile {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  ediConnectionId: ID
+  ediPartnerId: ID
+  id: ID!
+  method: EdiConnectionMethod!
+  name: String!
+  organizationId: ID!
+  partner: EdiPartner
+  secretState: [EdiCommunicationProfileSecretState!]
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiCommunicationProfileConnection {
+  edges: [EdiCommunicationProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiCommunicationProfileEdge {
+  cursor: String!
+  node: EdiCommunicationProfile!
+}
+
+type EdiCommunicationProfileSecretState {
+  key: String!
+}
+
+type EdiConnection {
+  id: ID!
+  method: EdiConnectionMethod!
+  status: EdiConnectionStatus!
+}
+
+enum EdiConnectionMethod {
+  AS2
+  Internal
+  SFTP
+  VAN
+}
+
+enum EdiConnectionStatus {
+  Active
+  PendingAcceptance
+  Rejected
+  Revoked
+  Suspended
+}
+
+enum EdiDocumentDirection {
+  Inbound
+  Outbound
+}
+
+type EdiInboundFile {
+  businessUnitId: ID!
+  checksum: String!
+  communicationProfileId: ID!
+  createdAt: Int!
+  ediPartnerId: ID
+  failureReason: String
+  fileName: String!
+  id: ID!
+  interchangeControlNumber: String
+  isaReceiverId: String
+  isaReceiverQualifier: String
+  isaSenderId: String
+  isaSenderQualifier: String
+  method: EdiConnectionMethod!
+  organizationId: ID!
+  partner: EdiPartner
+  processedAt: Int
+  receivedAt: Int!
+  remotePath: String!
+  sizeBytes: Int!
+  status: EdiInboundFileStatus!
+  transactionCount: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiInboundFileConnection {
+  edges: [EdiInboundFileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiInboundFileEdge {
+  cursor: String!
+  node: EdiInboundFile!
+}
+
+enum EdiInboundFileStatus {
+  Duplicate
+  Parsed
+  PartiallyProcessed
+  Processed
+  Quarantined
+  Received
+}
+
+enum EdiMappingEntityType {
+  AccessorialCharge
+  Commodity
+  Customer
+  FormulaTemplate
+  Location
+  ServiceFailureReasonCode
+  ServiceType
+  ShipmentType
+}
+
+type EdiMappingProfile {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  ediPartnerId: ID!
+  entries: [EdiMappingProfileItem!]
+  id: ID!
+  name: String!
+  organizationId: ID!
+  partner: EdiPartner
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiMappingProfileConnection {
+  edges: [EdiMappingProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiMappingProfileEdge {
+  cursor: String!
+  node: EdiMappingProfile!
+}
+
+type EdiMappingProfileItem {
+  businessUnitId: ID!
+  createdAt: Int!
+  ediPartnerId: ID!
+  entityType: EdiMappingEntityType!
+  id: ID!
+  mappingProfileId: ID!
+  organizationId: ID!
+  sourceId: ID!
+  sourceLabel: String
+  targetId: ID!
+  targetLabel: String
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiMessage {
+  ackLastError: String
+  ackMessageId: ID
+  ackReceivedAt: Int
+  ackStatus: EdiMessageAckStatus
+  businessUnitId: ID!
+  createdAt: Int!
+  deliveryAttempts: Int!
+  deliveryLastAttemptAt: Int
+  deliveryLastError: String
+  deliveryRemotePath: String
+  deliverySentAt: Int
+  deliveryStatus: EdiMessageDeliveryStatus
+  direction: EdiDocumentDirection!
+  documentTypeId: ID!
+  ediPartnerId: ID!
+  generatedAt: Int!
+  groupControlNumber: String!
+  id: ID!
+  inboundFileId: ID
+  interchangeControlNumber: String!
+  organizationId: ID!
+  partner: EdiPartner
+  partnerDocumentProfileId: ID
+  segmentCount: Int!
+  shipmentId: ID
+  status: EdiMessageStatus!
+  templateId: ID
+  templateVersionId: ID
+  transactionControlNumber: String!
+  transactionSet: String!
+  transferId: ID
+  updatedAt: Int!
+  version: Int!
+  x12Version: String!
+}
+
+enum EdiMessageAckStatus {
+  Accepted
+  Failed
+  NotExpected
+  Pending
+  Rejected
+}
+
+type EdiMessageConnection {
+  edges: [EdiMessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum EdiMessageDeliveryStatus {
+  DeadLettered
+  Failed
+  Queued
+  Sending
+  Sent
+}
+
+type EdiMessageEdge {
+  cursor: String!
+  node: EdiMessage!
+}
+
+enum EdiMessageStatus {
+  Failed
+  Generated
+}
+
+type EdiPartner {
+  businessUnitId: ID!
+  code: String!
+  connection: EdiConnection
+  contactEmail: String
+  contactName: String
+  contactPhone: String
+  country: String!
+  createdAt: Int!
+  customerId: ID
+  defaultMappingProfileId: ID
+  defaultTransport: EdiCommunicationProfile
+  defaultTransportId: ID
+  description: String
+  enabledForInbound: Boolean!
+  enabledForOutbound: Boolean!
+  id: ID!
+  internalOrganization: Organization
+  internalOrganizationId: ID
+  kind: EdiPartnerKind!
+  name: String!
+  organizationId: ID!
+  status: EntityStatus!
+  timezone: String
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiPartnerConnection {
+  edges: [EdiPartnerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiPartnerDocumentProfile {
+  direction: EdiDocumentDirection!
+  ediPartnerId: ID!
+  id: ID!
+  name: String!
+  partner: EdiPartner
+  transactionSet: String!
+}
+
+type EdiPartnerEdge {
+  cursor: String!
+  node: EdiPartner!
+}
+
+enum EdiPartnerKind {
+  External
+  Internal
+}
+
+type EdiPartnerReadinessState {
+  completedCount: Int!
+  partnerId: ID!
+  ready: Boolean!
+  totalCount: Int!
+}
+
+type EdiPartnerScorecard {
+  avgAckSeconds: Float
+  deadLetteredCount: Int!
+  deliverySuccessRate: Float
+  failedCount: Int!
+  oldestPendingAgeSeconds: Int
+  outboundTotal: Int!
+  overdueAckCount: Int!
+  p95AckSeconds: Float
+  partnerCode: String!
+  partnerId: ID!
+  partnerName: String!
+  pendingOver4hCount: Int!
+  pendingOver24hCount: Int!
+  receivedCount: Int!
+  sentCount: Int!
+}
+
+enum EdiStandard {
+  X12
+}
+
+type EdiSummary {
+  ackStatusCounts: [EdiSummaryStatusCount!]!
+  attentionItems: [EdiSummaryAttentionItem!]!
+  deliveryStatusCounts: [EdiSummaryStatusCount!]!
+  inboundFileStatusCounts: [EdiSummaryStatusCount!]!
+  inboundTransferStatusCounts: [EdiSummaryStatusCount!]!
+  overdueAckCount: Int!
+}
+
+type EdiSummaryAttentionItem {
+  error: String
+  id: ID!
+  kind: EdiSummaryAttentionKind!
+  occurredAt: Int!
+  partnerCode: String
+  partnerId: ID
+  partnerName: String
+  reference: String
+}
+
+enum EdiSummaryAttentionKind {
+  InboundFile
+  Message
+}
+
+type EdiSummaryStatusCount {
+  count: Int!
+  status: String!
+}
+
+type EdiTemplate {
+  activeVersion: EdiTemplateVersion
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  direction: EdiDocumentDirection!
+  documentTypeId: ID!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  standard: EdiStandard!
+  status: EdiTemplateStatus!
+  transactionSet: String!
+  updatedAt: Int!
+  version: Int!
+  versions: [EdiTemplateVersion!]
+}
+
+type EdiTemplateConnection {
+  edges: [EdiTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiTemplateEdge {
+  cursor: String!
+  node: EdiTemplate!
+}
+
+enum EdiTemplateStatus {
+  Active
+  Archived
+  Certified
+  Deprecated
+  Draft
+  Superseded
+}
+
+type EdiTemplateVersion {
+  activatedAt: Int
+  activationNotes: String
+  archiveNotes: String
+  archivedAt: Int
+  businessUnitId: ID!
+  certificationNotes: String
+  certifiedAt: Int
+  createdAt: Int!
+  deprecatedAt: Int
+  deprecatedNotes: String
+  functionalGroupId: String!
+  id: ID!
+  isActive: Boolean!
+  notes: String
+  organizationId: ID!
+  sourceVersionId: ID
+  status: EdiTemplateStatus!
+  supersededAt: Int
+  supersededNotes: String
+  templateId: ID!
+  updatedAt: Int!
+  version: Int!
+  versionNumber: Int!
+  x12Version: String!
+}
+
+type EdiTestCase {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  documentProfile: EdiPartnerDocumentProfile
+  expectedErrors: Int!
+  expectedWarnings: Int!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  partnerDocumentProfileId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiTestCaseConnection {
+  edges: [EdiTestCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiTestCaseEdge {
+  cursor: String!
+  node: EdiTestCase!
+}
+
+type EdiTransfer {
+  createdAt: Int!
+  failureReason: String
+  id: ID!
+  inboundMessageId: ID
+  mappingSnapshot: Any!
+  processedAt: Int
+  rejectionReason: String
+  sourceBusinessUnitId: ID!
+  sourceOrganizationId: ID!
+  sourcePartner: EdiPartner
+  sourcePartnerId: ID!
+  sourceShipmentId: ID
+  status: EdiTransferStatus!
+  submittedAt: Int!
+  targetBusinessUnitId: ID!
+  targetOrganizationId: ID!
+  targetPartner: EdiPartner
+  targetPartnerId: ID!
+  targetShipmentId: ID
+  tenderPayload: Any!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiTransferConnection {
+  edges: [EdiTransferEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum EdiTransferDirection {
+  Inbound
+  Outbound
+}
+
+type EdiTransferEdge {
+  cursor: String!
+  node: EdiTransfer!
+}
+
+enum EdiTransferStatus {
+  Approved
+  Canceled
+  Expired
+  Failed
+  MappingRequired
+  PendingApproval
+  Processing
+  Rejected
+  Submitted
+}
+
+type EdiVolumePoint {
+  bucketSeconds: Int!
+  bucketStart: Int!
+  failedCount: Int!
+  outboundCount: Int!
+  receivedCount: Int!
+  sentCount: Int!
+}
+
+enum EndorsementType {
+  H
+  N
+  O
+  P
+  T
+  X
+}
+
+enum EntityStatus {
+  Active
+  Inactive
+}
+
+enum EquipmentClass {
+  Container
+  Other
+  Tractor
+  Trailer
+}
+
+type EquipmentContinuity {
+  businessUnitId: ID!
+  createdAt: Int!
+  currentLocationId: ID
+  currentLocationName: String!
+  equipmentId: ID!
+  equipmentType: String!
+  id: ID!
+  isCurrent: Boolean!
+  organizationId: ID!
+  sourceShipmentId: ID
+  sourceShipmentMoveId: ID
+  updatedAt: Int!
+  version: Int!
+}
+
+type EquipmentManufacturer {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EquipmentManufacturerConnection {
+  edges: [EquipmentManufacturerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EquipmentManufacturerEdge {
+  cursor: String!
+  node: EquipmentManufacturer!
+}
+
+input EquipmentManufacturerInput {
+  createdAt: Int!
+  description: String!
+  name: String!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+input EquipmentManufacturerPatchInput {
+  description: String
+  name: String
+  status: EntityStatus
+  version: Int
+}
+
+enum EquipmentStatus {
+  AtMaintenance
+  Available
+  OutOfService
+  Sold
+}
+
+type EquipmentType {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  class: EquipmentClass!
+  code: String!
+  color: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  interiorLength: Float
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EquipmentTypeConnection {
+  edges: [EquipmentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EquipmentTypeEdge {
+  cursor: String!
+  node: EquipmentType!
+}
+
+input EquipmentTypeInput {
+  class: EquipmentClass!
+  code: String!
+  color: String
+  description: String
+  interiorLength: Float
+  status: EntityStatus = Active
+  version: Int
+}
+
+input EquipmentTypePatchInput {
+  class: EquipmentClass
+  code: String
+  color: String @goField(omittable: true)
+  description: String @goField(omittable: true)
+  interiorLength: Float @goField(omittable: true)
+  status: EntityStatus
+  version: Int
+}
+
+enum FacilityType {
+  ColdStorage
+  CrossDock
+  HazmatFacility
+  IntermodalFacility
+  StorageWarehouse
+}
+
+input FieldFilterInput {
+  field: String!
+  operator: String!
+  value: Any
+}
+
+input FilterGroupInput {
+  filters: [FieldFilterInput!]!
+}
+
+type FleetCode {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  color: String!
+  createdAt: Int!
+  deadheadGoal: Float
+  description: String!
+  id: ID!
+  manager: User
+  managerId: ID!
+  mileageGoal: Float
+  organization: Organization
+  organizationId: ID!
+  revenueGoal: Float
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type GeofenceVertex {
+  latitude: Float!
+  longitude: Float!
+}
+
+scalar JSON
+
+input LocateTractorInput {
+  newLocationId: ID!
+  tractorId: ID!
+}
+
+input LocateTrailerInput {
+  newLocationId: ID!
+  trailerId: ID!
+}
+
+type Location {
+  addressLine1: String!
+  addressLine2: String!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  city: String!
+  code: String!
+  createdAt: Int!
+  description: String!
+  geofenceRadiusMeters: Float
+  geofenceType: LocationGeofenceType!
+  geofenceVertices: [GeofenceVertex!]!
+  id: ID!
+  isGeocoded: Boolean!
+  latitude: Float
+  locationCategory: LocationCategory
+  locationCategoryId: ID!
+  longitude: Float
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  placeId: String!
+  postalCode: String!
+  state: UsState
+  stateId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type LocationCategory {
+  allowsOvernight: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  color: String!
+  createdAt: Int!
+  description: String!
+  facilityType: FacilityType
+  hasRestroom: Boolean!
+  hasSecureParking: Boolean!
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  requiresAppointment: Boolean!
+  type: LocationCategoryType!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum LocationCategoryType {
+  CustomerLocation
+  DistributionCenter
+  MaintenanceFacility
+  Port
+  RailYard
+  RestArea
+  Terminal
+  TruckStop
+  Warehouse
+}
+
+enum LocationGeofenceType {
+  auto
+  circle
+  draw
+  rectangle
+}
+
+type LocationReference {
+  id: ID!
+  name: String!
+}
+
+enum MoveStatus {
+  Assigned
+  Canceled
+  Completed
+  InTransit
+  New
+}
+
+type Mutation {
+  approveWorkerPTO(id: ID!): WorkerPTO!
+  bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
+  bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
+  bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
+  bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
+  bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
+  calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
+  calculateShipmentLoadingOptimization(input: ShipmentLoadingOptimizationInput!): ShipmentLoadingOptimizationResponse!
+  calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
+  cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
+  checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
+  checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
+  createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
+  createShipment(input: ShipmentInput!): Shipment!
+  createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
+  createTractor(input: TractorInput!): Tractor!
+  createTrailer(input: TrailerInput!): Trailer!
+  deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
+  duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
+  locateTractor(input: LocateTractorInput!): EquipmentContinuity!
+  locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
+  patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
+  patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
+  patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
+  patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
+  rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+  transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
+  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
+  uncancelShipment(id: ID!): Shipment!
+  updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
+  updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
+  updateOrganization(id: ID!, input: OrganizationInput!): Organization!
+  updateShipment(id: ID!, input: ShipmentInput!): Shipment!
+  updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
+  updateTractor(id: ID!, input: TractorInput!): Tractor!
+  updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+}
+
+type Organization {
+  addressLine1: String!
+  addressLine2: String!
+  bucketName: String!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  city: String!
+  createdAt: Int!
+  dotNumber: String!
+  id: ID!
+  loginSlug: String!
+  logoUrl: String!
+  name: String!
+  postalCode: String!
+  scacCode: String!
+  state: UsState
+  stateId: ID!
+  taxId: String!
+  timezone: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+input OrganizationInput {
+  addressLine1: String!
+  addressLine2: String
+  bucketName: String
+  city: String!
+  dotNumber: String!
+  loginSlug: String
+  logoUrl: String
+  name: String!
+  postalCode: String!
+  scacCode: String!
+  stateId: ID!
+  taxId: String
+  timezone: String!
+  version: Int!
+}
+
+type PTOChartDataPoint {
+  bereavement: Int!
+  date: String!
+  holiday: Int!
+  maternity: Int!
+  paternity: Int!
+  personal: Int!
+  sick: Int!
+  vacation: Int!
+  workers: JSON!
+}
+
+enum PTOStatus {
+  Approved
+  Cancelled
+  Rejected
+  Requested
+}
+
+enum PTOType {
+  Bereavement
+  Holiday
+  Maternity
+  Paternity
+  Personal
+  Sick
+  Vacation
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type Query {
+  ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
+  ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
+  ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
+  ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
+  ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
+  ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
+  ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
+  ediSummary(sinceHours: Int): EdiSummary!
+  ediTemplates(direction: EdiDocumentDirection, input: DataTableConnectionInput!, status: EdiTemplateStatus, transactionSet: String): EdiTemplateConnection!
+  ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
+  ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
+  ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
+  equipmentManufacturer(id: ID!): EquipmentManufacturer
+  equipmentManufacturers(input: DataTableConnectionInput!): EquipmentManufacturerConnection!
+  equipmentType(id: ID!): EquipmentType
+  equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
+  organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
+  selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
+  shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
+  shipmentAnalytics(endDate: Int, include: String, limit: Int, offset: Int, startDate: Int, timezone: String, windowDays: Int): ShipmentAnalytics!
+  shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
+  shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
+  shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  shipmentEvents(before: Int, limit: Int, shipmentId: ID, types: [ShipmentEventType!]): [ShipmentEvent!]!
+  shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
+  shipmentUIPolicy: ShipmentUIPolicy!
+  shipments(after: String, expandShipmentDetails: Boolean = false, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, query: String, sort: [SortFieldInput!], status: String): ShipmentConnection!
+  tractor(id: ID!): Tractor
+  tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
+  trailer(id: ID!): Trailer
+  trailers(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TrailerConnection!
+  unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
+  upcomingWorkerPTO(after: String, endDate: Int, first: Int = 20, fleetCodeId: ID, startDate: Int, status: PTOStatus, timezone: String, type: PTOType, workerId: ID): WorkerPTOConnection!
+  workerPTOChartData(startDateFrom: Int!, startDateTo: Int!, timezone: String, type: PTOType, workerId: ID): [PTOChartDataPoint!]!
+  workerPTOEntries(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeWorker: Boolean = false, query: String, sort: [SortFieldInput!], startDateFrom: Int, startDateTo: Int, status: PTOStatus, type: PTOType, workerId: ID): WorkerPTOConnection!
+  workers(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, query: String, sort: [SortFieldInput!]): WorkerConnection!
+}
+
+type SelectOption {
+  description: String
+  id: ID!
+  label: String!
+  meta: JSON
+}
+
+type SelectOptionConnection {
+  edges: [SelectOptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SelectOptionEdge {
+  cursor: String!
+  node: SelectOption!
+}
+
+enum SelectOptionResource {
+  EDI_TRANSFER
+  EQUIPMENT_MANUFACTURER
+  EQUIPMENT_TYPE
+  SHIPMENT
+  TRACTOR
+  TRAILER
+  US_STATE
+  WORKER
+}
+
+input SelectOptionsInput {
+  filters: JSON
+  first: Int = 20
+  ids: [ID!]
+  offset: Int = 0
+  query: String
+  resource: SelectOptionResource!
+}
+
+type Shipment {
+  actualDeliveryDate: Int
+  actualShipDate: Int
+  additionalCharges: [ShipmentAdditionalCharge!]!
+  baseRate: String!
+  billedAt: Int
+  billingTransferStatus: String
+  bol: String
+  businessUnitId: ID!
+  cancelReason: String!
+  canceledAt: Int
+  canceledById: ID
+  commodities: [ShipmentCommodity!]!
+  consolidationGroupId: ID
+  createdAt: Int!
+  customer: ShipmentCustomer
+  customerId: ID!
+  enteredById: ID
+  entryMethod: ShipmentEntryMethod
+  formulaTemplate: ShipmentFormulaTemplate
+  formulaTemplateId: ID!
+  freightChargeAmount: String!
+  id: ID!
+  markedReadyToBillAt: Int
+  moves: [ShipmentMove!]!
+  organizationId: ID!
+  otherChargeAmount: String!
+  owner: User
+  ownerId: ID
+  pieces: Int
+  proNumber: String!
+  ratingDetail: ShipmentRatingDetail
+  ratingUnit: Int!
+  serviceTypeId: ID!
+  shipmentTypeId: ID!
+  sourceDocumentId: String
+  status: ShipmentStatus!
+  temperatureMax: Int
+  temperatureMin: Int
+  tenderStatus: ShipmentTenderStatus
+  totalChargeAmount: String!
+  tractorTypeId: ID
+  trailerTypeId: ID
+  transferredToBillingAt: Int
+  updatedAt: Int!
+  version: Int!
+  weight: Int
+}
+
+type ShipmentAccessorialCharge {
+  amount: String!
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  method: String!
+  organizationId: ID!
+  rateUnit: String!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type ShipmentActiveShipments {
+  breakdown: ShipmentActiveShipmentsBreakdown!
+  changeFromYesterday: Int!
+  count: Int!
+  sparkline: [ShipmentSparklinePoint!]!
+}
+
+type ShipmentActiveShipmentsBreakdown {
+  atRisk: Int!
+  done: Int!
+  inTransit: Int!
+  loading: Int!
+}
+
+type ShipmentAdditionalCharge {
+  accessorialCharge: ShipmentAccessorialCharge
+  accessorialChargeId: ID!
+  amount: String!
+  businessUnitId: ID!
+  createdAt: Int!
+  id: ID
+  isSystemGenerated: Boolean!
+  method: String!
+  organizationId: ID!
+  shipmentId: ID!
+  unit: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+input ShipmentAdditionalChargeInput {
+  accessorialChargeId: ID!
+  amount: String = "0"
+  id: ID
+  isSystemGenerated: Boolean = false
+  method: String = "Flat"
+  shipmentId: ID
+  unit: Int = 1
+  version: Int
+}
+
+type ShipmentAnalytics {
+  activeShipments: ShipmentActiveShipments
+  atRisk: ShipmentAtRisk
+  customerMix: ShipmentCustomerMix
+  detentionWatchlist: ShipmentDetentionWatchlist
+  emptyMilePercent: ShipmentEmptyMile
+  laneHeatmap: ShipmentLaneHeatmap
+  onTimePercent: ShipmentOnTime
+  page: String!
+  readyToDispatch: ShipmentReadyToDispatch
+  revenueToday: ShipmentRevenueToday
+  savedViewCounts: ShipmentSavedViewCounts
+  tomorrowsPickups: ShipmentTomorrowsPickups
+  unassigned: ShipmentUnassignedAnalytics
+}
+
+type ShipmentAssignment {
+  archivedAt: Int
+  businessUnitId: ID!
+  createdAt: Int!
+  id: ID
+  organizationId: ID!
+  primaryWorker: Worker
+  primaryWorkerId: ID
+  secondaryWorker: Worker
+  secondaryWorkerId: ID
+  shipmentMoveId: ID
+  status: AssignmentStatus!
+  tractor: Tractor
+  tractorId: ID
+  trailer: Trailer
+  trailerId: ID
+  updatedAt: Int!
+  version: Int!
+}
+
+type ShipmentAtRisk {
+  count: Int!
+  delta: Int!
+  etaSlip: Int!
+  reefer: Int!
+  weather: Int!
+}
+
+type ShipmentAxleWeight {
+  axle: String!
+  compliant: Boolean!
+  limit: Int!
+  percentage: Float!
+  weight: Int!
+}
+
+type ShipmentBillingReadiness {
+  canMarkReadyToInvoice: Boolean!
+  missingRequirements: [ShipmentBillingRequirement!]!
+  policy: ShipmentBillingReadinessPolicy!
+  requirements: [ShipmentBillingRequirement!]!
+  serviceFailureContext: ShipmentServiceFailureBillingContext!
+  shipmentId: String!
+  shipmentStatus: ShipmentStatus!
+  shouldAutoMarkReadyToInvoice: Boolean!
+  shouldAutoTransferToBilling: Boolean!
+  validationFailures: [ShipmentBillingValidation!]!
+  warnings: [ShipmentBillingWarning!]!
+}
+
+type ShipmentBillingReadinessPolicy {
+  billingExceptionDisposition: String!
+  billingQueueTransferMode: String!
+  notifyOnBillingExceptions: Boolean!
+  rateValidationEnforcement: String!
+  readyToBillAssignmentMode: String!
+  shipmentBillingRequirementEnforcement: String!
+}
+
+type ShipmentBillingRequirement {
+  documentCount: Int!
+  documentIds: [String!]!
+  documentTypeCode: String!
+  documentTypeId: String!
+  documentTypeName: String!
+  satisfied: Boolean!
+}
+
+type ShipmentBillingValidation {
+  code: String!
+  field: String!
+  message: String!
+}
+
+type ShipmentBillingWarning {
+  code: String!
+  context: ShipmentBillingWarningContext
+  message: String!
+}
+
+type ShipmentBillingWarningContext {
+  documentCount: Int
+  documentTypeCode: String
+  documentTypeId: String
+  documentTypeName: String
+  missingRequirementCount: Int
+  requirementCount: Int
+  serviceFailureIds: [String!]
+  unresolvedCount: Int
+}
+
+input ShipmentBulkTransferToBillingInput {
+  billType: BillType = Invoice
+  shipmentIds: [ID!]!
+}
+
+type ShipmentBulkTransferToBillingResponse {
+  errorCount: Int!
+  results: [ShipmentBulkTransferToBillingResult!]!
+  successCount: Int!
+  totalCount: Int!
+}
+
+type ShipmentBulkTransferToBillingResult {
+  error: String
+  shipmentId: ID!
+  success: Boolean!
+}
+
+input ShipmentCancelInput {
+  cancelReason: String
+}
+
+type ShipmentComment {
+  businessUnitId: ID
+  comment: String!
+  createdAt: Int!
+  editedAt: Int
+  id: ID!
+  mentionedUserIds: [ID!]!
+  mentionedUsers: [ShipmentCommentMention!]
+  """
+  Comment metadata is written by users, integrations, and system workflows, so keys vary by source.
+  """
+  metadata: JSON
+  organizationId: ID
+  priority: ShipmentCommentPriority!
+  shipmentId: ID!
+  source: ShipmentCommentSource!
+  type: ShipmentCommentType!
+  updatedAt: Int!
+  user: User
+  userId: ID
+  version: Int!
+  visibility: ShipmentCommentVisibility!
+}
+
+type ShipmentCommentConnection {
+  edges: [ShipmentCommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ShipmentCommentCountResponse {
+  count: Int!
+}
+
+type ShipmentCommentEdge {
+  cursor: String!
+  node: ShipmentComment!
+}
+
+input ShipmentCommentInput {
+  comment: String!
+  mentionedUserIds: [ID!] = []
+  priority: ShipmentCommentPriority = Normal
+  type: ShipmentCommentType = Internal
+  visibility: ShipmentCommentVisibility = Internal
+}
+
+type ShipmentCommentMention {
+  businessUnitId: ID
+  commentId: ID!
+  createdAt: Int!
+  id: ID!
+  mentionedUser: User
+  mentionedUserId: ID!
+  organizationId: ID
+  shipmentId: ID
+}
+
+enum ShipmentCommentPriority {
+  High
+  Low
+  Normal
+  Urgent
+}
+
+enum ShipmentCommentSource {
+  AI
+  Integration
+  System
+  User
+}
+
+enum ShipmentCommentType {
+  Appointment
+  Billing
+  Compliance
+  CustomerUpdate
+  DeliveryInstruction
+  Dispatch
+  Document
+  DriverUpdate
+  Exception
+  Internal
+  PickupInstruction
+  StatusUpdate
+}
+
+input ShipmentCommentUpdateInput {
+  comment: String!
+  id: ID!
+  mentionedUserIds: [ID!] = []
+  priority: ShipmentCommentPriority = Normal
+  type: ShipmentCommentType = Internal
+  version: Int!
+  visibility: ShipmentCommentVisibility = Internal
+}
+
+enum ShipmentCommentVisibility {
+  Accounting
+  Customer
+  Driver
+  Internal
+  Operations
+}
+
+type ShipmentCommodity {
+  businessUnitId: ID!
+  commodity: ShipmentCommodityDetail
+  commodityId: ID!
+  createdAt: Int!
+  id: ID
+  organizationId: ID!
+  pieces: Int!
+  shipmentId: ID!
+  updatedAt: Int!
+  version: Int!
+  weight: Int!
+}
+
+type ShipmentCommodityDetail {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  fragile: Boolean!
+  freightClass: String!
+  hazardousMaterialId: ID
+  id: ID!
+  linearFeetPerUnit: Float
+  loadingInstructions: String!
+  maxQuantityPerShipment: Float
+  maxTemperature: Int
+  minTemperature: Int
+  name: String!
+  organizationId: ID!
+  stackable: Boolean!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+  weightPerUnit: Float
+}
+
+input ShipmentCommodityInput {
+  commodityId: ID!
+  id: ID
+  pieces: Int = 1
+  shipmentId: ID
+  version: Int
+  weight: Int = 0
+}
+
+type ShipmentConnection {
+  edges: [ShipmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ShipmentCustomer {
+  addressLine1: String!
+  addressLine2: String!
+  allowConsolidation: Boolean!
+  businessUnitId: ID!
+  city: String!
+  code: String!
+  consolidationPriority: Int!
+  createdAt: Int!
+  exclusiveConsolidation: Boolean!
+  externalId: String!
+  id: ID!
+  isGeocoded: Boolean!
+  latitude: Float
+  longitude: Float
+  name: String!
+  organizationId: ID!
+  placeId: String!
+  postalCode: String!
+  stateId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type ShipmentCustomerMix {
+  entries: [ShipmentCustomerMixEntry!]!
+  windowDays: Int!
+}
+
+type ShipmentCustomerMixEntry {
+  customerId: String!
+  loads: Int!
+  name: String!
+  revenue: Float!
+  share: Float!
+  trend: Float!
+}
+
+type ShipmentDetentionWatchlist {
+  items: [ShipmentDetentionWatchlistItem!]!
+}
+
+type ShipmentDetentionWatchlistItem {
+  customer: String!
+  dwellLabel: String!
+  shipmentId: String!
+  tone: String!
+}
+
+type ShipmentDistanceMoveResult {
+  calculatedAt: Int!
+  dataVersion: String
+  distance: Float!
+  distanceProfileId: String
+  distanceProfileName: String
+  distanceUnits: String
+  moveId: ID
+  moveIndex: Int!
+  provider: String
+  routingType: String
+  source: String!
+  warnings: [String!]
+}
+
+type ShipmentDistanceResponse {
+  moves: [ShipmentDistanceMoveResult!]!
+  shipmentId: ID
+  totalDistance: Float!
+}
+
+input ShipmentDuplicateBolInput {
+  bol: String!
+  shipmentId: ID
+}
+
+input ShipmentDuplicateInput {
+  count: Int = 1
+  overrideDates: Boolean = false
+  shipmentId: ID!
+}
+
+type ShipmentDuplicateResponse {
+  runId: String!
+  status: String!
+  submittedAt: Int!
+  taskQueue: String!
+  workflowId: String!
+}
+
+type ShipmentEdge {
+  cursor: String!
+  node: Shipment!
+}
+
+type ShipmentEmptyMile {
+  deltaPp: Float!
+  emptyMiles: Float!
+  percent: Float!
+  totalMiles: Float!
+}
+
+enum ShipmentEntryMethod {
+  EDI
+  Manual
+}
+
+type ShipmentEvent {
+  actor: User
+  actorId: ID
+  actorLabel: String!
+  actorType: ShipmentEventActorType!
+  assignmentId: ID
+  businessUnitId: ID!
+  commentBody: String
+  commentId: ID
+  commentPriority: String
+  commentType: String
+  commentVisibility: String
+  correlationId: String
+  driverName: String
+  holdId: ID
+  holdSeverity: String
+  holdSource: String
+  holdType: String
+  id: ID!
+  mentionedUserIds: [ID!]!
+  """
+  Shipment events can also be recorded by integrations and observers with variant-specific metadata.
+  """
+  metadata: JSON!
+  moveId: ID
+  newOwnerId: ID
+  newStatus: String
+  occurredAt: Int!
+  organizationId: ID!
+  previousOwnerId: ID
+  previousStatus: String
+  primaryWorkerId: ID
+  proNumber: String
+  reason: String
+  secondaryWorkerId: ID
+  severity: ShipmentEventSeverity!
+  shipment: ShipmentEventShipmentReference
+  shipmentId: ID!
+  stopId: ID
+  summary: String!
+  tractorId: ID
+  trailerId: ID
+  type: ShipmentEventType!
+}
+
+enum ShipmentEventActorType {
+  apikey
+  edi
+  system
+  user
+}
+
+enum ShipmentEventSeverity {
+  brand
+  danger
+  info
+  muted
+  success
+}
+
+type ShipmentEventShipmentReference {
+  id: ID
+  proNumber: String
+}
+
+enum ShipmentEventType {
+  CommentPosted
+  DriverAssigned
+  DriverReassigned
+  DriverUnassigned
+  HoldPlaced
+  HoldReleased
+  HoldUpdated
+  MoveArrived
+  MoveDeparted
+  MoveStatusChanged
+  OwnershipTransferred
+  ShipmentCanceled
+  ShipmentCreated
+  ShipmentUncanceled
+  ShipmentUpdated
+  StatusChanged
+  StopCompleted
+}
+
+type ShipmentFormulaTemplate {
+  businessUnitId: ID!
+  createdAt: Int!
+  currentVersionNumber: Int!
+  description: String!
+  expression: String!
+  id: ID!
+  """
+  Formula template metadata is admin-defined and intentionally open-ended.
+  """
+  metadata: JSON
+  name: String!
+  organizationId: ID!
+  schemaId: String!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
+  status: String!
+  type: String!
+  updatedAt: Int!
+  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  version: Int!
+}
+
+type ShipmentFormulaVariableDefinition {
+  """
+  Formula variable defaults can be scalar, array, object, or null by template design.
+  """
+  defaultValue: Any
+  description: String!
+  name: String!
+  required: Boolean!
+  source: String
+  type: String!
+}
+
+input ShipmentHazmatInput {
+  commodityIds: [ID!]!
+}
+
+type ShipmentHazmatZone {
+  actualDistanceFeet: Float!
+  commodityAId: ID!
+  commodityAName: String!
+  commodityBId: ID!
+  commodityBName: String!
+  requiredDistanceFeet: Float
+  ruleName: String!
+  satisfied: Boolean!
+  segregationType: String!
+}
+
+input ShipmentInput {
+  actualDeliveryDate: Int
+  actualShipDate: Int
+  additionalCharges: [ShipmentAdditionalChargeInput!] = []
+  baseRate: String = "0"
+  billedAt: Int
+  billingTransferStatus: String
+  bol: String
+  cancelReason: String
+  canceledAt: Int
+  canceledById: ID
+  commodities: [ShipmentCommodityInput!] = []
+  consolidationGroupId: ID
+  customerId: ID!
+  enteredById: ID
+  entryMethod: ShipmentEntryMethod = Manual
+  formulaTemplateId: ID!
+  freightChargeAmount: String = "0"
+  markedReadyToBillAt: Int
+  moves: [ShipmentMoveInput!] = []
+  otherChargeAmount: String = "0"
+  ownerId: ID
+  pieces: Int
+  proNumber: String
+  ratingDetail: ShipmentRatingDetailInput
+  ratingUnit: Int = 1
+  serviceTypeId: ID!
+  shipmentTypeId: ID!
+  sourceDocumentId: String
+  status: ShipmentStatus = New
+  temperatureMax: Int
+  temperatureMin: Int
+  tenderStatus: ShipmentTenderStatus
+  totalChargeAmount: String = "0"
+  tractorTypeId: ID
+  trailerTypeId: ID
+  transferredToBillingAt: Int
+  version: Int
+  weight: Int
+}
+
+type ShipmentLaneHeatmap {
+  cells: [ShipmentLaneHeatmapCell!]!
+  total: Int!
+  windowDays: Int!
+}
+
+type ShipmentLaneHeatmapCell {
+  count: Int!
+  destination: String!
+  origin: String!
+}
+
+type ShipmentLoadingCommodity {
+  commodityId: ID!
+  commodityName: String!
+  estimatedLength: Boolean!
+  fragile: Boolean!
+  hazmatClass: String
+  isHazmat: Boolean!
+  lengthFeet: Float!
+  loadingInstructions: String
+  maxTemp: Int
+  minTemp: Int
+  pieces: Int!
+  positionFeet: Float!
+  stackable: Boolean!
+  stopNumber: Int
+  weight: Int!
+}
+
+input ShipmentLoadingCommodityInput {
+  commodityId: ID!
+  pieces: Int!
+  weight: Int!
+}
+
+input ShipmentLoadingOptimizationInput {
+  commodities: [ShipmentLoadingCommodityInput!]!
+  equipmentTypeId: ID
+  stops: [ShipmentLoadingStopInput!]
+}
+
+type ShipmentLoadingOptimizationResponse {
+  aiAnalysis: String
+  axleWeights: [ShipmentAxleWeight!]!
+  hazmatZones: [ShipmentHazmatZone!]!
+  linearFeetUtil: Float!
+  maxWeight: Int!
+  placements: [ShipmentLoadingCommodity!]!
+  recommendations: [ShipmentLoadingRecommendation!]!
+  stopDividers: [ShipmentStopDivider!]
+  totalLinearFeet: Float!
+  totalWeight: Int!
+  trailerLengthFeet: Float!
+  utilizationGrade: String!
+  utilizationScore: Int!
+  warnings: [ShipmentLoadingWarning!]!
+  weightUtil: Float!
+}
+
+type ShipmentLoadingRecommendation {
+  commodityIds: [String!]
+  description: String!
+  impact: String
+  priority: String!
+  title: String!
+  type: String!
+}
+
+input ShipmentLoadingStopInput {
+  locationCity: String!
+  locationName: String!
+  sequence: Int!
+}
+
+type ShipmentLoadingWarning {
+  commodityIds: [String!]
+  message: String!
+  severity: String!
+  type: String!
+}
+
+type ShipmentMove {
+  assignment: ShipmentAssignment
+  businessUnitId: ID!
+  createdAt: Int!
+  distance: Float
+  distanceCalculatedAt: Int
+  distanceDataVersion: String
+  """
+  Distance providers may return provider-specific route details, so this remains intentionally open-ended.
+  """
+  distanceMetadata: JSON
+  distanceProvider: String
+  distanceRouteSignature: String
+  distanceRoutingType: String
+  distanceSource: String
+  distanceUnits: String
+  id: ID
+  loaded: Boolean!
+  organizationId: ID!
+  sequence: Int!
+  shipmentId: ID
+  status: MoveStatus!
+  stops: [ShipmentStop!]!
+  updatedAt: Int!
+  version: Int!
+}
+
+input ShipmentMoveInput {
+  distance: Float
+  distanceCalculatedAt: Int
+  distanceDataVersion: String
+  distanceMetadata: JSON
+  distanceProvider: String
+  distanceRouteSignature: String
+  distanceRoutingType: String
+  distanceSource: String
+  distanceUnits: String
+  id: ID
+  loaded: Boolean = true
+  sequence: Int = 0
+  shipmentId: ID
+  status: MoveStatus = New
+  stops: [ShipmentStopInput!] = []
+  version: Int
+}
+
+type ShipmentOnTime {
+  deltaPp: Float!
+  onTimeCount: Int!
+  percent: Float!
+  sevenDayPercent: Float!
+  target: Float
+  totalCount: Int!
+}
+
+type ShipmentPreviousRateSummary {
+  createdAt: Int!
+  customerId: ID!
+  formulaTemplateId: ID!
+  freightChargeAmount: String!
+  otherChargeAmount: String!
+  pieces: Int
+  proNumber: String!
+  ratingUnit: Int!
+  serviceTypeId: ID!
+  shipmentId: ID!
+  shipmentTypeId: ID!
+  totalChargeAmount: String!
+  weight: Int
+}
+
+input ShipmentPreviousRatesInput {
+  customerId: ID
+  destinationLocationId: ID!
+  excludeShipmentId: ID
+  originLocationId: ID!
+  serviceTypeId: ID!
+  shipmentTypeId: ID!
+}
+
+type ShipmentPreviousRatesResponse {
+  items: [ShipmentPreviousRateSummary!]!
+  total: Int!
+}
+
+type ShipmentRatingDetail {
+  expression: String!
+  formulaTemplateId: String!
+  formulaTemplateName: String!
+  ratedAt: Int!
+  """
+  Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended.
+  """
+  resolvedVariables: JSON!
+  result: Float!
+}
+
+input ShipmentRatingDetailInput {
+  expression: String!
+  formulaTemplateId: String!
+  formulaTemplateName: String!
+  ratedAt: Int!
+  resolvedVariables: JSON!
+  result: Float!
+}
+
+type ShipmentReadyToDispatch {
+  count: Int!
+  delta: Int!
+  driverReady: Int!
+  unassigned: Int!
+}
+
+type ShipmentRevenueToday {
+  deltaPct: Float!
+  rpm: Float!
+  sparkline: [ShipmentSparklinePoint!]!
+  total: Float!
+}
+
+type ShipmentSavedViewCounts {
+  all: Int
+  atRisk: Int
+  deliveringToday: Int
+  transit: Int
+  unassigned: Int
+}
+
+type ShipmentServiceFailureBillingContext {
+  hasUnresolved: Boolean!
+  serviceFailureIds: [String!]!
+  unresolvedCount: Int!
+}
+
+type ShipmentSparklinePoint {
+  hour: String!
+  value: Float!
+}
+
+enum ShipmentStatus {
+  Assigned
+  Canceled
+  Completed
+  Delayed
+  InTransit
+  Invoiced
+  New
+  PartiallyAssigned
+  PartiallyCompleted
+  ReadyToInvoice
+}
+
+type ShipmentStop {
+  actualArrival: Int
+  actualDeparture: Int
+  addressLine: String!
+  businessUnitId: ID!
+  countDetentionOverride: Boolean
+  countLateOverride: Boolean
+  createdAt: Int!
+  id: ID
+  location: Location
+  locationId: ID!
+  organizationId: ID!
+  pieces: Int
+  scheduleType: StopScheduleType!
+  scheduledWindowEnd: Int
+  scheduledWindowStart: Int!
+  sequence: Int!
+  shipmentMoveId: ID
+  status: StopStatus!
+  type: StopType!
+  updatedAt: Int!
+  version: Int!
+  weight: Int
+}
+
+type ShipmentStopDivider {
+  label: String!
+  positionFeet: Float!
+  stopNumber: Int!
+}
+
+input ShipmentStopInput {
+  actualArrival: Int
+  actualDeparture: Int
+  addressLine: String
+  countDetentionOverride: Boolean
+  countLateOverride: Boolean
+  id: ID
+  locationId: ID!
+  pieces: Int
+  scheduleType: StopScheduleType = Open
+  scheduledWindowEnd: Int
+  scheduledWindowStart: Int = 0
+  sequence: Int = 0
+  shipmentMoveId: ID
+  status: StopStatus = New
+  type: StopType = Pickup
+  version: Int
+  weight: Int
+}
+
+enum ShipmentTenderStatus {
+  Accepted
+  Canceled
+  Expired
+  Rejected
+  Tendered
+}
+
+type ShipmentTomorrowPickup {
+  customer: String!
+  destination: String!
+  driver: String!
+  origin: String!
+  pickupWindowStart: Int!
+  proNumber: String!
+  shipmentId: String!
+  status: String!
+}
+
+type ShipmentTomorrowsPickups {
+  date: String!
+  pickups: [ShipmentTomorrowPickup!]!
+}
+
+type ShipmentTotalsResponse {
+  freightChargeAmount: String!
+  otherChargeAmount: String!
+  totalChargeAmount: String!
+}
+
+input ShipmentTransferOwnershipInput {
+  ownerId: ID!
+}
+
+input ShipmentTransferToBillingInput {
+  billType: BillType = Invoice
+  shipmentId: ID!
+}
+
+type ShipmentUIPolicy {
+  allowMoveRemovals: Boolean!
+  checkForDuplicateBols: Boolean!
+  checkHazmatSegregation: Boolean!
+  maxShipmentWeightLimit: Int!
+}
+
+type ShipmentUnassignedAnalytics {
+  count: Int!
+  delta: Int!
+  revenueWaiting: Float!
+}
+
+type ShipmentValidationResponse {
+  valid: Boolean!
+}
+
+input SortFieldInput {
+  direction: String!
+  field: String!
+}
+
+enum StopScheduleType {
+  Appointment
+  Open
+}
+
+enum StopStatus {
+  Canceled
+  Completed
+  InTransit
+  New
+}
+
+enum StopType {
+  Delivery
+  Pickup
+  SplitDelivery
+  SplitPickup
+}
+
+enum TimeFormat {
+  TwelveHour
+  TwentyFourHour
+}
+
+type Tractor {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  customFields: JSON
+  equipmentManufacturer: EquipmentManufacturer
+  equipmentManufacturerId: ID!
+  equipmentStatus: EquipmentStatus!
+  equipmentType: EquipmentType
+  equipmentTypeId: ID!
+  fleetCode: FleetCode
+  fleetCodeId: ID
+  id: ID!
+  lastKnownLocation: LocationReference
+  lastKnownLocationId: ID
+  lastKnownLocationName: String!
+  licensePlateNumber: String!
+  make: String!
+  model: String!
+  organization: Organization
+  organizationId: ID!
+  primaryWorker: Worker
+  primaryWorkerId: ID!
+  registrationExpiry: Int
+  registrationNumber: String!
+  secondaryWorker: Worker
+  secondaryWorkerId: ID
+  state: UsState
+  stateId: ID
+  status: EquipmentStatus!
+  updatedAt: Int!
+  version: Int!
+  vin: String!
+  year: Int
+}
+
+type TractorConnection {
+  edges: [TractorEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TractorEdge {
+  cursor: String!
+  node: Tractor!
+}
+
+input TractorInput {
+  code: String!
+  customFields: JSON
+  equipmentManufacturerId: ID!
+  equipmentTypeId: ID!
+  fleetCodeId: ID
+  licensePlateNumber: String
+  make: String
+  model: String
+  primaryWorkerId: ID!
+  registrationExpiry: Int
+  registrationNumber: String
+  secondaryWorkerId: ID
+  stateId: ID
+  status: EquipmentStatus = Available
+  version: Int
+  vin: String
+  year: Int
+}
+
+input TractorPatchInput {
+  code: String
+  customFields: JSON
+  equipmentManufacturerId: ID
+  equipmentTypeId: ID
+  fleetCodeId: ID @goField(omittable: true)
+  licensePlateNumber: String
+  make: String
+  model: String
+  primaryWorkerId: ID
+  registrationExpiry: Int
+  registrationNumber: String
+  secondaryWorkerId: ID @goField(omittable: true)
+  stateId: ID @goField(omittable: true)
+  status: EquipmentStatus
+  version: Int
+  vin: String
+  year: Int
+}
+
+type Trailer {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  customFields: JSON
+  equipmentManufacturer: EquipmentManufacturer
+  equipmentManufacturerId: ID!
+  equipmentStatus: EquipmentStatus!
+  equipmentType: EquipmentType
+  equipmentTypeId: ID!
+  fleetCode: FleetCode
+  fleetCodeId: ID
+  id: ID!
+  lastInspectionDate: Int
+  lastKnownLocation: LocationReference
+  lastKnownLocationId: ID
+  lastKnownLocationName: String!
+  licensePlateNumber: String!
+  make: String!
+  maxLoadWeight: Int
+  model: String!
+  organization: Organization
+  organizationId: ID!
+  registrationExpiry: Int
+  registrationNumber: String!
+  registrationState: UsState
+  registrationStateId: ID
+  status: EquipmentStatus!
+  updatedAt: Int!
+  version: Int!
+  vin: String!
+  year: Int
+}
+
+type TrailerConnection {
+  edges: [TrailerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TrailerEdge {
+  cursor: String!
+  node: Trailer!
+}
+
+input TrailerInput {
+  code: String!
+  customFields: JSON
+  equipmentManufacturerId: ID!
+  equipmentTypeId: ID!
+  fleetCodeId: ID
+  lastInspectionDate: Int
+  licensePlateNumber: String
+  make: String
+  maxLoadWeight: Int
+  model: String
+  registrationExpiry: Int
+  registrationNumber: String
+  registrationStateId: ID
+  status: EquipmentStatus = Available
+  version: Int
+  vin: String
+  year: Int
+}
+
+input TrailerPatchInput {
+  code: String
+  customFields: JSON
+  equipmentManufacturerId: ID
+  equipmentTypeId: ID
+  fleetCodeId: ID @goField(omittable: true)
+  lastInspectionDate: Int
+  licensePlateNumber: String
+  make: String
+  maxLoadWeight: Int
+  model: String
+  registrationExpiry: Int
+  registrationNumber: String
+  registrationStateId: ID @goField(omittable: true)
+  status: EquipmentStatus
+  version: Int
+  vin: String
+  year: Int
+}
+
+type UsState {
+  abbreviation: String!
+  countryIso3: String!
+  countryName: String!
+  createdAt: Int!
+  id: ID!
+  name: String!
+  updatedAt: Int!
+}
+
+type User {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  currentOrganization: Organization
+  currentOrganizationId: ID!
+  emailAddress: String!
+  id: ID!
+  isLocked: Boolean!
+  lastLoginAt: Int
+  mustChangePassword: Boolean!
+  name: String!
+  profilePicUrl: String!
+  status: EntityStatus!
+  thumbnailUrl: String!
+  timeFormat: TimeFormat!
+  timezone: String!
+  updatedAt: Int!
+  username: String!
+  version: Int!
+}
+
+type Worker {
+  addressLine1: String!
+  addressLine2: String!
+  assignmentBlocked: String!
+  availableForDispatch: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  canBeAssigned: Boolean!
+  city: String!
+  createdAt: Int!
+  customFields: JSON
+  driverType: DriverType!
+  email: String!
+  emergencyContactName: String!
+  emergencyContactPhone: String!
+  externalId: String!
+  firstName: String!
+  fleetCode: FleetCode
+  fleetCodeId: ID
+  gender: WorkerGender!
+  id: ID!
+  lastName: String!
+  manager: User
+  managerId: ID
+  organization: Organization
+  organizationId: ID!
+  phoneNumber: String!
+  postalCode: String!
+  profile: WorkerProfile
+  profilePicUrl: String!
+  pto: [WorkerPTO!]
+  state: UsState
+  stateId: ID!
+  status: EntityStatus!
+  type: WorkerType!
+  updatedAt: Int!
+  version: Int!
+  wholeName: String!
+}
+
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type WorkerEdge {
+  cursor: String!
+  node: Worker!
+}
+
+enum WorkerGender {
+  Female
+  Male
+}
+
+type WorkerPTO {
+  approver: User
+  approverId: ID
+  businessUnitId: ID!
+  createdAt: Int!
+  endDate: Int!
+  id: ID!
+  organizationId: ID!
+  reason: String!
+  rejector: User
+  rejectorId: ID
+  startDate: Int!
+  status: PTOStatus!
+  type: PTOType!
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+type WorkerPTOConnection {
+  edges: [WorkerPTOEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type WorkerPTOEdge {
+  cursor: String!
+  node: WorkerPTO!
+}
+
+input WorkerPatchInput {
+  driverType: DriverType
+  status: EntityStatus
+  type: WorkerType
+}
+
+type WorkerProfile {
+  businessUnitId: ID!
+  cdlClass: CDLClass!
+  cdlRestrictions: String!
+  complianceStatus: ComplianceStatus!
+  createdAt: Int!
+  disqualificationReason: String!
+  dob: Int!
+  eldExempt: Boolean!
+  endorsement: EndorsementType!
+  hazmatExpiry: Int
+  hireDate: Int!
+  id: ID!
+  isQualified: Boolean!
+  lastComplianceCheck: Int!
+  lastDrugTest: Int!
+  lastMvrCheck: Int!
+  licenseExpiry: Int!
+  licenseNumber: String!
+  licenseState: UsState
+  licenseStateId: ID
+  medicalCardExpiry: Int
+  medicalExaminerName: String!
+  medicalExaminerNpi: String!
+  mvrDueDate: Int
+  organizationId: ID!
+  physicalDueDate: Int
+  shortHaulExempt: Boolean!
+  terminationDate: Int
+  twicCardNumber: String!
+  twicExpiry: Int
+  updatedAt: Int!
+  version: Int!
+  workerId: ID!
+}
+
+enum WorkerType {
+  Contractor
+  Employee
+}

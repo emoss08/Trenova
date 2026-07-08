@@ -32,6 +32,10 @@ type WorkflowDefinition struct {
 
 const ApproveLoadTenderTransferWorkflowName = "ApproveLoadTenderTransferWorkflow"
 
+const DeliverEDIMessageWorkflowName = "DeliverEDIMessageWorkflow"
+
+const ProcessInboundEDIFileWorkflowName = "ProcessInboundEDIFileWorkflow"
+
 var DefaultRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
 	BackoffCoefficient: 2.0,

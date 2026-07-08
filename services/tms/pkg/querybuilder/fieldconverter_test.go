@@ -85,6 +85,48 @@ func TestExtractFieldsFromStruct_PointerFields(t *testing.T) {
 	assert.Equal(t, "name", fields["name"])
 }
 
+func TestExtractNonNullableFieldsFromStruct(t *testing.T) {
+	ClearCaches()
+
+	type Model struct {
+		ID        string  `json:"id"        bun:"id,pk"`
+		Code      string  `json:"code"      bun:"code,notnull"`
+		Optional  string  `json:"optional"  bun:"optional,nullzero"`
+		Pointer   *int64  `json:"pointer"   bun:"pointer,notnull"`
+		CreatedAt int64   `json:"createdAt" bun:"created_at,notnull"`
+		Amount    float64 `json:"amount"    bun:"amount,notnull"`
+	}
+
+	fields := ExtractNonNullableFieldsFromStruct(&Model{})
+
+	assert.True(t, fields["id"])
+	assert.True(t, fields["code"])
+	assert.True(t, fields["createdAt"])
+	assert.True(t, fields["amount"])
+	assert.False(t, fields["optional"])
+	assert.False(t, fields["pointer"])
+}
+
+func TestExtractIntegerFieldsFromStruct(t *testing.T) {
+	ClearCaches()
+
+	type Model struct {
+		ID        string `json:"id"        bun:"id,pk"`
+		CreatedAt int64  `json:"createdAt" bun:"created_at,notnull"`
+		Count     int    `json:"count"     bun:"count,notnull"`
+		Small     int16  `json:"small"     bun:"small,notnull"`
+		Name      string `json:"name"      bun:"name,notnull"`
+	}
+
+	fields := ExtractIntegerFieldsFromStruct(&Model{})
+
+	assert.True(t, fields["createdAt"])
+	assert.True(t, fields["count"])
+	assert.True(t, fields["small"])
+	assert.False(t, fields["id"])
+	assert.False(t, fields["name"])
+}
+
 func TestExtractFieldsFromStruct_OmitemptyTag(t *testing.T) {
 	ClearCaches()
 

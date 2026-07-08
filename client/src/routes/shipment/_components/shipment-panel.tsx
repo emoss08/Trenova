@@ -199,6 +199,9 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         fieldKey="proNumber"
         formComponent={<ShipmentForm />}
         tabs={extraTabs}
+        mutationFn={(values, currentRow) =>
+          apiService.shipmentService.update(currentRow.id!, values as ShipmentUpdateInput)
+        }
         descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
         headerActions={
           <Tooltip>
@@ -231,6 +234,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       queryKey="shipment-list"
       title="Shipment"
       formComponent={<ShipmentForm />}
+      mutationFn={(values) => apiService.shipmentService.create(values as ShipmentCreateInput)}
       useDock
     />
   );

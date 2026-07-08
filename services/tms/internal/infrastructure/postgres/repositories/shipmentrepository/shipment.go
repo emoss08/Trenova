@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,30 +54,44 @@ func New(p Params) repositories.ShipmentRepository {
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListShipmentsRequest,
-) (*pagination.ListResult[*shipment.Shipment], error) {
-	entities := make([]*shipment.Shipment, 0, req.Filter.Pagination.SafeLimit())
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	dba := r.db.DBForContext(ctx)
 
-	total, err := r.db.DBForContext(ctx).
+	total, err := dba.
 		NewSelect().
-		Model(&entities).
+		Model((*shipment.Shipment)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return filterQuery(sq, req)
+			return countShipmentListQuery(sq, req)
 		}).
-		ScanAndCount(ctx)
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
+			return dba.NewSelect().
+				Model(items).
+				ColumnExpr(buncolgen.ShipmentTable.All())
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return cursorFilterQuery(sq, req)
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	if req.ShipmentOptions.ExpandShipmentDetails {
-		if err = r.hydrateMoves(ctx, entities); err != nil {
+		if err = r.hydrateMoves(ctx, result.Items); err != nil {
 			return nil, err
 		}
 	}
 
-	return &pagination.ListResult[*shipment.Shipment]{
-		Items: entities,
-		Total: total,
-	}, nil
+	return result, nil
 }
 
 func (r *repository) GetByID(
@@ -132,53 +147,83 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.ShipmentSelectOptionsRequest,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	sp := buncolgen.ShipmentColumns
+
+	return dbhelper.SelectOptions[*shipment.Shipment](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				sp.ID,
+				sp.CreatedAt,
+				sp.Status,
+				sp.ProNumber,
+				sp.BOL,
+			},
+			OrgColumnRef:     &sp.OrganizationID,
+			BuColumnRef:      &sp.BusinessUnitID,
+			SearchColumnRefs: []buncolgen.Column{sp.ProNumber, sp.BOL},
+			EntityName:       "Shipment",
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order(sp.CreatedAt.OrderDesc())
+			},
+		},
+	)
+}
+
 func (r *repository) GetUnassigned(
 	ctx context.Context,
 	req *repositories.GetUnassignedShipmentsRequest,
-) (*pagination.ListResult[*shipment.Shipment], error) {
-	entities := make([]*shipment.Shipment, 0, req.Filter.Pagination.SafeLimit())
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	dba := r.db.DBForContext(ctx)
-	unassignedPredicate := dba.NewSelect().
-		TableExpr(`"shipment_moves" AS "sm"`).
-		ColumnExpr("1").
-		Join(`JOIN "assignments" AS "a"`).
-		JoinOn("a.shipment_move_id = sm.id").
-		JoinOn("a.organization_id = sm.organization_id").
-		JoinOn("a.business_unit_id = sm.business_unit_id").
-		JoinOn("a.archived_at IS NULL").
-		JoinOn("a.status != ?", shipment.AssignmentStatusCanceled).
-		Where("sm.shipment_id = sp.id").
-		Where("sm.organization_id = sp.organization_id").
-		Where("sm.business_unit_id = sp.business_unit_id").
-		Where("sm.status != ?", shipment.MoveStatusCanceled)
 
 	total, err := dba.
 		NewSelect().
-		Model(&entities).
-		Relation("Customer").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, req.Filter.TenantInfo).
-				Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew).
-				Where("NOT EXISTS (?)", unassignedPredicate)
+		Model((*shipment.Shipment)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			countReq := repositories.ListShipmentsRequest{
+				Filter: req.Filter,
+				ShipmentOptions: repositories.ShipmentOptions{
+					Status: string(shipment.StatusNew),
+				},
+			}
+			return countShipmentListQuery(sq, &countReq).
+				Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
 		}).
-		Order(buncolgen.ShipmentColumns.CreatedAt.OrderDesc()).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.Shipment]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
+			return dba.NewSelect().
+				Model(items).
+				ColumnExpr(buncolgen.ShipmentTable.All())
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return unassignedShipmentListQuery(sq, dba, req)
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	if req.ShipmentOptions.ExpandShipmentDetails {
-		if err = r.hydrateMoves(ctx, entities); err != nil {
+		if err = r.hydrateMoves(ctx, result.Items); err != nil {
 			return nil, err
 		}
 	}
 
-	return &pagination.ListResult[*shipment.Shipment]{
-		Items: entities,
-		Total: total,
-	}, nil
+	return result, nil
 }
 
 func (r *repository) GetPreviousRates(

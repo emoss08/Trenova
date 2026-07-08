@@ -909,7 +909,7 @@ func makeStopForValidation(
 	stop.Type = stopType
 	stop.Sequence = sequence
 	stop.ScheduledWindowStart = scheduledWindowStart
-	stop.ScheduledWindowEnd = ptrInt64(scheduledWindowEnd)
+	stop.ScheduledWindowEnd = new(scheduledWindowEnd)
 	return stop
 }
 

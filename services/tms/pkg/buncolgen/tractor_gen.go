@@ -67,6 +67,8 @@ var TractorColumns = struct {
 	RegistrationNumber      Column // "registration_number" → qualified: "trac.registration_number"
 	RegistrationExpiry      Column // "registration_expiry" → qualified: "trac.registration_expiry"
 	Vin                     Column // "vin" → qualified: "trac.vin"
+	LastKnownLocationID     Column // "last_known_location_id" → qualified: "trac.last_known_location_id"
+	LastKnownLocationName   Column // "last_known_location_name" → qualified: "trac.last_known_location_name"
 	Version                 Column // "version" → qualified: "trac.version"
 	CreatedAt               Column // "created_at" → qualified: "trac.created_at"
 	UpdatedAt               Column // "updated_at" → qualified: "trac.updated_at"
@@ -89,6 +91,8 @@ var TractorColumns = struct {
 	RegistrationNumber:      NewColumn("registration_number", "trac"),
 	RegistrationExpiry:      NewColumn("registration_expiry", "trac"),
 	Vin:                     NewColumn("vin", "trac"),
+	LastKnownLocationID:     NewColumn("last_known_location_id", "trac"),
+	LastKnownLocationName:   NewColumn("last_known_location_name", "trac"),
 	Version:                 NewColumn("version", "trac"),
 	CreatedAt:               NewColumn("created_at", "trac"),
 	UpdatedAt:               NewColumn("updated_at", "trac"),
@@ -117,6 +121,8 @@ var TractorFieldMap = map[string]string{
 	"registrationNumber":      "registration_number",
 	"registrationExpiry":      "registration_expiry",
 	"vin":                     "vin",
+	"lastKnownLocationId":     "last_known_location_id",
+	"lastKnownLocationName":   "last_known_location_name",
 	"version":                 "version",
 	"createdAt":               "created_at",
 	"updatedAt":               "updated_at",

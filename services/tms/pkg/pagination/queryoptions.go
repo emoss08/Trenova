@@ -11,4 +11,9 @@ type QueryOptions struct {
 	GeoFilters       []domaintypes.GeoFilter       `json:"geoFilters"`
 	AggregateFilters []domaintypes.AggregateFilter `json:"aggregateFilters"`
 	Sort             []domaintypes.SortField       `json:"sort"`
+	Cursor           CursorInfo                    `json:"-"`
+	CursorSort       []CursorSortField             `json:"-"`
+	CursorColumns    []CursorValueColumn           `json:"-"`
+	CursorError      error                         `json:"-"`
+	UseCursor        bool                          `json:"-"`
 }

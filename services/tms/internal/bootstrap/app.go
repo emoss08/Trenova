@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
+	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
@@ -50,6 +51,7 @@ func Options() fx.Option {
 		fx.Provide(integrationservice.New),
 		formula.Module,
 		formulatemplateservice.Module,
+		editransport.Module,
 		temporaljobs.Module,
 		schedule.Module,
 		auditjobs.Module,
@@ -83,6 +85,7 @@ func NewApp(opts ...fx.Option) *App {
 func APIOptions() fx.Option {
 	return fx.Options(
 		api.HelpersModule,
+		api.GraphQLModule,
 		api.HandlersModule,
 		api.MiddlewareModule,
 		api.ServerModule,

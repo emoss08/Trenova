@@ -4,6 +4,13 @@ package edi
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierInvoice].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.CarrierInvoiceFieldMap] instead of parsing struct tags via reflection.
+func (e *CarrierInvoice) GetStaticFieldMap() map[string]string {
+	return buncolgen.CarrierInvoiceFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDICodeListDefinition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDICodeListDefinitionFieldMap] instead of parsing struct tags via reflection.
@@ -37,6 +44,13 @@ func (e *EDIControlNumberSequence) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.EDIDocumentTypeFieldMap] instead of parsing struct tags via reflection.
 func (e *EDIDocumentType) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDIDocumentTypeFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIInboundFile].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIInboundFileFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIInboundFile) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIInboundFileFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIMappingProfile].
@@ -184,6 +198,20 @@ func (e *EDITransfer) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.ShipmentLinkFieldMap] instead of parsing struct tags via reflection.
 func (e *ShipmentLink) GetStaticFieldMap() map[string]string {
 	return buncolgen.ShipmentLinkFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TenderChange].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TenderChangeFieldMap] instead of parsing struct tags via reflection.
+func (e *TenderChange) GetStaticFieldMap() map[string]string {
+	return buncolgen.TenderChangeFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TenderRecipient].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TenderRecipientFieldMap] instead of parsing struct tags via reflection.
+func (e *TenderRecipient) GetStaticFieldMap() map[string]string {
+	return buncolgen.TenderRecipientFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TransferChange].

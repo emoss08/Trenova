@@ -2,24 +2,12 @@
 
 import * as React from "react";
 
-import {
-  Check,
-  Copy,
-  RefreshCw,
-  Share2,
-  ThumbsDown,
-  ThumbsUp,
-} from "lucide-react";
+import { Check, Copy, RefreshCw, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type FeedbackType = "positive" | "negative" | null;
 
@@ -63,74 +51,132 @@ export function AiResponseActions({
   const iconSize = compact ? "size-3.5" : "size-4";
 
   return (
-    <TooltipProvider>
-      <div
-        data-slot="ai-response-actions"
-        role="toolbar"
-        aria-label="Response actions"
-        className={cn(
-          "inline-flex items-center gap-1 rounded-lg border bg-background p-1",
-          className,
-        )}
-      >
-        {content && (
+    <div
+      data-slot="ai-response-actions"
+      role="toolbar"
+      aria-label="Response actions"
+      className={cn(
+        "inline-flex items-center gap-1 rounded-lg border bg-background p-1",
+        className,
+      )}
+    >
+      {content && (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className={buttonSize}
+                onClick={handleCopy}
+                aria-label={copied ? "Copied" : "Copy response"}
+              />
+            }
+          >
+            {copied ? (
+              <Check className={cn(iconSize, "text-green-500")} />
+            ) : (
+              <Copy className={iconSize} />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{copied ? "Copied!" : "Copy"}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {onRegenerate && (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className={buttonSize}
+                onClick={onRegenerate}
+                aria-label="Regenerate response"
+              />
+            }
+          >
+            <RefreshCw className={iconSize} />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Regenerate</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {onFeedback && (
+        <>
           <Tooltip>
-            <TooltipTrigger render={<Button variant="ghost" size="icon" className={buttonSize} onClick={handleCopy} aria-label={copied ? "Copied" : "Copy response"} />}>{copied ? (
-                                        <Check className={cn(iconSize, "text-green-500")} />
-                                      ) : (
-                                        <Copy className={iconSize} />
-                                      )}</TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    buttonSize,
+                    feedback === "positive" && "bg-green-100 text-green-600 dark:bg-green-900/30",
+                  )}
+                  onClick={() => handleFeedback("positive")}
+                  aria-label="Rate positive"
+                  aria-pressed={feedback === "positive"}
+                />
+              }
+            >
+              <ThumbsUp className={iconSize} />
+            </TooltipTrigger>
             <TooltipContent>
-              <p>{copied ? "Copied!" : "Copy"}</p>
+              <p>Good response</p>
             </TooltipContent>
           </Tooltip>
-        )}
 
-        {onRegenerate && (
           <Tooltip>
-            <TooltipTrigger render={<Button variant="ghost" size="icon" className={buttonSize} onClick={onRegenerate} aria-label="Regenerate response" />}><RefreshCw className={iconSize} /></TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    buttonSize,
+                    feedback === "negative" && "bg-red-100 text-red-600 dark:bg-red-900/30",
+                  )}
+                  onClick={() => handleFeedback("negative")}
+                  aria-label="Rate negative"
+                  aria-pressed={feedback === "negative"}
+                />
+              }
+            >
+              <ThumbsDown className={iconSize} />
+            </TooltipTrigger>
             <TooltipContent>
-              <p>Regenerate</p>
+              <p>Bad response</p>
             </TooltipContent>
           </Tooltip>
-        )}
+        </>
+      )}
 
-        {onFeedback && (
-          <>
-            <Tooltip>
-              <TooltipTrigger render={<Button variant="ghost" size="icon" className={cn(
-                                              buttonSize,
-                                              feedback === "positive" &&
-                                                "bg-green-100 text-green-600 dark:bg-green-900/30",
-                                            )} onClick={() => handleFeedback("positive")} aria-label="Rate positive" aria-pressed={feedback === "positive"} />}><ThumbsUp className={iconSize} /></TooltipTrigger>
-              <TooltipContent>
-                <p>Good response</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger render={<Button variant="ghost" size="icon" className={cn(
-                                              buttonSize,
-                                              feedback === "negative" &&
-                                                "bg-red-100 text-red-600 dark:bg-red-900/30",
-                                            )} onClick={() => handleFeedback("negative")} aria-label="Rate negative" aria-pressed={feedback === "negative"} />}><ThumbsDown className={iconSize} /></TooltipTrigger>
-              <TooltipContent>
-                <p>Bad response</p>
-              </TooltipContent>
-            </Tooltip>
-          </>
-        )}
-
-        {onShare && (
-          <Tooltip>
-            <TooltipTrigger render={<Button variant="ghost" size="icon" className={buttonSize} onClick={onShare} aria-label="Share response" />}><Share2 className={iconSize} /></TooltipTrigger>
-            <TooltipContent>
-              <p>Share</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-    </TooltipProvider>
+      {onShare && (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className={buttonSize}
+                onClick={onShare}
+                aria-label="Share response"
+              />
+            }
+          >
+            <Share2 className={iconSize} />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Share</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   );
 }
 

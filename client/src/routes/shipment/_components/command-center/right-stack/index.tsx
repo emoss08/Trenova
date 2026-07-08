@@ -67,7 +67,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
 
   if (visible.length === 0) {
     return (
-      <aside className="flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-6">
+      <aside className="flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-6 bg-card">
         <p className="text-[11.5px] font-medium">All panels hidden</p>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -78,7 +78,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
               </Button>
             }
           />
-          <DropdownMenuContent align="center" className="min-w-[180px]">
+          <DropdownMenuContent align="center" className="min-w-45">
             {ALL_MODULES.map((id) => (
               <DropdownMenuItem key={id} title={MODULE_LABEL[id]} onClick={() => show(id)} />
             ))}
@@ -101,7 +101,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
                 </Button>
               }
             />
-            <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuContent align="end" className="min-w-40">
               {hidden.map((id) => (
                 <DropdownMenuItem key={id} title={MODULE_LABEL[id]} onClick={() => show(id)} />
               ))}

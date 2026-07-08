@@ -1,0 +1,46 @@
+scalar JSON
+scalar Any
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+  type: String
+  autoBindGetterHaser: Boolean
+  forceGenerate: Boolean
+  batch: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+enum EntityStatus {
+  Active
+  Inactive
+}
+
+input FieldFilterInput {
+  field: String!
+  operator: String!
+  value: Any
+}
+
+input FilterGroupInput {
+  filters: [FieldFilterInput!]!
+}
+
+input SortFieldInput {
+  field: String!
+  direction: String!
+}
+
+input DataTableConnectionInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}

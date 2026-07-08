@@ -45,7 +45,7 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListEquipmentTypesRequest,
-) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
+) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 	return s.repo.List(ctx, req)
 }
 

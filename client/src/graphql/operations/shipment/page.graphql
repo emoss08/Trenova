@@ -1,0 +1,1001 @@
+fragment ShipmentUserFields on User {
+  id
+  name
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+}
+
+fragment ShipmentLocationFields on Location {
+  id
+  name
+  code
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  longitude
+  latitude
+}
+
+fragment ShipmentWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+
+fragment ShipmentTractorFields on Tractor {
+  id
+  code
+}
+
+fragment ShipmentTrailerFields on Trailer {
+  id
+  code
+}
+
+fragment ShipmentAssignmentFields on ShipmentAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  primaryWorkerId
+  tractorId
+  trailerId
+  secondaryWorkerId
+  status
+  archivedAt
+  version
+  createdAt
+  updatedAt
+  tractor {
+    ...ShipmentTractorFields
+  }
+  trailer {
+    ...ShipmentTrailerFields
+  }
+  primaryWorker {
+    ...ShipmentWorkerFields
+  }
+  secondaryWorker {
+    ...ShipmentWorkerFields
+  }
+}
+
+fragment ShipmentStopFields on ShipmentStop {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  locationId
+  status
+  type
+  scheduleType
+  sequence
+  pieces
+  weight
+  scheduledWindowStart
+  scheduledWindowEnd
+  actualArrival
+  actualDeparture
+  countLateOverride
+  countDetentionOverride
+  addressLine
+  version
+  createdAt
+  updatedAt
+  location {
+    ...ShipmentLocationFields
+  }
+}
+
+fragment ShipmentMoveFields on ShipmentMove {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  status
+  loaded
+  sequence
+  distance
+  distanceSource
+  distanceProvider
+  distanceCalculatedAt
+  distanceRouteSignature
+  distanceDataVersion
+  distanceRoutingType
+  distanceUnits
+  distanceMetadata
+  version
+  createdAt
+  updatedAt
+  stops {
+    ...ShipmentStopFields
+  }
+  assignment {
+    ...ShipmentAssignmentFields
+  }
+}
+
+fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  accessorialChargeId
+  isSystemGenerated
+  method
+  amount
+  unit
+  version
+  createdAt
+  updatedAt
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+fragment ShipmentCommodityFields on ShipmentCommodity {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  commodityId
+  pieces
+  weight
+  version
+  createdAt
+  updatedAt
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
+  formulaTemplateId
+  formulaTemplateName
+  expression
+  resolvedVariables
+  result
+  ratedAt
+}
+
+fragment ShipmentFields on Shipment {
+  id
+  businessUnitId
+  organizationId
+  sourceDocumentId
+  serviceTypeId
+  shipmentTypeId
+  customerId
+  tractorTypeId
+  trailerTypeId
+  ownerId
+  enteredById
+  canceledById
+  formulaTemplateId
+  consolidationGroupId
+  status
+  tenderStatus
+  entryMethod
+  proNumber
+  bol
+  cancelReason
+  otherChargeAmount
+  freightChargeAmount
+  baseRate
+  totalChargeAmount
+  pieces
+  weight
+  temperatureMin
+  temperatureMax
+  actualDeliveryDate
+  actualShipDate
+  canceledAt
+  billingTransferStatus
+  transferredToBillingAt
+  markedReadyToBillAt
+  billedAt
+  ratingUnit
+  ratingDetail {
+    ...ShipmentRatingDetailFields
+  }
+  version
+  createdAt
+  updatedAt
+  moves {
+    ...ShipmentMoveFields
+  }
+  additionalCharges {
+    ...ShipmentAdditionalChargeFields
+  }
+  commodities {
+    ...ShipmentCommodityFields
+  }
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
+  owner {
+    ...ShipmentUserFields
+  }
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}
+
+fragment ShipmentPageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  comment
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+}
+
+fragment ShipmentEventFields on ShipmentEvent {
+  id
+  organizationId
+  businessUnitId
+  shipmentId
+  moveId
+  stopId
+  assignmentId
+  commentId
+  holdId
+  type
+  severity
+  actorType
+  actorId
+  actorLabel
+  summary
+  proNumber
+  previousStatus
+  newStatus
+  reason
+  previousOwnerId
+  newOwnerId
+  primaryWorkerId
+  secondaryWorkerId
+  tractorId
+  trailerId
+  driverName
+  holdType
+  holdSeverity
+  holdSource
+  commentBody
+  commentType
+  commentVisibility
+  commentPriority
+  mentionedUserIds
+  metadata
+  occurredAt
+  correlationId
+  actor {
+    id
+    name
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+  shipment {
+    id
+    proNumber
+  }
+}
+
+query ShipmentCommandCenterTable(
+  $first: Int!
+  $after: String
+  $query: String
+  $fieldFilters: [FieldFilterInput!]
+  $filterGroups: [FilterGroupInput!]
+  $sort: [SortFieldInput!]
+  $expandShipmentDetails: Boolean = true
+) {
+  shipments(
+    first: $first
+    after: $after
+    query: $query
+    fieldFilters: $fieldFilters
+    filterGroups: $filterGroups
+    sort: $sort
+    expandShipmentDetails: $expandShipmentDetails
+  ) {
+    edges {
+      node {
+        ...ShipmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+
+query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
+  shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
+    ...ShipmentFields
+  }
+}
+
+query ShipmentSavedViewCounts($timezone: String!) {
+  shipmentAnalytics(include: "savedViewCounts", timezone: $timezone) {
+    page
+    savedViewCounts {
+      all
+      transit
+      atRisk
+      unassigned
+      deliveringToday
+    }
+  }
+}
+
+query ShipmentPageAnalytics(
+  $startDate: Int
+  $endDate: Int
+  $limit: Int
+  $offset: Int
+  $timezone: String
+  $windowDays: Int
+  $include: String
+) {
+  shipmentAnalytics(
+    startDate: $startDate
+    endDate: $endDate
+    limit: $limit
+    offset: $offset
+    timezone: $timezone
+    windowDays: $windowDays
+    include: $include
+  ) {
+    page
+    savedViewCounts {
+      all
+      transit
+      atRisk
+      unassigned
+      deliveringToday
+    }
+    activeShipments {
+      count
+      changeFromYesterday
+      sparkline {
+        hour
+        value
+      }
+      breakdown {
+        inTransit
+        atRisk
+        loading
+        done
+      }
+    }
+    onTimePercent {
+      percent
+      onTimeCount
+      totalCount
+      target
+      deltaPp
+      sevenDayPercent
+    }
+    revenueToday {
+      total
+      sparkline {
+        hour
+        value
+      }
+      deltaPct
+      rpm
+    }
+    emptyMilePercent {
+      percent
+      emptyMiles
+      totalMiles
+      deltaPp
+    }
+    atRisk {
+      count
+      delta
+      etaSlip
+      weather
+      reefer
+    }
+    unassigned {
+      count
+      delta
+      revenueWaiting
+    }
+    readyToDispatch {
+      count
+      delta
+      unassigned
+      driverReady
+    }
+    detentionWatchlist {
+      items {
+        shipmentId
+        customer
+        dwellLabel
+        tone
+      }
+    }
+    customerMix {
+      windowDays
+      entries {
+        customerId
+        name
+        revenue
+        share
+        loads
+        trend
+      }
+    }
+    tomorrowsPickups {
+      date
+      pickups {
+        shipmentId
+        proNumber
+        pickupWindowStart
+        customer
+        origin
+        destination
+        driver
+        status
+      }
+    }
+    laneHeatmap {
+      windowDays
+      cells {
+        origin
+        destination
+        count
+      }
+      total
+    }
+  }
+}
+
+query ShipmentTomorrowsPickups($limit: Int, $offset: Int, $timezone: String) {
+  shipmentAnalytics(include: "tomorrowsPickups", limit: $limit, offset: $offset, timezone: $timezone) {
+    page
+    tomorrowsPickups {
+      date
+      pickups {
+        shipmentId
+        proNumber
+        pickupWindowStart
+        customer
+        origin
+        destination
+        driver
+        status
+      }
+    }
+  }
+}
+
+query UnassignedShipments($first: Int!, $after: String) {
+  unassignedShipments(first: $first, after: $after) {
+    edges {
+      node {
+        ...ShipmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+
+query ExceptionShipments(
+  $first: Int!
+  $after: String
+  $fieldFilters: [FieldFilterInput!]
+) {
+  shipments(
+    first: $first
+    after: $after
+    fieldFilters: $fieldFilters
+    expandShipmentDetails: true
+  ) {
+    edges {
+      node {
+        ...ShipmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+
+query MapShipments(
+  $first: Int!
+  $after: String
+  $fieldFilters: [FieldFilterInput!]
+) {
+  shipments(
+    first: $first
+    after: $after
+    fieldFilters: $fieldFilters
+    expandShipmentDetails: true
+  ) {
+    edges {
+      node {
+        ...ShipmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+
+query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
+  shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
+    edges {
+      node {
+        ...ShipmentCommentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+
+query ShipmentCommentCount($shipmentId: ID!) {
+  shipmentCommentCount(shipmentId: $shipmentId) {
+    count
+  }
+}
+
+query ShipmentEvents(
+  $shipmentId: ID
+  $types: [ShipmentEventType!]
+  $limit: Int
+  $before: Int
+) {
+  shipmentEvents(shipmentId: $shipmentId, types: $types, limit: $limit, before: $before) {
+    ...ShipmentEventFields
+  }
+}
+
+query ShipmentBillingReadiness($shipmentId: ID!) {
+  shipmentBillingReadiness(shipmentId: $shipmentId) {
+    shipmentId
+    shipmentStatus
+    policy {
+      shipmentBillingRequirementEnforcement
+      rateValidationEnforcement
+      billingExceptionDisposition
+      notifyOnBillingExceptions
+      readyToBillAssignmentMode
+      billingQueueTransferMode
+    }
+    requirements {
+      documentTypeId
+      documentTypeCode
+      documentTypeName
+      satisfied
+      documentCount
+      documentIds
+    }
+    missingRequirements {
+      documentTypeId
+      documentTypeCode
+      documentTypeName
+      satisfied
+      documentCount
+      documentIds
+    }
+    validationFailures {
+      field
+      code
+      message
+    }
+    warnings {
+      code
+      message
+      context {
+        documentTypeId
+        documentTypeCode
+        documentTypeName
+        documentCount
+        requirementCount
+        missingRequirementCount
+        serviceFailureIds
+        unresolvedCount
+      }
+    }
+    serviceFailureContext {
+      hasUnresolved
+      unresolvedCount
+      serviceFailureIds
+    }
+    canMarkReadyToInvoice
+    shouldAutoMarkReadyToInvoice
+    shouldAutoTransferToBilling
+  }
+}
+
+query ShipmentUIPolicy {
+  shipmentUIPolicy {
+    allowMoveRemovals
+    checkForDuplicateBols
+    checkHazmatSegregation
+    maxShipmentWeightLimit
+  }
+}
+
+query ShipmentPreviousRates($input: ShipmentPreviousRatesInput!) {
+  shipmentPreviousRates(input: $input) {
+    items {
+      shipmentId
+      proNumber
+      customerId
+      serviceTypeId
+      shipmentTypeId
+      formulaTemplateId
+      freightChargeAmount
+      otherChargeAmount
+      totalChargeAmount
+      ratingUnit
+      pieces
+      weight
+      createdAt
+    }
+    total
+  }
+}
+
+mutation CreateShipment($input: ShipmentInput!) {
+  createShipment(input: $input) {
+    ...ShipmentFields
+  }
+}
+
+mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
+  updateShipment(id: $id, input: $input) {
+    ...ShipmentFields
+  }
+}
+
+mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
+  cancelShipment(id: $id, input: $input) {
+    ...ShipmentFields
+  }
+}
+
+mutation UncancelShipment($id: ID!) {
+  uncancelShipment(id: $id) {
+    ...ShipmentFields
+  }
+}
+
+mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
+  duplicateShipment(input: $input) {
+    workflowId
+    runId
+    taskQueue
+    status
+    submittedAt
+  }
+}
+
+mutation TransferShipmentOwnership($id: ID!, $input: ShipmentTransferOwnershipInput!) {
+  transferShipmentOwnership(id: $id, input: $input) {
+    ...ShipmentFields
+  }
+}
+
+mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
+  transferShipmentToBilling(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    shipmentId
+    assignedBillerId
+    number
+    status
+    billType
+    exceptionReasonCode
+    reviewNotes
+    exceptionNotes
+    reviewStartedAt
+    reviewCompletedAt
+    canceledById
+    canceledAt
+    cancelReason
+    isAdjustmentOrigin
+    sourceInvoiceId
+    sourceInvoiceAdjustmentId
+    sourceCreditMemoInvoiceId
+    correctionGroupId
+    rebillStrategy
+    requiresReplacementReview
+    rerateVariancePercent
+    adjustmentContext
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInput!) {
+  bulkTransferShipmentsToBilling(input: $input) {
+    results {
+      shipmentId
+      success
+      error
+    }
+    totalCount
+    successCount
+    errorCount
+  }
+}
+
+mutation CalculateShipmentTotals($input: ShipmentInput!) {
+  calculateShipmentTotals(input: $input) {
+    freightChargeAmount
+    otherChargeAmount
+    totalChargeAmount
+  }
+}
+
+mutation CalculateShipmentDistance($input: ShipmentInput!) {
+  calculateShipmentDistance(input: $input) {
+    shipmentId
+    totalDistance
+    moves {
+      moveId
+      moveIndex
+      distance
+      source
+      provider
+      routingType
+      dataVersion
+      distanceUnits
+      distanceProfileId
+      distanceProfileName
+      warnings
+      calculatedAt
+    }
+  }
+}
+
+mutation RecalculateShipmentDistance($shipmentId: ID!) {
+  recalculateShipmentDistance(shipmentId: $shipmentId) {
+    shipmentId
+    totalDistance
+    moves {
+      moveId
+      moveIndex
+      distance
+      source
+      provider
+      routingType
+      dataVersion
+      distanceUnits
+      distanceProfileId
+      distanceProfileName
+      warnings
+      calculatedAt
+    }
+  }
+}
+
+mutation CheckShipmentDuplicateBol($input: ShipmentDuplicateBolInput!) {
+  checkShipmentDuplicateBol(input: $input) {
+    valid
+  }
+}
+
+mutation CheckShipmentHazmatSegregation($input: ShipmentHazmatInput!) {
+  checkShipmentHazmatSegregation(input: $input) {
+    valid
+  }
+}
+
+mutation CalculateShipmentLoadingOptimization($input: ShipmentLoadingOptimizationInput!) {
+  calculateShipmentLoadingOptimization(input: $input) {
+    trailerLengthFeet
+    totalLinearFeet
+    totalWeight
+    maxWeight
+    linearFeetUtil
+    weightUtil
+    utilizationScore
+    utilizationGrade
+    placements {
+      commodityId
+      commodityName
+      positionFeet
+      lengthFeet
+      weight
+      pieces
+      stackable
+      fragile
+      isHazmat
+      hazmatClass
+      minTemp
+      maxTemp
+      loadingInstructions
+      estimatedLength
+      stopNumber
+    }
+    hazmatZones {
+      commodityAId
+      commodityBId
+      commodityAName
+      commodityBName
+      ruleName
+      segregationType
+      requiredDistanceFeet
+      actualDistanceFeet
+      satisfied
+    }
+    warnings {
+      type
+      message
+      severity
+      commodityIds
+    }
+    axleWeights {
+      axle
+      weight
+      limit
+      percentage
+      compliant
+    }
+    recommendations {
+      type
+      priority
+      title
+      description
+      impact
+      commodityIds
+    }
+    stopDividers {
+      positionFeet
+      stopNumber
+      label
+    }
+    aiAnalysis
+  }
+}
+
+mutation CreateShipmentComment($shipmentId: ID!, $input: ShipmentCommentInput!) {
+  createShipmentComment(shipmentId: $shipmentId, input: $input) {
+    ...ShipmentCommentFields
+  }
+}
+
+mutation UpdateShipmentComment(
+  $shipmentId: ID!
+  $commentId: ID!
+  $input: ShipmentCommentUpdateInput!
+) {
+  updateShipmentComment(shipmentId: $shipmentId, commentId: $commentId, input: $input) {
+    ...ShipmentCommentFields
+  }
+}
+
+mutation DeleteShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
+}

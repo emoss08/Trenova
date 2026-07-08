@@ -1,0 +1,1156 @@
+enum ShipmentStatus {
+  New
+  PartiallyAssigned
+  Assigned
+  InTransit
+  Delayed
+  PartiallyCompleted
+  Completed
+  ReadyToInvoice
+  Invoiced
+  Canceled
+}
+
+enum ShipmentTenderStatus {
+  Tendered
+  Accepted
+  Rejected
+  Expired
+  Canceled
+}
+
+enum ShipmentEntryMethod {
+  Manual
+  EDI
+}
+
+enum MoveStatus {
+  New
+  Assigned
+  InTransit
+  Completed
+  Canceled
+}
+
+enum AssignmentStatus {
+  New
+  InProgress
+  Completed
+  Canceled
+}
+
+enum StopStatus {
+  New
+  InTransit
+  Completed
+  Canceled
+}
+
+enum StopType {
+  Pickup
+  Delivery
+  SplitDelivery
+  SplitPickup
+}
+
+enum StopScheduleType {
+  Open
+  Appointment
+}
+
+enum ShipmentCommentType {
+  Internal
+  Dispatch
+  DriverUpdate
+  PickupInstruction
+  DeliveryInstruction
+  StatusUpdate
+  Exception
+  CustomerUpdate
+  Appointment
+  Document
+  Billing
+  Compliance
+}
+
+enum ShipmentCommentVisibility {
+  Internal
+  Operations
+  Customer
+  Driver
+  Accounting
+}
+
+enum ShipmentCommentPriority {
+  Low
+  Normal
+  High
+  Urgent
+}
+
+enum ShipmentCommentSource {
+  User
+  System
+  Integration
+  AI
+}
+
+enum BillingQueueStatus {
+  ReadyForReview
+  InReview
+  Approved
+  Posted
+  OnHold
+  SentBackToOps
+  Exception
+  Canceled
+}
+
+enum BillType {
+  Invoice
+  CreditMemo
+  DebitMemo
+}
+
+enum BillingQueueExceptionReasonCode {
+  MissingDocumentation
+  IncorrectRates
+  WeightDiscrepancy
+  AccessorialDispute
+  DuplicateCharge
+  MissingReferenceNumber
+  CustomerInformationError
+  ServiceFailure
+  RateNotOnFile
+  Other
+}
+
+type ShipmentEdge {
+  node: Shipment!
+  cursor: String!
+}
+
+type ShipmentConnection {
+  edges: [ShipmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type Shipment {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  sourceDocumentId: String
+  serviceTypeId: ID!
+  shipmentTypeId: ID!
+  customerId: ID!
+  tractorTypeId: ID
+  trailerTypeId: ID
+  ownerId: ID
+  enteredById: ID
+  canceledById: ID
+  formulaTemplateId: ID!
+  consolidationGroupId: ID
+  status: ShipmentStatus!
+  tenderStatus: ShipmentTenderStatus
+  entryMethod: ShipmentEntryMethod
+  proNumber: String!
+  bol: String
+  cancelReason: String!
+  otherChargeAmount: String!
+  freightChargeAmount: String!
+  baseRate: String!
+  totalChargeAmount: String!
+  pieces: Int
+  weight: Int
+  temperatureMin: Int
+  temperatureMax: Int
+  actualDeliveryDate: Int
+  actualShipDate: Int
+  canceledAt: Int
+  billingTransferStatus: String
+  transferredToBillingAt: Int
+  markedReadyToBillAt: Int
+  billedAt: Int
+  ratingUnit: Int!
+  ratingDetail: ShipmentRatingDetail
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  moves: [ShipmentMove!]!
+  additionalCharges: [ShipmentAdditionalCharge!]!
+  commodities: [ShipmentCommodity!]!
+  customer: ShipmentCustomer
+  owner: User
+  formulaTemplate: ShipmentFormulaTemplate
+}
+
+type ShipmentRatingDetail {
+  formulaTemplateId: String!
+  formulaTemplateName: String!
+  expression: String!
+  "Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended."
+  resolvedVariables: JSON!
+  result: Float!
+  ratedAt: Int!
+}
+
+type ShipmentCustomer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  postalCode: String!
+  isGeocoded: Boolean!
+  longitude: Float
+  latitude: Float
+  placeId: String!
+  externalId: String!
+  allowConsolidation: Boolean!
+  exclusiveConsolidation: Boolean!
+  consolidationPriority: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ShipmentFormulaTemplate {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  description: String!
+  type: String!
+  expression: String!
+  status: String!
+  schemaId: String!
+  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  "Formula template metadata is admin-defined and intentionally open-ended."
+  metadata: JSON
+  version: Int!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
+  currentVersionNumber: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ShipmentFormulaVariableDefinition {
+  name: String!
+  type: String!
+  description: String!
+  required: Boolean!
+  "Formula variable defaults can be scalar, array, object, or null by template design."
+  defaultValue: Any
+  source: String
+}
+
+type ShipmentMove {
+  id: ID
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID
+  status: MoveStatus!
+  loaded: Boolean!
+  sequence: Int!
+  distance: Float
+  distanceSource: String
+  distanceProvider: String
+  distanceCalculatedAt: Int
+  distanceRouteSignature: String
+  distanceDataVersion: String
+  distanceRoutingType: String
+  distanceUnits: String
+  "Distance providers may return provider-specific route details, so this remains intentionally open-ended."
+  distanceMetadata: JSON
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  stops: [ShipmentStop!]!
+  assignment: ShipmentAssignment
+}
+
+type ShipmentStop {
+  id: ID
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentMoveId: ID
+  locationId: ID!
+  status: StopStatus!
+  type: StopType!
+  scheduleType: StopScheduleType!
+  sequence: Int!
+  pieces: Int
+  weight: Int
+  scheduledWindowStart: Int!
+  scheduledWindowEnd: Int
+  actualArrival: Int
+  actualDeparture: Int
+  countLateOverride: Boolean
+  countDetentionOverride: Boolean
+  addressLine: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  location: Location
+}
+
+type ShipmentAssignment {
+  id: ID
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentMoveId: ID
+  primaryWorkerId: ID
+  tractorId: ID
+  trailerId: ID
+  secondaryWorkerId: ID
+  status: AssignmentStatus!
+  archivedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  tractor: Tractor
+  trailer: Trailer
+  primaryWorker: Worker
+  secondaryWorker: Worker
+}
+
+type ShipmentAdditionalCharge {
+  id: ID
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  accessorialChargeId: ID!
+  isSystemGenerated: Boolean!
+  method: String!
+  amount: String!
+  unit: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  accessorialCharge: ShipmentAccessorialCharge
+}
+
+type ShipmentAccessorialCharge {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  description: String!
+  status: EntityStatus!
+  method: String!
+  rateUnit: String!
+  amount: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ShipmentCommodity {
+  id: ID
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  commodityId: ID!
+  pieces: Int!
+  weight: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  commodity: ShipmentCommodityDetail
+}
+
+type ShipmentCommodityDetail {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  hazardousMaterialId: ID
+  status: EntityStatus!
+  name: String!
+  description: String!
+  minTemperature: Int
+  maxTemperature: Int
+  weightPerUnit: Float
+  linearFeetPerUnit: Float
+  maxQuantityPerShipment: Float
+  freightClass: String!
+  loadingInstructions: String!
+  stackable: Boolean!
+  fragile: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ShipmentUIPolicy {
+  allowMoveRemovals: Boolean!
+  checkForDuplicateBols: Boolean!
+  checkHazmatSegregation: Boolean!
+  maxShipmentWeightLimit: Int!
+}
+
+type ShipmentBillingReadinessPolicy {
+  shipmentBillingRequirementEnforcement: String!
+  rateValidationEnforcement: String!
+  billingExceptionDisposition: String!
+  notifyOnBillingExceptions: Boolean!
+  readyToBillAssignmentMode: String!
+  billingQueueTransferMode: String!
+}
+
+type ShipmentBillingValidation {
+  field: String!
+  code: String!
+  message: String!
+}
+
+type ShipmentBillingWarning {
+  code: String!
+  message: String!
+  context: ShipmentBillingWarningContext
+}
+
+type ShipmentBillingWarningContext {
+  documentTypeId: String
+  documentTypeCode: String
+  documentTypeName: String
+  documentCount: Int
+  requirementCount: Int
+  missingRequirementCount: Int
+  serviceFailureIds: [String!]
+  unresolvedCount: Int
+}
+
+type ShipmentServiceFailureBillingContext {
+  hasUnresolved: Boolean!
+  unresolvedCount: Int!
+  serviceFailureIds: [String!]!
+}
+
+type ShipmentBillingRequirement {
+  documentTypeId: String!
+  documentTypeCode: String!
+  documentTypeName: String!
+  satisfied: Boolean!
+  documentCount: Int!
+  documentIds: [String!]!
+}
+
+type ShipmentBillingReadiness {
+  shipmentId: String!
+  shipmentStatus: ShipmentStatus!
+  policy: ShipmentBillingReadinessPolicy!
+  requirements: [ShipmentBillingRequirement!]!
+  missingRequirements: [ShipmentBillingRequirement!]!
+  validationFailures: [ShipmentBillingValidation!]!
+  warnings: [ShipmentBillingWarning!]!
+  serviceFailureContext: ShipmentServiceFailureBillingContext!
+  canMarkReadyToInvoice: Boolean!
+  shouldAutoMarkReadyToInvoice: Boolean!
+  shouldAutoTransferToBilling: Boolean!
+}
+
+type ShipmentTotalsResponse {
+  freightChargeAmount: String!
+  otherChargeAmount: String!
+  totalChargeAmount: String!
+}
+
+type ShipmentDistanceMoveResult {
+  moveId: ID
+  moveIndex: Int!
+  distance: Float!
+  source: String!
+  provider: String
+  routingType: String
+  dataVersion: String
+  distanceUnits: String
+  distanceProfileId: String
+  distanceProfileName: String
+  warnings: [String!]
+  calculatedAt: Int!
+}
+
+type ShipmentDistanceResponse {
+  shipmentId: ID
+  totalDistance: Float!
+  moves: [ShipmentDistanceMoveResult!]!
+}
+
+type ShipmentDuplicateResponse {
+  workflowId: String!
+  runId: String!
+  taskQueue: String!
+  status: String!
+  submittedAt: Int!
+}
+
+type ShipmentValidationResponse {
+  valid: Boolean!
+}
+
+type ShipmentPreviousRateSummary {
+  shipmentId: ID!
+  proNumber: String!
+  customerId: ID!
+  serviceTypeId: ID!
+  shipmentTypeId: ID!
+  formulaTemplateId: ID!
+  freightChargeAmount: String!
+  otherChargeAmount: String!
+  totalChargeAmount: String!
+  ratingUnit: Int!
+  pieces: Int
+  weight: Int
+  createdAt: Int!
+}
+
+type ShipmentPreviousRatesResponse {
+  items: [ShipmentPreviousRateSummary!]!
+  total: Int!
+}
+
+type ShipmentBulkTransferToBillingResult {
+  shipmentId: ID!
+  success: Boolean!
+  error: String
+}
+
+type ShipmentBulkTransferToBillingResponse {
+  results: [ShipmentBulkTransferToBillingResult!]!
+  totalCount: Int!
+  successCount: Int!
+  errorCount: Int!
+}
+
+type BillingQueueItem {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  assignedBillerId: ID
+  number: String!
+  status: BillingQueueStatus!
+  billType: BillType!
+  exceptionReasonCode: BillingQueueExceptionReasonCode
+  reviewNotes: String!
+  exceptionNotes: String!
+  reviewStartedAt: Int
+  reviewCompletedAt: Int
+  canceledById: ID
+  canceledAt: Int
+  cancelReason: String!
+  isAdjustmentOrigin: Boolean!
+  sourceInvoiceId: ID
+  sourceInvoiceAdjustmentId: ID
+  sourceCreditMemoInvoiceId: ID
+  correctionGroupId: ID
+  rebillStrategy: String
+  requiresReplacementReview: Boolean!
+  rerateVariancePercent: String!
+  "Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended."
+  adjustmentContext: JSON!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  shipment: Shipment
+  assignedBiller: User
+  canceledBy: User
+}
+
+type ShipmentCommentEdge {
+  node: ShipmentComment!
+  cursor: String!
+}
+
+type ShipmentCommentConnection {
+  edges: [ShipmentCommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ShipmentCommentCountResponse {
+  count: Int!
+}
+
+type ShipmentCommentMention {
+  id: ID!
+  commentId: ID!
+  mentionedUserId: ID!
+  organizationId: ID
+  businessUnitId: ID
+  shipmentId: ID
+  createdAt: Int!
+  mentionedUser: User
+}
+
+type ShipmentComment {
+  id: ID!
+  businessUnitId: ID
+  organizationId: ID
+  shipmentId: ID!
+  userId: ID
+  comment: String!
+  type: ShipmentCommentType!
+  visibility: ShipmentCommentVisibility!
+  priority: ShipmentCommentPriority!
+  source: ShipmentCommentSource!
+  "Comment metadata is written by users, integrations, and system workflows, so keys vary by source."
+  metadata: JSON
+  editedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  mentionedUserIds: [ID!]!
+  user: User
+  mentionedUsers: [ShipmentCommentMention!]
+}
+
+type ShipmentSavedViewCounts {
+  all: Int
+  transit: Int
+  atRisk: Int
+  unassigned: Int
+  deliveringToday: Int
+}
+
+type ShipmentAnalytics {
+  page: String!
+  savedViewCounts: ShipmentSavedViewCounts
+  activeShipments: ShipmentActiveShipments
+  onTimePercent: ShipmentOnTime
+  revenueToday: ShipmentRevenueToday
+  emptyMilePercent: ShipmentEmptyMile
+  atRisk: ShipmentAtRisk
+  unassigned: ShipmentUnassignedAnalytics
+  readyToDispatch: ShipmentReadyToDispatch
+  detentionWatchlist: ShipmentDetentionWatchlist
+  customerMix: ShipmentCustomerMix
+  tomorrowsPickups: ShipmentTomorrowsPickups
+  laneHeatmap: ShipmentLaneHeatmap
+}
+
+type ShipmentActiveShipments {
+  count: Int!
+  changeFromYesterday: Int!
+  sparkline: [ShipmentSparklinePoint!]!
+  breakdown: ShipmentActiveShipmentsBreakdown!
+}
+
+type ShipmentActiveShipmentsBreakdown {
+  inTransit: Int!
+  atRisk: Int!
+  loading: Int!
+  done: Int!
+}
+
+type ShipmentOnTime {
+  percent: Float!
+  onTimeCount: Int!
+  totalCount: Int!
+  target: Float
+  deltaPp: Float!
+  sevenDayPercent: Float!
+}
+
+type ShipmentSparklinePoint {
+  hour: String!
+  value: Float!
+}
+
+type ShipmentRevenueToday {
+  total: Float!
+  sparkline: [ShipmentSparklinePoint!]!
+  deltaPct: Float!
+  rpm: Float!
+}
+
+type ShipmentEmptyMile {
+  percent: Float!
+  emptyMiles: Float!
+  totalMiles: Float!
+  deltaPp: Float!
+}
+
+type ShipmentAtRisk {
+  count: Int!
+  delta: Int!
+  etaSlip: Int!
+  weather: Int!
+  reefer: Int!
+}
+
+type ShipmentUnassignedAnalytics {
+  count: Int!
+  delta: Int!
+  revenueWaiting: Float!
+}
+
+type ShipmentReadyToDispatch {
+  count: Int!
+  delta: Int!
+  unassigned: Int!
+  driverReady: Int!
+}
+
+type ShipmentDetentionWatchlist {
+  items: [ShipmentDetentionWatchlistItem!]!
+}
+
+type ShipmentDetentionWatchlistItem {
+  shipmentId: String!
+  customer: String!
+  dwellLabel: String!
+  tone: String!
+}
+
+type ShipmentCustomerMix {
+  windowDays: Int!
+  entries: [ShipmentCustomerMixEntry!]!
+}
+
+type ShipmentCustomerMixEntry {
+  customerId: String!
+  name: String!
+  revenue: Float!
+  share: Float!
+  loads: Int!
+  trend: Float!
+}
+
+type ShipmentTomorrowsPickups {
+  date: String!
+  pickups: [ShipmentTomorrowPickup!]!
+}
+
+type ShipmentTomorrowPickup {
+  shipmentId: String!
+  proNumber: String!
+  pickupWindowStart: Int!
+  customer: String!
+  origin: String!
+  destination: String!
+  driver: String!
+  status: String!
+}
+
+type ShipmentLaneHeatmap {
+  windowDays: Int!
+  cells: [ShipmentLaneHeatmapCell!]!
+  total: Int!
+}
+
+type ShipmentLaneHeatmapCell {
+  origin: String!
+  destination: String!
+  count: Int!
+}
+
+enum ShipmentEventType {
+  ShipmentCreated
+  ShipmentUpdated
+  StatusChanged
+  ShipmentCanceled
+  ShipmentUncanceled
+  OwnershipTransferred
+  MoveStatusChanged
+  MoveDeparted
+  MoveArrived
+  StopCompleted
+  DriverAssigned
+  DriverReassigned
+  DriverUnassigned
+  HoldPlaced
+  HoldUpdated
+  HoldReleased
+  CommentPosted
+}
+
+enum ShipmentEventSeverity {
+  danger
+  success
+  brand
+  info
+  muted
+}
+
+enum ShipmentEventActorType {
+  user
+  apikey
+  system
+  edi
+}
+
+type ShipmentEventShipmentReference {
+  id: ID
+  proNumber: String
+}
+
+type ShipmentEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  moveId: ID
+  stopId: ID
+  assignmentId: ID
+  commentId: ID
+  holdId: ID
+  type: ShipmentEventType!
+  severity: ShipmentEventSeverity!
+  actorType: ShipmentEventActorType!
+  actorId: ID
+  actorLabel: String!
+  summary: String!
+  proNumber: String
+  previousStatus: String
+  newStatus: String
+  reason: String
+  previousOwnerId: ID
+  newOwnerId: ID
+  primaryWorkerId: ID
+  secondaryWorkerId: ID
+  tractorId: ID
+  trailerId: ID
+  driverName: String
+  holdType: String
+  holdSeverity: String
+  holdSource: String
+  commentBody: String
+  commentType: String
+  commentVisibility: String
+  commentPriority: String
+  mentionedUserIds: [ID!]!
+  "Shipment events can also be recorded by integrations and observers with variant-specific metadata."
+  metadata: JSON!
+  occurredAt: Int!
+  correlationId: String
+  actor: User
+  shipment: ShipmentEventShipmentReference
+}
+
+type ShipmentLoadingCommodity {
+  commodityId: ID!
+  commodityName: String!
+  positionFeet: Float!
+  lengthFeet: Float!
+  weight: Int!
+  pieces: Int!
+  stackable: Boolean!
+  fragile: Boolean!
+  isHazmat: Boolean!
+  hazmatClass: String
+  minTemp: Int
+  maxTemp: Int
+  loadingInstructions: String
+  estimatedLength: Boolean!
+  stopNumber: Int
+}
+
+type ShipmentHazmatZone {
+  commodityAId: ID!
+  commodityBId: ID!
+  commodityAName: String!
+  commodityBName: String!
+  ruleName: String!
+  segregationType: String!
+  requiredDistanceFeet: Float
+  actualDistanceFeet: Float!
+  satisfied: Boolean!
+}
+
+type ShipmentLoadingWarning {
+  type: String!
+  message: String!
+  severity: String!
+  commodityIds: [String!]
+}
+
+type ShipmentAxleWeight {
+  axle: String!
+  weight: Int!
+  limit: Int!
+  percentage: Float!
+  compliant: Boolean!
+}
+
+type ShipmentLoadingRecommendation {
+  type: String!
+  priority: String!
+  title: String!
+  description: String!
+  impact: String
+  commodityIds: [String!]
+}
+
+type ShipmentStopDivider {
+  positionFeet: Float!
+  stopNumber: Int!
+  label: String!
+}
+
+type ShipmentLoadingOptimizationResponse {
+  trailerLengthFeet: Float!
+  totalLinearFeet: Float!
+  totalWeight: Int!
+  maxWeight: Int!
+  linearFeetUtil: Float!
+  weightUtil: Float!
+  utilizationScore: Int!
+  utilizationGrade: String!
+  placements: [ShipmentLoadingCommodity!]!
+  hazmatZones: [ShipmentHazmatZone!]!
+  warnings: [ShipmentLoadingWarning!]!
+  axleWeights: [ShipmentAxleWeight!]!
+  recommendations: [ShipmentLoadingRecommendation!]!
+  stopDividers: [ShipmentStopDivider!]
+  aiAnalysis: String
+}
+
+input ShipmentRatingDetailInput {
+  formulaTemplateId: String!
+  formulaTemplateName: String!
+  expression: String!
+  resolvedVariables: JSON!
+  result: Float!
+  ratedAt: Int!
+}
+
+input ShipmentInput {
+  sourceDocumentId: String
+  serviceTypeId: ID!
+  shipmentTypeId: ID!
+  customerId: ID!
+  tractorTypeId: ID
+  trailerTypeId: ID
+  ownerId: ID
+  enteredById: ID
+  canceledById: ID
+  formulaTemplateId: ID!
+  consolidationGroupId: ID
+  status: ShipmentStatus = New
+  tenderStatus: ShipmentTenderStatus
+  entryMethod: ShipmentEntryMethod = Manual
+  proNumber: String
+  bol: String
+  cancelReason: String
+  otherChargeAmount: String = "0"
+  freightChargeAmount: String = "0"
+  baseRate: String = "0"
+  totalChargeAmount: String = "0"
+  pieces: Int
+  weight: Int
+  temperatureMin: Int
+  temperatureMax: Int
+  actualDeliveryDate: Int
+  actualShipDate: Int
+  canceledAt: Int
+  billingTransferStatus: String
+  transferredToBillingAt: Int
+  markedReadyToBillAt: Int
+  billedAt: Int
+  ratingUnit: Int = 1
+  ratingDetail: ShipmentRatingDetailInput
+  version: Int
+  moves: [ShipmentMoveInput!] = []
+  additionalCharges: [ShipmentAdditionalChargeInput!] = []
+  commodities: [ShipmentCommodityInput!] = []
+}
+
+input ShipmentMoveInput {
+  id: ID
+  shipmentId: ID
+  status: MoveStatus = New
+  loaded: Boolean = true
+  sequence: Int = 0
+  distance: Float
+  distanceSource: String
+  distanceProvider: String
+  distanceCalculatedAt: Int
+  distanceRouteSignature: String
+  distanceDataVersion: String
+  distanceRoutingType: String
+  distanceUnits: String
+  distanceMetadata: JSON
+  version: Int
+  stops: [ShipmentStopInput!] = []
+}
+
+input ShipmentStopInput {
+  id: ID
+  shipmentMoveId: ID
+  locationId: ID!
+  status: StopStatus = New
+  type: StopType = Pickup
+  scheduleType: StopScheduleType = Open
+  sequence: Int = 0
+  pieces: Int
+  weight: Int
+  scheduledWindowStart: Int = 0
+  scheduledWindowEnd: Int
+  actualArrival: Int
+  actualDeparture: Int
+  countLateOverride: Boolean
+  countDetentionOverride: Boolean
+  addressLine: String
+  version: Int
+}
+
+input ShipmentAdditionalChargeInput {
+  id: ID
+  shipmentId: ID
+  accessorialChargeId: ID!
+  isSystemGenerated: Boolean = false
+  method: String = "Flat"
+  amount: String = "0"
+  unit: Int = 1
+  version: Int
+}
+
+input ShipmentCommodityInput {
+  id: ID
+  shipmentId: ID
+  commodityId: ID!
+  pieces: Int = 1
+  weight: Int = 0
+  version: Int
+}
+
+input ShipmentDuplicateInput {
+  shipmentId: ID!
+  count: Int = 1
+  overrideDates: Boolean = false
+}
+
+input ShipmentCancelInput {
+  cancelReason: String
+}
+
+input ShipmentTransferOwnershipInput {
+  ownerId: ID!
+}
+
+input ShipmentDuplicateBolInput {
+  bol: String!
+  shipmentId: ID
+}
+
+input ShipmentHazmatInput {
+  commodityIds: [ID!]!
+}
+
+input ShipmentPreviousRatesInput {
+  originLocationId: ID!
+  destinationLocationId: ID!
+  shipmentTypeId: ID!
+  serviceTypeId: ID!
+  customerId: ID
+  excludeShipmentId: ID
+}
+
+input ShipmentLoadingCommodityInput {
+  commodityId: ID!
+  pieces: Int!
+  weight: Int!
+}
+
+input ShipmentLoadingStopInput {
+  sequence: Int!
+  locationName: String!
+  locationCity: String!
+}
+
+input ShipmentLoadingOptimizationInput {
+  commodities: [ShipmentLoadingCommodityInput!]!
+  equipmentTypeId: ID
+  stops: [ShipmentLoadingStopInput!]
+}
+
+input ShipmentTransferToBillingInput {
+  shipmentId: ID!
+  billType: BillType = Invoice
+}
+
+input ShipmentBulkTransferToBillingInput {
+  shipmentIds: [ID!]!
+  billType: BillType = Invoice
+}
+
+input ShipmentCommentInput {
+  comment: String!
+  mentionedUserIds: [ID!] = []
+  type: ShipmentCommentType = Internal
+  visibility: ShipmentCommentVisibility = Internal
+  priority: ShipmentCommentPriority = Normal
+}
+
+input ShipmentCommentUpdateInput {
+  id: ID!
+  comment: String!
+  mentionedUserIds: [ID!] = []
+  type: ShipmentCommentType = Internal
+  visibility: ShipmentCommentVisibility = Internal
+  priority: ShipmentCommentPriority = Normal
+  version: Int!
+}
+
+extend type Query {
+  shipments(
+    first: Int = 20
+    after: String
+    query: String
+    fieldFilters: [FieldFilterInput!]
+    filterGroups: [FilterGroupInput!]
+    sort: [SortFieldInput!]
+    expandShipmentDetails: Boolean = false
+    status: String
+  ): ShipmentConnection!
+  shipment(id: ID!, expandShipmentDetails: Boolean = false, status: String): Shipment
+  unassignedShipments(first: Int = 20, after: String): ShipmentConnection!
+  shipmentComments(shipmentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
+  shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
+  shipmentUIPolicy: ShipmentUIPolicy!
+  shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
+  shipmentEvents(
+    shipmentId: ID
+    types: [ShipmentEventType!]
+    limit: Int
+    before: Int
+  ): [ShipmentEvent!]!
+  shipmentAnalytics(
+    startDate: Int
+    endDate: Int
+    limit: Int
+    offset: Int
+    timezone: String
+    windowDays: Int
+    include: String
+  ): ShipmentAnalytics!
+  shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
+}
+
+extend type Mutation {
+  createShipment(input: ShipmentInput!): Shipment!
+  updateShipment(id: ID!, input: ShipmentInput!): Shipment!
+  cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
+  uncancelShipment(id: ID!): Shipment!
+  duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
+  transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
+  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
+  bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
+  calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
+  calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
+  recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
+  checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
+  checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  calculateShipmentLoadingOptimization(input: ShipmentLoadingOptimizationInput!): ShipmentLoadingOptimizationResponse!
+  createShipmentComment(shipmentId: ID!, input: ShipmentCommentInput!): ShipmentComment!
+  updateShipmentComment(shipmentId: ID!, commentId: ID!, input: ShipmentCommentUpdateInput!): ShipmentComment!
+  deleteShipmentComment(shipmentId: ID!, commentId: ID!): Boolean!
+}

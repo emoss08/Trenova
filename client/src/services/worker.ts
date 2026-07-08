@@ -57,6 +57,10 @@ export class WorkerService {
 
     fetchURL.searchParams.set("type", req.type ?? "");
     fetchURL.searchParams.set("status", req.status ?? "");
+    fetchURL.searchParams.set("limit", req.filter?.limit?.toString() ?? "20");
+    if (req.filter?.after) {
+      fetchURL.searchParams.set("after", req.filter.after);
+    }
     fetchURL.searchParams.set("startDate", req.startDate?.toString() ?? "");
     fetchURL.searchParams.set("endDate", req.endDate?.toString() ?? "");
     fetchURL.searchParams.set("workerId", req.workerId ?? "");

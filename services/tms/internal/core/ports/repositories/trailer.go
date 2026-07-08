@@ -10,16 +10,55 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+type TrailerRelationIncludes struct {
+	IncludeTenantDetails         bool     `json:"includeTenantDetails"`
+	IncludeEquipmentDetails      bool     `json:"includeEquipmentDetails"`
+	IncludeFleetDetails          bool     `json:"includeFleetDetails"`
+	IncludeFleetManager          bool     `json:"includeFleetManager"`
+	IncludeRegistrationDetails   bool     `json:"includeRegistrationDetails"`
+	IncludeBusinessUnit          bool     `json:"includeBusinessUnit"`
+	IncludeOrganization          bool     `json:"includeOrganization"`
+	IncludeEquipmentType         bool     `json:"includeEquipmentType"`
+	IncludeEquipmentManufacturer bool     `json:"includeEquipmentManufacturer"`
+	IncludeFleetCode             bool     `json:"includeFleetCode"`
+	IncludeRegistrationState     bool     `json:"includeRegistrationState"`
+	IncludeLastKnownLocation     bool     `json:"includeLastKnownLocation"`
+	IncludeCustomFields          bool     `json:"includeCustomFields"`
+	TrailerColumns               []string `json:"-"`
+	EquipmentTypeColumns         []string `json:"-"`
+	EquipmentManufacturerColumns []string `json:"-"`
+	FleetCodeColumns             []string `json:"-"`
+}
+
+func FullTrailerRelationIncludes() TrailerRelationIncludes {
+	return TrailerRelationIncludes{
+		IncludeTenantDetails:         true,
+		IncludeEquipmentDetails:      true,
+		IncludeFleetDetails:          true,
+		IncludeFleetManager:          true,
+		IncludeRegistrationDetails:   true,
+		IncludeBusinessUnit:          true,
+		IncludeOrganization:          true,
+		IncludeEquipmentType:         true,
+		IncludeEquipmentManufacturer: true,
+		IncludeFleetCode:             true,
+		IncludeRegistrationState:     true,
+		IncludeLastKnownLocation:     true,
+		IncludeCustomFields:          true,
+	}
+}
+
 type ListTrailersRequest struct {
-	Filter                  *pagination.QueryOptions `json:"filter"`
-	IncludeEquipmentDetails bool                     `json:"includeEquipmentDetails"`
-	IncludeFleetDetails     bool                     `json:"includeFleetDetails"`
-	Status                  string                   `json:"status"`
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"cursor"`
+	TrailerRelationIncludes
+	Status string `json:"status"`
 }
 
 type GetTrailerByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
+	TrailerRelationIncludes
 }
 
 type BulkUpdateTrailerStatusRequest struct {
@@ -31,6 +70,7 @@ type BulkUpdateTrailerStatusRequest struct {
 type GetTrailersByIDsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	TrailerIDs []pulid.ID            `json:"trailerIds"`
+	TrailerRelationIncludes
 }
 
 type LocateTrailerRequest struct {
@@ -70,7 +110,7 @@ type TrailerRepository interface {
 	List(
 		ctx context.Context,
 		req *ListTrailersRequest,
-	) (*pagination.ListResult[*trailer.Trailer], error)
+	) (*pagination.CursorListResult[*trailer.Trailer], error)
 	GetByID(
 		ctx context.Context,
 		req GetTrailerByIDRequest,

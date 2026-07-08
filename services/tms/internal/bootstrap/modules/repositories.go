@@ -41,10 +41,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentuploadrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dothazmatreferencerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ediconnectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicontrolnumberrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edidocumenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ediinboundfilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edimappingprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edimessagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edipartnerdocumentprofilerepository"
@@ -210,6 +212,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	edicontrolnumberrepository.New,
 	edimessagerepository.New,
 	editestcaserepository.New,
+	ediinboundfilerepository.New,
+	edicarrierinvoicerepository.New,
 	commodityrepository.New,
 	customerpaymentrepository.New,
 	customerledgerrepository.New,

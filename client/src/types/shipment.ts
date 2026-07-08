@@ -484,3 +484,7 @@ export const transferToBillingRequestSchema = z.object({
 });
 
 export type TransferToBillingRequest = z.infer<typeof transferToBillingRequestSchema>;
+
+export const listShipmentCommentRequestSchema = z.object({
+  shipmentId: shipmentSchema.shape.id,
+});

@@ -1,5 +1,10 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { API_BASE_URL } from "@/lib/constants";
+import {
+  fetchGraphQLSelectedOption,
+  selectOptionFiltersFromSearchParams,
+  type GraphQLSelectOptionsConfig,
+} from "@/lib/graphql/select-options";
 import { cn } from "@/lib/utils";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
@@ -200,6 +205,8 @@ export interface BaseAutocompleteFieldProps<
   onOptionChange?: (option: TOption | null) => void;
   /** Extra search params to append to the query */
   extraSearchParams?: Record<string, string | string[]>;
+  /** Optional GraphQL select-options resource. REST link remains the compatibility fallback. */
+  graphql?: GraphQLSelectOptionsConfig;
   /** Popout link to open in a new window */
   popoutLink?: string;
 
@@ -234,6 +241,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   isInvalid,
   clearable = false,
   extraSearchParams,
+  graphql,
   popoutLink,
   initialLimit,
   filterOption,
@@ -246,11 +254,38 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   } | null>(null);
 
   const valueLookupLink = selectedValueLink ?? link;
+  const graphQLFilters = useMemo(
+    () => ({
+      ...selectOptionFiltersFromSearchParams(extraSearchParams),
+      ...graphql?.filters,
+    }),
+    [extraSearchParams, graphql?.filters],
+  );
+  const normalizedGraphQLFilters = useMemo(
+    () => (Object.keys(graphQLFilters).length > 0 ? graphQLFilters : undefined),
+    [graphQLFilters],
+  );
 
   const { data: fetchedOption } = useQuery({
-    queryKey: ["autocomplete-option", link, valueLookupLink, value],
+    queryKey: [
+      "autocomplete-option",
+      link,
+      valueLookupLink,
+      value,
+      graphql,
+      graphql?.resource,
+      normalizedGraphQLFilters,
+    ],
     queryFn: async () => {
       if (!value) return null;
+      if (graphql) {
+        return (await fetchGraphQLSelectedOption(
+          graphql.resource,
+          value,
+          normalizedGraphQLFilters,
+        )) as TOption | null;
+      }
+
       const candidates = buildSelectedValueLookupCandidates(valueLookupLink, value);
 
       for (const [index, candidate] of candidates.entries()) {
@@ -379,6 +414,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             value={value}
             noResultsMessage={noResultsMessage}
             extraSearchParams={extraSearchParams}
+            graphql={graphql}
             initialLimit={initialLimit}
             popoutLink={popoutLink}
             listboxId={listboxId}
@@ -411,6 +447,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   onOptionChange,
   clearable,
   extraSearchParams,
+  graphql,
   placeholder,
   initialLimit,
   filterOption,
@@ -440,6 +477,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
               onOptionChange={onOptionChange}
               clearable={clearable}
               extraSearchParams={extraSearchParams}
+              graphql={graphql}
               label={label}
               initialLimit={initialLimit}
               selectedValueLink={selectedValueLink}

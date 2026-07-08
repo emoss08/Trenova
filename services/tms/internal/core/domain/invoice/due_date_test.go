@@ -19,12 +19,12 @@ func TestDueDateFromPaymentTerm(t *testing.T) {
 		{
 			name:     "due on receipt",
 			term:     PaymentTermDueOnReceipt,
-			expected: int64Ptr(invoiceDate),
+			expected: new(invoiceDate),
 		},
 		{
 			name:     "net 30",
 			term:     PaymentTermNet30,
-			expected: int64Ptr(invoiceDate + 30*daySeconds),
+			expected: new(invoiceDate + 30*daySeconds),
 		},
 		{
 			name:     "invalid payment term returns nil",
@@ -47,6 +47,7 @@ func TestDueDateFromPaymentTermRequiresInvoiceDate(t *testing.T) {
 	assert.Nil(t, DueDateFromPaymentTerm(0, PaymentTermNet30))
 }
 
+//go:fix inline
 func int64Ptr(v int64) *int64 {
-	return &v
+	return new(v)
 }

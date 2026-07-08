@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,10 +8,31 @@ import { DataTable } from "../data-table";
 import { DataTableProvider, useDataTable } from "@/contexts/data-table-context";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
+import { DataTablePagination } from "../_components/data-table-pagination";
 
 type TestRow = { id: string; name: string };
 
 const testColumns: ColumnDef<TestRow>[] = [{ accessorKey: "name", header: "Name" }];
+const testGraphQLConfig = {
+  document:
+    "query TestTable($input: DataTableConnectionInput!) { tests(input: $input) { totalCount } }",
+  operationName: "TestTable",
+  connectionKey: "tests",
+};
+const useDataTableQueryMock = vi.hoisted(() =>
+  vi.fn(() => ({
+    data: {
+      results: [
+        { id: "1", name: "Alice" },
+        { id: "2", name: "Bob" },
+      ],
+      count: 2,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+  })),
+);
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermissions: () => ({
@@ -25,18 +46,7 @@ vi.mock("@/hooks/use-permission", () => ({
 }));
 
 vi.mock("@/hooks/data-table/use-data-table-query", () => ({
-  useDataTableQuery: () => ({
-    data: {
-      results: [
-        { id: "1", name: "Alice" },
-        { id: "2", name: "Bob" },
-      ],
-      count: 2,
-    },
-    isLoading: false,
-    isError: false,
-    error: null,
-  }),
+  useDataTableQuery: useDataTableQueryMock,
 }));
 
 vi.mock("@/lib/queries", () => ({
@@ -49,10 +59,6 @@ vi.mock("@/lib/queries", () => ({
       }),
     },
   },
-}));
-
-vi.mock("@/lib/api", () => ({
-  api: { get: vi.fn().mockResolvedValue(null) },
 }));
 
 vi.mock("@/hooks/use-debounce", () => ({
@@ -79,9 +85,8 @@ function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<T
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
-          link="/trailers/"
           queryKey="test"
-          exportModelName="Test"
+          graphql={testGraphQLConfig}
           {...props}
         />
       </NuqsTestingAdapter>
@@ -112,6 +117,34 @@ describe("DataTable", () => {
     expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
   });
 
+  it("passes the required GraphQL config through to the query hook", () => {
+    const graphql = {
+      document:
+        "query TestTable($input: DataTableConnectionInput!) { tests(input: $input) { totalCount } }",
+      operationName: "TestTable",
+      connectionKey: "tests",
+      extraVariables: { includeDetails: true },
+    };
+
+    renderDataTable({ graphql });
+
+    const graphqlCall = (useDataTableQueryMock.mock.calls as unknown[][]).find(
+      (call) => call[1] === graphql,
+    );
+    expect(graphqlCall).toEqual([
+      "test",
+      graphql,
+      { pageIndex: 0, pageSize: 10 },
+      expect.objectContaining({
+        query: "",
+        fieldFilters: [],
+        filterGroups: [],
+        sort: [],
+      }),
+      true,
+    ]);
+  });
+
   it("survives multiple parent re-renders without crashing", () => {
     const queryClient = createQueryClient();
 
@@ -125,9 +158,8 @@ describe("DataTable", () => {
           <DataTable<TestRow>
             columns={testColumns}
             name="rerender-test"
-            link="/trailers/"
             queryKey="rerender"
-            exportModelName="Test"
+            graphql={testGraphQLConfig}
           />
         </>
       );
@@ -331,6 +363,43 @@ describe("DataTableProvider memoization", () => {
     expect(contextValues.length).toBeGreaterThanOrEqual(2);
     expect((contextValues[0] as any).isLoading).toBe(false);
     expect((contextValues[contextValues.length - 1] as any).isLoading).toBe(false);
+  });
+});
+
+describe("DataTablePagination", () => {
+  it("renders cursor pagination without total count or last-page controls", () => {
+    function CursorPaginationHarness() {
+      const table = useReactTable({
+        data: [
+          { id: "11", name: "Cursor A" },
+          { id: "12", name: "Cursor B" },
+        ] as TestRow[],
+        columns: testColumns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        pageCount: 3,
+        rowCount: 30,
+        state: {
+          pagination: {
+            pageIndex: 1,
+            pageSize: 10,
+          },
+        },
+      });
+
+      return (
+        <DataTablePagination table={table} mode="cursor" hasNextPage currentPageRowCount={2} />
+      );
+    }
+
+    const { container } = render(<CursorPaginationHarness />);
+    const view = within(container);
+
+    expect(container).toHaveTextContent("Showing 11 to 12 results");
+    expect(view.queryByLabelText("Go to first page")).not.toBeInTheDocument();
+    expect(view.queryByLabelText("Go to last page")).not.toBeInTheDocument();
+    expect(view.getByLabelText("Go to next page")).not.toBeDisabled();
+    expect(container).not.toHaveTextContent("of 30");
   });
 });
 

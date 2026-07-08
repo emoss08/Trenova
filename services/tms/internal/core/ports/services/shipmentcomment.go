@@ -23,7 +23,7 @@ type ShipmentCommentService interface {
 	ListByShipmentID(
 		ctx context.Context,
 		req *repositories.ListShipmentCommentsRequest,
-	) (*pagination.ListResult[*shipment.ShipmentComment], error)
+	) (*pagination.CursorListResult[*shipment.ShipmentComment], error)
 	GetCountByShipmentID(
 		ctx context.Context,
 		req *repositories.GetShipmentCommentCountRequest,

@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
+import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
 import type { EquipmentType } from "@/types/equipment-type";
@@ -58,11 +59,10 @@ export default function EquipmentTypeTable() {
   return (
     <DataTable<EquipmentType>
       name="Equipment Type"
-      link="/equipment-types/"
       queryKey="equipment-type-list"
-      exportModelName="equipment-type"
       resource={Resource.EquipmentType}
       columns={columns}
+      graphql={equipmentTableGraphQLConfigs.equipmentType}
       dockActions={dockActions}
       enableRowSelection
       TablePanel={EquipmentTypePanel}

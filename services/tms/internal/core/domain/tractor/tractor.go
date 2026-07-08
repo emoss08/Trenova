@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -20,13 +22,16 @@ import (
 )
 
 var (
-	_ bun.BeforeAppendModelHook         = (*Tractor)(nil)
-	_ domaintypes.PostgresSearchable    = (*Tractor)(nil)
-	_ customfield.CustomFieldsSupporter = (*Tractor)(nil)
+	_ bun.BeforeAppendModelHook          = (*Tractor)(nil)
+	_ domaintypes.PostgresSearchable     = (*Tractor)(nil)
+	_ customfield.CustomFieldsSupporter  = (*Tractor)(nil)
+	_ pagination.CursorEntity            = (*Tractor)(nil)
+	_ validationframework.TenantedEntity = (*Tractor)(nil)
 )
 
 type Tractor struct {
-	bun.BaseModel `bun:"table:tractors,alias:trac" json:"-"`
+	bun.BaseModel             `bun:"table:tractors,alias:trac" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                      pulid.ID                    `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID          pulid.ID                    `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -46,6 +51,8 @@ type Tractor struct {
 	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
 	RegistrationExpiry      *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
 	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
+	LastKnownLocationID     pulid.ID                    `json:"lastKnownLocationId"     bun:"last_known_location_id,type:VARCHAR(100),scanonly"`
+	LastKnownLocationName   string                      `json:"lastKnownLocationName"   bun:"last_known_location_name,type:VARCHAR(255),scanonly"`
 	Version                 int64                       `json:"version"                 bun:"version,type:BIGINT"`
 	CreatedAt               int64                       `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64                       `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -126,6 +133,10 @@ func (t *Tractor) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 func (t *Tractor) GetID() pulid.ID {
 	return t.ID
+}
+
+func (t *Tractor) GetCreatedAt() int64 {
+	return t.CreatedAt
 }
 
 func (t *Tractor) GetOrganizationID() pulid.ID {

@@ -1,16 +1,23 @@
 import { timezoneChoices } from "@/lib/choices";
+import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import {
   ediConnectionMethodSchema,
+  ediDocumentPayloadSchema,
   ediMappingEntityTypeSchema,
   ediPartnerKindSchema,
   type EDIPartner,
+  type EDITestCase,
+  type SaveEDITestCaseRequest,
   type UpsertEDIPartnerRequest,
 } from "@/types/edi";
 import { z } from "zod";
 
 export const mappingEntityTypes = ediMappingEntityTypeSchema.options;
 
-export const mappingTargetEndpoints: Record<(typeof mappingEntityTypes)[number], string> = {
+export const mappingTargetEndpoints: Record<
+  (typeof mappingEntityTypes)[number],
+  SELECT_OPTIONS_ENDPOINTS
+> = {
   Customer: "/customers/select-options/",
   ServiceType: "/service-types/select-options/",
   ShipmentType: "/shipment-types/select-options/",
@@ -50,6 +57,32 @@ export const mdnModeOptions = [
   { label: "Asynchronous", value: "async" },
 ];
 
+export const as2SigningAlgorithmOptions = [
+  { label: "SHA-256", value: "sha256" },
+  { label: "SHA-384", value: "sha384" },
+  { label: "SHA-512", value: "sha512" },
+  { label: "SHA-1 (legacy)", value: "sha1" },
+];
+
+export const as2EncryptionAlgorithmOptions = [
+  { label: "AES-256-CBC", value: "aes256-cbc" },
+  { label: "AES-128-CBC", value: "aes128-cbc" },
+  { label: "AES-256-GCM", value: "aes256-gcm" },
+  { label: "AES-128-GCM", value: "aes128-gcm" },
+  { label: "Triple DES (legacy)", value: "3des" },
+];
+
+export const as2InboundRequirementOptions = [
+  { label: "Automatic (require when certificates are configured)", value: "auto" },
+  { label: "Required", value: "true" },
+  { label: "Not required", value: "false" },
+];
+
+export const as2CompressionOptions = [
+  { label: "None", value: "none" },
+  { label: "Zlib", value: "zlib" },
+];
+
 export const environmentOptions = [
   { label: "Test", value: "test" },
   { label: "Production", value: "production" },
@@ -71,14 +104,20 @@ export const communicationProfileConfigSchema = z.object({
   localAS2Id: z.string(),
   partnerAS2Id: z.string(),
   endpointUrl: z.string(),
-  signingCertificateRef: z.string(),
-  encryptionCertificateRef: z.string(),
+  localCertificate: z.string(),
+  partnerSigningCertificate: z.string(),
+  partnerEncryptionCertificate: z.string(),
   mdnMode: z.string(),
   mdnUrl: z.string(),
   compressionAlgorithm: z.string(),
   signingAlgorithm: z.string(),
   encryptionAlgorithm: z.string(),
+  requireSignedInbound: z.string(),
+  requireEncryptedInbound: z.string(),
   basicAuthUsername: z.string(),
+  retryMaxAttempts: z.string(),
+  retryInitialIntervalSeconds: z.string(),
+  retryMaxIntervalSeconds: z.string(),
   host: z.string(),
   port: z.string(),
   username: z.string(),
@@ -171,7 +210,6 @@ export const ediPartnerFormSchema = z.object({
   enabledForOutbound: z.boolean(),
   defaultTransportId: z.string(),
   defaultMappingProfileId: z.string(),
-  defaultValidationProfileId: z.string(),
   settingsJson: z.string().refine(
     (value) => {
       try {
@@ -207,7 +245,6 @@ export function getPartnerFormDefaults(partner?: EDIPartner | null): EDIPartnerF
     enabledForOutbound: partner?.enabledForOutbound ?? true,
     defaultTransportId: partner?.defaultTransportId ?? "",
     defaultMappingProfileId: partner?.defaultMappingProfileId ?? "",
-    defaultValidationProfileId: partner?.defaultValidationProfileId ?? "",
     settingsJson: JSON.stringify(partner?.settings ?? {}, null, 2),
     version: partner?.version,
   };
@@ -223,7 +260,6 @@ export function toPartnerRequest(values: EDIPartnerFormValues): UpsertEDIPartner
     customerId: emptyToUndefined(values.customerId),
     defaultTransportId: emptyToUndefined(values.defaultTransportId),
     defaultMappingProfileId: emptyToUndefined(values.defaultMappingProfileId),
-    defaultValidationProfileId: emptyToUndefined(values.defaultValidationProfileId),
     country: values.country,
     timezone: emptyToUndefined(values.timezone),
     contactName: emptyToUndefined(values.contactName),
@@ -243,7 +279,94 @@ export function toPartnerRequest(values: EDIPartnerFormValues): UpsertEDIPartner
   return request;
 }
 
-function emptyToUndefined(value: string) {
+export function emptyToUndefined(value: string) {
   const trimmed = value.trim();
   return trimmed === "" ? undefined : trimmed;
+}
+
+export const ediTestCaseFormSchema = z.object({
+  partnerDocumentProfileId: z.string().min(1, "Document profile is required"),
+  name: z.string().trim().min(1, "Name is required"),
+  description: z.string(),
+  payloadJson: z
+    .string()
+    .trim()
+    .min(1, "Payload is required")
+    .superRefine((value, ctx) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        ctx.addIssue({ code: "custom", message: "Payload must be valid JSON" });
+        return;
+      }
+      const result = ediDocumentPayloadSchema.safeParse(parsed);
+      if (!result.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Payload must be a valid EDI document payload",
+        });
+        return;
+      }
+      const payload = result.data;
+      const hasBranch = Boolean(
+        payload.loadTender ||
+        payload.shipment ||
+        payload.invoice ||
+        payload.shipmentStatus ||
+        payload.tenderResponse ||
+        payload.functionalAck ||
+        payload.implementationAck,
+      );
+      if (!hasBranch) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Payload must contain at least one transaction branch",
+        });
+      }
+    }),
+  expectedWarnings: z.number().int().min(0, "Expected warnings cannot be negative"),
+  expectedErrors: z.number().int().min(0, "Expected errors cannot be negative"),
+  expectedWarningCodes: z.string(),
+  expectedErrorCodes: z.string(),
+  version: z.number(),
+});
+
+export type EDITestCaseFormValues = z.infer<typeof ediTestCaseFormSchema>;
+
+export function getTestCaseFormDefaults(testCase?: EDITestCase | null): EDITestCaseFormValues {
+  return {
+    partnerDocumentProfileId: testCase?.partnerDocumentProfileId ?? "",
+    name: testCase?.name ?? "",
+    description: testCase?.description ?? "",
+    payloadJson: JSON.stringify(testCase?.payload ?? {}, null, 2),
+    expectedWarnings: testCase?.expectedWarnings ?? 0,
+    expectedErrors: testCase?.expectedErrors ?? 0,
+    expectedWarningCodes: (testCase?.expectedWarningCodes ?? []).join(", "),
+    expectedErrorCodes: (testCase?.expectedErrorCodes ?? []).join(", "),
+    version: testCase?.version ?? 0,
+  };
+}
+
+export function parseDiagnosticCodes(value: string): string[] {
+  const seen = new Set<string>();
+  for (const raw of value.split(",")) {
+    const trimmed = raw.trim();
+    if (trimmed !== "") seen.add(trimmed);
+  }
+  return Array.from(seen).sort();
+}
+
+export function toTestCaseRequest(values: EDITestCaseFormValues): SaveEDITestCaseRequest {
+  return {
+    partnerDocumentProfileId: values.partnerDocumentProfileId,
+    name: values.name,
+    description: emptyToUndefined(values.description),
+    payload: ediDocumentPayloadSchema.parse(JSON.parse(values.payloadJson)),
+    expectedWarnings: values.expectedWarnings,
+    expectedErrors: values.expectedErrors,
+    expectedWarningCodes: parseDiagnosticCodes(values.expectedWarningCodes),
+    expectedErrorCodes: parseDiagnosticCodes(values.expectedErrorCodes),
+    version: values.version,
+  };
 }

@@ -58,10 +58,7 @@ func (a *Activities) GetAutoCloseTenantsActivity(
 			ToTemporalError()
 	}
 
-	limit := temporaljobs.DefaultTenantScanLimit
-	if len(controls) < limit {
-		limit = len(controls)
-	}
+	limit := min(len(controls), temporaljobs.DefaultTenantScanLimit)
 
 	tenants := make([]OrgTenant, 0, limit)
 	for _, ac := range controls[:limit] {

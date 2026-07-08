@@ -365,6 +365,7 @@ func newShipmentEntity() *shipment.Shipment {
 	}
 }
 
+//go:fix inline
 func int64Ptr(value int64) *int64 {
-	return &value
+	return new(value)
 }

@@ -22,18 +22,19 @@ export function useShipmentEventsInfinite({
   enabled = true,
 }: Options = {}) {
   const limit = pageSize ?? ACTIVITY_FEED_PAGE_SIZE;
-  const typesKey = types && types.length > 0 ? [...types].sort().join(",") : "";
+  const normalizedTypes = types && types.length > 0 ? [...types].sort() : undefined;
+  const typesKey = normalizedTypes?.join(",") ?? "";
 
   return useInfiniteQuery({
     queryKey: [
       "shipment-events",
-      { shipmentId: shipmentId ?? "all", typesKey, limit, types },
+      { shipmentId: shipmentId ?? "all", typesKey, limit, types: normalizedTypes },
     ],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       apiService.shipmentEventService.list({
         shipmentId,
-        types,
+        types: normalizedTypes,
         limit,
         before: pageParam || undefined,
       }),

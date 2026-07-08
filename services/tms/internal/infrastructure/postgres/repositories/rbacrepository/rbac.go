@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -62,10 +63,8 @@ func (r *repository) UpsertRoleHierarchyEdge(
 	if err != nil {
 		return err
 	}
-	for _, id := range closure {
-		if id == req.SeniorRoleID {
-			return repositories.ErrCircularRoleHierarchy
-		}
+	if slices.Contains(closure, req.SeniorRoleID) {
+		return repositories.ErrCircularRoleHierarchy
 	}
 
 	edge := &permission.RoleHierarchyEdge{

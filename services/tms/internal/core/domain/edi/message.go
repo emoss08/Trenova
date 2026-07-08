@@ -3,24 +3,33 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
+var (
+	_ pagination.CursorEntity   = (*EDIMessage)(nil)
+	_ bun.BeforeAppendModelHook = (*EDIMessage)(nil)
+)
+
 type EDIMessage struct {
-	bun.BaseModel `json:"-" bun:"table:edi_messages,alias:emsg"`
+	bun.BaseModel             `json:"-" bun:"table:edi_messages,alias:emsg"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                       pulid.ID                    `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID           pulid.ID                    `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID           pulid.ID                    `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 	EDIPartnerID             pulid.ID                    `json:"ediPartnerId"             bun:"edi_partner_id,type:VARCHAR(100),notnull"`
 	DocumentTypeID           pulid.ID                    `json:"documentTypeId"           bun:"document_type_id,type:VARCHAR(100),notnull"`
-	PartnerDocumentProfileID pulid.ID                    `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),notnull"`
-	TemplateID               pulid.ID                    `json:"templateId"               bun:"template_id,type:VARCHAR(100),notnull"`
-	TemplateVersionID        pulid.ID                    `json:"templateVersionId"        bun:"template_version_id,type:VARCHAR(100),notnull"`
+	PartnerDocumentProfileID pulid.ID                    `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),nullzero"`
+	TemplateID               pulid.ID                    `json:"templateId"               bun:"template_id,type:VARCHAR(100),nullzero"`
+	TemplateVersionID        pulid.ID                    `json:"templateVersionId"        bun:"template_version_id,type:VARCHAR(100),nullzero"`
 	ShipmentID               pulid.ID                    `json:"shipmentId"               bun:"shipment_id,type:VARCHAR(100),nullzero"`
 	TransferID               pulid.ID                    `json:"transferId"               bun:"transfer_id,type:VARCHAR(100),nullzero"`
+	InboundFileID            pulid.ID                    `json:"inboundFileId"            bun:"inbound_file_id,type:VARCHAR(100),nullzero"`
 	Direction                DocumentDirection           `json:"direction"                bun:"direction,type:edi_document_direction_enum,notnull"`
 	Standard                 EDIStandard                 `json:"standard"                 bun:"standard,type:edi_standard_enum,notnull"`
 	TransactionSet           TransactionSet              `json:"transactionSet"           bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
@@ -33,16 +42,19 @@ type EDIMessage struct {
 	SegmentCount             int64                       `json:"segmentCount"             bun:"segment_count,type:BIGINT,notnull"`
 	RawX12                   string                      `json:"rawX12"                   bun:"raw_x12,type:TEXT,notnull"`
 	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot"          bun:"payload_snapshot,type:JSONB,notnull"`
-	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"       bun:"delivery_status,type:edi_message_delivery_status_enum,nullzero"`
-	DeliveryRemotePath       string                      `json:"deliveryRemotePath"   bun:"delivery_remote_path,type:TEXT,nullzero"`
-	DeliveryAttempts         int64                       `json:"deliveryAttempts"     bun:"delivery_attempts,type:BIGINT,notnull,default:0"`
-	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt" bun:"delivery_last_attempt_at,type:BIGINT,nullzero"`
-	DeliverySentAt           *int64                      `json:"deliverySentAt"       bun:"delivery_sent_at,type:BIGINT,nullzero"`
-	DeliveryLastError        string                      `json:"deliveryLastError"    bun:"delivery_last_error,type:TEXT,nullzero"`
-	AckStatus                MessageAcknowledgmentStatus `json:"ackStatus"            bun:"ack_status,type:edi_message_ack_status_enum,nullzero"`
-	AckMessageID             pulid.ID                    `json:"ackMessageId"         bun:"ack_message_id,type:VARCHAR(100),nullzero"`
-	AckReceivedAt            *int64                      `json:"ackReceivedAt"        bun:"ack_received_at,type:BIGINT,nullzero"`
-	AckLastError             string                      `json:"ackLastError"         bun:"ack_last_error,type:TEXT,nullzero"`
+	RawPurgedAt              *int64                      `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
+	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           bun:"delivery_status,type:edi_message_delivery_status_enum,nullzero"`
+	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       bun:"delivery_remote_path,type:TEXT,nullzero"`
+	DeliveryAttempts         int64                       `json:"deliveryAttempts"         bun:"delivery_attempts,type:BIGINT,notnull,default:0"`
+	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt"    bun:"delivery_last_attempt_at,type:BIGINT,nullzero"`
+	DeliverySentAt           *int64                      `json:"deliverySentAt"           bun:"delivery_sent_at,type:BIGINT,nullzero"`
+	DeliveryLastError        string                      `json:"deliveryLastError"        bun:"delivery_last_error,type:TEXT,nullzero"`
+	AS2MessageID             string                      `json:"as2MessageId"             bun:"as2_message_id,type:VARCHAR(255),nullzero"`
+	AS2MIC                   string                      `json:"as2Mic"                   bun:"as2_mic,type:VARCHAR(255),nullzero"`
+	AckStatus                MessageAcknowledgmentStatus `json:"ackStatus"                bun:"ack_status,type:edi_message_ack_status_enum,nullzero"`
+	AckMessageID             pulid.ID                    `json:"ackMessageId"             bun:"ack_message_id,type:VARCHAR(100),nullzero"`
+	AckReceivedAt            *int64                      `json:"ackReceivedAt"            bun:"ack_received_at,type:BIGINT,nullzero"`
+	AckLastError             string                      `json:"ackLastError"             bun:"ack_last_error,type:TEXT,nullzero"`
 	GeneratedByID            pulid.ID                    `json:"generatedById"            bun:"generated_by_id,type:VARCHAR(100),nullzero"`
 	GeneratedAt              int64                       `json:"generatedAt"              bun:"generated_at,type:BIGINT,notnull"`
 	Version                  int64                       `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
@@ -64,6 +76,7 @@ func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error
 	if m.GeneratedAt == 0 {
 		m.GeneratedAt = now
 	}
+
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if m.ID.IsNil() {
@@ -73,6 +86,7 @@ func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error
 	case *bun.UpdateQuery:
 		m.UpdatedAt = now
 	}
+
 	return nil
 }
 
@@ -104,7 +118,8 @@ func (e *EDIMessageValidationError) BeforeAppendModel(_ context.Context, query b
 }
 
 type EDITestCase struct {
-	bun.BaseModel `json:"-" bun:"table:edi_test_cases,alias:etc"`
+	bun.BaseModel             `json:"-" bun:"table:edi_test_cases,alias:etc"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                       pulid.ID        `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID           pulid.ID        `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -115,9 +130,17 @@ type EDITestCase struct {
 	Payload                  DocumentPayload `json:"payload"                  bun:"payload,type:JSONB,notnull"`
 	ExpectedWarnings         int             `json:"expectedWarnings"         bun:"expected_warnings,type:INTEGER,notnull,default:0"`
 	ExpectedErrors           int             `json:"expectedErrors"           bun:"expected_errors,type:INTEGER,notnull,default:0"`
+	ExpectedWarningCodes     []string        `json:"expectedWarningCodes"     bun:"expected_warning_codes,type:JSONB,notnull,default:'[]'::jsonb"`
+	ExpectedErrorCodes       []string        `json:"expectedErrorCodes"       bun:"expected_error_codes,type:JSONB,notnull,default:'[]'::jsonb"`
+	LastRunAt                *int64          `json:"lastRunAt"                bun:"last_run_at,type:BIGINT,nullzero"`
+	LastRunPassed            *bool           `json:"lastRunPassed"            bun:"last_run_passed,type:BOOLEAN"`
+	LastRunWarnings          int             `json:"lastRunWarnings"          bun:"last_run_warnings,type:INTEGER,notnull,default:0"`
+	LastRunErrors            int             `json:"lastRunErrors"            bun:"last_run_errors,type:INTEGER,notnull,default:0"`
 	Version                  int64           `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt                int64           `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64           `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	DocumentProfile *EDIPartnerDocumentProfile `json:"documentProfile,omitempty" bun:"rel:belongs-to,join:partner_document_profile_id=id"`
 }
 
 func (t *EDITestCase) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -132,4 +155,69 @@ func (t *EDITestCase) BeforeAppendModel(_ context.Context, query bun.Query) erro
 		t.UpdatedAt = now
 	}
 	return nil
+}
+
+func (t *EDITestCase) GetID() pulid.ID {
+	return t.ID
+}
+
+func (t *EDITestCase) GetTableName() string {
+	return "edi_test_cases"
+}
+
+func (t *EDITestCase) GetOrganizationID() pulid.ID {
+	return t.OrganizationID
+}
+
+func (t *EDITestCase) GetBusinessUnitID() pulid.ID {
+	return t.BusinessUnitID
+}
+
+func (t *EDITestCase) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "etc",
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
+}
+
+func (t *EDITestCase) GetCreatedAt() int64 {
+	return t.CreatedAt
+}
+
+func (m *EDIMessage) GetID() pulid.ID {
+	return m.ID
+}
+
+func (m *EDIMessage) GetTableName() string {
+	return "edi_messages"
+}
+
+func (m *EDIMessage) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "emsg",
+		SearchableFields: []domaintypes.SearchableField{
+			{
+				Name:   "interchange_control_number",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "transaction_set",
+				Type:   domaintypes.FieldTypeEnum,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
+		},
+	}
+}
+
+func (m *EDIMessage) GetCreatedAt() int64 {
+	return m.CreatedAt
 }

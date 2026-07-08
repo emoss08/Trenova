@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -100,6 +101,67 @@ func (r *repository) ListMappingProfiles(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) ListMappingProfilesCursor(
+	ctx context.Context,
+	req *repositories.ListEDIMappingProfilesRequest,
+) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*edi.EDIMappingProfile)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = querybuilder.ApplyFiltersWithoutSort(
+				sq,
+				"emp",
+				req.Filter,
+				(*edi.EDIMappingProfile)(nil),
+			)
+			return applyMappingProfileListFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMappingProfile]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*edi.EDIMappingProfile) *bun.SelectQuery {
+			rel := buncolgen.EDIMappingProfileRelations
+			return dba.
+				NewSelect().
+				Model(entities).
+				ColumnExpr(buncolgen.EDIMappingProfileTable.All()).
+				Relation(rel.Partner).
+				Relation(rel.Entries)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			sq, applyErr := querybuilder.ApplyCursorFilters(
+				sq,
+				"emp",
+				req.Filter,
+				req.Cursor,
+				(*edi.EDIMappingProfile)(nil),
+			)
+			if applyErr != nil {
+				return sq, applyErr
+			}
+			return applyMappingProfileListFilters(sq, req), nil
+		},
+	})
+}
+
+func applyMappingProfileListFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEDIMappingProfilesRequest,
+) *bun.SelectQuery {
+	if !req.PartnerID.IsNil() {
+		q = q.Where(buncolgen.EDIMappingProfileColumns.EDIPartnerID.Eq(), req.PartnerID)
+	}
+	return q
 }
 
 func (r *repository) SelectMappingProfileOptions(

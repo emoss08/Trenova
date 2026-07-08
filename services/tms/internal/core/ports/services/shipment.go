@@ -138,11 +138,19 @@ type ShipmentService interface {
 	List(
 		ctx context.Context,
 		req *repositories.ListShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Get(
 		ctx context.Context,
 		req *repositories.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
+	GetByIDs(
+		ctx context.Context,
+		req *repositories.GetShipmentsByIDsRequest,
+	) ([]*shipment.Shipment, error)
+	SelectOptions(
+		ctx context.Context,
+		req *repositories.ShipmentSelectOptionsRequest,
+	) (*pagination.ListResult[*shipment.Shipment], error)
 	GetUIPolicy(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -164,7 +172,7 @@ type ShipmentService interface {
 	GetUnassigned(
 		ctx context.Context,
 		req *repositories.GetUnassignedShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,

@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchData } from "@/hooks/data-table/use-data-table-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   convertFilterItemsToFieldFilters,
@@ -26,9 +25,10 @@ import {
   initializeFilterItemsFromFieldFilters,
   initializeFilterItemsFromFilterGroups,
 } from "@/lib/data-table";
+import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { FieldFilter, FilterItem, SortField } from "@/types/data-table";
+import type { FieldFilter, FilterItem, RowAction } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
 import type { TableConfig } from "@/types/table-configuration";
 import { useQuery } from "@tanstack/react-query";
@@ -38,14 +38,13 @@ import {
   useReactTable,
   type ColumnDef,
   type Row,
-  type SortingState,
   type Table as TanstackTable,
   type VisibilityState,
 } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon, LayoutGridIcon, TableIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ExpandedRow } from "./expanded-row";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
+import { PanelSkeleton } from "./expanded-row/panel-skeletons";
 import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
@@ -61,7 +60,6 @@ const DataTableSearch = lazy(() => import("@/components/data-table/data-table-se
 const DataTableFilterBuilder = lazy(
   () => import("@/components/data-table/data-table-filter-builder"),
 );
-const DataTableSortBuilder = lazy(() => import("@/components/data-table/data-table-sort-builder"));
 const DataTableViewOptions = lazy(() => import("@/components/data-table/data-table-view-options"));
 const DataTableConfigManager = lazy(
   () => import("@/components/data-table/data-table-config-manager"),
@@ -71,6 +69,7 @@ const DataTableSaveConfigDialog = lazy(() =>
     default: m.DataTableSaveConfigDialog,
   })),
 );
+const ExpandedRow = lazy(() => import("./expanded-row").then((m) => ({ default: m.ExpandedRow })));
 
 function ToolbarButtonSkeleton() {
   return <Skeleton className="h-7 w-20" />;
@@ -80,12 +79,22 @@ function SearchSkeleton() {
   return <Skeleton className="h-7 w-48" />;
 }
 
-const SHIPMENTS_LINK = "/shipments/";
+function ExpandedRowLoadingFallback() {
+  return (
+    <div className="grid grid-cols-1 gap-5 px-4 py-3 md:grid-cols-[2fr_1.4fr_1fr_1fr]">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <PanelSkeleton key={index} />
+      ))}
+    </div>
+  );
+}
+
 const QUERY_KEY = "shipment-list";
 const RESOURCE_NAME = "Shipment";
 
 type CommandCenterTableProps = {
   columns: ColumnDef<Shipment>[];
+  rowActions: RowAction<Shipment>[];
   mandatoryFieldFilters: FieldFilter[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
   onSummaryChange?: (summary: CommandCenterTableSummary) => void;
@@ -99,6 +108,7 @@ export type CommandCenterTableSummary = {
 
 export function CommandCenterTable({
   columns,
+  rowActions,
   mandatoryFieldFilters,
   onUploadDocument,
   onSummaryChange,
@@ -117,13 +127,13 @@ export function CommandCenterTable({
   const setHighlightId = useCommandCenterStore.use.setHighlightId();
 
   const [filterItems, setFilterItems] = useState<FilterItem[]>([]);
-  const [sort, setSort] = useState<SortField[]>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     pickupAppointment: false,
     deliveryAppointment: false,
   });
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const cursorCacheRef = useRef(new Map<string, Map<number, string | null>>());
 
   const debouncedFilterItems = useDebounce(filterItems, 300);
 
@@ -143,28 +153,65 @@ export function CommandCenterTable({
 
   useEffect(() => {
     void setUrl({ page: 1 });
-  }, [mergedFieldFilters, userFilterGroups, sort, query, setUrl]);
+  }, [mergedFieldFilters, userFilterGroups, query, setUrl]);
+
+  const cursorCacheKey = useMemo(
+    () =>
+      JSON.stringify({
+        pageSize,
+        query,
+        fieldFilters: mergedFieldFilters,
+        filterGroups: userFilterGroups,
+      }),
+    [pageSize, query, mergedFieldFilters, userFilterGroups],
+  );
+
+  const pageCursor = useMemo(() => {
+    if (pageIndex === 0) return null;
+    return cursorCacheRef.current.get(cursorCacheKey)?.get(pageIndex - 1);
+  }, [cursorCacheKey, pageIndex]);
+
+  useEffect(() => {
+    if (pageIndex > 0 && pageCursor === undefined) {
+      void setUrl({ page: 1 });
+    }
+  }, [pageCursor, pageIndex, setUrl]);
+
+  const canFetchPage = pageIndex === 0 || pageCursor !== undefined;
 
   const dataQuery = useQuery({
     queryKey: [
       QUERY_KEY,
       "command-center",
       { pageIndex, pageSize },
+      pageCursor,
       mergedFieldFilters,
       userFilterGroups,
-      sort,
       query,
     ],
     queryFn: () =>
-      fetchData<Shipment & Record<string, unknown>>(SHIPMENTS_LINK, pageIndex, pageSize, {
+      listShipmentsGraphQL({
+        limit: pageSize,
+        after: pageCursor ?? null,
         query,
         fieldFilters: mergedFieldFilters,
         filterGroups: userFilterGroups,
-        sort,
-        extraSearchParams: { expandShipmentDetails: true },
       }),
     placeholderData: (prev) => prev,
+    enabled: canFetchPage,
   });
+
+  useEffect(() => {
+    const endCursor = dataQuery.data?.pageInfo?.endCursor ?? null;
+    if (!dataQuery.data || !endCursor) return;
+
+    let pageCursors = cursorCacheRef.current.get(cursorCacheKey);
+    if (!pageCursors) {
+      pageCursors = new Map<number, string | null>();
+      cursorCacheRef.current.set(cursorCacheKey, pageCursors);
+    }
+    pageCursors.set(pageIndex, endCursor);
+  }, [cursorCacheKey, dataQuery.data, pageIndex]);
 
   const totalCount = dataQuery.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -186,20 +233,14 @@ export function CommandCenterTable({
     totalCount,
   ]);
 
-  const sortingState = useMemo<SortingState>(
-    () => sort.map((s) => ({ id: s.field, desc: s.direction === "desc" })),
-    [sort],
-  );
-
   const table = useReactTable({
     data: rows,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    state: { sorting: sortingState, columnVisibility, columnOrder },
+    state: { columnVisibility, columnOrder },
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
     manualPagination: true,
-    manualSorting: true,
     pageCount: totalPages,
     rowCount: totalCount,
     getRowId: (row) => row.id ?? "",
@@ -219,7 +260,6 @@ export function CommandCenterTable({
       const fromFields = initializeFilterItemsFromFieldFilters(fieldFilters, columns);
       const fromGroups = initializeFilterItemsFromFilterGroups(filterGroups, columns);
       setFilterItems([...fromFields, ...fromGroups]);
-      setSort(config.sort ?? []);
       if (config.columnVisibility) setColumnVisibility(config.columnVisibility);
       if (config.columnOrder?.length) setColumnOrder(config.columnOrder);
       void setUrl({ page: 1 });
@@ -231,13 +271,12 @@ export function CommandCenterTable({
     if (
       defaultConfig?.tableConfig &&
       !appliedDefaultRef.current &&
-      filterItems.length === 0 &&
-      sort.length === 0
+      filterItems.length === 0
     ) {
       appliedDefaultRef.current = true;
       handleApplyConfig(defaultConfig.tableConfig);
     }
-  }, [defaultConfig, filterItems.length, sort.length, handleApplyConfig]);
+  }, [defaultConfig, filterItems.length, handleApplyConfig]);
 
   const currentConfig = useMemo<TableConfig>(() => {
     const visibility: Record<string, boolean> = {};
@@ -246,12 +285,12 @@ export function CommandCenterTable({
       fieldFilters: userFieldFilters,
       filterGroups: userFilterGroups,
       joinOperator: "and",
-      sort,
+      sort: [],
       pageSize,
       columnVisibility: visibility,
       columnOrder: table.getState().columnOrder,
     };
-  }, [userFieldFilters, userFilterGroups, sort, pageSize, table]);
+  }, [userFieldFilters, userFilterGroups, pageSize, table]);
 
   const handleRowClick = (row: Row<Shipment>) => {
     if (row.original.id) toggleExpandedId(row.original.id);
@@ -292,7 +331,6 @@ export function CommandCenterTable({
   return (
     <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
       <SavedViewsBar rightSlot={rightSlot} countsEnabled={backgroundQueriesEnabled} />
-
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
           <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
@@ -302,13 +340,6 @@ export function CommandCenterTable({
             columns={columns as ColumnDef<unknown>[]}
             filters={filterItems}
             onFiltersChange={setFilterItems}
-          />
-        </Suspense>
-        <Suspense fallback={<ToolbarButtonSkeleton />}>
-          <DataTableSortBuilder
-            columns={columns as ColumnDef<unknown>[]}
-            sort={sort}
-            onSortChange={setSort}
           />
         </Suspense>
         <div className="mx-1 h-4 w-px bg-border" />
@@ -366,6 +397,7 @@ export function CommandCenterTable({
                     onClick={() => handleRowClick(row)}
                     onMouseEnter={() => row.original.id && setHighlightId(row.original.id)}
                     onMouseLeave={() => setHighlightId(null)}
+                    rowActions={rowActions}
                     onUploadDocument={onUploadDocument}
                   />
                 );
@@ -456,6 +488,7 @@ function RowFragment({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  rowActions,
   onUploadDocument,
 }: {
   row: Row<Shipment>;
@@ -464,6 +497,7 @@ function RowFragment({
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  rowActions: RowAction<Shipment>[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 }) {
   return (
@@ -485,10 +519,17 @@ function RowFragment({
         ))}
       </tr>
       {isExpanded && (
-        <tr className="border-b border-border bg-muted">
+        <tr className="border-b border-border bg-background">
           <td colSpan={row.getVisibleCells().length} className="p-0">
             <div className="cc-fade-in">
-              <ExpandedRow shipment={row.original} onUploadDocument={onUploadDocument} />
+              <Suspense fallback={<ExpandedRowLoadingFallback />}>
+                <ExpandedRow
+                  row={row}
+                  shipment={row.original}
+                  rowActions={rowActions}
+                  onUploadDocument={onUploadDocument}
+                />
+              </Suspense>
             </div>
           </td>
         </tr>
@@ -528,7 +569,7 @@ function CommandCenterFooter({
             value={String(pageSize)}
             onValueChange={(value) => onPageSizeChange(Number(value) as CommandCenterPageSize)}
           >
-            <SelectTrigger className="h-6 w-[58px] py-0 text-[11px]">
+            <SelectTrigger className="h-6 w-14.5 py-0 text-[11px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

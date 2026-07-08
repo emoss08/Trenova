@@ -138,9 +138,10 @@ func TestList_Success(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	expected := &pagination.ListResult[*equipmenttype.EquipmentType]{
-		Items: []*equipmenttype.EquipmentType{newTestEntity()},
-		Total: 1,
+	total := 1
+	expected := &pagination.CursorListResult[*equipmenttype.EquipmentType]{
+		Items:      []*equipmenttype.EquipmentType{newTestEntity()},
+		TotalCount: &total,
 	}
 	req := &repositories.ListEquipmentTypesRequest{
 		Filter: &pagination.QueryOptions{},
@@ -151,7 +152,8 @@ func TestList_Success(t *testing.T) {
 	result, err := deps.svc.List(ctx, req)
 
 	require.NoError(t, err)
-	assert.Equal(t, 1, result.Total)
+	require.NotNil(t, result.TotalCount)
+	assert.Equal(t, 1, *result.TotalCount)
 	assert.Len(t, result.Items, 1)
 	deps.repo.AssertExpectations(t)
 }

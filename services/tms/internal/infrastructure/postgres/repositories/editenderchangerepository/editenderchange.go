@@ -54,7 +54,7 @@ func (r *repository) ListTenderChanges(
 	if req.Status != "" {
 		query = query.Where("etcg.status = ?", req.Status)
 	}
-	total, err := querybuilder.ApplyFilters(query, "etcg", req.Filter, (*edi.TenderChange)(nil)).
+	total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etcg", req.Filter, (*edi.TenderChange)(nil)).
 		Order("etcg.created_at DESC").
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
@@ -75,6 +75,26 @@ func (r *repository) GetTenderChangeByID(
 		Model(entity).
 		Relation("Recipient").
 		Where("etcg.id = ?", req.ID).
+		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+			return applyTenderChangeTenantScope(query, req.TenantInfo)
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDITenderChange")
+	}
+	return entity, nil
+}
+
+func (r *repository) GetTenderChangeByOutboundMessageID(
+	ctx context.Context,
+	req repositories.GetEDITenderChangeByOutboundMessageIDRequest,
+) (*edi.TenderChange, error) {
+	entity := new(edi.TenderChange)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation("Recipient").
+		Where("etcg.outbound_message_id = ?", req.OutboundMessageID).
 		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
 			return applyTenderChangeTenantScope(query, req.TenantInfo)
 		}).

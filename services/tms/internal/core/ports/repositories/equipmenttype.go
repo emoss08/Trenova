@@ -10,8 +10,10 @@ import (
 )
 
 type ListEquipmentTypesRequest struct {
-	Filter  *pagination.QueryOptions `json:"filter"`
-	Classes []string                 `json:"classes"`
+	Filter               *pagination.QueryOptions `json:"filter"`
+	Cursor               pagination.CursorInfo    `json:"-"`
+	Classes              []string                 `json:"classes"`
+	EquipmentTypeColumns []string                 `json:"-"`
 }
 
 type GetEquipmentTypeByIDRequest struct {
@@ -39,7 +41,7 @@ type EquipmentTypeRepository interface {
 	List(
 		ctx context.Context,
 		req *ListEquipmentTypesRequest,
-	) (*pagination.ListResult[*equipmenttype.EquipmentType], error)
+	) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error)
 	GetByID(
 		ctx context.Context,
 		req GetEquipmentTypeByIDRequest,

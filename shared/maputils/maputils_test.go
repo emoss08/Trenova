@@ -26,6 +26,42 @@ func TestPath(t *testing.T) {
 	assert.Nil(t, Path(root, "shipment.moves.5"))
 }
 
+func TestBoolValue(t *testing.T) {
+	t.Parallel()
+
+	input := map[string]any{
+		"enabled":  true,
+		"disabled": "false",
+		"padded":   " true ",
+		"auto":     "auto",
+		"number":   1,
+	}
+
+	value, ok := BoolValue(input, "enabled")
+	assert.True(t, ok)
+	assert.True(t, value)
+
+	value, ok = BoolValue(input, "disabled")
+	assert.True(t, ok)
+	assert.False(t, value)
+
+	value, ok = BoolValue(input, "padded")
+	assert.True(t, ok)
+	assert.True(t, value)
+
+	_, ok = BoolValue(input, "auto")
+	assert.False(t, ok)
+
+	_, ok = BoolValue(input, "number")
+	assert.False(t, ok)
+
+	_, ok = BoolValue(input, "missing")
+	assert.False(t, ok)
+
+	_, ok = BoolValue(nil, "enabled")
+	assert.False(t, ok)
+}
+
 func TestCloneShallow(t *testing.T) {
 	t.Parallel()
 

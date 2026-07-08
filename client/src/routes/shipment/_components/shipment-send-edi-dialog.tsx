@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { EDIPartner } from "@/types/edi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +35,7 @@ export function ShipmentSendEDIDialog({
       }),
     onSuccess: async () => {
       toast.success("EDI load tender submitted");
-      await queryClient.invalidateQueries({ queryKey: queries.edi.outboundTransfers._def });
+      await queryClient.invalidateQueries({ queryKey: ["edi-outbound-transfer-list"] });
       onOpenChange(false);
       setPartnerId("");
     },

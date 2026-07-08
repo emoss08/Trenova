@@ -36,75 +36,103 @@ func New(p Params) repositories.TractorRepository {
 	}
 }
 
-func (r *repository) filterQuery(
+func (r *repository) applyListFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListTractorsRequest,
+) (*bun.SelectQuery, error) {
+	q = applyTractorRelations(q, req.TractorRelationIncludes)
+
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.TractorTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*tractor.Tractor)(nil),
+	)
+	if err != nil {
+		return q, err
+	}
+
+	q = r.applyStatusFilter(q, req.Status)
+
+	return q, nil
+}
+
+func (r *repository) applyListCountFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListTractorsRequest,
 ) *bun.SelectQuery {
-	log := r.l.With(
-		zap.String("operation", "filterQuery"),
-		zap.Any("request", req),
-	)
-
-	rel := buncolgen.TractorRelations
-	if req.IncludeEquipmentDetails {
-		q = q.Relation(rel.EquipmentType).
-			Relation(rel.EquipmentManufacturer)
-	}
-
-	if req.IncludeFleetDetails {
-		q = q.Relation(rel.FleetCode)
-	}
-
-	if req.IncludeWorkerDetails {
-		q = q.Relation(rel.PrimaryWorker).
-			Relation(rel.SecondaryWorker)
-	}
-
-	q = querybuilder.ApplyFilters(
+	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
 		buncolgen.TractorTable.Alias,
 		req.Filter,
 		(*tractor.Tractor)(nil),
 	)
 
-	if req.Status != "" {
-		status, err := domaintypes.EquipmentStatusFromString(req.Status)
-		if err != nil {
-			log.Error("failed to parse equipment status", zap.Error(err))
-			return q
-		}
+	return r.applyStatusFilter(q, req.Status)
+}
 
-		q = q.Where(buncolgen.TractorColumns.Status.Eq(), status)
+func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.SelectQuery {
+	if value == "" {
+		return q
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	status, err := domaintypes.EquipmentStatusFromString(value)
+	if err != nil {
+		r.l.Error("failed to parse equipment status", zap.Error(err))
+		return q
+	}
+
+	return q.Where(buncolgen.TractorColumns.Status.Eq(), status)
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListTractorsRequest,
-) (*pagination.ListResult[*tractor.Tractor], error) {
+) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	log := r.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
 	)
 
-	entities := make([]*tractor.Tractor, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
 		NewSelect().
-		Model(&entities).
+		Model((*tractor.Tractor)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
+			return r.applyListCountFilters(sq, req)
+		}).
+		Count(ctx)
 	if err != nil {
-		log.Error("failed to scan and count tractors", zap.Error(err))
+		log.Error("failed to count tractors", zap.Error(err))
 		return nil, err
 	}
 
-	return &pagination.ListResult[*tractor.Tractor]{
-		Items: entities,
-		Total: total,
-	}, nil
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*tractor.Tractor]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*tractor.Tractor) *bun.SelectQuery {
+			return dba.
+				NewSelect().
+				Model(items).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTractorColumns(sq, req.TractorRelationIncludes)
+				}).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
+				})
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.applyListFilters(sq, req)
+		},
+	})
+	if err != nil {
+		log.Error("failed to scan tractors", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) Create(
@@ -168,6 +196,15 @@ func (r *repository) GetByID(
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyTractorColumns(sq, req.TractorRelationIncludes)
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyTractorRelations(sq, req.TractorRelationIncludes)
+		}).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
 				Where(buncolgen.TractorColumns.ID.Eq(), req.ID)
@@ -194,6 +231,15 @@ func (r *repository) GetByIDs(
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyTractorColumns(sq, req.TractorRelationIncludes)
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyTractorRelations(sq, req.TractorRelationIncludes)
+		}).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
 				Where(buncolgen.TractorColumns.ID.In(), bun.List(req.TractorIDs))
@@ -253,6 +299,7 @@ func (r *repository) SelectOptions(
 		&dbhelper.SelectOptionsConfig{
 			ColumnRefs: []buncolgen.Column{
 				cols.ID,
+				cols.CreatedAt,
 				cols.Status,
 				cols.Code,
 				cols.PrimaryWorkerID,
@@ -272,4 +319,136 @@ func (r *repository) SelectOptions(
 			},
 		},
 	)
+}
+
+func applyTractorRelations(
+	q *bun.SelectQuery,
+	includes repositories.TractorRelationIncludes,
+) *bun.SelectQuery {
+	rel := buncolgen.TractorRelations
+	equipmentTypeRel := buncolgen.EquipmentTypeRelations
+	equipmentManufacturerRel := buncolgen.EquipmentManufacturerRelations
+	fleetCodeRel := buncolgen.FleetCodeRelations
+	organizationRel := buncolgen.OrganizationRelations
+	workerRel := buncolgen.WorkerRelations
+	includeBusinessUnit := includes.IncludeTenantDetails || includes.IncludeBusinessUnit
+	includeOrganization := includes.IncludeTenantDetails || includes.IncludeOrganization
+	includeEquipmentType := includes.IncludeEquipmentDetails || includes.IncludeEquipmentType
+	includeEquipmentManufacturer := includes.IncludeEquipmentDetails ||
+		includes.IncludeEquipmentManufacturer
+	includeFleetCode := includes.IncludeFleetDetails || includes.IncludeFleetCode
+	includePrimaryWorker := includes.IncludeWorkerDetails || includes.IncludePrimaryWorker
+	includeSecondaryWorker := includes.IncludeWorkerDetails || includes.IncludeSecondaryWorker
+
+	if includeBusinessUnit {
+		q = q.Relation(rel.BusinessUnit)
+	}
+	if includeOrganization {
+		q = q.Relation(rel.Organization)
+	}
+	if includes.IncludeTenantDetails {
+		q = q.Relation(buncolgen.Rel(rel.Organization, organizationRel.BusinessUnit)).
+			Relation(buncolgen.Rel(rel.Organization, organizationRel.State))
+	}
+	if includes.IncludeState {
+		q = q.Relation(rel.State)
+	}
+	if includeEquipmentType {
+		q = q.Relation(rel.EquipmentType, dbhelper.RelationColumns(includes.EquipmentTypeColumns))
+	}
+	if includeEquipmentManufacturer {
+		q = q.Relation(
+			rel.EquipmentManufacturer,
+			dbhelper.RelationColumns(includes.EquipmentManufacturerColumns),
+		)
+	}
+	if includeEquipmentType && includes.IncludeTenantDetails {
+		q = q.Relation(buncolgen.Rel(rel.EquipmentType, equipmentTypeRel.BusinessUnit)).
+			Relation(buncolgen.Rel(rel.EquipmentType, equipmentTypeRel.Organization))
+	}
+	if includeEquipmentManufacturer && includes.IncludeTenantDetails {
+		q = q.Relation(buncolgen.Rel(
+			rel.EquipmentManufacturer,
+			equipmentManufacturerRel.BusinessUnit,
+		)).
+			Relation(buncolgen.Rel(
+				rel.EquipmentManufacturer,
+				equipmentManufacturerRel.Organization,
+			))
+	}
+	if includeFleetCode {
+		q = q.Relation(rel.FleetCode, dbhelper.RelationColumns(includes.FleetCodeColumns))
+	}
+	if includeFleetCode && includes.IncludeTenantDetails {
+		q = q.Relation(buncolgen.Rel(rel.FleetCode, fleetCodeRel.BusinessUnit)).
+			Relation(buncolgen.Rel(rel.FleetCode, fleetCodeRel.Organization))
+	}
+	if includePrimaryWorker {
+		q = q.Relation(rel.PrimaryWorker, dbhelper.RelationColumns(includes.PrimaryWorkerColumns))
+	}
+	if includeSecondaryWorker {
+		q = q.Relation(
+			rel.SecondaryWorker,
+			dbhelper.RelationColumns(includes.SecondaryWorkerColumns),
+		)
+	}
+	if includePrimaryWorker && includes.IncludeTenantDetails {
+		q = q.Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.BusinessUnit)).
+			Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.Organization)).
+			Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.State))
+	}
+	if includePrimaryWorker && includes.IncludePrimaryWorkerState {
+		q = q.Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.State))
+	}
+	if includePrimaryWorker && includes.IncludePrimaryWorkerFleet {
+		q = q.Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.FleetCode))
+	}
+	if includePrimaryWorker && includes.IncludePrimaryWorkerManager {
+		q = q.Relation(buncolgen.Rel(rel.PrimaryWorker, workerRel.Manager))
+	}
+	if includeSecondaryWorker && includes.IncludeTenantDetails {
+		q = q.Relation(buncolgen.Rel(rel.SecondaryWorker, workerRel.BusinessUnit)).
+			Relation(buncolgen.Rel(rel.SecondaryWorker, workerRel.Organization)).
+			Relation(buncolgen.Rel(rel.SecondaryWorker, workerRel.State))
+	}
+	if includeSecondaryWorker && includes.IncludeSecondaryWorkerState {
+		q = q.Relation(buncolgen.Rel(rel.SecondaryWorker, workerRel.State))
+	}
+	if includeSecondaryWorker && includes.IncludeSecondaryWorkerFleet {
+		q = q.Relation(buncolgen.Rel(rel.SecondaryWorker, workerRel.FleetCode))
+	}
+	if includeSecondaryWorker && includes.IncludeSecondaryWorkerManager {
+		q = q.Relation(buncolgen.Rel(rel.SecondaryWorker, workerRel.Manager))
+	}
+
+	return q
+}
+
+func applyTractorColumns(
+	q *bun.SelectQuery,
+	includes repositories.TractorRelationIncludes,
+) *bun.SelectQuery {
+	if len(includes.TractorColumns) == 0 {
+		return q.ColumnExpr(buncolgen.TractorTable.All())
+	}
+
+	return q.Column(includes.TractorColumns...)
+}
+
+func applyTractorLastKnownLocationJoin(
+	q *bun.SelectQuery,
+	includes repositories.TractorRelationIncludes,
+) *bun.SelectQuery {
+	if !includes.IncludeLastKnownLocation {
+		return q
+	}
+
+	if len(includes.TractorColumns) == 0 {
+		q = q.Column("trac.*")
+	}
+
+	return q.ColumnExpr("ec.current_location_id AS last_known_location_id").
+		ColumnExpr("COALESCE(lkl.name, '') AS last_known_location_name").
+		Join("LEFT JOIN equipment_continuity AS ec ON ec.equipment_id = trac.id AND ec.equipment_type = ? AND ec.organization_id = trac.organization_id AND ec.business_unit_id = trac.business_unit_id AND ec.is_current = TRUE", "Tractor").
+		Join("LEFT JOIN locations AS lkl ON lkl.id = ec.current_location_id AND lkl.organization_id = ec.organization_id AND lkl.business_unit_id = ec.business_unit_id")
 }

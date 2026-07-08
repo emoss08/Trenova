@@ -161,6 +161,7 @@ func TestDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T)
 }
 
 //go:fix inline
+//go:fix inline
 func ptrInt16(v int16) *int16 {
-	return &v
+	return new(v)
 }

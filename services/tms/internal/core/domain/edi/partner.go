@@ -8,16 +8,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
-var _ domaintypes.PostgresSearchable = (*EDIPartner)(nil)
+var (
+	_ bun.BeforeAppendModelHook      = (*EDIPartner)(nil)
+	_ domaintypes.PostgresSearchable = (*EDIPartner)(nil)
+	_ pagination.CursorEntity        = (*EDIPartner)(nil)
+)
 
 type EDIPartner struct {
-	bun.BaseModel `json:"-" bun:"table:edi_partners,alias:ep"`
+	bun.BaseModel             `json:"-" bun:"table:edi_partners,alias:ep"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                         pulid.ID           `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID             pulid.ID           `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -32,7 +38,6 @@ type EDIPartner struct {
 	CustomerID                 pulid.ID           `json:"customerId"                 bun:"customer_id,type:VARCHAR(100),nullzero"`
 	DefaultTransportID         pulid.ID           `json:"defaultTransportId"         bun:"default_transport_id,type:VARCHAR(100),nullzero"`
 	DefaultMappingProfileID    pulid.ID           `json:"defaultMappingProfileId"    bun:"default_mapping_profile_id,type:VARCHAR(100),nullzero"`
-	DefaultValidationProfileID pulid.ID           `json:"defaultValidationProfileId" bun:"default_validation_profile_id,type:VARCHAR(100),nullzero"`
 	Timezone                   string             `json:"timezone"                   bun:"timezone,type:VARCHAR(100),nullzero"`
 	Country                    string             `json:"country"                    bun:"country,type:VARCHAR(2),notnull,default:'US'"`
 	ContactName                string             `json:"contactName"                bun:"contact_name,type:VARCHAR(150),nullzero"`
@@ -149,4 +154,8 @@ func (p *EDIPartner) BeforeAppendModel(_ context.Context, query bun.Query) error
 	}
 
 	return nil
+}
+
+func (p *EDIPartner) GetCreatedAt() int64 {
+	return p.CreatedAt
 }

@@ -132,9 +132,10 @@ func TestList(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 
-		expected := &pagination.ListResult[*worker.Worker]{
-			Items: []*worker.Worker{newTestWorker(), newTestWorker()},
-			Total: 2,
+		total := 2
+		expected := &pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{newTestWorker(), newTestWorker()},
+			TotalCount: &total,
 		}
 		req := &repositories.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{},
@@ -147,7 +148,8 @@ func TestList(t *testing.T) {
 		result, err := deps.svc.List(t.Context(), req)
 
 		require.NoError(t, err)
-		assert.Equal(t, 2, result.Total)
+		require.NotNil(t, result.TotalCount)
+		assert.Equal(t, 2, *result.TotalCount)
 		assert.Len(t, result.Items, 2)
 		deps.repo.AssertExpectations(t)
 	})
@@ -156,9 +158,10 @@ func TestList(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 
-		expected := &pagination.ListResult[*worker.Worker]{
-			Items: []*worker.Worker{},
-			Total: 0,
+		total := 0
+		expected := &pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{},
+			TotalCount: &total,
 		}
 		req := &repositories.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{},
@@ -169,7 +172,8 @@ func TestList(t *testing.T) {
 		result, err := deps.svc.List(t.Context(), req)
 
 		require.NoError(t, err)
-		assert.Equal(t, 0, result.Total)
+		require.NotNil(t, result.TotalCount)
+		assert.Equal(t, 0, *result.TotalCount)
 		assert.Empty(t, result.Items)
 		deps.repo.AssertExpectations(t)
 	})
@@ -199,9 +203,10 @@ func TestList(t *testing.T) {
 		req := &repositories.ListWorkersRequest{
 			Filter: nil,
 		}
-		expected := &pagination.ListResult[*worker.Worker]{
-			Items: []*worker.Worker{},
-			Total: 0,
+		total := 0
+		expected := &pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{},
+			TotalCount: &total,
 		}
 		deps.repo.On("List", mock.Anything, req).Return(expected, nil)
 

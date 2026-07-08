@@ -96,6 +96,14 @@ export function getTargetOptionValue(option: unknown) {
   return getStringValue(record.id) || getStringValue(record.value);
 }
 
+export function getTargetOptionDescription(option: unknown) {
+  if (!option || typeof option !== "object") {
+    return "";
+  }
+  const record = option as Record<string, unknown>;
+  return getStringValue(record.description);
+}
+
 export function getTargetOptionLabel(option: unknown) {
   if (!option || typeof option !== "object") {
     return "";

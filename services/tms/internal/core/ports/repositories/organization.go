@@ -14,6 +14,13 @@ type GetOrganizationByIDRequest struct {
 	IncludeBU    bool `json:"includeBu"`
 }
 
+type GetOrganizationsByIDsRequest struct {
+	TenantInfo      pagination.TenantInfo
+	OrganizationIDs []pulid.ID
+	IncludeState    bool `json:"includeState"`
+	IncludeBU       bool `json:"includeBu"`
+}
+
 type SelectOrganizationOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
 	Scope              string `json:"scope"`
@@ -22,6 +29,7 @@ type SelectOrganizationOptionsRequest struct {
 
 type OrganizationRepository interface {
 	GetByID(ctx context.Context, req GetOrganizationByIDRequest) (*tenant.Organization, error)
+	GetByIDs(ctx context.Context, req GetOrganizationsByIDsRequest) ([]*tenant.Organization, error)
 	SelectOptions(
 		ctx context.Context,
 		req *SelectOrganizationOptionsRequest,

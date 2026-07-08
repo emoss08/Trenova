@@ -57,6 +57,13 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req repositories.GetEquipmentManufacturersByIDsRequest,
+) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

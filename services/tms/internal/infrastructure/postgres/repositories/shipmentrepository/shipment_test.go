@@ -46,7 +46,7 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipments" AS "sp".*sp\.organization_id = .*sp\.business_unit_id = .*` + unassignedPredicate).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(`SELECT .*FROM "shipments" AS "sp".*sp\.organization_id = .*sp\.business_unit_id = .*` + unassignedPredicate + `.*ORDER BY "sp"\."created_at" DESC LIMIT 10`).
+	mock.ExpectQuery(`SELECT .*FROM "shipments" AS "sp".*` + unassignedPredicate + `.*sp\.organization_id = .*sp\.business_unit_id = .*ORDER BY "sp"\."created_at" DESC, "sp"\."id" DESC LIMIT 11`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id",
 			"business_unit_id",
@@ -57,6 +57,8 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 			"status",
 			"pro_number",
 			"rating_unit",
+			"__cursor_value_0",
+			"__cursor_value_1",
 		}).AddRow(
 			shipmentID,
 			buID,
@@ -67,6 +69,8 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 			shipment.StatusNew,
 			"PRO-1",
 			1,
+			1,
+			shipmentID,
 		))
 
 	result, err := repo.GetUnassigned(t.Context(), &repositories.GetUnassignedShipmentsRequest{
@@ -84,7 +88,12 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, 1, result.Total)
 	require.Len(t, result.Items, 1)
+	assert.False(t, result.HasNextPage)
+	require.NotNil(t, result.TotalCount)
+	assert.Equal(t, 1, *result.TotalCount)
 	assert.Equal(t, shipmentID, result.Items[0].ID)
+	values, ok := result.CursorValuesAt(0)
+	require.True(t, ok)
+	assert.Equal(t, []any{int64(1), shipmentID.String()}, values)
 }
