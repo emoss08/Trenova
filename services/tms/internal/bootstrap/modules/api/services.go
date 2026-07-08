@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distancecalculationservice"
@@ -214,6 +215,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazardousmaterialservice.New,
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
+	dataretentionservice.New,
 	ediservice.New,
 	ediinboundservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },

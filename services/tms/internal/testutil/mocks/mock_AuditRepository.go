@@ -41,8 +41,8 @@ func (_m *MockAuditRepository) EXPECT() *MockAuditRepository_Expecter {
 }
 
 // DeleteAuditEntries provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) DeleteAuditEntries(ctx context.Context, timestamp int64) (int64, error) {
-	ret := _mock.Called(ctx, timestamp)
+func (_mock *MockAuditRepository) DeleteAuditEntries(ctx context.Context, req repositories.DeleteAuditEntriesRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteAuditEntries")
@@ -50,16 +50,16 @@ func (_mock *MockAuditRepository) DeleteAuditEntries(ctx context.Context, timest
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
-		return returnFunc(ctx, timestamp)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteAuditEntriesRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
-		r0 = returnFunc(ctx, timestamp)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteAuditEntriesRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = returnFunc(ctx, timestamp)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.DeleteAuditEntriesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -78,15 +78,15 @@ func (_e *MockAuditRepository_Expecter) DeleteAuditEntries(ctx interface{}, time
 	return &MockAuditRepository_DeleteAuditEntries_Call{Call: _e.mock.On("DeleteAuditEntries", ctx, timestamp)}
 }
 
-func (_c *MockAuditRepository_DeleteAuditEntries_Call) Run(run func(ctx context.Context, timestamp int64)) *MockAuditRepository_DeleteAuditEntries_Call {
+func (_c *MockAuditRepository_DeleteAuditEntries_Call) Run(run func(ctx context.Context, req repositories.DeleteAuditEntriesRequest)) *MockAuditRepository_DeleteAuditEntries_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 repositories.DeleteAuditEntriesRequest
 		if args[1] != nil {
-			arg1 = args[1].(int64)
+			arg1 = args[1].(repositories.DeleteAuditEntriesRequest)
 		}
 		run(
 			arg0,
@@ -101,7 +101,7 @@ func (_c *MockAuditRepository_DeleteAuditEntries_Call) Return(n int64, err error
 	return _c
 }
 
-func (_c *MockAuditRepository_DeleteAuditEntries_Call) RunAndReturn(run func(ctx context.Context, timestamp int64) (int64, error)) *MockAuditRepository_DeleteAuditEntries_Call {
+func (_c *MockAuditRepository_DeleteAuditEntries_Call) RunAndReturn(run func(ctx context.Context, req repositories.DeleteAuditEntriesRequest) (int64, error)) *MockAuditRepository_DeleteAuditEntries_Call {
 	_c.Call.Return(run)
 	return _c
 }

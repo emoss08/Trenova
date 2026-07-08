@@ -100,7 +100,11 @@ func (a *Activities) DeleteAuditEntriesActivity(
 			fmt.Sprintf("deleting audit entries for org %s", entity.OrganizationID),
 		)
 
-		deletedRows, drErr := a.ar.DeleteAuditEntries(ctx, timestamp)
+		deletedRows, drErr := a.ar.DeleteAuditEntries(ctx, repositories.DeleteAuditEntriesRequest{
+			OrgID:  entity.OrganizationID,
+			BuID:   entity.BusinessUnitID,
+			Before: timestamp,
+		})
 		if drErr != nil {
 			logger.Error("Failed to delete audit entries for organization",
 				"error", drErr,

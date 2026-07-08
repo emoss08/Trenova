@@ -63,6 +63,8 @@ describe("EDI test case form helpers", () => {
       payloadJson: JSON.stringify({ transactionSet: "204" }),
       expectedWarnings: 0,
       expectedErrors: 0,
+      expectedWarningCodes: "",
+      expectedErrorCodes: "",
       version: 0,
     });
 
@@ -77,6 +79,8 @@ describe("EDI test case form helpers", () => {
       payloadJson: validPayloadJson,
       expectedWarnings: 0,
       expectedErrors: 2,
+      expectedWarningCodes: "",
+      expectedErrorCodes: "",
       version: 0,
     });
 
@@ -91,9 +95,16 @@ describe("EDI test case form helpers", () => {
       payloadJson: validPayloadJson,
       expectedWarnings: 1,
       expectedErrors: 2,
+      expectedWarningCodes: "value_truncated, missing_optional_element, value_truncated",
+      expectedErrorCodes: "",
       version: 5,
     });
 
+    expect(request.expectedWarningCodes).toEqual([
+      "missing_optional_element",
+      "value_truncated",
+    ]);
+    expect(request.expectedErrorCodes).toEqual([]);
     expect(request.partnerDocumentProfileId).toBe("edidp_1");
     expect(request.description).toBeUndefined();
     expect(request.expectedWarnings).toBe(1);

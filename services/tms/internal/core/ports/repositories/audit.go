@@ -37,6 +37,12 @@ type GetRecentEntriesRequest struct {
 	Limit          int
 }
 
+type DeleteAuditEntriesRequest struct {
+	OrgID  pulid.ID
+	BuID   pulid.ID
+	Before int64
+}
+
 type AuditRepository interface {
 	InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error
 	List(
@@ -53,5 +59,5 @@ type AuditRepository interface {
 		req *GetAuditByResourceRequest,
 	) ([]*audit.Entry, error)
 	GetRecentEntries(ctx context.Context, req *GetRecentEntriesRequest) ([]*audit.Entry, error)
-	DeleteAuditEntries(ctx context.Context, timestamp int64) (int64, error)
+	DeleteAuditEntries(ctx context.Context, req DeleteAuditEntriesRequest) (int64, error)
 }

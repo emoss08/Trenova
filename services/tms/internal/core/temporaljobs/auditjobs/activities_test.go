@@ -91,14 +91,25 @@ func (m *mockAuditRepository) GetRecentEntries(
 
 func (m *mockAuditRepository) DeleteAuditEntries(
 	ctx context.Context,
-	timestamp int64,
+	req repositories.DeleteAuditEntriesRequest,
 ) (int64, error) {
-	args := m.Called(ctx, timestamp)
+	args := m.Called(ctx, req)
 	return args.Get(0).(int64), args.Error(1)
 }
 
 type mockDataRetentionRepository struct {
 	mock.Mock
+}
+
+func (m *mockDataRetentionRepository) Upsert(
+	ctx context.Context,
+	entity *tenant.DataRetention,
+) (*tenant.DataRetention, error) {
+	args := m.Called(ctx, entity)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*tenant.DataRetention), args.Error(1)
 }
 
 func (m *mockDataRetentionRepository) List(
@@ -453,6 +464,7 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	testSuite := &testsuite.WorkflowTestSuite{}
 	env := testSuite.NewTestActivityEnvironment()
+	buID := pulid.MustNew("bu_")
 
 	mockAuditRepo := new(mockAuditRepository)
 	mockDataRetentionRepo := new(mockDataRetentionRepository)
@@ -473,6 +485,7 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 			Items: []*tenant.DataRetention{
 				{
 					OrganizationID:       orgID,
+					BusinessUnitID:       buID,
 					AuditRetentionPeriod: 30,
 				},
 			},
@@ -480,9 +493,12 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 		}, nil)
 
 	expectedTimestamp := time.Now().AddDate(0, 0, -30).Unix()
-	mockAuditRepo.On("DeleteAuditEntries", mock.Anything, mock.MatchedBy(func(ts int64) bool {
-		return ts <= expectedTimestamp+60 && ts >= expectedTimestamp-60
-	})).Return(int64(100), nil)
+	mockAuditRepo.On("DeleteAuditEntries", mock.Anything, mock.MatchedBy(
+		func(req repositories.DeleteAuditEntriesRequest) bool {
+			return req.OrgID == orgID && req.BuID == buID &&
+				req.Before <= expectedTimestamp+60 && req.Before >= expectedTimestamp-60
+		},
+	)).Return(int64(100), nil)
 
 	env.RegisterActivity(activities.DeleteAuditEntriesActivity)
 	result, err := env.ExecuteActivity(activities.DeleteAuditEntriesActivity)

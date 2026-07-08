@@ -327,6 +327,8 @@ export const ediTestCaseFormSchema = z.object({
     }),
   expectedWarnings: z.number().int().min(0, "Expected warnings cannot be negative"),
   expectedErrors: z.number().int().min(0, "Expected errors cannot be negative"),
+  expectedWarningCodes: z.string(),
+  expectedErrorCodes: z.string(),
   version: z.number(),
 });
 
@@ -340,8 +342,19 @@ export function getTestCaseFormDefaults(testCase?: EDITestCase | null): EDITestC
     payloadJson: JSON.stringify(testCase?.payload ?? {}, null, 2),
     expectedWarnings: testCase?.expectedWarnings ?? 0,
     expectedErrors: testCase?.expectedErrors ?? 0,
+    expectedWarningCodes: (testCase?.expectedWarningCodes ?? []).join(", "),
+    expectedErrorCodes: (testCase?.expectedErrorCodes ?? []).join(", "),
     version: testCase?.version ?? 0,
   };
+}
+
+export function parseDiagnosticCodes(value: string): string[] {
+  const seen = new Set<string>();
+  for (const raw of value.split(",")) {
+    const trimmed = raw.trim();
+    if (trimmed !== "") seen.add(trimmed);
+  }
+  return Array.from(seen).sort();
 }
 
 export function toTestCaseRequest(values: EDITestCaseFormValues): SaveEDITestCaseRequest {
@@ -352,6 +365,8 @@ export function toTestCaseRequest(values: EDITestCaseFormValues): SaveEDITestCas
     payload: ediDocumentPayloadSchema.parse(JSON.parse(values.payloadJson)),
     expectedWarnings: values.expectedWarnings,
     expectedErrors: values.expectedErrors,
+    expectedWarningCodes: parseDiagnosticCodes(values.expectedWarningCodes),
+    expectedErrorCodes: parseDiagnosticCodes(values.expectedErrorCodes),
     version: values.version,
   };
 }

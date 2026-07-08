@@ -282,6 +282,11 @@ export class EDIService {
     return safeParse(ediBulkActionResultSchema, response, "EDIBulkActionResult");
   }
 
+  public async replayMessageDelivery(messageId: string) {
+    const response = await api.post(`/edi/messages/${messageId}/replay/`);
+    return safeParse(ediMessageSchema, response, "EDIMessage");
+  }
+
   public async retryMessageDelivery(messageId: string) {
     const response = await api.post(`/edi/messages/${messageId}/retry-delivery/`);
     return safeParse(ediMessageSchema, response, "EDIMessage");

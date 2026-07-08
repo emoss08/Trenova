@@ -24,7 +24,7 @@ func TestScheduleProvider_GetSchedules(t *testing.T) {
 	provider := NewScheduleProvider(newTestConfig())
 	schedules := provider.GetSchedules()
 
-	require.Len(t, schedules, 2)
+	require.Len(t, schedules, 3)
 }
 
 func TestScheduleProvider_AuditBufferFlush(t *testing.T) {
@@ -60,13 +60,27 @@ func TestScheduleProvider_AuditBufferFlushConfigOverride(t *testing.T) {
 	assert.Equal(t, 2*time.Minute, schedules[0].Spec.Interval)
 }
 
+func TestScheduleProvider_RetentionPurge(t *testing.T) {
+	t.Parallel()
+
+	provider := NewScheduleProvider(newTestConfig())
+	schedules := provider.GetSchedules()
+
+	retentionSchedule := schedules[1]
+
+	assert.Equal(t, "audit-retention-purge", retentionSchedule.ID)
+	assert.NotNil(t, retentionSchedule.Workflow)
+	assert.Equal(t, temporaltype.AuditTaskQueue, retentionSchedule.TaskQueue)
+	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_SKIP, retentionSchedule.OverlapPolicy)
+}
+
 func TestScheduleProvider_DLQRetry(t *testing.T) {
 	t.Parallel()
 
 	provider := NewScheduleProvider(newTestConfig())
 	schedules := provider.GetSchedules()
 
-	dlqSchedule := schedules[1]
+	dlqSchedule := schedules[2]
 
 	assert.Equal(t, "audit-dlq-retry", dlqSchedule.ID)
 	assert.Equal(t, "Retry failed audit entries from dead-letter queue", dlqSchedule.Description)

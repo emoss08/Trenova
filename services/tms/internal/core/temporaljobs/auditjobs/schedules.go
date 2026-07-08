@@ -34,6 +34,18 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "audit-retention-purge",
+			Description:   "Delete audit entries past each organization's retention window",
+			Spec:          schedule.Cron("0 2 * * *"),
+			Workflow:      DeleteAuditEntriesWorkflow,
+			TaskQueue:     temporaltype.AuditTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "audit-retention-purge",
+				"target":  "audit_entries",
+			},
+		},
+		{
 			ID:            "audit-dlq-retry",
 			Description:   "Retry failed audit entries from dead-letter queue",
 			Spec:          schedule.Every(5 * time.Minute),

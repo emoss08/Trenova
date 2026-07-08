@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -91,4 +92,28 @@ func (r *repository) AllocateControlNumbers(
 		return nil
 	})
 	return allocated, err
+}
+
+func (r *repository) ResetControlNumber(
+	ctx context.Context,
+	req *repositories.ResetEDIControlNumberRequest,
+) (*edi.EDIControlNumberSequence, error) {
+	cols := buncolgen.EDIControlNumberSequenceColumns
+	sequence := new(edi.EDIControlNumberSequence)
+	err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(sequence).
+		Set("next_value = ?", req.NextValue).
+		Set("version = version + 1").
+		Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+		Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
+		Where(cols.Kind.Eq(), req.Kind).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Returning("*").
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDIControlNumberSequence")
+	}
+	return sequence, nil
 }
