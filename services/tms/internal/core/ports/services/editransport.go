@@ -50,6 +50,7 @@ type EDIMailboxFetcher interface {
 }
 
 type EDITransportDispatcher interface {
+	Supports(method edi.ConnectionMethod) bool
 	Deliver(
 		ctx context.Context,
 		method edi.ConnectionMethod,

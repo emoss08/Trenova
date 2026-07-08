@@ -183,6 +183,144 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 	require.True(t, duplicate.Duplicate)
 }
 
+func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T) {
+	t.Parallel()
+
+	trenova := newAS2ReceiverIdentity(t, "trenova.example")
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+
+	profile := &edi.EDICommunicationProfile{
+		ID:             pulid.MustNew("edicp_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		EDIPartnerID:   pulid.MustNew("edip_"),
+		Method:         edi.ConnectionMethodAS2,
+		Config: map[string]any{
+			editransport.ConfigKeyLocalAS2ID:                "TRENOVA-AS2",
+			editransport.ConfigKeyPartnerAS2ID:              "PARTNER-AS2",
+			editransport.ConfigKeyLocalCertificate:          trenova.certificatePEM,
+			editransport.ConfigKeyPartnerSigningCertificate: partner.certificatePEM,
+		},
+		EncryptedSecrets: map[string]string{
+			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
+		},
+	}
+	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		Return(profile, nil).
+		Once()
+
+	service := New(Params{
+		Logger:      zap.NewNop(),
+		ProfileRepo: profileRepo,
+		EDIService:  ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+	})
+
+	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
+		From:    "PARTNER-AS2",
+		To:      "TRENOVA-AS2",
+		Payload: []byte(as2ReceiverPayload),
+	})
+	require.NoError(t, err)
+
+	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		From:             "PARTNER-AS2",
+		To:               "TRENOVA-AS2",
+		MessageID:        built.MessageID,
+		ContentType:      built.ContentType,
+		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
+		Body:             built.Body,
+	})
+	require.NoError(t, err)
+	require.True(t, result.Rejected)
+	require.NotEmpty(t, result.MDNBody)
+
+	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
+	require.NoError(t, err)
+	require.False(t, mdn.Processed())
+}
+
+func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) {
+	t.Parallel()
+
+	trenova := newAS2ReceiverIdentity(t, "trenova.example")
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+
+	partnerID := pulid.MustNew("edip_")
+	profile := &edi.EDICommunicationProfile{
+		ID:             pulid.MustNew("edicp_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		EDIPartnerID:   partnerID,
+		Method:         edi.ConnectionMethodAS2,
+		Config: map[string]any{
+			editransport.ConfigKeyLocalAS2ID:                "TRENOVA-AS2",
+			editransport.ConfigKeyPartnerAS2ID:              "PARTNER-AS2",
+			editransport.ConfigKeyLocalCertificate:          trenova.certificatePEM,
+			editransport.ConfigKeyPartnerSigningCertificate: partner.certificatePEM,
+			editransport.ConfigKeyRequireSignedInbound:      "false",
+			editransport.ConfigKeyRequireEncryptedInbound:   "false",
+		},
+		EncryptedSecrets: map[string]string{
+			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
+		},
+	}
+	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		Return(profile, nil).
+		Once()
+	inboundFileRepo := mocks.NewMockEDIInboundFileRepository(t)
+	inboundFileRepo.EXPECT().
+		ExistsByChecksum(mock.Anything, mock.Anything).
+		Return(false, nil).
+		Once()
+	inboundFileRepo.EXPECT().
+		CreateInboundFile(mock.Anything, mock.MatchedBy(func(file *edi.EDIInboundFile) bool {
+			return file.RawContent == as2ReceiverPayload && file.EDIPartnerID == partnerID
+		})).
+		RunAndReturn(func(_ context.Context, file *edi.EDIInboundFile) (*edi.EDIInboundFile, error) {
+			file.ID = pulid.MustNew("ediinf_")
+			return file, nil
+		}).
+		Once()
+	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter.EXPECT().Enabled().Return(true)
+	workflowStarter.EXPECT().
+		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
+
+	service := New(Params{
+		Logger:          zap.NewNop(),
+		InboundFileRepo: inboundFileRepo,
+		ProfileRepo:     profileRepo,
+		EDIService:      ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		WorkflowStarter: workflowStarter,
+	})
+
+	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
+		From:    "PARTNER-AS2",
+		To:      "TRENOVA-AS2",
+		Payload: []byte(as2ReceiverPayload),
+	})
+	require.NoError(t, err)
+
+	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		From:             "PARTNER-AS2",
+		To:               "TRENOVA-AS2",
+		MessageID:        built.MessageID,
+		ContentType:      built.ContentType,
+		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
+		Body:             built.Body,
+	})
+	require.NoError(t, err)
+	require.False(t, result.Rejected)
+	require.False(t, result.Duplicate)
+	require.NotEmpty(t, result.MDNBody)
+}
+
 func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 	t.Parallel()
 

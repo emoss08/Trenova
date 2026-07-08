@@ -31,12 +31,16 @@ const (
 	ConfigKeyPartnerSigningCertificate    = "partnerSigningCertificate"
 	ConfigKeyPartnerEncryptionCertificate = "partnerEncryptionCertificate"
 	ConfigKeyBasicAuthUsername            = "basicAuthUsername"
+	ConfigKeyRequireSignedInbound         = "requireSignedInbound"
+	ConfigKeyRequireEncryptedInbound      = "requireEncryptedInbound"
 
 	SecretKeyAS2PrivateKey     = "privateKey"
 	SecretKeyBasicAuthPassword = "basicAuthPassword"
 
 	MDNModeSync  = "sync"
 	MDNModeAsync = "async"
+
+	AS2InboundRequirementAuto = "auto"
 
 	CompressionZlib = "zlib"
 
@@ -59,6 +63,8 @@ type AS2Config struct {
 	PrivateKey                   crypto.PrivateKey
 	PartnerSigningCertificate    *x509.Certificate
 	PartnerEncryptionCertificate *x509.Certificate
+	RequireSignedInbound         bool
+	RequireEncryptedInbound      bool
 }
 
 func (c *AS2Config) Async() bool {
@@ -117,6 +123,16 @@ func AS2ConfigFromProfile(
 			return nil, fmt.Errorf("AS2 private key secret is invalid: %w", err)
 		}
 		cfg.PrivateKey = key
+	}
+	if required, ok := maputils.BoolValue(profile.Config, ConfigKeyRequireSignedInbound); ok {
+		cfg.RequireSignedInbound = required
+	} else {
+		cfg.RequireSignedInbound = cfg.PartnerSigningCertificate != nil
+	}
+	if required, ok := maputils.BoolValue(profile.Config, ConfigKeyRequireEncryptedInbound); ok {
+		cfg.RequireEncryptedInbound = required
+	} else {
+		cfg.RequireEncryptedInbound = cfg.LocalCertificate != nil && cfg.PrivateKey != nil
 	}
 	return cfg, nil
 }

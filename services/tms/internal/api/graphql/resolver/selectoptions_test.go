@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -271,4 +273,48 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(t, "Illinois", stateOption.Label)
 	assert.Equal(t, "IL", stateOption.Meta["abbreviation"])
 	assert.Equal(t, "USA", stateOption.Meta["countryIso3"])
+
+	shipmentEntity := &shipment.Shipment{
+		ID:        pulid.MustNew("sp_"),
+		ProNumber: "PRO-1001",
+		BOL:       "BOL-2002",
+		Status:    shipment.StatusInTransit,
+		CreatedAt: 1780415000,
+	}
+	shipmentOption := shipmentSelectOption(shipmentEntity)
+	assert.Equal(t, "PRO-1001", shipmentOption.Label)
+	assert.Equal(t, "BOL-2002", *shipmentOption.Description)
+	assert.Equal(t, string(shipment.StatusInTransit), shipmentOption.Meta["status"])
+	assert.Equal(t, "BOL-2002", shipmentOption.Meta["bol"])
+	assert.Equal(t, shipmentEntity.CreatedAt, shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt)
+
+	transferEntity := &edi.EDITransfer{
+		ID:        pulid.MustNew("edilt_"),
+		Status:    edi.TransferStatusSubmitted,
+		CreatedAt: 1780415500,
+		TenderPayload: edi.LoadTenderPayload{
+			BOL:           "BOL-3003",
+			CustomerLabel: "ACME Freight",
+		},
+		SourcePartner: &edi.EDIPartner{Name: "Partner A"},
+		TargetPartner: &edi.EDIPartner{Name: "Partner B"},
+	}
+	transferOption := ediTransferSelectOption(transferEntity)
+	assert.Equal(t, "BOL-3003", transferOption.Label)
+	assert.Equal(t, "ACME Freight", *transferOption.Description)
+	assert.Equal(t, string(edi.TransferStatusSubmitted), transferOption.Meta["status"])
+	assert.Equal(t, "Partner A", transferOption.Meta["sourcePartner"])
+	assert.Equal(t, "Partner B", transferOption.Meta["targetPartner"])
+	assert.Equal(t, transferEntity.CreatedAt, ediTransferSelectOptionItem(transferEntity).cursor.CreatedAt)
+
+	fallbackTransfer := &edi.EDITransfer{
+		ID:        pulid.MustNew("edilt_"),
+		Status:    edi.TransferStatusSubmitted,
+		CreatedAt: 1780415600,
+	}
+	assert.Equal(
+		t,
+		"Load tender "+fallbackTransfer.ID.String(),
+		ediTransferSelectOption(fallbackTransfer).Label,
+	)
 }

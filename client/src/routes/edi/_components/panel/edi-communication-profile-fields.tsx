@@ -10,6 +10,7 @@ import {
   acknowledgmentOptions,
   as2CompressionOptions,
   as2EncryptionAlgorithmOptions,
+  as2InboundRequirementOptions,
   as2SigningAlgorithmOptions,
   environmentOptions,
   mdnModeOptions,
@@ -118,6 +119,24 @@ export function TransportProfileFields({
                 name="config.basicAuthUsername"
                 label="Basic Auth Username"
                 description="Optional HTTP basic auth credential the partner endpoint expects."
+              />
+            </FormControl>
+            <FormControl>
+              <SelectField
+                control={control}
+                name="config.requireSignedInbound"
+                label="Require Signed Inbound"
+                options={as2InboundRequirementOptions}
+                description="Reject inbound documents that are not signed by the partner. Automatic requires a signature when a partner signing certificate is configured."
+              />
+            </FormControl>
+            <FormControl>
+              <SelectField
+                control={control}
+                name="config.requireEncryptedInbound"
+                label="Require Encrypted Inbound"
+                options={as2InboundRequirementOptions}
+                description="Reject inbound documents that are not encrypted to us. Automatic requires encryption when a local certificate and private key are configured."
               />
             </FormControl>
           </FormGroup>

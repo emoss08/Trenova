@@ -235,7 +235,6 @@ func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.E
 			cols.CustomerID.Bare(),
 			cols.DefaultTransportID.Bare(),
 			cols.DefaultMappingProfileID.Bare(),
-			cols.DefaultValidationProfileID.Bare(),
 			cols.Timezone.Bare(),
 			cols.Country.Bare(),
 			cols.ContactName.Bare(),

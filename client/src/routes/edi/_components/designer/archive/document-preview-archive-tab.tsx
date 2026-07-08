@@ -215,10 +215,6 @@ export function DocumentPreviewArchiveTab() {
   const sourceTransactionSet = sourceContext.transactionSet;
   const sourceDirection = sourceContext.direction;
   const hasSourceValue = hasEDIDocumentSourceValue(sourceValues, sourceTransactionSet);
-  const matchingProfiles = profilesQuery.data?.results ?? [];
-  const selectedPartnerHasNoProfiles =
-    !!partnerId && !profileId && !profilesQuery.isLoading && matchingProfiles.length === 0;
-  const isCreatingProfile = !!partnerId && !profileId;
   const invalidateDocumentProfiles = useInvalidateEDIDocumentProfiles();
   const invalidateMessageArchive = useInvalidateEDIMessageArchive();
 

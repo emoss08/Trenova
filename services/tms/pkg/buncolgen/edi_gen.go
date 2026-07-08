@@ -2663,61 +2663,59 @@ var EDIPartnerTable = TableInfo{
 //	q.Where(EDIPartnerColumns.ID.Eq(), id)           // WHERE ep.id = ?
 //	q.Order(EDIPartnerColumns.CreatedAt.OrderDesc())  // ORDER BY ep.created_at DESC
 var EDIPartnerColumns = struct {
-	ID                         Column // "id" → qualified: "ep.id"
-	BusinessUnitID             Column // "business_unit_id" → qualified: "ep.business_unit_id"
-	OrganizationID             Column // "organization_id" → qualified: "ep.organization_id"
-	Kind                       Column // "kind" → qualified: "ep.kind"
-	Status                     Column // "status" → qualified: "ep.status"
-	Code                       Column // "code" → qualified: "ep.code"
-	Name                       Column // "name" → qualified: "ep.name"
-	Description                Column // "description" → qualified: "ep.description"
-	InternalOrganizationID     Column // "internal_organization_id" → qualified: "ep.internal_organization_id"
-	EDIConnectionID            Column // "edi_connection_id" → qualified: "ep.edi_connection_id"
-	CustomerID                 Column // "customer_id" → qualified: "ep.customer_id"
-	DefaultTransportID         Column // "default_transport_id" → qualified: "ep.default_transport_id"
-	DefaultMappingProfileID    Column // "default_mapping_profile_id" → qualified: "ep.default_mapping_profile_id"
-	DefaultValidationProfileID Column // "default_validation_profile_id" → qualified: "ep.default_validation_profile_id"
-	Timezone                   Column // "timezone" → qualified: "ep.timezone"
-	Country                    Column // "country" → qualified: "ep.country"
-	ContactName                Column // "contact_name" → qualified: "ep.contact_name"
-	ContactEmail               Column // "contact_email" → qualified: "ep.contact_email"
-	ContactPhone               Column // "contact_phone" → qualified: "ep.contact_phone"
-	EnabledForInbound          Column // "enabled_for_inbound" → qualified: "ep.enabled_for_inbound"
-	EnabledForOutbound         Column // "enabled_for_outbound" → qualified: "ep.enabled_for_outbound"
-	Settings                   Column // "settings" → qualified: "ep.settings"
-	SearchVector               Column // "search_vector" → qualified: "ep.search_vector"
-	Rank                       Column // "rank" → qualified: "ep.rank"
-	Version                    Column // "version" → qualified: "ep.version"
-	CreatedAt                  Column // "created_at" → qualified: "ep.created_at"
-	UpdatedAt                  Column // "updated_at" → qualified: "ep.updated_at"
+	ID                      Column // "id" → qualified: "ep.id"
+	BusinessUnitID          Column // "business_unit_id" → qualified: "ep.business_unit_id"
+	OrganizationID          Column // "organization_id" → qualified: "ep.organization_id"
+	Kind                    Column // "kind" → qualified: "ep.kind"
+	Status                  Column // "status" → qualified: "ep.status"
+	Code                    Column // "code" → qualified: "ep.code"
+	Name                    Column // "name" → qualified: "ep.name"
+	Description             Column // "description" → qualified: "ep.description"
+	InternalOrganizationID  Column // "internal_organization_id" → qualified: "ep.internal_organization_id"
+	EDIConnectionID         Column // "edi_connection_id" → qualified: "ep.edi_connection_id"
+	CustomerID              Column // "customer_id" → qualified: "ep.customer_id"
+	DefaultTransportID      Column // "default_transport_id" → qualified: "ep.default_transport_id"
+	DefaultMappingProfileID Column // "default_mapping_profile_id" → qualified: "ep.default_mapping_profile_id"
+	Timezone                Column // "timezone" → qualified: "ep.timezone"
+	Country                 Column // "country" → qualified: "ep.country"
+	ContactName             Column // "contact_name" → qualified: "ep.contact_name"
+	ContactEmail            Column // "contact_email" → qualified: "ep.contact_email"
+	ContactPhone            Column // "contact_phone" → qualified: "ep.contact_phone"
+	EnabledForInbound       Column // "enabled_for_inbound" → qualified: "ep.enabled_for_inbound"
+	EnabledForOutbound      Column // "enabled_for_outbound" → qualified: "ep.enabled_for_outbound"
+	Settings                Column // "settings" → qualified: "ep.settings"
+	SearchVector            Column // "search_vector" → qualified: "ep.search_vector"
+	Rank                    Column // "rank" → qualified: "ep.rank"
+	Version                 Column // "version" → qualified: "ep.version"
+	CreatedAt               Column // "created_at" → qualified: "ep.created_at"
+	UpdatedAt               Column // "updated_at" → qualified: "ep.updated_at"
 }{
-	ID:                         NewColumn("id", "ep"),
-	BusinessUnitID:             NewColumn("business_unit_id", "ep"),
-	OrganizationID:             NewColumn("organization_id", "ep"),
-	Kind:                       NewColumn("kind", "ep"),
-	Status:                     NewColumn("status", "ep"),
-	Code:                       NewColumn("code", "ep"),
-	Name:                       NewColumn("name", "ep"),
-	Description:                NewColumn("description", "ep"),
-	InternalOrganizationID:     NewColumn("internal_organization_id", "ep"),
-	EDIConnectionID:            NewColumn("edi_connection_id", "ep"),
-	CustomerID:                 NewColumn("customer_id", "ep"),
-	DefaultTransportID:         NewColumn("default_transport_id", "ep"),
-	DefaultMappingProfileID:    NewColumn("default_mapping_profile_id", "ep"),
-	DefaultValidationProfileID: NewColumn("default_validation_profile_id", "ep"),
-	Timezone:                   NewColumn("timezone", "ep"),
-	Country:                    NewColumn("country", "ep"),
-	ContactName:                NewColumn("contact_name", "ep"),
-	ContactEmail:               NewColumn("contact_email", "ep"),
-	ContactPhone:               NewColumn("contact_phone", "ep"),
-	EnabledForInbound:          NewColumn("enabled_for_inbound", "ep"),
-	EnabledForOutbound:         NewColumn("enabled_for_outbound", "ep"),
-	Settings:                   NewColumn("settings", "ep"),
-	SearchVector:               NewColumn("search_vector", "ep"),
-	Rank:                       NewColumn("rank", "ep"),
-	Version:                    NewColumn("version", "ep"),
-	CreatedAt:                  NewColumn("created_at", "ep"),
-	UpdatedAt:                  NewColumn("updated_at", "ep"),
+	ID:                      NewColumn("id", "ep"),
+	BusinessUnitID:          NewColumn("business_unit_id", "ep"),
+	OrganizationID:          NewColumn("organization_id", "ep"),
+	Kind:                    NewColumn("kind", "ep"),
+	Status:                  NewColumn("status", "ep"),
+	Code:                    NewColumn("code", "ep"),
+	Name:                    NewColumn("name", "ep"),
+	Description:             NewColumn("description", "ep"),
+	InternalOrganizationID:  NewColumn("internal_organization_id", "ep"),
+	EDIConnectionID:         NewColumn("edi_connection_id", "ep"),
+	CustomerID:              NewColumn("customer_id", "ep"),
+	DefaultTransportID:      NewColumn("default_transport_id", "ep"),
+	DefaultMappingProfileID: NewColumn("default_mapping_profile_id", "ep"),
+	Timezone:                NewColumn("timezone", "ep"),
+	Country:                 NewColumn("country", "ep"),
+	ContactName:             NewColumn("contact_name", "ep"),
+	ContactEmail:            NewColumn("contact_email", "ep"),
+	ContactPhone:            NewColumn("contact_phone", "ep"),
+	EnabledForInbound:       NewColumn("enabled_for_inbound", "ep"),
+	EnabledForOutbound:      NewColumn("enabled_for_outbound", "ep"),
+	Settings:                NewColumn("settings", "ep"),
+	SearchVector:            NewColumn("search_vector", "ep"),
+	Rank:                    NewColumn("rank", "ep"),
+	Version:                 NewColumn("version", "ep"),
+	CreatedAt:               NewColumn("created_at", "ep"),
+	UpdatedAt:               NewColumn("updated_at", "ep"),
 }
 
 // EDIPartnerFieldMap maps JSON API field names to database column names.
@@ -2725,31 +2723,30 @@ var EDIPartnerColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by EDIPartner.GetStaticFieldMap().
 var EDIPartnerFieldMap = map[string]string{
-	"id":                         "id",
-	"businessUnitId":             "business_unit_id",
-	"organizationId":             "organization_id",
-	"kind":                       "kind",
-	"status":                     "status",
-	"code":                       "code",
-	"name":                       "name",
-	"description":                "description",
-	"internalOrganizationId":     "internal_organization_id",
-	"ediConnectionId":            "edi_connection_id",
-	"customerId":                 "customer_id",
-	"defaultTransportId":         "default_transport_id",
-	"defaultMappingProfileId":    "default_mapping_profile_id",
-	"defaultValidationProfileId": "default_validation_profile_id",
-	"timezone":                   "timezone",
-	"country":                    "country",
-	"contactName":                "contact_name",
-	"contactEmail":               "contact_email",
-	"contactPhone":               "contact_phone",
-	"enabledForInbound":          "enabled_for_inbound",
-	"enabledForOutbound":         "enabled_for_outbound",
-	"settings":                   "settings",
-	"version":                    "version",
-	"createdAt":                  "created_at",
-	"updatedAt":                  "updated_at",
+	"id":                      "id",
+	"businessUnitId":          "business_unit_id",
+	"organizationId":          "organization_id",
+	"kind":                    "kind",
+	"status":                  "status",
+	"code":                    "code",
+	"name":                    "name",
+	"description":             "description",
+	"internalOrganizationId":  "internal_organization_id",
+	"ediConnectionId":         "edi_connection_id",
+	"customerId":              "customer_id",
+	"defaultTransportId":      "default_transport_id",
+	"defaultMappingProfileId": "default_mapping_profile_id",
+	"timezone":                "timezone",
+	"country":                 "country",
+	"contactName":             "contact_name",
+	"contactEmail":            "contact_email",
+	"contactPhone":            "contact_phone",
+	"enabledForInbound":       "enabled_for_inbound",
+	"enabledForOutbound":      "enabled_for_outbound",
+	"settings":                "settings",
+	"version":                 "version",
+	"createdAt":               "created_at",
+	"updatedAt":               "updated_at",
 }
 
 // EDIPartnerInsertableColumns lists column names suitable for INSERT statements on the "edi_partners" table.
@@ -2768,7 +2765,6 @@ var EDIPartnerInsertableColumns = []string{
 	"customer_id",
 	"default_transport_id",
 	"default_mapping_profile_id",
-	"default_validation_profile_id",
 	"timezone",
 	"country",
 	"contact_name",
@@ -2857,31 +2853,30 @@ func EDIPartnerApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun
 //	EDIPartnerFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var EDIPartnerFilter = struct {
-	ID                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Kind                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	Status                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Code                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	InternalOrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "internalOrganizationId" → DB: "internal_organization_id"
-	EDIConnectionID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediConnectionId" → DB: "edi_connection_id"
-	CustomerID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
-	DefaultTransportID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultTransportId" → DB: "default_transport_id"
-	DefaultMappingProfileID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMappingProfileId" → DB: "default_mapping_profile_id"
-	DefaultValidationProfileID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultValidationProfileId" → DB: "default_validation_profile_id"
-	Timezone                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
-	Country                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "country" → DB: "country"
-	ContactName                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contactName" → DB: "contact_name"
-	ContactEmail               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contactEmail" → DB: "contact_email"
-	ContactPhone               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contactPhone" → DB: "contact_phone"
-	EnabledForInbound          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabledForInbound" → DB: "enabled_for_inbound"
-	EnabledForOutbound         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabledForOutbound" → DB: "enabled_for_outbound"
-	Settings                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settings" → DB: "settings"
-	Version                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Kind                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	Status                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Code                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	InternalOrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "internalOrganizationId" → DB: "internal_organization_id"
+	EDIConnectionID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediConnectionId" → DB: "edi_connection_id"
+	CustomerID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	DefaultTransportID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultTransportId" → DB: "default_transport_id"
+	DefaultMappingProfileID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMappingProfileId" → DB: "default_mapping_profile_id"
+	Timezone                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
+	Country                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "country" → DB: "country"
+	ContactName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contactName" → DB: "contact_name"
+	ContactEmail            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contactEmail" → DB: "contact_email"
+	ContactPhone            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contactPhone" → DB: "contact_phone"
+	EnabledForInbound       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabledForInbound" → DB: "enabled_for_inbound"
+	EnabledForOutbound      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabledForOutbound" → DB: "enabled_for_outbound"
+	Settings                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settings" → DB: "settings"
+	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -2921,9 +2916,6 @@ var EDIPartnerFilter = struct {
 	},
 	DefaultMappingProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("defaultMappingProfileId", op, value)
-	},
-	DefaultValidationProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("defaultValidationProfileId", op, value)
 	},
 	Timezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("timezone", op, value)

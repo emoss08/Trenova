@@ -485,12 +485,11 @@ func (v *Validator) validateAS2ProfileConfig(
 		[]string{
 			as2.EncryptionAlgorithmTripleDES,
 			as2.EncryptionAlgorithmAES128CBC,
-			as2.EncryptionAlgorithmAES192CBC,
 			as2.EncryptionAlgorithmAES256CBC,
 			as2.EncryptionAlgorithmAES128GCM,
 			as2.EncryptionAlgorithmAES256GCM,
 		},
-		"Encryption algorithm must be 3des, aes128-cbc, aes192-cbc, aes256-cbc, aes128-gcm, or aes256-gcm",
+		"Encryption algorithm must be 3des, aes128-cbc, aes256-cbc, aes128-gcm, or aes256-gcm",
 	)
 	validateAS2Algorithm(
 		multiErr,
@@ -498,6 +497,20 @@ func (v *Validator) validateAS2ProfileConfig(
 		editransport.ConfigKeyCompressionAlgorithm,
 		[]string{"none", editransport.CompressionZlib},
 		"Compression algorithm must be none or zlib",
+	)
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyRequireSignedInbound,
+		[]string{editransport.AS2InboundRequirementAuto, "true", "false"},
+		"Require signed inbound must be auto, true, or false",
+	)
+	validateAS2Algorithm(
+		multiErr,
+		entity.Config,
+		editransport.ConfigKeyRequireEncryptedInbound,
+		[]string{editransport.AS2InboundRequirementAuto, "true", "false"},
+		"Require encrypted inbound must be auto, true, or false",
 	)
 	validateAS2Certificate(
 		multiErr,

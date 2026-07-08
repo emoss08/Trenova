@@ -282,7 +282,9 @@ func (s *Service) encryptProfileSecret(
 	value string,
 ) (string, error) {
 	if s.encryption == nil {
-		return value, nil
+		return "", errortypes.NewBusinessError(
+			"EDI communication profile secrets cannot be saved because the encryption service is not configured",
+		)
 	}
 
 	resourceID := profileID.String() + ":" + key

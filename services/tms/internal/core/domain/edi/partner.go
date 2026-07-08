@@ -38,7 +38,6 @@ type EDIPartner struct {
 	CustomerID                 pulid.ID           `json:"customerId"                 bun:"customer_id,type:VARCHAR(100),nullzero"`
 	DefaultTransportID         pulid.ID           `json:"defaultTransportId"         bun:"default_transport_id,type:VARCHAR(100),nullzero"`
 	DefaultMappingProfileID    pulid.ID           `json:"defaultMappingProfileId"    bun:"default_mapping_profile_id,type:VARCHAR(100),nullzero"`
-	DefaultValidationProfileID pulid.ID           `json:"defaultValidationProfileId" bun:"default_validation_profile_id,type:VARCHAR(100),nullzero"`
 	Timezone                   string             `json:"timezone"                   bun:"timezone,type:VARCHAR(100),nullzero"`
 	Country                    string             `json:"country"                    bun:"country,type:VARCHAR(2),notnull,default:'US'"`
 	ContactName                string             `json:"contactName"                bun:"contact_name,type:VARCHAR(150),nullzero"`

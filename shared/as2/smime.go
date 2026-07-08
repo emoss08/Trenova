@@ -20,7 +20,6 @@ const (
 
 	EncryptionAlgorithmTripleDES = "3des"
 	EncryptionAlgorithmAES128CBC = "aes128-cbc"
-	EncryptionAlgorithmAES192CBC = "aes192-cbc"
 	EncryptionAlgorithmAES256CBC = "aes256-cbc"
 	EncryptionAlgorithmAES128GCM = "aes128-gcm"
 	EncryptionAlgorithmAES256GCM = "aes256-gcm"
@@ -160,7 +159,7 @@ func encryptionAlgorithmID(algorithm string) (int, error) {
 		return pkcs7.EncryptionAlgorithmDESCBC, nil
 	case EncryptionAlgorithmAES128CBC:
 		return pkcs7.EncryptionAlgorithmAES128CBC, nil
-	case EncryptionAlgorithmAES192CBC, EncryptionAlgorithmAES256CBC:
+	case EncryptionAlgorithmAES256CBC:
 		return pkcs7.EncryptionAlgorithmAES256CBC, nil
 	case EncryptionAlgorithmAES128GCM:
 		return pkcs7.EncryptionAlgorithmAES128GCM, nil

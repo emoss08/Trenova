@@ -35,6 +35,24 @@ func CloneShallow(input map[string]any) map[string]any {
 	return output
 }
 
+func BoolValue(input map[string]any, key string) (value, ok bool) {
+	if len(input) == 0 {
+		return false, false
+	}
+	switch value := input[key].(type) {
+	case bool:
+		return value, true
+	case string:
+		parsed, err := strconv.ParseBool(strings.TrimSpace(value))
+		if err != nil {
+			return false, false
+		}
+		return parsed, true
+	default:
+		return false, false
+	}
+}
+
 func StringValue(input map[string]any, key string) string {
 	if len(input) == 0 {
 		return ""
