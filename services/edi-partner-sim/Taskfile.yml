@@ -1,0 +1,24 @@
+version: "3"
+
+tasks:
+  sim:
+    desc: Run the AS2 partner simulator
+    cmds:
+      - go run ./cmd/edi-partner-sim {{.CLI_ARGS}}
+
+  e2e:
+    desc: Run the end-to-end EDI scenario against a live Trenova stack
+    cmds:
+      - go run ./cmd/edi-e2e {{.CLI_ARGS}}
+
+  test:
+    desc: Run simulator unit tests
+    cmds:
+      - go test ./...
+
+  build:
+    desc: Build both binaries
+    cmds:
+      - mkdir -p ./build
+      - go build -o ./build/edi-partner-sim ./cmd/edi-partner-sim
+      - go build -o ./build/edi-e2e ./cmd/edi-e2e

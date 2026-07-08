@@ -1667,6 +1667,8 @@ var EDIMappingProfileColumns = struct {
 	EDIPartnerID   Column // "edi_partner_id" → qualified: "emp.edi_partner_id"
 	Name           Column // "name" → qualified: "emp.name"
 	Description    Column // "description" → qualified: "emp.description"
+	SearchVector   Column // "search_vector" → qualified: "emp.search_vector"
+	Rank           Column // "rank" → qualified: "emp.rank"
 	Version        Column // "version" → qualified: "emp.version"
 	CreatedAt      Column // "created_at" → qualified: "emp.created_at"
 	UpdatedAt      Column // "updated_at" → qualified: "emp.updated_at"
@@ -1677,6 +1679,8 @@ var EDIMappingProfileColumns = struct {
 	EDIPartnerID:   NewColumn("edi_partner_id", "emp"),
 	Name:           NewColumn("name", "emp"),
 	Description:    NewColumn("description", "emp"),
+	SearchVector:   NewColumn("search_vector", "emp"),
+	Rank:           NewColumn("rank", "emp"),
 	Version:        NewColumn("version", "emp"),
 	CreatedAt:      NewColumn("created_at", "emp"),
 	UpdatedAt:      NewColumn("updated_at", "emp"),
