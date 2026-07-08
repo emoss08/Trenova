@@ -3,3 +3,4 @@ trenova
 build
 .idea
 config/config.yaml/cli
+config/*
