@@ -211,12 +211,14 @@ func (r *repository) GetRecentEntries(
 
 func (r *repository) DeleteAuditEntries(
 	ctx context.Context,
-	timestamp int64,
+	req repositories.DeleteAuditEntriesRequest,
 ) (int64, error) {
 	log := r.l.With(zap.String("operation", "DeleteAuditEntries"))
 
 	result, err := r.db.DB().NewDelete().Model((*audit.Entry)(nil)).
-		Where("ae.timestamp < ?", timestamp).
+		Where("ae.organization_id = ?", req.OrgID).
+		Where("ae.business_unit_id = ?", req.BuID).
+		Where("ae.timestamp < ?", req.Before).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to delete audit entries", zap.Error(err))

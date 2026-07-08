@@ -2662,6 +2662,8 @@ type testCaseRequest struct {
 	Payload                  edi.DocumentPayload `json:"payload"`
 	ExpectedWarnings         int                 `json:"expectedWarnings"`
 	ExpectedErrors           int                 `json:"expectedErrors"`
+	ExpectedWarningCodes     []string            `json:"expectedWarningCodes"`
+	ExpectedErrorCodes       []string            `json:"expectedErrorCodes"`
 	Version                  int64               `json:"version"`
 }
 
@@ -2678,6 +2680,8 @@ func (r *testCaseRequest) toServiceRequest(
 		Payload:                  r.Payload,
 		ExpectedWarnings:         r.ExpectedWarnings,
 		ExpectedErrors:           r.ExpectedErrors,
+		ExpectedWarningCodes:     r.ExpectedWarningCodes,
+		ExpectedErrorCodes:       r.ExpectedErrorCodes,
 		Version:                  r.Version,
 	}
 }
