@@ -273,7 +273,7 @@ func (r *repository) GetActiveAS2ProfileByIdentifiers(
 		Where("ecp.edi_partner_id IS NOT NULL").
 		Where("TRIM(ecp.config->>'localAS2Id') = ?", req.LocalAS2ID).
 		Where("TRIM(ecp.config->>'partnerAS2Id') = ?", req.PartnerAS2ID).
-		Order(cols.CreatedAt.OrderAsc()).
+		Order(cols.UpdatedAt.OrderDesc()).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
