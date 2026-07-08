@@ -581,7 +581,7 @@ func (r *runner) runSFTP(suffix, shipmentID string) bool {
 				"inboundDirectory":     sftpInfo.InboundDirectory,
 				"outboundDirectory":    sftpInfo.OutboundDirectory,
 				"archiveDirectory":     sftpInfo.ArchiveDirectory,
-				"fileNamingPattern":    "{partnerId}-{transactionSet}-{messageId}.x12",
+				"fileNamingPattern":    "{partnerId}-{transactionSet}-{messageId}.edi",
 				"isaSenderQualifier":   "ZZ",
 				"isaSenderId":          "TRENOVA",
 				"isaReceiverQualifier": "ZZ",
