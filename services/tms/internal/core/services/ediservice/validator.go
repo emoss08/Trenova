@@ -270,6 +270,16 @@ func validateEnvelope(multiErr *errortypes.MultiError, envelope *edi.X12Envelope
 		envelope.InterchangeReceiverID,
 		"ISA receiver ID is required",
 	)
+	validateISAQualifier(
+		multiErr,
+		"envelope.interchangeSenderQualifier",
+		envelope.InterchangeSenderQualifier,
+	)
+	validateISAQualifier(
+		multiErr,
+		"envelope.interchangeReceiverQualifier",
+		envelope.InterchangeReceiverQualifier,
+	)
 	requireSeparator(multiErr, "envelope.elementSeparator", envelope.ElementSeparator)
 	requireSeparator(multiErr, "envelope.segmentTerminator", envelope.SegmentTerminator)
 	requireSeparator(multiErr, "envelope.componentSeparator", envelope.ComponentSeparator)
@@ -435,6 +445,15 @@ func validateRetryConfigInt(
 		return 0, false
 	}
 	return value, true
+}
+
+func validateISAQualifier(multiErr *errortypes.MultiError, field, value string) {
+	if value == "" {
+		return
+	}
+	if len(value) != 2 {
+		multiErr.Add(field, errortypes.ErrInvalid, "ISA qualifier must be exactly 2 characters")
+	}
 }
 
 func requireConfigString(

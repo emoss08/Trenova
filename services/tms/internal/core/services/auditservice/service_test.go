@@ -90,9 +90,9 @@ func (m *mockAuditRepository) GetRecentEntries(
 
 func (m *mockAuditRepository) DeleteAuditEntries(
 	ctx context.Context,
-	timestamp int64,
+	req repositories.DeleteAuditEntriesRequest,
 ) (int64, error) {
-	args := m.Called(ctx, timestamp)
+	args := m.Called(ctx, req)
 	return args.Get(0).(int64), args.Error(1)
 }
 

@@ -250,8 +250,7 @@ function TestCaseEditPanel({
         {testCase && preview && (
           <TestCaseVerdict
             preview={preview}
-            expectedWarnings={testCase.expectedWarnings}
-            expectedErrors={testCase.expectedErrors}
+            testCase={testCase}
             onOpenInspector={() => setInspectorOpen(true)}
           />
         )}
@@ -281,6 +280,16 @@ function TestCaseEditPanel({
   );
 }
 
+function CodeDiffLine({ label, codes }: { label: string; codes: string[] }) {
+  if (codes.length === 0) return null;
+  return (
+    <p className="text-xs">
+      <span className="text-muted-foreground">{label}: </span>
+      <span className="font-mono">{codes.join(", ")}</span>
+    </p>
+  );
+}
+
 function verdictCountLine(label: string, actual: number, expected: number) {
   if (actual === expected) {
     return `${label}: ${actual} (matches expected)`;
@@ -288,24 +297,49 @@ function verdictCountLine(label: string, actual: number, expected: number) {
   return `${label}: ${actual}, expected ${expected}`;
 }
 
+function diffCodes(expected: string[], actual: string[]) {
+  if (expected.length === 0) return { missing: [] as string[], unexpected: [] as string[] };
+  const expectedSet = new Set(expected);
+  const actualSet = new Set(actual);
+  return {
+    missing: expected.filter((code) => !actualSet.has(code)),
+    unexpected: Array.from(actualSet).filter((code) => !expectedSet.has(code)),
+  };
+}
+
 function TestCaseVerdict({
   preview,
-  expectedWarnings,
-  expectedErrors,
+  testCase,
   onOpenInspector,
 }: {
   preview: EDIDocumentPreview;
-  expectedWarnings: number;
-  expectedErrors: number;
+  testCase: EDITestCaseRow;
   onOpenInspector: () => void;
 }) {
-  const actualWarnings = preview.diagnostics.filter(
+  const { expectedWarnings, expectedErrors } = testCase;
+  const warningDiagnostics = preview.diagnostics.filter(
     (diagnostic) => diagnostic.severity === "Warning",
-  ).length;
-  const actualErrors = preview.diagnostics.filter(
+  );
+  const errorDiagnostics = preview.diagnostics.filter(
     (diagnostic) => diagnostic.severity === "Error",
-  ).length;
-  const passed = actualWarnings === expectedWarnings && actualErrors === expectedErrors;
+  );
+  const actualWarnings = warningDiagnostics.length;
+  const actualErrors = errorDiagnostics.length;
+  const warningDiff = diffCodes(
+    testCase.expectedWarningCodes ?? [],
+    warningDiagnostics.map((diagnostic) => diagnostic.code),
+  );
+  const errorDiff = diffCodes(
+    testCase.expectedErrorCodes ?? [],
+    errorDiagnostics.map((diagnostic) => diagnostic.code),
+  );
+  const codesPass =
+    warningDiff.missing.length === 0 &&
+    warningDiff.unexpected.length === 0 &&
+    errorDiff.missing.length === 0 &&
+    errorDiff.unexpected.length === 0;
+  const passed =
+    actualWarnings === expectedWarnings && actualErrors === expectedErrors && codesPass;
 
   return (
     <div className="mb-4 flex items-center justify-between gap-3 rounded-md border bg-muted/20 p-3">
@@ -319,9 +353,13 @@ function TestCaseVerdict({
           {!passed && (
             <p className="text-xs text-muted-foreground">
               Review the inspector diagnostics, then either fix the payload/template or update the
-              expected counts.
+              expected counts and codes.
             </p>
           )}
+          <CodeDiffLine label="Missing warning codes" codes={warningDiff.missing} />
+          <CodeDiffLine label="Unexpected warning codes" codes={warningDiff.unexpected} />
+          <CodeDiffLine label="Missing error codes" codes={errorDiff.missing} />
+          <CodeDiffLine label="Unexpected error codes" codes={errorDiff.unexpected} />
         </div>
       </div>
       <Button type="button" variant="ghost" size="sm" onClick={onOpenInspector}>
@@ -408,6 +446,26 @@ function TestCaseForm({
               name="expectedErrors"
               label="Expected Errors"
               disabled={disabled}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              control={control}
+              name="expectedWarningCodes"
+              label="Expected Warning Codes"
+              disabled={disabled}
+              placeholder="missing_optional_element, value_truncated"
+              description="Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's warning codes to match exactly."
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              control={control}
+              name="expectedErrorCodes"
+              label="Expected Error Codes"
+              disabled={disabled}
+              placeholder="missing_required_element"
+              description="Optional comma-separated diagnostic codes. When set, the verdict also requires the preview's error codes to match exactly."
             />
           </FormControl>
         </FormGroup>

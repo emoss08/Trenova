@@ -34,6 +34,8 @@ type EDIMappingProfile struct {
 	EDIPartnerID   pulid.ID `json:"ediPartnerId"   bun:"edi_partner_id,type:VARCHAR(100),notnull"`
 	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
 	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero"`
+	SearchVector   string   `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank           string   `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
 	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

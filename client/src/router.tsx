@@ -48,6 +48,15 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/organization/data-retention",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
+            async lazy() {
+              const { DataRetentionPage } =
+                await import("@/routes/organization/data-retention/page");
+              return { Component: DataRetentionPage };
+            },
+          },
+          {
             path: "/organization/email-profiles",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailProfile)),
             async lazy() {

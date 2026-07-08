@@ -2,4 +2,4 @@ tmp/
 trenova
 build
 .idea
-config/config.yaml
+config/config.yaml/cli

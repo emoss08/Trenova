@@ -769,7 +769,9 @@ export const ediPartnerSettingSchemaSchema = z.object({
 export type EDIPartnerSettingSchema = z.infer<typeof ediPartnerSettingSchemaSchema>;
 
 export const ediX12EnvelopeSettingsSchema = z.object({
+  interchangeSenderQualifier: z.string().default("ZZ"),
   interchangeSenderId: z.string().default("TRENOVA"),
+  interchangeReceiverQualifier: z.string().default("ZZ"),
   interchangeReceiverId: z.string().default("PARTNER"),
   applicationSenderCode: z.string().default("TRENOVA"),
   applicationReceiverCode: z.string().default("PARTNER"),
@@ -905,6 +907,22 @@ export const ediCertificateSummarySchema = z.object({
 
 export type EDICertificateSummary = z.infer<typeof ediCertificateSummarySchema>;
 
+export const ediPartnerReadinessItemSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  complete: z.boolean(),
+});
+
+export const ediPartnerReadinessSchema = z.object({
+  partnerId: z.string(),
+  ready: z.boolean(),
+  completedCount: z.number(),
+  totalCount: z.number(),
+  items: z.array(ediPartnerReadinessItemSchema),
+});
+
+export type EDIPartnerReadiness = z.infer<typeof ediPartnerReadinessSchema>;
+
 export const ediBulkActionResultSchema = z.object({
   succeeded: z.array(z.string()),
   failed: z.array(
@@ -946,6 +964,7 @@ export const ediMessageSchema = z.object({
   deliveryAttempts: z.number().default(0),
   deliveryLastAttemptAt: nullableNumberSchema,
   deliverySentAt: nullableNumberSchema,
+  rawPurgedAt: nullableNumberSchema,
   deliveryLastError: z.string().nullish(),
   ackStatus: ediMessageAcknowledgmentStatusSchema.nullish(),
   ackMessageId: z.string().nullish(),
@@ -1143,6 +1162,12 @@ export const ediTestCaseSchema = z.object({
   payload: ediDocumentPayloadSchema,
   expectedWarnings: z.number(),
   expectedErrors: z.number(),
+  expectedWarningCodes: z.array(z.string()).default([]),
+  expectedErrorCodes: z.array(z.string()).default([]),
+  lastRunAt: z.number().nullish(),
+  lastRunPassed: z.boolean().nullish(),
+  lastRunWarnings: z.number().default(0),
+  lastRunErrors: z.number().default(0),
   version: z.number().default(0),
   createdAt: z.number().nullish(),
   updatedAt: z.number().nullish(),
@@ -1167,6 +1192,8 @@ export type SaveEDITestCaseRequest = {
   payload: EDIDocumentPayload;
   expectedWarnings: number;
   expectedErrors: number;
+  expectedWarningCodes: string[];
+  expectedErrorCodes: string[];
   version?: number;
 };
 

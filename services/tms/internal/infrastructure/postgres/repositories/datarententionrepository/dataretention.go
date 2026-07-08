@@ -98,3 +98,38 @@ func (r *repository) Update(
 
 	return entity, nil
 }
+
+func (r *repository) Upsert(
+	ctx context.Context,
+	entity *tenant.DataRetention,
+) (*tenant.DataRetention, error) {
+	log := r.l.With(zap.String("operation", "Upsert"))
+
+	existing, err := r.Get(ctx, repositories.GetDataRetentionRequest{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	})
+	if err == nil {
+		existing.AuditRetentionPeriod = entity.AuditRetentionPeriod
+		existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
+		existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
+		return r.Update(ctx, existing)
+	}
+	if !dberror.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	if _, err = r.db.DB().
+		NewInsert().
+		Model(entity).
+		On(`CONFLICT ("organization_id") DO UPDATE`).
+		Set("audit_retention_period = EXCLUDED.audit_retention_period").
+		Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
+		Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error("failed to upsert data retention", zap.Error(err))
+		return nil, err
+	}
+	return entity, nil
+}

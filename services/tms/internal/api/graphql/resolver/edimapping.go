@@ -6,8 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func ediPartnerConnectionToModel(
@@ -92,6 +94,55 @@ func ediMessageConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+func ediPartnerScorecardsToModel(
+	rows []*repositories.EDIPartnerScorecardRow,
+) []*gqlmodel.EdiPartnerScorecard {
+	now := timeutils.NowUnix()
+	cards := make([]*gqlmodel.EdiPartnerScorecard, 0, len(rows))
+	for _, row := range rows {
+		card := &gqlmodel.EdiPartnerScorecard{
+			PartnerID:           row.PartnerID.String(),
+			PartnerName:         row.PartnerName,
+			PartnerCode:         row.PartnerCode,
+			OutboundTotal:       int(row.OutboundTotal),
+			SentCount:           int(row.SentCount),
+			FailedCount:         int(row.FailedCount),
+			DeadLetteredCount:   int(row.DeadLetteredCount),
+			ReceivedCount:       int(row.ReceivedCount),
+			AvgAckSeconds:       row.AvgAckSeconds,
+			P95AckSeconds:       row.P95AckSeconds,
+			OverdueAckCount:     int(row.OverdueAckCount),
+			PendingOver4hCount:  int(row.PendingOver4hCount),
+			PendingOver24hCount: int(row.PendingOver24hCount),
+		}
+		if attempted := row.SentCount + row.FailedCount + row.DeadLetteredCount; attempted > 0 {
+			rate := float64(row.SentCount) / float64(attempted)
+			card.DeliverySuccessRate = &rate
+		}
+		if row.OldestPendingAt != nil && now >= *row.OldestPendingAt {
+			age := int(now - *row.OldestPendingAt)
+			card.OldestPendingAgeSeconds = &age
+		}
+		cards = append(cards, card)
+	}
+	return cards
+}
+
+func ediVolumeSeriesToModel(series *ediservice.EDIVolumeSeries) []*gqlmodel.EdiVolumePoint {
+	points := make([]*gqlmodel.EdiVolumePoint, 0, len(series.Points))
+	for _, point := range series.Points {
+		points = append(points, &gqlmodel.EdiVolumePoint{
+			BucketStart:   int(point.BucketStart),
+			BucketSeconds: int(series.BucketSeconds),
+			OutboundCount: int(point.OutboundCount),
+			SentCount:     int(point.SentCount),
+			FailedCount:   int(point.FailedCount),
+			ReceivedCount: int(point.ReceivedCount),
+		})
+	}
+	return points
 }
 
 func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EdiSummary {

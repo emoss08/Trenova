@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   ediBulkActionResultSchema,
+  ediPartnerReadinessSchema,
   ediCertificateSummarySchema,
   ediConnectionTestResultSchema,
   ediMappingPreviewSchema,
@@ -281,6 +282,11 @@ export class EDIService {
     return safeParse(ediBulkActionResultSchema, response, "EDIBulkActionResult");
   }
 
+  public async replayMessageDelivery(messageId: string) {
+    const response = await api.post(`/edi/messages/${messageId}/replay/`);
+    return safeParse(ediMessageSchema, response, "EDIMessage");
+  }
+
   public async retryMessageDelivery(messageId: string) {
     const response = await api.post(`/edi/messages/${messageId}/retry-delivery/`);
     return safeParse(ediMessageSchema, response, "EDIMessage");
@@ -304,6 +310,11 @@ export class EDIService {
   public async listTestCases(query = "") {
     const response = await api.get(`/edi/test-cases/${query}`);
     return safeParse(ediTestCaseListSchema, response, "EDITestCaseList");
+  }
+
+  public async getPartnerReadiness(partnerId: string) {
+    const response = await api.get(`/edi/partners/${partnerId}/readiness/`);
+    return safeParse(ediPartnerReadinessSchema, response, "EDIPartnerReadiness");
   }
 
   public async getTestCase(testCaseId: string) {

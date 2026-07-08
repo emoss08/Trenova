@@ -37,4 +37,14 @@ type EDITestCaseRepository interface {
 	CreateTestCase(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)
 	UpdateTestCase(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)
 	DeleteTestCase(ctx context.Context, req DeleteEDITestCaseRequest) error
+	RecordTestCaseRun(ctx context.Context, req *RecordEDITestCaseRunRequest) error
+}
+
+type RecordEDITestCaseRunRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	RanAt      int64
+	Passed     bool
+	Warnings   int
+	Errors     int
 }

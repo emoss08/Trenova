@@ -161,6 +161,14 @@ func RuntimeValues(profile *edi.EDIPartnerDocumentProfile, x12Version string) ma
 	envelope := profile.Envelope
 	normalizeEnvelope(&envelope)
 	return map[string]any{
+		"interchangeSenderQualifier": stringutils.FirstNonEmpty(
+			envelope.InterchangeSenderQualifier,
+			"ZZ",
+		),
+		"interchangeReceiverQualifier": stringutils.FirstNonEmpty(
+			envelope.InterchangeReceiverQualifier,
+			"ZZ",
+		),
 		"interchangeSenderId":   padISAID(envelope.InterchangeSenderID),
 		"interchangeReceiverId": padISAID(envelope.InterchangeReceiverID),
 		"applicationSenderCode": stringutils.FirstNonEmpty(

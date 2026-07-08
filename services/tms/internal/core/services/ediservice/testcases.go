@@ -2,6 +2,8 @@ package ediservice
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -19,6 +21,8 @@ type SaveEDITestCaseRequest struct {
 	Payload                  edi.DocumentPayload
 	ExpectedWarnings         int
 	ExpectedErrors           int
+	ExpectedWarningCodes     []string
+	ExpectedErrorCodes       []string
 	Version                  int64
 }
 
@@ -52,6 +56,8 @@ func (s *Service) CreateTestCase(
 		Payload:                  req.Payload,
 		ExpectedWarnings:         req.ExpectedWarnings,
 		ExpectedErrors:           req.ExpectedErrors,
+		ExpectedWarningCodes:     normalizeDiagnosticCodes(req.ExpectedWarningCodes),
+		ExpectedErrorCodes:       normalizeDiagnosticCodes(req.ExpectedErrorCodes),
 	})
 }
 
@@ -82,6 +88,8 @@ func (s *Service) UpdateTestCase(
 	entity.Payload = req.Payload
 	entity.ExpectedWarnings = req.ExpectedWarnings
 	entity.ExpectedErrors = req.ExpectedErrors
+	entity.ExpectedWarningCodes = normalizeDiagnosticCodes(req.ExpectedWarningCodes)
+	entity.ExpectedErrorCodes = normalizeDiagnosticCodes(req.ExpectedErrorCodes)
 	entity.Version = req.Version
 	return s.testCaseRepo.UpdateTestCase(ctx, entity)
 }
@@ -150,4 +158,22 @@ func (s *Service) validateTestCase(ctx context.Context, req *SaveEDITestCaseRequ
 		return err
 	}
 	return nil
+}
+
+func normalizeDiagnosticCodes(codes []string) []string {
+	normalized := make([]string, 0, len(codes))
+	seen := make(map[string]struct{}, len(codes))
+	for _, code := range codes {
+		trimmed := strings.TrimSpace(code)
+		if trimmed == "" {
+			continue
+		}
+		if _, exists := seen[trimmed]; exists {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		normalized = append(normalized, trimmed)
+	}
+	slices.Sort(normalized)
+	return normalized
 }

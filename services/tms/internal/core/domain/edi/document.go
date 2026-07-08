@@ -18,28 +18,32 @@ type AcknowledgmentConfig struct {
 }
 
 type X12EnvelopeSettings struct {
-	InterchangeSenderID       string `json:"interchangeSenderId"`
-	InterchangeReceiverID     string `json:"interchangeReceiverId"`
-	ApplicationSenderCode     string `json:"applicationSenderCode"`
-	ApplicationReceiverCode   string `json:"applicationReceiverCode"`
-	InterchangeUsageIndicator string `json:"interchangeUsageIndicator"`
-	ElementSeparator          string `json:"elementSeparator"`
-	SegmentTerminator         string `json:"segmentTerminator"`
-	ComponentSeparator        string `json:"componentSeparator"`
-	RepetitionSeparator       string `json:"repetitionSeparator"`
+	InterchangeSenderQualifier   string `json:"interchangeSenderQualifier"`
+	InterchangeSenderID          string `json:"interchangeSenderId"`
+	InterchangeReceiverQualifier string `json:"interchangeReceiverQualifier"`
+	InterchangeReceiverID        string `json:"interchangeReceiverId"`
+	ApplicationSenderCode        string `json:"applicationSenderCode"`
+	ApplicationReceiverCode      string `json:"applicationReceiverCode"`
+	InterchangeUsageIndicator    string `json:"interchangeUsageIndicator"`
+	ElementSeparator             string `json:"elementSeparator"`
+	SegmentTerminator            string `json:"segmentTerminator"`
+	ComponentSeparator           string `json:"componentSeparator"`
+	RepetitionSeparator          string `json:"repetitionSeparator"`
 }
 
 func DefaultX12EnvelopeSettings() X12EnvelopeSettings {
 	return X12EnvelopeSettings{
-		InterchangeSenderID:       "TRENOVA",
-		InterchangeReceiverID:     "PARTNER",
-		ApplicationSenderCode:     "TRENOVA",
-		ApplicationReceiverCode:   "PARTNER",
-		InterchangeUsageIndicator: "T",
-		ElementSeparator:          "*",
-		SegmentTerminator:         "~",
-		ComponentSeparator:        ">",
-		RepetitionSeparator:       "^",
+		InterchangeSenderQualifier:   "ZZ",
+		InterchangeSenderID:          "TRENOVA",
+		InterchangeReceiverQualifier: "ZZ",
+		InterchangeReceiverID:        "PARTNER",
+		ApplicationSenderCode:        "TRENOVA",
+		ApplicationReceiverCode:      "PARTNER",
+		InterchangeUsageIndicator:    "T",
+		ElementSeparator:             "*",
+		SegmentTerminator:            "~",
+		ComponentSeparator:           ">",
+		RepetitionSeparator:          "^",
 	}
 }
 

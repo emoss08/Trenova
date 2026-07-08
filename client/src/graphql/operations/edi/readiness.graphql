@@ -1,0 +1,8 @@
+query EdiPartnerReadiness($partnerIds: [ID!]!) {
+  ediPartnerReadiness(partnerIds: $partnerIds) {
+    partnerId
+    ready
+    completedCount
+    totalCount
+  }
+}

@@ -417,6 +417,31 @@ enum EdiPartnerKind {
   Internal
 }
 
+type EdiPartnerReadinessState {
+  completedCount: Int!
+  partnerId: ID!
+  ready: Boolean!
+  totalCount: Int!
+}
+
+type EdiPartnerScorecard {
+  avgAckSeconds: Float
+  deadLetteredCount: Int!
+  deliverySuccessRate: Float
+  failedCount: Int!
+  oldestPendingAgeSeconds: Int
+  outboundTotal: Int!
+  overdueAckCount: Int!
+  p95AckSeconds: Float
+  partnerCode: String!
+  partnerId: ID!
+  partnerName: String!
+  pendingOver4hCount: Int!
+  pendingOver24hCount: Int!
+  receivedCount: Int!
+  sentCount: Int!
+}
+
 enum EdiStandard {
   X12
 }
@@ -593,6 +618,15 @@ enum EdiTransferStatus {
   Processing
   Rejected
   Submitted
+}
+
+type EdiVolumePoint {
+  bucketSeconds: Int!
+  bucketStart: Int!
+  failedCount: Int!
+  outboundCount: Int!
+  receivedCount: Int!
+  sentCount: Int!
 }
 
 enum EndorsementType {
@@ -986,11 +1020,14 @@ type Query {
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
   ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
+  ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
+  ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediTemplates(direction: EdiDocumentDirection, input: DataTableConnectionInput!, status: EdiTemplateStatus, transactionSet: String): EdiTemplateConnection!
   ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
   ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
+  ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
   equipmentManufacturer(id: ID!): EquipmentManufacturer
   equipmentManufacturers(input: DataTableConnectionInput!): EquipmentManufacturerConnection!
   equipmentType(id: ID!): EquipmentType
