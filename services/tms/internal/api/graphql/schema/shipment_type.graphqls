@@ -1,0 +1,30 @@
+type ShipmentType {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  description: String
+  color: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type ShipmentTypeEdge {
+  node: ShipmentType!
+  cursor: String!
+}
+
+type ShipmentTypeConnection {
+  edges: [ShipmentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
+  shipmentType(id: ID!): ShipmentType
+}

@@ -1,0 +1,42 @@
+enum AccountCategory {
+  Asset
+  Liability
+  Equity
+  Revenue
+  CostOfRevenue
+  Expense
+}
+
+type AccountType {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String
+  category: AccountCategory!
+  color: String
+  isSystem: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type AccountTypeEdge {
+  node: AccountType!
+  cursor: String!
+}
+
+type AccountTypeConnection {
+  edges: [AccountTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
+  accountType(id: ID!): AccountType
+}

@@ -1,0 +1,28 @@
+fragment AccessorialChargeTableRowFields on AccessorialCharge {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  method
+  rateUnit
+  amount
+  version
+  createdAt
+  updatedAt
+}
+
+query AccessorialChargeTable($input: DataTableConnectionInput!) {
+  accessorialCharges(input: $input) {
+    edges {
+      node {
+        ...AccessorialChargeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

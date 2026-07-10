@@ -212,6 +212,45 @@ func TestParseJSONTag(t *testing.T) {
 	}
 }
 
+func TestParsePackage_SkipsNamedEmbedField(t *testing.T) {
+	dir := t.TempDir()
+
+	content := `package testpkg
+
+import "github.com/uptrace/bun"
+
+type Cursor struct {
+	Seq int64 ` + "`" + `json:"-" bun:"seq"` + "`" + `
+}
+
+type Entity struct {
+	bun.BaseModel ` + "`" + `bun:"table:entities,alias:e" json:"-"` + "`" + `
+
+	Cursor Cursor ` + "`" + `json:"-" bun:",embed"` + "`" + `
+
+	ID   string ` + "`" + `json:"id"   bun:"id,pk,type:VARCHAR(100)"` + "`" + `
+	Name string ` + "`" + `json:"name" bun:"name,type:VARCHAR(100),notnull"` + "`" + `
+}
+`
+	if err := os.WriteFile(filepath.Join(dir, "entity.go"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	models := mustParsePackage(t, dir)
+	if len(models) != 1 {
+		t.Fatalf("got %d models, want 1", len(models))
+	}
+
+	for _, field := range models[0].Fields {
+		if field.ColumnName == "embed" || field.GoName == "Cursor" {
+			t.Fatalf("named embed field was parsed as a column: %+v", field)
+		}
+	}
+	if len(models[0].Fields) != 2 {
+		t.Fatalf("got %d fields, want 2 (ID, Name). Fields: %+v", len(models[0].Fields), models[0].Fields)
+	}
+}
+
 func TestParsePackage(t *testing.T) {
 	dir := t.TempDir()
 

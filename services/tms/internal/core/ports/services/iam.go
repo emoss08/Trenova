@@ -86,6 +86,10 @@ type IAMService interface {
 		ctx context.Context,
 		req *repositories.ListSCIMGroupRoleMappingsRequest,
 	) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error)
+	ListSCIMGroupRoleMappingsConnection(
+		ctx context.Context,
+		req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
+	) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error)
 	CreateSCIMGroupRoleMapping(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

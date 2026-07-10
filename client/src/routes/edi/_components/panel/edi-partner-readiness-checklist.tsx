@@ -97,7 +97,6 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
               </div>
               {link && (
                 <Button
-                  type="button"
                   variant="outline"
                   size="sm"
                   className="shrink-0"

@@ -44,6 +44,17 @@ func (m *mockAuditRepository) List(
 	return args.Get(0).(*pagination.ListResult[*audit.Entry]), args.Error(1)
 }
 
+func (m *mockAuditRepository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAuditEntriesConnectionRequest,
+) (*pagination.CursorListResult[*audit.Entry], error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*pagination.CursorListResult[*audit.Entry]), args.Error(1)
+}
+
 func (m *mockAuditRepository) ListByResourceID(
 	ctx context.Context,
 	req *repositories.ListByResourceIDRequest,

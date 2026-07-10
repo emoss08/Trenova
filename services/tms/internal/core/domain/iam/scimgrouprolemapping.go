@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -20,7 +21,8 @@ var (
 )
 
 type SCIMGroupRoleMapping struct {
-	bun.BaseModel `bun:"table:scim_group_role_mappings,alias:sgrm" json:"-"`
+	bun.BaseModel             `bun:"table:scim_group_role_mappings,alias:sgrm" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull,pk"`
@@ -77,6 +79,10 @@ func (m *SCIMGroupRoleMapping) BeforeAppendModel(_ context.Context, q bun.Query)
 
 func (m *SCIMGroupRoleMapping) GetID() pulid.ID {
 	return m.ID
+}
+
+func (m *SCIMGroupRoleMapping) GetCreatedAt() int64 {
+	return m.CreatedAt
 }
 
 func (m *SCIMGroupRoleMapping) GetOrganizationID() pulid.ID {

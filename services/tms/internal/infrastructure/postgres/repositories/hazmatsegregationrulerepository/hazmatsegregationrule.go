@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -123,6 +125,90 @@ func (r *repository) ListActiveByTenant(
 	}
 
 	return entities, nil
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListHazmatSegregationRuleConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.HazmatSegregationRuleTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListHazmatSegregationRuleConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.HazmatSegregationRuleTable.Alias,
+		req.Filter,
+		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
+	)
+}
+
+func applyHazmatSegregationRuleColumns(
+	q *bun.SelectQuery,
+	columns []string,
+) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.HazmatSegregationRuleTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListHazmatSegregationRuleConnectionRequest,
+) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*hazmatsegregationrule.HazmatSegregationRule)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count hazmat segregation rules", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*hazmatsegregationrule.HazmatSegregationRule]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*hazmatsegregationrule.HazmatSegregationRule) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyHazmatSegregationRuleColumns(sq, req.HazmatSegregationRuleColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan hazmat segregation rules", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) Create(

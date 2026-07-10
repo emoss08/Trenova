@@ -1,0 +1,29 @@
+fragment AccountTypeTableRowFields on AccountType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  description
+  category
+  color
+  isSystem
+  version
+  createdAt
+  updatedAt
+}
+
+query AccountTypeTable($input: DataTableConnectionInput!) {
+  accountTypes(input: $input) {
+    edges {
+      node {
+        ...AccountTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

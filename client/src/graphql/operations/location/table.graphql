@@ -1,0 +1,42 @@
+fragment LocationTableRowFields on Location {
+  id
+  businessUnitId
+  organizationId
+  locationCategoryId
+  stateId
+  status
+  code
+  name
+  description
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+  locationCategory {
+    id
+    name
+    color
+  }
+}
+
+query LocationTable($input: DataTableConnectionInput!) {
+  locations(input: $input) {
+    edges {
+      node {
+        ...LocationTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

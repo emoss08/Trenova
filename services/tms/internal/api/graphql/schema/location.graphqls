@@ -44,3 +44,19 @@ type LocationReference {
   id: ID!
   name: String!
 }
+
+type LocationEdge {
+  node: Location!
+  cursor: String!
+}
+
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  locations(input: DataTableConnectionInput!): LocationConnection!
+  location(id: ID!): Location
+}

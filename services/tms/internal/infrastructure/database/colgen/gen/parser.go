@@ -133,6 +133,10 @@ func parseStruct(pkgName, structName string, st *ast.StructType) (*ModelInfo, st
 			continue
 		}
 
+		if isBunEmbed(bunTag) {
+			continue
+		}
+
 		columnName, isRel, isScanOnly, isPK := parseBunFieldTag(bunTag)
 		if isRel {
 			model.Relations = append(model.Relations, RelationInfo{
@@ -161,6 +165,16 @@ func parseStruct(pkgName, structName string, st *ast.StructType) (*ModelInfo, st
 	}
 
 	return model, ""
+}
+
+func isBunEmbed(bunTag string) bool {
+	for part := range strings.SplitSeq(bunTag, ",") {
+		if strings.TrimSpace(part) == "embed" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isBunBaseModel(field *ast.Field) bool {

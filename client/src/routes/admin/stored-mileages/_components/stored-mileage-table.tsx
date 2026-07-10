@@ -10,6 +10,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { storedMileageTableGraphQLConfig } from "@/lib/graphql/stored-mileage-table";
 import { StoredMileageService } from "@/services/stored-mileage";
 import type { RowAction } from "@/types/data-table";
 import { Resource } from "@/types/permission";
@@ -66,9 +67,8 @@ export default function StoredMileageTable() {
     <>
       <DataTable<StoredMileage>
         name="Stored Mileage"
-        link="/stored-mileages/"
         queryKey="stored-mileage-list"
-        exportModelName="stored-mileage"
+        graphql={storedMileageTableGraphQLConfig}
         resource={Resource.StoredMileage}
         columns={columns}
         contextMenuActions={contextMenuActions}

@@ -1,0 +1,45 @@
+type Customer {
+  id: ID!
+  name: String!
+}
+
+type DistanceOverrideStop {
+  locationId: ID!
+  stopOrder: Int!
+  location: Location
+}
+
+type DistanceOverride {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  originLocationId: ID!
+  destinationLocationId: ID!
+  customerId: ID
+  distance: Float!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  originLocation: Location
+  destinationLocation: Location
+  customer: Customer
+  intermediateStops: [DistanceOverrideStop!]
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type DistanceOverrideEdge {
+  node: DistanceOverride!
+  cursor: String!
+}
+
+type DistanceOverrideConnection {
+  edges: [DistanceOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
+  distanceOverride(id: ID!): DistanceOverride
+}

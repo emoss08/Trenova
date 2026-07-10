@@ -80,6 +80,87 @@ func (r *repository) List(
 	}, nil
 }
 
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListDocumentTypeConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.DocumentTypeTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*documenttype.DocumentType)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListDocumentTypeConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.DocumentTypeTable.Alias,
+		req.Filter,
+		(*documenttype.DocumentType)(nil),
+	)
+}
+
+func applyDocumentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.DocumentTypeTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListDocumentTypeConnectionRequest,
+) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*documenttype.DocumentType)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count document types", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*documenttype.DocumentType]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*documenttype.DocumentType) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyDocumentTypeColumns(sq, req.DocumentTypeColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan document types", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *documenttype.DocumentType,

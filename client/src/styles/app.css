@@ -291,7 +291,7 @@
   overflow: hidden;
 }
 
-.lane-bar > span {
+.lane-bar>span {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -301,15 +301,15 @@
   transition: width 200ms ease;
 }
 
-.lane-bar-success > span {
+.lane-bar-success>span {
   background: var(--success);
 }
 
-.lane-bar-warning > span {
+.lane-bar-warning>span {
   background: var(--warning);
 }
 
-.lane-bar-danger > span {
+.lane-bar-danger>span {
   background: var(--destructive);
 }
 
@@ -318,6 +318,7 @@
     opacity: 0;
     transform: translateY(2px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -357,11 +358,14 @@
 }
 
 @keyframes cc-pulse-pin-rest {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow:
       0 0 0 3px color-mix(in oklch, currentColor 22%, transparent),
       0 0 0 3px color-mix(in oklch, currentColor 38%, transparent);
   }
+
   70% {
     box-shadow:
       0 0 0 3px color-mix(in oklch, currentColor 22%, transparent),
@@ -370,11 +374,14 @@
 }
 
 @keyframes cc-pulse-pin-active {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow:
       0 0 0 5px color-mix(in oklch, currentColor 28%, transparent),
       0 0 0 5px color-mix(in oklch, currentColor 50%, transparent);
   }
+
   70% {
     box-shadow:
       0 0 0 5px color-mix(in oklch, currentColor 28%, transparent),
@@ -392,6 +399,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .cc-pulse-pin,
   .cc-pulse-pin.is-highlighted {
     animation: none;

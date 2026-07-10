@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { journalReversalTableGraphQLConfig } from "@/lib/graphql/journal-reversal-table";
 import type { JournalReversal } from "@/types/journal-reversal";
 import { Resource } from "@/types/permission";
 import { useMemo } from "react";
@@ -11,9 +12,8 @@ export default function JournalReversalTable() {
   return (
     <DataTable<JournalReversal>
       name="Journal Reversal"
-      link="/accounting/journal-reversals/"
       queryKey="journal-reversal-list"
-      exportModelName="journal-reversal"
+      graphql={journalReversalTableGraphQLConfig}
       resource={Resource.JournalReversal}
       columns={columns}
       TablePanel={JournalReversalPanel}

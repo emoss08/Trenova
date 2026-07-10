@@ -4,15 +4,21 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
+var _ domaintypes.PostgresSearchable = (*Request)(nil)
+
 type Request struct {
 	bun.BaseModel `bun:"table:manual_journal_requests,alias:mjr" json:"-"`
+
+	CursorValueSet pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                      pulid.ID `json:"id"                      bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID          pulid.ID `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -115,6 +121,38 @@ func (l *Line) Validate(multiErr *errortypes.MultiError) {
 			errortypes.ErrInvalid,
 			"Exactly one of debit or credit amount must be greater than zero",
 		)
+	}
+}
+
+func (r *Request) GetID() pulid.ID {
+	return r.ID
+}
+
+func (r *Request) GetCreatedAt() int64 {
+	return r.CreatedAt
+}
+
+func (r *Request) GetTableName() string {
+	return "manual_journal_requests"
+}
+
+func (r *Request) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "mjr",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{
+				Name:   "request_number",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{Name: "reason", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+		},
 	}
 }
 

@@ -78,6 +78,87 @@ func (r *repository) ListProfiles(
 	return &pagination.ListResult[*email.Profile]{Items: entities, Total: total}, nil
 }
 
+func (r *repository) applyProfileCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEmailProfileConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		"ep",
+		req.Filter,
+		req.Cursor,
+		(*email.Profile)(nil),
+	)
+}
+
+func (r *repository) applyProfileTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEmailProfileConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		"ep",
+		req.Filter,
+		(*email.Profile)(nil),
+	)
+}
+
+func applyEmailProfileColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListProfilesConnection(
+	ctx context.Context,
+	req *repositories.ListEmailProfileConnectionRequest,
+) (*pagination.CursorListResult[*email.Profile], error) {
+	log := r.l.With(
+		zap.String("operation", "ListProfilesConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*email.Profile)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyProfileTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count email profiles", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*email.Profile]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*email.Profile) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyEmailProfileColumns(sq, req.EmailProfileColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyProfileCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan email profiles", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (r *repository) SelectProfileOptions(
 	ctx context.Context,
 	req *repositories.EmailProfileSelectOptionsRequest,

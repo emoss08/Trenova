@@ -1,0 +1,15 @@
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  users(input: DataTableConnectionInput!): UserConnection!
+  user(id: ID!): User
+}

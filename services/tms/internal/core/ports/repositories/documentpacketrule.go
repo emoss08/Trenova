@@ -12,6 +12,12 @@ type ListDocumentPacketRulesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListDocumentPacketRuleConnectionRequest struct {
+	Filter                  *pagination.QueryOptions `json:"filter"`
+	Cursor                  pagination.CursorInfo    `json:"-"`
+	DocumentPacketRuleColumns []string               `json:"-"`
+}
+
 type GetDocumentPacketRuleByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -27,6 +33,10 @@ type DocumentPacketRuleRepository interface {
 		ctx context.Context,
 		req *ListDocumentPacketRulesRequest,
 	) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListDocumentPacketRuleConnectionRequest,
+	) (*pagination.CursorListResult[*documentpacketrule.DocumentPacketRule], error)
 	GetByID(
 		ctx context.Context,
 		req GetDocumentPacketRuleByIDRequest,

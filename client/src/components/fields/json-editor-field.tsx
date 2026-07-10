@@ -1,6 +1,6 @@
 import { FieldWrapper } from "@/components/fields/field-components";
-import { useTheme } from "@/components/theme-provider";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
+import { useTheme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import type { FormControlProps } from "@/types/fields";
 import { json, jsonParseLinter } from "@codemirror/lang-json";

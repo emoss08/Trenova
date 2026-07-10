@@ -52,6 +52,13 @@ func (s *service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListServiceFailureReasonCodeConnectionRequest,
+) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *service) Get(
 	ctx context.Context,
 	req repositories.GetServiceFailureReasonCodeByIDRequest,

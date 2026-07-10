@@ -5,6 +5,8 @@ allowBuilds:
   msw: true
   sharp: true
   workerd: true
+overrides:
+  "@codemirror/view": "6.43.6"
 minimumReleaseAgeExclude:
   - "@graphql-codegen/add@7.1.0"
   - "@graphql-codegen/cli@7.2.0"
@@ -29,3 +31,13 @@ minimumReleaseAgeExclude:
   - "@vitest/ui@4.1.10"
   - "@vitest/utils@4.1.10"
   - vitest@4.1.10
+  - '@cloudflare/vite-plugin@1.44.0'
+  - ably@2.24.0
+  - deslop-js@0.7.3
+  - lucide-react@1.24.0
+  - miniflare@4.20260708.1
+  - oxlint-plugin-react-doctor@0.7.3
+  - prettier@3.9.5
+  - react-doctor@0.7.3
+  - vite@8.1.4
+  - wrangler@4.110.0

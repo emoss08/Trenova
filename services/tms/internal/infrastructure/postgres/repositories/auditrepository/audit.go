@@ -6,7 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
@@ -73,6 +77,83 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListAuditEntriesConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.EntryTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*audit.Entry)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListAuditEntriesConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.EntryTable.Alias,
+		req.Filter,
+		(*audit.Entry)(nil),
+	)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAuditEntriesConnectionRequest,
+) (*pagination.CursorListResult[*audit.Entry], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	if req.Filter != nil && len(req.Filter.Sort) == 0 {
+		req.Filter.Sort = []domaintypes.SortField{
+			{Field: "timestamp", Direction: dbtype.SortDirectionDesc},
+		}
+	}
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*audit.Entry)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count audit entries", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*audit.Entry]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*audit.Entry) *bun.SelectQuery {
+			return dba.
+				NewSelect().
+				Model(entities).
+				ColumnExpr(buncolgen.EntryTable.All()).
+				Relation("User").
+				Relation("APIKey")
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.applyCursorPageFilters(sq, req)
+		},
+	})
+	if err != nil {
+		log.Error("failed to scan audit entries", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) GetByID(

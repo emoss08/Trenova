@@ -13,6 +13,12 @@ type ListLocationRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListLocationConnectionRequest struct {
+	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"-"`
+	LocationColumns []string                 `json:"-"`
+}
+
 type GetLocationByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -38,6 +44,10 @@ type LocationRepository interface {
 		ctx context.Context,
 		req *ListLocationRequest,
 	) (*pagination.ListResult[*location.Location], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListLocationConnectionRequest,
+	) (*pagination.CursorListResult[*location.Location], error)
 	GetByID(
 		ctx context.Context,
 		req GetLocationByIDRequest,

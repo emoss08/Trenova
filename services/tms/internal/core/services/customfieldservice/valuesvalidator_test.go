@@ -31,6 +31,17 @@ func (m *mockCustomFieldRepository) List(
 	return args.Get(0).(*pagination.ListResult[*customfield.CustomFieldDefinition]), args.Error(1)
 }
 
+func (m *mockCustomFieldRepository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListCustomFieldDefinitionConnectionRequest,
+) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*pagination.CursorListResult[*customfield.CustomFieldDefinition]), args.Error(1)
+}
+
 func (m *mockCustomFieldRepository) GetByID(
 	ctx context.Context,
 	req repositories.GetCustomFieldDefinitionByIDRequest,

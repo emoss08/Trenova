@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -83,6 +85,72 @@ func (r *repository) List(
 		items = append(items, mapReversal(rec))
 	}
 	return &pagination.ListResult[*journalreversal.Reversal]{Items: items, Total: total}, nil
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListJournalReversalConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		"jr",
+		req.Filter,
+		req.Cursor,
+		(*journalreversal.Reversal)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListJournalReversalConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		"jr",
+		req.Filter,
+		(*journalreversal.Reversal)(nil),
+	)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListJournalReversalConnectionRequest,
+) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*journalreversal.Reversal)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count journal reversals", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*journalreversal.Reversal]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*journalreversal.Reversal) *bun.SelectQuery {
+			return dba.NewSelect().Model(entities)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.applyCursorPageFilters(sq, req)
+		},
+	})
+	if err != nil {
+		log.Error("failed to scan journal reversals", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) GetByID(

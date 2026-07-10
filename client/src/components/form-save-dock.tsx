@@ -27,6 +27,7 @@ interface FormSaveDockProps<T extends string = string> {
   alwaysVisible?: boolean;
   showReset?: boolean;
   requireInteraction?: boolean;
+  showHeightGap?: boolean;
 }
 
 function SaveDockContent<T extends string = string>({
@@ -119,6 +120,7 @@ export function FormSaveDock<T extends string = string>({
   alwaysVisible = false,
   showReset = true,
   requireInteraction = false,
+  showHeightGap = true,
 }: FormSaveDockProps<T>) {
   const { control, reset } = useFormContext();
 
@@ -151,7 +153,7 @@ export function FormSaveDock<T extends string = string>({
 
   return (
     <>
-      <div className="h-16" />
+      {showHeightGap && <div className="h-16" />}
       <SaveDockContent
         saveButtonContent={saveButtonContent}
         unsavedText={unsavedText}

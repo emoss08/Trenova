@@ -1,0 +1,29 @@
+fragment DocumentPacketRuleTableRowFields on DocumentPacketRule {
+  id
+  businessUnitId
+  organizationId
+  resourceType
+  documentTypeId
+  required
+  allowMultiple
+  displayOrder
+  expirationRequired
+  expirationWarningDays
+  version
+  createdAt
+  updatedAt
+}
+
+query DocumentPacketRuleTable($input: DataTableConnectionInput!) {
+  documentPacketRules(input: $input) {
+    edges {
+      node {
+        ...DocumentPacketRuleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

@@ -17,6 +17,12 @@ type ListTCASubscriptionsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListTCASubscriptionConnectionRequest struct {
+	Filter                 *pagination.QueryOptions `json:"filter"`
+	Cursor                 pagination.CursorInfo    `json:"-"`
+	TCASubscriptionColumns []string                 `json:"-"`
+}
+
 type FindMatchingTCASubscriptionsRequest struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
@@ -42,6 +48,10 @@ type TCASubscriptionRepository interface {
 		ctx context.Context,
 		req *ListTCASubscriptionsRequest,
 	) (*pagination.ListResult[*tablechangealert.TCASubscription], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListTCASubscriptionConnectionRequest,
+	) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error)
 	Delete(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo) error
 	FindMatchingSubscriptions(
 		ctx context.Context,

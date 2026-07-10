@@ -94,6 +94,90 @@ func (r *repository) List(
 	}, nil
 }
 
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListLocationConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.LocationTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*location.Location)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListLocationConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.LocationTable.Alias,
+		req.Filter,
+		(*location.Location)(nil),
+	)
+}
+
+func applyLocationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.LocationTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListLocationConnectionRequest,
+) (*pagination.CursorListResult[*location.Location], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*location.Location)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count locations", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*location.Location]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*location.Location) *bun.SelectQuery {
+				relations := buncolgen.LocationRelations
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyLocationColumns(sq, req.LocationColumns)
+					}).
+					Relation(relations.State).
+					Relation(relations.LocationCategory)
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan locations", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func applyLocationGeofence(
 	insertQuery *bun.InsertQuery,
 	updateQuery *bun.UpdateQuery,

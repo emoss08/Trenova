@@ -774,3 +774,71 @@ func (_c *MockFiscalYearRepository_Update_Call) RunAndReturn(run func(ctx contex
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListConnection provides a mock function for the type MockFiscalYearRepository
+func (_mock *MockFiscalYearRepository) ListConnection(ctx context.Context, req *repositories.ListFiscalYearConnectionRequest) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*fiscalyear.FiscalYear]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFiscalYearConnectionRequest) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFiscalYearConnectionRequest) *pagination.CursorListResult[*fiscalyear.FiscalYear]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*fiscalyear.FiscalYear])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListFiscalYearConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalYearRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockFiscalYearRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListFiscalYearConnectionRequest
+func (_e *MockFiscalYearRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockFiscalYearRepository_ListConnection_Call {
+	return &MockFiscalYearRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockFiscalYearRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListFiscalYearConnectionRequest)) *MockFiscalYearRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListFiscalYearConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListFiscalYearConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*fiscalyear.FiscalYear], err error) *MockFiscalYearRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockFiscalYearRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFiscalYearConnectionRequest) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error)) *MockFiscalYearRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}

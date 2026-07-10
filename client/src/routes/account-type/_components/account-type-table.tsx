@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { accountTypeTableGraphQLConfig } from "@/lib/graphql/account-type-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,9 +59,8 @@ export default function AccountTypeTable() {
   return (
     <DataTable<AccountType>
       name="Account Type"
-      link="/account-types/"
       queryKey="account-type-list"
-      exportModelName="account-type"
+      graphql={accountTypeTableGraphQLConfig}
       resource={Resource.AccountType}
       columns={columns}
       dockActions={dockActions}

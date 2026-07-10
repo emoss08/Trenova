@@ -9,17 +9,88 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/accounttype"
+	"github.com/emoss08/trenova/internal/core/domain/apikey"
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/commodity"
+	"github.com/emoss08/trenova/internal/core/domain/customfield"
+	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/core/domain/holdreason"
+	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
+
+type AccessorialChargeConnection struct {
+	Edges      []*AccessorialChargeEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type AccessorialChargeEdge struct {
+	Node   *accessorialcharge.AccessorialCharge `json:"node"`
+	Cursor string                               `json:"cursor"`
+}
+
+type AccountTypeConnection struct {
+	Edges      []*AccountTypeEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type AccountTypeEdge struct {
+	Node   *accounttype.AccountType `json:"node"`
+	Cursor string                   `json:"cursor"`
+}
+
+type APIKeyConnection struct {
+	Edges      []*APIKeyEdge `json:"edges"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+	TotalCount *int          `json:"totalCount,omitempty"`
+}
+
+type APIKeyEdge struct {
+	Node   *apikey.Key `json:"node"`
+	Cursor string      `json:"cursor"`
+}
+
+type AuditEntryConnection struct {
+	Edges      []*AuditEntryEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type AuditEntryEdge struct {
+	Node   *audit.Entry `json:"node"`
+	Cursor string       `json:"cursor"`
+}
 
 type BillingQueueItem struct {
 	ID                        string                            `json:"id"`
@@ -76,6 +147,28 @@ type BulkUpdateTrailerStatusInput struct {
 	Status     domaintypes.EquipmentStatus `json:"status"`
 }
 
+type CommodityConnection struct {
+	Edges      []*CommodityEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type CommodityEdge struct {
+	Node   *commodity.Commodity `json:"node"`
+	Cursor string               `json:"cursor"`
+}
+
+type CustomFieldDefinitionConnection struct {
+	Edges      []*CustomFieldDefinitionEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+}
+
+type CustomFieldDefinitionEdge struct {
+	Node   *customfield.CustomFieldDefinition `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
 type DataTableConnectionInput struct {
 	First        *int                `json:"first,omitempty"`
 	After        *string             `json:"after,omitempty"`
@@ -83,6 +176,50 @@ type DataTableConnectionInput struct {
 	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
 	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+}
+
+type DistanceOverrideConnection struct {
+	Edges      []*DistanceOverrideEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type DistanceOverrideEdge struct {
+	Node   *distanceoverride.DistanceOverride `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
+type DistanceProfileConnection struct {
+	Edges      []*DistanceProfileEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type DistanceProfileEdge struct {
+	Node   *distanceprofile.DistanceProfile `json:"node"`
+	Cursor string                           `json:"cursor"`
+}
+
+type DocumentPacketRuleConnection struct {
+	Edges      []*DocumentPacketRuleEdge `json:"edges"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+	TotalCount *int                      `json:"totalCount,omitempty"`
+}
+
+type DocumentPacketRuleEdge struct {
+	Node   *documentpacketrule.DocumentPacketRule `json:"node"`
+	Cursor string                                 `json:"cursor"`
+}
+
+type DocumentTypeConnection struct {
+	Edges      []*DocumentTypeEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type DocumentTypeEdge struct {
+	Node   *documenttype.DocumentType `json:"node"`
+	Cursor string                     `json:"cursor"`
 }
 
 type EdiCommunicationProfileConnection struct {
@@ -232,6 +369,17 @@ type EdiVolumePoint struct {
 	ReceivedCount int `json:"receivedCount"`
 }
 
+type EmailProfileConnection struct {
+	Edges      []*EmailProfileEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type EmailProfileEdge struct {
+	Node   *email.Profile `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
 type EquipmentManufacturerConnection struct {
 	Edges      []*EquipmentManufacturerEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
@@ -244,12 +392,10 @@ type EquipmentManufacturerEdge struct {
 }
 
 type EquipmentManufacturerInput struct {
-	Status      domaintypes.Status `json:"status"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Version     int                `json:"version"`
-	CreatedAt   int                `json:"createdAt"`
-	UpdatedAt   int                `json:"updatedAt"`
+	Status      *domaintypes.Status `json:"status,omitempty"`
+	Name        string              `json:"name"`
+	Description *string             `json:"description,omitempty"`
+	Version     *int                `json:"version,omitempty"`
 }
 
 type EquipmentManufacturerPatchInput struct {
@@ -300,6 +446,83 @@ type FilterGroupInput struct {
 	Filters []*FieldFilterInput `json:"filters"`
 }
 
+type FiscalYearConnection struct {
+	Edges      []*FiscalYearEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type FiscalYearEdge struct {
+	Node   *fiscalyear.FiscalYear `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type FleetCodeConnection struct {
+	Edges      []*FleetCodeEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type FleetCodeEdge struct {
+	Node   *fleetcode.FleetCode `json:"node"`
+	Cursor string               `json:"cursor"`
+}
+
+type FormulaTemplateConnection struct {
+	Edges      []*FormulaTemplateEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type FormulaTemplateEdge struct {
+	Node   *formulatemplate.FormulaTemplate `json:"node"`
+	Cursor string                           `json:"cursor"`
+}
+
+type HazardousMaterialConnection struct {
+	Edges      []*HazardousMaterialEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type HazardousMaterialEdge struct {
+	Node   *hazardousmaterial.HazardousMaterial `json:"node"`
+	Cursor string                               `json:"cursor"`
+}
+
+type HazmatSegregationRuleConnection struct {
+	Edges      []*HazmatSegregationRuleEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+}
+
+type HazmatSegregationRuleEdge struct {
+	Node   *hazmatsegregationrule.HazmatSegregationRule `json:"node"`
+	Cursor string                                       `json:"cursor"`
+}
+
+type HoldReasonConnection struct {
+	Edges      []*HoldReasonEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type HoldReasonEdge struct {
+	Node   *holdreason.HoldReason `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type JournalReversalConnection struct {
+	Edges      []*JournalReversalEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type JournalReversalEdge struct {
+	Node   *journalreversal.Reversal `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
 type LocateTractorInput struct {
 	TractorID     string `json:"tractorId"`
 	NewLocationID string `json:"newLocationId"`
@@ -310,9 +533,42 @@ type LocateTrailerInput struct {
 	NewLocationID string `json:"newLocationId"`
 }
 
+type LocationCategoryConnection struct {
+	Edges      []*LocationCategoryEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type LocationCategoryEdge struct {
+	Node   *locationcategory.LocationCategory `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
+type LocationConnection struct {
+	Edges      []*LocationEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type LocationEdge struct {
+	Node   *location.Location `json:"node"`
+	Cursor string             `json:"cursor"`
+}
+
 type LocationReference struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type ManualJournalConnection struct {
+	Edges      []*ManualJournalEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type ManualJournalEdge struct {
+	Node   *manualjournal.Request `json:"node"`
+	Cursor string                 `json:"cursor"`
 }
 
 type Mutation struct {
@@ -343,6 +599,28 @@ type PageInfo struct {
 type Query struct {
 }
 
+type RoleConnection struct {
+	Edges      []*RoleEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+	TotalCount *int        `json:"totalCount,omitempty"`
+}
+
+type RoleEdge struct {
+	Node   *permission.Role `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type SCIMGroupRoleMappingConnection struct {
+	Edges      []*SCIMGroupRoleMappingEdge `json:"edges"`
+	PageInfo   *PageInfo                   `json:"pageInfo"`
+	TotalCount *int                        `json:"totalCount,omitempty"`
+}
+
+type SCIMGroupRoleMappingEdge struct {
+	Node   *iam.SCIMGroupRoleMapping `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
 type SelectOption struct {
 	ID          string         `json:"id"`
 	Label       string         `json:"label"`
@@ -368,6 +646,39 @@ type SelectOptionsInput struct {
 	Offset   *int                 `json:"offset,omitempty"`
 	Ids      []string             `json:"ids,omitempty"`
 	Filters  map[string]any       `json:"filters,omitempty"`
+}
+
+type ServiceFailureConnection struct {
+	Edges      []*ServiceFailureEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type ServiceFailureEdge struct {
+	Node   *servicefailure.ServiceFailure `json:"node"`
+	Cursor string                         `json:"cursor"`
+}
+
+type ServiceFailureReasonCodeConnection struct {
+	Edges      []*ServiceFailureReasonCodeEdge `json:"edges"`
+	PageInfo   *PageInfo                       `json:"pageInfo"`
+	TotalCount *int                            `json:"totalCount,omitempty"`
+}
+
+type ServiceFailureReasonCodeEdge struct {
+	Node   *servicefailure.ReasonCode `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
+type ServiceTypeConnection struct {
+	Edges      []*ServiceTypeEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type ServiceTypeEdge struct {
+	Node   *servicetype.ServiceType `json:"node"`
+	Cursor string                   `json:"cursor"`
 }
 
 type Shipment struct {
@@ -1258,6 +1569,17 @@ type ShipmentTransferToBillingInput struct {
 	BillType   *billingqueue.BillType `json:"billType,omitempty"`
 }
 
+type ShipmentTypeConnection struct {
+	Edges      []*ShipmentTypeEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type ShipmentTypeEdge struct {
+	Node   *shipmenttype.ShipmentType `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type ShipmentUIPolicy struct {
 	AllowMoveRemovals      bool `json:"allowMoveRemovals"`
 	CheckForDuplicateBols  bool `json:"checkForDuplicateBols"`
@@ -1278,6 +1600,28 @@ type ShipmentValidationResponse struct {
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
+}
+
+type StoredMileageConnection struct {
+	Edges      []*StoredMileageEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type StoredMileageEdge struct {
+	Node   *storedmileage.StoredMileage `json:"node"`
+	Cursor string                       `json:"cursor"`
+}
+
+type TCASubscriptionConnection struct {
+	Edges      []*TCASubscriptionEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type TCASubscriptionEdge struct {
+	Node   *tablechangealert.TCASubscription `json:"node"`
+	Cursor string                            `json:"cursor"`
 }
 
 type TractorConnection struct {
@@ -1380,6 +1724,17 @@ type TrailerPatchInput struct {
 	RegistrationExpiry      *int                         `json:"registrationExpiry,omitempty"`
 	Version                 *int                         `json:"version,omitempty"`
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
+}
+
+type UserConnection struct {
+	Edges      []*UserEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
+	TotalCount *int        `json:"totalCount,omitempty"`
+}
+
+type UserEdge struct {
+	Node   *tenant.User `json:"node"`
+	Cursor string       `json:"cursor"`
 }
 
 type WorkerConnection struct {

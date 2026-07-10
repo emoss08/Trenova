@@ -1,0 +1,29 @@
+fragment DocumentTypeTableRowFields on DocumentType {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  color
+  documentClassification
+  documentCategory
+  isSystem
+  version
+  createdAt
+  updatedAt
+}
+
+query DocumentTypeTable($input: DataTableConnectionInput!) {
+  documentTypes(input: $input) {
+    edges {
+      node {
+        ...DocumentTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

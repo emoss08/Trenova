@@ -98,6 +98,87 @@ func (r *repository) List(
 	}, nil
 }
 
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListFormulaTemplateConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		"ft",
+		req.Filter,
+		req.Cursor,
+		(*formulatemplate.FormulaTemplate)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListFormulaTemplateConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		"ft",
+		req.Filter,
+		(*formulatemplate.FormulaTemplate)(nil),
+	)
+}
+
+func applyFormulaTemplateColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListFormulaTemplateConnectionRequest,
+) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*formulatemplate.FormulaTemplate)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count formula templates", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*formulatemplate.FormulaTemplate]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*formulatemplate.FormulaTemplate) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyFormulaTemplateColumns(sq, req.FormulaTemplateColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan formula templates", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,

@@ -1,0 +1,43 @@
+fragment AuditLogTableRowFields on AuditEntry {
+  id
+  userId
+  businessUnitId
+  organizationId
+  timestamp
+  changes
+  previousState
+  currentState
+  metadata
+  resource
+  operation
+  resourceId
+  correlationId
+  userAgent
+  comment
+  ipAddress
+  category
+  sensitiveData
+  critical
+  user {
+    id
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+}
+
+query AuditLogTable($input: DataTableConnectionInput!) {
+  auditEntries(input: $input) {
+    edges {
+      node {
+        ...AuditLogTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

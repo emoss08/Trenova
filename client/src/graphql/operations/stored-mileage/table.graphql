@@ -1,0 +1,54 @@
+fragment StoredMileageStopKeyFields on StopKey {
+  method
+  key
+  city
+  state
+  postalCode
+  placeId
+  coordinates
+}
+
+fragment StoredMileageTableRowFields on StoredMileage {
+  id
+  businessUnitId
+  organizationId
+  status
+  originKey {
+    ...StoredMileageStopKeyFields
+  }
+  destinationKey {
+    ...StoredMileageStopKeyFields
+  }
+  intermediateKeys {
+    ...StoredMileageStopKeyFields
+  }
+  routeSignature
+  routeHash
+  distance
+  distanceUnits
+  provider
+  source
+  routingType
+  method
+  distanceProfileId
+  distanceProfileName
+  hitCount
+  lastCalculatedAt
+  version
+  createdAt
+  updatedAt
+}
+
+query StoredMileageTable($input: DataTableConnectionInput!) {
+  storedMileages(input: $input) {
+    edges {
+      node {
+        ...StoredMileageTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

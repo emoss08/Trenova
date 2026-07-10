@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { equipmentManufacturerTableGraphQLConfig } from "@/lib/graphql/equipment-manufacturer-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,9 +59,8 @@ export default function EquipmentManufacturerTable() {
   return (
     <DataTable<EquipmentManufacturer>
       name="Equipment Manufacturer"
-      link="/equipment-manufacturers/"
       queryKey="equipment-manufacturer-list"
-      exportModelName="equipment-manufacturer"
+      graphql={equipmentManufacturerTableGraphQLConfig}
       resource={Resource.EquipmentManufacturer}
       columns={columns}
       dockActions={dockActions}

@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { holdReasonTableGraphQLConfig } from "@/lib/graphql/hold-reason-table";
 import type { HoldReason } from "@/types/hold-reason";
 import { Resource } from "@/types/permission";
 import { useMemo } from "react";
@@ -11,9 +12,8 @@ export default function HoldReasonTable() {
   return (
     <DataTable<HoldReason>
       name="Hold Reason"
-      link="/hold-reasons/"
       queryKey="hold-reason-list"
-      exportModelName="hold-reason"
+      graphql={holdReasonTableGraphQLConfig}
       resource={Resource.HoldReason}
       columns={columns}
       TablePanel={HoldReasonPanel}

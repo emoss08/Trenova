@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { hazmatSegregationRuleTableGraphQLConfig } from "@/lib/graphql/hazmat-segregation-rule-table";
 import { Resource } from "@/types/permission";
 import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
 import { useMemo } from "react";
@@ -11,9 +12,8 @@ export default function HazmatSegregationRuleTable() {
   return (
     <DataTable<HazmatSegregationRule>
       name="Hazmat Segregation Rule"
-      link="/hazmat-segregation-rules/"
       queryKey="hazmat-segregation-rule-list"
-      exportModelName="hazmat-segregation-rule"
+      graphql={hazmatSegregationRuleTableGraphQLConfig}
       resource={Resource.HazmatSegregationRule}
       columns={columns}
       TablePanel={HazmatSegregationRulePanel}

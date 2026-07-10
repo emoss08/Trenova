@@ -418,6 +418,27 @@ func (s *service) List(
 	return entities, nil
 }
 
+func (s *service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAuditEntriesConnectionRequest,
+) (*pagination.CursorListResult[*audit.Entry], error) {
+	log := s.logger.With(
+		zap.String("operation", "ListConnection"),
+		zap.String("buID", req.Filter.TenantInfo.BuID.String()),
+		zap.String("userID", req.Filter.TenantInfo.UserID.String()),
+	)
+
+	normalizeOperationFilters(req.Filter)
+
+	entities, err := s.repo.ListConnection(ctx, req)
+	if err != nil {
+		log.Error("failed to list audit entries", zap.Error(err))
+		return nil, fmt.Errorf("failed to list audit entries: %w", err)
+	}
+
+	return entities, nil
+}
+
 func (s *service) ListByResourceID(
 	ctx context.Context,
 	req *repositories.ListByResourceIDRequest,

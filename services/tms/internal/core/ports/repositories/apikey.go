@@ -19,8 +19,18 @@ type ListAPIKeysRequest struct {
 	Filter *pagination.QueryOptions
 }
 
+type ListAPIKeyConnectionRequest struct {
+	Filter        *pagination.QueryOptions `json:"filter"`
+	Cursor        pagination.CursorInfo    `json:"-"`
+	APIKeyColumns []string                 `json:"-"`
+}
+
 type APIKeyRepository interface {
 	List(ctx context.Context, req *ListAPIKeysRequest) (*pagination.ListResult[*apikey.Key], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListAPIKeyConnectionRequest,
+	) (*pagination.CursorListResult[*apikey.Key], error)
 	GetByID(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) (*apikey.Key, error)
 	GetByPrefix(ctx context.Context, prefix string) (*apikey.Key, error)
 	Create(ctx context.Context, key *apikey.Key) error

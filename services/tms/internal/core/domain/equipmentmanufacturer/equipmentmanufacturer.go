@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,6 +23,8 @@ var (
 
 type EquipmentManufacturer struct {
 	bun.BaseModel `bun:"table:equipment_manufacturers,alias:em" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -83,6 +86,10 @@ func (em *EquipmentManufacturer) GetOrganizationID() pulid.ID {
 
 func (em *EquipmentManufacturer) GetBusinessUnitID() pulid.ID {
 	return em.BusinessUnitID
+}
+
+func (em *EquipmentManufacturer) GetCreatedAt() int64 {
+	return em.CreatedAt
 }
 
 func (em *EquipmentManufacturer) GetTableName() string {

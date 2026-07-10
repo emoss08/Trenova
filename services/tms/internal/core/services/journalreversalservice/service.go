@@ -69,6 +69,13 @@ func (s *Service) List(
 	return s.journalReversalRepo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListJournalReversalConnectionRequest,
+) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
+	return s.journalReversalRepo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req *serviceports.GetJournalReversalRequest,

@@ -1,0 +1,42 @@
+enum FiscalYearStatus {
+  Draft
+  Open
+  Closed
+  PermanentlyClosed
+}
+
+type FiscalYear {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: FiscalYearStatus!
+  year: Int!
+  name: String!
+  description: String!
+  startDate: Int!
+  endDate: Int!
+  isCurrent: Boolean!
+  isCalendarYear: Boolean!
+  allowAdjustingEntries: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type FiscalYearEdge {
+  node: FiscalYear!
+  cursor: String!
+}
+
+type FiscalYearConnection {
+  edges: [FiscalYearEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
+  fiscalYear(id: ID!): FiscalYear
+}

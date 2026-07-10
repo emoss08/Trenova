@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableStringSchema } from "./helpers";
+import { nullableArraySchema, nullableStringSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
 
 export const ediPartnerKindSchema = z.enum(["Internal", "External"]);
@@ -251,7 +251,7 @@ export const ediCommunicationProfileSchema = z.object({
   name: z.string(),
   description: z.string().nullish(),
   config: z.record(z.string(), z.unknown()).default({}),
-  secretState: z.array(ediCommunicationProfileSecretStateSchema).default([]),
+  secretState: nullableArraySchema(ediCommunicationProfileSecretStateSchema),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -367,7 +367,7 @@ export const loadTenderChargeSchema = z.object({
 export type LoadTenderCharge = z.infer<typeof loadTenderChargeSchema>;
 
 const loadTenderPayloadSchema = z.object({
-  shipmentId: z.string(),
+  shipmentId: z.string().nullish(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),
   serviceTypeId: z.string().nullish(),
@@ -389,9 +389,9 @@ const loadTenderPayloadSchema = z.object({
   totalChargeAmount: z.unknown().nullish(),
   ratingUnit: nullableNumberSchema,
   ratingDetail: z.record(z.string(), z.unknown()).nullish(),
-  moves: z.array(loadTenderMoveSchema).default([]),
-  commodities: z.array(loadTenderCommoditySchema).default([]),
-  additionalCharges: z.array(loadTenderChargeSchema).default([]),
+  moves: nullableArraySchema(loadTenderMoveSchema),
+  commodities: nullableArraySchema(loadTenderCommoditySchema),
+  additionalCharges: nullableArraySchema(loadTenderChargeSchema),
   requiredMappingEntityIds: z.record(z.string(), z.array(z.string())).nullish(),
 });
 
@@ -959,14 +959,20 @@ export const ediMessageSchema = z.object({
   segmentCount: z.number(),
   rawX12: z.string(),
   payloadSnapshot: ediDocumentPayloadSchema.nullish(),
-  deliveryStatus: ediMessageDeliveryStatusSchema.nullish(),
+  deliveryStatus: z.preprocess(
+    (value) => (value === "" ? null : value),
+    ediMessageDeliveryStatusSchema.nullish(),
+  ),
   deliveryRemotePath: z.string().nullish(),
   deliveryAttempts: z.number().default(0),
   deliveryLastAttemptAt: nullableNumberSchema,
   deliverySentAt: nullableNumberSchema,
   rawPurgedAt: nullableNumberSchema,
   deliveryLastError: z.string().nullish(),
-  ackStatus: ediMessageAcknowledgmentStatusSchema.nullish(),
+  ackStatus: z.preprocess(
+    (value) => (value === "" ? null : value),
+    ediMessageAcknowledgmentStatusSchema.nullish(),
+  ),
   ackMessageId: z.string().nullish(),
   ackReceivedAt: nullableNumberSchema,
   ackLastError: z.string().nullish(),

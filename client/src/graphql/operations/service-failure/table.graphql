@@ -1,0 +1,38 @@
+fragment ServiceFailureTableRowFields on ServiceFailure {
+  id
+  shipmentId
+  number
+  type
+  source
+  status
+  stopType
+  lateMinutes
+  reasonCodeId
+  notes
+  detectedAt
+  version
+  shipment {
+    id
+    proNumber
+    bol
+  }
+  reasonCode {
+    id
+    code
+    label
+  }
+}
+
+query ServiceFailureTable($input: DataTableConnectionInput!) {
+  serviceFailures(input: $input) {
+    edges {
+      node {
+        ...ServiceFailureTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,6 +21,7 @@ var (
 	_ bun.BeforeAppendModelHook          = (*StoredMileage)(nil)
 	_ validationframework.TenantedEntity = (*StoredMileage)(nil)
 	_ domaintypes.PostgresSearchable     = (*StoredMileage)(nil)
+	_ pagination.CursorEntity            = (*StoredMileage)(nil)
 )
 
 const (
@@ -39,7 +41,8 @@ type StopKey struct {
 }
 
 type StoredMileage struct {
-	bun.BaseModel `bun:"table:stored_mileages,alias:smg" json:"-"`
+	bun.BaseModel             `bun:"table:stored_mileages,alias:smg" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                  pulid.ID       `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID      pulid.ID       `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -165,6 +168,7 @@ func ConvertDistance(distance float64, fromUnits, toUnits string) float64 {
 }
 
 func (s *StoredMileage) GetID() pulid.ID             { return s.ID }
+func (s *StoredMileage) GetCreatedAt() int64         { return s.CreatedAt }
 func (s *StoredMileage) GetTableName() string        { return "stored_mileages" }
 func (s *StoredMileage) GetOrganizationID() pulid.ID { return s.OrganizationID }
 func (s *StoredMileage) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID }

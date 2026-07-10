@@ -13,6 +13,12 @@ type ListCommodityRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListCommodityConnectionRequest struct {
+	Filter           *pagination.QueryOptions `json:"filter"`
+	Cursor           pagination.CursorInfo    `json:"-"`
+	CommodityColumns []string                 `json:"-"`
+}
+
 type GetCommodityByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -38,6 +44,10 @@ type CommodityRepository interface {
 		ctx context.Context,
 		req *ListCommodityRequest,
 	) (*pagination.ListResult[*commodity.Commodity], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListCommodityConnectionRequest,
+	) (*pagination.CursorListResult[*commodity.Commodity], error)
 	GetByID(
 		ctx context.Context,
 		req GetCommodityByIDRequest,

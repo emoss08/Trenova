@@ -1,0 +1,46 @@
+enum AuditCategory {
+  System
+  User
+}
+
+type AuditEntry {
+  id: ID!
+  userId: ID
+  principalType: String!
+  principalId: ID!
+  apiKeyId: ID
+  businessUnitId: ID!
+  organizationId: ID!
+  timestamp: Int!
+  changes: JSON
+  previousState: JSON
+  currentState: JSON
+  metadata: JSON
+  resource: String!
+  operation: String!
+  resourceId: String!
+  correlationId: String
+  userAgent: String
+  comment: String
+  ipAddress: String
+  category: AuditCategory!
+  sensitiveData: Boolean!
+  critical: Boolean!
+  user: User
+}
+
+type AuditEntryEdge {
+  node: AuditEntry!
+  cursor: String!
+}
+
+type AuditEntryConnection {
+  edges: [AuditEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  auditEntry(id: ID!): AuditEntry
+}

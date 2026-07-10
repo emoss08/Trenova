@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,10 +20,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*ReasonCode)(nil)
 	_ validationframework.TenantedEntity = (*ReasonCode)(nil)
 	_ domaintypes.PostgresSearchable     = (*ReasonCode)(nil)
+	_ pagination.CursorEntity            = (*ReasonCode)(nil)
 )
 
 type ReasonCode struct {
-	bun.BaseModel `bun:"table:service_failure_reason_codes,alias:sfrc" json:"-"`
+	bun.BaseModel             `bun:"table:service_failure_reason_codes,alias:sfrc" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                   pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID       pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -123,6 +126,10 @@ func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 
 func (rc *ReasonCode) GetID() pulid.ID {
 	return rc.ID
+}
+
+func (rc *ReasonCode) GetCreatedAt() int64 {
+	return rc.CreatedAt
 }
 
 func (rc *ReasonCode) GetTableName() string {

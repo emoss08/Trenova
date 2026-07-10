@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { apiKeyTableGraphQLConfig } from "@/lib/graphql/api-key-table";
 import { apiService } from "@/services/api";
 import type { ApiKey } from "@/types/api-key";
 import type { RowAction } from "@/types/data-table";
@@ -66,9 +67,8 @@ export default function APIKeyTable() {
     <>
       <DataTable<ApiKey>
         name="API Key"
-        link="/api-keys/"
         queryKey="api-key-list"
-        exportModelName="api-key"
+        graphql={apiKeyTableGraphQLConfig}
         resource={Resource.Integration}
         columns={columns}
         TablePanel={APIKeyPanel}

@@ -47,6 +47,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListDistanceOverrideConnectionRequest,
+) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetDistanceOverrideByIDRequest,

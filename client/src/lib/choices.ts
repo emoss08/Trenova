@@ -1,17 +1,5 @@
 import type { AccessorialChargeMethod, RateUnit } from "@/types/accessorial-charge";
 import type { AccountCategory } from "@/types/account-type";
-import type { BankReceiptStatus } from "@/types/bank-receipt";
-import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
-import type { ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
-import type {
-  EDIInboundFileStatus,
-  EDIMessageAcknowledgmentStatus,
-  EDIMessageDeliveryStatus,
-  EDITransferStatus,
-} from "@/types/edi";
-import type { PaymentMethod } from "@/types/customer-payment";
-import type { JournalReversalStatus } from "@/types/journal-reversal";
-import type { ManualJournalStatus } from "@/types/manual-journal";
 import type {
   AccountingBasis,
   ClosedPeriodPostingPolicy,
@@ -28,7 +16,9 @@ import type {
   ReconciliationMode,
   RevenueRecognitionPolicy,
 } from "@/types/accounting-control";
-import type { BillingQueueStatus, ExceptionReasonCode } from "@/types/billing-queue";
+import type { BankReceiptStatus } from "@/types/bank-receipt";
+import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
+import type { ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
 import type {
   BillingExceptionDisposition,
   BillingQueueTransferMode,
@@ -40,6 +30,7 @@ import type {
   ReadyToBillAssignmentMode,
   TransferSchedule,
 } from "@/types/billing-control";
+import type { BillingQueueStatus, ExceptionReasonCode } from "@/types/billing-queue";
 import type { FreightClass } from "@/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -51,17 +42,23 @@ import type {
   InvoiceMethod,
   InvoiceNumberFormat,
 } from "@/types/customer";
+import type { PaymentMethod } from "@/types/customer-payment";
 import type { CaseFormat } from "@/types/data-entry-control";
 import type {
   AutoAssignmentStrategy,
   ComplianceEnforcementLevel,
   ServiceIncidentType,
 } from "@/types/dispatch-control";
+import type { DistanceProfile } from "@/types/distance-profile";
 import type { ResourceType } from "@/types/document-packet-rule";
-import type { InvoiceStatus } from "@/types/invoice";
 import type { DocumentKind } from "@/types/document-parsing-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
-import type { DistanceProfile } from "@/types/distance-profile";
+import type {
+  EDIInboundFileStatus,
+  EDIMessageAcknowledgmentStatus,
+  EDIMessageDeliveryStatus,
+  EDITransferStatus,
+} from "@/types/edi";
 import type { EquipmentClass } from "@/types/equipment-type";
 import type { GenericSelectOption, SelectOption, SelectOptionGroup } from "@/types/fields";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
@@ -71,15 +68,7 @@ import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
 import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
 import type { EquipmentStatus, Status } from "@/types/helpers";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
-import type {
-  ServiceFailureReasonCategory,
-  ServiceFailureReasonCodeAppliesTo,
-} from "@/types/service-failure-reason-code";
-import type {
-  ServiceFailureSource,
-  ServiceFailureStatus,
-  ServiceFailureType,
-} from "@/types/service-failure";
+import type { InvoiceStatus } from "@/types/invoice";
 import type {
   AdjustmentAccountingDatePolicy,
   AdjustmentAttachmentPolicy,
@@ -93,13 +82,24 @@ import type {
   SupersededInvoiceVisibilityPolicy,
   WriteOffApprovalPolicy,
 } from "@/types/invoice-adjustment-control";
-import type { FacilityType, LocationCategoryType } from "@/types/location-category";
+import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { LocationGeofenceType } from "@/types/location";
+import type { FacilityType, LocationCategoryType } from "@/types/location-category";
+import type { ManualJournalStatus } from "@/types/manual-journal";
 import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
+  ServiceFailureSource,
+  ServiceFailureStatus,
+  ServiceFailureType,
+} from "@/types/service-failure";
+import type {
+  ServiceFailureReasonCategory,
+  ServiceFailureReasonCodeAppliesTo,
+} from "@/types/service-failure-reason-code";
+import type {
   MoveStatus,
-  ShipmentTenderStatus,
   ShipmentStatus,
+  ShipmentTenderStatus,
   StopScheduleType,
   StopStatus,
   StopType,

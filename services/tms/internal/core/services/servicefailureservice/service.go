@@ -80,6 +80,13 @@ func (s *service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListServiceFailureConnectionRequest,
+) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *service) GetByID(
 	ctx context.Context,
 	req *repositories.GetServiceFailureByIDRequest,

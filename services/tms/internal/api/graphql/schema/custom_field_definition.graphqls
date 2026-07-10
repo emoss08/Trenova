@@ -1,0 +1,44 @@
+enum FieldType {
+  text
+  number
+  date
+  boolean
+  select
+  multiSelect
+}
+
+type CustomFieldDefinition {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  resourceType: String!
+  name: String!
+  label: String!
+  description: String
+  fieldType: FieldType!
+  isRequired: Boolean!
+  isActive: Boolean!
+  displayOrder: Int!
+  color: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CustomFieldDefinitionEdge {
+  node: CustomFieldDefinition!
+  cursor: String!
+}
+
+type CustomFieldDefinitionConnection {
+  edges: [CustomFieldDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  customFieldDefinitions(
+    input: DataTableConnectionInput!
+  ): CustomFieldDefinitionConnection!
+  customFieldDefinition(id: ID!): CustomFieldDefinition
+}

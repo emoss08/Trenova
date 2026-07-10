@@ -1,0 +1,35 @@
+type ApiKey {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  keyPrefix: String!
+  status: String!
+  expiresAt: Int!
+  lastUsedAt: Int!
+  lastUsedIp: String!
+  lastUsedUserAgent: String!
+  createdById: ID!
+  revokedById: ID!
+  revokedAt: Int!
+  permissionScope: String!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ApiKeyEdge {
+  node: ApiKey!
+  cursor: String!
+}
+
+type ApiKeyConnection {
+  edges: [ApiKeyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
+  apiKey(id: ID!): ApiKey
+}

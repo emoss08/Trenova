@@ -46,6 +46,24 @@ models:
   GeofenceVertex:
     model:
       - github.com/emoss08/trenova/internal/core/domain/geofence.Vertex
+  DocumentClassification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttype.DocumentClassification
+  DocumentCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttype.DocumentCategory
+  DocumentType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttype.DocumentType
+  HoldType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/holdreason.HoldType
+  HoldSeverity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/holdreason.HoldSeverity
+  HoldReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/holdreason.HoldReason
   Trailer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/trailer.Trailer
@@ -147,6 +165,92 @@ models:
   EquipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType
+  AccessorialMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accessorialcharge.Method
+  RateUnit:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accessorialcharge.RateUnit
+  AccessorialCharge:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accessorialcharge.AccessorialCharge
+    fields:
+      amount:
+        resolver: true
+      rateUnit:
+        resolver: true
+  Role:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/permission.Role
+    fields:
+      coreResponsibility:
+        resolver: true
+      maxSensitivity:
+        resolver: true
+  ApiKey:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/apikey.Key
+    fields:
+      status:
+        resolver: true
+      permissionScope:
+        resolver: true
+  TCASubscription:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tablechangealert.TCASubscription
+    fields:
+      status:
+        resolver: true
+      conditions:
+        resolver: true
+  FiscalYearStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fiscalyear.Status
+  FiscalYear:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fiscalyear.FiscalYear
+  FormulaTemplateStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/formulatemplate.Status
+  FormulaTemplateType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/formulatemplate.TemplateType
+  FormulaTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/formulatemplate.FormulaTemplate
+  EmailProvider:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/email.Provider
+  EmailProfileStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/email.ProfileStatus
+  EmailProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/email.Profile
+  DocumentPacketRule:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documentpacketrule.DocumentPacketRule
+  AccountCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accounttype.Category
+  AccountType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accounttype.AccountType
+  FreightClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/commodity.FreightClass
+  Commodity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/commodity.Commodity
+    fields:
+      freightClass:
+        resolver: true
+  ServiceType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicetype.ServiceType
+  ShipmentType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipmenttype.ShipmentType
   EdiPartnerKind:
     model:
       - github.com/emoss08/trenova/internal/core/domain/edi.PartnerKind
@@ -228,6 +332,21 @@ models:
   FleetCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/fleetcode.FleetCode
+  HazardousClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/hazardousmaterial.HazardousClass
+  PackingGroup:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/hazardousmaterial.PackingGroup
+  HazardousMaterial:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/hazardousmaterial.HazardousMaterial
+  SegregationType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule.SegregationType
+  HazmatSegregationRule:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule.HazmatSegregationRule
   BusinessUnit:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tenant.BusinessUnit
@@ -265,6 +384,9 @@ models:
   LocationCategory:
     model:
       - github.com/emoss08/trenova/internal/core/domain/locationcategory.LocationCategory
+    fields:
+      facilityType:
+        resolver: true
   EquipmentContinuity:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity.EquipmentContinuity
@@ -276,4 +398,84 @@ models:
       currentLocationId:
         resolver: true
       currentLocationName:
+        resolver: true
+  Customer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.Customer
+  DistanceOverride:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/distanceoverride.DistanceOverride
+  DistanceOverrideStop:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/distanceoverride.DistanceOverrideStop
+  DistanceProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/distanceprofile.DistanceProfile
+    fields:
+      provider:
+        resolver: true
+  StopKey:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/storedmileage.StopKey
+  StoredMileage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/storedmileage.StoredMileage
+  ServiceFailureReasonCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.ReasonCategory
+  ServiceFailureReasonCodeAppliesTo:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.ReasonCodeAppliesTo
+  ServiceFailureReasonCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.ReasonCode
+  ServiceFailureType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.Type
+  ServiceFailureSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.Source
+  ServiceFailureStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.Status
+  ServiceFailureShipment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.Shipment
+  SCIMGroupRoleMapping:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/iam.SCIMGroupRoleMapping
+  ServiceFailure:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/servicefailure.ServiceFailure
+    fields:
+      stopType:
+        resolver: true
+  FieldType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customfield.FieldType
+  CustomFieldDefinition:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customfield.CustomFieldDefinition
+  ManualJournalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/manualjournal.Status
+  ManualJournal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/manualjournal.Request
+  JournalReversalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/journalreversal.Status
+  JournalReversal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/journalreversal.Reversal
+  AuditCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/audit.Category
+  AuditEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/audit.Entry
+    fields:
+      resource:
+        resolver: true
+      operation:
         resolver: true

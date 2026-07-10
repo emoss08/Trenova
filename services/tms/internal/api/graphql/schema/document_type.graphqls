@@ -1,0 +1,51 @@
+enum DocumentClassification {
+  Public
+  Private
+  Sensitive
+  Regulatory
+}
+
+enum DocumentCategory {
+  Shipment
+  Worker
+  Regulatory
+  Profile
+  Branding
+  Invoice
+  Contract
+  Other
+}
+
+type DocumentType {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String!
+  color: String!
+  documentClassification: DocumentClassification!
+  documentCategory: DocumentCategory!
+  isSystem: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type DocumentTypeEdge {
+  node: DocumentType!
+  cursor: String!
+}
+
+type DocumentTypeConnection {
+  edges: [DocumentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
+  documentType(id: ID!): DocumentType
+}

@@ -1,0 +1,44 @@
+enum FormulaTemplateStatus {
+  Active
+  Inactive
+  Draft
+}
+
+enum FormulaTemplateType {
+  FreightCharge
+  AccessorialCharge
+}
+
+type FormulaTemplate {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  type: FormulaTemplateType!
+  expression: String!
+  status: FormulaTemplateStatus!
+  schemaId: String!
+  version: Int!
+  currentVersionNumber: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type FormulaTemplateEdge {
+  node: FormulaTemplate!
+  cursor: String!
+}
+
+type FormulaTemplateConnection {
+  edges: [FormulaTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
+  formulaTemplate(id: ID!): FormulaTemplate
+}

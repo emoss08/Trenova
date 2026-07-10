@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,7 +24,8 @@ var (
 )
 
 type ServiceFailure struct {
-	bun.BaseModel `bun:"table:service_failures,alias:sf" json:"-"`
+	bun.BaseModel             `bun:"table:service_failures,alias:sf" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                    pulid.ID          `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID        pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -174,6 +176,10 @@ func (sf *ServiceFailure) IsTerminal() bool {
 
 func (sf *ServiceFailure) GetID() pulid.ID {
 	return sf.ID
+}
+
+func (sf *ServiceFailure) GetCreatedAt() int64 {
+	return sf.CreatedAt
 }
 
 func (sf *ServiceFailure) GetTableName() string {

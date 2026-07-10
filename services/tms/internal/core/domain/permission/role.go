@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -27,6 +28,8 @@ const (
 
 type Role struct {
 	bun.BaseModel `bun:"table:roles,alias:r" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                 pulid.ID           `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID     pulid.ID           `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100)"`
@@ -63,6 +66,10 @@ func (r *Role) BeforeAppendModel(_ context.Context, q bun.Query) error {
 
 func (r *Role) GetID() pulid.ID {
 	return r.ID
+}
+
+func (r *Role) GetCreatedAt() int64 {
+	return r.CreatedAt
 }
 
 func (r *Role) GetOrganizationID() pulid.ID {

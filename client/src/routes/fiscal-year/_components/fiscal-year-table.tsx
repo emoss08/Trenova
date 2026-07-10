@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { fiscalYearTableGraphQLConfig } from "@/lib/graphql/fiscal-year-table";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import type { RowAction } from "@/types/data-table";
 import type { FiscalYear } from "@/types/fiscal-year";
@@ -76,15 +77,11 @@ export default function FiscalYearTable() {
     <>
       <DataTable<FiscalYear>
         name="Fiscal Year"
-        link="/fiscal-years/"
         queryKey="fiscal-year-list"
-        exportModelName="fiscal-year"
+        graphql={fiscalYearTableGraphQLConfig}
         resource={Resource.FiscalYear}
         columns={columns}
         contextMenuActions={contextMenuActions}
-        extraSearchParams={{
-          includePeriods: true,
-        }}
         TablePanel={FiscalYearPanel}
       />
       {selectedFiscalYear && (

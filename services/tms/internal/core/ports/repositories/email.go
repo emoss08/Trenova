@@ -13,6 +13,12 @@ type ListEmailProfilesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListEmailProfileConnectionRequest struct {
+	Filter              *pagination.QueryOptions `json:"filter"`
+	Cursor              pagination.CursorInfo    `json:"-"`
+	EmailProfileColumns []string                 `json:"-"`
+}
+
 type EmailProfileSelectOptionsRequest struct {
 	*pagination.SelectQueryRequest
 }
@@ -53,6 +59,7 @@ type EmailWebhookConfig struct {
 
 type EmailRepository interface {
 	ListProfiles(context.Context, *ListEmailProfilesRequest) (*pagination.ListResult[*email.Profile], error)
+	ListProfilesConnection(context.Context, *ListEmailProfileConnectionRequest) (*pagination.CursorListResult[*email.Profile], error)
 	SelectProfileOptions(context.Context, *EmailProfileSelectOptionsRequest) (*pagination.ListResult[*email.Profile], error)
 	GetProfile(context.Context, GetEmailEntityRequest) (*email.Profile, error)
 	CreateProfile(context.Context, *email.Profile) (*email.Profile, error)

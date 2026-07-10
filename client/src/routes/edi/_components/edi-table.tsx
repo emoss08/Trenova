@@ -249,7 +249,9 @@ function MessagesWorkspace() {
     async (rows: EDIMessage[]) => {
       const eligible = rows.filter(
         (row) =>
-          row.direction === "Outbound" && RETRYABLE_DELIVERY_STATUSES.has(row.deliveryStatus),
+          row.direction === "Outbound" &&
+          row.deliveryStatus != null &&
+          RETRYABLE_DELIVERY_STATUSES.has(row.deliveryStatus),
       );
       if (eligible.length === 0) {
         toast.info("None of the selected messages are retryable");

@@ -47,6 +47,20 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListDocumentPacketRuleConnectionRequest,
+) (*pagination.CursorListResult[*documentpacketrule.DocumentPacketRule], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
+func (s *Service) Get(
+	ctx context.Context,
+	req repositories.GetDocumentPacketRuleByIDRequest,
+) (*documentpacketrule.DocumentPacketRule, error) {
+	return s.repo.GetByID(ctx, req)
+}
+
 func (s *Service) ListByResourceType(
 	ctx context.Context,
 	resourceType string,

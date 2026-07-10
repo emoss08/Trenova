@@ -14,9 +14,7 @@ function countFor(counts: StatusCount[], status: string) {
 }
 
 function EDIAttentionNavBadge() {
-  const canRead = usePermissionStore((state) =>
-    state.hasPermission(Resource.EDI, Operation.Read),
-  );
+  const canRead = usePermissionStore((state) => state.hasPermission(Resource.EDI, Operation.Read));
   const { data } = useQuery({
     ...queries.edi.summary(),
     refetchInterval: EDI_ATTENTION_REFETCH_INTERVAL,

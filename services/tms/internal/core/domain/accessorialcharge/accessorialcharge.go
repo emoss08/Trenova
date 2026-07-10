@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,6 +24,8 @@ var (
 
 type AccessorialCharge struct {
 	bun.BaseModel `bun:"table:accessorial_charges,alias:acc" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
@@ -84,6 +87,10 @@ func (a *AccessorialCharge) Validate(multiErr *errortypes.MultiError) {
 
 func (a *AccessorialCharge) GetID() pulid.ID {
 	return a.ID
+}
+
+func (a *AccessorialCharge) GetCreatedAt() int64 {
+	return a.CreatedAt
 }
 
 func (a *AccessorialCharge) GetOrganizationID() pulid.ID {

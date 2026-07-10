@@ -14,6 +14,12 @@ type ListServiceFailuresRequest struct {
 	ShipmentID pulid.ID                 `json:"shipmentId"`
 }
 
+type ListServiceFailureConnectionRequest struct {
+	Filter                *pagination.QueryOptions `json:"filter"`
+	Cursor                pagination.CursorInfo    `json:"-"`
+	ServiceFailureColumns []string                 `json:"-"`
+}
+
 type GetServiceFailureByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -125,6 +131,10 @@ type ServiceFailureRepository interface {
 		ctx context.Context,
 		req *ListServiceFailuresRequest,
 	) (*pagination.ListResult[*servicefailure.ServiceFailure], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListServiceFailureConnectionRequest,
+	) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error)
 	GetByID(
 		ctx context.Context,
 		req *GetServiceFailureByIDRequest,

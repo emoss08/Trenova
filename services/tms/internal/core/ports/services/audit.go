@@ -53,6 +53,10 @@ type AuditService interface {
 		ctx context.Context,
 		req *repositories.ListAuditEntriesRequest,
 	) (*pagination.ListResult[*audit.Entry], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListAuditEntriesConnectionRequest,
+	) (*pagination.CursorListResult[*audit.Entry], error)
 	ListByResourceID(
 		ctx context.Context,
 		req *repositories.ListByResourceIDRequest,

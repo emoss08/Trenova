@@ -102,35 +102,20 @@ func (r *pTOChartDataPointResolver) Workers(ctx context.Context, obj *repositori
 }
 
 // Workers is the resolver for the workers field.
-func (r *queryResolver) Workers(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput) (*gqlmodel.WorkerConnection, error) {
+func (r *queryResolver) Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorker, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
-		First: first,
-		After: after,
-	})
+	connection, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	queryValue := ""
-	if query != nil {
-		queryValue = *query
-	}
-	filter := queryOptionsFromGraphQL(gqlListOptions{
-		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Cursor.Limit,
-		Query:        queryValue,
-		FieldFilters: fieldFilters,
-		FilterGroups: filterGroups,
-		Sort:         sort,
-	})
 	result, err := r.workerService.List(ctx, &repositories.ListWorkersRequest{
-		Filter: filter,
-		Cursor: page.Cursor,
+		Filter: connection.Filter,
+		Cursor: connection.Cursor,
 	})
 	if err != nil {
 		return nil, err
@@ -140,32 +125,17 @@ func (r *queryResolver) Workers(ctx context.Context, first *int, after *string, 
 }
 
 // WorkerPTOEntries is the resolver for the workerPTOEntries field.
-func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) (*gqlmodel.WorkerPTOConnection, error) {
+func (r *queryResolver) WorkerPTOEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) (*gqlmodel.WorkerPTOConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
-		First: first,
-		After: after,
-	})
+	connection, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
-
-	queryValue := ""
-	if query != nil {
-		queryValue = *query
-	}
-	filter := queryOptionsFromGraphQL(gqlListOptions{
-		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Cursor.Limit,
-		Query:        queryValue,
-		FieldFilters: fieldFilters,
-		FilterGroups: filterGroups,
-		Sort:         sort,
-	})
+	filter := connection.Filter
 	workerIDValue, err := optionalID(workerID)
 	if err != nil {
 		return nil, err
@@ -177,7 +147,7 @@ func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, after 
 	}
 	result, err := r.workerPTOService.List(ctx, &repositories.ListPTORequest{
 		Filter:        filter,
-		Cursor:        page.Cursor,
+		Cursor:        connection.Cursor,
 		Status:        ptoStatusString(status),
 		Type:          ptoTypeString(typeArg),
 		StartDateFrom: int64Value(startDateFrom),

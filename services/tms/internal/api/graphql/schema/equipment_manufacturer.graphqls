@@ -24,12 +24,10 @@ type EquipmentManufacturer {
 }
 
 input EquipmentManufacturerInput {
-  status: EntityStatus!
+  status: EntityStatus = Active
   name: String!
-  description: String!
-  version: Int!
-  createdAt: Int!
-  updatedAt: Int!
+  description: String
+  version: Int
 }
 
 input EquipmentManufacturerPatchInput {

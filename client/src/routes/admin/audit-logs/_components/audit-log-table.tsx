@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { auditLogTableGraphQLConfig } from "@/lib/graphql/audit-log-table";
 import type { AuditEntry } from "@/types/audit-entry";
 import { Resource } from "@/types/permission";
 import { useMemo } from "react";
@@ -11,9 +12,8 @@ export default function AuditLogTable() {
   return (
     <DataTable<AuditEntry>
       name="Audit Entry"
-      link="/audit-entries/"
       queryKey="audit-entry-list"
-      exportModelName="audit-entry"
+      graphql={auditLogTableGraphQLConfig}
       resource={Resource.AuditLog}
       columns={columns}
       TablePanel={AuditLogPanel}

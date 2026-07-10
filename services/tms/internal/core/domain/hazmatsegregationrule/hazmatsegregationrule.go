@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,6 +24,8 @@ var (
 
 type HazmatSegregationRule struct {
 	bun.BaseModel `bun:"table:hazmat_segregation_rules,alias:hsr" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID               pulid.ID                         `json:"id"               bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID   pulid.ID                         `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -123,6 +126,10 @@ func (hsr *HazmatSegregationRule) Validate(multiErr *errortypes.MultiError) {
 
 func (hsr *HazmatSegregationRule) GetID() pulid.ID {
 	return hsr.ID
+}
+
+func (hsr *HazmatSegregationRule) GetCreatedAt() int64 {
+	return hsr.CreatedAt
 }
 
 func (hsr *HazmatSegregationRule) GetTableName() string {

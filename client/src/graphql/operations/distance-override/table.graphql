@@ -1,0 +1,53 @@
+fragment DistanceOverrideLocationFields on Location {
+  id
+  name
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  state {
+    id
+    abbreviation
+  }
+}
+
+fragment DistanceOverrideTableRowFields on DistanceOverride {
+  id
+  businessUnitId
+  organizationId
+  originLocationId
+  destinationLocationId
+  customerId
+  distance
+  version
+  createdAt
+  updatedAt
+  originLocation {
+    ...DistanceOverrideLocationFields
+  }
+  destinationLocation {
+    ...DistanceOverrideLocationFields
+  }
+  customer {
+    id
+    name
+  }
+  intermediateStops {
+    locationId
+    stopOrder
+  }
+}
+
+query DistanceOverrideTable($input: DataTableConnectionInput!) {
+  distanceOverrides(input: $input) {
+    edges {
+      node {
+        ...DistanceOverrideTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

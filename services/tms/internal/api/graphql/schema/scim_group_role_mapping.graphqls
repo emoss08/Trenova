@@ -1,0 +1,31 @@
+type SCIMGroupRoleMapping {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  directoryId: ID!
+  externalGroupId: String!
+  displayName: String!
+  roleId: ID!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  role: Role
+}
+
+type SCIMGroupRoleMappingEdge {
+  node: SCIMGroupRoleMapping!
+  cursor: String!
+}
+
+type SCIMGroupRoleMappingConnection {
+  edges: [SCIMGroupRoleMappingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  scimGroupRoleMappings(
+    input: DataTableConnectionInput!
+    directoryId: ID!
+  ): SCIMGroupRoleMappingConnection!
+}

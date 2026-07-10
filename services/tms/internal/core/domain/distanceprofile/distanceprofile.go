@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,6 +22,7 @@ var (
 	_ bun.BeforeAppendModelHook          = (*DistanceProfile)(nil)
 	_ validationframework.TenantedEntity = (*DistanceProfile)(nil)
 	_ domaintypes.PostgresSearchable     = (*DistanceProfile)(nil)
+	_ pagination.CursorEntity            = (*DistanceProfile)(nil)
 )
 
 const (
@@ -38,7 +40,8 @@ const (
 )
 
 type DistanceProfile struct {
-	bun.BaseModel `bun:"table:distance_profiles,alias:dp" json:"-"`
+	bun.BaseModel             `bun:"table:distance_profiles,alias:dp" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                  pulid.ID         `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID      pulid.ID         `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -159,6 +162,8 @@ func (d *DistanceProfile) RouteOptions() pcmiler.RouteOptions {
 }
 
 func (d *DistanceProfile) GetID() pulid.ID { return d.ID }
+
+func (d *DistanceProfile) GetCreatedAt() int64 { return d.CreatedAt }
 
 func (d *DistanceProfile) GetTableName() string { return "distance_profiles" }
 

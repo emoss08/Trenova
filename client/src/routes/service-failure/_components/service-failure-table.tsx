@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { serviceFailureTableGraphQLConfig } from "@/lib/graphql/service-failure-table";
 import { usePermission } from "@/hooks/use-permission";
 import { apiService } from "@/services/api";
 import type { RowAction } from "@/types/data-table";
@@ -13,11 +14,7 @@ import { ServiceFailurePanel } from "./service-failure-panel";
 
 type LifecycleAction = "review" | "resolve" | "void";
 
-type ServiceFailureTableProps = {
-  shipmentId?: string;
-};
-
-export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableProps) {
+export default function ServiceFailureTable() {
   const queryClient = useQueryClient();
   const canApprove = usePermission(Resource.ServiceFailure, Operation.Approve);
   const canUpdate = usePermission(Resource.ServiceFailure, Operation.Update);
@@ -111,16 +108,13 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
   return (
     <DataTable<ServiceFailure>
       name="Service Failure"
-      link="/service-failures/"
       queryKey="service-failure-list"
-      exportModelName="service-failure"
+      graphql={serviceFailureTableGraphQLConfig}
       resource={Resource.ServiceFailure}
       columns={columns}
-      extraSearchParams={shipmentId ? { shipmentId } : undefined}
       contextMenuActions={contextMenuActions}
       TablePanel={ServiceFailurePanel}
       enableCreateAction={false}
-      preferDetailRowForEdit
     />
   );
 }

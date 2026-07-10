@@ -82,6 +82,13 @@ func (s *stubLocationRepository) List(
 	return nil, nil
 }
 
+func (s *stubLocationRepository) ListConnection(
+	context.Context,
+	*repositories.ListLocationConnectionRequest,
+) (*pagination.CursorListResult[*location.Location], error) {
+	return nil, nil
+}
+
 func (s *stubLocationRepository) GetByID(
 	context.Context,
 	repositories.GetLocationByIDRequest,

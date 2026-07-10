@@ -1,0 +1,33 @@
+fragment HoldReasonTableRowFields on HoldReason {
+  id
+  businessUnitId
+  organizationId
+  type
+  code
+  label
+  description
+  active
+  defaultSeverity
+  defaultBlocksDispatch
+  defaultBlocksDelivery
+  defaultBlocksBilling
+  defaultVisibleToCustomer
+  sortOrder
+  version
+  createdAt
+  updatedAt
+}
+
+query HoldReasonTable($input: DataTableConnectionInput!) {
+  holdReasons(input: $input) {
+    edges {
+      node {
+        ...HoldReasonTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

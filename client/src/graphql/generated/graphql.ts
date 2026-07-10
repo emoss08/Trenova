@@ -4,11 +4,28 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+export type AccessorialMethod =
+  | 'Flat'
+  | 'PerUnit'
+  | 'Percentage';
+
+export type AccountCategory =
+  | 'Asset'
+  | 'CostOfRevenue'
+  | 'Equity'
+  | 'Expense'
+  | 'Liability'
+  | 'Revenue';
+
 export type AssignmentStatus =
   | 'Canceled'
   | 'Completed'
   | 'InProgress'
   | 'New';
+
+export type AuditCategory =
+  | 'System'
+  | 'User';
 
 export type BillType =
   | 'CreditMemo'
@@ -60,6 +77,22 @@ export type DataTableConnectionInput = {
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
 };
+
+export type DocumentCategory =
+  | 'Branding'
+  | 'Contract'
+  | 'Invoice'
+  | 'Other'
+  | 'Profile'
+  | 'Regulatory'
+  | 'Shipment'
+  | 'Worker';
+
+export type DocumentClassification =
+  | 'Private'
+  | 'Public'
+  | 'Regulatory'
+  | 'Sensitive';
 
 export type DriverType =
   | 'Local'
@@ -154,6 +187,14 @@ export type EdiTransferStatus =
   | 'Rejected'
   | 'Submitted';
 
+export type EmailProfileStatus =
+  | 'Active'
+  | 'Inactive';
+
+export type EmailProvider =
+  | 'Postmark'
+  | 'Resend';
+
 export type EndorsementType =
   | 'H'
   | 'N'
@@ -198,15 +239,126 @@ export type EquipmentTypePatchInput = {
   version?: number | null | undefined;
 };
 
+export type FacilityType =
+  | 'ColdStorage'
+  | 'CrossDock'
+  | 'HazmatFacility'
+  | 'IntermodalFacility'
+  | 'StorageWarehouse';
+
 export type FieldFilterInput = {
   field: string;
   operator: string;
   value?: unknown;
 };
 
+export type FieldType =
+  | 'boolean'
+  | 'date'
+  | 'multiSelect'
+  | 'number'
+  | 'select'
+  | 'text';
+
 export type FilterGroupInput = {
   filters: Array<FieldFilterInput>;
 };
+
+export type FiscalYearStatus =
+  | 'Closed'
+  | 'Draft'
+  | 'Open'
+  | 'PermanentlyClosed';
+
+export type FormulaTemplateStatus =
+  | 'Active'
+  | 'Draft'
+  | 'Inactive';
+
+export type FormulaTemplateType =
+  | 'AccessorialCharge'
+  | 'FreightCharge';
+
+export type FreightClass =
+  | 'Class50'
+  | 'Class55'
+  | 'Class60'
+  | 'Class65'
+  | 'Class70'
+  | 'Class77_5'
+  | 'Class85'
+  | 'Class92_5'
+  | 'Class100'
+  | 'Class110'
+  | 'Class125'
+  | 'Class150'
+  | 'Class175'
+  | 'Class200'
+  | 'Class250'
+  | 'Class300'
+  | 'Class400'
+  | 'Class500';
+
+export type HazardousClass =
+  | 'HazardClass1'
+  | 'HazardClass1And1'
+  | 'HazardClass1And2'
+  | 'HazardClass1And3'
+  | 'HazardClass1And4'
+  | 'HazardClass1And5'
+  | 'HazardClass1And6'
+  | 'HazardClass2And1'
+  | 'HazardClass2And2'
+  | 'HazardClass2And3'
+  | 'HazardClass3'
+  | 'HazardClass4And1'
+  | 'HazardClass4And2'
+  | 'HazardClass4And3'
+  | 'HazardClass5And1'
+  | 'HazardClass5And2'
+  | 'HazardClass6And1'
+  | 'HazardClass6And2'
+  | 'HazardClass7'
+  | 'HazardClass8'
+  | 'HazardClass9';
+
+export type HoldSeverity =
+  | 'Advisory'
+  | 'Blocking'
+  | 'Informational';
+
+export type HoldType =
+  | 'ComplianceHold'
+  | 'CustomerHold'
+  | 'FinanceHold'
+  | 'OperationalHold';
+
+export type JournalReversalStatus =
+  | 'Approved'
+  | 'Cancelled'
+  | 'PendingApproval'
+  | 'Posted'
+  | 'Rejected'
+  | 'Requested';
+
+export type LocationCategoryType =
+  | 'CustomerLocation'
+  | 'DistributionCenter'
+  | 'MaintenanceFacility'
+  | 'Port'
+  | 'RailYard'
+  | 'RestArea'
+  | 'Terminal'
+  | 'TruckStop'
+  | 'Warehouse';
+
+export type ManualJournalStatus =
+  | 'Approved'
+  | 'Cancelled'
+  | 'Draft'
+  | 'PendingApproval'
+  | 'Posted'
+  | 'Rejected';
 
 export type MoveStatus =
   | 'Assigned'
@@ -247,6 +399,23 @@ export type PtoType =
   | 'Sick'
   | 'Vacation';
 
+export type PackingGroup =
+  | 'I'
+  | 'II'
+  | 'III';
+
+export type RateUnit =
+  | 'Day'
+  | 'Hour'
+  | 'Mile'
+  | 'Stop';
+
+export type SegregationType =
+  | 'Barrier'
+  | 'Distance'
+  | 'Prohibited'
+  | 'Separated';
+
 export type SelectOptionResource =
   | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
@@ -265,6 +434,45 @@ export type SelectOptionsInput = {
   query?: string | null | undefined;
   resource: SelectOptionResource;
 };
+
+export type ServiceFailureReasonCategory =
+  | 'Appointment'
+  | 'Carrier'
+  | 'Consignee'
+  | 'Customer'
+  | 'Documentation'
+  | 'Driver'
+  | 'Equipment'
+  | 'Facility'
+  | 'Other'
+  | 'Shipper'
+  | 'Weather';
+
+export type ServiceFailureReasonCodeAppliesTo =
+  | 'All'
+  | 'Both'
+  | 'Delivery'
+  | 'Pickup';
+
+export type ServiceFailureSource =
+  | 'Detected'
+  | 'EDI'
+  | 'Integration'
+  | 'Manual';
+
+export type ServiceFailureStatus =
+  | 'Open'
+  | 'Resolved'
+  | 'Reviewed'
+  | 'Voided';
+
+export type ServiceFailureType =
+  | 'AppointmentMissed'
+  | 'LateDelivery'
+  | 'LatePickup'
+  | 'MissedDelivery'
+  | 'MissedPickup'
+  | 'Other';
 
 export type ShipmentAdditionalChargeInput = {
   accessorialChargeId: string | number;
@@ -576,6 +784,98 @@ export type WorkerType =
   | 'Contractor'
   | 'Employee';
 
+export type AccessorialChargeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string, method: AccessorialMethod, rateUnit: RateUnit | null, amount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccessorialChargeTableRowFieldsFragment' };
+
+export type AccessorialChargeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AccessorialChargeTableQuery = { accessorialCharges: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccessorialChargeTableRowFieldsFragment': AccessorialChargeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AccountTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, description: string | null, category: AccountCategory, color: string | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccountTypeTableRowFieldsFragment' };
+
+export type AccountTypeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AccountTypeTableQuery = { accountTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
+
+export type ApiKeyTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ApiKeyTableQuery = { apiKeys: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ApiKeyTableRowFieldsFragment': ApiKeyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AuditLogTableRowFieldsFragment = { id: string, userId: string | null, businessUnitId: string, organizationId: string, timestamp: number, changes: unknown, previousState: unknown, currentState: unknown, metadata: unknown, resource: string, operation: string, resourceId: string, correlationId: string | null, userAgent: string | null, comment: string | null, ipAddress: string | null, category: AuditCategory, sensitiveData: boolean, critical: boolean, user: { id: string, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AuditLogTableRowFieldsFragment' };
+
+export type AuditLogTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AuditLogTableQuery = { auditEntries: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
+
+export type CommodityTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CommodityTableQuery = { commodities: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CommodityTableRowFieldsFragment': CommodityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CustomFieldDefinitionTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, name: string, label: string, description: string | null, fieldType: FieldType, isRequired: boolean, isActive: boolean, displayOrder: number, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomFieldDefinitionTableRowFieldsFragment' };
+
+export type CustomFieldDefinitionTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CustomFieldDefinitionTableQuery = { customFieldDefinitions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomFieldDefinitionTableRowFieldsFragment': CustomFieldDefinitionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DistanceOverrideLocationFieldsFragment = { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'DistanceOverrideLocationFieldsFragment' };
+
+export type DistanceOverrideTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originLocationId: string, destinationLocationId: string, customerId: string | null, distance: number, version: number, createdAt: number, updatedAt: number, originLocation: { ' $fragmentRefs'?: { 'DistanceOverrideLocationFieldsFragment': DistanceOverrideLocationFieldsFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'DistanceOverrideLocationFieldsFragment': DistanceOverrideLocationFieldsFragment } } | null, customer: { id: string, name: string } | null, intermediateStops: Array<{ locationId: string, stopOrder: number }> | null } & { ' $fragmentName'?: 'DistanceOverrideTableRowFieldsFragment' };
+
+export type DistanceOverrideTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DistanceOverrideTableQuery = { distanceOverrides: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceOverrideTableRowFieldsFragment': DistanceOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DistanceProfileTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: string, isDefault: boolean, provider: string, dataVersion: string, region: string, routingType: string, distanceUnits: string, locationGranularity: string, profileName: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DistanceProfileTableRowFieldsFragment' };
+
+export type DistanceProfileTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DistanceProfileTableQuery = { distanceProfiles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceProfileTableRowFieldsFragment': DistanceProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DocumentPacketRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, documentTypeId: string, required: boolean, allowMultiple: boolean, displayOrder: number, expirationRequired: boolean, expirationWarningDays: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentPacketRuleTableRowFieldsFragment' };
+
+export type DocumentPacketRuleTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DocumentPacketRuleTableQuery = { documentPacketRules: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentPacketRuleTableRowFieldsFragment': DocumentPacketRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DocumentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory, isSystem: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentTypeTableRowFieldsFragment' };
+
+export type DocumentTypeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DocumentTypeTableQuery = { documentTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentTypeTableRowFieldsFragment': DocumentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type EdiPartnerScorecardsQueryVariables = Exact<{
   sinceHours?: number | null | undefined;
 }>;
@@ -683,6 +983,24 @@ export type EdiTestCaseTableQueryVariables = Exact<{
 
 export type EdiTestCaseTableQuery = { ediTestCases: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTestCaseRowFieldsFragment': EdiTestCaseRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type EmailProfileTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, senderName: string, senderEmail: string, replyToEmail: string, provider: EmailProvider, status: EmailProfileStatus, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EmailProfileTableRowFieldsFragment' };
+
+export type EmailProfileTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EmailProfileTableQuery = { emailProfiles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EmailProfileTableRowFieldsFragment': EmailProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type EquipmentManufacturerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, name: string, description: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EquipmentManufacturerTableRowFieldsFragment' };
+
+export type EquipmentManufacturerTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EquipmentManufacturerTableQuery = { equipmentManufacturers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableRowFieldsFragment': EquipmentManufacturerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type EquipmentTypeTableFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'EquipmentTypeTableFieldsFragment' };
 
 export type EquipmentTypeConfigurationRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string, class: EquipmentClass, color: string, interiorLength: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EquipmentTypeConfigurationRowFieldsFragment' };
@@ -765,6 +1083,96 @@ export type BulkUpdateEquipmentTypeStatusMutationVariables = Exact<{
 
 export type BulkUpdateEquipmentTypeStatusMutation = { bulkUpdateEquipmentTypeStatus: Array<{ ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } }> };
 
+export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
+
+export type FiscalYearTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type FiscalYearTableQuery = { fiscalYears: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FiscalYearTableRowFieldsFragment': FiscalYearTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FleetCodeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, managerId: string, status: EntityStatus, code: string, description: string, revenueGoal: number | null, deadheadGoal: number | null, mileageGoal: number | null, color: string, version: number, createdAt: number, updatedAt: number, manager: { id: string, name: string } | null } & { ' $fragmentName'?: 'FleetCodeTableRowFieldsFragment' };
+
+export type FleetCodeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type FleetCodeTableQuery = { fleetCodes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FleetCodeTableRowFieldsFragment': FleetCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: FormulaTemplateType, expression: string, status: FormulaTemplateStatus, schemaId: string, version: number, currentVersionNumber: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
+
+export type FormulaTemplateTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type HazardousMaterialTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, description: string, class: HazardousClass, unNumber: string, packingGroup: PackingGroup, subsidiaryHazardClass: string, ergGuideNumber: string, labelCodes: string, specialProvisions: string, properShippingName: string, handlingInstructions: string, emergencyContact: string, emergencyContactPhoneNumber: string, quantityThreshold: string, placardRequired: boolean, isReportableQuantity: boolean, marinePollutant: boolean, inhalationHazard: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HazardousMaterialTableRowFieldsFragment' };
+
+export type HazardousMaterialTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type HazardousMaterialTableQuery = { hazardousMaterials: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazardousMaterialTableRowFieldsFragment': HazardousMaterialTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type HazmatSegregationRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, name: string, description: string, exceptionNotes: string, referenceCode: string, regulationSource: string, distanceUnit: string, classA: HazardousClass, classB: HazardousClass, segregationType: SegregationType, hasExceptions: boolean, hazmatAId: string | null, hazmatBId: string | null, minimumDistance: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HazmatSegregationRuleTableRowFieldsFragment' };
+
+export type HazmatSegregationRuleTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type HazmatSegregationRuleTableQuery = { hazmatSegregationRules: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HazmatSegregationRuleTableRowFieldsFragment': HazmatSegregationRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type HoldReasonTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, type: HoldType, code: string, label: string, description: string, active: boolean, defaultSeverity: HoldSeverity, defaultBlocksDispatch: boolean, defaultBlocksDelivery: boolean, defaultBlocksBilling: boolean, defaultVisibleToCustomer: boolean, sortOrder: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HoldReasonTableRowFieldsFragment' };
+
+export type HoldReasonTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type HoldReasonTableQuery = { holdReasons: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HoldReasonTableRowFieldsFragment': HoldReasonTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type JournalReversalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originalJournalEntryId: string, reversalJournalEntryId: string | null, postedBatchId: string | null, status: JournalReversalStatus, requestedAccountingDate: number, resolvedFiscalYearId: string, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, requestedById: string, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string | null, cancelledById: string | null, cancelledAt: number | null, cancelReason: string | null, postedById: string | null, postedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'JournalReversalTableRowFieldsFragment' };
+
+export type JournalReversalTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type JournalReversalTableQuery = { journalReversals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JournalReversalTableRowFieldsFragment': JournalReversalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type LocationCategoryTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: LocationCategoryType, facilityType: FacilityType | null, color: string, hasSecureParking: boolean, requiresAppointment: boolean, allowsOvernight: boolean, hasRestroom: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'LocationCategoryTableRowFieldsFragment' };
+
+export type LocationCategoryTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type LocationCategoryTableQuery = { locationCategories: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationCategoryTableRowFieldsFragment': LocationCategoryTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type LocationTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, locationCategoryId: string, stateId: string, status: EntityStatus, code: string, name: string, description: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null, locationCategory: { id: string, name: string, color: string } | null } & { ' $fragmentName'?: 'LocationTableRowFieldsFragment' };
+
+export type LocationTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type LocationTableQuery = { locations: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'LocationTableRowFieldsFragment': LocationTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ManualJournalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ManualJournalTableRowFieldsFragment' };
+
+export type ManualJournalTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ManualJournalTableQuery = { manualJournals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
 export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
@@ -786,12 +1194,67 @@ export type UpdateOrganizationSettingsMutationVariables = Exact<{
 
 export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
 
+export type RoleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, coreResponsibility: string | null, parentRoleIds: Array<string> | null, maxSensitivity: string, isSystem: boolean, createdBy: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RoleTableRowFieldsFragment' };
+
+export type RoleTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RoleTableQuery = { roles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoleTableRowFieldsFragment': RoleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ScimGroupRoleMappingTableRowFieldsFragment = { id: string, directoryId: string, externalGroupId: string, displayName: string, roleId: string, version: number, role: { id: string, name: string } | null } & { ' $fragmentName'?: 'ScimGroupRoleMappingTableRowFieldsFragment' };
+
+export type ScimGroupRoleMappingsTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  directoryId: string | number;
+}>;
+
+
+export type ScimGroupRoleMappingsTableQuery = { scimGroupRoleMappings: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ScimGroupRoleMappingTableRowFieldsFragment': ScimGroupRoleMappingTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type SelectOptionsQueryVariables = Exact<{
   input: SelectOptionsInput;
 }>;
 
 
 export type SelectOptionsQuery = { selectOptions: { totalCount: number | null, edges: Array<{ cursor: string, node: { id: string, label: string, description: string | null, meta: unknown } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type ServiceFailureReasonCodeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, label: string, description: string, category: ServiceFailureReasonCategory, appliesTo: ServiceFailureReasonCodeAppliesTo, defaultStatusCode: string, defaultReasonCode: string, defaultExceptionCode: string, defaultNote: string, active: boolean, sortOrder: number, externalMap: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ServiceFailureReasonCodeTableRowFieldsFragment' };
+
+export type ServiceFailureReasonCodeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ServiceFailureReasonCodeTableQuery = { serviceFailureReasonCodes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureReasonCodeTableRowFieldsFragment': ServiceFailureReasonCodeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ServiceFailureTableRowFieldsFragment = { id: string, shipmentId: string, number: string, type: ServiceFailureType, source: ServiceFailureSource, status: ServiceFailureStatus, stopType: StopType, lateMinutes: number, reasonCodeId: string | null, notes: string, detectedAt: number, version: number, shipment: { id: string, proNumber: string, bol: string | null } | null, reasonCode: { id: string, code: string, label: string } | null } & { ' $fragmentName'?: 'ServiceFailureTableRowFieldsFragment' };
+
+export type ServiceFailureTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ServiceFailureTableQuery = { serviceFailures: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceFailureTableRowFieldsFragment': ServiceFailureTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ServiceTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ServiceTypeTableRowFieldsFragment' };
+
+export type ServiceTypeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ServiceTypeTableQuery = { serviceTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ServiceTypeTableRowFieldsFragment': ServiceTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ShipmentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ShipmentTypeTableRowFieldsFragment' };
+
+export type ShipmentTypeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ShipmentTypeTableQuery = { shipmentTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentTypeTableRowFieldsFragment': ShipmentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type ShipmentUserFieldsFragment = { id: string, name: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
@@ -1072,6 +1535,35 @@ export type DeleteShipmentCommentMutationVariables = Exact<{
 
 export type DeleteShipmentCommentMutation = { deleteShipmentComment: boolean };
 
+export type StoredMileageStopKeyFieldsFragment = { method: string, key: string, city: string, state: string, postalCode: string, placeId: string, coordinates: Array<number> | null } & { ' $fragmentName'?: 'StoredMileageStopKeyFieldsFragment' };
+
+export type StoredMileageTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: string, routeSignature: string, routeHash: string, distance: number, distanceUnits: string, provider: string, source: string, routingType: string, method: string, distanceProfileId: string, distanceProfileName: string, hitCount: number, lastCalculatedAt: number, version: number, createdAt: number, updatedAt: number, originKey: { ' $fragmentRefs'?: { 'StoredMileageStopKeyFieldsFragment': StoredMileageStopKeyFieldsFragment } }, destinationKey: { ' $fragmentRefs'?: { 'StoredMileageStopKeyFieldsFragment': StoredMileageStopKeyFieldsFragment } }, intermediateKeys: Array<{ ' $fragmentRefs'?: { 'StoredMileageStopKeyFieldsFragment': StoredMileageStopKeyFieldsFragment } }> | null } & { ' $fragmentName'?: 'StoredMileageTableRowFieldsFragment' };
+
+export type StoredMileageTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type StoredMileageTableQuery = { storedMileages: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type TcaSubscriptionTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, tableName: string, recordId: string | null, eventTypes: Array<string>, conditions: Array<unknown>, conditionMatch: string, watchedColumns: Array<string>, customTitle: string, customMessage: string, topic: string, priority: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TcaSubscriptionTableRowFieldsFragment' };
+
+export type TcaSubscriptionTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type TcaSubscriptionTableQuery = { tcaSubscriptions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TcaSubscriptionTableRowFieldsFragment': TcaSubscriptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
+
+export type UserTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type UserTableQuery = { users: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type WorkerFleetCodeFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'WorkerFleetCodeFieldsFragment' };
 
 export type WorkerUsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'WorkerUsStateFieldsFragment' };
@@ -1087,24 +1579,14 @@ export type WorkerPtoRowFieldsFragment = { id: string, workerId: string, organiz
 export type WorkerDataTablePageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'WorkerDataTablePageInfoFieldsFragment' };
 
 export type WorkerTableQueryVariables = Exact<{
-  first: number;
-  after?: string | null | undefined;
-  query?: string | null | undefined;
-  fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
-  filterGroups?: Array<FilterGroupInput> | FilterGroupInput | null | undefined;
-  sort?: Array<SortFieldInput> | SortFieldInput | null | undefined;
+  input: DataTableConnectionInput;
 }>;
 
 
 export type WorkerTableQuery = { workers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkerTableRowFieldsFragment': WorkerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'WorkerDataTablePageInfoFieldsFragment': WorkerDataTablePageInfoFieldsFragment } } } };
 
 export type WorkerPtoTableQueryVariables = Exact<{
-  first: number;
-  after?: string | null | undefined;
-  query?: string | null | undefined;
-  fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
-  filterGroups?: Array<FilterGroupInput> | FilterGroupInput | null | undefined;
-  sort?: Array<SortFieldInput> | SortFieldInput | null | undefined;
+  input: DataTableConnectionInput;
   includeWorker?: boolean | null | undefined;
 }>;
 
@@ -1178,6 +1660,236 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const AccessorialChargeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccessorialChargeTableRowFields on AccessorialCharge {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  method
+  rateUnit
+  amount
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AccessorialChargeTableRowFields"}) as unknown as TypedDocumentString<AccessorialChargeTableRowFieldsFragment, unknown>;
+export const AccountTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountTypeTableRowFields on AccountType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  description
+  category
+  color
+  isSystem
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AccountTypeTableRowFields"}) as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
+export const ApiKeyTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ApiKeyTableRowFields on ApiKey {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  keyPrefix
+  status
+  expiresAt
+  lastUsedAt
+  permissionScope
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ApiKeyTableRowFields"}) as unknown as TypedDocumentString<ApiKeyTableRowFieldsFragment, unknown>;
+export const AuditLogTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AuditLogTableRowFields on AuditEntry {
+  id
+  userId
+  businessUnitId
+  organizationId
+  timestamp
+  changes
+  previousState
+  currentState
+  metadata
+  resource
+  operation
+  resourceId
+  correlationId
+  userAgent
+  comment
+  ipAddress
+  category
+  sensitiveData
+  critical
+  user {
+    id
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+}
+    `, {"fragmentName":"AuditLogTableRowFields"}) as unknown as TypedDocumentString<AuditLogTableRowFieldsFragment, unknown>;
+export const CommodityTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CommodityTableRowFields on Commodity {
+  id
+  businessUnitId
+  organizationId
+  hazardousMaterialId
+  status
+  name
+  description
+  minTemperature
+  maxTemperature
+  weightPerUnit
+  linearFeetPerUnit
+  maxQuantityPerShipment
+  freightClass
+  loadingInstructions
+  stackable
+  fragile
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CommodityTableRowFields"}) as unknown as TypedDocumentString<CommodityTableRowFieldsFragment, unknown>;
+export const CustomFieldDefinitionTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CustomFieldDefinitionTableRowFields on CustomFieldDefinition {
+  id
+  businessUnitId
+  organizationId
+  resourceType
+  name
+  label
+  description
+  fieldType
+  isRequired
+  isActive
+  displayOrder
+  color
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CustomFieldDefinitionTableRowFields"}) as unknown as TypedDocumentString<CustomFieldDefinitionTableRowFieldsFragment, unknown>;
+export const DistanceOverrideLocationFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DistanceOverrideLocationFields on Location {
+  id
+  name
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  state {
+    id
+    abbreviation
+  }
+}
+    `, {"fragmentName":"DistanceOverrideLocationFields"}) as unknown as TypedDocumentString<DistanceOverrideLocationFieldsFragment, unknown>;
+export const DistanceOverrideTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DistanceOverrideTableRowFields on DistanceOverride {
+  id
+  businessUnitId
+  organizationId
+  originLocationId
+  destinationLocationId
+  customerId
+  distance
+  version
+  createdAt
+  updatedAt
+  originLocation {
+    ...DistanceOverrideLocationFields
+  }
+  destinationLocation {
+    ...DistanceOverrideLocationFields
+  }
+  customer {
+    id
+    name
+  }
+  intermediateStops {
+    locationId
+    stopOrder
+  }
+}
+    fragment DistanceOverrideLocationFields on Location {
+  id
+  name
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  state {
+    id
+    abbreviation
+  }
+}`, {"fragmentName":"DistanceOverrideTableRowFields"}) as unknown as TypedDocumentString<DistanceOverrideTableRowFieldsFragment, unknown>;
+export const DistanceProfileTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DistanceProfileTableRowFields on DistanceProfile {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  status
+  isDefault
+  provider
+  dataVersion
+  region
+  routingType
+  distanceUnits
+  locationGranularity
+  profileName
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"DistanceProfileTableRowFields"}) as unknown as TypedDocumentString<DistanceProfileTableRowFieldsFragment, unknown>;
+export const DocumentPacketRuleTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DocumentPacketRuleTableRowFields on DocumentPacketRule {
+  id
+  businessUnitId
+  organizationId
+  resourceType
+  documentTypeId
+  required
+  allowMultiple
+  displayOrder
+  expirationRequired
+  expirationWarningDays
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"DocumentPacketRuleTableRowFields"}) as unknown as TypedDocumentString<DocumentPacketRuleTableRowFieldsFragment, unknown>;
+export const DocumentTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DocumentTypeTableRowFields on DocumentType {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  color
+  documentClassification
+  documentCategory
+  isSystem
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"DocumentTypeTableRowFields"}) as unknown as TypedDocumentString<DocumentTypeTableRowFieldsFragment, unknown>;
 export const EdiTemplateVersionSummaryFieldsFragmentDoc = new TypedDocumentString(`
     fragment EdiTemplateVersionSummaryFields on EdiTemplateVersion {
   id
@@ -1459,6 +2171,36 @@ export const EdiTestCaseRowFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"EdiTestCaseRowFields"}) as unknown as TypedDocumentString<EdiTestCaseRowFieldsFragment, unknown>;
+export const EmailProfileTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EmailProfileTableRowFields on EmailProfile {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  senderName
+  senderEmail
+  replyToEmail
+  provider
+  status
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"EmailProfileTableRowFields"}) as unknown as TypedDocumentString<EmailProfileTableRowFieldsFragment, unknown>;
+export const EquipmentManufacturerTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer {
+  id
+  businessUnitId
+  organizationId
+  status
+  name
+  description
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"EquipmentManufacturerTableRowFields"}) as unknown as TypedDocumentString<EquipmentManufacturerTableRowFieldsFragment, unknown>;
 export const EquipmentTypeConfigurationRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment EquipmentTypeConfigurationRowFields on EquipmentType {
   id
@@ -1644,6 +2386,249 @@ fragment UsStateTableFields on UsState {
   name
   abbreviation
 }`, {"fragmentName":"TrailerTableRowFields"}) as unknown as TypedDocumentString<TrailerTableRowFieldsFragment, unknown>;
+export const FiscalYearTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FiscalYearTableRowFields on FiscalYear {
+  id
+  businessUnitId
+  organizationId
+  status
+  year
+  name
+  description
+  startDate
+  endDate
+  isCurrent
+  isCalendarYear
+  allowAdjustingEntries
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FiscalYearTableRowFields"}) as unknown as TypedDocumentString<FiscalYearTableRowFieldsFragment, unknown>;
+export const FleetCodeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FleetCodeTableRowFields on FleetCode {
+  id
+  businessUnitId
+  organizationId
+  managerId
+  status
+  code
+  description
+  revenueGoal
+  deadheadGoal
+  mileageGoal
+  color
+  version
+  createdAt
+  updatedAt
+  manager {
+    id
+    name
+  }
+}
+    `, {"fragmentName":"FleetCodeTableRowFields"}) as unknown as TypedDocumentString<FleetCodeTableRowFieldsFragment, unknown>;
+export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FormulaTemplateTableRowFields on FormulaTemplate {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  type
+  expression
+  status
+  schemaId
+  version
+  currentVersionNumber
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FormulaTemplateTableRowFields"}) as unknown as TypedDocumentString<FormulaTemplateTableRowFieldsFragment, unknown>;
+export const HazardousMaterialTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment HazardousMaterialTableRowFields on HazardousMaterial {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  description
+  class
+  unNumber
+  packingGroup
+  subsidiaryHazardClass
+  ergGuideNumber
+  labelCodes
+  specialProvisions
+  properShippingName
+  handlingInstructions
+  emergencyContact
+  emergencyContactPhoneNumber
+  quantityThreshold
+  placardRequired
+  isReportableQuantity
+  marinePollutant
+  inhalationHazard
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"HazardousMaterialTableRowFields"}) as unknown as TypedDocumentString<HazardousMaterialTableRowFieldsFragment, unknown>;
+export const HazmatSegregationRuleTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment HazmatSegregationRuleTableRowFields on HazmatSegregationRule {
+  id
+  businessUnitId
+  organizationId
+  status
+  name
+  description
+  exceptionNotes
+  referenceCode
+  regulationSource
+  distanceUnit
+  classA
+  classB
+  segregationType
+  hasExceptions
+  hazmatAId
+  hazmatBId
+  minimumDistance
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"HazmatSegregationRuleTableRowFields"}) as unknown as TypedDocumentString<HazmatSegregationRuleTableRowFieldsFragment, unknown>;
+export const HoldReasonTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment HoldReasonTableRowFields on HoldReason {
+  id
+  businessUnitId
+  organizationId
+  type
+  code
+  label
+  description
+  active
+  defaultSeverity
+  defaultBlocksDispatch
+  defaultBlocksDelivery
+  defaultBlocksBilling
+  defaultVisibleToCustomer
+  sortOrder
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"HoldReasonTableRowFields"}) as unknown as TypedDocumentString<HoldReasonTableRowFieldsFragment, unknown>;
+export const JournalReversalTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment JournalReversalTableRowFields on JournalReversal {
+  id
+  businessUnitId
+  organizationId
+  originalJournalEntryId
+  reversalJournalEntryId
+  postedBatchId
+  status
+  requestedAccountingDate
+  resolvedFiscalYearId
+  resolvedFiscalPeriodId
+  reasonCode
+  reasonText
+  requestedById
+  approvedById
+  approvedAt
+  rejectedById
+  rejectedAt
+  rejectionReason
+  cancelledById
+  cancelledAt
+  cancelReason
+  postedById
+  postedAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"JournalReversalTableRowFields"}) as unknown as TypedDocumentString<JournalReversalTableRowFieldsFragment, unknown>;
+export const LocationCategoryTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment LocationCategoryTableRowFields on LocationCategory {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  type
+  facilityType
+  color
+  hasSecureParking
+  requiresAppointment
+  allowsOvernight
+  hasRestroom
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"LocationCategoryTableRowFields"}) as unknown as TypedDocumentString<LocationCategoryTableRowFieldsFragment, unknown>;
+export const LocationTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment LocationTableRowFields on Location {
+  id
+  businessUnitId
+  organizationId
+  locationCategoryId
+  stateId
+  status
+  code
+  name
+  description
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+  locationCategory {
+    id
+    name
+    color
+  }
+}
+    `, {"fragmentName":"LocationTableRowFields"}) as unknown as TypedDocumentString<LocationTableRowFieldsFragment, unknown>;
+export const ManualJournalTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ManualJournalTableRowFields on ManualJournal {
+  id
+  businessUnitId
+  organizationId
+  requestNumber
+  status
+  description
+  reason
+  accountingDate
+  requestedFiscalYearId
+  requestedFiscalPeriodId
+  currencyCode
+  totalDebit
+  totalCredit
+  approvedAt
+  approvedById
+  rejectedAt
+  rejectedById
+  rejectionReason
+  cancelledAt
+  cancelledById
+  cancelReason
+  postedBatchId
+  createdById
+  updatedById
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ManualJournalTableRowFields"}) as unknown as TypedDocumentString<ManualJournalTableRowFieldsFragment, unknown>;
 export const OrganizationSettingsStateFieldsFragmentDoc = new TypedDocumentString(`
     fragment OrganizationSettingsStateFields on UsState {
   id
@@ -1680,6 +2665,112 @@ export const OrganizationSettingsFieldsFragmentDoc = new TypedDocumentString(`
   name
   abbreviation
 }`, {"fragmentName":"OrganizationSettingsFields"}) as unknown as TypedDocumentString<OrganizationSettingsFieldsFragment, unknown>;
+export const RoleTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RoleTableRowFields on Role {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  coreResponsibility
+  parentRoleIds
+  maxSensitivity
+  isSystem
+  createdBy
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"RoleTableRowFields"}) as unknown as TypedDocumentString<RoleTableRowFieldsFragment, unknown>;
+export const ScimGroupRoleMappingTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment SCIMGroupRoleMappingTableRowFields on SCIMGroupRoleMapping {
+  id
+  directoryId
+  externalGroupId
+  displayName
+  roleId
+  version
+  role {
+    id
+    name
+  }
+}
+    `, {"fragmentName":"SCIMGroupRoleMappingTableRowFields"}) as unknown as TypedDocumentString<ScimGroupRoleMappingTableRowFieldsFragment, unknown>;
+export const ServiceFailureReasonCodeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode {
+  id
+  businessUnitId
+  organizationId
+  code
+  label
+  description
+  category
+  appliesTo
+  defaultStatusCode
+  defaultReasonCode
+  defaultExceptionCode
+  defaultNote
+  active
+  sortOrder
+  externalMap
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ServiceFailureReasonCodeTableRowFields"}) as unknown as TypedDocumentString<ServiceFailureReasonCodeTableRowFieldsFragment, unknown>;
+export const ServiceFailureTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ServiceFailureTableRowFields on ServiceFailure {
+  id
+  shipmentId
+  number
+  type
+  source
+  status
+  stopType
+  lateMinutes
+  reasonCodeId
+  notes
+  detectedAt
+  version
+  shipment {
+    id
+    proNumber
+    bol
+  }
+  reasonCode {
+    id
+    code
+    label
+  }
+}
+    `, {"fragmentName":"ServiceFailureTableRowFields"}) as unknown as TypedDocumentString<ServiceFailureTableRowFieldsFragment, unknown>;
+export const ServiceTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ServiceTypeTableRowFields on ServiceType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  color
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ServiceTypeTableRowFields"}) as unknown as TypedDocumentString<ServiceTypeTableRowFieldsFragment, unknown>;
+export const ShipmentTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ShipmentTypeTableRowFields on ShipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  color
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ShipmentTypeTableRowFields"}) as unknown as TypedDocumentString<ShipmentTypeTableRowFieldsFragment, unknown>;
 export const ShipmentRatingDetailFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -2397,6 +3488,100 @@ export const ShipmentEventFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ShipmentEventFields"}) as unknown as TypedDocumentString<ShipmentEventFieldsFragment, unknown>;
+export const StoredMileageStopKeyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment StoredMileageStopKeyFields on StopKey {
+  method
+  key
+  city
+  state
+  postalCode
+  placeId
+  coordinates
+}
+    `, {"fragmentName":"StoredMileageStopKeyFields"}) as unknown as TypedDocumentString<StoredMileageStopKeyFieldsFragment, unknown>;
+export const StoredMileageTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment StoredMileageTableRowFields on StoredMileage {
+  id
+  businessUnitId
+  organizationId
+  status
+  originKey {
+    ...StoredMileageStopKeyFields
+  }
+  destinationKey {
+    ...StoredMileageStopKeyFields
+  }
+  intermediateKeys {
+    ...StoredMileageStopKeyFields
+  }
+  routeSignature
+  routeHash
+  distance
+  distanceUnits
+  provider
+  source
+  routingType
+  method
+  distanceProfileId
+  distanceProfileName
+  hitCount
+  lastCalculatedAt
+  version
+  createdAt
+  updatedAt
+}
+    fragment StoredMileageStopKeyFields on StopKey {
+  method
+  key
+  city
+  state
+  postalCode
+  placeId
+  coordinates
+}`, {"fragmentName":"StoredMileageTableRowFields"}) as unknown as TypedDocumentString<StoredMileageTableRowFieldsFragment, unknown>;
+export const TcaSubscriptionTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TCASubscriptionTableRowFields on TCASubscription {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  tableName
+  recordId
+  eventTypes
+  conditions
+  conditionMatch
+  watchedColumns
+  customTitle
+  customMessage
+  topic
+  priority
+  status
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"TCASubscriptionTableRowFields"}) as unknown as TypedDocumentString<TcaSubscriptionTableRowFieldsFragment, unknown>;
+export const UserTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment UserTableRowFields on User {
+  id
+  businessUnitId
+  currentOrganizationId
+  status
+  name
+  username
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+  timezone
+  isLocked
+  mustChangePassword
+  version
+  lastLoginAt
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"UserTableRowFields"}) as unknown as TypedDocumentString<UserTableRowFieldsFragment, unknown>;
 export const WorkerFleetCodeFieldsFragmentDoc = new TypedDocumentString(`
     fragment WorkerFleetCodeFields on FleetCode {
   id
@@ -2585,6 +3770,383 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
   endCursor
 }
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
+export const AccessorialChargeTableDocument = new TypedDocumentString(`
+    query AccessorialChargeTable($input: DataTableConnectionInput!) {
+  accessorialCharges(input: $input) {
+    edges {
+      node {
+        ...AccessorialChargeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment AccessorialChargeTableRowFields on AccessorialCharge {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  method
+  rateUnit
+  amount
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:27a2e818673246434e1ff9e5eeee1b5d8636cd03e000b1687a499cb7ac62e03e"}) as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;
+export const AccountTypeTableDocument = new TypedDocumentString(`
+    query AccountTypeTable($input: DataTableConnectionInput!) {
+  accountTypes(input: $input) {
+    edges {
+      node {
+        ...AccountTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment AccountTypeTableRowFields on AccountType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  description
+  category
+  color
+  isSystem
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:2822d802104dfabd7fe2f2d1ca2f602dc8252429dbef72cd86a9cb81d97c1a11"}) as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
+export const ApiKeyTableDocument = new TypedDocumentString(`
+    query ApiKeyTable($input: DataTableConnectionInput!) {
+  apiKeys(input: $input) {
+    edges {
+      node {
+        ...ApiKeyTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment ApiKeyTableRowFields on ApiKey {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  keyPrefix
+  status
+  expiresAt
+  lastUsedAt
+  permissionScope
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:eedf9586fa2250cef08f3db2d0bdd0e4626ef2ba3a1bfa718672099b06537d89"}) as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
+export const AuditLogTableDocument = new TypedDocumentString(`
+    query AuditLogTable($input: DataTableConnectionInput!) {
+  auditEntries(input: $input) {
+    edges {
+      node {
+        ...AuditLogTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment AuditLogTableRowFields on AuditEntry {
+  id
+  userId
+  businessUnitId
+  organizationId
+  timestamp
+  changes
+  previousState
+  currentState
+  metadata
+  resource
+  operation
+  resourceId
+  correlationId
+  userAgent
+  comment
+  ipAddress
+  category
+  sensitiveData
+  critical
+  user {
+    id
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:38a7fba8573aabdc8c3200c54ad7144482fa3304ff8e2094264b45ada14a4e59"}) as unknown as TypedDocumentString<AuditLogTableQuery, AuditLogTableQueryVariables>;
+export const CommodityTableDocument = new TypedDocumentString(`
+    query CommodityTable($input: DataTableConnectionInput!) {
+  commodities(input: $input) {
+    edges {
+      node {
+        ...CommodityTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment CommodityTableRowFields on Commodity {
+  id
+  businessUnitId
+  organizationId
+  hazardousMaterialId
+  status
+  name
+  description
+  minTemperature
+  maxTemperature
+  weightPerUnit
+  linearFeetPerUnit
+  maxQuantityPerShipment
+  freightClass
+  loadingInstructions
+  stackable
+  fragile
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:041b888950efa127280047210c6b31f1c0cc7acae490838d5dbe274e6f5c9e82"}) as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;
+export const CustomFieldDefinitionTableDocument = new TypedDocumentString(`
+    query CustomFieldDefinitionTable($input: DataTableConnectionInput!) {
+  customFieldDefinitions(input: $input) {
+    edges {
+      node {
+        ...CustomFieldDefinitionTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment CustomFieldDefinitionTableRowFields on CustomFieldDefinition {
+  id
+  businessUnitId
+  organizationId
+  resourceType
+  name
+  label
+  description
+  fieldType
+  isRequired
+  isActive
+  displayOrder
+  color
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:8adb1344e082bff954969a271a629448765d0bf043201cbc840773ef215a8e11"}) as unknown as TypedDocumentString<CustomFieldDefinitionTableQuery, CustomFieldDefinitionTableQueryVariables>;
+export const DistanceOverrideTableDocument = new TypedDocumentString(`
+    query DistanceOverrideTable($input: DataTableConnectionInput!) {
+  distanceOverrides(input: $input) {
+    edges {
+      node {
+        ...DistanceOverrideTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DistanceOverrideLocationFields on Location {
+  id
+  name
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  state {
+    id
+    abbreviation
+  }
+}
+fragment DistanceOverrideTableRowFields on DistanceOverride {
+  id
+  businessUnitId
+  organizationId
+  originLocationId
+  destinationLocationId
+  customerId
+  distance
+  version
+  createdAt
+  updatedAt
+  originLocation {
+    ...DistanceOverrideLocationFields
+  }
+  destinationLocation {
+    ...DistanceOverrideLocationFields
+  }
+  customer {
+    id
+    name
+  }
+  intermediateStops {
+    locationId
+    stopOrder
+  }
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:64a708bb1057e5597b782607190db2f5813c3a2913a09ed3a77489508b6c2c3b"}) as unknown as TypedDocumentString<DistanceOverrideTableQuery, DistanceOverrideTableQueryVariables>;
+export const DistanceProfileTableDocument = new TypedDocumentString(`
+    query DistanceProfileTable($input: DataTableConnectionInput!) {
+  distanceProfiles(input: $input) {
+    edges {
+      node {
+        ...DistanceProfileTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DistanceProfileTableRowFields on DistanceProfile {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  status
+  isDefault
+  provider
+  dataVersion
+  region
+  routingType
+  distanceUnits
+  locationGranularity
+  profileName
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:9b47b610d1875f28f673905f7bec10c67fe6f178b06ce0af560b2fe8b758967f"}) as unknown as TypedDocumentString<DistanceProfileTableQuery, DistanceProfileTableQueryVariables>;
+export const DocumentPacketRuleTableDocument = new TypedDocumentString(`
+    query DocumentPacketRuleTable($input: DataTableConnectionInput!) {
+  documentPacketRules(input: $input) {
+    edges {
+      node {
+        ...DocumentPacketRuleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DocumentPacketRuleTableRowFields on DocumentPacketRule {
+  id
+  businessUnitId
+  organizationId
+  resourceType
+  documentTypeId
+  required
+  allowMultiple
+  displayOrder
+  expirationRequired
+  expirationWarningDays
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:4ca290e5de0116cb3c75bdb1c763213bbce015c05fcd9a4ed64a072c73cedc67"}) as unknown as TypedDocumentString<DocumentPacketRuleTableQuery, DocumentPacketRuleTableQueryVariables>;
+export const DocumentTypeTableDocument = new TypedDocumentString(`
+    query DocumentTypeTable($input: DataTableConnectionInput!) {
+  documentTypes(input: $input) {
+    edges {
+      node {
+        ...DocumentTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DocumentTypeTableRowFields on DocumentType {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  color
+  documentClassification
+  documentCategory
+  isSystem
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:ae55c419637d48ea77823cabaa483d3c741cc6b0bcc07b86e2bd25f4fce11b82"}) as unknown as TypedDocumentString<DocumentTypeTableQuery, DocumentTypeTableQueryVariables>;
 export const EdiPartnerScorecardsDocument = new TypedDocumentString(`
     query EdiPartnerScorecards($sinceHours: Int) {
   ediPartnerScorecards(sinceHours: $sinceHours) {
@@ -3029,6 +4591,68 @@ export const EdiTestCaseTableDocument = new TypedDocumentString(`
     }
   }
 }`, {"hash":"sha256:5eddd01690b554a6b32398b3bbb4d397ef7b355a3a0f988818783ad41a79bd43"}) as unknown as TypedDocumentString<EdiTestCaseTableQuery, EdiTestCaseTableQueryVariables>;
+export const EmailProfileTableDocument = new TypedDocumentString(`
+    query EmailProfileTable($input: DataTableConnectionInput!) {
+  emailProfiles(input: $input) {
+    edges {
+      node {
+        ...EmailProfileTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment EmailProfileTableRowFields on EmailProfile {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  senderName
+  senderEmail
+  replyToEmail
+  provider
+  status
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:c038fb1fcdf44c087999c4ece3b1bf633228536561dd6e8f1b9e135a33f971c3"}) as unknown as TypedDocumentString<EmailProfileTableQuery, EmailProfileTableQueryVariables>;
+export const EquipmentManufacturerTableDocument = new TypedDocumentString(`
+    query EquipmentManufacturerTable($input: DataTableConnectionInput!) {
+  equipmentManufacturers(input: $input) {
+    edges {
+      node {
+        ...EquipmentManufacturerTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer {
+  id
+  businessUnitId
+  organizationId
+  status
+  name
+  description
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:c2afeb6f14e3169daa15b0187712b44c1bf698a30b68fc0b76636537842844a6"}) as unknown as TypedDocumentString<EquipmentManufacturerTableQuery, EquipmentManufacturerTableQueryVariables>;
 export const TractorTableDocument = new TypedDocumentString(`
     query TractorTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true) {
   tractors(
@@ -3332,6 +4956,409 @@ export const BulkUpdateEquipmentTypeStatusDocument = new TypedDocumentString(`
   createdAt
   updatedAt
 }`, {"hash":"sha256:a7e10803dec124d60c6f74fbce991a84c22d9e6dd45781e8bdc63de2ac10b9b3"}) as unknown as TypedDocumentString<BulkUpdateEquipmentTypeStatusMutation, BulkUpdateEquipmentTypeStatusMutationVariables>;
+export const FiscalYearTableDocument = new TypedDocumentString(`
+    query FiscalYearTable($input: DataTableConnectionInput!) {
+  fiscalYears(input: $input) {
+    edges {
+      node {
+        ...FiscalYearTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment FiscalYearTableRowFields on FiscalYear {
+  id
+  businessUnitId
+  organizationId
+  status
+  year
+  name
+  description
+  startDate
+  endDate
+  isCurrent
+  isCalendarYear
+  allowAdjustingEntries
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:b201f867a66edbfce1f3b205c8cfe6b1a7882dc5896b6b3b2e149a9ed1d654b4"}) as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
+export const FleetCodeTableDocument = new TypedDocumentString(`
+    query FleetCodeTable($input: DataTableConnectionInput!) {
+  fleetCodes(input: $input) {
+    edges {
+      node {
+        ...FleetCodeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment FleetCodeTableRowFields on FleetCode {
+  id
+  businessUnitId
+  organizationId
+  managerId
+  status
+  code
+  description
+  revenueGoal
+  deadheadGoal
+  mileageGoal
+  color
+  version
+  createdAt
+  updatedAt
+  manager {
+    id
+    name
+  }
+}`, {"hash":"sha256:9e60d0f64fda83c8ea362f780adbecf5c40a3746eaae58f5e4697f7f61da6c68"}) as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
+export const FormulaTemplateTableDocument = new TypedDocumentString(`
+    query FormulaTemplateTable($input: DataTableConnectionInput!) {
+  formulaTemplates(input: $input) {
+    edges {
+      node {
+        ...FormulaTemplateTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment FormulaTemplateTableRowFields on FormulaTemplate {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  type
+  expression
+  status
+  schemaId
+  version
+  currentVersionNumber
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+export const HazardousMaterialTableDocument = new TypedDocumentString(`
+    query HazardousMaterialTable($input: DataTableConnectionInput!) {
+  hazardousMaterials(input: $input) {
+    edges {
+      node {
+        ...HazardousMaterialTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment HazardousMaterialTableRowFields on HazardousMaterial {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  description
+  class
+  unNumber
+  packingGroup
+  subsidiaryHazardClass
+  ergGuideNumber
+  labelCodes
+  specialProvisions
+  properShippingName
+  handlingInstructions
+  emergencyContact
+  emergencyContactPhoneNumber
+  quantityThreshold
+  placardRequired
+  isReportableQuantity
+  marinePollutant
+  inhalationHazard
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:9d47f5a414bcb4f1a88805ae94dc4768f7f859ca59ebd101fb9934a6ad5a5701"}) as unknown as TypedDocumentString<HazardousMaterialTableQuery, HazardousMaterialTableQueryVariables>;
+export const HazmatSegregationRuleTableDocument = new TypedDocumentString(`
+    query HazmatSegregationRuleTable($input: DataTableConnectionInput!) {
+  hazmatSegregationRules(input: $input) {
+    edges {
+      node {
+        ...HazmatSegregationRuleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment HazmatSegregationRuleTableRowFields on HazmatSegregationRule {
+  id
+  businessUnitId
+  organizationId
+  status
+  name
+  description
+  exceptionNotes
+  referenceCode
+  regulationSource
+  distanceUnit
+  classA
+  classB
+  segregationType
+  hasExceptions
+  hazmatAId
+  hazmatBId
+  minimumDistance
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:936ac7914a10d12b383f19c58fae243218ae68c137bc3d09cb7dc8f92a4ec676"}) as unknown as TypedDocumentString<HazmatSegregationRuleTableQuery, HazmatSegregationRuleTableQueryVariables>;
+export const HoldReasonTableDocument = new TypedDocumentString(`
+    query HoldReasonTable($input: DataTableConnectionInput!) {
+  holdReasons(input: $input) {
+    edges {
+      node {
+        ...HoldReasonTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment HoldReasonTableRowFields on HoldReason {
+  id
+  businessUnitId
+  organizationId
+  type
+  code
+  label
+  description
+  active
+  defaultSeverity
+  defaultBlocksDispatch
+  defaultBlocksDelivery
+  defaultBlocksBilling
+  defaultVisibleToCustomer
+  sortOrder
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:366e81c2432a4eafc200d3719e3b3917a9ac0fccc30df96abd7a3450fe189e31"}) as unknown as TypedDocumentString<HoldReasonTableQuery, HoldReasonTableQueryVariables>;
+export const JournalReversalTableDocument = new TypedDocumentString(`
+    query JournalReversalTable($input: DataTableConnectionInput!) {
+  journalReversals(input: $input) {
+    edges {
+      node {
+        ...JournalReversalTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment JournalReversalTableRowFields on JournalReversal {
+  id
+  businessUnitId
+  organizationId
+  originalJournalEntryId
+  reversalJournalEntryId
+  postedBatchId
+  status
+  requestedAccountingDate
+  resolvedFiscalYearId
+  resolvedFiscalPeriodId
+  reasonCode
+  reasonText
+  requestedById
+  approvedById
+  approvedAt
+  rejectedById
+  rejectedAt
+  rejectionReason
+  cancelledById
+  cancelledAt
+  cancelReason
+  postedById
+  postedAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:24e728ee31f68aae6a69d417eef59bab9bd326df315025eb96e50213d737aa49"}) as unknown as TypedDocumentString<JournalReversalTableQuery, JournalReversalTableQueryVariables>;
+export const LocationCategoryTableDocument = new TypedDocumentString(`
+    query LocationCategoryTable($input: DataTableConnectionInput!) {
+  locationCategories(input: $input) {
+    edges {
+      node {
+        ...LocationCategoryTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment LocationCategoryTableRowFields on LocationCategory {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  type
+  facilityType
+  color
+  hasSecureParking
+  requiresAppointment
+  allowsOvernight
+  hasRestroom
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:2195db009823cc4e4abe821398a2ead3cc9de4499d7abf02057459e0a9feb0fb"}) as unknown as TypedDocumentString<LocationCategoryTableQuery, LocationCategoryTableQueryVariables>;
+export const LocationTableDocument = new TypedDocumentString(`
+    query LocationTable($input: DataTableConnectionInput!) {
+  locations(input: $input) {
+    edges {
+      node {
+        ...LocationTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment LocationTableRowFields on Location {
+  id
+  businessUnitId
+  organizationId
+  locationCategoryId
+  stateId
+  status
+  code
+  name
+  description
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+  locationCategory {
+    id
+    name
+    color
+  }
+}`, {"hash":"sha256:277bd5cfec39789703fce55c06d35fddaea3f6a6e19dd6d4d20dd940a1a9f1bc"}) as unknown as TypedDocumentString<LocationTableQuery, LocationTableQueryVariables>;
+export const ManualJournalTableDocument = new TypedDocumentString(`
+    query ManualJournalTable($input: DataTableConnectionInput!) {
+  manualJournals(input: $input) {
+    edges {
+      node {
+        ...ManualJournalTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ManualJournalTableRowFields on ManualJournal {
+  id
+  businessUnitId
+  organizationId
+  requestNumber
+  status
+  description
+  reason
+  accountingDate
+  requestedFiscalYearId
+  requestedFiscalPeriodId
+  currencyCode
+  totalDebit
+  totalCredit
+  approvedAt
+  approvedById
+  rejectedAt
+  rejectedById
+  rejectionReason
+  cancelledAt
+  cancelledById
+  cancelReason
+  postedBatchId
+  createdById
+  updatedById
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:68c27faeae7ef0ec21693a745b9c58fb933c9e3ab8a395de79705953a4200bbd"}) as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
 export const OrganizationSettingsDocument = new TypedDocumentString(`
     query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
   organization(id: $id, includeState: $includeState, includeBu: $includeBu) {
@@ -3400,6 +5427,68 @@ fragment OrganizationSettingsFields on Organization {
     ...OrganizationSettingsStateFields
   }
 }`, {"hash":"sha256:9c93ea23726c32ce8a2683f6ff0e4f38d5a63a9ef0ddd9a86b9b98899aeaefe8"}) as unknown as TypedDocumentString<UpdateOrganizationSettingsMutation, UpdateOrganizationSettingsMutationVariables>;
+export const RoleTableDocument = new TypedDocumentString(`
+    query RoleTable($input: DataTableConnectionInput!) {
+  roles(input: $input) {
+    edges {
+      node {
+        ...RoleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RoleTableRowFields on Role {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  coreResponsibility
+  parentRoleIds
+  maxSensitivity
+  isSystem
+  createdBy
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:2e3b4362769ce92ff4b9c8280388ed1d9d5a89d7fde4ced15da8a869256043e6"}) as unknown as TypedDocumentString<RoleTableQuery, RoleTableQueryVariables>;
+export const ScimGroupRoleMappingsTableDocument = new TypedDocumentString(`
+    query SCIMGroupRoleMappingsTable($input: DataTableConnectionInput!, $directoryId: ID!) {
+  scimGroupRoleMappings(input: $input, directoryId: $directoryId) {
+    edges {
+      node {
+        ...SCIMGroupRoleMappingTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment SCIMGroupRoleMappingTableRowFields on SCIMGroupRoleMapping {
+  id
+  directoryId
+  externalGroupId
+  displayName
+  roleId
+  version
+  role {
+    id
+    name
+  }
+}`, {"hash":"sha256:6bf4bfdef8339181a130d96349331780bb6f19c451290ee16715438f8d96651f"}) as unknown as TypedDocumentString<ScimGroupRoleMappingsTableQuery, ScimGroupRoleMappingsTableQueryVariables>;
 export const SelectOptionsDocument = new TypedDocumentString(`
     query SelectOptions($input: SelectOptionsInput!) {
   selectOptions(input: $input) {
@@ -3420,6 +5509,146 @@ export const SelectOptionsDocument = new TypedDocumentString(`
   }
 }
     `, {"hash":"sha256:61baa26c739e995aee3b16a4b9f4b584b628598c5e46d1f3886624091f1c12f2"}) as unknown as TypedDocumentString<SelectOptionsQuery, SelectOptionsQueryVariables>;
+export const ServiceFailureReasonCodeTableDocument = new TypedDocumentString(`
+    query ServiceFailureReasonCodeTable($input: DataTableConnectionInput!) {
+  serviceFailureReasonCodes(input: $input) {
+    edges {
+      node {
+        ...ServiceFailureReasonCodeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode {
+  id
+  businessUnitId
+  organizationId
+  code
+  label
+  description
+  category
+  appliesTo
+  defaultStatusCode
+  defaultReasonCode
+  defaultExceptionCode
+  defaultNote
+  active
+  sortOrder
+  externalMap
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d52e5ebcf43703622505501e1bed670df8b7524dd05f1110417eed7d958323f9"}) as unknown as TypedDocumentString<ServiceFailureReasonCodeTableQuery, ServiceFailureReasonCodeTableQueryVariables>;
+export const ServiceFailureTableDocument = new TypedDocumentString(`
+    query ServiceFailureTable($input: DataTableConnectionInput!) {
+  serviceFailures(input: $input) {
+    edges {
+      node {
+        ...ServiceFailureTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ServiceFailureTableRowFields on ServiceFailure {
+  id
+  shipmentId
+  number
+  type
+  source
+  status
+  stopType
+  lateMinutes
+  reasonCodeId
+  notes
+  detectedAt
+  version
+  shipment {
+    id
+    proNumber
+    bol
+  }
+  reasonCode {
+    id
+    code
+    label
+  }
+}`, {"hash":"sha256:967624b05ef63edbc9f0da0d7eb21c4c07e0aebe44a56fa09a81dbca7fe7693d"}) as unknown as TypedDocumentString<ServiceFailureTableQuery, ServiceFailureTableQueryVariables>;
+export const ServiceTypeTableDocument = new TypedDocumentString(`
+    query ServiceTypeTable($input: DataTableConnectionInput!) {
+  serviceTypes(input: $input) {
+    edges {
+      node {
+        ...ServiceTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ServiceTypeTableRowFields on ServiceType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  color
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:a4a14c4d0bc8254c150ca972341b60d1cddc3863437ed289e7c90dbacd9cb498"}) as unknown as TypedDocumentString<ServiceTypeTableQuery, ServiceTypeTableQueryVariables>;
+export const ShipmentTypeTableDocument = new TypedDocumentString(`
+    query ShipmentTypeTable($input: DataTableConnectionInput!) {
+  shipmentTypes(input: $input) {
+    edges {
+      node {
+        ...ShipmentTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ShipmentTypeTableRowFields on ShipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  color
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:425dfb86e8a1bb1b30377d884a6d93a1cf2cea2889aee419f9de30498c6e8522"}) as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;
 export const ShipmentCommandCenterTableDocument = new TypedDocumentString(`
     query ShipmentCommandCenterTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $expandShipmentDetails: Boolean = true) {
   shipments(
@@ -7105,16 +9334,141 @@ export const DeleteShipmentCommentDocument = new TypedDocumentString(`
   deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
 }
     `, {"hash":"sha256:a20dcdea6225911dd4742c1e415a5f1e2b04d0111fbaf5ecbda1e8136b3dfa14"}) as unknown as TypedDocumentString<DeleteShipmentCommentMutation, DeleteShipmentCommentMutationVariables>;
+export const StoredMileageTableDocument = new TypedDocumentString(`
+    query StoredMileageTable($input: DataTableConnectionInput!) {
+  storedMileages(input: $input) {
+    edges {
+      node {
+        ...StoredMileageTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment StoredMileageStopKeyFields on StopKey {
+  method
+  key
+  city
+  state
+  postalCode
+  placeId
+  coordinates
+}
+fragment StoredMileageTableRowFields on StoredMileage {
+  id
+  businessUnitId
+  organizationId
+  status
+  originKey {
+    ...StoredMileageStopKeyFields
+  }
+  destinationKey {
+    ...StoredMileageStopKeyFields
+  }
+  intermediateKeys {
+    ...StoredMileageStopKeyFields
+  }
+  routeSignature
+  routeHash
+  distance
+  distanceUnits
+  provider
+  source
+  routingType
+  method
+  distanceProfileId
+  distanceProfileName
+  hitCount
+  lastCalculatedAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:3a50b15af9e7b4e8c9b869e8638aae181cd9169fdc472212ce4fec2d87d8c1d1"}) as unknown as TypedDocumentString<StoredMileageTableQuery, StoredMileageTableQueryVariables>;
+export const TcaSubscriptionTableDocument = new TypedDocumentString(`
+    query TCASubscriptionTable($input: DataTableConnectionInput!) {
+  tcaSubscriptions(input: $input) {
+    edges {
+      node {
+        ...TCASubscriptionTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment TCASubscriptionTableRowFields on TCASubscription {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  tableName
+  recordId
+  eventTypes
+  conditions
+  conditionMatch
+  watchedColumns
+  customTitle
+  customMessage
+  topic
+  priority
+  status
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:3b200328291e0761d53c2426b15e1ab7cfd05ae2b55be15e33b603847b38174c"}) as unknown as TypedDocumentString<TcaSubscriptionTableQuery, TcaSubscriptionTableQueryVariables>;
+export const UserTableDocument = new TypedDocumentString(`
+    query UserTable($input: DataTableConnectionInput!) {
+  users(input: $input) {
+    edges {
+      node {
+        ...UserTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment UserTableRowFields on User {
+  id
+  businessUnitId
+  currentOrganizationId
+  status
+  name
+  username
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+  timezone
+  isLocked
+  mustChangePassword
+  version
+  lastLoginAt
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:49712b2a1329e674ea6b11f1294601eb50deb21d53e79540876b0455d897db5d"}) as unknown as TypedDocumentString<UserTableQuery, UserTableQueryVariables>;
 export const WorkerTableDocument = new TypedDocumentString(`
-    query WorkerTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!]) {
-  workers(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
-  ) {
+    query WorkerTable($input: DataTableConnectionInput!) {
+  workers(input: $input) {
     edges {
       node {
         ...WorkerTableRowFields
@@ -7217,18 +9571,10 @@ fragment WorkerTableRowFields on Worker {
 fragment WorkerDataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:04a18f51566b8eb924e96a832da2f36b971c41f41526d79634a73582499b3430"}) as unknown as TypedDocumentString<WorkerTableQuery, WorkerTableQueryVariables>;
+}`, {"hash":"sha256:214ae22d2686f4434a662bf4f790087d6d97d6d05302366ae7b48e470a014f18"}) as unknown as TypedDocumentString<WorkerTableQuery, WorkerTableQueryVariables>;
 export const WorkerPtoTableDocument = new TypedDocumentString(`
-    query WorkerPtoTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeWorker: Boolean = true) {
-  workerPTOEntries(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
-    includeWorker: $includeWorker
-  ) {
+    query WorkerPtoTable($input: DataTableConnectionInput!, $includeWorker: Boolean = true) {
+  workerPTOEntries(input: $input, includeWorker: $includeWorker) {
     edges {
       node {
         ...WorkerPtoRowFields
@@ -7269,7 +9615,7 @@ fragment WorkerPtoRowFields on WorkerPTO {
 fragment WorkerDataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:881fc2e33707f67149bfe0e449e4f465fb7ac35e9f3d78dfbdc13da242cf8dcf"}) as unknown as TypedDocumentString<WorkerPtoTableQuery, WorkerPtoTableQueryVariables>;
+}`, {"hash":"sha256:2504bbe8e2689728a6c0c517639bb50983a43fd796233b806f9d7f8e168bbcef"}) as unknown as TypedDocumentString<WorkerPtoTableQuery, WorkerPtoTableQueryVariables>;
 export const UpcomingWorkerPtoDocument = new TypedDocumentString(`
     query UpcomingWorkerPto($first: Int!, $after: String, $status: PTOStatus, $type: PTOType, $startDate: Int, $endDate: Int, $workerId: ID, $fleetCodeId: ID, $timezone: String) {
   upcomingWorkerPTO(

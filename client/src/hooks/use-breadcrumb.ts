@@ -3,7 +3,7 @@ import type { BreadcrumbMatch } from "@/types/router";
 import { useLocation, useMatches } from "react-router";
 
 export function useBreadcrumbs() {
-  const matches = useMatches() as BreadcrumbMatch[];
+  const matches = useMatches() as unknown as BreadcrumbMatch[];
   const location = useLocation();
 
   // Get matches with explicit crumbs from route handles

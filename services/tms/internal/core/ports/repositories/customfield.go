@@ -13,6 +13,12 @@ type ListCustomFieldDefinitionsRequest struct {
 	ResourceType string                   `json:"resourceType"`
 }
 
+type ListCustomFieldDefinitionConnectionRequest struct {
+	Filter                       *pagination.QueryOptions `json:"filter"`
+	Cursor                       pagination.CursorInfo    `json:"-"`
+	CustomFieldDefinitionColumns []string                 `json:"-"`
+}
+
 type GetCustomFieldDefinitionByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -33,6 +39,10 @@ type CustomFieldDefinitionRepository interface {
 		ctx context.Context,
 		req *ListCustomFieldDefinitionsRequest,
 	) (*pagination.ListResult[*customfield.CustomFieldDefinition], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListCustomFieldDefinitionConnectionRequest,
+	) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error)
 	GetByID(
 		ctx context.Context,
 		req GetCustomFieldDefinitionByIDRequest,

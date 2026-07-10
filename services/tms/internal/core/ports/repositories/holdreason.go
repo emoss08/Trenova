@@ -12,6 +12,12 @@ type ListHoldReasonRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListHoldReasonConnectionRequest struct {
+	Filter            *pagination.QueryOptions `json:"filter"`
+	Cursor            pagination.CursorInfo    `json:"-"`
+	HoldReasonColumns []string                 `json:"-"`
+}
+
 type GetHoldReasonByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -26,6 +32,10 @@ type HoldReasonRepository interface {
 		ctx context.Context,
 		req *ListHoldReasonRequest,
 	) (*pagination.ListResult[*holdreason.HoldReason], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListHoldReasonConnectionRequest,
+	) (*pagination.CursorListResult[*holdreason.HoldReason], error)
 	GetByID(
 		ctx context.Context,
 		req GetHoldReasonByIDRequest,

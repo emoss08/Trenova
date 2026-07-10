@@ -10,6 +10,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { distanceProfileTableGraphQLConfig } from "@/lib/graphql/distance-profile-table";
 import { DistanceProfileService } from "@/services/distance-profile";
 import type { RowAction } from "@/types/data-table";
 import type { DistanceProfile } from "@/types/distance-profile";
@@ -93,9 +94,8 @@ export default function DistanceProfileTable() {
     <>
       <DataTable<DistanceProfile>
         name="Distance Profile"
-        link="/distance-profiles/"
         queryKey="distance-profile-list"
-        exportModelName="distance-profile"
+        graphql={distanceProfileTableGraphQLConfig}
         resource={Resource.DistanceProfile}
         columns={columns}
         contextMenuActions={contextMenuActions}

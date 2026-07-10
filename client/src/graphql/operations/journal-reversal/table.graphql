@@ -1,0 +1,42 @@
+fragment JournalReversalTableRowFields on JournalReversal {
+  id
+  businessUnitId
+  organizationId
+  originalJournalEntryId
+  reversalJournalEntryId
+  postedBatchId
+  status
+  requestedAccountingDate
+  resolvedFiscalYearId
+  resolvedFiscalPeriodId
+  reasonCode
+  reasonText
+  requestedById
+  approvedById
+  approvedAt
+  rejectedById
+  rejectedAt
+  rejectionReason
+  cancelledById
+  cancelledAt
+  cancelReason
+  postedById
+  postedAt
+  version
+  createdAt
+  updatedAt
+}
+
+query JournalReversalTable($input: DataTableConnectionInput!) {
+  journalReversals(input: $input) {
+    edges {
+      node {
+        ...JournalReversalTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

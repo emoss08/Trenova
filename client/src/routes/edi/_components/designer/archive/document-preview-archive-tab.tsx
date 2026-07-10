@@ -41,7 +41,7 @@ import {
   FileCode2Icon,
   PlayIcon,
   RefreshCwIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -85,6 +85,8 @@ import {
 import { buildArchiveMessagesQueryString, buildX12Filename } from "../utils/edi-message-utils";
 
 const defaultEnvelope = {
+  interchangeSenderQualifier: "ZZ",
+  interchangeReceiverQualifier: "ZZ",
   interchangeSenderId: "TRENOVA",
   interchangeReceiverId: "PARTNER",
   applicationSenderCode: "TRENOVA",
@@ -200,7 +202,7 @@ export function DocumentPreviewArchiveTab() {
   const documentContextLabel = [
     selectedPartnerLabel || "No partner selected",
     selectedDocumentProfile?.name ??
-    (!!partnerId && !profileId ? "New profile draft" : "No profile"),
+      (!!partnerId && !profileId ? "New profile draft" : "No profile"),
     activeTemplate?.name ?? "No template",
     activeTemplate?.activeVersion?.versionNumber
       ? `v${activeTemplate.activeVersion.versionNumber}`

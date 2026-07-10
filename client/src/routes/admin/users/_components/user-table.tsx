@@ -1,6 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { userTableGraphQLConfig } from "@/lib/graphql/user-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction, RowAction } from "@/types/data-table";
@@ -91,12 +92,10 @@ export default function UserTable() {
   return (
     <DataTable<User>
       name="User"
-      link="/users/"
       queryKey="user-list"
+      graphql={userTableGraphQLConfig}
       resource={Resource.User}
       columns={columns}
-      exportModelName="User"
-      extraSearchParams={{ includeMemberships: true }}
       enableRowSelection
       dockActions={dockActions}
       contextMenuActions={contextMenuActions}

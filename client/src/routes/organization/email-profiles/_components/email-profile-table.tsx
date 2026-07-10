@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { emailProfileTableGraphQLConfig } from "@/lib/graphql/email-profile-table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,9 +126,8 @@ export default function EmailProfileTable() {
     <>
       <DataTable<EmailProfile>
         name="Email Profile"
-        link="/email-profiles/"
         queryKey={emailProfileQueryKey}
-        exportModelName="email-profile"
+        graphql={emailProfileTableGraphQLConfig}
         resource={Resource.EmailProfile}
         columns={columns}
         contextMenuActions={contextMenuActions}

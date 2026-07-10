@@ -1,0 +1,26 @@
+fragment ServiceTypeTableRowFields on ServiceType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  color
+  version
+  createdAt
+  updatedAt
+}
+
+query ServiceTypeTable($input: DataTableConnectionInput!) {
+  serviceTypes(input: $input) {
+    edges {
+      node {
+        ...ServiceTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

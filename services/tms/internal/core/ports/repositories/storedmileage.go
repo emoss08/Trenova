@@ -12,6 +12,12 @@ type ListStoredMileageRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListStoredMileageConnectionRequest struct {
+	Filter               *pagination.QueryOptions `json:"filter"`
+	Cursor               pagination.CursorInfo    `json:"-"`
+	StoredMileageColumns []string                 `json:"-"`
+}
+
 type GetStoredMileageByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -34,6 +40,7 @@ type StoredMileageLookupRequest struct {
 
 type StoredMileageRepository interface {
 	List(ctx context.Context, req *ListStoredMileageRequest) (*pagination.ListResult[*storedmileage.StoredMileage], error)
+	ListConnection(ctx context.Context, req *ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)
 	GetByID(ctx context.Context, req GetStoredMileageByIDRequest) (*storedmileage.StoredMileage, error)
 	Lookup(ctx context.Context, req StoredMileageLookupRequest) (*storedmileage.StoredMileage, error)
 	BulkUpsert(ctx context.Context, entities []*storedmileage.StoredMileage) error

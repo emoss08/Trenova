@@ -19,6 +19,12 @@ type ListFormulaTemplatesRequest struct {
 	Status string                   `json:"status"`
 }
 
+type ListFormulaTemplateConnectionRequest struct {
+	Filter                 *pagination.QueryOptions `json:"filter"`
+	Cursor                 pagination.CursorInfo    `json:"-"`
+	FormulaTemplateColumns []string                 `json:"-"`
+}
+
 type BulkUpdateFormulaTemplateStatusRequest struct {
 	TenantInfo  pagination.TenantInfo  `json:"-"`
 	TemplateIDs []pulid.ID             `json:"templateIds"`
@@ -75,6 +81,10 @@ type FormulaTemplateRepository interface {
 		ctx context.Context,
 		req *ListFormulaTemplatesRequest,
 	) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListFormulaTemplateConnectionRequest,
+	) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *BulkUpdateFormulaTemplateStatusRequest,

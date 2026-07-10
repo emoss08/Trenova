@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,6 +23,8 @@ var (
 
 type FleetCode struct {
 	bun.BaseModel `bun:"table:fleet_codes,alias:fc" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -89,6 +92,10 @@ func (fc *FleetCode) GetOrganizationID() pulid.ID {
 
 func (fc *FleetCode) GetBusinessUnitID() pulid.ID {
 	return fc.BusinessUnitID
+}
+
+func (fc *FleetCode) GetCreatedAt() int64 {
+	return fc.CreatedAt
 }
 
 func (fc *FleetCode) GetTableName() string {

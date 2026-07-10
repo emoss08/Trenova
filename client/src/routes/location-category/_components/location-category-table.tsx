@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { locationCategoryTableGraphQLConfig } from "@/lib/graphql/location-category-table";
 import type { LocationCategory } from "@/types/location-category";
 import { Resource } from "@/types/permission";
 import { useMemo } from "react";
@@ -11,9 +12,8 @@ export default function LocationCategoryTable() {
   return (
     <DataTable<LocationCategory>
       name="Location Category"
-      link="/location-categories/"
       queryKey="location-category-list"
-      exportModelName="location-category"
+      graphql={locationCategoryTableGraphQLConfig}
       resource={Resource.LocationCategory}
       columns={columns}
       TablePanel={LocationCategoryPanel}

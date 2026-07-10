@@ -12,6 +12,12 @@ type ListDocumentTypesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListDocumentTypeConnectionRequest struct {
+	Filter              *pagination.QueryOptions `json:"filter"`
+	Cursor              pagination.CursorInfo    `json:"-"`
+	DocumentTypeColumns []string                 `json:"-"`
+}
+
 type GetDocumentTypeByIDRequest struct {
 	ID         pulid.ID              `json:"id" form:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -32,6 +38,10 @@ type DocumentTypeRepository interface {
 		ctx context.Context,
 		req *ListDocumentTypesRequest,
 	) (*pagination.ListResult[*documenttype.DocumentType], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListDocumentTypeConnectionRequest,
+	) (*pagination.CursorListResult[*documenttype.DocumentType], error)
 	GetByID(
 		ctx context.Context,
 		req GetDocumentTypeByIDRequest,

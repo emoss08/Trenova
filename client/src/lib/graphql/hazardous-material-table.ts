@@ -1,0 +1,15 @@
+import {
+  HazardousMaterialTableDocument,
+  type HazardousMaterialTableQueryVariables,
+} from "@/graphql/generated/graphql";
+import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import type { HazardousMaterial } from "@/types/hazardous-material";
+
+export const hazardousMaterialTableGraphQLConfig = defineDataTableGraphQLConfig<
+  HazardousMaterial,
+  HazardousMaterialTableQueryVariables
+>({
+  document: HazardousMaterialTableDocument,
+  operationName: "HazardousMaterialTable",
+  connectionKey: "hazardousMaterials",
+});

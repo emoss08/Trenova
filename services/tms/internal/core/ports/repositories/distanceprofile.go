@@ -12,6 +12,12 @@ type ListDistanceProfileRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListDistanceProfileConnectionRequest struct {
+	Filter                 *pagination.QueryOptions `json:"filter"`
+	Cursor                 pagination.CursorInfo    `json:"-"`
+	DistanceProfileColumns []string                 `json:"-"`
+}
+
 type GetDistanceProfileByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -28,6 +34,7 @@ type DistanceProfileSelectOptionsRequest struct {
 
 type DistanceProfileRepository interface {
 	List(ctx context.Context, req *ListDistanceProfileRequest) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
+	ListConnection(ctx context.Context, req *ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)
 	GetByID(ctx context.Context, req GetDistanceProfileByIDRequest) (*distanceprofile.DistanceProfile, error)
 	GetDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*distanceprofile.DistanceProfile, error)
 	EnsureDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*distanceprofile.DistanceProfile, error)

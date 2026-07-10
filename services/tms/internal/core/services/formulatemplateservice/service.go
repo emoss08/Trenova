@@ -184,6 +184,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListFormulaTemplateConnectionRequest,
+) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetUsage(
 	ctx context.Context,
 	req *repositories.GetTemplateUsageRequest,

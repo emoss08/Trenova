@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { locationTableGraphQLConfig } from "@/lib/graphql/location-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,9 +59,8 @@ export default function LocationTable() {
   return (
     <DataTable<Location>
       name="Location"
-      link="/locations/"
       queryKey="location-list"
-      exportModelName="location"
+      graphql={locationTableGraphQLConfig}
       resource={Resource.Location}
       columns={columns}
       dockActions={dockActions}

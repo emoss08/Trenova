@@ -1,0 +1,30 @@
+type ServiceType {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  description: String
+  color: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type ServiceTypeEdge {
+  node: ServiceType!
+  cursor: String!
+}
+
+type ServiceTypeConnection {
+  edges: [ServiceTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
+  serviceType(id: ID!): ServiceType
+}

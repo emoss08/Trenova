@@ -1,0 +1,53 @@
+enum JournalReversalStatus {
+  Requested
+  PendingApproval
+  Approved
+  Rejected
+  Cancelled
+  Posted
+}
+
+type JournalReversal {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  originalJournalEntryId: ID!
+  reversalJournalEntryId: ID
+  postedBatchId: ID
+  status: JournalReversalStatus!
+  requestedAccountingDate: Int!
+  resolvedFiscalYearId: ID!
+  resolvedFiscalPeriodId: ID!
+  reasonCode: String!
+  reasonText: String!
+  requestedById: ID!
+  approvedById: ID
+  approvedAt: Int
+  rejectedById: ID
+  rejectedAt: Int
+  rejectionReason: String
+  cancelledById: ID
+  cancelledAt: Int
+  cancelReason: String
+  postedById: ID
+  postedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type JournalReversalEdge {
+  node: JournalReversal!
+  cursor: String!
+}
+
+type JournalReversalConnection {
+  edges: [JournalReversalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
+  journalReversal(id: ID!): JournalReversal
+}

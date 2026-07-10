@@ -1,0 +1,43 @@
+enum EmailProvider {
+  Resend
+  Postmark
+}
+
+enum EmailProfileStatus {
+  Active
+  Inactive
+}
+
+type EmailProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  senderName: String!
+  senderEmail: String!
+  replyToEmail: String!
+  provider: EmailProvider!
+  status: EmailProfileStatus!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type EmailProfileEdge {
+  node: EmailProfile!
+  cursor: String!
+}
+
+type EmailProfileConnection {
+  edges: [EmailProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
+  emailProfile(id: ID!): EmailProfile
+}

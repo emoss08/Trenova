@@ -17,3 +17,19 @@ type FleetCode {
   organization: Organization
   manager: User
 }
+
+type FleetCodeEdge {
+  node: FleetCode!
+  cursor: String!
+}
+
+type FleetCodeConnection {
+  edges: [FleetCodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
+  fleetCode(id: ID!): FleetCode
+}

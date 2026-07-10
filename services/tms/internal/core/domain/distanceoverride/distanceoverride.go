@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,10 +22,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*DistanceOverride)(nil)
 	_ validationframework.TenantedEntity = (*DistanceOverride)(nil)
 	_ domaintypes.PostgresSearchable     = (*DistanceOverride)(nil)
+	_ pagination.CursorEntity            = (*DistanceOverride)(nil)
 )
 
 type DistanceOverride struct {
-	bun.BaseModel `bun:"table:distance_overrides,alias:diso" json:"-"`
+	bun.BaseModel             `bun:"table:distance_overrides,alias:diso" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -71,6 +74,10 @@ func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {
 
 func (d *DistanceOverride) GetID() pulid.ID {
 	return d.ID
+}
+
+func (d *DistanceOverride) GetCreatedAt() int64 {
+	return d.CreatedAt
 }
 
 func (d *DistanceOverride) GetTableName() string {

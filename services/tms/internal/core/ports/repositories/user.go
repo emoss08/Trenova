@@ -48,6 +48,12 @@ type ListUsersRequest struct {
 	IncludeMemberships bool `json:"includeMemberships"`
 }
 
+type ListUserConnectionRequest struct {
+	Filter      *pagination.QueryOptions `json:"filter"`
+	Cursor      pagination.CursorInfo    `json:"-"`
+	UserColumns []string                 `json:"-"`
+}
+
 type BulkUpdateUserStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	UserIDs    []pulid.ID            `json:"userIds"`
@@ -76,6 +82,10 @@ type UpdateUserPasswordRequest struct {
 
 type UserRepository interface {
 	List(ctx context.Context, req *ListUsersRequest) (*pagination.ListResult[*tenant.User], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListUserConnectionRequest,
+	) (*pagination.CursorListResult[*tenant.User], error)
 	GetByID(ctx context.Context, req GetUserByIDRequest) (*tenant.User, error)
 	SelectOptions(
 		ctx context.Context,

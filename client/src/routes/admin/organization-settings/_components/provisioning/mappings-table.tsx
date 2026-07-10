@@ -1,5 +1,6 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { DataTable } from "@/components/data-table/data-table";
+import { createSCIMGroupRoleMappingTableGraphQLConfig } from "@/lib/graphql/scim-group-role-mapping-table";
 import type { SCIMGroupRoleMapping } from "@/types/iam";
 import type { Role } from "@/types/role";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -77,15 +78,16 @@ export default function SCIMGroupRoleMappingsTable({
 }) {
   const columns = useMemo(() => getColumns(), []);
   const queryKey = scimGroupMappingPanelQueryKey(organizationId, directoryId);
+  const graphql = useMemo(
+    () => createSCIMGroupRoleMappingTableGraphQLConfig(directoryId),
+    [directoryId],
+  );
 
   return (
     <DataTable<SCIMGroupRoleMapping>
       name="SCIM Group Role Mapping"
-      link={
-        `/organizations/${organizationId}/iam/scim/directories/${directoryId}/group-role-mappings` as any
-      }
       queryKey={queryKey}
-      exportModelName="scim-group-role-mapping"
+      graphql={graphql}
       columns={columns}
       includeHeader={false}
       enableCreateAction={false}

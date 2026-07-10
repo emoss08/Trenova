@@ -68,6 +68,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListUserConnectionRequest,
+) (*pagination.CursorListResult[*tenant.User], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

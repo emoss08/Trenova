@@ -1,0 +1,31 @@
+fragment LocationCategoryTableRowFields on LocationCategory {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  type
+  facilityType
+  color
+  hasSecureParking
+  requiresAppointment
+  allowsOvernight
+  hasRestroom
+  version
+  createdAt
+  updatedAt
+}
+
+query LocationCategoryTable($input: DataTableConnectionInput!) {
+  locationCategories(input: $input) {
+    edges {
+      node {
+        ...LocationCategoryTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

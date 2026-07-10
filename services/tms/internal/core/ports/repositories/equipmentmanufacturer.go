@@ -13,6 +13,12 @@ type ListEquipmentManufacturersRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListEquipmentManufacturerConnectionRequest struct {
+	Filter                       *pagination.QueryOptions `json:"filter"`
+	Cursor                       pagination.CursorInfo    `json:"-"`
+	EquipmentManufacturerColumns []string                 `json:"-"`
+}
+
 type GetEquipmentManufacturerByIDRequest struct {
 	ID         pulid.ID              `json:"id" form:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -34,6 +40,10 @@ type EquipmentManufacturerRepository interface {
 		ctx context.Context,
 		req *ListEquipmentManufacturersRequest,
 	) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListEquipmentManufacturerConnectionRequest,
+	) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error)
 	GetByID(
 		ctx context.Context,
 		req GetEquipmentManufacturerByIDRequest,

@@ -49,6 +49,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListServiceTypesConnectionRequest,
+) (*pagination.CursorListResult[*servicetype.ServiceType], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetServiceTypeByIDRequest,

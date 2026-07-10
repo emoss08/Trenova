@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { shipmentTypeTableGraphQLConfig } from "@/lib/graphql/shipment-type-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,9 +59,8 @@ export default function ShipmentTypeTable() {
   return (
     <DataTable<ShipmentType>
       name="Shipment Type"
-      link="/shipment-types/"
       queryKey="shipment-type-list"
-      exportModelName="shipment-type"
+      graphql={shipmentTypeTableGraphQLConfig}
       resource={Resource.ShipmentType}
       columns={columns}
       dockActions={dockActions}

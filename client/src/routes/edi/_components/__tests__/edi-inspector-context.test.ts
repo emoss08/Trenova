@@ -121,7 +121,9 @@ function partnerDocumentProfile(
 
 function x12Envelope(): EDIX12EnvelopeSettings {
   return {
+    interchangeSenderQualifier: "ZZ",
     interchangeSenderId: "SENDER",
+    interchangeReceiverQualifier: "ZZ",
     interchangeReceiverId: "RECEIVER",
     applicationSenderCode: "SENDER",
     applicationReceiverCode: "RECEIVER",

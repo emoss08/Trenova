@@ -446,6 +446,74 @@ func (_c *MockServiceFailureRepository_List_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// ListConnection provides a mock function for the type MockServiceFailureRepository
+func (_mock *MockServiceFailureRepository) ListConnection(ctx context.Context, req *repositories.ListServiceFailureConnectionRequest) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*servicefailure.ServiceFailure]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListServiceFailureConnectionRequest) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListServiceFailureConnectionRequest) *pagination.CursorListResult[*servicefailure.ServiceFailure]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*servicefailure.ServiceFailure])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListServiceFailureConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockServiceFailureRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockServiceFailureRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListServiceFailureConnectionRequest
+func (_e *MockServiceFailureRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockServiceFailureRepository_ListConnection_Call {
+	return &MockServiceFailureRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockServiceFailureRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListServiceFailureConnectionRequest)) *MockServiceFailureRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListServiceFailureConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListServiceFailureConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockServiceFailureRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*servicefailure.ServiceFailure], err error) *MockServiceFailureRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockServiceFailureRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListServiceFailureConnectionRequest) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error)) *MockServiceFailureRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListUnresolvedByShipment provides a mock function for the type MockServiceFailureRepository
 func (_mock *MockServiceFailureRepository) ListUnresolvedByShipment(ctx context.Context, req *repositories.ServiceFailuresByShipmentRequest) ([]*servicefailure.ServiceFailure, error) {
 	ret := _mock.Called(ctx, req)

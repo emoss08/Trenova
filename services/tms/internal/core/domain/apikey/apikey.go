@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -11,6 +12,8 @@ import (
 
 type Key struct {
 	bun.BaseModel `bun:"table:api_keys,alias:ak" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                pulid.ID `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID    pulid.ID `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull"`
@@ -32,6 +35,14 @@ type Key struct {
 	UpdatedAt         int64    `json:"updatedAt"         bun:"updated_at,notnull"`
 
 	Permissions []*Permission `json:"permissions" bun:"rel:has-many,join:id=api_key_id"`
+}
+
+func (k *Key) GetID() pulid.ID {
+	return k.ID
+}
+
+func (k *Key) GetCreatedAt() int64 {
+	return k.CreatedAt
 }
 
 func (k *Key) GetOrganizationID() pulid.ID {

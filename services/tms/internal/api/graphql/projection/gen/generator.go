@@ -293,7 +293,7 @@ func discoverProjectionTypes(
 	skipped := make(map[string]string, len(objectNames))
 
 	for _, name := range objectNames {
-		if reason, ok := autoSkipReason(name); ok {
+		if reason, ok := autoSkipReason(name, data); ok {
 			skipped[name] = reason
 			continue
 		}
@@ -325,7 +325,7 @@ func schemaObjectNames(schema *gqlast.Schema) []string {
 	return names
 }
 
-func autoSkipReason(name string) (string, bool) {
+func autoSkipReason(name string, data discovery) (string, bool) {
 	if reason, ok := nonProjectionObjects[name]; ok {
 		return reason, true
 	}
@@ -354,11 +354,25 @@ func autoSkipReason(name string) (string, bool) {
 	}
 	for _, suffix := range suffixes {
 		if strings.HasSuffix(name, suffix) {
+			// A wrapper/DTO suffix is only a heuristic. A type with an explicit
+			// gqlgen model binding or modelOverride is a real projected entity
+			// that merely shares a suffix (e.g. EdiConnection); never skip it.
+			if hasExplicitModelBinding(name, data) {
+				return "", false
+			}
 			return "GraphQL wrapper or DTO suffix " + suffix, true
 		}
 	}
 
 	return "", false
+}
+
+func hasExplicitModelBinding(name string, data discovery) bool {
+	if data.Manifest.ModelOverrides[name] != "" {
+		return true
+	}
+
+	return firstModelBinding(data.Gqlgen.Models[name]) != ""
 }
 
 func selectProjectionType(typeName string, data discovery) (typeSelection, error) {
@@ -426,7 +440,15 @@ func selectionForModelOverride(
 
 	fieldMap, ok := data.FieldMaps[st.Name]
 	if !ok {
-		return typeSelection{}, fmt.Errorf("model %q has no buncolgen %sFieldMap", model, st.Name)
+		// Some domain packages are intentionally excluded from buncolgen (e.g.
+		// email, whose unqualified model names would collide). When a bound bun
+		// entity has no generated field map, synthesize one from its own column
+		// tags so the type still gets a projection spec instead of being dropped.
+		synthesized, synthOK := synthesizeFieldMap(st)
+		if !synthOK {
+			return typeSelection{}, fmt.Errorf("model %q has no buncolgen %sFieldMap", model, st.Name)
+		}
+		fieldMap = synthesized
 	}
 
 	return typeSelection{
@@ -434,6 +456,50 @@ func selectionForModelOverride(
 		Struct:   st,
 		FieldMap: fieldMap,
 	}, nil
+}
+
+func synthesizeFieldMap(st goStruct) (fieldMapRegistration, bool) {
+	if !st.IsEntity {
+		return fieldMapRegistration{}, false
+	}
+
+	values := make(map[string]string, len(st.Fields))
+	relations := make(map[string]string, len(st.Fields))
+	for _, field := range st.Fields {
+		switch {
+		case field.IsColumn:
+			values[field.JSONName] = field.ColumnName
+		case field.IsRelation:
+			relations[field.JSONName] = field.GoName
+		}
+	}
+	if len(values) == 0 {
+		return fieldMapRegistration{}, false
+	}
+
+	return fieldMapRegistration{
+		EntityName:   st.Name,
+		Values:       values,
+		Relations:    relations,
+		GoExpression: goMapLiteral(values),
+	}, true
+}
+
+func goMapLiteral(values map[string]string) string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var builder strings.Builder
+	builder.WriteString("map[string]string{")
+	for _, key := range keys {
+		fmt.Fprintf(&builder, "%q: %q,", key, values[key])
+	}
+	builder.WriteString("}")
+
+	return builder.String()
 }
 
 func normalizeModelName(model string) string {
@@ -968,6 +1034,9 @@ func loadGoStructs(root string, modulePath string) (map[string]goStruct, error) 
 				}
 				for _, field := range structType.Fields.List {
 					if len(field.Names) == 0 {
+						if isBunEntityEmbed(field) {
+							st.IsEntity = true
+						}
 						continue
 					}
 					parsed, ok := parseGoStructField(field)
@@ -1014,6 +1083,15 @@ func packagePathForFile(root string, modulePath string, path string) (string, er
 	}
 
 	return domainImportRoot + "/" + filepath.ToSlash(rel), nil
+}
+
+func isBunEntityEmbed(field *ast.Field) bool {
+	if field.Tag == nil {
+		return false
+	}
+	tag := reflect.StructTag(strings.Trim(field.Tag.Value, "`"))
+
+	return strings.Contains(tag.Get("bun"), "table:")
 }
 
 func parseGoStructField(field *ast.Field) (goField, bool) {

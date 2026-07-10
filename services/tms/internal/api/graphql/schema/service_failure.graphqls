@@ -1,0 +1,67 @@
+enum ServiceFailureType {
+  LatePickup
+  LateDelivery
+  MissedPickup
+  MissedDelivery
+  AppointmentMissed
+  Other
+}
+
+enum ServiceFailureSource {
+  Detected
+  Manual
+  EDI
+  Integration
+}
+
+enum ServiceFailureStatus {
+  Open
+  Reviewed
+  Resolved
+  Voided
+}
+
+type ServiceFailureShipment {
+  id: ID!
+  proNumber: String!
+  bol: String
+}
+
+type ServiceFailure {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  stopId: ID!
+  reasonCodeId: ID
+  number: String!
+  type: ServiceFailureType!
+  source: ServiceFailureSource!
+  status: ServiceFailureStatus!
+  stopType: StopType!
+  lateMinutes: Int!
+  notes: String!
+  detectedAt: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  shipment: ServiceFailureShipment
+  reasonCode: ServiceFailureReasonCode
+}
+
+type ServiceFailureEdge {
+  node: ServiceFailure!
+  cursor: String!
+}
+
+type ServiceFailureConnection {
+  edges: [ServiceFailureEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  serviceFailures(input: DataTableConnectionInput!): ServiceFailureConnection!
+  serviceFailure(id: ID!): ServiceFailure
+}

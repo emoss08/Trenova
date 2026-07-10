@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -18,10 +19,13 @@ import (
 var (
 	_ bun.BeforeAppendModelHook      = (*Entry)(nil)
 	_ domaintypes.PostgresSearchable = (*Entry)(nil)
+	_ pagination.CursorEntity        = (*Entry)(nil)
 )
 
 type Entry struct {
 	bun.BaseModel `bun:"table:audit_entries,alias:ae"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID             `json:"id"                      bun:"id,pk,type:VARCHAR(100)"`
 	UserID         pulid.ID             `json:"userId,omitempty"        bun:"user_id,type:VARCHAR(100),nullzero"`
@@ -149,6 +153,14 @@ func (e *Entry) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 func (e *Entry) GetTableName() string {
 	return "audit_entries"
+}
+
+func (e *Entry) GetID() pulid.ID {
+	return e.ID
+}
+
+func (e *Entry) GetCreatedAt() int64 {
+	return e.Timestamp
 }
 
 func (e *Entry) RealtimeBatchKey() string {

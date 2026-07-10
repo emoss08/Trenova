@@ -1,0 +1,43 @@
+fragment ManualJournalTableRowFields on ManualJournal {
+  id
+  businessUnitId
+  organizationId
+  requestNumber
+  status
+  description
+  reason
+  accountingDate
+  requestedFiscalYearId
+  requestedFiscalPeriodId
+  currencyCode
+  totalDebit
+  totalCredit
+  approvedAt
+  approvedById
+  rejectedAt
+  rejectedById
+  rejectionReason
+  cancelledAt
+  cancelledById
+  cancelReason
+  postedBatchId
+  createdById
+  updatedById
+  version
+  createdAt
+  updatedAt
+}
+
+query ManualJournalTable($input: DataTableConnectionInput!) {
+  manualJournals(input: $input) {
+    edges {
+      node {
+        ...ManualJournalTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

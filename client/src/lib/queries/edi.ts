@@ -76,7 +76,7 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["test-case", testCaseId],
     queryFn: async () => apiService.ediService.getTestCase(testCaseId),
   }),
-  summary: (sinceHours: number | null = null) => ({
+  summary: (sinceHours?: number) => ({
     queryKey: ["summary", sinceHours],
     queryFn: async () =>
       requestGraphQL({
@@ -85,7 +85,7 @@ export const edi = createQueryKeys("edi", {
         variables: { sinceHours },
       }),
   }),
-  partnerScorecards: (sinceHours: number | null = null) => ({
+  partnerScorecards: (sinceHours?: number) => ({
     queryKey: ["partner-scorecards", sinceHours],
     queryFn: async () =>
       requestGraphQL({
@@ -94,7 +94,7 @@ export const edi = createQueryKeys("edi", {
         variables: { sinceHours },
       }),
   }),
-  volumeSeries: (sinceHours: number | null = null) => ({
+  volumeSeries: (sinceHours?: number) => ({
     queryKey: ["volume-series", sinceHours],
     queryFn: async () =>
       requestGraphQL({

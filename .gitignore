@@ -20,6 +20,7 @@ logs/
 !.env.example
 !.env.*.example
 CLAUDE.local.md
+*.local.md
 client/stats.html
 services/tms/logs/
 deploy/caddy-root-ca.crt

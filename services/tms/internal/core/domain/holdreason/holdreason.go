@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -35,10 +36,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*HoldReason)(nil)
 	_ validationframework.TenantedEntity = (*HoldReason)(nil)
 	_ domaintypes.PostgresSearchable     = (*HoldReason)(nil)
+	_ pagination.CursorEntity            = (*HoldReason)(nil)
 )
 
 type HoldReason struct {
-	bun.BaseModel `bun:"table:hold_reasons,alias:hr" json:"-"`
+	bun.BaseModel             `bun:"table:hold_reasons,alias:hr" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                       pulid.ID       `json:"id"                       bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID           pulid.ID       `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -97,6 +100,10 @@ func (hr *HoldReason) Validate(multiErr *errortypes.MultiError) {
 
 func (hr *HoldReason) GetID() pulid.ID {
 	return hr.ID
+}
+
+func (hr *HoldReason) GetCreatedAt() int64 {
+	return hr.CreatedAt
 }
 
 func (hr *HoldReason) GetTableName() string {

@@ -5,13 +5,158 @@ schema {
 
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
+type AccessorialCharge {
+  amount: Float!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  method: AccessorialMethod!
+  organization: Organization
+  organizationId: ID!
+  rateUnit: RateUnit
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type AccessorialChargeConnection {
+  edges: [AccessorialChargeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccessorialChargeEdge {
+  cursor: String!
+  node: AccessorialCharge!
+}
+
+enum AccessorialMethod {
+  Flat
+  PerUnit
+  Percentage
+}
+
+enum AccountCategory {
+  Asset
+  CostOfRevenue
+  Equity
+  Expense
+  Liability
+  Revenue
+}
+
+type AccountType {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  category: AccountCategory!
+  code: String!
+  color: String
+  createdAt: Int!
+  description: String
+  id: ID!
+  isSystem: Boolean!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type AccountTypeConnection {
+  edges: [AccountTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountTypeEdge {
+  cursor: String!
+  node: AccountType!
+}
+
 scalar Any
+
+type ApiKey {
+  businessUnitId: ID!
+  createdAt: Int!
+  createdById: ID!
+  description: String!
+  expiresAt: Int!
+  id: ID!
+  keyPrefix: String!
+  lastUsedAt: Int!
+  lastUsedIp: String!
+  lastUsedUserAgent: String!
+  name: String!
+  organizationId: ID!
+  permissionScope: String!
+  revokedAt: Int!
+  revokedById: ID!
+  status: String!
+  updatedAt: Int!
+}
+
+type ApiKeyConnection {
+  edges: [ApiKeyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ApiKeyEdge {
+  cursor: String!
+  node: ApiKey!
+}
 
 enum AssignmentStatus {
   Canceled
   Completed
   InProgress
   New
+}
+
+enum AuditCategory {
+  System
+  User
+}
+
+type AuditEntry {
+  apiKeyId: ID
+  businessUnitId: ID!
+  category: AuditCategory!
+  changes: JSON
+  comment: String
+  correlationId: String
+  critical: Boolean!
+  currentState: JSON
+  id: ID!
+  ipAddress: String
+  metadata: JSON
+  operation: String!
+  organizationId: ID!
+  previousState: JSON
+  principalId: ID!
+  principalType: String!
+  resource: String!
+  resourceId: String!
+  sensitiveData: Boolean!
+  timestamp: Int!
+  user: User
+  userAgent: String
+  userId: ID
+}
+
+type AuditEntryConnection {
+  edges: [AuditEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AuditEntryEdge {
+  cursor: String!
+  node: AuditEntry!
 }
 
 enum BillType {
@@ -116,10 +261,79 @@ enum CDLClass {
   C
 }
 
+type Commodity {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  fragile: Boolean!
+  freightClass: FreightClass
+  hazardousMaterialId: ID
+  id: ID!
+  linearFeetPerUnit: Float
+  loadingInstructions: String
+  maxQuantityPerShipment: Float
+  maxTemperature: Int
+  minTemperature: Int
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  stackable: Boolean!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+  weightPerUnit: Float
+}
+
+type CommodityConnection {
+  edges: [CommodityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CommodityEdge {
+  cursor: String!
+  node: Commodity!
+}
+
 enum ComplianceStatus {
   Compliant
   NonCompliant
   Pending
+}
+
+type CustomFieldDefinition {
+  businessUnitId: ID!
+  color: String
+  createdAt: Int!
+  description: String
+  displayOrder: Int!
+  fieldType: FieldType!
+  id: ID!
+  isActive: Boolean!
+  isRequired: Boolean!
+  label: String!
+  name: String!
+  organizationId: ID!
+  resourceType: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type CustomFieldDefinitionConnection {
+  edges: [CustomFieldDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CustomFieldDefinitionEdge {
+  cursor: String!
+  node: CustomFieldDefinition!
+}
+
+type Customer {
+  id: ID!
+  name: String!
 }
 
 input DataTableConnectionInput {
@@ -129,6 +343,149 @@ input DataTableConnectionInput {
   first: Int = 20
   query: String
   sort: [SortFieldInput!]
+}
+
+type DistanceOverride {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  customer: Customer
+  customerId: ID
+  destinationLocation: Location
+  destinationLocationId: ID!
+  distance: Float!
+  id: ID!
+  intermediateStops: [DistanceOverrideStop!]
+  organization: Organization
+  organizationId: ID!
+  originLocation: Location
+  originLocationId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type DistanceOverrideConnection {
+  edges: [DistanceOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DistanceOverrideEdge {
+  cursor: String!
+  node: DistanceOverride!
+}
+
+type DistanceOverrideStop {
+  location: Location
+  locationId: ID!
+  stopOrder: Int!
+}
+
+type DistanceProfile {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  dataVersion: String!
+  description: String!
+  distanceUnits: String!
+  id: ID!
+  isDefault: Boolean!
+  locationGranularity: String!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  profileName: String!
+  provider: String!
+  region: String!
+  routingType: String!
+  status: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type DistanceProfileConnection {
+  edges: [DistanceProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DistanceProfileEdge {
+  cursor: String!
+  node: DistanceProfile!
+}
+
+enum DocumentCategory {
+  Branding
+  Contract
+  Invoice
+  Other
+  Profile
+  Regulatory
+  Shipment
+  Worker
+}
+
+enum DocumentClassification {
+  Private
+  Public
+  Regulatory
+  Sensitive
+}
+
+type DocumentPacketRule {
+  allowMultiple: Boolean!
+  businessUnitId: ID!
+  createdAt: Int!
+  displayOrder: Int!
+  documentTypeId: ID!
+  expirationRequired: Boolean!
+  expirationWarningDays: Int!
+  id: ID!
+  organizationId: ID!
+  required: Boolean!
+  resourceType: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type DocumentPacketRuleConnection {
+  edges: [DocumentPacketRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DocumentPacketRuleEdge {
+  cursor: String!
+  node: DocumentPacketRule!
+}
+
+type DocumentType {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  color: String!
+  createdAt: Int!
+  description: String!
+  documentCategory: DocumentCategory!
+  documentClassification: DocumentClassification!
+  id: ID!
+  isSystem: Boolean!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type DocumentTypeConnection {
+  edges: [DocumentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DocumentTypeEdge {
+  cursor: String!
+  node: DocumentType!
 }
 
 enum DriverType {
@@ -629,6 +986,45 @@ type EdiVolumePoint {
   sentCount: Int!
 }
 
+type EmailProfile {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  provider: EmailProvider!
+  replyToEmail: String!
+  senderEmail: String!
+  senderName: String!
+  status: EmailProfileStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EmailProfileConnection {
+  edges: [EmailProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EmailProfileEdge {
+  cursor: String!
+  node: EmailProfile!
+}
+
+enum EmailProfileStatus {
+  Active
+  Inactive
+}
+
+enum EmailProvider {
+  Postmark
+  Resend
+}
+
 enum EndorsementType {
   H
   N
@@ -776,8 +1172,55 @@ input FieldFilterInput {
   value: Any
 }
 
+enum FieldType {
+  boolean
+  date
+  multiSelect
+  number
+  select
+  text
+}
+
 input FilterGroupInput {
   filters: [FieldFilterInput!]!
+}
+
+type FiscalYear {
+  allowAdjustingEntries: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  endDate: Int!
+  id: ID!
+  isCalendarYear: Boolean!
+  isCurrent: Boolean!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  startDate: Int!
+  status: FiscalYearStatus!
+  updatedAt: Int!
+  version: Int!
+  year: Int!
+}
+
+type FiscalYearConnection {
+  edges: [FiscalYearEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FiscalYearEdge {
+  cursor: String!
+  node: FiscalYear!
+}
+
+enum FiscalYearStatus {
+  Closed
+  Draft
+  Open
+  PermanentlyClosed
 }
 
 type FleetCode {
@@ -800,12 +1243,282 @@ type FleetCode {
   version: Int!
 }
 
+type FleetCodeConnection {
+  edges: [FleetCodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FleetCodeEdge {
+  cursor: String!
+  node: FleetCode!
+}
+
+type FormulaTemplate {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  currentVersionNumber: Int!
+  description: String!
+  expression: String!
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  schemaId: String!
+  status: FormulaTemplateStatus!
+  type: FormulaTemplateType!
+  updatedAt: Int!
+  version: Int!
+}
+
+type FormulaTemplateConnection {
+  edges: [FormulaTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FormulaTemplateEdge {
+  cursor: String!
+  node: FormulaTemplate!
+}
+
+enum FormulaTemplateStatus {
+  Active
+  Draft
+  Inactive
+}
+
+enum FormulaTemplateType {
+  AccessorialCharge
+  FreightCharge
+}
+
+enum FreightClass {
+  Class50
+  Class55
+  Class60
+  Class65
+  Class70
+  Class77_5
+  Class85
+  Class92_5
+  Class100
+  Class110
+  Class125
+  Class150
+  Class175
+  Class200
+  Class250
+  Class300
+  Class400
+  Class500
+}
+
 type GeofenceVertex {
   latitude: Float!
   longitude: Float!
 }
 
+enum HazardousClass {
+  HazardClass1
+  HazardClass1And1
+  HazardClass1And2
+  HazardClass1And3
+  HazardClass1And4
+  HazardClass1And5
+  HazardClass1And6
+  HazardClass2And1
+  HazardClass2And2
+  HazardClass2And3
+  HazardClass3
+  HazardClass4And1
+  HazardClass4And2
+  HazardClass4And3
+  HazardClass5And1
+  HazardClass5And2
+  HazardClass6And1
+  HazardClass6And2
+  HazardClass7
+  HazardClass8
+  HazardClass9
+}
+
+type HazardousMaterial {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  class: HazardousClass!
+  code: String!
+  createdAt: Int!
+  description: String!
+  emergencyContact: String!
+  emergencyContactPhoneNumber: String!
+  ergGuideNumber: String!
+  handlingInstructions: String!
+  id: ID!
+  inhalationHazard: Boolean!
+  isReportableQuantity: Boolean!
+  labelCodes: String!
+  marinePollutant: Boolean!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  packingGroup: PackingGroup!
+  placardRequired: Boolean!
+  properShippingName: String!
+  quantityThreshold: String!
+  specialProvisions: String!
+  status: EntityStatus!
+  subsidiaryHazardClass: String!
+  unNumber: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type HazardousMaterialConnection {
+  edges: [HazardousMaterialEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type HazardousMaterialEdge {
+  cursor: String!
+  node: HazardousMaterial!
+}
+
+type HazmatSegregationRule {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  classA: HazardousClass!
+  classB: HazardousClass!
+  createdAt: Int!
+  description: String!
+  distanceUnit: String!
+  exceptionNotes: String!
+  hasExceptions: Boolean!
+  hazmatAId: ID
+  hazmatBId: ID
+  id: ID!
+  minimumDistance: Float
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  referenceCode: String!
+  regulationSource: String!
+  segregationType: SegregationType!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type HazmatSegregationRuleConnection {
+  edges: [HazmatSegregationRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type HazmatSegregationRuleEdge {
+  cursor: String!
+  node: HazmatSegregationRule!
+}
+
+type HoldReason {
+  active: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  defaultBlocksBilling: Boolean!
+  defaultBlocksDelivery: Boolean!
+  defaultBlocksDispatch: Boolean!
+  defaultSeverity: HoldSeverity!
+  defaultVisibleToCustomer: Boolean!
+  description: String!
+  externalMap: JSON
+  id: ID!
+  label: String!
+  organization: Organization
+  organizationId: ID!
+  sortOrder: Int!
+  type: HoldType!
+  updatedAt: Int!
+  version: Int!
+}
+
+type HoldReasonConnection {
+  edges: [HoldReasonEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type HoldReasonEdge {
+  cursor: String!
+  node: HoldReason!
+}
+
+enum HoldSeverity {
+  Advisory
+  Blocking
+  Informational
+}
+
+enum HoldType {
+  ComplianceHold
+  CustomerHold
+  FinanceHold
+  OperationalHold
+}
+
 scalar JSON
+
+type JournalReversal {
+  approvedAt: Int
+  approvedById: ID
+  businessUnitId: ID!
+  cancelReason: String
+  cancelledAt: Int
+  cancelledById: ID
+  createdAt: Int!
+  id: ID!
+  organizationId: ID!
+  originalJournalEntryId: ID!
+  postedAt: Int
+  postedBatchId: ID
+  postedById: ID
+  reasonCode: String!
+  reasonText: String!
+  rejectedAt: Int
+  rejectedById: ID
+  rejectionReason: String
+  requestedAccountingDate: Int!
+  requestedById: ID!
+  resolvedFiscalPeriodId: ID!
+  resolvedFiscalYearId: ID!
+  reversalJournalEntryId: ID
+  status: JournalReversalStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type JournalReversalConnection {
+  edges: [JournalReversalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JournalReversalEdge {
+  cursor: String!
+  node: JournalReversal!
+}
+
+enum JournalReversalStatus {
+  Approved
+  Cancelled
+  PendingApproval
+  Posted
+  Rejected
+  Requested
+}
 
 input LocateTractorInput {
   newLocationId: ID!
@@ -867,6 +1580,17 @@ type LocationCategory {
   version: Int!
 }
 
+type LocationCategoryConnection {
+  edges: [LocationCategoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type LocationCategoryEdge {
+  cursor: String!
+  node: LocationCategory!
+}
+
 enum LocationCategoryType {
   CustomerLocation
   DistributionCenter
@@ -879,6 +1603,17 @@ enum LocationCategoryType {
   Warehouse
 }
 
+type LocationConnection {
+  edges: [LocationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type LocationEdge {
+  cursor: String!
+  node: Location!
+}
+
 enum LocationGeofenceType {
   auto
   circle
@@ -889,6 +1624,56 @@ enum LocationGeofenceType {
 type LocationReference {
   id: ID!
   name: String!
+}
+
+type ManualJournal {
+  accountingDate: Int!
+  approvedAt: Int
+  approvedById: ID
+  businessUnitId: ID!
+  cancelReason: String
+  cancelledAt: Int
+  cancelledById: ID
+  createdAt: Int!
+  createdById: ID
+  currencyCode: String!
+  description: String!
+  id: ID!
+  organizationId: ID!
+  postedBatchId: ID
+  reason: String
+  rejectedAt: Int
+  rejectedById: ID
+  rejectionReason: String
+  requestNumber: String!
+  requestedFiscalPeriodId: ID!
+  requestedFiscalYearId: ID!
+  status: ManualJournalStatus!
+  totalCredit: Int!
+  totalDebit: Int!
+  updatedAt: Int!
+  updatedById: ID
+  version: Int!
+}
+
+type ManualJournalConnection {
+  edges: [ManualJournalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ManualJournalEdge {
+  cursor: String!
+  node: ManualJournal!
+}
+
+enum ManualJournalStatus {
+  Approved
+  Cancelled
+  Draft
+  PendingApproval
+  Posted
+  Rejected
 }
 
 enum MoveStatus {
@@ -1010,12 +1795,38 @@ enum PTOType {
   Vacation
 }
 
+enum PackingGroup {
+  I
+  II
+  III
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
 }
 
 type Query {
+  accessorialCharge(id: ID!): AccessorialCharge
+  accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
+  accountType(id: ID!): AccountType
+  accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
+  apiKey(id: ID!): ApiKey
+  apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
+  auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  auditEntry(id: ID!): AuditEntry
+  commodities(input: DataTableConnectionInput!): CommodityConnection!
+  commodity(id: ID!): Commodity
+  customFieldDefinition(id: ID!): CustomFieldDefinition
+  customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
+  distanceOverride(id: ID!): DistanceOverride
+  distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
+  distanceProfile(id: ID!): DistanceProfile
+  distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
+  documentPacketRule(id: ID!): DocumentPacketRule
+  documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
+  documentType(id: ID!): DocumentType
+  documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
@@ -1028,12 +1839,43 @@ type Query {
   ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
   ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
+  emailProfile(id: ID!): EmailProfile
+  emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
   equipmentManufacturer(id: ID!): EquipmentManufacturer
   equipmentManufacturers(input: DataTableConnectionInput!): EquipmentManufacturerConnection!
   equipmentType(id: ID!): EquipmentType
   equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
+  fiscalYear(id: ID!): FiscalYear
+  fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
+  fleetCode(id: ID!): FleetCode
+  fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
+  formulaTemplate(id: ID!): FormulaTemplate
+  formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
+  hazardousMaterial(id: ID!): HazardousMaterial
+  hazardousMaterials(input: DataTableConnectionInput!): HazardousMaterialConnection!
+  hazmatSegregationRule(id: ID!): HazmatSegregationRule
+  hazmatSegregationRules(input: DataTableConnectionInput!): HazmatSegregationRuleConnection!
+  holdReason(id: ID!): HoldReason
+  holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
+  journalReversal(id: ID!): JournalReversal
+  journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
+  location(id: ID!): Location
+  locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
+  locationCategory(id: ID!): LocationCategory
+  locations(input: DataTableConnectionInput!): LocationConnection!
+  manualJournal(id: ID!): ManualJournal
+  manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
+  role(id: ID!): Role
+  roles(input: DataTableConnectionInput!): RoleConnection!
+  scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
+  serviceFailure(id: ID!): ServiceFailure
+  serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
+  serviceFailureReasonCodes(input: DataTableConnectionInput!): ServiceFailureReasonCodeConnection!
+  serviceFailures(input: DataTableConnectionInput!): ServiceFailureConnection!
+  serviceType(id: ID!): ServiceType
+  serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
   shipmentAnalytics(endDate: Int, include: String, limit: Int, offset: Int, startDate: Int, timezone: String, windowDays: Int): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -1041,17 +1883,90 @@ type Query {
   shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentEvents(before: Int, limit: Int, shipmentId: ID, types: [ShipmentEventType!]): [ShipmentEvent!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
+  shipmentType(id: ID!): ShipmentType
+  shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipments(after: String, expandShipmentDetails: Boolean = false, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, query: String, sort: [SortFieldInput!], status: String): ShipmentConnection!
+  storedMileage(id: ID!): StoredMileage
+  storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
+  tcaSubscription(id: ID!): TCASubscription
+  tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
   tractor(id: ID!): Tractor
   tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
   trailer(id: ID!): Trailer
   trailers(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TrailerConnection!
   unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
   upcomingWorkerPTO(after: String, endDate: Int, first: Int = 20, fleetCodeId: ID, startDate: Int, status: PTOStatus, timezone: String, type: PTOType, workerId: ID): WorkerPTOConnection!
+  user(id: ID!): User
+  users(input: DataTableConnectionInput!): UserConnection!
   workerPTOChartData(startDateFrom: Int!, startDateTo: Int!, timezone: String, type: PTOType, workerId: ID): [PTOChartDataPoint!]!
-  workerPTOEntries(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeWorker: Boolean = false, query: String, sort: [SortFieldInput!], startDateFrom: Int, startDateTo: Int, status: PTOStatus, type: PTOType, workerId: ID): WorkerPTOConnection!
-  workers(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, query: String, sort: [SortFieldInput!]): WorkerConnection!
+  workerPTOEntries(includeWorker: Boolean = false, input: DataTableConnectionInput!, startDateFrom: Int, startDateTo: Int, status: PTOStatus, type: PTOType, workerId: ID): WorkerPTOConnection!
+  workers(input: DataTableConnectionInput!): WorkerConnection!
+}
+
+enum RateUnit {
+  Day
+  Hour
+  Mile
+  Stop
+}
+
+type Role {
+  businessUnitId: ID!
+  coreResponsibility: String
+  createdAt: Int!
+  createdBy: ID!
+  description: String!
+  id: ID!
+  isSystem: Boolean!
+  maxSensitivity: String!
+  name: String!
+  organizationId: ID!
+  parentRoleIds: [ID!]
+  updatedAt: Int!
+}
+
+type RoleConnection {
+  edges: [RoleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RoleEdge {
+  cursor: String!
+  node: Role!
+}
+
+type SCIMGroupRoleMapping {
+  businessUnitId: ID!
+  createdAt: Int!
+  directoryId: ID!
+  displayName: String!
+  externalGroupId: String!
+  id: ID!
+  organizationId: ID!
+  role: Role
+  roleId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type SCIMGroupRoleMappingConnection {
+  edges: [SCIMGroupRoleMappingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SCIMGroupRoleMappingEdge {
+  cursor: String!
+  node: SCIMGroupRoleMapping!
+}
+
+enum SegregationType {
+  Barrier
+  Distance
+  Prohibited
+  Separated
 }
 
 type SelectOption {
@@ -1090,6 +2005,150 @@ input SelectOptionsInput {
   offset: Int = 0
   query: String
   resource: SelectOptionResource!
+}
+
+type ServiceFailure {
+  businessUnitId: ID!
+  createdAt: Int!
+  detectedAt: Int!
+  id: ID!
+  lateMinutes: Int!
+  notes: String!
+  number: String!
+  organizationId: ID!
+  reasonCode: ServiceFailureReasonCode
+  reasonCodeId: ID
+  shipment: ServiceFailureShipment
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  source: ServiceFailureSource!
+  status: ServiceFailureStatus!
+  stopId: ID!
+  stopType: StopType!
+  type: ServiceFailureType!
+  updatedAt: Int!
+  version: Int!
+}
+
+type ServiceFailureConnection {
+  edges: [ServiceFailureEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ServiceFailureEdge {
+  cursor: String!
+  node: ServiceFailure!
+}
+
+enum ServiceFailureReasonCategory {
+  Appointment
+  Carrier
+  Consignee
+  Customer
+  Documentation
+  Driver
+  Equipment
+  Facility
+  Other
+  Shipper
+  Weather
+}
+
+type ServiceFailureReasonCode {
+  active: Boolean!
+  appliesTo: ServiceFailureReasonCodeAppliesTo!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  category: ServiceFailureReasonCategory!
+  code: String!
+  createdAt: Int!
+  defaultExceptionCode: String!
+  defaultNote: String!
+  defaultReasonCode: String!
+  defaultStatusCode: String!
+  description: String!
+  externalMap: JSON
+  id: ID!
+  label: String!
+  organization: Organization
+  organizationId: ID!
+  sortOrder: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum ServiceFailureReasonCodeAppliesTo {
+  All
+  Both
+  Delivery
+  Pickup
+}
+
+type ServiceFailureReasonCodeConnection {
+  edges: [ServiceFailureReasonCodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ServiceFailureReasonCodeEdge {
+  cursor: String!
+  node: ServiceFailureReasonCode!
+}
+
+type ServiceFailureShipment {
+  bol: String
+  id: ID!
+  proNumber: String!
+}
+
+enum ServiceFailureSource {
+  Detected
+  EDI
+  Integration
+  Manual
+}
+
+enum ServiceFailureStatus {
+  Open
+  Resolved
+  Reviewed
+  Voided
+}
+
+enum ServiceFailureType {
+  AppointmentMissed
+  LateDelivery
+  LatePickup
+  MissedDelivery
+  MissedPickup
+  Other
+}
+
+type ServiceType {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  color: String
+  createdAt: Int!
+  description: String
+  id: ID!
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type ServiceTypeConnection {
+  edges: [ServiceTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ServiceTypeEdge {
+  cursor: String!
+  node: ServiceType!
 }
 
 type Shipment {
@@ -2090,6 +3149,32 @@ input ShipmentTransferToBillingInput {
   shipmentId: ID!
 }
 
+type ShipmentType {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  color: String
+  createdAt: Int!
+  description: String
+  id: ID!
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type ShipmentTypeConnection {
+  edges: [ShipmentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ShipmentTypeEdge {
+  cursor: String!
+  node: ShipmentType!
+}
+
 type ShipmentUIPolicy {
   allowMoveRemovals: Boolean!
   checkForDuplicateBols: Boolean!
@@ -2112,6 +3197,16 @@ input SortFieldInput {
   field: String!
 }
 
+type StopKey {
+  city: String!
+  coordinates: [Float!]
+  key: String!
+  method: String!
+  placeId: String!
+  postalCode: String!
+  state: String!
+}
+
 enum StopScheduleType {
   Appointment
   Open
@@ -2129,6 +3224,79 @@ enum StopType {
   Pickup
   SplitDelivery
   SplitPickup
+}
+
+type StoredMileage {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  dataVersion: String!
+  destinationKey: StopKey!
+  distance: Float!
+  distanceProfileId: ID!
+  distanceProfileName: String!
+  distanceUnits: String!
+  hitCount: Int!
+  id: ID!
+  intermediateKeys: [StopKey!]
+  lastCalculatedAt: Int!
+  locationGranularity: String!
+  method: String!
+  organization: Organization
+  organizationId: ID!
+  originKey: StopKey!
+  provider: String!
+  routeHash: String!
+  routeSignature: String!
+  routingType: String!
+  source: String!
+  status: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type StoredMileageConnection {
+  edges: [StoredMileageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type StoredMileageEdge {
+  cursor: String!
+  node: StoredMileage!
+}
+
+type TCASubscription {
+  businessUnitId: ID!
+  conditionMatch: String!
+  conditions: [JSON!]!
+  createdAt: Int!
+  customMessage: String!
+  customTitle: String!
+  eventTypes: [String!]!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  priority: String!
+  recordId: String
+  status: String!
+  tableName: String!
+  topic: String!
+  updatedAt: Int!
+  userId: ID!
+  version: Int!
+  watchedColumns: [String!]!
+}
+
+type TCASubscriptionConnection {
+  edges: [TCASubscriptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TCASubscriptionEdge {
+  cursor: String!
+  node: TCASubscription!
 }
 
 enum TimeFormat {
@@ -2340,6 +3508,17 @@ type User {
   updatedAt: Int!
   username: String!
   version: Int!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type UserEdge {
+  cursor: String!
+  node: User!
 }
 
 type Worker {

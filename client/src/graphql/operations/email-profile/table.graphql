@@ -1,0 +1,29 @@
+fragment EmailProfileTableRowFields on EmailProfile {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  senderName
+  senderEmail
+  replyToEmail
+  provider
+  status
+  version
+  createdAt
+  updatedAt
+}
+
+query EmailProfileTable($input: DataTableConnectionInput!) {
+  emailProfiles(input: $input) {
+    edges {
+      node {
+        ...EmailProfileTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

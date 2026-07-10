@@ -101,6 +101,133 @@ var ProjectedFieldMap = map[string]string{"id": "id"}
 	require.Equal(t, 2, strings.Count(output, "Special: \"display\""))
 }
 
+func TestRun_UnskipsWrapperSuffixTypeWithModelBinding(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type WidgetConnection {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  widget: WidgetConnection
+}
+`,
+		Gqlgen: `
+models:
+  WidgetConnection:
+    model:
+      - example.com/app/internal/core/domain/widget.Connection
+`,
+		DomainFiles: map[string]string{
+			"widget/widget.go": `
+package widget
+
+import "github.com/uptrace/bun"
+
+type Connection struct {
+	bun.BaseModel ` + "`bun:\"table:widget_connections,alias:wc\"`" + `
+
+	ID string ` + "`json:\"id\" bun:\"id\"`" + `
+	Name string ` + "`json:\"name\" bun:\"name\"`" + `
+}
+`,
+		},
+		BuncolgenFiles: map[string]string{
+			"widget_gen.go": `
+package buncolgen
+
+var ConnectionFieldMap = map[string]string{"id": "id", "name": "name"}
+`,
+		},
+	})
+
+	output := runFixture(t, fixture)
+
+	require.Contains(t, output, "var WidgetConnectionSpec TypeSpec")
+	require.Contains(t, output, "FieldMap: buncolgen.ConnectionFieldMap")
+}
+
+func TestRun_SynthesizesFieldMapForBoundEntityWithoutBuncolgen(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type Mailbox {
+  id: ID!
+  senderName: String!
+}
+
+type Query {
+  mailbox: Mailbox
+}
+`,
+		Gqlgen: `
+models:
+  Mailbox:
+    model:
+      - example.com/app/internal/core/domain/mailbox.Mailbox
+`,
+		DomainFiles: map[string]string{
+			"mailbox/mailbox.go": `
+package mailbox
+
+import "github.com/uptrace/bun"
+
+type Mailbox struct {
+	bun.BaseModel ` + "`bun:\"table:mailboxes,alias:mb\"`" + `
+
+	ID string ` + "`json:\"id\" bun:\"id\"`" + `
+	SenderName string ` + "`json:\"senderName\" bun:\"from_name\"`" + `
+}
+`,
+		},
+	})
+
+	output := runFixture(t, fixture)
+
+	require.Contains(t, output, "var MailboxSpec TypeSpec")
+	require.Contains(t, output, `FieldMap: map[string]string{"id": "id", "senderName": "from_name"}`)
+	require.Contains(t, output, "FieldMapKey: \"senderName\"")
+}
+
+func TestRun_SkipsBoundNonEntityWithoutBuncolgen(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type Payload {
+  id: ID!
+}
+
+type Query {
+  payload: Payload
+}
+`,
+		Gqlgen: `
+models:
+  Payload:
+    model:
+      - example.com/app/internal/core/domain/payload.Payload
+`,
+		DomainFiles: map[string]string{
+			"payload/payload.go": `
+package payload
+
+type Payload struct {
+	ID string ` + "`json:\"id\" bun:\"id\"`" + `
+}
+`,
+		},
+	})
+
+	output := runFixture(t, fixture)
+
+	require.NotContains(t, output, "var PayloadSpec TypeSpec")
+}
+
 func TestRun_InferNonMatchingGraphQLNameByFieldCoverage(t *testing.T) {
 	t.Parallel()
 

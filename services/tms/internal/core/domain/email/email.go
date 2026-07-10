@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,6 +24,8 @@ var (
 
 type Profile struct {
 	bun.BaseModel `bun:"table:email_profiles,alias:ep" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID      `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -83,6 +86,7 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (p *Profile) GetID() pulid.ID             { return p.ID }
+func (p *Profile) GetCreatedAt() int64         { return p.CreatedAt }
 func (p *Profile) GetTableName() string        { return "email_profiles" }
 func (p *Profile) GetOrganizationID() pulid.ID { return p.OrganizationID }
 func (p *Profile) GetBusinessUnitID() pulid.ID { return p.BusinessUnitID }

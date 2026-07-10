@@ -1,0 +1,28 @@
+fragment ApiKeyTableRowFields on ApiKey {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  keyPrefix
+  status
+  expiresAt
+  lastUsedAt
+  permissionScope
+  createdAt
+  updatedAt
+}
+
+query ApiKeyTable($input: DataTableConnectionInput!) {
+  apiKeys(input: $input) {
+    edges {
+      node {
+        ...ApiKeyTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

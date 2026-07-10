@@ -1,5 +1,4 @@
 import { timezoneChoices } from "@/lib/choices";
-import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import {
   ediConnectionMethodSchema,
   ediDocumentPayloadSchema,
@@ -10,6 +9,7 @@ import {
   type SaveEDITestCaseRequest,
   type UpsertEDIPartnerRequest,
 } from "@/types/edi";
+import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import { z } from "zod";
 
 export const mappingEntityTypes = ediMappingEntityTypeSchema.options;
@@ -41,8 +41,6 @@ export const profileStatusOptions = [
   { label: "Active", value: "Active" },
   { label: "Inactive", value: "Inactive" },
 ];
-
-export const partnerStatusOptions = profileStatusOptions;
 
 export const partnerCountryOptions = [
   { label: "United States", value: "US" },

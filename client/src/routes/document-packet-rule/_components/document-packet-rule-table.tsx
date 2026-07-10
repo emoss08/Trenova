@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { documentPacketRuleTableGraphQLConfig } from "@/lib/graphql/document-packet-rule-table";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import {
   AlertDialog,
@@ -88,9 +89,8 @@ export default function DocumentPacketRuleTable() {
     <>
       <DataTable<DocumentPacketRule>
         name="Document Packet Rule"
-        link="/document-packet-rules/"
         queryKey="document-packet-rule-list"
-        exportModelName="document-packet-rule"
+        graphql={documentPacketRuleTableGraphQLConfig}
         resource={Resource.DocumentType}
         columns={columns}
         contextMenuActions={contextMenuActions}

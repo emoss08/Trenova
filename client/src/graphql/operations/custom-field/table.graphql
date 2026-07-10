@@ -1,0 +1,31 @@
+fragment CustomFieldDefinitionTableRowFields on CustomFieldDefinition {
+  id
+  businessUnitId
+  organizationId
+  resourceType
+  name
+  label
+  description
+  fieldType
+  isRequired
+  isActive
+  displayOrder
+  color
+  version
+  createdAt
+  updatedAt
+}
+
+query CustomFieldDefinitionTable($input: DataTableConnectionInput!) {
+  customFieldDefinitions(input: $input) {
+    edges {
+      node {
+        ...CustomFieldDefinitionTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

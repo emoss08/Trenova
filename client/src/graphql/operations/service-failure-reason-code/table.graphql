@@ -1,0 +1,34 @@
+fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode {
+  id
+  businessUnitId
+  organizationId
+  code
+  label
+  description
+  category
+  appliesTo
+  defaultStatusCode
+  defaultReasonCode
+  defaultExceptionCode
+  defaultNote
+  active
+  sortOrder
+  externalMap
+  version
+  createdAt
+  updatedAt
+}
+
+query ServiceFailureReasonCodeTable($input: DataTableConnectionInput!) {
+  serviceFailureReasonCodes(input: $input) {
+    edges {
+      node {
+        ...ServiceFailureReasonCodeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

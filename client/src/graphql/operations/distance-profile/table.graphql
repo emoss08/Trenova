@@ -1,0 +1,33 @@
+fragment DistanceProfileTableRowFields on DistanceProfile {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  status
+  isDefault
+  provider
+  dataVersion
+  region
+  routingType
+  distanceUnits
+  locationGranularity
+  profileName
+  version
+  createdAt
+  updatedAt
+}
+
+query DistanceProfileTable($input: DataTableConnectionInput!) {
+  distanceProfiles(input: $input) {
+    edges {
+      node {
+        ...DistanceProfileTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

@@ -1,12 +1,11 @@
 import { EmailProfileAutocompleteField } from "@/components/autocomplete-fields";
-import { Button } from "@/components/ui/button";
+import { FormSaveDock } from "@/components/form-save-dock";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { EmailProfileAssignment } from "@/types/email";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RouteIcon, SaveIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -76,10 +75,7 @@ export function PurposeAssignmentsPanel() {
   return (
     <section className="rounded-md border border-border bg-background">
       <div className="flex flex-col gap-1 border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <RouteIcon className="size-4 text-muted-foreground" />
-          Purpose Assignments
-        </div>
+        <div className="flex items-center gap-2 text-sm font-medium">Purpose Assignments</div>
         <p className="text-xs text-muted-foreground">
           Assign each email purpose to an active sender profile. Clearing a purpose removes its
           assignment on save.
@@ -103,17 +99,7 @@ export function PurposeAssignmentsPanel() {
                 </FormControl>
               ))}
             </FormGroup>
-            <div className="mt-4 flex justify-end">
-              <Button
-                type="submit"
-                disabled={!form.formState.isDirty}
-                isLoading={saveAssignments.isPending}
-                loadingText="Saving..."
-              >
-                <SaveIcon />
-                Save Assignments
-              </Button>
-            </div>
+            <FormSaveDock saveButtonContent="Save Assignments" showHeightGap={false} />
           </Form>
         </FormProvider>
       </div>

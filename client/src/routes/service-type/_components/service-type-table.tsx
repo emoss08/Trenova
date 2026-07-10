@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { serviceTypeTableGraphQLConfig } from "@/lib/graphql/service-type-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,9 +59,8 @@ export default function EquipmentTypeTable() {
   return (
     <DataTable<ServiceType>
       name="Service Type"
-      link="/service-types/"
       queryKey="service-type-list"
-      exportModelName="service-type"
+      graphql={serviceTypeTableGraphQLConfig}
       resource={Resource.ServiceType}
       columns={columns}
       dockActions={dockActions}

@@ -1,0 +1,29 @@
+fragment FormulaTemplateTableRowFields on FormulaTemplate {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  type
+  expression
+  status
+  schemaId
+  version
+  currentVersionNumber
+  createdAt
+  updatedAt
+}
+
+query FormulaTemplateTable($input: DataTableConnectionInput!) {
+  formulaTemplates(input: $input) {
+    edges {
+      node {
+        ...FormulaTemplateTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

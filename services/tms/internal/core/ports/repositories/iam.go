@@ -35,6 +35,13 @@ type ListSCIMGroupRoleMappingsRequest struct {
 	DirectoryID pulid.ID                 `json:"directoryId" form:"directoryId"`
 }
 
+type ListSCIMGroupRoleMappingConnectionRequest struct {
+	Filter                      *pagination.QueryOptions `json:"filter"`
+	Cursor                      pagination.CursorInfo    `json:"-"`
+	DirectoryID                 pulid.ID                 `json:"directoryId"`
+	SCIMGroupRoleMappingColumns []string                 `json:"-"`
+}
+
 type IAMRepository interface {
 	ListIdentityProviders(ctx context.Context, req ListIAMRequest) ([]*iam.IdentityProvider, error)
 	GetIdentityProvider(
@@ -72,6 +79,10 @@ type IAMRepository interface {
 		ctx context.Context,
 		req *ListSCIMGroupRoleMappingsRequest,
 	) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error)
+	ListSCIMGroupRoleMappingsConnection(
+		ctx context.Context,
+		req *ListSCIMGroupRoleMappingConnectionRequest,
+	) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error)
 	CreateSCIMGroupRoleMapping(
 		ctx context.Context,
 		entity *iam.SCIMGroupRoleMapping,

@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { customFieldDefinitionTableGraphQLConfig } from "@/lib/graphql/custom-field-definition-table";
 import { CustomFieldService } from "@/services/custom-field";
 import type { CustomFieldDefinition } from "@/types/custom-field";
 import type { RowAction } from "@/types/data-table";
@@ -104,9 +105,8 @@ export default function CustomFieldDefinitionTable() {
     <>
       <DataTable<CustomFieldDefinition>
         name="Custom Field Definition"
-        link="/custom-fields/definitions/"
         queryKey="custom-field-definition-list"
-        exportModelName="custom-field-definition"
+        graphql={customFieldDefinitionTableGraphQLConfig}
         resource={Resource.CustomFieldDefinition}
         columns={columns}
         contextMenuActions={contextMenuActions}

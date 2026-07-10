@@ -35,6 +35,13 @@ func (n *NoopAuditService) List(
 	return &pagination.ListResult[*audit.Entry]{}, nil
 }
 
+func (n *NoopAuditService) ListConnection(
+	_ context.Context,
+	_ *repositories.ListAuditEntriesConnectionRequest,
+) (*pagination.CursorListResult[*audit.Entry], error) {
+	return &pagination.CursorListResult[*audit.Entry]{}, nil
+}
+
 func (n *NoopAuditService) ListByResourceID(
 	_ context.Context,
 	_ *repositories.ListByResourceIDRequest,

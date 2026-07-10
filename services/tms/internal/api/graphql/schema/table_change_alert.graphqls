@@ -1,0 +1,37 @@
+type TCASubscription {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  name: String!
+  tableName: String!
+  recordId: String
+  eventTypes: [String!]!
+  conditions: [JSON!]!
+  conditionMatch: String!
+  watchedColumns: [String!]!
+  customTitle: String!
+  customMessage: String!
+  topic: String!
+  priority: String!
+  status: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type TCASubscriptionEdge {
+  node: TCASubscription!
+  cursor: String!
+}
+
+type TCASubscriptionConnection {
+  edges: [TCASubscriptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
+  tcaSubscription(id: ID!): TCASubscription
+}

@@ -44,20 +44,28 @@ interface TabConfig {
   contentProps?: Record<string, unknown>;
 }
 
+export interface FormTabConfig {
+  value: string;
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  content: React.ReactNode;
+}
+
 type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string, unknown>> = Pick<
   DataTablePanelProps<TData>,
   "open" | "onOpenChange" | "row"
 > & {
-  url: API_ENDPOINTS;
+  url?: API_ENDPOINTS;
   title: string;
   queryKey: string;
-  formComponent: React.ReactNode;
+  formComponent?: React.ReactNode;
   form: UseFormReturn<T>;
   fieldKey?: keyof TData;
   titleComponent?: (currentRecord: TData) => React.ReactNode;
   headerActions?: React.ReactNode;
   descriptionExtra?: React.ReactNode;
   tabs?: TabConfig[];
+  formTabs?: FormTabConfig[];
   size?: PanelSize;
   useDock?: boolean;
   mutationFn?: (values: T, row: TData) => Promise<T>;
@@ -90,6 +98,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   headerActions,
   descriptionExtra,
   tabs = [],
+  formTabs = [],
   size = "md",
   useDock = false,
   mutationFn,
@@ -98,7 +107,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
-  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("details"));
+  const hasFormTabs = formTabs.length > 0;
+  const defaultTab = hasFormTabs ? formTabs[0].value : "details";
+  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault(defaultTab));
   const {
     setError,
     formState: { isSubmitting },
@@ -109,7 +120,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const handleClose = () => {
     onOpenChange(false);
     reset();
-    void setActiveTab("details");
+    void setActiveTab(defaultTab);
   };
 
   useEffect(() => {
@@ -121,9 +132,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   useEffect(() => {
     if (!open) {
-      void setActiveTab("details");
+      void setActiveTab(defaultTab);
     }
-  }, [open, setActiveTab]);
+  }, [open, defaultTab, setActiveTab]);
 
   const { mutateAsync } = useApiMutation<T, T, unknown, T>({
     mutationFn: async (values: T) => {
@@ -149,7 +160,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       if (action === "save-close") {
         reset();
         onOpenChange(false);
-        void setActiveTab("details");
+        void setActiveTab(defaultTab);
       }
     },
     setFormError: setError,
@@ -277,6 +288,43 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             <div className="flex-1 p-4">
               <ComponentLoader message={`Loading ${title}...`} />
             </div>
+          ) : hasFormTabs ? (
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as string)}
+              className="flex flex-1 flex-col overflow-hidden"
+            >
+              <div className="border-b border-border px-4 pt-2">
+                <TabsList variant="underline">
+                  {formTabs.map((tab) => (
+                    <TabsTab key={tab.value} value={tab.value} className="hover:text-foreground">
+                      {tab.icon && <tab.icon className="mr-1 size-4" />}
+                      {tab.label}
+                    </TabsTab>
+                  ))}
+                </TabsList>
+              </div>
+
+              <ScrollArea className="flex-1">
+                <FormProvider {...form}>
+                  <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
+                    {formTabs.map((tab) => (
+                      <TabsContent key={tab.value} value={tab.value} keepMounted className="p-4">
+                        {tab.content}
+                      </TabsContent>
+                    ))}
+                    {useDock && (
+                      <FormSaveDock
+                        splitButton={splitButtonConfig}
+                        formId="panel-edit-form"
+                        position="right"
+                        showReset={false}
+                      />
+                    )}
+                  </Form>
+                </FormProvider>
+              </ScrollArea>
+            </Tabs>
           ) : hasTabs ? (
             <Tabs
               value={activeTab}

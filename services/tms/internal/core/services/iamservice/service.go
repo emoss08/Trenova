@@ -368,6 +368,13 @@ func (s *service) ListSCIMGroupRoleMappings(
 	return s.repo.ListSCIMGroupRoleMappings(ctx, req)
 }
 
+func (s *service) ListSCIMGroupRoleMappingsConnection(
+	ctx context.Context,
+	req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
+) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
+	return s.repo.ListSCIMGroupRoleMappingsConnection(ctx, req)
+}
+
 func (s *service) CreateSCIMGroupRoleMapping(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

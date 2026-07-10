@@ -15,16 +15,16 @@ import { useEDIPartnerScorecards, useEDISummary, useEDIVolumeSeries } from "./us
 type EDISummaryResult = ResultOf<typeof EdiSummaryDocument>["ediSummary"];
 type EDISummaryAttentionItem = EDISummaryResult["attentionItems"][number];
 
-const TIME_RANGE_OPTIONS: { label: string; sinceHours: number | null }[] = [
+const TIME_RANGE_OPTIONS: { label: string; sinceHours?: number }[] = [
   { label: "4h", sinceHours: 4 },
   { label: "24h", sinceHours: 24 },
   { label: "7d", sinceHours: 168 },
   { label: "30d", sinceHours: 720 },
-  { label: "All", sinceHours: null },
+  { label: "All", sinceHours: undefined },
 ];
 
 export function EDIOverview() {
-  const [sinceHours, setSinceHours] = useState<number | null>(24);
+  const [sinceHours, setSinceHours] = useState<number | undefined>(24);
   const { data, isLoading, isError } = useEDISummary(sinceHours);
   const scorecardsQuery = useEDIPartnerScorecards(sinceHours);
   const volumeQuery = useEDIVolumeSeries(sinceHours);
@@ -50,7 +50,7 @@ export function EDIOverview() {
   const rejectedAcks = countFor(summary.ackStatusCounts, "Rejected");
 
   return (
-    <div className="flex flex-col gap-6 px-3">
+    <div className="flex flex-col gap-6 p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
           Counts, trends, and partner scorecards for the selected window.

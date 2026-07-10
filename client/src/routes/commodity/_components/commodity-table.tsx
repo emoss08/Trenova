@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { commodityTableGraphQLConfig } from "@/lib/graphql/commodity-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { Commodity } from "@/types/commodity";
@@ -58,9 +59,8 @@ export default function CommodityTable() {
   return (
     <DataTable<Commodity>
       name="Commodity"
-      link="/commodities/"
       queryKey="commodity-list"
-      exportModelName="commodity"
+      graphql={commodityTableGraphQLConfig}
       resource={Resource.Commodity}
       columns={columns}
       dockActions={dockActions}

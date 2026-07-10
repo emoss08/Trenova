@@ -1,0 +1,45 @@
+enum AccessorialMethod {
+  Flat
+  PerUnit
+  Percentage
+}
+
+enum RateUnit {
+  Mile
+  Hour
+  Day
+  Stop
+}
+
+type AccessorialCharge {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  description: String!
+  method: AccessorialMethod!
+  rateUnit: RateUnit
+  amount: Float!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type AccessorialChargeEdge {
+  node: AccessorialCharge!
+  cursor: String!
+}
+
+type AccessorialChargeConnection {
+  edges: [AccessorialChargeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
+  accessorialCharge(id: ID!): AccessorialCharge
+}

@@ -22,6 +22,12 @@ export const stringArraySchema = z
   .nullish()
   .transform((value) => value ?? []);
 
+export const nullableArraySchema = <T extends z.ZodTypeAny>(schema: T) =>
+  z
+    .array(schema)
+    .nullish()
+    .transform((value) => value ?? []);
+
 export const tenantInfoSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,

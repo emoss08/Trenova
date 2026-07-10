@@ -1,0 +1,51 @@
+enum HoldType {
+  OperationalHold
+  ComplianceHold
+  CustomerHold
+  FinanceHold
+}
+
+enum HoldSeverity {
+  Informational
+  Advisory
+  Blocking
+}
+
+type HoldReason {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  type: HoldType!
+  code: String!
+  label: String!
+  description: String!
+  active: Boolean!
+  defaultSeverity: HoldSeverity!
+  defaultBlocksDispatch: Boolean!
+  defaultBlocksDelivery: Boolean!
+  defaultBlocksBilling: Boolean!
+  defaultVisibleToCustomer: Boolean!
+  sortOrder: Int!
+  externalMap: JSON
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type HoldReasonEdge {
+  node: HoldReason!
+  cursor: String!
+}
+
+type HoldReasonConnection {
+  edges: [HoldReasonEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
+  holdReason(id: ID!): HoldReason
+}

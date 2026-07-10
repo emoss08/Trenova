@@ -7,38 +7,161 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // CreateEquipmentManufacturer is the resolver for the createEquipmentManufacturer field.
 func (r *mutationResolver) CreateEquipmentManufacturer(ctx context.Context, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	panic(fmt.Errorf("not implemented: CreateEquipmentManufacturer - createEquipmentManufacturer"))
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := mappers.EquipmentManufacturerFromInput(input, pulid.Nil, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := r.equipmentManufacturerService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return created, nil
 }
 
 // UpdateEquipmentManufacturer is the resolver for the updateEquipmentManufacturer field.
 func (r *mutationResolver) UpdateEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	panic(fmt.Errorf("not implemented: UpdateEquipmentManufacturer - updateEquipmentManufacturer"))
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	equipmentManufacturerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := mappers.EquipmentManufacturerFromInput(input, equipmentManufacturerID, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := r.equipmentManufacturerService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return updated, nil
 }
 
 // PatchEquipmentManufacturer is the resolver for the patchEquipmentManufacturer field.
 func (r *mutationResolver) PatchEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerPatchInput) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	panic(fmt.Errorf("not implemented: PatchEquipmentManufacturer - patchEquipmentManufacturer"))
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	equipmentManufacturerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.equipmentManufacturerService.Get(ctx, repositories.GetEquipmentManufacturerByIDRequest{
+		ID:         equipmentManufacturerID,
+		TenantInfo: tenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = mappers.ApplyEquipmentManufacturerPatch(existing, input); err != nil {
+		return nil, err
+	}
+
+	updated, err := r.equipmentManufacturerService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return updated, nil
 }
 
 // BulkUpdateEquipmentManufacturerStatus is the resolver for the bulkUpdateEquipmentManufacturerStatus field.
 func (r *mutationResolver) BulkUpdateEquipmentManufacturerStatus(ctx context.Context, input gqlmodel.BulkUpdateEquipmentManufacturerStatusInput) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
-	panic(fmt.Errorf("not implemented: BulkUpdateEquipmentManufacturerStatus - bulkUpdateEquipmentManufacturerStatus"))
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	equipmentManufacturerIDs, err := parseIDs(input.EquipmentManufacturerIds)
+	if err != nil {
+		return nil, err
+	}
+
+	entities, err := r.equipmentManufacturerService.BulkUpdateStatus(
+		ctx,
+		&repositories.BulkUpdateEquipmentManufacturerStatusRequest{
+			TenantInfo:               tenantInfo(authCtx),
+			EquipmentManufacturerIDs: equipmentManufacturerIDs,
+			Status:                   input.Status,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
 }
 
 // EquipmentManufacturers is the resolver for the equipmentManufacturers field.
 func (r *queryResolver) EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error) {
-	panic(fmt.Errorf("not implemented: EquipmentManufacturers - equipmentManufacturers"))
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.equipmentManufacturerService.ListConnection(
+		ctx,
+		&repositories.ListEquipmentManufacturerConnectionRequest{
+			Filter:                       tableInput.Filter,
+			Cursor:                       tableInput.Cursor,
+			EquipmentManufacturerColumns: equipmentManufacturerColumns(ctx, "edges.node"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return equipmentManufacturerConnectionToModel(result)
 }
 
 // EquipmentManufacturer is the resolver for the equipmentManufacturer field.
 func (r *queryResolver) EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	panic(fmt.Errorf("not implemented: EquipmentManufacturer - equipmentManufacturer"))
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	equipmentManufacturerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.equipmentManufacturerService.Get(ctx, repositories.GetEquipmentManufacturerByIDRequest{
+		ID:         equipmentManufacturerID,
+		TenantInfo: tenantInfo(authCtx),
+	})
 }

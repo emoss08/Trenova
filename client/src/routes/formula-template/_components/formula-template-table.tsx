@@ -1,6 +1,7 @@
 "use no memo";
 import { DataTable } from "@/components/data-table/data-table";
 import { DuplicateAlertDialog } from "@/components/duplicate-alert-dialog";
+import { formulaTemplateTableGraphQLConfig } from "@/lib/graphql/formula-template-table";
 import { statusChoices } from "@/lib/choices";
 import {
   buildBulkExport,
@@ -273,9 +274,8 @@ export default function FormulaTemplatesDataTable() {
     <>
       <DataTable<FormulaTemplate>
         name="Formula Template"
-        link="/formula-templates/"
         queryKey="formula-template-list"
-        exportModelName="formula-template"
+        graphql={formulaTemplateTableGraphQLConfig}
         columns={columns}
         enableRowSelection
         dockActions={dockActions}

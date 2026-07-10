@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { accessorialChargeTableGraphQLConfig } from "@/lib/graphql/accessorial-charge-table";
 import type { AccessorialCharge } from "@/types/accessorial-charge";
 import { Resource } from "@/types/permission";
 import { useMemo } from "react";
@@ -52,9 +53,8 @@ export default function AccessorialChargeTable() {
   return (
     <DataTable<AccessorialCharge>
       name="Accessorial Charge"
-      link="/accessorial-charges/"
       queryKey="accessorial-charge-list"
-      exportModelName="accessorial-charge"
+      graphql={accessorialChargeTableGraphQLConfig}
       resource={Resource.AccessorialCharge}
       columns={columns}
       //   dockActions={dockActions}

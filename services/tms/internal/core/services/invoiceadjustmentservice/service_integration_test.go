@@ -178,6 +178,13 @@ func (fakeAccessorialRepo) List(
 	return nil, nil
 }
 
+func (fakeAccessorialRepo) ListConnection(
+	context.Context,
+	*repositories.ListAccessorialChargeConnectionRequest,
+) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
+	return nil, nil
+}
+
 func (fakeAccessorialRepo) SelectOptions(
 	context.Context,
 	*pagination.SelectQueryRequest,

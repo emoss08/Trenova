@@ -190,21 +190,9 @@ input WorkerPatchInput {
 }
 
 extend type Query {
-  workers(
-    first: Int = 20
-    after: String
-    query: String
-    fieldFilters: [FieldFilterInput!]
-    filterGroups: [FilterGroupInput!]
-    sort: [SortFieldInput!]
-  ): WorkerConnection!
+  workers(input: DataTableConnectionInput!): WorkerConnection!
   workerPTOEntries(
-    first: Int = 20
-    after: String
-    query: String
-    fieldFilters: [FieldFilterInput!]
-    filterGroups: [FilterGroupInput!]
-    sort: [SortFieldInput!]
+    input: DataTableConnectionInput!
     status: PTOStatus
     type: PTOType
     startDateFrom: Int

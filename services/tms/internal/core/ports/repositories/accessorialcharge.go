@@ -12,6 +12,12 @@ type ListAccessorialChargeRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListAccessorialChargeConnectionRequest struct {
+	Filter                   *pagination.QueryOptions `json:"filter"`
+	Cursor                   pagination.CursorInfo    `json:"-"`
+	AccessorialChargeColumns []string                 `json:"-"`
+}
+
 type GetAccessorialChargeByIDRequest struct {
 	ID         pulid.ID               `json:"id"`
 	TenantInfo *pagination.TenantInfo `json:"-"`
@@ -22,6 +28,10 @@ type AccessorialChargeRepository interface {
 		ctx context.Context,
 		req *ListAccessorialChargeRequest,
 	) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListAccessorialChargeConnectionRequest,
+	) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error)
 	SelectOptions(
 		ctx context.Context,
 		req *pagination.SelectQueryRequest,

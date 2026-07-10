@@ -1,0 +1,35 @@
+fragment CommodityTableRowFields on Commodity {
+  id
+  businessUnitId
+  organizationId
+  hazardousMaterialId
+  status
+  name
+  description
+  minTemperature
+  maxTemperature
+  weightPerUnit
+  linearFeetPerUnit
+  maxQuantityPerShipment
+  freightClass
+  loadingInstructions
+  stackable
+  fragile
+  version
+  createdAt
+  updatedAt
+}
+
+query CommodityTable($input: DataTableConnectionInput!) {
+  commodities(input: $input) {
+    edges {
+      node {
+        ...CommodityTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

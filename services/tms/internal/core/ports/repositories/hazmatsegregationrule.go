@@ -12,6 +12,12 @@ type ListHazmatSegregationRuleRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListHazmatSegregationRuleConnectionRequest struct {
+	Filter                       *pagination.QueryOptions `json:"filter"`
+	Cursor                       pagination.CursorInfo    `json:"-"`
+	HazmatSegregationRuleColumns []string                 `json:"-"`
+}
+
 type GetHazmatSegregationRuleByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -22,6 +28,10 @@ type HazmatSegregationRuleRepository interface {
 		ctx context.Context,
 		req *ListHazmatSegregationRuleRequest,
 	) (*pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListHazmatSegregationRuleConnectionRequest,
+	) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error)
 	ListActiveByTenant(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

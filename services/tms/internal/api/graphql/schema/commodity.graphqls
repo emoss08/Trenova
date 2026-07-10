@@ -1,0 +1,60 @@
+enum FreightClass {
+  Class50
+  Class55
+  Class60
+  Class65
+  Class70
+  Class77_5
+  Class85
+  Class92_5
+  Class100
+  Class110
+  Class125
+  Class150
+  Class175
+  Class200
+  Class250
+  Class300
+  Class400
+  Class500
+}
+
+type Commodity {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  hazardousMaterialId: ID
+  status: EntityStatus!
+  name: String!
+  description: String!
+  minTemperature: Int
+  maxTemperature: Int
+  weightPerUnit: Float
+  linearFeetPerUnit: Float
+  maxQuantityPerShipment: Float
+  freightClass: FreightClass
+  loadingInstructions: String
+  stackable: Boolean!
+  fragile: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type CommodityEdge {
+  node: Commodity!
+  cursor: String!
+}
+
+type CommodityConnection {
+  edges: [CommodityEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  commodities(input: DataTableConnectionInput!): CommodityConnection!
+  commodity(id: ID!): Commodity
+}

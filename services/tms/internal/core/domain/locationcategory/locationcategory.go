@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,10 +20,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*LocationCategory)(nil)
 	_ validationframework.TenantedEntity = (*LocationCategory)(nil)
 	_ domaintypes.PostgresSearchable     = (*LocationCategory)(nil)
+	_ pagination.CursorEntity            = (*LocationCategory)(nil)
 )
 
 type LocationCategory struct {
-	bun.BaseModel `bun:"table:location_categories,alias:lc" json:"-"`
+	bun.BaseModel             `bun:"table:location_categories,alias:lc" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                  pulid.ID     `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID      pulid.ID     `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -99,6 +102,10 @@ func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query
 
 func (lc *LocationCategory) GetID() pulid.ID {
 	return lc.ID
+}
+
+func (lc *LocationCategory) GetCreatedAt() int64 {
+	return lc.CreatedAt
 }
 
 func (lc *LocationCategory) GetOrganizationID() pulid.ID {

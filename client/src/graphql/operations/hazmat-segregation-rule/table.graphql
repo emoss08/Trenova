@@ -1,0 +1,36 @@
+fragment HazmatSegregationRuleTableRowFields on HazmatSegregationRule {
+  id
+  businessUnitId
+  organizationId
+  status
+  name
+  description
+  exceptionNotes
+  referenceCode
+  regulationSource
+  distanceUnit
+  classA
+  classB
+  segregationType
+  hasExceptions
+  hazmatAId
+  hazmatBId
+  minimumDistance
+  version
+  createdAt
+  updatedAt
+}
+
+query HazmatSegregationRuleTable($input: DataTableConnectionInput!) {
+  hazmatSegregationRules(input: $input) {
+    edges {
+      node {
+        ...HazmatSegregationRuleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

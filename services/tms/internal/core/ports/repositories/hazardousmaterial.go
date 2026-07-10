@@ -13,6 +13,12 @@ type ListHazardousMaterialsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListHazardousMaterialConnectionRequest struct {
+	Filter                   *pagination.QueryOptions `json:"filter"`
+	Cursor                   pagination.CursorInfo    `json:"-"`
+	HazardousMaterialColumns []string                 `json:"-"`
+}
+
 type GetHazardousMaterialByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -38,6 +44,10 @@ type HazardousMaterialRepository interface {
 		ctx context.Context,
 		req *ListHazardousMaterialsRequest,
 	) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListHazardousMaterialConnectionRequest,
+	) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error)
 	GetByID(
 		ctx context.Context,
 		req GetHazardousMaterialByIDRequest,

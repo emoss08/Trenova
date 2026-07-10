@@ -1,0 +1,34 @@
+fragment FleetCodeTableRowFields on FleetCode {
+  id
+  businessUnitId
+  organizationId
+  managerId
+  status
+  code
+  description
+  revenueGoal
+  deadheadGoal
+  mileageGoal
+  color
+  version
+  createdAt
+  updatedAt
+  manager {
+    id
+    name
+  }
+}
+
+query FleetCodeTable($input: DataTableConnectionInput!) {
+  fleetCodes(input: $input) {
+    edges {
+      node {
+        ...FleetCodeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

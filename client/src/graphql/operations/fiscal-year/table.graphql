@@ -1,0 +1,31 @@
+fragment FiscalYearTableRowFields on FiscalYear {
+  id
+  businessUnitId
+  organizationId
+  status
+  year
+  name
+  description
+  startDate
+  endDate
+  isCurrent
+  isCalendarYear
+  allowAdjustingEntries
+  version
+  createdAt
+  updatedAt
+}
+
+query FiscalYearTable($input: DataTableConnectionInput!) {
+  fiscalYears(input: $input) {
+    edges {
+      node {
+        ...FiscalYearTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

@@ -90,6 +90,13 @@ func (s *Service) ListProfiles(
 	return s.repo.ListProfiles(ctx, req)
 }
 
+func (s *Service) ListProfilesConnection(
+	ctx context.Context,
+	req *repositories.ListEmailProfileConnectionRequest,
+) (*pagination.CursorListResult[*email.Profile], error) {
+	return s.repo.ListProfilesConnection(ctx, req)
+}
+
 func (s *Service) SelectProfileOptions(
 	ctx context.Context,
 	req *repositories.EmailProfileSelectOptionsRequest,

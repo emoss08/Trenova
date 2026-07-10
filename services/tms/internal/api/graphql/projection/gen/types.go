@@ -41,6 +41,7 @@ type goStruct struct {
 	PackageName string
 	Name        string
 	FullName    string
+	IsEntity    bool
 	Fields      map[string]goField
 }
 

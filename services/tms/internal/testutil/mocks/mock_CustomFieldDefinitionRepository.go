@@ -435,6 +435,74 @@ func (_c *MockCustomFieldDefinitionRepository_List_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// ListConnection provides a mock function for the type MockCustomFieldDefinitionRepository
+func (_mock *MockCustomFieldDefinitionRepository) ListConnection(ctx context.Context, req *repositories.ListCustomFieldDefinitionConnectionRequest) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*customfield.CustomFieldDefinition]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCustomFieldDefinitionConnectionRequest) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCustomFieldDefinitionConnectionRequest) *pagination.CursorListResult[*customfield.CustomFieldDefinition]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*customfield.CustomFieldDefinition])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListCustomFieldDefinitionConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomFieldDefinitionRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockCustomFieldDefinitionRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListCustomFieldDefinitionConnectionRequest
+func (_e *MockCustomFieldDefinitionRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_ListConnection_Call {
+	return &MockCustomFieldDefinitionRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockCustomFieldDefinitionRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListCustomFieldDefinitionConnectionRequest)) *MockCustomFieldDefinitionRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListCustomFieldDefinitionConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListCustomFieldDefinitionConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomFieldDefinitionRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*customfield.CustomFieldDefinition], err error) *MockCustomFieldDefinitionRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockCustomFieldDefinitionRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListCustomFieldDefinitionConnectionRequest) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error)) *MockCustomFieldDefinitionRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockCustomFieldDefinitionRepository
 func (_mock *MockCustomFieldDefinitionRepository) Update(ctx context.Context, entity *customfield.CustomFieldDefinition) (*customfield.CustomFieldDefinition, error) {
 	ret := _mock.Called(ctx, entity)

@@ -13,6 +13,12 @@ type ListServiceTypesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListServiceTypesConnectionRequest struct {
+	Filter             *pagination.QueryOptions `json:"filter"`
+	Cursor             pagination.CursorInfo    `json:"-"`
+	ServiceTypeColumns []string                 `json:"-"`
+}
+
 type GetServiceTypeByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -39,6 +45,10 @@ type ServiceTypeRepository interface {
 		ctx context.Context,
 		req *ListServiceTypesRequest,
 	) (*pagination.ListResult[*servicetype.ServiceType], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListServiceTypesConnectionRequest,
+	) (*pagination.CursorListResult[*servicetype.ServiceType], error)
 	GetByID(
 		ctx context.Context,
 		req GetServiceTypeByIDRequest,

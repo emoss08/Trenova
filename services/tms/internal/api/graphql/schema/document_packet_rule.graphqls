@@ -1,0 +1,31 @@
+type DocumentPacketRule {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  resourceType: String!
+  documentTypeId: ID!
+  required: Boolean!
+  allowMultiple: Boolean!
+  displayOrder: Int!
+  expirationRequired: Boolean!
+  expirationWarningDays: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type DocumentPacketRuleEdge {
+  node: DocumentPacketRule!
+  cursor: String!
+}
+
+type DocumentPacketRuleConnection {
+  edges: [DocumentPacketRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
+  documentPacketRule(id: ID!): DocumentPacketRule
+}

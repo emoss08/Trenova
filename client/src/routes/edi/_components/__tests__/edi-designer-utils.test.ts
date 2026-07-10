@@ -183,7 +183,9 @@ describe("buildNewPartnerDocumentProfileDraft", () => {
         status: "Active",
         functionalGroupId: "SM",
         envelope: {
+          interchangeSenderQualifier: "ZZ",
           interchangeSenderId: "TRENOVA",
+          interchangeReceiverQualifier: "ZZ",
           interchangeReceiverId: "PARTNER",
           applicationSenderCode: "TRENOVA",
           applicationReceiverCode: "PARTNER",

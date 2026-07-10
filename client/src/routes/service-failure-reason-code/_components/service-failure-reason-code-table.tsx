@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { serviceFailureReasonCodeTableGraphQLConfig } from "@/lib/graphql/service-failure-reason-code-table";
 import { apiService } from "@/services/api";
 import type { RowAction } from "@/types/data-table";
 import { Resource } from "@/types/permission";
@@ -53,9 +54,8 @@ export default function ServiceFailureReasonCodeTable() {
   return (
     <DataTable<ServiceFailureReasonCode>
       name="Service Failure Reason Code"
-      link="/service-failure-reason-codes/"
       queryKey="service-failure-reason-code-list"
-      exportModelName="service-failure-reason-code"
+      graphql={serviceFailureReasonCodeTableGraphQLConfig}
       resource={Resource.ServiceFailureReasonCode}
       columns={columns}
       contextMenuActions={contextMenuActions}

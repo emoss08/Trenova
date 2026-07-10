@@ -1,0 +1,26 @@
+fragment ShipmentTypeTableRowFields on ShipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  color
+  version
+  createdAt
+  updatedAt
+}
+
+query ShipmentTypeTable($input: DataTableConnectionInput!) {
+  shipmentTypes(input: $input) {
+    edges {
+      node {
+        ...ShipmentTypeTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

@@ -1,0 +1,30 @@
+type Role {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  coreResponsibility: String
+  parentRoleIds: [ID!]
+  maxSensitivity: String!
+  isSystem: Boolean!
+  createdBy: ID!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RoleEdge {
+  node: Role!
+  cursor: String!
+}
+
+type RoleConnection {
+  edges: [RoleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  roles(input: DataTableConnectionInput!): RoleConnection!
+  role(id: ID!): Role
+}

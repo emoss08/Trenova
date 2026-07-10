@@ -1,0 +1,35 @@
+fragment TCASubscriptionTableRowFields on TCASubscription {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  tableName
+  recordId
+  eventTypes
+  conditions
+  conditionMatch
+  watchedColumns
+  customTitle
+  customMessage
+  topic
+  priority
+  status
+  version
+  createdAt
+  updatedAt
+}
+
+query TCASubscriptionTable($input: DataTableConnectionInput!) {
+  tcaSubscriptions(input: $input) {
+    edges {
+      node {
+        ...TCASubscriptionTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

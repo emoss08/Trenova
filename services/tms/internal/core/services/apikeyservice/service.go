@@ -65,6 +65,25 @@ func (s *Service) ListAPIKeys(
 	}, nil
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAPIKeyConnectionRequest,
+) (*pagination.CursorListResult[*apikey.Key], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
+func (s *Service) ComputePermissionScope(perms []*apikey.Permission) string {
+	return s.computePermissionScope(perms)
+}
+
+func (s *Service) GetAPIKeyEntity(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) (*apikey.Key, error) {
+	return s.repo.GetByID(ctx, tenantInfo, id)
+}
+
 func (s *Service) CreateAPIKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

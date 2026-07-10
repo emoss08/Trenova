@@ -1,0 +1,42 @@
+fragment HazardousMaterialTableRowFields on HazardousMaterial {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  name
+  description
+  class
+  unNumber
+  packingGroup
+  subsidiaryHazardClass
+  ergGuideNumber
+  labelCodes
+  specialProvisions
+  properShippingName
+  handlingInstructions
+  emergencyContact
+  emergencyContactPhoneNumber
+  quantityThreshold
+  placardRequired
+  isReportableQuantity
+  marinePollutant
+  inhalationHazard
+  version
+  createdAt
+  updatedAt
+}
+
+query HazardousMaterialTable($input: DataTableConnectionInput!) {
+  hazardousMaterials(input: $input) {
+    edges {
+      node {
+        ...HazardousMaterialTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

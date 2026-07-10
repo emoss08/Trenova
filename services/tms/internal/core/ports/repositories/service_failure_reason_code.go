@@ -13,6 +13,12 @@ type ListServiceFailureReasonCodesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListServiceFailureReasonCodeConnectionRequest struct {
+	Filter                          *pagination.QueryOptions `json:"filter"`
+	Cursor                          pagination.CursorInfo    `json:"-"`
+	ServiceFailureReasonCodeColumns []string                 `json:"-"`
+}
+
 type GetServiceFailureReasonCodeByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -77,6 +83,10 @@ type ServiceFailureReasonCodeRepository interface {
 		ctx context.Context,
 		req *ListServiceFailureReasonCodesRequest,
 	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListServiceFailureReasonCodeConnectionRequest,
+	) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)
 	GetByID(
 		ctx context.Context,
 		req GetServiceFailureReasonCodeByIDRequest,

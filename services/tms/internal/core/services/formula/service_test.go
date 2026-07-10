@@ -63,6 +63,13 @@ func (m *mockFormulaTemplateRepo) List(
 	return nil, nil
 }
 
+func (m *mockFormulaTemplateRepo) ListConnection(
+	_ context.Context,
+	_ *repositories.ListFormulaTemplateConnectionRequest,
+) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	return nil, nil
+}
+
 func (m *mockFormulaTemplateRepo) BulkUpdateStatus(
 	_ context.Context,
 	_ *repositories.BulkUpdateFormulaTemplateStatusRequest,

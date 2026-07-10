@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -22,6 +23,8 @@ var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 
 type CustomFieldDefinition struct {
 	bun.BaseModel `bun:"table:custom_field_definitions,alias:cfd" json:"-"`
+
+	CursorValueSet pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -122,6 +125,10 @@ func (c *CustomFieldDefinition) BeforeAppendModel(_ context.Context, query bun.Q
 
 func (c *CustomFieldDefinition) GetID() pulid.ID {
 	return c.ID
+}
+
+func (c *CustomFieldDefinition) GetCreatedAt() int64 {
+	return c.CreatedAt
 }
 
 func (c *CustomFieldDefinition) GetOrganizationID() pulid.ID {

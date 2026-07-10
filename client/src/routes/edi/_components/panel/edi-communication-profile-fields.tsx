@@ -50,7 +50,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.localAS2Id"
                 label="Local AS2 ID"
+                placeholder="TRENOVA"
                 rules={{ required: true }}
+                description="Our AS2 identifier that the partner uses to address messages to us."
               />
             </FormControl>
             <FormControl>
@@ -58,7 +60,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.partnerAS2Id"
                 label="Partner AS2 ID"
+                placeholder="PARTNERCO"
                 rules={{ required: true }}
+                description="The partner's AS2 identifier that we address outbound messages to."
               />
             </FormControl>
             <FormControl cols="full">
@@ -66,7 +70,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.endpointUrl"
                 label="Endpoint URL"
+                placeholder="https://edi.partner.com/as2"
                 rules={{ required: true }}
+                description="The partner's HTTPS URL where we POST outbound AS2 messages."
               />
             </FormControl>
           </FormGroup>
@@ -88,6 +94,7 @@ export function TransportProfileFields({
                 control={control}
                 name="config.mdnUrl"
                 label="Async MDN Return URL"
+                placeholder="https://edi.trenova.com/as2/mdn"
                 description="Required when MDN mode is asynchronous."
               />
             </FormControl>
@@ -97,6 +104,7 @@ export function TransportProfileFields({
                 name="config.signingAlgorithm"
                 label="Signing Algorithm"
                 options={as2SigningAlgorithmOptions}
+                description="The hashing algorithm used to sign outbound messages and MDNs."
               />
             </FormControl>
             <FormControl>
@@ -105,6 +113,7 @@ export function TransportProfileFields({
                 name="config.encryptionAlgorithm"
                 label="Encryption Algorithm"
                 options={as2EncryptionAlgorithmOptions}
+                description="The cipher used to encrypt outbound message payloads."
               />
             </FormControl>
             <FormControl>
@@ -113,6 +122,7 @@ export function TransportProfileFields({
                 name="config.compressionAlgorithm"
                 label="Compression"
                 options={as2CompressionOptions}
+                description="Compresses outbound payloads before encryption to reduce transfer size."
               />
             </FormControl>
             <FormControl>
@@ -120,6 +130,7 @@ export function TransportProfileFields({
                 control={control}
                 name="config.basicAuthUsername"
                 label="Basic Auth Username"
+                placeholder="trenova"
                 description="Optional HTTP basic auth credential the partner endpoint expects."
               />
             </FormControl>
@@ -197,7 +208,9 @@ export function TransportProfileFields({
               control={control}
               name="config.providerName"
               label="Provider Name"
+              placeholder="OpenText / SPS Commerce"
               rules={{ required: true }}
+              description="The name of the VAN provider hosting this mailbox."
             />
           </FormControl>
           <FormControl>
@@ -205,14 +218,28 @@ export function TransportProfileFields({
               control={control}
               name="config.mailboxId"
               label="Mailbox ID"
+              placeholder="MB123456"
               rules={{ required: true }}
+              description="The mailbox identifier assigned by the VAN provider for routing documents."
             />
           </FormControl>
           <FormControl>
-            <InputField control={control} name="config.accountId" label="Account ID" />
+            <InputField
+              control={control}
+              name="config.accountId"
+              label="Account ID"
+              placeholder="ACCT-0001"
+              description="The account identifier with the VAN provider, if separate from the mailbox."
+            />
           </FormControl>
           <FormControl>
-            <InputField control={control} name="config.contactEmail" label="Contact Email" />
+            <InputField
+              control={control}
+              name="config.contactEmail"
+              label="Contact Email"
+              placeholder="edi@trenova.com"
+              description="The email address the VAN provider uses for service notifications."
+            />
           </FormControl>
         </FormGroup>
       </FormSection>
@@ -227,7 +254,7 @@ export function TransportProfileFields({
 
 function DeliveryRetrySection({ control }: ProfileFieldsProps) {
   return (
-    <FormSection title="Delivery Retry" className="rounded-md border bg-muted/20 p-3">
+    <FormSection title="Delivery Retry">
       <FormGroup cols={3}>
         <FormControl>
           <InputField
@@ -267,13 +294,15 @@ function DeliveryRetrySection({ control }: ProfileFieldsProps) {
 function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: string }) {
   return (
     <>
-      <FormSection title={title} className="rounded-md border bg-muted/20 p-3">
+      <FormSection title={title}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="config.host"
               label="Host"
+              placeholder="sftp.partner.com"
+              description="The host name or IP address of the SFTP server."
               rules={{ required: true }}
             />
           </FormControl>
@@ -282,6 +311,8 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               control={control}
               name="config.port"
               label="Port"
+              placeholder="22"
+              description="The port number of the SFTP server."
               rules={{ required: true }}
             />
           </FormControl>
@@ -290,6 +321,8 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               control={control}
               name="config.username"
               label="Username"
+              placeholder="trenova"
+              description="The username for the SFTP server."
               rules={{ required: true }}
             />
           </FormControl>
@@ -299,6 +332,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               name="config.authMode"
               label="Authentication"
               options={sftpAuthModeOptions}
+              description="The authentication mode for the SFTP server."
               rules={{ required: true }}
             />
           </FormControl>
@@ -307,12 +341,14 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               control={control}
               name="config.knownHostKey"
               label="Known Host Key"
+              placeholder="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5..."
+              description="The known host key for the SFTP server."
               rules={{ required: true }}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
-      <FormSection title="Directories" className="rounded-md border bg-muted/20 p-3">
+      <FormSection title="Directories">
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -320,6 +356,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               name="config.inboundDirectory"
               label="Inbound Directory"
               placeholder="/inbound"
+              description="The directory where inbound files are stored."
             />
           </FormControl>
           <FormControl>
@@ -328,6 +365,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               name="config.outboundDirectory"
               label="Outbound Directory"
               placeholder="/outbound"
+              description="The directory where outbound files are written for pickup."
             />
           </FormControl>
           <FormControl>
@@ -336,6 +374,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               name="config.archiveDirectory"
               label="Archive Directory"
               placeholder="/archive"
+              description="The directory where processed files are moved for retention."
             />
           </FormControl>
           <FormControl>
@@ -344,6 +383,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               name="config.fileNamingPattern"
               label="File Naming Pattern"
               placeholder="{partner}-{timestamp}.edi"
+              description="The template used to name outbound files, with token substitution."
             />
           </FormControl>
         </FormGroup>
@@ -354,14 +394,16 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
 
 export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
   return (
-    <FormSection title="X12 Envelope" className="rounded-md border bg-muted/20 p-3">
+    <FormSection title="X12 Envelope">
       <FormGroup cols={2}>
         <FormControl>
           <InputField
             control={control}
             name="config.isaSenderQualifier"
             label="ISA Sender Qualifier"
+            placeholder="ZZ"
             rules={{ required: true }}
+            description="The qualifier code that identifies the type of our ISA sender ID (e.g. 01, ZZ)."
           />
         </FormControl>
         <FormControl>
@@ -369,7 +411,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             control={control}
             name="config.isaSenderId"
             label="ISA Sender ID"
+            placeholder="TRENOVA"
             rules={{ required: true }}
+            description="Our sender identifier placed in the ISA interchange header."
           />
         </FormControl>
         <FormControl>
@@ -377,7 +421,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             control={control}
             name="config.isaReceiverQualifier"
             label="ISA Receiver Qualifier"
+            placeholder="ZZ"
             rules={{ required: true }}
+            description="The qualifier code that identifies the type of the partner's ISA receiver ID."
           />
         </FormControl>
         <FormControl>
@@ -385,7 +431,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             control={control}
             name="config.isaReceiverId"
             label="ISA Receiver ID"
+            placeholder="PARTNERCO"
             rules={{ required: true }}
+            description="The partner's receiver identifier placed in the ISA interchange header."
           />
         </FormControl>
         <FormControl>
@@ -393,7 +441,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             control={control}
             name="config.gsSenderId"
             label="GS Sender ID"
+            placeholder="TRENOVA"
             rules={{ required: true }}
+            description="Our application sender code placed in the GS functional group header."
           />
         </FormControl>
         <FormControl>
@@ -401,7 +451,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             control={control}
             name="config.gsReceiverId"
             label="GS Receiver ID"
+            placeholder="PARTNERCO"
             rules={{ required: true }}
+            description="The partner's application receiver code placed in the GS functional group header."
           />
         </FormControl>
         <FormControl>
@@ -409,7 +461,9 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             control={control}
             name="config.x12Version"
             label="X12 Version"
+            placeholder="004010"
             rules={{ required: true }}
+            description="The X12 release version the partner expects (e.g. 004010, 005010)."
           />
         </FormControl>
         <FormControl>
@@ -419,6 +473,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             label="Environment"
             options={environmentOptions}
             rules={{ required: true }}
+            description="Whether this envelope targets the partner's test or production system."
           />
         </FormControl>
         <FormControl cols="full">
@@ -427,6 +482,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             name="config.acknowledgmentPreference"
             label="Acknowledgment Preference"
             options={acknowledgmentOptions}
+            description="Which functional acknowledgments (997/999) to request from the partner."
           />
         </FormControl>
       </FormGroup>
@@ -448,13 +504,15 @@ export function SecretProfileFields({
     return <EDIEmptyState message="Internal profiles do not store external credentials." />;
   }
 
+  const secretState = profile ? profile.secretState : null;
+
   return (
-    <div className="grid gap-3 xl:grid-cols-2">
-      {profile && profile.secretState.length > 0 && (
+    <div className="space-y-3">
+      {secretState && secretState.length > 0 && (
         <div className="rounded-md border bg-muted/20 p-3">
           <div className="mb-2 text-sm font-medium">Saved Secrets</div>
           <div className="flex flex-wrap gap-1.5">
-            {profile.secretState.map((secret) => (
+            {secretState.map((secret) => (
               <Badge key={secret.key} variant="secondary">
                 {secret.key} saved
               </Badge>
@@ -462,8 +520,8 @@ export function SecretProfileFields({
           </div>
         </div>
       )}
-      <FormSection title="Secret Values" className="rounded-md border bg-muted/20 p-3">
-        <FormGroup cols={2}>
+      <FormSection title="Secret Values">
+        <FormGroup cols={1}>
           {method === "AS2" && (
             <>
               <FormControl cols="full">
@@ -474,7 +532,7 @@ export function SecretProfileFields({
                   description="Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value."
                 />
               </FormControl>
-              <FormControl>
+              <FormControl cols="full">
                 <SensitiveField
                   control={control}
                   name="secrets.basicAuthPassword"
@@ -485,7 +543,7 @@ export function SecretProfileFields({
             </>
           )}
           {(method === "SFTP" || method === "VAN") && authMode === "password" && (
-            <FormControl>
+            <FormControl cols="full">
               <SensitiveField
                 control={control}
                 name="secrets.password"

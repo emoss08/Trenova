@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -58,6 +59,8 @@ var (
 
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:usr" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                    pulid.ID               `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID        pulid.ID               `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull"`
@@ -156,6 +159,10 @@ func (u *User) BeforeAppendModel(_ context.Context, q bun.Query) error {
 
 func (u *User) GetID() pulid.ID {
 	return u.ID
+}
+
+func (u *User) GetCreatedAt() int64 {
+	return u.CreatedAt
 }
 
 func (u *User) GetTableName() string {

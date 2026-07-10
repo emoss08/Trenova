@@ -13,6 +13,12 @@ type ListAccountTypesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListAccountTypesConnectionRequest struct {
+	Filter             *pagination.QueryOptions `json:"filter"`
+	Cursor             pagination.CursorInfo    `json:"-"`
+	AccountTypeColumns []string                 `json:"-"`
+}
+
 type GetAccountTypeByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -38,6 +44,10 @@ type AccountTypeRepository interface {
 		ctx context.Context,
 		req *ListAccountTypesRequest,
 	) (*pagination.ListResult[*accounttype.AccountType], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListAccountTypesConnectionRequest,
+	) (*pagination.CursorListResult[*accounttype.AccountType], error)
 	GetByID(
 		ctx context.Context,
 		req GetAccountTypeByIDRequest,

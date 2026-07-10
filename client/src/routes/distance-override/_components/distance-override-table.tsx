@@ -10,6 +10,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { distanceOverrideTableGraphQLConfig } from "@/lib/graphql/distance-override-table";
 import { DistanceOverrideService } from "@/services/distance-override";
 import type { RowAction } from "@/types/data-table";
 import type { DistanceOverride } from "@/types/distance-override";
@@ -76,9 +77,8 @@ export default function DistanceOverrideTable() {
     <>
       <DataTable<DistanceOverride>
         name="Distance Override"
-        link="/distance-overrides/"
         queryKey="distance-override-list"
-        exportModelName="distance-override"
+        graphql={distanceOverrideTableGraphQLConfig}
         resource={Resource.DistanceOverride}
         columns={columns}
         contextMenuActions={contextMenuActions}

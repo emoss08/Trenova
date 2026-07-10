@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,6 +24,8 @@ var (
 
 type AccountType struct {
 	bun.BaseModel `bun:"table:account_types,alias:at" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -87,6 +90,10 @@ func (a *AccountType) Validate(multiErr *errortypes.MultiError) {
 
 func (a *AccountType) GetID() pulid.ID {
 	return a.ID
+}
+
+func (a *AccountType) GetCreatedAt() int64 {
+	return a.CreatedAt
 }
 
 func (a *AccountType) GetTableName() string {

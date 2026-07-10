@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { hazardousMaterialTableGraphQLConfig } from "@/lib/graphql/hazardous-material-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,9 +59,8 @@ export default function HazardousMaterialTable() {
   return (
     <DataTable<HazardousMaterial>
       name="Hazardous Material"
-      link="/hazardous-materials/"
       queryKey="hazardous-material-list"
-      exportModelName="hazardous-material"
+      graphql={hazardousMaterialTableGraphQLConfig}
       resource={Resource.HazardousMaterial}
       columns={columns}
       dockActions={dockActions}

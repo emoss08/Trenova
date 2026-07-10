@@ -114,6 +114,13 @@ func (s *Service) ListSubscriptions(
 	return s.subRepo.List(ctx, req)
 }
 
+func (s *Service) ListSubscriptionsConnection(
+	ctx context.Context,
+	req *repositories.ListTCASubscriptionConnectionRequest,
+) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error) {
+	return s.subRepo.ListConnection(ctx, req)
+}
+
 func (s *Service) DeleteSubscription(
 	ctx context.Context,
 	id pulid.ID,

@@ -284,6 +284,10 @@ type ServiceFailureService interface {
 		ctx context.Context,
 		req *repositories.ListServiceFailuresRequest,
 	) (*pagination.ListResult[*servicefailure.ServiceFailure], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListServiceFailureConnectionRequest,
+	) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error)
 	GetByID(
 		ctx context.Context,
 		req *repositories.GetServiceFailureByIDRequest,
@@ -329,6 +333,10 @@ type ServiceFailureReasonCodeService interface {
 		ctx context.Context,
 		req *repositories.ListServiceFailureReasonCodesRequest,
 	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListServiceFailureReasonCodeConnectionRequest,
+	) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)
 	Get(
 		ctx context.Context,
 		req repositories.GetServiceFailureReasonCodeByIDRequest,

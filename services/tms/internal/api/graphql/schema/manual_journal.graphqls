@@ -1,0 +1,54 @@
+enum ManualJournalStatus {
+  Draft
+  PendingApproval
+  Approved
+  Rejected
+  Cancelled
+  Posted
+}
+
+type ManualJournal {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  requestNumber: String!
+  status: ManualJournalStatus!
+  description: String!
+  reason: String
+  accountingDate: Int!
+  requestedFiscalYearId: ID!
+  requestedFiscalPeriodId: ID!
+  currencyCode: String!
+  totalDebit: Int!
+  totalCredit: Int!
+  approvedAt: Int
+  approvedById: ID
+  rejectedAt: Int
+  rejectedById: ID
+  rejectionReason: String
+  cancelledAt: Int
+  cancelledById: ID
+  cancelReason: String
+  postedBatchId: ID
+  createdById: ID
+  updatedById: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ManualJournalEdge {
+  node: ManualJournal!
+  cursor: String!
+}
+
+type ManualJournalConnection {
+  edges: [ManualJournalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
+  manualJournal(id: ID!): ManualJournal
+}

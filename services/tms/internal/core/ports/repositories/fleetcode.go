@@ -13,6 +13,12 @@ type ListFleetCodesRequest struct {
 	IncludeManagerDetails bool                     `json:"includeManagerDetails"`
 }
 
+type ListFleetCodeConnectionRequest struct {
+	Filter           *pagination.QueryOptions `json:"filter"`
+	Cursor           pagination.CursorInfo    `json:"-"`
+	FleetCodeColumns []string                 `json:"-"`
+}
+
 type GetFleetCodeByIDRequest struct {
 	ID         pulid.ID               `json:"id"`
 	TenantInfo *pagination.TenantInfo `json:"-"`
@@ -23,6 +29,10 @@ type FleetCodeRepository interface {
 		ctx context.Context,
 		req *ListFleetCodesRequest,
 	) (*pagination.ListResult[*fleetcode.FleetCode], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListFleetCodeConnectionRequest,
+	) (*pagination.CursorListResult[*fleetcode.FleetCode], error)
 	GetByID(
 		ctx context.Context,
 		req GetFleetCodeByIDRequest,

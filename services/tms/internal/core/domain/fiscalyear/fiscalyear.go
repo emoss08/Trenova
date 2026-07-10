@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,6 +24,8 @@ var (
 
 type FiscalYear struct {
 	bun.BaseModel `bun:"table:fiscal_years,alias:fy" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -165,6 +168,10 @@ func (fy *FiscalYear) Validate(multiErr *errortypes.MultiError) {
 
 func (fy *FiscalYear) GetID() pulid.ID {
 	return fy.ID
+}
+
+func (fy *FiscalYear) GetCreatedAt() int64 {
+	return fy.CreatedAt
 }
 
 func (fy *FiscalYear) GetTableName() string {

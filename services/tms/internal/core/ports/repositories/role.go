@@ -20,6 +20,12 @@ type ListRolesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListRoleConnectionRequest struct {
+	Filter      *pagination.QueryOptions `json:"filter"`
+	Cursor      pagination.CursorInfo    `json:"-"`
+	RoleColumns []string                 `json:"-"`
+}
+
 type GetRoleByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -37,6 +43,10 @@ type RoleRepository interface {
 		ctx context.Context,
 		req *ListRolesRequest,
 	) (*pagination.ListResult[*permission.Role], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListRoleConnectionRequest,
+	) (*pagination.CursorListResult[*permission.Role], error)
 	SelectOptions(
 		ctx context.Context,
 		req *pagination.SelectQueryRequest,

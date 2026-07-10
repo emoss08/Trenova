@@ -18,6 +18,11 @@ type ListAuditEntriesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListAuditEntriesConnectionRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
+}
+
 type ListByResourceIDRequest struct {
 	ResourceID pulid.ID                 `json:"resourceId"`
 	Filter     *pagination.QueryOptions `json:"filter"`
@@ -49,6 +54,10 @@ type AuditRepository interface {
 		ctx context.Context,
 		req *ListAuditEntriesRequest,
 	) (*pagination.ListResult[*audit.Entry], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListAuditEntriesConnectionRequest,
+	) (*pagination.CursorListResult[*audit.Entry], error)
 	ListByResourceID(
 		ctx context.Context,
 		req *ListByResourceIDRequest,

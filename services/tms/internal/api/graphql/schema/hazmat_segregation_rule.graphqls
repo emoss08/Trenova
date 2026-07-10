@@ -1,0 +1,47 @@
+enum SegregationType {
+  Prohibited
+  Separated
+  Distance
+  Barrier
+}
+
+type HazmatSegregationRule {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  name: String!
+  description: String!
+  exceptionNotes: String!
+  referenceCode: String!
+  regulationSource: String!
+  distanceUnit: String!
+  classA: HazardousClass!
+  classB: HazardousClass!
+  segregationType: SegregationType!
+  hasExceptions: Boolean!
+  hazmatAId: ID
+  hazmatBId: ID
+  minimumDistance: Float
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type HazmatSegregationRuleEdge {
+  node: HazmatSegregationRule!
+  cursor: String!
+}
+
+type HazmatSegregationRuleConnection {
+  edges: [HazmatSegregationRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  hazmatSegregationRules(input: DataTableConnectionInput!): HazmatSegregationRuleConnection!
+  hazmatSegregationRule(id: ID!): HazmatSegregationRule
+}

@@ -1527,3 +1527,71 @@ func (_c *MockEmailRepository_UpsertAssignments_Call) RunAndReturn(run func(cont
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListProfilesConnection provides a mock function for the type MockEmailRepository
+func (_mock *MockEmailRepository) ListProfilesConnection(context1 context.Context, listEmailProfileConnectionRequest *repositories.ListEmailProfileConnectionRequest) (*pagination.CursorListResult[*email.Profile], error) {
+	ret := _mock.Called(context1, listEmailProfileConnectionRequest)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListProfilesConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*email.Profile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEmailProfileConnectionRequest) (*pagination.CursorListResult[*email.Profile], error)); ok {
+		return returnFunc(context1, listEmailProfileConnectionRequest)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEmailProfileConnectionRequest) *pagination.CursorListResult[*email.Profile]); ok {
+		r0 = returnFunc(context1, listEmailProfileConnectionRequest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*email.Profile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEmailProfileConnectionRequest) error); ok {
+		r1 = returnFunc(context1, listEmailProfileConnectionRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEmailRepository_ListProfilesConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListProfilesConnection'
+type MockEmailRepository_ListProfilesConnection_Call struct {
+	*mock.Call
+}
+
+// ListProfilesConnection is a helper method to define mock.On call
+//   - context1 context.Context
+//   - listEmailProfileConnectionRequest *repositories.ListEmailProfileConnectionRequest
+func (_e *MockEmailRepository_Expecter) ListProfilesConnection(context1 interface{}, listEmailProfileConnectionRequest interface{}) *MockEmailRepository_ListProfilesConnection_Call {
+	return &MockEmailRepository_ListProfilesConnection_Call{Call: _e.mock.On("ListProfilesConnection", context1, listEmailProfileConnectionRequest)}
+}
+
+func (_c *MockEmailRepository_ListProfilesConnection_Call) Run(run func(context1 context.Context, listEmailProfileConnectionRequest *repositories.ListEmailProfileConnectionRequest)) *MockEmailRepository_ListProfilesConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEmailProfileConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEmailProfileConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEmailRepository_ListProfilesConnection_Call) Return(cursorListResult *pagination.CursorListResult[*email.Profile], err error) *MockEmailRepository_ListProfilesConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEmailRepository_ListProfilesConnection_Call) RunAndReturn(run func(context1 context.Context, listEmailProfileConnectionRequest *repositories.ListEmailProfileConnectionRequest) (*pagination.CursorListResult[*email.Profile], error)) *MockEmailRepository_ListProfilesConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}

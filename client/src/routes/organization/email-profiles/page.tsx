@@ -14,10 +14,10 @@ export function EmailProfilesPage() {
         description="Manage verified sender identities and route email purposes to the right provider profile."
       />
       <div className="flex flex-col gap-4 p-4">
+        <PurposeAssignmentsPanel />
         <DataTableLazyComponent>
           <Table />
         </DataTableLazyComponent>
-        <PurposeAssignmentsPanel />
       </div>
     </AdminPageLayout>
   );

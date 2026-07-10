@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -16,6 +17,8 @@ import (
 
 type ShipmentType struct {
 	bun.BaseModel `bun:"table:shipment_types,alias:sht" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -55,6 +58,10 @@ func (sht *ShipmentType) Validate(multiErr *errortypes.MultiError) {
 
 func (sht *ShipmentType) GetID() pulid.ID {
 	return sht.ID
+}
+
+func (sht *ShipmentType) GetCreatedAt() int64 {
+	return sht.CreatedAt
 }
 
 func (sht *ShipmentType) GetTableName() string {

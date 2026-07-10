@@ -85,6 +85,90 @@ func (r *repository) List(
 	}, nil
 }
 
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEquipmentManufacturerConnectionRequest,
+) (*bun.SelectQuery, error) {
+	return querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.EquipmentManufacturerTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
+	)
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEquipmentManufacturerConnectionRequest,
+) *bun.SelectQuery {
+	return querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.EquipmentManufacturerTable.Alias,
+		req.Filter,
+		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
+	)
+}
+
+func applyEquipmentManufacturerColumns(
+	q *bun.SelectQuery,
+	columns []string,
+) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.EquipmentManufacturerTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListEquipmentManufacturerConnectionRequest,
+) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+	log := r.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*equipmentmanufacturer.EquipmentManufacturer)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count equipment manufacturers", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*equipmentmanufacturer.EquipmentManufacturer]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*equipmentmanufacturer.EquipmentManufacturer) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyEquipmentManufacturerColumns(sq, req.EquipmentManufacturerColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan equipment manufacturers", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *equipmentmanufacturer.EquipmentManufacturer,

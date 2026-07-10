@@ -200,6 +200,13 @@ func (s *Service) ListRoles(
 	return s.roleRepo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListRoleConnectionRequest,
+) (*pagination.CursorListResult[*permission.Role], error) {
+	return s.roleRepo.ListConnection(ctx, req)
+}
+
 func (s *Service) SelectRoleOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

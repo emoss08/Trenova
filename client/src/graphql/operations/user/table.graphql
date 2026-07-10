@@ -1,0 +1,32 @@
+fragment UserTableRowFields on User {
+  id
+  businessUnitId
+  currentOrganizationId
+  status
+  name
+  username
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+  timezone
+  isLocked
+  mustChangePassword
+  version
+  lastLoginAt
+  createdAt
+  updatedAt
+}
+
+query UserTable($input: DataTableConnectionInput!) {
+  users(input: $input) {
+    edges {
+      node {
+        ...UserTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

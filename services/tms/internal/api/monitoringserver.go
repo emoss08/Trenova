@@ -25,9 +25,9 @@ type MonitoringServerParams struct {
 	LC             fx.Lifecycle
 	Metrics        *metrics.Registry
 	Database       ports.DBConnection
-	EDIMessageRepo repositories.EDIMessageRepository              `optional:"true"`
-	EDIInboundRepo repositories.EDIInboundFileRepository          `optional:"true"`
-	EDIProfileRepo repositories.EDICommunicationProfileRepository `optional:"true"`
+	EDIMessageRepo repositories.EDIMessageRepository
+	EDIInboundRepo repositories.EDIInboundFileRepository
+	EDIProfileRepo repositories.EDICommunicationProfileRepository
 }
 
 type MonitoringServer struct {
@@ -53,7 +53,11 @@ type monitoringResponse struct {
 }
 
 func NewMonitoringServer(p MonitoringServerParams) *MonitoringServer {
-	addr := fmt.Sprintf("%s:%d", p.Config.Monitoring.Metrics.GetHost(), p.Config.Monitoring.Metrics.Port)
+	addr := fmt.Sprintf(
+		"%s:%d",
+		p.Config.Monitoring.Metrics.GetHost(),
+		p.Config.Monitoring.Metrics.Port,
+	)
 
 	s := &MonitoringServer{
 		cfg:            p.Config,
@@ -167,13 +171,6 @@ func (s *MonitoringServer) handleLiveness(w http.ResponseWriter, _ *http.Request
 }
 
 func (s *MonitoringServer) databaseCheck(ctx context.Context) monitoringCheck {
-	if s.database == nil {
-		return monitoringCheck{
-			Status:  "down",
-			Message: "database connection is not configured",
-		}
-	}
-
 	if err := s.database.HealthCheck(ctx); err != nil {
 		return monitoringCheck{
 			Status:  "down",
@@ -192,13 +189,6 @@ const (
 )
 
 func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
-	if s.ediMessageRepo == nil || s.ediInboundRepo == nil || s.ediProfileRepo == nil {
-		return monitoringCheck{
-			Status:  "up",
-			Message: "EDI repositories are not configured; check skipped",
-		}
-	}
-
 	now := time.Now()
 	issues := make([]string, 0, 3)
 
@@ -251,6 +241,7 @@ func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
 			Message: strings.Join(issues, "; "),
 		}
 	}
+
 	return monitoringCheck{Status: "up"}
 }
 

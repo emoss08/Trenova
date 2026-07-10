@@ -1,0 +1,29 @@
+fragment SCIMGroupRoleMappingTableRowFields on SCIMGroupRoleMapping {
+  id
+  directoryId
+  externalGroupId
+  displayName
+  roleId
+  version
+  role {
+    id
+    name
+  }
+}
+
+query SCIMGroupRoleMappingsTable(
+  $input: DataTableConnectionInput!
+  $directoryId: ID!
+) {
+  scimGroupRoleMappings(input: $input, directoryId: $directoryId) {
+    edges {
+      node {
+        ...SCIMGroupRoleMappingTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

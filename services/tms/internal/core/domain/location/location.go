@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,10 +24,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*Location)(nil)
 	_ validationframework.TenantedEntity = (*Location)(nil)
 	_ domaintypes.PostgresSearchable     = (*Location)(nil)
+	_ pagination.CursorEntity            = (*Location)(nil)
 )
 
 type Location struct {
-	bun.BaseModel `bun:"table:locations,alias:loc" json:"-"`
+	bun.BaseModel             `bun:"table:locations,alias:loc" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                   pulid.ID           `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID       pulid.ID           `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -105,6 +108,10 @@ func (l *Location) Validate(multiErr *errortypes.MultiError) {
 
 func (l *Location) GetID() pulid.ID {
 	return l.ID
+}
+
+func (l *Location) GetCreatedAt() int64 {
+	return l.CreatedAt
 }
 
 func (l *Location) GetTableName() string {

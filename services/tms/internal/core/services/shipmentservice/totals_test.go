@@ -543,6 +543,13 @@ func (s *stubFormulaTemplateRepository) List(
 	return nil, errors.New("not implemented")
 }
 
+func (s *stubFormulaTemplateRepository) ListConnection(
+	context.Context,
+	*repositories.ListFormulaTemplateConnectionRequest,
+) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	return nil, errors.New("not implemented")
+}
+
 func (s *stubFormulaTemplateRepository) BulkUpdateStatus(
 	context.Context,
 	*repositories.BulkUpdateFormulaTemplateStatusRequest,

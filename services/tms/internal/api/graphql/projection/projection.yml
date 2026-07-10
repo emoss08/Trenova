@@ -1,12 +1,38 @@
 aliases:
   EquipmentContinuity:
     currentLocationName: currentLocationId
+  ShipmentEvent:
+    proNumber: metadata
+    previousStatus: metadata
+    newStatus: metadata
+    reason: metadata
+    previousOwnerId: metadata
+    newOwnerId: metadata
+    primaryWorkerId: metadata
+    secondaryWorkerId: metadata
+    tractorId: metadata
+    trailerId: metadata
+    driverName: metadata
+    holdType: metadata
+    holdSeverity: metadata
+    holdSource: metadata
+    commentBody: metadata
+    commentType: metadata
+    commentVisibility: metadata
+    commentPriority: metadata
+    mentionedUserIds: metadata
   Tractor:
     equipmentStatus: status
   Trailer:
     equipmentStatus: status
 
 virtuals:
+  ApiKey:
+    - permissionScope
+  DistanceOverrideStop:
+    - stopOrder
+  EdiCommunicationProfile:
+    - secretState
   Location:
     - geofenceVertices
   Shipment:
@@ -51,6 +77,9 @@ gates:
     equipmentManufacturer: equipmentDetails
     equipmentType: equipmentDetails
     fleetCode: fleetDetails
+
+modelOverrides:
+  ShipmentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
 
 always:
   ShipmentEvent:

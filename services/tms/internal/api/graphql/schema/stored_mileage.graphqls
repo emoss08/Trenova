@@ -1,0 +1,54 @@
+type StopKey {
+  method: String!
+  key: String!
+  city: String!
+  state: String!
+  postalCode: String!
+  placeId: String!
+  coordinates: [Float!]
+}
+
+type StoredMileage {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: String!
+  originKey: StopKey!
+  destinationKey: StopKey!
+  intermediateKeys: [StopKey!]
+  routeSignature: String!
+  routeHash: String!
+  distance: Float!
+  distanceUnits: String!
+  provider: String!
+  source: String!
+  routingType: String!
+  method: String!
+  locationGranularity: String!
+  dataVersion: String!
+  distanceProfileId: ID!
+  distanceProfileName: String!
+  hitCount: Int!
+  lastCalculatedAt: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type StoredMileageEdge {
+  node: StoredMileage!
+  cursor: String!
+}
+
+type StoredMileageConnection {
+  edges: [StoredMileageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
+  storedMileage(id: ID!): StoredMileage
+}

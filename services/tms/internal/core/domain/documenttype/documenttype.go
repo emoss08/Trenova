@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,10 +20,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*DocumentType)(nil)
 	_ validationframework.TenantedEntity = (*DocumentType)(nil)
 	_ domaintypes.PostgresSearchable     = (*DocumentType)(nil)
+	_ pagination.CursorEntity            = (*DocumentType)(nil)
 )
 
 type DocumentType struct {
-	bun.BaseModel `bun:"table:document_types,alias:dt" json:"-"`
+	bun.BaseModel             `bun:"table:document_types,alias:dt" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -105,6 +108,10 @@ func (dt *DocumentType) BeforeAppendModel(_ context.Context, query bun.Query) er
 
 func (dt *DocumentType) GetID() pulid.ID {
 	return dt.ID
+}
+
+func (dt *DocumentType) GetCreatedAt() int64 {
+	return dt.CreatedAt
 }
 
 func (dt *DocumentType) GetOrganizationID() pulid.ID {

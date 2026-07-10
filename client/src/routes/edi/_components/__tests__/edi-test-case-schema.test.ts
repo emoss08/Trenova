@@ -29,6 +29,10 @@ describe("EDI test case form helpers", () => {
       payload: { transactionSet: "204" },
       expectedWarnings: 1,
       expectedErrors: 0,
+      expectedWarningCodes: [],
+      expectedErrorCodes: [],
+      lastRunWarnings: 0,
+      lastRunErrors: 0,
       version: 4,
     });
 

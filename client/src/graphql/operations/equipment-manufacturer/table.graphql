@@ -1,0 +1,25 @@
+fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer {
+  id
+  businessUnitId
+  organizationId
+  status
+  name
+  description
+  version
+  createdAt
+  updatedAt
+}
+
+query EquipmentManufacturerTable($input: DataTableConnectionInput!) {
+  equipmentManufacturers(input: $input) {
+    edges {
+      node {
+        ...EquipmentManufacturerTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

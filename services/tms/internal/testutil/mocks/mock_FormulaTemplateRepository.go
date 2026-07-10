@@ -651,3 +651,71 @@ func (_c *MockFormulaTemplateRepository_Update_Call) RunAndReturn(run func(ctx c
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListConnection provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) ListConnection(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*formulatemplate.FormulaTemplate]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) *pagination.CursorListResult[*formulatemplate.FormulaTemplate]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*formulatemplate.FormulaTemplate])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockFormulaTemplateRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListFormulaTemplateConnectionRequest
+func (_e *MockFormulaTemplateRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_ListConnection_Call {
+	return &MockFormulaTemplateRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest)) *MockFormulaTemplateRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListFormulaTemplateConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListFormulaTemplateConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*formulatemplate.FormulaTemplate], err error) *MockFormulaTemplateRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)) *MockFormulaTemplateRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}

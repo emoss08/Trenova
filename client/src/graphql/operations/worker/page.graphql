@@ -123,22 +123,8 @@ fragment WorkerDataTablePageInfoFields on PageInfo {
   endCursor
 }
 
-query WorkerTable(
-  $first: Int!
-  $after: String
-  $query: String
-  $fieldFilters: [FieldFilterInput!]
-  $filterGroups: [FilterGroupInput!]
-  $sort: [SortFieldInput!]
-) {
-  workers(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
-  ) {
+query WorkerTable($input: DataTableConnectionInput!) {
+  workers(input: $input) {
     edges {
       node {
         ...WorkerTableRowFields
@@ -151,24 +137,8 @@ query WorkerTable(
   }
 }
 
-query WorkerPtoTable(
-  $first: Int!
-  $after: String
-  $query: String
-  $fieldFilters: [FieldFilterInput!]
-  $filterGroups: [FilterGroupInput!]
-  $sort: [SortFieldInput!]
-  $includeWorker: Boolean = true
-) {
-  workerPTOEntries(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
-    includeWorker: $includeWorker
-  ) {
+query WorkerPtoTable($input: DataTableConnectionInput!, $includeWorker: Boolean = true) {
+  workerPTOEntries(input: $input, includeWorker: $includeWorker) {
     edges {
       node {
         ...WorkerPtoRowFields

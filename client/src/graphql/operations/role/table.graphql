@@ -1,0 +1,28 @@
+fragment RoleTableRowFields on Role {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  coreResponsibility
+  parentRoleIds
+  maxSensitivity
+  isSystem
+  createdBy
+  createdAt
+  updatedAt
+}
+
+query RoleTable($input: DataTableConnectionInput!) {
+  roles(input: $input) {
+    edges {
+      node {
+        ...RoleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

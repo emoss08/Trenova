@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { manualJournalTableGraphQLConfig } from "@/lib/graphql/manual-journal-table";
 import type { ManualJournal } from "@/types/manual-journal";
 import { Resource } from "@/types/permission";
 import { useMemo } from "react";
@@ -18,12 +19,11 @@ export function ManualJournalsPage() {
     >
       <div className="mx-4 mt-3 mb-4">
         <DataTable<ManualJournal>
-          exportModelName="ManualJournal"
           name="ManualJournal"
-          link="/accounting/manual-journals/"
           queryKey="manual-journal-list"
           columns={columns}
           resource={Resource.ManualJournal}
+          graphql={manualJournalTableGraphQLConfig}
           TablePanel={ManualJournalPanel}
         />
       </div>

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -78,6 +79,81 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListTCASubscriptionConnectionRequest,
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.TCASubscriptionTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*tablechangealert.TCASubscription)(nil),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return q.Where(buncolgen.TCASubscriptionColumns.UserID.Eq(), req.Filter.TenantInfo.UserID), nil
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListTCASubscriptionConnectionRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.TCASubscriptionTable.Alias,
+		req.Filter,
+		(*tablechangealert.TCASubscription)(nil),
+	)
+
+	return q.Where(buncolgen.TCASubscriptionColumns.UserID.Eq(), req.Filter.TenantInfo.UserID)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListTCASubscriptionConnectionRequest,
+) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error) {
+	log := r.l.With(zap.String("operation", "ListConnection"))
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*tablechangealert.TCASubscription)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count tca subscriptions", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*tablechangealert.TCASubscription]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*tablechangealert.TCASubscription) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					ColumnExpr(buncolgen.TCASubscriptionTable.All())
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan tca subscriptions", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) Create(

@@ -51,6 +51,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 	if message.DeliveryStatus == edi.MessageDeliveryStatusSent {
 		return nil
 	}
+
 	now := timeutils.NowUnix()
 	if !mdn.Processed() {
 		s.recordDeliveryFailure(ctx, message, message.DeliveryRemotePath, &now, fmt.Errorf(
@@ -59,6 +60,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 		))
 		return nil
 	}
+
 	if message.AS2MIC != "" && mdn.ReceivedContentMIC != "" &&
 		!as2.MICMatches(message.AS2MIC, mdn.ReceivedContentMIC) {
 		s.recordDeliveryFailure(
@@ -93,6 +95,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 		"AS2 async MDN resolved outbound message delivery",
 		zap.String("messageId", message.ID.String()),
 	)
+
 	return s.completeTenderChangeDelivery(ctx, message)
 }
 
@@ -125,5 +128,6 @@ func (s *Service) verifyAS2MDNSignature(
 	); err != nil {
 		return fmt.Errorf("AS2 MDN signature verification failed: %w", err)
 	}
+
 	return nil
 }

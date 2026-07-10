@@ -52,6 +52,15 @@ func (m *mockFormulaTemplateRepo) List(
 	}, nil
 }
 
+func (m *mockFormulaTemplateRepo) ListConnection(
+	_ context.Context,
+	_ *repositories.ListFormulaTemplateConnectionRequest,
+) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	return &pagination.CursorListResult[*formulatemplate.FormulaTemplate]{
+		Items: []*formulatemplate.FormulaTemplate{},
+	}, nil
+}
+
 func (m *mockFormulaTemplateRepo) GetByID(
 	ctx context.Context,
 	req repositories.GetFormulaTemplateByIDRequest,

@@ -18,10 +18,10 @@ func EquipmentManufacturerFromInput(
 		ID:             id,
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
-		Description:    input.Description,
+		Description:    StringValue(input.Description),
 		Name:           input.Name,
-		Status:         input.Status,
-		Version:        int64(input.Version),
+		Status:         *input.Status,
+		Version:        Int64Value(input.Version),
 	}
 	return entity, nil
 }

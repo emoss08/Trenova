@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { fleetCodeTableGraphQLConfig } from "@/lib/graphql/fleet-code-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DockAction } from "@/types/data-table";
@@ -58,17 +59,13 @@ export default function FleetCodeTable() {
   return (
     <DataTable<FleetCode>
       name="Fleet Code"
-      link="/fleet-codes/"
       queryKey="fleet-code-list"
-      exportModelName="fleet-code"
+      graphql={fleetCodeTableGraphQLConfig}
       resource={Resource.FleetCode}
       columns={columns}
       dockActions={dockActions}
       enableRowSelection
       TablePanel={FleetCodePanel}
-      extraSearchParams={{
-        includeManagerDetails: true,
-      }}
     />
   );
 }

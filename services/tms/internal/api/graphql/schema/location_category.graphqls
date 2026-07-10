@@ -37,3 +37,19 @@ type LocationCategory {
   businessUnit: BusinessUnit
   organization: Organization
 }
+
+type LocationCategoryEdge {
+  node: LocationCategory!
+  cursor: String!
+}
+
+type LocationCategoryConnection {
+  edges: [LocationCategoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
+  locationCategory(id: ID!): LocationCategory
+}

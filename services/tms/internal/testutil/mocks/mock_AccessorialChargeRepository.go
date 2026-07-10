@@ -244,6 +244,74 @@ func (_c *MockAccessorialChargeRepository_List_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
+// ListConnection provides a mock function for the type MockAccessorialChargeRepository
+func (_mock *MockAccessorialChargeRepository) ListConnection(ctx context.Context, req *repositories.ListAccessorialChargeConnectionRequest) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*accessorialcharge.AccessorialCharge]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAccessorialChargeConnectionRequest) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAccessorialChargeConnectionRequest) *pagination.CursorListResult[*accessorialcharge.AccessorialCharge]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*accessorialcharge.AccessorialCharge])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListAccessorialChargeConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAccessorialChargeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockAccessorialChargeRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListAccessorialChargeConnectionRequest
+func (_e *MockAccessorialChargeRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockAccessorialChargeRepository_ListConnection_Call {
+	return &MockAccessorialChargeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockAccessorialChargeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListAccessorialChargeConnectionRequest)) *MockAccessorialChargeRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListAccessorialChargeConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListAccessorialChargeConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAccessorialChargeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*accessorialcharge.AccessorialCharge], err error) *MockAccessorialChargeRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockAccessorialChargeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListAccessorialChargeConnectionRequest) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error)) *MockAccessorialChargeRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelectOptions provides a mock function for the type MockAccessorialChargeRepository
 func (_mock *MockAccessorialChargeRepository) SelectOptions(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	ret := _mock.Called(ctx, req)

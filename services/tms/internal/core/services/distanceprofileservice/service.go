@@ -48,6 +48,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListDistanceProfileConnectionRequest,
+) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetDistanceProfileByIDRequest,

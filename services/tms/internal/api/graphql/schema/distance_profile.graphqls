@@ -1,0 +1,37 @@
+type DistanceProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  status: String!
+  isDefault: Boolean!
+  provider: String!
+  dataVersion: String!
+  region: String!
+  routingType: String!
+  distanceUnits: String!
+  locationGranularity: String!
+  profileName: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type DistanceProfileEdge {
+  node: DistanceProfile!
+  cursor: String!
+}
+
+type DistanceProfileConnection {
+  edges: [DistanceProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
+  distanceProfile(id: ID!): DistanceProfile
+}

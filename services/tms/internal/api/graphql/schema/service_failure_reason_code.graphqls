@@ -1,0 +1,61 @@
+enum ServiceFailureReasonCategory {
+  Carrier
+  Customer
+  Facility
+  Weather
+  Equipment
+  Documentation
+  Driver
+  Shipper
+  Consignee
+  Appointment
+  Other
+}
+
+enum ServiceFailureReasonCodeAppliesTo {
+  Pickup
+  Delivery
+  Both
+  All
+}
+
+type ServiceFailureReasonCode {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  label: String!
+  description: String!
+  category: ServiceFailureReasonCategory!
+  appliesTo: ServiceFailureReasonCodeAppliesTo!
+  defaultStatusCode: String!
+  defaultReasonCode: String!
+  defaultExceptionCode: String!
+  defaultNote: String!
+  active: Boolean!
+  sortOrder: Int!
+  externalMap: JSON
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type ServiceFailureReasonCodeEdge {
+  node: ServiceFailureReasonCode!
+  cursor: String!
+}
+
+type ServiceFailureReasonCodeConnection {
+  edges: [ServiceFailureReasonCodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  serviceFailureReasonCodes(
+    input: DataTableConnectionInput!
+  ): ServiceFailureReasonCodeConnection!
+  serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
+}

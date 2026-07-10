@@ -3,7 +3,6 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@/components/ui/badge";
 import type { EmailProfile } from "@/types/email";
 import { type ColumnDef } from "@tanstack/react-table";
-import { MailIcon } from "lucide-react";
 import { emailProfileStatusChoices, emailProviderChoices } from "./email-profile-constants";
 
 function StatusBadge({ status }: { status: EmailProfile["status"] }) {
@@ -36,12 +35,9 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       accessorKey: "senderEmail",
       header: "Sender",
       cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-2">
-          <MailIcon className="size-4 shrink-0 text-muted-foreground" />
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate">{row.original.senderName}</span>
-            <span className="truncate text-xs text-muted-foreground">{row.original.senderEmail}</span>
-          </div>
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate">{row.original.senderName}</span>
+          <span className="truncate text-xs text-muted-foreground">{row.original.senderEmail}</span>
         </div>
       ),
       size: 280,
@@ -88,7 +84,9 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       accessorKey: "replyToEmail",
       header: "Reply-To",
       cell: ({ row }) => (
-        <span className="truncate text-muted-foreground">{row.original.replyToEmail || "Default sender"}</span>
+        <span className="truncate text-muted-foreground">
+          {row.original.replyToEmail || "Default sender"}
+        </span>
       ),
       size: 240,
       meta: {

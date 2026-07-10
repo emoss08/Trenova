@@ -13,6 +13,12 @@ type ListShipmentTypesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListShipmentTypesConnectionRequest struct {
+	Filter              *pagination.QueryOptions `json:"filter"`
+	Cursor              pagination.CursorInfo    `json:"-"`
+	ShipmentTypeColumns []string                 `json:"-"`
+}
+
 type GetShipmentTypeByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -39,6 +45,10 @@ type ShipmentTypeRepository interface {
 		ctx context.Context,
 		req *ListShipmentTypesRequest,
 	) (*pagination.ListResult[*shipmenttype.ShipmentType], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListShipmentTypesConnectionRequest,
+	) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error)
 	GetByID(
 		ctx context.Context,
 		req GetShipmentTypeByIDRequest,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,6 +24,8 @@ var (
 
 type FormulaTemplate struct {
 	bun.BaseModel `bun:"table:formula_templates,alias:ft" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                   pulid.ID                           `json:"id"                   bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID       pulid.ID                           `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
@@ -90,6 +93,10 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 
 func (ft *FormulaTemplate) GetID() pulid.ID {
 	return ft.ID
+}
+
+func (ft *FormulaTemplate) GetCreatedAt() int64 {
+	return ft.CreatedAt
 }
 
 func (ft *FormulaTemplate) GetOrganizationID() pulid.ID {

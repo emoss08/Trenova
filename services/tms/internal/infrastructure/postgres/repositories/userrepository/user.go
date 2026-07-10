@@ -116,6 +116,100 @@ func (ur *repository) List(
 	}, nil
 }
 
+func (ur *repository) scopeUserTenant(
+	q *bun.SelectQuery,
+	tenantInfo pagination.TenantInfo,
+) *bun.SelectQuery {
+	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where("usr.current_organization_id = ?", tenantInfo.OrgID).
+			Where("usr.business_unit_id = ?", tenantInfo.BuID).
+			Where("usr.username != ?", "system")
+	})
+}
+
+func (ur *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListUserConnectionRequest,
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFiltersWithoutTenantScope(
+		q,
+		"usr",
+		req.Filter,
+		req.Cursor,
+		(*tenant.User)(nil),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ur.scopeUserTenant(q, req.Filter.TenantInfo), nil
+}
+
+func (ur *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListUserConnectionRequest,
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFiltersWithoutTenantScope(
+		q,
+		"usr",
+		req.Filter,
+		pagination.CursorInfo{},
+		(*tenant.User)(nil),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ur.scopeUserTenant(q, req.Filter.TenantInfo), nil
+}
+
+func (ur *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListUserConnectionRequest,
+) (*pagination.CursorListResult[*tenant.User], error) {
+	log := ur.l.With(
+		zap.String("operation", "ListConnection"),
+		zap.Any("request", req),
+	)
+
+	dba := ur.db.DBForContext(ctx)
+
+	countQuery := dba.NewSelect().Model((*tenant.User)(nil))
+	countQuery, err := ur.applyTotalCountFilters(countQuery, req)
+	if err != nil {
+		log.Error("failed to build user count query", zap.Error(err))
+		return nil, err
+	}
+	total, err := countQuery.Count(ctx)
+	if err != nil {
+		log.Error("failed to count users", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*tenant.User]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*tenant.User) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					ColumnExpr("usr.*")
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return ur.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan users", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (ur *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetUserByIDRequest,

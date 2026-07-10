@@ -44,6 +44,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListStoredMileageConnectionRequest,
+) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetStoredMileageByIDRequest,

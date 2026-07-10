@@ -1,0 +1,76 @@
+enum HazardousClass {
+  HazardClass1
+  HazardClass1And1
+  HazardClass1And2
+  HazardClass1And3
+  HazardClass1And4
+  HazardClass1And5
+  HazardClass1And6
+  HazardClass2And1
+  HazardClass2And2
+  HazardClass2And3
+  HazardClass3
+  HazardClass4And1
+  HazardClass4And2
+  HazardClass4And3
+  HazardClass5And1
+  HazardClass5And2
+  HazardClass6And1
+  HazardClass6And2
+  HazardClass7
+  HazardClass8
+  HazardClass9
+}
+
+enum PackingGroup {
+  I
+  II
+  III
+}
+
+type HazardousMaterial {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String!
+  class: HazardousClass!
+  unNumber: String!
+  packingGroup: PackingGroup!
+  subsidiaryHazardClass: String!
+  ergGuideNumber: String!
+  labelCodes: String!
+  specialProvisions: String!
+  properShippingName: String!
+  handlingInstructions: String!
+  emergencyContact: String!
+  emergencyContactPhoneNumber: String!
+  quantityThreshold: String!
+  placardRequired: Boolean!
+  isReportableQuantity: Boolean!
+  marinePollutant: Boolean!
+  inhalationHazard: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type HazardousMaterialEdge {
+  node: HazardousMaterial!
+  cursor: String!
+}
+
+type HazardousMaterialConnection {
+  edges: [HazardousMaterialEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  hazardousMaterials(input: DataTableConnectionInput!): HazardousMaterialConnection!
+  hazardousMaterial(id: ID!): HazardousMaterial
+}

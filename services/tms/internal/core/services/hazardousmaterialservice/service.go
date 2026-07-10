@@ -49,6 +49,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListHazardousMaterialConnectionRequest,
+) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetHazardousMaterialByIDRequest,
