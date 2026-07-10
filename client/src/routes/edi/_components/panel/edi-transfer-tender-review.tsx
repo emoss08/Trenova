@@ -1,5 +1,6 @@
 import { EDITransferStatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { EDIMappingResolution, EDITransfer } from "@/types/edi";
 import {
   ArrowRightIcon,
@@ -87,7 +88,15 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
           />
           <InfoTile label="Pieces" value={formatNumber(payload.pieces)} />
           <InfoTile label="Weight" value={formatWeight(payload.weight)} />
-          <InfoTile label="Charges" value={payload.additionalCharges.length.toLocaleString()} />
+          <InfoTile
+            label="Charges"
+            value={
+              payload.additionalCharges?.length === undefined ||
+              payload.additionalCharges?.length === 0
+                ? "N/A"
+                : payload.additionalCharges?.length.toLocaleString()
+            }
+          />
         </div>
       </div>
     </div>
@@ -102,8 +111,8 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      {moves.map((move) => {
+    <div className={cn("grid gap-3 lg:grid-cols-1", moves.length > 1 && "lg:grid-cols-2")}>
+      {moves?.map((move) => {
         const origin = move.stops[0];
         const destination = move.stops[move.stops.length - 1];
         const originMapping = origin
@@ -169,7 +178,7 @@ function TenderStopCard({
 
   return (
     <div className="relative grid grid-cols-[28px_1fr] gap-3">
-      {!isLast && <div className="absolute top-7 bottom-[-0.75rem] left-[13.5px] w-px bg-border" />}
+      {!isLast && <div className="absolute top-7 -bottom-3 left-[13.5px] w-px bg-border" />}
       <div className="relative z-10 flex flex-col items-center">
         <div className="flex size-7 items-center justify-center rounded-full border bg-muted">
           <MapPinIcon className="size-3.5" />
@@ -216,10 +225,10 @@ export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps
       <ReviewSection
         icon={<PackageIcon className="size-4" />}
         title="Commodities"
-        count={payload.commodities.length}
+        count={payload.commodities?.length ?? 0}
         empty="No commodities were included in this tender."
       >
-        {payload.commodities.map((commodity) => {
+        {payload.commodities?.map((commodity) => {
           const mapping = findMapping(mappingRows, "Commodity", commodity.commodityId);
           return (
             <FreightLine
@@ -234,10 +243,10 @@ export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps
       <ReviewSection
         icon={<DollarSignIcon className="size-4" />}
         title="Additional Charges"
-        count={payload.additionalCharges.length}
+        count={payload.additionalCharges?.length ?? 0}
         empty="No additional charges were included in this tender."
       >
-        {payload.additionalCharges.map((charge) => {
+        {payload.additionalCharges?.map((charge) => {
           const mapping = findMapping(mappingRows, "AccessorialCharge", charge.accessorialChargeId);
           return (
             <FreightLine
