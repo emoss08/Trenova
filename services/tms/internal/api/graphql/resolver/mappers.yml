@@ -18,3 +18,5 @@ types:
       domaintypes: github.com/emoss08/trenova/pkg/domaintypes
     defaults:
       status: domaintypes.EquipmentStatusAvailable
+  TableConfiguration:
+    skip: true

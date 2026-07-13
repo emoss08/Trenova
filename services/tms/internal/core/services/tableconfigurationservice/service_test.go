@@ -68,6 +68,19 @@ func (m *mockRepository) List(
 	)
 }
 
+func (m *mockRepository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListTableConfigurationConnectionRequest,
+) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*pagination.CursorListResult[*tableconfiguration.TableConfiguration]), args.Error(
+		1,
+	)
+}
+
 func (m *mockRepository) Delete(
 	ctx context.Context,
 	id pulid.ID,

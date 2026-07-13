@@ -33,12 +33,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
+	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
@@ -105,6 +107,8 @@ type Params struct {
 	UserService                  *userservice.Service
 	APIKeyService                *apikeyservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
+	TableConfigurationService    *tableconfigurationservice.Service
+	NotificationService          *notificationservice.Service
 	PermissionEngine             services.PermissionEngine
 }
 
@@ -159,6 +163,8 @@ type Resolver struct {
 	userService                  *userservice.Service
 	apiKeyService                *apikeyservice.Service
 	tableChangeAlertService      *tablechangealertservice.Service
+	tableConfigurationService    *tableconfigurationservice.Service
+	notificationService          *notificationservice.Service
 	permissionEngine             services.PermissionEngine
 }
 
@@ -214,6 +220,8 @@ func New(p Params) *Resolver {
 		userService:                  p.UserService,
 		apiKeyService:                p.APIKeyService,
 		tableChangeAlertService:      p.TableChangeAlertService,
+		tableConfigurationService:    p.TableConfigurationService,
+		notificationService:          p.NotificationService,
 		permissionEngine:             p.PermissionEngine,
 	}
 }

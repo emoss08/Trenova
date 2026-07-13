@@ -61,7 +61,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/notificationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
@@ -82,7 +81,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/tableconfigurationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -102,7 +100,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	authhandler.New,
 	audithandler.New,
 	formulatemplatehandler.New,
-	tableconfigurationhandler.New,
 	pagefavoritehandler.New,
 	equipmenttypehandler.New,
 	fleetcodehandler.New,
@@ -183,5 +180,4 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	analyticshandler.New,
 	apikeyhandler.New,
 	tablechangealerthandler.New,
-	notificationhandler.New,
 ))

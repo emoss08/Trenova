@@ -66,6 +66,10 @@ func (n *Notification) GetID() pulid.ID {
 	return n.ID
 }
 
+func (n *Notification) GetCreatedAt() int64 {
+	return n.CreatedAt
+}
+
 func (n *Notification) GetTableName() string {
 	return "notifications"
 }

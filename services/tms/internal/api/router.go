@@ -64,7 +64,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/notificationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
@@ -85,7 +84,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/tableconfigurationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -131,7 +129,6 @@ type RouterParams struct {
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	AuditHandler                    *audithandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
-	TableConfigurationHandler       *tableconfigurationhandler.Handler
 	PageFavoriteHandler             *pagefavoritehandler.Handler
 	EquipmentTypeHandler            *equipmenttypehandler.Handler
 	EquipmentManufacturerHandler    *equipmentmanufacturerhandler.Handler
@@ -208,7 +205,6 @@ type RouterParams struct {
 	AnalyticsHandler                *analyticshandler.Handler
 	ApiKeyHandler                   *apikeyhandler.Handler //nolint:revive // field name follows existing router wiring
 	TableChangeAlertHandler         *tablechangealerthandler.Handler
-	NotificationHandler             *notificationhandler.Handler
 	DocumentPacketRuleHandler       *documentpacketrulehandler.Handler
 }
 
@@ -232,7 +228,6 @@ type Router struct {
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	auditHandler                    *audithandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
-	tableConfigurationHandler       *tableconfigurationhandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
 	serviceTypeHandler              *servicetypehandler.Handler
 	serviceFailureReasonCodeHandler *servicefailurereasoncodehandler.Handler
@@ -309,7 +304,6 @@ type Router struct {
 	analyticsHandler                *analyticshandler.Handler
 	apiKeyHandler                   *apikeyhandler.Handler
 	tableChangeAlertHandler         *tablechangealerthandler.Handler
-	notificationHandler             *notificationhandler.Handler
 	documentPacketRuleHandler       *documentpacketrulehandler.Handler
 }
 
@@ -335,7 +329,6 @@ func NewRouter(p RouterParams) *Router {
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		auditHandler:                    p.AuditHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
-		tableConfigurationHandler:       p.TableConfigurationHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
 		serviceTypeHandler:              p.ServiceTypeHandler,
 		serviceFailureReasonCodeHandler: p.ServiceFailureReasonCodeHandler,
@@ -412,7 +405,6 @@ func NewRouter(p RouterParams) *Router {
 		analyticsHandler:                p.AnalyticsHandler,
 		apiKeyHandler:                   p.ApiKeyHandler,
 		tableChangeAlertHandler:         p.TableChangeAlertHandler,
-		notificationHandler:             p.NotificationHandler,
 		documentPacketRuleHandler:       p.DocumentPacketRuleHandler,
 	}
 }
@@ -506,7 +498,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
 	r.auditHandler.RegisterRoutes(protected)
 	r.formulaTemplateHandler.RegisterRoutes(protected)
-	r.tableConfigurationHandler.RegisterRoutes(protected)
 	r.pageFavoriteHandler.RegisterRoutes(protected)
 	r.equipmentManufacturerHandler.RegisterRoutes(protected)
 	r.equipmentTypeHandler.RegisterRoutes(protected)
@@ -580,7 +571,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.analyticsHandler.RegisterRoutes(protected)
 	r.apiKeyHandler.RegisterRoutes(protected)
 	r.tableChangeAlertHandler.RegisterRoutes(protected)
-	r.notificationHandler.RegisterRoutes(protected)
 	r.documentPacketRuleHandler.RegisterRoutes(protected)
 }
 

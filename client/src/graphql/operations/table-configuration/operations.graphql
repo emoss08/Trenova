@@ -1,0 +1,67 @@
+fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}
+
+query TableConfigurationTable(
+  $input: DataTableConnectionInput!
+  $resource: String
+  $visibility: ConfigurationVisibility
+) {
+  tableConfigurations(input: $input, resource: $resource, visibility: $visibility) {
+    edges {
+      node {
+        ...TableConfigurationFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DefaultTableConfiguration($resource: String!) {
+  defaultTableConfiguration(resource: $resource) {
+    ...TableConfigurationFields
+  }
+}
+
+query TableConfigurationDetail($id: ID!) {
+  tableConfiguration(id: $id) {
+    ...TableConfigurationFields
+  }
+}
+
+mutation CreateTableConfiguration($input: TableConfigurationInput!) {
+  createTableConfiguration(input: $input) {
+    ...TableConfigurationFields
+  }
+}
+
+mutation UpdateTableConfiguration($id: ID!, $input: TableConfigurationInput!) {
+  updateTableConfiguration(id: $id, input: $input) {
+    ...TableConfigurationFields
+  }
+}
+
+mutation DeleteTableConfiguration($id: ID!) {
+  deleteTableConfiguration(id: $id)
+}
+
+mutation SetDefaultTableConfiguration($id: ID!) {
+  setDefaultTableConfiguration(id: $id) {
+    ...TableConfigurationFields
+  }
+}

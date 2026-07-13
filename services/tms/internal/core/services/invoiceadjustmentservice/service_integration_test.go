@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -213,7 +214,7 @@ func (fakeAccessorialRepo) Update(
 	return nil, nil
 }
 
-type noopAuditService struct{}
+type noopAuditService struct{ *mocks.MockAuditService }
 
 func (noopAuditService) List(
 	context.Context,

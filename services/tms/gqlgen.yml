@@ -520,3 +520,24 @@ models:
         resolver: true
       operation:
         resolver: true
+  NotificationPriority:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/notification.Priority
+  NotificationChannel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/notification.Channel
+  NotificationDeliveryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/notification.DeliveryStatus
+  Notification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/notification.Notification
+  ConfigurationVisibility:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tableconfiguration.Visibility
+  TableConfiguration:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tableconfiguration.TableConfiguration
+    fields:
+      tableConfig:
+        resolver: true

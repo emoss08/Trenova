@@ -81,6 +81,11 @@ export type ComplianceStatus =
   | 'NonCompliant'
   | 'Pending';
 
+export type ConfigurationVisibility =
+  | 'Private'
+  | 'Public'
+  | 'Shared';
+
 export type DataTableConnectionInput = {
   after?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
@@ -407,6 +412,17 @@ export type MoveStatus =
   | 'Completed'
   | 'InTransit'
   | 'New';
+
+export type NotificationChannel =
+  | 'global'
+  | 'role'
+  | 'user';
+
+export type NotificationPriority =
+  | 'critical'
+  | 'high'
+  | 'low'
+  | 'medium';
 
 export type OrganizationInput = {
   addressLine1: string;
@@ -842,6 +858,15 @@ export type StopType =
   | 'Pickup'
   | 'SplitDelivery'
   | 'SplitPickup';
+
+export type TableConfigurationInput = {
+  description?: string | null | undefined;
+  isDefault?: boolean | null | undefined;
+  name: string;
+  resource: string;
+  tableConfig: unknown;
+  visibility?: ConfigurationVisibility | null | undefined;
+};
 
 export type UpcomingWorkerPtoInput = {
   after?: string | null | undefined;
@@ -1317,6 +1342,32 @@ export type ManualJournalTableQueryVariables = Exact<{
 
 export type ManualJournalTableQuery = { manualJournals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, source: string, readAt: number | null, createdAt: number } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
+
+export type NotificationListQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type NotificationListQuery = { notifications: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type NotificationUnreadCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type NotificationUnreadCountQuery = { notificationUnreadCount: number };
+
+export type MarkNotificationsReadMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type MarkNotificationsReadMutation = { markNotificationsRead: boolean };
+
+export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MarkAllNotificationsReadMutation = { markAllNotificationsRead: boolean };
+
 export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
 export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
@@ -1689,6 +1740,60 @@ export type TcaSubscriptionTableQueryVariables = Exact<{
 
 
 export type TcaSubscriptionTableQuery = { tcaSubscriptions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TcaSubscriptionTableRowFieldsFragment': TcaSubscriptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type TableConfigurationFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, description: string, resource: string, tableConfig: unknown, visibility: ConfigurationVisibility, isDefault: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TableConfigurationFieldsFragment' };
+
+export type TableConfigurationTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  resource?: string | null | undefined;
+  visibility?: ConfigurationVisibility | null | undefined;
+}>;
+
+
+export type TableConfigurationTableQuery = { tableConfigurations: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DefaultTableConfigurationQueryVariables = Exact<{
+  resource: string;
+}>;
+
+
+export type DefaultTableConfigurationQuery = { defaultTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } | null };
+
+export type TableConfigurationDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type TableConfigurationDetailQuery = { tableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } | null };
+
+export type CreateTableConfigurationMutationVariables = Exact<{
+  input: TableConfigurationInput;
+}>;
+
+
+export type CreateTableConfigurationMutation = { createTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
+
+export type UpdateTableConfigurationMutationVariables = Exact<{
+  id: string | number;
+  input: TableConfigurationInput;
+}>;
+
+
+export type UpdateTableConfigurationMutation = { updateTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
+
+export type DeleteTableConfigurationMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteTableConfigurationMutation = { deleteTableConfiguration: boolean };
+
+export type SetDefaultTableConfigurationMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SetDefaultTableConfigurationMutation = { setDefaultTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
 
 export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
 
@@ -2831,6 +2936,23 @@ export const ManualJournalTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ManualJournalTableRowFields"}) as unknown as TypedDocumentString<ManualJournalTableRowFieldsFragment, unknown>;
+export const NotificationFieldsFragmentDoc = new TypedDocumentString(`
+    fragment NotificationFields on Notification {
+  id
+  organizationId
+  businessUnitId
+  targetUserId
+  eventType
+  priority
+  channel
+  title
+  message
+  data
+  source
+  readAt
+  createdAt
+}
+    `, {"fragmentName":"NotificationFields"}) as unknown as TypedDocumentString<NotificationFieldsFragment, unknown>;
 export const OrganizationSettingsStateFieldsFragmentDoc = new TypedDocumentString(`
     fragment OrganizationSettingsStateFields on UsState {
   id
@@ -3822,6 +3944,23 @@ export const TcaSubscriptionTableRowFieldsFragmentDoc = new TypedDocumentString(
   updatedAt
 }
     `, {"fragmentName":"TCASubscriptionTableRowFields"}) as unknown as TypedDocumentString<TcaSubscriptionTableRowFieldsFragment, unknown>;
+export const TableConfigurationFieldsFragmentDoc = new TypedDocumentString(`
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"TableConfigurationFields"}) as unknown as TypedDocumentString<TableConfigurationFieldsFragment, unknown>;
 export const UserTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment UserTableRowFields on User {
   id
@@ -5771,6 +5910,54 @@ fragment ManualJournalTableRowFields on ManualJournal {
   createdAt
   updatedAt
 }`, {"hash":"sha256:68c27faeae7ef0ec21693a745b9c58fb933c9e3ab8a395de79705953a4200bbd"}) as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
+export const NotificationListDocument = new TypedDocumentString(`
+    query NotificationList($input: DataTableConnectionInput!) {
+  notifications(input: $input) {
+    edges {
+      node {
+        ...NotificationFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment NotificationFields on Notification {
+  id
+  organizationId
+  businessUnitId
+  targetUserId
+  eventType
+  priority
+  channel
+  title
+  message
+  data
+  source
+  readAt
+  createdAt
+}`, {"hash":"sha256:521222189fc8fc082707badddfab4a76f8bb053d4603d33f06ad0c47cc64d5c0"}) as unknown as TypedDocumentString<NotificationListQuery, NotificationListQueryVariables>;
+export const NotificationUnreadCountDocument = new TypedDocumentString(`
+    query NotificationUnreadCount {
+  notificationUnreadCount
+}
+    `, {"hash":"sha256:ed4fa686e9641b77e14b47a1c93d30e473f479f8cb960bc62def2000568e84a7"}) as unknown as TypedDocumentString<NotificationUnreadCountQuery, NotificationUnreadCountQueryVariables>;
+export const MarkNotificationsReadDocument = new TypedDocumentString(`
+    mutation MarkNotificationsRead($ids: [ID!]!) {
+  markNotificationsRead(ids: $ids)
+}
+    `, {"hash":"sha256:1a766cf4ea3e134b35e5fa8ec5b904da700ab13ff3d61af7158809b586e6fe94"}) as unknown as TypedDocumentString<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>;
+export const MarkAllNotificationsReadDocument = new TypedDocumentString(`
+    mutation MarkAllNotificationsRead {
+  markAllNotificationsRead
+}
+    `, {"hash":"sha256:e919497b911d73638f8329785ecb0b4b48a247bb6d037bf89b2a498c5bca336d"}) as unknown as TypedDocumentString<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
 export const OrganizationSettingsDocument = new TypedDocumentString(`
     query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
   organization(id: $id, includeState: $includeState, includeBu: $includeBu) {
@@ -9932,6 +10119,149 @@ fragment TCASubscriptionTableRowFields on TCASubscription {
   createdAt
   updatedAt
 }`, {"hash":"sha256:3b200328291e0761d53c2426b15e1ab7cfd05ae2b55be15e33b603847b38174c"}) as unknown as TypedDocumentString<TcaSubscriptionTableQuery, TcaSubscriptionTableQueryVariables>;
+export const TableConfigurationTableDocument = new TypedDocumentString(`
+    query TableConfigurationTable($input: DataTableConnectionInput!, $resource: String, $visibility: ConfigurationVisibility) {
+  tableConfigurations(input: $input, resource: $resource, visibility: $visibility) {
+    edges {
+      node {
+        ...TableConfigurationFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:021fa0f568747a3357e4b59ba635e5c80bdc5dc0ce28118e04e13d31c02931d4"}) as unknown as TypedDocumentString<TableConfigurationTableQuery, TableConfigurationTableQueryVariables>;
+export const DefaultTableConfigurationDocument = new TypedDocumentString(`
+    query DefaultTableConfiguration($resource: String!) {
+  defaultTableConfiguration(resource: $resource) {
+    ...TableConfigurationFields
+  }
+}
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:f5455dd64d6ae87c336154b63560ddd2f1a985d4eadfa843bcd18851517be0e5"}) as unknown as TypedDocumentString<DefaultTableConfigurationQuery, DefaultTableConfigurationQueryVariables>;
+export const TableConfigurationDetailDocument = new TypedDocumentString(`
+    query TableConfigurationDetail($id: ID!) {
+  tableConfiguration(id: $id) {
+    ...TableConfigurationFields
+  }
+}
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:8b96b72329790f8c9ac9ad3392ff7e757e40951be3454e0a3bbf9635105fa359"}) as unknown as TypedDocumentString<TableConfigurationDetailQuery, TableConfigurationDetailQueryVariables>;
+export const CreateTableConfigurationDocument = new TypedDocumentString(`
+    mutation CreateTableConfiguration($input: TableConfigurationInput!) {
+  createTableConfiguration(input: $input) {
+    ...TableConfigurationFields
+  }
+}
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:086f96a9688283d2b9077f23d851257bca7c1bb7718c7dee67e567d38c56aa74"}) as unknown as TypedDocumentString<CreateTableConfigurationMutation, CreateTableConfigurationMutationVariables>;
+export const UpdateTableConfigurationDocument = new TypedDocumentString(`
+    mutation UpdateTableConfiguration($id: ID!, $input: TableConfigurationInput!) {
+  updateTableConfiguration(id: $id, input: $input) {
+    ...TableConfigurationFields
+  }
+}
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d031325d006875d779bce3b042ab8ae49adc6b7a35e7a31ee0208c2bcb829a8b"}) as unknown as TypedDocumentString<UpdateTableConfigurationMutation, UpdateTableConfigurationMutationVariables>;
+export const DeleteTableConfigurationDocument = new TypedDocumentString(`
+    mutation DeleteTableConfiguration($id: ID!) {
+  deleteTableConfiguration(id: $id)
+}
+    `, {"hash":"sha256:5c2f8a0d5ce9cc3f5ae7702ee9785c067097d3a04de36ae8b17d43afeb5e4951"}) as unknown as TypedDocumentString<DeleteTableConfigurationMutation, DeleteTableConfigurationMutationVariables>;
+export const SetDefaultTableConfigurationDocument = new TypedDocumentString(`
+    mutation SetDefaultTableConfiguration($id: ID!) {
+  setDefaultTableConfiguration(id: $id) {
+    ...TableConfigurationFields
+  }
+}
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:66c7e28c908e27654cc05dea05d78d7eab9c14ded06a12228376670fc3f80d8b"}) as unknown as TypedDocumentString<SetDefaultTableConfigurationMutation, SetDefaultTableConfigurationMutationVariables>;
 export const UserTableDocument = new TypedDocumentString(`
     query UserTable($input: DataTableConnectionInput!) {
   users(input: $input) {

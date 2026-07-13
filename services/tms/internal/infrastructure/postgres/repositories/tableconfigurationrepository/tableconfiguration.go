@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,6 +114,133 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) scopeQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListTableConfigurationConnectionRequest,
+) *bun.SelectQuery {
+	log := r.l.With(zap.String("operation", "scopeQuery"))
+	tenantInfo := req.Filter.TenantInfo
+
+	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.
+			WhereGroup(" AND ", func(privateSq *bun.SelectQuery) *bun.SelectQuery {
+				return privateSq.
+					Where("tc.user_id = ?", tenantInfo.UserID).
+					Where("tc.visibility = ?", tableconfiguration.VisibilityPrivate)
+			}).
+			WhereGroup(" OR ", func(publicSq *bun.SelectQuery) *bun.SelectQuery {
+				return publicSq.
+					Where("tc.organization_id = ?", tenantInfo.OrgID).
+					Where("tc.visibility = ?", tableconfiguration.VisibilityPublic)
+			})
+	})
+
+	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where("tc.organization_id = ?", tenantInfo.OrgID).
+			Where("tc.business_unit_id = ?", tenantInfo.BuID)
+	})
+
+	if req.Resource != "" {
+		q = q.Where("tc.resource = ?", req.Resource)
+	}
+
+	if req.Visibility != "" {
+		v, err := tableconfiguration.VisibilityFromString(req.Visibility)
+		if err != nil {
+			log.Error("failed to parse visibility", zap.Error(err))
+			return q
+		}
+		q = q.Where("tc.visibility = ?", v)
+	}
+
+	return q
+}
+
+func applyTableConfigurationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.TableConfigurationTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListTableConfigurationConnectionRequest,
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.TableConfigurationTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*tableconfiguration.TableConfiguration)(nil),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.scopeQuery(q, req), nil
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListTableConfigurationConnectionRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.TableConfigurationTable.Alias,
+		req.Filter,
+		(*tableconfiguration.TableConfiguration)(nil),
+	)
+
+	return r.scopeQuery(q, req)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListTableConfigurationConnectionRequest,
+) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
+	log := r.l.With(zap.String("operation", "ListConnection"))
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*tableconfiguration.TableConfiguration)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count table configurations", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*tableconfiguration.TableConfiguration]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*tableconfiguration.TableConfiguration) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyTableConfigurationColumns(sq, req.TableConfigurationColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan table configurations", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) Create(

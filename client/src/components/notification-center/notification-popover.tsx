@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { formatTimestamp, getPriorityConfig, SOURCE_LABELS } from "@/lib/notification-helpers";
+import { formatTimestamp, getPriorityConfig } from "@/lib/notification-helpers";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
@@ -21,7 +21,6 @@ function NotificationItem({
 }) {
   const isUnread = !notification.readAt;
   const config = getPriorityConfig(notification.priority);
-  const sourceLabel = SOURCE_LABELS[notification.source] ?? notification.source;
 
   return (
     <button

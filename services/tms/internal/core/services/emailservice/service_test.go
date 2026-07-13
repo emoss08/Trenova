@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -147,7 +148,7 @@ func (r *assignmentRepo) UpsertAssignments(
 	return r.updatedAssignments, nil
 }
 
-type noopAuditService struct{}
+type noopAuditService struct{ *mocks.MockAuditService }
 
 func (noopAuditService) List(
 	context.Context,

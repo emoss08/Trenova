@@ -86,6 +86,8 @@ var LocationCategorySpec TypeSpec
 
 var ManualJournalSpec TypeSpec
 
+var NotificationSpec TypeSpec
+
 var OrganizationSpec TypeSpec
 
 var RateTableSpec TypeSpec
@@ -135,6 +137,8 @@ var ShipmentTypeSpec TypeSpec
 var StoredMileageSpec TypeSpec
 
 var TCASubscriptionSpec TypeSpec
+
+var TableConfigurationSpec TypeSpec
 
 var TractorSpec TypeSpec
 
@@ -3723,6 +3727,113 @@ func init() {
 		},
 	}
 
+	NotificationSpec = TypeSpec{
+		TypeName: "Notification",
+		FieldMap: buncolgen.NotificationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "targetUserId",
+				FieldMapKey: "targetUserId",
+			},
+			{
+				Name:        "eventType",
+				FieldMapKey: "eventType",
+			},
+			{
+				Name:        "priority",
+				FieldMapKey: "priority",
+			},
+			{
+				Name:        "channel",
+				FieldMapKey: "channel",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "message",
+				FieldMapKey: "message",
+			},
+			{
+				Name:        "data",
+				FieldMapKey: "data",
+			},
+			{
+				Name:        "relatedEntities",
+				FieldMapKey: "relatedEntities",
+			},
+			{
+				Name:        "actions",
+				FieldMapKey: "actions",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "deliveredAt",
+				FieldMapKey: "deliveredAt",
+			},
+			{
+				Name:        "readAt",
+				FieldMapKey: "readAt",
+			},
+			{
+				Name:        "dismissedAt",
+				FieldMapKey: "dismissedAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "deliveryStatus",
+				FieldMapKey: "deliveryStatus",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "jobId",
+				FieldMapKey: "jobId",
+			},
+			{
+				Name:        "correlationId",
+				FieldMapKey: "correlationId",
+			},
+			{
+				Name:        "tags",
+				FieldMapKey: "tags",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+		},
+	}
+
 	OrganizationSpec = TypeSpec{
 		TypeName: "Organization",
 		FieldMap: buncolgen.OrganizationFieldMap,
@@ -5852,6 +5963,90 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	TableConfigurationSpec = TypeSpec{
+		TypeName: "TableConfiguration",
+		FieldMap: buncolgen.TableConfigurationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "resource",
+				FieldMapKey: "resource",
+			},
+			{
+				Name:        "tableConfig",
+				FieldMapKey: "tableConfig",
+			},
+			{
+				Name:        "visibility",
+				FieldMapKey: "visibility",
+			},
+			{
+				Name:        "isDefault",
+				FieldMapKey: "isDefault",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "organization",
+				FieldMapKey: "organizationId",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
+			},
+			{
+				Name:        "businessUnit",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &BusinessUnitSpec,
+				},
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
 			},
 		},
 	}

@@ -12,6 +12,12 @@ type ListNotificationsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListNotificationConnectionRequest struct {
+	Filter              *pagination.QueryOptions `json:"filter"`
+	Cursor              pagination.CursorInfo    `json:"-"`
+	NotificationColumns []string                 `json:"-"`
+}
+
 type MarkNotificationsReadRequest struct {
 	IDs        []pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -35,6 +41,10 @@ type NotificationRepository interface {
 		ctx context.Context,
 		req *ListNotificationsRequest,
 	) (*pagination.ListResult[*notification.Notification], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListNotificationConnectionRequest,
+	) (*pagination.CursorListResult[*notification.Notification], error)
 	MarkAsRead(ctx context.Context, req MarkNotificationsReadRequest) error
 	MarkAllAsRead(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) error
 	CountUnread(

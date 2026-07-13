@@ -19,6 +19,14 @@ type ListTableConfigurationsRequest struct {
 	Visibility string                   `json:"visibility"`
 }
 
+type ListTableConfigurationConnectionRequest struct {
+	Filter                    *pagination.QueryOptions `json:"filter"`
+	Cursor                    pagination.CursorInfo    `json:"-"`
+	Resource                  string                   `json:"resource"`
+	Visibility                string                   `json:"visibility"`
+	TableConfigurationColumns []string                 `json:"-"`
+}
+
 type GetDefaultTableConfigurationRequest struct {
 	Resource   string
 	TenantInfo pagination.TenantInfo
@@ -44,6 +52,11 @@ type TableConfigurationRepository interface {
 		ctx context.Context,
 		req *ListTableConfigurationsRequest,
 	) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error)
+
+	ListConnection(
+		ctx context.Context,
+		req *ListTableConfigurationConnectionRequest,
+	) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error)
 
 	Delete(
 		ctx context.Context,

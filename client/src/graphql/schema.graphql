@@ -314,6 +314,12 @@ enum ComplianceStatus {
   Pending
 }
 
+enum ConfigurationVisibility {
+  Private
+  Public
+  Shared
+}
+
 type CustomFieldDefinition {
   businessUnitId: ID!
   color: String
@@ -1824,19 +1830,25 @@ type Mutation {
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
+  createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
+  deleteTableConfiguration(id: ID!): Boolean!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  markAllNotificationsRead: Boolean!
+  markNotificationsRead(ids: [ID!]!): Boolean!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
+  patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+  setDefaultTableConfiguration(id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
@@ -1846,8 +1858,67 @@ type Mutation {
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
+  updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+}
+
+type Notification {
+  actions: JSON
+  businessUnitId: ID
+  channel: NotificationChannel!
+  correlationId: String
+  createdAt: Int!
+  data: JSON
+  deliveredAt: Int
+  deliveryStatus: NotificationDeliveryStatus!
+  dismissedAt: Int
+  eventType: String!
+  expiresAt: Int
+  id: ID!
+  jobId: String
+  message: String!
+  organizationId: ID!
+  priority: NotificationPriority!
+  readAt: Int
+  relatedEntities: JSON
+  source: String!
+  tags: [String!]
+  targetUserId: ID
+  title: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum NotificationChannel {
+  global
+  role
+  user
+}
+
+type NotificationConnection {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum NotificationDeliveryStatus {
+  delivered
+  expired
+  failed
+  pending
+}
+
+type NotificationEdge {
+  cursor: String!
+  node: Notification!
+}
+
+enum NotificationPriority {
+  critical
+  high
+  low
+  medium
 }
 
 type Organization {
@@ -1945,6 +2016,7 @@ type Query {
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
   customer(id: ID!): Customer
   customers(input: DataTableConnectionInput!): CustomerConnection!
+  defaultTableConfiguration(resource: String!): TableConfiguration
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceProfile(id: ID!): DistanceProfile
@@ -1993,6 +2065,8 @@ type Query {
   locations(input: DataTableConnectionInput!): LocationConnection!
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
+  notificationUnreadCount: Int!
+  notifications(input: DataTableConnectionInput!): NotificationConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
@@ -2019,6 +2093,8 @@ type Query {
   shipments(input: ShipmentsInput!): ShipmentConnection!
   storedMileage(id: ID!): StoredMileage
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
+  tableConfiguration(id: ID!): TableConfiguration
+  tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
   tcaSubscription(id: ID!): TCASubscription
   tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
   tractor(id: ID!): Tractor
@@ -3499,6 +3575,54 @@ type TCASubscriptionConnection {
 type TCASubscriptionEdge {
   cursor: String!
   node: TCASubscription!
+}
+
+type TableConfiguration {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  isDefault: Boolean!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  resource: String!
+  tableConfig: JSON!
+  updatedAt: Int!
+  user: User
+  userId: ID!
+  version: Int!
+  visibility: ConfigurationVisibility!
+}
+
+type TableConfigurationConnection {
+  edges: [TableConfigurationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TableConfigurationEdge {
+  cursor: String!
+  node: TableConfiguration!
+}
+
+input TableConfigurationInput {
+  description: String
+  isDefault: Boolean
+  name: String!
+  resource: String!
+  tableConfig: JSON!
+  visibility: ConfigurationVisibility = Private
+}
+
+input TableConfigurationPatchInput {
+  description: String @goField(omittable: true)
+  isDefault: Boolean @goField(omittable: true)
+  name: String
+  resource: String
+  tableConfig: JSON
+  visibility: ConfigurationVisibility
 }
 
 enum TimeFormat {

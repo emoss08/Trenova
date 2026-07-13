@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -44,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -609,6 +611,17 @@ type ManualJournalEdge struct {
 }
 
 type Mutation struct {
+}
+
+type NotificationConnection struct {
+	Edges      []*NotificationEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type NotificationEdge struct {
+	Node   *notification.Notification `json:"node"`
+	Cursor string                     `json:"cursor"`
 }
 
 type OrganizationInput struct {
@@ -1698,6 +1711,35 @@ type TCASubscriptionConnection struct {
 type TCASubscriptionEdge struct {
 	Node   *tablechangealert.TCASubscription `json:"node"`
 	Cursor string                            `json:"cursor"`
+}
+
+type TableConfigurationConnection struct {
+	Edges      []*TableConfigurationEdge `json:"edges"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+	TotalCount *int                      `json:"totalCount,omitempty"`
+}
+
+type TableConfigurationEdge struct {
+	Node   *tableconfiguration.TableConfiguration `json:"node"`
+	Cursor string                                 `json:"cursor"`
+}
+
+type TableConfigurationInput struct {
+	Name        string                         `json:"name"`
+	Description *string                        `json:"description,omitempty"`
+	Resource    string                         `json:"resource"`
+	TableConfig map[string]any                 `json:"tableConfig"`
+	Visibility  *tableconfiguration.Visibility `json:"visibility,omitempty"`
+	IsDefault   *bool                          `json:"isDefault,omitempty"`
+}
+
+type TableConfigurationPatchInput struct {
+	Name        *string                        `json:"name,omitempty"`
+	Description graphql.Omittable[*string]     `json:"description,omitempty"`
+	Resource    *string                        `json:"resource,omitempty"`
+	TableConfig map[string]any                 `json:"tableConfig,omitempty"`
+	Visibility  *tableconfiguration.Visibility `json:"visibility,omitempty"`
+	IsDefault   graphql.Omittable[*bool]       `json:"isDefault,omitempty"`
 }
 
 type TractorConnection struct {

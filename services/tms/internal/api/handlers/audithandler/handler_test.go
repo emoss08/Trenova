@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,6 +26,8 @@ import (
 )
 
 type stubAuditService struct {
+	*mocks.MockAuditService
+
 	listResp *pagination.ListResult[*audit.Entry]
 	listErr  error
 	getResp  *audit.Entry
@@ -188,14 +191,14 @@ func TestList_Success(t *testing.T) {
 	}
 
 	_, router := newAuditTestHandler(t, svc)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit-entries/?limit=10&offset=0", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit-entries/?limit=10", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	require.NotNil(t, svc.lastListReq)
 	require.NotNil(t, svc.lastListReq.Filter)
-	assert.Equal(t, 10, svc.lastListReq.Filter.Pagination.Limit)
+	assert.Equal(t, 11, svc.lastListReq.Filter.Pagination.Limit)
 }
 
 func TestList_ServiceError(t *testing.T) {

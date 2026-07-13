@@ -82,6 +82,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListNotificationConnectionRequest,
+) (*pagination.CursorListResult[*notification.Notification], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) CountUnread(
 	ctx context.Context,
 	userID pulid.ID,

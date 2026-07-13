@@ -315,6 +315,74 @@ func (_c *MockNotificationRepository_List_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ListConnection provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) ListConnection(ctx context.Context, req *repositories.ListNotificationConnectionRequest) (*pagination.CursorListResult[*notification.Notification], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*notification.Notification]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListNotificationConnectionRequest) (*pagination.CursorListResult[*notification.Notification], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListNotificationConnectionRequest) *pagination.CursorListResult[*notification.Notification]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*notification.Notification])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListNotificationConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockNotificationRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockNotificationRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListNotificationConnectionRequest
+func (_e *MockNotificationRepository_Expecter) ListConnection(ctx any, req any) *MockNotificationRepository_ListConnection_Call {
+	return &MockNotificationRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListNotificationConnectionRequest)) *MockNotificationRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListNotificationConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListNotificationConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*notification.Notification], err error) *MockNotificationRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListNotificationConnectionRequest) (*pagination.CursorListResult[*notification.Notification], error)) *MockNotificationRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkAllAsRead provides a mock function for the type MockNotificationRepository
 func (_mock *MockNotificationRepository) MarkAllAsRead(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) error {
 	ret := _mock.Called(ctx, userID, tenantInfo)

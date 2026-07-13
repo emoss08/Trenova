@@ -117,7 +117,7 @@ export default function LoadPlannerDialog({
                     name: p.commodityName,
                     weight: p.weight,
                     lengthFeet: p.lengthFeet,
-                    instructions: p.loadingInstructions,
+                    instructions: p.loadingInstructions ?? undefined,
                     palette: COMMODITY_PALETTE[idx % COMMODITY_PALETTE.length],
                   }))}
                 />

@@ -1,0 +1,41 @@
+fragment NotificationFields on Notification {
+  id
+  organizationId
+  businessUnitId
+  targetUserId
+  eventType
+  priority
+  channel
+  title
+  message
+  data
+  source
+  readAt
+  createdAt
+}
+
+query NotificationList($input: DataTableConnectionInput!) {
+  notifications(input: $input) {
+    edges {
+      node {
+        ...NotificationFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query NotificationUnreadCount {
+  notificationUnreadCount
+}
+
+mutation MarkNotificationsRead($ids: [ID!]!) {
+  markNotificationsRead(ids: $ids)
+}
+
+mutation MarkAllNotificationsRead {
+  markAllNotificationsRead
+}

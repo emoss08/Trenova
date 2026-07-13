@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -117,6 +118,93 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func applyNotificationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.NotificationTable.All())
+	}
+
+	return q.Column(columns...)
+}
+
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListNotificationConnectionRequest,
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.NotificationTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*notification.Notification)(nil),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
+	return r.userOrGlobalFilter(q, req.Filter.TenantInfo), nil
+}
+
+func (r *repository) applyTotalCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListNotificationConnectionRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFiltersWithoutSort(
+		q,
+		buncolgen.NotificationTable.Alias,
+		req.Filter,
+		(*notification.Notification)(nil),
+	)
+
+	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
+	return r.userOrGlobalFilter(q, req.Filter.TenantInfo)
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListNotificationConnectionRequest,
+) (*pagination.CursorListResult[*notification.Notification], error) {
+	log := r.l.With(zap.String("operation", "ListConnection"))
+
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*notification.Notification)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count notifications", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*notification.Notification]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*notification.Notification) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyNotificationColumns(sq, req.NotificationColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
+	if err != nil {
+		log.Error("failed to scan notifications", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) MarkAsRead(

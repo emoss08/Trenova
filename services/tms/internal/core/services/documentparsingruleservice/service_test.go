@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -509,7 +510,7 @@ func TestSaveFixtureUpdateUsesStoredRuleSetIDBeforeValidation(t *testing.T) {
 	require.Equal(t, ruleSetID, updated.RuleSetID)
 }
 
-type noopAuditService struct{}
+type noopAuditService struct{ *mocks.MockAuditService }
 
 func (noopAuditService) List(context.Context, *repositories.ListAuditEntriesRequest) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil

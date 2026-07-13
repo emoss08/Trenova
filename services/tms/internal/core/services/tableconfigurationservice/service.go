@@ -127,6 +127,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListTableConfigurationConnectionRequest,
+) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Delete(
 	ctx context.Context,
 	id pulid.ID,

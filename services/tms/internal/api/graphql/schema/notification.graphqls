@@ -1,0 +1,67 @@
+enum NotificationPriority {
+  critical
+  high
+  medium
+  low
+}
+
+enum NotificationChannel {
+  global
+  user
+  role
+}
+
+enum NotificationDeliveryStatus {
+  pending
+  delivered
+  failed
+  expired
+}
+
+type Notification {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID
+  targetUserId: ID
+  eventType: String!
+  priority: NotificationPriority!
+  channel: NotificationChannel!
+  title: String!
+  message: String!
+  data: JSON
+  relatedEntities: JSON
+  actions: JSON
+  expiresAt: Int
+  deliveredAt: Int
+  readAt: Int
+  dismissedAt: Int
+  createdAt: Int!
+  updatedAt: Int!
+  deliveryStatus: NotificationDeliveryStatus!
+  source: String!
+  jobId: String
+  correlationId: String
+  tags: [String!]
+  version: Int!
+}
+
+type NotificationEdge {
+  node: Notification!
+  cursor: String!
+}
+
+type NotificationConnection {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  notifications(input: DataTableConnectionInput!): NotificationConnection!
+  notificationUnreadCount: Int!
+}
+
+extend type Mutation {
+  markNotificationsRead(ids: [ID!]!): Boolean!
+  markAllNotificationsRead: Boolean!
+}

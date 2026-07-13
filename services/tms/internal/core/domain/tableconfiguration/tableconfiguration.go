@@ -93,6 +93,10 @@ func (tc *TableConfiguration) GetID() pulid.ID {
 	return tc.ID
 }
 
+func (tc *TableConfiguration) GetCreatedAt() int64 {
+	return tc.CreatedAt
+}
+
 func (tc *TableConfiguration) GetOrganizationID() pulid.ID {
 	return tc.OrganizationID
 }

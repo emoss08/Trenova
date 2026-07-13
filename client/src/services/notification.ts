@@ -1,45 +1,61 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
 import {
-  notificationResponseSchema,
-  type Notification,
-  type NotificationResponse,
-} from "@/types/notification";
+  MarkAllNotificationsReadDocument,
+  MarkNotificationsReadDocument,
+  NotificationListDocument,
+  NotificationUnreadCountDocument,
+  type NotificationListQuery,
+  type NotificationUnreadCountQuery,
+} from "@/graphql/generated/graphql";
+import { requestGraphQL } from "@/lib/graphql";
+import { safeParse } from "@/lib/parse";
+import { notificationResponseSchema, type Notification } from "@/types/notification";
 
 export class NotificationService {
-  public async listNotifications(params?: {
-    limit?: number;
-    offset?: number;
-  }) {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.offset) searchParams.set("offset", String(params.offset));
+  public async listNotifications(params?: { limit?: number; offset?: number }) {
+    const response = (await requestGraphQL({
+      document: NotificationListDocument,
+      operationName: "NotificationList",
+      variables: { input: { first: params?.limit ?? 20 } },
+    })) as NotificationListQuery;
 
-    const queryString = searchParams.toString();
-    const response = await api.get<NotificationResponse>(
-      `/notifications/?${queryString}`,
-    );
+    const results = response.notifications.edges.map((edge) => edge.node);
+    const totalCount = response.notifications.totalCount;
 
     return safeParse(
       notificationResponseSchema,
-      response,
+      {
+        results,
+        count: totalCount ?? results.length,
+        next: null,
+        prev: null,
+      },
       "Notification List",
     );
   }
 
   public async getUnreadCount() {
-    const response = await api.get<{ count: number }>(
-      "/notifications/unread-count",
-    );
+    const response = (await requestGraphQL({
+      document: NotificationUnreadCountDocument,
+      operationName: "NotificationUnreadCount",
+      variables: {},
+    })) as NotificationUnreadCountQuery;
 
-    return response.count;
+    return response.notificationUnreadCount;
   }
 
   public async markRead(ids: Notification["id"][]) {
-    await api.patch("/notifications/mark-read", { ids });
+    await requestGraphQL({
+      document: MarkNotificationsReadDocument,
+      operationName: "MarkNotificationsRead",
+      variables: { ids },
+    });
   }
 
   public async markAllRead() {
-    await api.patch("/notifications/mark-all-read");
+    await requestGraphQL({
+      document: MarkAllNotificationsReadDocument,
+      operationName: "MarkAllNotificationsRead",
+      variables: {},
+    });
   }
 }

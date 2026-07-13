@@ -1,0 +1,71 @@
+enum ConfigurationVisibility {
+  Private
+  Public
+  Shared
+}
+
+type TableConfiguration {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  name: String!
+  description: String!
+  resource: String!
+  tableConfig: JSON!
+  visibility: ConfigurationVisibility!
+  isDefault: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  organization: Organization
+  businessUnit: BusinessUnit
+  user: User
+}
+
+type TableConfigurationEdge {
+  node: TableConfiguration!
+  cursor: String!
+}
+
+type TableConfigurationConnection {
+  edges: [TableConfigurationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input TableConfigurationInput {
+  name: String!
+  description: String
+  resource: String!
+  tableConfig: JSON!
+  visibility: ConfigurationVisibility = Private
+  isDefault: Boolean
+}
+
+input TableConfigurationPatchInput {
+  name: String
+  description: String @goField(omittable: true)
+  resource: String
+  tableConfig: JSON
+  visibility: ConfigurationVisibility
+  isDefault: Boolean @goField(omittable: true)
+}
+
+extend type Query {
+  tableConfigurations(
+    input: DataTableConnectionInput!
+    resource: String
+    visibility: ConfigurationVisibility
+  ): TableConfigurationConnection!
+  tableConfiguration(id: ID!): TableConfiguration
+  defaultTableConfiguration(resource: String!): TableConfiguration
+}
+
+extend type Mutation {
+  createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
+  updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
+  patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
+  deleteTableConfiguration(id: ID!): Boolean!
+  setDefaultTableConfiguration(id: ID!): TableConfiguration!
+}

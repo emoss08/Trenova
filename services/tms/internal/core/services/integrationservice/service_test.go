@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ type stubIntegrationRepo struct {
 	upsertErr          error
 }
 
-type stubAuditService struct{}
+type stubAuditService struct{ *mocks.MockAuditService }
 
 func (s *stubAuditService) List(
 	context.Context,
