@@ -1,8 +1,3 @@
-type Customer {
-  id: ID!
-  name: String!
-}
-
 type DistanceOverrideStop {
   locationId: ID!
   stopOrder: Int!

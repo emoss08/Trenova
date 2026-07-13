@@ -77,7 +77,7 @@ type MockBankReceiptService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetBankReceiptRequest
-func (_e *MockBankReceiptService_Expecter) Get(ctx interface{}, req interface{}) *MockBankReceiptService_Get_Call {
+func (_e *MockBankReceiptService_Expecter) Get(ctx any, req any) *MockBankReceiptService_Get_Call {
 	return &MockBankReceiptService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -146,7 +146,7 @@ type MockBankReceiptService_GetSummary_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - asOfDate int64
-func (_e *MockBankReceiptService_Expecter) GetSummary(ctx interface{}, tenantInfo interface{}, asOfDate interface{}) *MockBankReceiptService_GetSummary_Call {
+func (_e *MockBankReceiptService_Expecter) GetSummary(ctx any, tenantInfo any, asOfDate any) *MockBankReceiptService_GetSummary_Call {
 	return &MockBankReceiptService_GetSummary_Call{Call: _e.mock.On("GetSummary", ctx, tenantInfo, asOfDate)}
 }
 
@@ -220,7 +220,7 @@ type MockBankReceiptService_Import_Call struct {
 //   - ctx context.Context
 //   - req *services.ImportBankReceiptRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptService_Expecter) Import(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptService_Import_Call {
+func (_e *MockBankReceiptService_Expecter) Import(ctx any, req any, actor any) *MockBankReceiptService_Import_Call {
 	return &MockBankReceiptService_Import_Call{Call: _e.mock.On("Import", ctx, req, actor)}
 }
 
@@ -293,7 +293,7 @@ type MockBankReceiptService_ListExceptions_Call struct {
 // ListExceptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptService_Expecter) ListExceptions(ctx interface{}, tenantInfo interface{}) *MockBankReceiptService_ListExceptions_Call {
+func (_e *MockBankReceiptService_Expecter) ListExceptions(ctx any, tenantInfo any) *MockBankReceiptService_ListExceptions_Call {
 	return &MockBankReceiptService_ListExceptions_Call{Call: _e.mock.On("ListExceptions", ctx, tenantInfo)}
 }
 
@@ -362,7 +362,7 @@ type MockBankReceiptService_Match_Call struct {
 //   - ctx context.Context
 //   - req *services.MatchBankReceiptRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptService_Expecter) Match(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptService_Match_Call {
+func (_e *MockBankReceiptService_Expecter) Match(ctx any, req any, actor any) *MockBankReceiptService_Match_Call {
 	return &MockBankReceiptService_Match_Call{Call: _e.mock.On("Match", ctx, req, actor)}
 }
 
@@ -435,7 +435,7 @@ type MockBankReceiptService_SuggestMatches_Call struct {
 // SuggestMatches is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetBankReceiptRequest
-func (_e *MockBankReceiptService_Expecter) SuggestMatches(ctx interface{}, req interface{}) *MockBankReceiptService_SuggestMatches_Call {
+func (_e *MockBankReceiptService_Expecter) SuggestMatches(ctx any, req any) *MockBankReceiptService_SuggestMatches_Call {
 	return &MockBankReceiptService_SuggestMatches_Call{Call: _e.mock.On("SuggestMatches", ctx, req)}
 }
 

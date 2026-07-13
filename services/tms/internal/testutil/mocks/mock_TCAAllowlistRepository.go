@@ -74,7 +74,7 @@ type MockTCAAllowlistRepository_IsTableAllowed_Call struct {
 //   - ctx context.Context
 //   - tableName string
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockTCAAllowlistRepository_Expecter) IsTableAllowed(ctx interface{}, tableName interface{}, tenantInfo interface{}) *MockTCAAllowlistRepository_IsTableAllowed_Call {
+func (_e *MockTCAAllowlistRepository_Expecter) IsTableAllowed(ctx any, tableName any, tenantInfo any) *MockTCAAllowlistRepository_IsTableAllowed_Call {
 	return &MockTCAAllowlistRepository_IsTableAllowed_Call{Call: _e.mock.On("IsTableAllowed", ctx, tableName, tenantInfo)}
 }
 
@@ -147,7 +147,7 @@ type MockTCAAllowlistRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockTCAAllowlistRepository_Expecter) List(ctx interface{}, tenantInfo interface{}) *MockTCAAllowlistRepository_List_Call {
+func (_e *MockTCAAllowlistRepository_Expecter) List(ctx any, tenantInfo any) *MockTCAAllowlistRepository_List_Call {
 	return &MockTCAAllowlistRepository_List_Call{Call: _e.mock.On("List", ctx, tenantInfo)}
 }
 

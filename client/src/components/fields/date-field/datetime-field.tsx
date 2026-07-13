@@ -1,6 +1,5 @@
 import { toDate, toUnixTimeStamp } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { useCallback, useMemo } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
 import type { AutoCompleteDateFieldProps } from "./date-field";
@@ -14,6 +13,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
   label,
   description,
   placeholder,
+  disabled,
   ...props
 }: AutoCompleteDateFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -26,42 +26,31 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field, fieldState }) => {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const dateValue = useMemo(
-          () => (field.value ? toDate(field.value) : undefined),
-          [field.value],
-        );
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const handleChange = useCallback(
-          (date: Date | undefined) => {
-            field.onChange(date ? toUnixTimeStamp(date) : null);
-          },
-          [field],
-        );
-
         return (
           <FieldWrapper
             label={label}
             description={description}
+            descriptionId={descriptionId}
+            errorId={errorId}
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
           >
             <DateTimePicker
               {...props}
-              {...field}
-              name={name}
               id={inputId}
+              name={field.name}
+              ref={field.ref}
               aria-label={label}
-              dateTime={dateValue || undefined}
-              placeholder={placeholder}
-              setDateTime={handleChange}
+              dateTime={field.value ? toDate(field.value) : undefined}
+              setDateTime={(date) => field.onChange(date ? (toUnixTimeStamp(date) ?? null) : null)}
               onBlur={field.onBlur}
-              className={className}
+              placeholder={placeholder}
+              disabled={disabled || field.disabled}
               isInvalid={fieldState.invalid}
-              autoComplete="off"
-              aria-describedby={cn(description && descriptionId, fieldState.error && errorId)}
+              aria-describedby={
+                cn(description && descriptionId, fieldState.error && errorId) || undefined
+              }
             />
           </FieldWrapper>
         );

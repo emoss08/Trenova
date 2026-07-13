@@ -29,7 +29,7 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			AutoCancelShipments:          true,
-			AutoCancelShipmentsThreshold: ptrInt8(21),
+			AutoCancelShipmentsThreshold: new(int8(21)),
 		}, nil).
 		Once()
 
@@ -98,7 +98,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			AutoCancelShipments:          true,
-			AutoCancelShipmentsThreshold: ptrInt8(30),
+			AutoCancelShipmentsThreshold: new(int8(30)),
 		}, nil).
 		Once()
 

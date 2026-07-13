@@ -75,7 +75,7 @@ type MockInvoiceAdjustGenerator_GenerateCreditMemoNumber_Call struct {
 //   - buID pulid.ID
 //   - locationCode string
 //   - businessUnitCode string
-func (_e *MockInvoiceAdjustGenerator_Expecter) GenerateCreditMemoNumber(ctx interface{}, orgID interface{}, buID interface{}, locationCode interface{}, businessUnitCode interface{}) *MockInvoiceAdjustGenerator_GenerateCreditMemoNumber_Call {
+func (_e *MockInvoiceAdjustGenerator_Expecter) GenerateCreditMemoNumber(ctx any, orgID any, buID any, locationCode any, businessUnitCode any) *MockInvoiceAdjustGenerator_GenerateCreditMemoNumber_Call {
 	return &MockInvoiceAdjustGenerator_GenerateCreditMemoNumber_Call{Call: _e.mock.On("GenerateCreditMemoNumber", ctx, orgID, buID, locationCode, businessUnitCode)}
 }
 
@@ -159,7 +159,7 @@ type MockInvoiceAdjustGenerator_GenerateInvoiceNumber_Call struct {
 //   - buID pulid.ID
 //   - locationCode string
 //   - businessUnitCode string
-func (_e *MockInvoiceAdjustGenerator_Expecter) GenerateInvoiceNumber(ctx interface{}, orgID interface{}, buID interface{}, locationCode interface{}, businessUnitCode interface{}) *MockInvoiceAdjustGenerator_GenerateInvoiceNumber_Call {
+func (_e *MockInvoiceAdjustGenerator_Expecter) GenerateInvoiceNumber(ctx any, orgID any, buID any, locationCode any, businessUnitCode any) *MockInvoiceAdjustGenerator_GenerateInvoiceNumber_Call {
 	return &MockInvoiceAdjustGenerator_GenerateInvoiceNumber_Call{Call: _e.mock.On("GenerateInvoiceNumber", ctx, orgID, buID, locationCode, businessUnitCode)}
 }
 

@@ -15,7 +15,7 @@ import (
 type Registry struct {
 	mu       sync.RWMutex
 	compiler *jsonschema.Compiler
-	schemas  map[string]*formulatypes.Defintion
+	schemas  map[string]*formulatypes.Definition
 }
 
 func NewRegistry() *Registry {
@@ -24,7 +24,7 @@ func NewRegistry() *Registry {
 
 	return &Registry{
 		compiler: compiler,
-		schemas:  make(map[string]*formulatypes.Defintion),
+		schemas:  make(map[string]*formulatypes.Definition),
 	}
 }
 
@@ -32,7 +32,7 @@ func (r *Registry) Register(id string, schemaJSON []byte) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	var definition formulatypes.Defintion
+	var definition formulatypes.Definition
 
 	if err := sonic.Unmarshal(schemaJSON, &definition); err != nil {
 		return errors.NewSchemaError(id, "unmarshal", err)
@@ -63,7 +63,7 @@ func (r *Registry) Register(id string, schemaJSON []byte) error {
 	return nil
 }
 
-func (r *Registry) Get(schemaID string) (*formulatypes.Defintion, bool) {
+func (r *Registry) Get(schemaID string) (*formulatypes.Definition, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -88,11 +88,11 @@ func (r *Registry) ValidateData(schemaID string, data any) error {
 	return nil
 }
 
-func (r *Registry) ListSchemas() []*formulatypes.Defintion {
+func (r *Registry) ListSchemas() []*formulatypes.Definition {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	schemas := make([]*formulatypes.Defintion, 0, len(r.schemas))
+	schemas := make([]*formulatypes.Definition, 0, len(r.schemas))
 	for _, schema := range r.schemas {
 		schemas = append(schemas, schema)
 	}

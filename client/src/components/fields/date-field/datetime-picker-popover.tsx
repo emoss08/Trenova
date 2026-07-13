@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -9,43 +9,45 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { TimePicker } from "../time-picker/time-picker";
 
 interface DateTimePickerPopoverProps {
   children: React.ReactElement;
-  onOpen: () => void;
   dateTime: Date | undefined;
   setDateTime: (date: Date | undefined) => void;
-  setInputValue: (value: string) => void;
 }
 
 export function DateTimePickerPopover({
   children,
-  onOpen,
   dateTime,
   setDateTime,
 }: DateTimePickerPopoverProps) {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 640px)");
 
+  const onSelectDay = useCallback(
+    (day: Date | undefined) => {
+      if (!day) return;
+      const next = new Date(day);
+      if (dateTime) {
+        next.setHours(
+          dateTime.getHours(),
+          dateTime.getMinutes(),
+          dateTime.getSeconds(),
+          dateTime.getMilliseconds(),
+        );
+      }
+      setDateTime(next);
+    },
+    [dateTime, setDateTime],
+  );
+
   if (!isDesktop) {
     return (
-      <Drawer
-        open={isDrawerOpen}
-        onOpenChange={(value) => {
-          onOpen();
-          setIsDrawerOpen(value);
-        }}
-        shouldScaleBackground
-      >
+      <Drawer open={isOpen} onOpenChange={setIsOpen} shouldScaleBackground>
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent>
           <DrawerHeader className="sr-only text-left">
@@ -56,7 +58,8 @@ export function DateTimePickerPopover({
             <Calendar
               mode="single"
               selected={dateTime}
-              onSelect={setDateTime}
+              defaultMonth={dateTime}
+              onSelect={onSelectDay}
               className="self-center"
             />
             <div className="border-t border-border p-3">
@@ -69,16 +72,10 @@ export function DateTimePickerPopover({
   }
 
   return (
-    <Popover
-      open={isPopoverOpen}
-      onOpenChange={(value) => {
-        onOpen();
-        setIsPopoverOpen(value);
-      }}
-    >
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger render={children} />
       <PopoverContent align="center" side="right" className="w-auto p-0">
-        <Calendar mode="single" selected={dateTime} onSelect={setDateTime} />
+        <Calendar mode="single" selected={dateTime} defaultMonth={dateTime} onSelect={onSelectDay} />
         <div className="border-t border-border p-3">
           <TimePicker date={dateTime} setDate={setDateTime} />
         </div>

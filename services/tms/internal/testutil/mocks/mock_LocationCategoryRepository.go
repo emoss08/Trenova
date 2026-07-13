@@ -76,7 +76,7 @@ type MockLocationCategoryRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *locationcategory.LocationCategory
-func (_e *MockLocationCategoryRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockLocationCategoryRepository_Create_Call {
+func (_e *MockLocationCategoryRepository_Expecter) Create(ctx any, entity any) *MockLocationCategoryRepository_Create_Call {
 	return &MockLocationCategoryRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockLocationCategoryRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetLocationCategoryByIDRequest
-func (_e *MockLocationCategoryRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockLocationCategoryRepository_GetByID_Call {
+func (_e *MockLocationCategoryRepository_Expecter) GetByID(ctx any, req any) *MockLocationCategoryRepository_GetByID_Call {
 	return &MockLocationCategoryRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockLocationCategoryRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListLocationCategoriesRequest
-func (_e *MockLocationCategoryRepository_Expecter) List(ctx interface{}, req interface{}) *MockLocationCategoryRepository_List_Call {
+func (_e *MockLocationCategoryRepository_Expecter) List(ctx any, req any) *MockLocationCategoryRepository_List_Call {
 	return &MockLocationCategoryRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -240,6 +240,74 @@ func (_c *MockLocationCategoryRepository_List_Call) Return(listResult *paginatio
 }
 
 func (_c *MockLocationCategoryRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListLocationCategoriesRequest) (*pagination.ListResult[*locationcategory.LocationCategory], error)) *MockLocationCategoryRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockLocationCategoryRepository
+func (_mock *MockLocationCategoryRepository) ListConnection(ctx context.Context, req *repositories.ListLocationCategoryConnectionRequest) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*locationcategory.LocationCategory]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListLocationCategoryConnectionRequest) (*pagination.CursorListResult[*locationcategory.LocationCategory], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListLocationCategoryConnectionRequest) *pagination.CursorListResult[*locationcategory.LocationCategory]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*locationcategory.LocationCategory])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListLocationCategoryConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockLocationCategoryRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockLocationCategoryRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListLocationCategoryConnectionRequest
+func (_e *MockLocationCategoryRepository_Expecter) ListConnection(ctx any, req any) *MockLocationCategoryRepository_ListConnection_Call {
+	return &MockLocationCategoryRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockLocationCategoryRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListLocationCategoryConnectionRequest)) *MockLocationCategoryRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListLocationCategoryConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListLocationCategoryConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockLocationCategoryRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*locationcategory.LocationCategory], err error) *MockLocationCategoryRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockLocationCategoryRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListLocationCategoryConnectionRequest) (*pagination.CursorListResult[*locationcategory.LocationCategory], error)) *MockLocationCategoryRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -280,7 +348,7 @@ type MockLocationCategoryRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockLocationCategoryRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockLocationCategoryRepository_SelectOptions_Call {
+func (_e *MockLocationCategoryRepository_Expecter) SelectOptions(ctx any, req any) *MockLocationCategoryRepository_SelectOptions_Call {
 	return &MockLocationCategoryRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -348,7 +416,7 @@ type MockLocationCategoryRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *locationcategory.LocationCategory
-func (_e *MockLocationCategoryRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockLocationCategoryRepository_Update_Call {
+func (_e *MockLocationCategoryRepository_Expecter) Update(ctx any, entity any) *MockLocationCategoryRepository_Update_Call {
 	return &MockLocationCategoryRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -376,74 +444,6 @@ func (_c *MockLocationCategoryRepository_Update_Call) Return(locationCategory *l
 }
 
 func (_c *MockLocationCategoryRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *locationcategory.LocationCategory) (*locationcategory.LocationCategory, error)) *MockLocationCategoryRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockLocationCategoryRepository
-func (_mock *MockLocationCategoryRepository) ListConnection(ctx context.Context, req *repositories.ListLocationCategoryConnectionRequest) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*locationcategory.LocationCategory]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListLocationCategoryConnectionRequest) (*pagination.CursorListResult[*locationcategory.LocationCategory], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListLocationCategoryConnectionRequest) *pagination.CursorListResult[*locationcategory.LocationCategory]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*locationcategory.LocationCategory])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListLocationCategoryConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockLocationCategoryRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockLocationCategoryRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListLocationCategoryConnectionRequest
-func (_e *MockLocationCategoryRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockLocationCategoryRepository_ListConnection_Call {
-	return &MockLocationCategoryRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockLocationCategoryRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListLocationCategoryConnectionRequest)) *MockLocationCategoryRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListLocationCategoryConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListLocationCategoryConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockLocationCategoryRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*locationcategory.LocationCategory], err error) *MockLocationCategoryRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockLocationCategoryRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListLocationCategoryConnectionRequest) (*pagination.CursorListResult[*locationcategory.LocationCategory], error)) *MockLocationCategoryRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

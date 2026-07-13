@@ -54,12 +54,18 @@ func TestQueryResolver_ShipmentEvents_MapsRequest(t *testing.T) {
 	})
 	limit := 20
 	before := 1_700_000_000
+	shipmentIDValue := shipmentID.String()
 	types := []gqlmodel.ShipmentEventType{
 		gqlmodel.ShipmentEventTypeStatusChanged,
 		gqlmodel.ShipmentEventTypeCommentPosted,
 	}
 
-	events, err := resolver.ShipmentEvents(ctx, new(shipmentID.String()), types, &limit, &before)
+	events, err := resolver.ShipmentEvents(ctx, gqlmodel.ShipmentEventsInput{
+		ShipmentID: &shipmentIDValue,
+		Types:      types,
+		Limit:      &limit,
+		Before:     &before,
+	})
 	require.NoError(t, err)
 
 	require.Len(t, events, 1)
@@ -99,7 +105,7 @@ func TestQueryResolver_ShipmentEvents_AllowsOptionalFilters(t *testing.T) {
 		BusinessUnitID: buID,
 	})
 
-	events, err := resolver.ShipmentEvents(ctx, nil, nil, nil, nil)
+	events, err := resolver.ShipmentEvents(ctx, gqlmodel.ShipmentEventsInput{})
 	require.NoError(t, err)
 
 	assert.Empty(t, events)

@@ -20,6 +20,12 @@ type ListCustomerRequest struct {
 	CustomerFilterOptions ` form:"customerFilterOptions"`
 }
 
+type ListCustomerConnectionRequest struct {
+	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"-"`
+	CustomerColumns []string                 `json:"-"`
+}
+
 type GetCustomerByIDRequest struct {
 	ID                    pulid.ID              `json:"id"         form:"id"`
 	TenantInfo            pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -46,6 +52,10 @@ type CustomerRepository interface {
 		ctx context.Context,
 		req *ListCustomerRequest,
 	) (*pagination.ListResult[*customer.Customer], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListCustomerConnectionRequest,
+	) (*pagination.CursorListResult[*customer.Customer], error)
 	GetByID(
 		ctx context.Context,
 		req GetCustomerByIDRequest,

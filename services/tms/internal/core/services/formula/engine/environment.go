@@ -31,13 +31,17 @@ func NewEnvironmentBuilder(p EnvironmentBuilderParams) *EnvironmentBuilder {
 	}
 }
 
-func (b *EnvironmentBuilder) Build(entity any, schemaID string) (map[string]any, error) {
-	env := make(map[string]any)
-
+func (b *EnvironmentBuilder) Build(
+	entity any,
+	schemaID string,
+) (map[string]any, map[string]error, error) {
 	definition, ok := b.registry.Get(schemaID)
 	if !ok {
-		return b.buildFromEntity(entity)
+		return nil, nil, fmt.Errorf("%w: %s", ErrSchemaNotFound, schemaID)
 	}
+
+	env := make(map[string]any, len(definition.FieldSources))
+	resolveFailures := make(map[string]error)
 
 	for fieldPath, source := range definition.FieldSources {
 		var value any
@@ -50,75 +54,46 @@ func (b *EnvironmentBuilder) Build(entity any, schemaID string) (map[string]any,
 		}
 
 		if err != nil {
-			if source.Nullable {
-				value = nil
-			} else {
-				continue
+			value = nil
+			if !source.Nullable {
+				resolveFailures[fieldPath] = err
 			}
 		}
 
 		formulatypes.SetNestedValue(env, fieldPath, value)
 	}
 
-	return env, nil
+	return env, resolveFailures, nil
 }
 
 func (b *EnvironmentBuilder) BuildWithVariables(
 	entity any,
 	schemaID string,
 	variables map[string]any,
-) (map[string]any, error) {
-	env, err := b.Build(entity, schemaID)
+) (map[string]any, map[string]error, error) {
+	env, resolveFailures, err := b.Build(entity, schemaID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	mergeVariables(env, variables)
 
-	return env, nil
+	return env, resolveFailures, nil
 }
 
 func (b *EnvironmentBuilder) BuildValidationEnvironment(
 	schemaID string,
 	variables map[string]any,
-) (map[string]any, error) {
+) (map[string]any, map[string]error, error) {
 	definition, ok := b.registry.Get(schemaID)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrSchemaNotFound, schemaID)
+		return nil, nil, fmt.Errorf("%w: %s", ErrSchemaNotFound, schemaID)
 	}
 
 	env := buildPropertyValidationEnvironment(definition.Properties)
 	mergeVariables(env, variables)
 
-	return env, nil
-}
-
-func (b *EnvironmentBuilder) buildFromEntity(entity any) (map[string]any, error) {
-	env := make(map[string]any)
-
-	computed := []string{
-		"totalDistance",
-		"totalStops",
-		"hasHazmat",
-		"requiresTemperatureControl",
-		"temperatureDifferential",
-		"totalWeight",
-		"totalPieces",
-		"totalLinearFeet",
-		"baseRate",
-		"freightChargeAmount",
-		"otherChargeAmount",
-		"currentTotalCharge",
-	}
-
-	for _, name := range computed {
-		functionName := "compute" + strings.ToUpper(name[:1]) + name[1:]
-		if value, err := b.resolver.ResolveComputed(entity, functionName); err == nil {
-			env[name] = value
-		}
-	}
-
-	return env, nil
+	return env, nil, nil
 }
 
 func (b *EnvironmentBuilder) GetRequiredPreloads(schemaID string) []string {

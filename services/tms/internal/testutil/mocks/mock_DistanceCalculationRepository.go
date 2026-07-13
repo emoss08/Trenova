@@ -64,7 +64,7 @@ type MockDistanceCalculationRepository_CreateRun_Call struct {
 // CreateRun is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distancecalculation.Run
-func (_e *MockDistanceCalculationRepository_Expecter) CreateRun(ctx interface{}, entity interface{}) *MockDistanceCalculationRepository_CreateRun_Call {
+func (_e *MockDistanceCalculationRepository_Expecter) CreateRun(ctx any, entity any) *MockDistanceCalculationRepository_CreateRun_Call {
 	return &MockDistanceCalculationRepository_CreateRun_Call{Call: _e.mock.On("CreateRun", ctx, entity)}
 }
 
@@ -121,7 +121,7 @@ type MockDistanceCalculationRepository_UpdateMoveDistance_Call struct {
 // UpdateMoveDistance is a helper method to define mock.On call
 //   - ctx context.Context
 //   - move *shipment.ShipmentMove
-func (_e *MockDistanceCalculationRepository_Expecter) UpdateMoveDistance(ctx interface{}, move interface{}) *MockDistanceCalculationRepository_UpdateMoveDistance_Call {
+func (_e *MockDistanceCalculationRepository_Expecter) UpdateMoveDistance(ctx any, move any) *MockDistanceCalculationRepository_UpdateMoveDistance_Call {
 	return &MockDistanceCalculationRepository_UpdateMoveDistance_Call{Call: _e.mock.On("UpdateMoveDistance", ctx, move)}
 }
 

@@ -3,14 +3,9 @@
 package formula_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/services/formula"
-	"github.com/emoss08/trenova/internal/core/services/formula/engine"
-	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
-	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,76 +59,17 @@ type IntegrationHazardousMaterial struct {
 	Class string
 }
 
-type mockFormulaTemplateRepository struct{}
-
-func (m *mockFormulaTemplateRepository) Create(
-	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
-) (*formulatemplate.FormulaTemplate, error) {
-	return entity, nil
-}
-
-func (m *mockFormulaTemplateRepository) Update(
-	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
-) (*formulatemplate.FormulaTemplate, error) {
-	return entity, nil
-}
-
-func (m *mockFormulaTemplateRepository) GetByID(
-	ctx context.Context,
-	req interface{},
-) (*formulatemplate.FormulaTemplate, error) {
-	return nil, nil
-}
-
-func (m *mockFormulaTemplateRepository) List(
-	ctx context.Context,
-	req interface{},
-) (interface{}, error) {
-	return nil, nil
-}
-
-func (m *mockFormulaTemplateRepository) Delete(
-	ctx context.Context,
-	id pulid.ID,
-	tenantInfo interface{},
-) error {
-	return nil
-}
-
-func setupIntegrationService(t *testing.T) (*formula.Service, *engine.Engine) {
-	t.Helper()
-
-	reg := schema.NewRegistry()
-	res := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(res)
-
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: reg,
-		Resolver: res,
-	})
-
-	eng := engine.NewEngine(engine.Params{
-		Registry:   reg,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-
-	return nil, eng
-}
-
 func TestIntegration_FlatRateBilling(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
 		Name:       "Flat Rate",
-		Expression: "baseRate",
+		Expression: "flatRate",
 		SchemaID:   "shipment",
 		VariableDefinitions: []*formulatypes.VariableDefinition{
 			{
-				Name:         "baseRate",
+				Name:         "flatRate",
 				Type:         formulatypes.VariableValueTypeNumber,
 				DefaultValue: 500.0,
 			},
@@ -145,7 +81,7 @@ func TestIntegration_FlatRateBilling(t *testing.T) {
 		Weight:    5000,
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -157,7 +93,7 @@ func TestIntegration_FlatRateBilling(t *testing.T) {
 }
 
 func TestIntegration_PerMileBilling(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -181,7 +117,7 @@ func TestIntegration_PerMileBilling(t *testing.T) {
 		},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -193,16 +129,16 @@ func TestIntegration_PerMileBilling(t *testing.T) {
 }
 
 func TestIntegration_PerStopBilling(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
 		Name:       "Per Stop",
-		Expression: "baseRate + (ratePerStop * totalStops)",
+		Expression: "startingRate + (ratePerStop * totalStops)",
 		SchemaID:   "shipment",
 		VariableDefinitions: []*formulatypes.VariableDefinition{
 			{
-				Name:         "baseRate",
+				Name:         "startingRate",
 				Type:         formulatypes.VariableValueTypeNumber,
 				DefaultValue: 100.0,
 			},
@@ -222,7 +158,7 @@ func TestIntegration_PerStopBilling(t *testing.T) {
 		},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -234,7 +170,7 @@ func TestIntegration_PerStopBilling(t *testing.T) {
 }
 
 func TestIntegration_CWTBilling(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -255,7 +191,7 @@ func TestIntegration_CWTBilling(t *testing.T) {
 		Weight:    4550,
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -267,7 +203,7 @@ func TestIntegration_CWTBilling(t *testing.T) {
 }
 
 func TestIntegration_HazmatSurcharge(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -318,7 +254,7 @@ func TestIntegration_HazmatSurcharge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  template,
 				Entity:    tt.shipment,
 				Variables: map[string]any{},
@@ -332,7 +268,7 @@ func TestIntegration_HazmatSurcharge(t *testing.T) {
 }
 
 func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -376,7 +312,7 @@ func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  template,
 				Entity:    tt.shipment,
 				Variables: map[string]any{},
@@ -390,7 +326,7 @@ func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
 }
 
 func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -438,7 +374,7 @@ func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  template,
 				Entity:    tt.shipment,
 				Variables: map[string]any{},
@@ -452,13 +388,13 @@ func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
 }
 
 func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:   pulid.MustNew("FT"),
 		Name: "Combined Freight Charge",
 		Expression: `
-			baseRate
+			startingRate
 			+ (ratePerMile * totalDistance)
 			+ (ratePerStop * totalStops)
 			+ (hasHazmat ? hazmatFee : 0)
@@ -466,7 +402,7 @@ func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
 		`,
 		SchemaID: "shipment",
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "baseRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 50.0},
+			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 50.0},
 			{Name: "ratePerMile", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1.5},
 			{Name: "ratePerStop", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 25.0},
 			{Name: "hazmatFee", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.0},
@@ -504,7 +440,7 @@ func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
 		},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -518,7 +454,7 @@ func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
 }
 
 func TestIntegration_RuntimeVariableOverride(t *testing.T) {
-	_, eng := setupIntegrationService(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -540,7 +476,7 @@ func TestIntegration_RuntimeVariableOverride(t *testing.T) {
 		},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
 		Entity:   shipment,
 		Variables: map[string]any{

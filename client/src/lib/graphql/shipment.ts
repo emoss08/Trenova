@@ -96,7 +96,7 @@ export const shipmentTableGraphQLConfig = defineDataTableGraphQLConfig<
   document: ShipmentCommandCenterTableDocument,
   operationName: "ShipmentCommandCenterTable",
   connectionKey: "shipments",
-  extraVariables: {
+  inputExtraVariables: {
     expandShipmentDetails: true,
   },
   mapNode: (node) => node as Shipment,
@@ -109,12 +109,14 @@ export async function listShipmentsGraphQL(
     document: ShipmentCommandCenterTableDocument,
     operationName: "ShipmentCommandCenterTable",
     variables: {
-      first: req.limit,
-      after: req.after ?? undefined,
-      query: req.query,
-      fieldFilters: req.fieldFilters ?? [],
-      filterGroups: req.filterGroups ?? [],
-      expandShipmentDetails: true,
+      input: {
+        first: req.limit,
+        after: req.after ?? undefined,
+        query: req.query,
+        fieldFilters: req.fieldFilters ?? [],
+        filterGroups: req.filterGroups ?? [],
+        expandShipmentDetails: true,
+      },
     },
   });
   return connectionToLimitOffset(data.shipments as ShipmentConnection);
@@ -144,9 +146,12 @@ export async function listExceptionShipmentsGraphQL(req: {
     document: ExceptionShipmentsDocument,
     operationName: "ExceptionShipments",
     variables: {
-      first: req.limit,
-      after: req.after ?? undefined,
-      fieldFilters: req.fieldFilters,
+      input: {
+        first: req.limit,
+        after: req.after ?? undefined,
+        fieldFilters: req.fieldFilters,
+        expandShipmentDetails: true,
+      },
     },
   });
   return connectionToLimitOffset(data.shipments as ShipmentConnection);
@@ -161,9 +166,12 @@ export async function listMapShipmentsGraphQL(req: {
     document: MapShipmentsDocument,
     operationName: "MapShipments",
     variables: {
-      first: req.limit,
-      after: req.after ?? undefined,
-      fieldFilters: req.fieldFilters,
+      input: {
+        first: req.limit,
+        after: req.after ?? undefined,
+        fieldFilters: req.fieldFilters,
+        expandShipmentDetails: true,
+      },
     },
   });
   return connectionToLimitOffset(data.shipments as ShipmentConnection);
@@ -222,7 +230,7 @@ export async function getShipmentPageAnalyticsGraphQL(req: {
   const data = await requestShipmentGraphQL({
     document: ShipmentPageAnalyticsDocument,
     operationName: "ShipmentPageAnalytics",
-    variables: req,
+    variables: { input: req },
   });
   return data.shipmentAnalytics;
 }
@@ -237,10 +245,12 @@ export async function listShipmentEventsGraphQL(req: {
     document: ShipmentEventsDocument,
     operationName: "ShipmentEvents",
     variables: {
-      shipmentId: req.shipmentId,
-      types: req.types,
-      limit: req.limit,
-      before: req.before,
+      input: {
+        shipmentId: req.shipmentId,
+        types: req.types,
+        limit: req.limit,
+        before: req.before,
+      },
     },
   });
   return data.shipmentEvents as ShipmentEventList;

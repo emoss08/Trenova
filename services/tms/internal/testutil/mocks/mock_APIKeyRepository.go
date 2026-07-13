@@ -77,7 +77,7 @@ type MockAPIKeyRepository_CountActiveByCreator_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - userID pulid.ID
-func (_e *MockAPIKeyRepository_Expecter) CountActiveByCreator(ctx interface{}, tenantInfo interface{}, userID interface{}) *MockAPIKeyRepository_CountActiveByCreator_Call {
+func (_e *MockAPIKeyRepository_Expecter) CountActiveByCreator(ctx any, tenantInfo any, userID any) *MockAPIKeyRepository_CountActiveByCreator_Call {
 	return &MockAPIKeyRepository_CountActiveByCreator_Call{Call: _e.mock.On("CountActiveByCreator", ctx, tenantInfo, userID)}
 }
 
@@ -139,7 +139,7 @@ type MockAPIKeyRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key *apikey.Key
-func (_e *MockAPIKeyRepository_Expecter) Create(ctx interface{}, key interface{}) *MockAPIKeyRepository_Create_Call {
+func (_e *MockAPIKeyRepository_Expecter) Create(ctx any, key any) *MockAPIKeyRepository_Create_Call {
 	return &MockAPIKeyRepository_Create_Call{Call: _e.mock.On("Create", ctx, key)}
 }
 
@@ -197,7 +197,7 @@ type MockAPIKeyRepository_CreateWithPermissions_Call struct {
 //   - ctx context.Context
 //   - key *apikey.Key
 //   - permissions []*apikey.Permission
-func (_e *MockAPIKeyRepository_Expecter) CreateWithPermissions(ctx interface{}, key interface{}, permissions interface{}) *MockAPIKeyRepository_CreateWithPermissions_Call {
+func (_e *MockAPIKeyRepository_Expecter) CreateWithPermissions(ctx any, key any, permissions any) *MockAPIKeyRepository_CreateWithPermissions_Call {
 	return &MockAPIKeyRepository_CreateWithPermissions_Call{Call: _e.mock.On("CreateWithPermissions", ctx, key, permissions)}
 }
 
@@ -271,7 +271,7 @@ type MockAPIKeyRepository_GetByID_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - id pulid.ID
-func (_e *MockAPIKeyRepository_Expecter) GetByID(ctx interface{}, tenantInfo interface{}, id interface{}) *MockAPIKeyRepository_GetByID_Call {
+func (_e *MockAPIKeyRepository_Expecter) GetByID(ctx any, tenantInfo any, id any) *MockAPIKeyRepository_GetByID_Call {
 	return &MockAPIKeyRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, tenantInfo, id)}
 }
 
@@ -344,7 +344,7 @@ type MockAPIKeyRepository_GetByPrefix_Call struct {
 // GetByPrefix is a helper method to define mock.On call
 //   - ctx context.Context
 //   - prefix string
-func (_e *MockAPIKeyRepository_Expecter) GetByPrefix(ctx interface{}, prefix interface{}) *MockAPIKeyRepository_GetByPrefix_Call {
+func (_e *MockAPIKeyRepository_Expecter) GetByPrefix(ctx any, prefix any) *MockAPIKeyRepository_GetByPrefix_Call {
 	return &MockAPIKeyRepository_GetByPrefix_Call{Call: _e.mock.On("GetByPrefix", ctx, prefix)}
 }
 
@@ -405,7 +405,7 @@ type MockAPIKeyRepository_IncrementDailyUsage_Call struct {
 //   - buID pulid.ID
 //   - date time.Time
 //   - count int64
-func (_e *MockAPIKeyRepository_Expecter) IncrementDailyUsage(ctx interface{}, id interface{}, orgID interface{}, buID interface{}, date interface{}, count interface{}) *MockAPIKeyRepository_IncrementDailyUsage_Call {
+func (_e *MockAPIKeyRepository_Expecter) IncrementDailyUsage(ctx any, id any, orgID any, buID any, date any, count any) *MockAPIKeyRepository_IncrementDailyUsage_Call {
 	return &MockAPIKeyRepository_IncrementDailyUsage_Call{Call: _e.mock.On("IncrementDailyUsage", ctx, id, orgID, buID, date, count)}
 }
 
@@ -493,7 +493,7 @@ type MockAPIKeyRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAPIKeysRequest
-func (_e *MockAPIKeyRepository_Expecter) List(ctx interface{}, req interface{}) *MockAPIKeyRepository_List_Call {
+func (_e *MockAPIKeyRepository_Expecter) List(ctx any, req any) *MockAPIKeyRepository_List_Call {
 	return &MockAPIKeyRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -525,6 +525,74 @@ func (_c *MockAPIKeyRepository_List_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// ListConnection provides a mock function for the type MockAPIKeyRepository
+func (_mock *MockAPIKeyRepository) ListConnection(ctx context.Context, req *repositories.ListAPIKeyConnectionRequest) (*pagination.CursorListResult[*apikey.Key], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*apikey.Key]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAPIKeyConnectionRequest) (*pagination.CursorListResult[*apikey.Key], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAPIKeyConnectionRequest) *pagination.CursorListResult[*apikey.Key]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*apikey.Key])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListAPIKeyConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAPIKeyRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockAPIKeyRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListAPIKeyConnectionRequest
+func (_e *MockAPIKeyRepository_Expecter) ListConnection(ctx any, req any) *MockAPIKeyRepository_ListConnection_Call {
+	return &MockAPIKeyRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockAPIKeyRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListAPIKeyConnectionRequest)) *MockAPIKeyRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListAPIKeyConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListAPIKeyConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAPIKeyRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*apikey.Key], err error) *MockAPIKeyRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockAPIKeyRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListAPIKeyConnectionRequest) (*pagination.CursorListResult[*apikey.Key], error)) *MockAPIKeyRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReplacePermissions provides a mock function for the type MockAPIKeyRepository
 func (_mock *MockAPIKeyRepository) ReplacePermissions(ctx context.Context, key *apikey.Key, permissions []*apikey.Permission) error {
 	ret := _mock.Called(ctx, key, permissions)
@@ -551,7 +619,7 @@ type MockAPIKeyRepository_ReplacePermissions_Call struct {
 //   - ctx context.Context
 //   - key *apikey.Key
 //   - permissions []*apikey.Permission
-func (_e *MockAPIKeyRepository_Expecter) ReplacePermissions(ctx interface{}, key interface{}, permissions interface{}) *MockAPIKeyRepository_ReplacePermissions_Call {
+func (_e *MockAPIKeyRepository_Expecter) ReplacePermissions(ctx any, key any, permissions any) *MockAPIKeyRepository_ReplacePermissions_Call {
 	return &MockAPIKeyRepository_ReplacePermissions_Call{Call: _e.mock.On("ReplacePermissions", ctx, key, permissions)}
 }
 
@@ -613,7 +681,7 @@ type MockAPIKeyRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key *apikey.Key
-func (_e *MockAPIKeyRepository_Expecter) Update(ctx interface{}, key interface{}) *MockAPIKeyRepository_Update_Call {
+func (_e *MockAPIKeyRepository_Expecter) Update(ctx any, key any) *MockAPIKeyRepository_Update_Call {
 	return &MockAPIKeyRepository_Update_Call{Call: _e.mock.On("Update", ctx, key)}
 }
 
@@ -671,7 +739,7 @@ type MockAPIKeyRepository_UpdateUsage_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - metadata repositories.APIKeyUsageMetadata
-func (_e *MockAPIKeyRepository_Expecter) UpdateUsage(ctx interface{}, id interface{}, metadata interface{}) *MockAPIKeyRepository_UpdateUsage_Call {
+func (_e *MockAPIKeyRepository_Expecter) UpdateUsage(ctx any, id any, metadata any) *MockAPIKeyRepository_UpdateUsage_Call {
 	return &MockAPIKeyRepository_UpdateUsage_Call{Call: _e.mock.On("UpdateUsage", ctx, id, metadata)}
 }
 
@@ -734,7 +802,7 @@ type MockAPIKeyRepository_UpdateWithPermissions_Call struct {
 //   - ctx context.Context
 //   - key *apikey.Key
 //   - permissions []*apikey.Permission
-func (_e *MockAPIKeyRepository_Expecter) UpdateWithPermissions(ctx interface{}, key interface{}, permissions interface{}) *MockAPIKeyRepository_UpdateWithPermissions_Call {
+func (_e *MockAPIKeyRepository_Expecter) UpdateWithPermissions(ctx any, key any, permissions any) *MockAPIKeyRepository_UpdateWithPermissions_Call {
 	return &MockAPIKeyRepository_UpdateWithPermissions_Call{Call: _e.mock.On("UpdateWithPermissions", ctx, key, permissions)}
 }
 
@@ -767,74 +835,6 @@ func (_c *MockAPIKeyRepository_UpdateWithPermissions_Call) Return(err error) *Mo
 }
 
 func (_c *MockAPIKeyRepository_UpdateWithPermissions_Call) RunAndReturn(run func(ctx context.Context, key *apikey.Key, permissions []*apikey.Permission) error) *MockAPIKeyRepository_UpdateWithPermissions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockAPIKeyRepository
-func (_mock *MockAPIKeyRepository) ListConnection(ctx context.Context, req *repositories.ListAPIKeyConnectionRequest) (*pagination.CursorListResult[*apikey.Key], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*apikey.Key]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAPIKeyConnectionRequest) (*pagination.CursorListResult[*apikey.Key], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAPIKeyConnectionRequest) *pagination.CursorListResult[*apikey.Key]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*apikey.Key])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListAPIKeyConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAPIKeyRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockAPIKeyRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListAPIKeyConnectionRequest
-func (_e *MockAPIKeyRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockAPIKeyRepository_ListConnection_Call {
-	return &MockAPIKeyRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockAPIKeyRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListAPIKeyConnectionRequest)) *MockAPIKeyRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListAPIKeyConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListAPIKeyConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAPIKeyRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*apikey.Key], err error) *MockAPIKeyRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockAPIKeyRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListAPIKeyConnectionRequest) (*pagination.CursorListResult[*apikey.Key], error)) *MockAPIKeyRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

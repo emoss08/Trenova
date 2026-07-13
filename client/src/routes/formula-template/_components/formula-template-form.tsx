@@ -1,4 +1,5 @@
 import { InputField } from "@/components/fields/input-field";
+import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { ExpressionEditor } from "@/components/formula-editor/expression-editor";
@@ -8,8 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { formulaTemplateStatusChoices, formulaTemplateTypeChoices } from "@/lib/choices";
 import type { FormulaTemplateFormValues } from "@/types/formula-template";
-import { CodeIcon, FileCode2 } from "lucide-react";
+import { CodeIcon, FileCode2, ShieldCheckIcon } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { BreakdownDefinitionEditor } from "./breakdown-definition-editor";
+
+const statusSelectChoices = formulaTemplateStatusChoices.map((choice) =>
+  choice.value === "InReview" ? { ...choice, disabled: true } : choice,
+);
 
 function SectionHeader({
   icon: Icon,
@@ -52,7 +58,7 @@ export function FormulaTemplateForm() {
             name="status"
             control={control}
             rules={{ required: true }}
-            options={formulaTemplateStatusChoices}
+            options={statusSelectChoices}
           />
         </FormControl>
         <FormControl>
@@ -108,7 +114,41 @@ export function FormulaTemplateForm() {
       </p>
 
       <Separator />
+      <SectionHeader
+        icon={ShieldCheckIcon}
+        title="Guardrails"
+        description="Clamp the calculated charge to a minimum and maximum amount"
+      />
+      <FormGroup cols={2}>
+        <FormControl>
+          <NumberField
+            label="Minimum Charge"
+            name="minCharge"
+            control={control}
+            placeholder="No minimum"
+            sideText="$"
+            decimalScale={2}
+            thousandSeparator
+          />
+        </FormControl>
+        <FormControl>
+          <NumberField
+            label="Maximum Charge"
+            name="maxCharge"
+            control={control}
+            placeholder="No maximum"
+            sideText="$"
+            decimalScale={2}
+            thousandSeparator
+          />
+        </FormControl>
+      </FormGroup>
+
+      <Separator />
       <VariableDefinitionEditor control={control as any} register={register as any} />
+
+      <Separator />
+      <BreakdownDefinitionEditor control={control as any} register={register as any} />
     </div>
   );
 }

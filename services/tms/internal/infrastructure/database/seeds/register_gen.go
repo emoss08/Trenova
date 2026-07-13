@@ -29,4 +29,5 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewTestDataSeed())
 	r.MustRegister(development.NewShipmentSeed())
 	r.MustRegister(development.NewDocumentParsingRuleExampleSeed())
+	r.MustRegister(development.NewRateTableSeed())
 }

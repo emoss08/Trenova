@@ -75,7 +75,7 @@ type MockEmailService_Send_Call struct {
 // Send is a helper method to define mock.On call
 //   - context1 context.Context
 //   - sendEmailRequest *services.SendEmailRequest
-func (_e *MockEmailService_Expecter) Send(context1 interface{}, sendEmailRequest interface{}) *MockEmailService_Send_Call {
+func (_e *MockEmailService_Expecter) Send(context1 any, sendEmailRequest any) *MockEmailService_Send_Call {
 	return &MockEmailService_Send_Call{Call: _e.mock.On("Send", context1, sendEmailRequest)}
 }
 
@@ -143,7 +143,7 @@ type MockEmailService_SendPersisted_Call struct {
 // SendPersisted is a helper method to define mock.On call
 //   - context1 context.Context
 //   - sendPersistedEmailRequest *services.SendPersistedEmailRequest
-func (_e *MockEmailService_Expecter) SendPersisted(context1 interface{}, sendPersistedEmailRequest interface{}) *MockEmailService_SendPersisted_Call {
+func (_e *MockEmailService_Expecter) SendPersisted(context1 any, sendPersistedEmailRequest any) *MockEmailService_SendPersisted_Call {
 	return &MockEmailService_SendPersisted_Call{Call: _e.mock.On("SendPersisted", context1, sendPersistedEmailRequest)}
 }
 

@@ -1,5 +1,10 @@
 import { ApiRequestError } from "@/lib/api";
-import type { ValidationError } from "@/types/errors";
+import { GraphQLRequestError } from "@/lib/graphql";
+import {
+  type NormalizedApiError,
+  type ValidationError,
+  apiProblem,
+} from "@/types/errors";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
@@ -10,12 +15,21 @@ type MutationErrorOptions<T extends FieldValues> = {
   resourceName?: string;
 };
 
+function normalizeMutationError(error: unknown): NormalizedApiError | null {
+  if (error instanceof ApiRequestError || error instanceof GraphQLRequestError) {
+    return error.normalize();
+  }
+  return null;
+}
+
 export function handleMutationError<T extends FieldValues>({
   error,
   setFormError,
   resourceName,
 }: MutationErrorOptions<T>): void {
-  if (!(error instanceof ApiRequestError)) {
+  const normalized = normalizeMutationError(error);
+
+  if (!normalized) {
     if (resourceName) {
       console.error(`Error handling ${resourceName}:`, error);
     }
@@ -29,7 +43,7 @@ export function handleMutationError<T extends FieldValues>({
     return;
   }
 
-  if (error.isVersionMismatchError()) {
+  if (apiProblem.isVersionMismatchError(normalized)) {
     toast.error("Version mismatch", {
       description:
         "The resource has been modified. Please refresh and try again.",
@@ -37,9 +51,8 @@ export function handleMutationError<T extends FieldValues>({
     return;
   }
 
-  if (error.isValidationError() && setFormError) {
-    const fieldErrors = error.getFieldErrors();
-    fieldErrors.forEach((fieldError: ValidationError) => {
+  if (apiProblem.isValidationError(normalized) && setFormError) {
+    normalized.fieldErrors.forEach((fieldError: ValidationError) => {
       try {
         setFormError(fieldError.field as Path<T>, {
           message: fieldError.message,
@@ -55,37 +68,37 @@ export function handleMutationError<T extends FieldValues>({
     return;
   }
 
-  if (error.isBusinessError()) {
+  if (apiProblem.isBusinessError(normalized)) {
     toast.error("Invalid Operation", {
-      description: error.data.detail || error.data.title,
+      description: normalized.message,
     });
     return;
   }
 
-  if (error.isRateLimitError()) {
+  if (apiProblem.isRateLimitError(normalized)) {
     toast.error("Rate limit exceeded", {
       description: "Please wait a moment and try again.",
     });
     return;
   }
 
-  if (error.isAuthenticationError()) {
-    toast.error(error.data.title, {
-      description: error.data?.detail,
+  if (apiProblem.isAuthenticationError(normalized)) {
+    toast.error(normalized.title ?? "Authentication required", {
+      description: normalized.detail ?? normalized.message,
     });
     return;
   }
 
-  if (error.isAuthorizationError()) {
+  if (apiProblem.isAuthorizationError(normalized)) {
     toast.error("Access denied", {
       description: "You don't have permission to perform this action.",
     });
     return;
   }
 
-  if (error.isNotFoundError()) {
+  if (apiProblem.isNotFoundError(normalized)) {
     toast.error("Not found", {
-      description: error.data.detail || "The requested resource was not found.",
+      description: normalized.detail || "The requested resource was not found.",
     });
     return;
   }
@@ -95,7 +108,7 @@ export function handleMutationError<T extends FieldValues>({
   }
 
   toast.error("Error", {
-    description: error.data.detail || error.data.title || "An error occurred",
+    description: normalized.message,
   });
 }
 

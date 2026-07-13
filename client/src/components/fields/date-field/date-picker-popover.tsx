@@ -7,67 +7,44 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { generateDateOnlyString } from "@/lib/date";
 import { useCallback, useState } from "react";
 
 interface DatePickerPopoverProps {
   children: React.ReactElement;
-  onOpen: () => void;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
-  setInputValue: (value: string) => void;
 }
 
-export function DatePickerPopover({
-  children,
-  onOpen,
-  date,
-  setDate,
-  setInputValue,
-}: DatePickerPopoverProps) {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+export function DatePickerPopover({ children, date, setDate }: DatePickerPopoverProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 640px)");
 
   const onSelect = useCallback(
-    (date: Date | undefined) => {
-      if (date) {
-        setDate(date);
-        setInputValue(generateDateOnlyString(date));
-        setIsPopoverOpen(false);
-      }
+    (selected: Date | undefined) => {
+      if (!selected) return;
+      setDate(selected);
+      setIsOpen(false);
     },
-    [setDate, setInputValue],
+    [setDate],
   );
 
   if (!isDesktop) {
     return (
-      <Drawer
-        open={isDrawerOpen}
-        onOpenChange={(value) => {
-          onOpen();
-          setIsDrawerOpen(value);
-        }}
-        shouldScaleBackground
-      >
+      <Drawer open={isOpen} onOpenChange={setIsOpen} shouldScaleBackground>
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent>
           <DrawerHeader className="sr-only text-left">
-            <DrawerTitle>Date Time Picker</DrawerTitle>
-            <DrawerDescription>Select date and time</DrawerDescription>
+            <DrawerTitle>Date Picker</DrawerTitle>
+            <DrawerDescription>Select date</DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col py-5">
             <Calendar
               mode="single"
               selected={date}
+              defaultMonth={date}
               onSelect={onSelect}
               className="self-center"
             />
@@ -78,18 +55,10 @@ export function DatePickerPopover({
   }
 
   return (
-    <Popover
-      open={isPopoverOpen}
-      onOpenChange={(value) => {
-        onOpen();
-        setIsPopoverOpen(value);
-      }}
-    >
-      <Tooltip>
-        <TooltipTrigger render={<PopoverTrigger render={children} />} />
-      </Tooltip>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger render={children} />
       <PopoverContent align="center" side="bottom" className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={onSelect} />
+        <Calendar mode="single" selected={date} defaultMonth={date} onSelect={onSelect} />
       </PopoverContent>
     </Popover>
   );

@@ -1,6 +1,14 @@
 import { withCsrfHeader } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
 import type { GraphQLExecutableDocument, TypedGraphQLDocument } from "@/types/graphql";
+import {
+  type NormalizedApiError,
+  type ProblemType,
+  type ValidationError,
+  apiProblem,
+  parseFieldErrors,
+  parseProblemType,
+} from "@/types/errors";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 
 type GraphQLErrorResponse = {
@@ -90,6 +98,67 @@ export class GraphQLRequestError extends Error {
       this.params = firstError.params;
       this.errors = firstError.errors;
     }
+  }
+
+  public normalize(): NormalizedApiError {
+    const fieldErrors = this.getFieldErrors();
+    const detail = fieldErrors[0]?.message ?? this.message;
+    return {
+      problemType: this.getProblemType(),
+      status: this.status ?? 0,
+      fieldErrors,
+      message: detail,
+      detail,
+      traceId: this.traceId,
+    };
+  }
+
+  public getProblemType(): ProblemType | null {
+    return parseProblemType(this.type);
+  }
+
+  public getFieldErrors(): ValidationError[] {
+    return parseFieldErrors(this.errors);
+  }
+
+  public getFieldError(field: string): ValidationError | undefined {
+    return this.getFieldErrors().find((e) => e.field === field);
+  }
+
+  public isValidationError(): boolean {
+    return apiProblem.isValidationError(this.normalize());
+  }
+
+  public isBusinessError(): boolean {
+    return apiProblem.isBusinessError(this.normalize());
+  }
+
+  public isAuthenticationError(): boolean {
+    return apiProblem.isAuthenticationError(this.normalize());
+  }
+
+  public isAuthorizationError(): boolean {
+    return apiProblem.isAuthorizationError(this.normalize());
+  }
+
+  public isNotFoundError(): boolean {
+    return apiProblem.isNotFoundError(this.normalize());
+  }
+
+  public isRateLimitError(): boolean {
+    return apiProblem.isRateLimitError(this.normalize());
+  }
+
+  public isVersionMismatchError(): boolean {
+    return apiProblem.isVersionMismatchError(this.normalize());
+  }
+
+  public isConflictError(): boolean {
+    return apiProblem.isConflictError(this.normalize());
+  }
+
+  public isTimeoutError(): boolean {
+    return apiProblem.isTimeoutError(this.normalize());
   }
 }
 

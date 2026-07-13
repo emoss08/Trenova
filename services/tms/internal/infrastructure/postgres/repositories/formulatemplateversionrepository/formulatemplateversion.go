@@ -261,3 +261,102 @@ func (r *repository) UpdateTags(
 
 	return entity, nil
 }
+
+func (r *repository) GetEffectiveVersion(
+	ctx context.Context,
+	req *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	log := r.l.With(
+		zap.String("operation", "GetEffectiveVersion"),
+		zap.String("templateID", req.TemplateID.String()),
+		zap.Int64("asOf", req.AsOf),
+	)
+
+	entity := new(formulatemplate.FormulaTemplateVersion)
+	err := r.db.DB().
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("ftv.template_id = ?", req.TemplateID).
+				Where("ftv.organization_id = ?", req.TenantInfo.OrgID).
+				Where("ftv.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("ftv.effective_from IS NOT NULL").
+				Where("ftv.effective_from <= ?", req.AsOf)
+		}).
+		OrderExpr("ftv.effective_from DESC").
+		OrderExpr("ftv.version_number DESC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil version means no scheduled version is in effect
+		}
+		log.Error("failed to get effective formula template version", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *repository) UpdateEffectiveDate(
+	ctx context.Context,
+	req *repositories.UpdateEffectiveDateRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	log := r.l.With(
+		zap.String("operation", "UpdateEffectiveDate"),
+		zap.String("templateID", req.TemplateID.String()),
+		zap.Int64("versionNumber", req.VersionNumber),
+	)
+
+	entity := new(formulatemplate.FormulaTemplateVersion)
+	err := r.db.DB().
+		NewUpdate().
+		Model(entity).
+		Set("effective_from = ?", req.EffectiveFrom).
+		WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
+			return sq.
+				Where("ftv.template_id = ?", req.TemplateID).
+				Where("ftv.organization_id = ?", req.TenantInfo.OrgID).
+				Where("ftv.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("ftv.version_number = ?", req.VersionNumber)
+		}).
+		Returning("*").
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to update version effective date", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *repository) ListScheduled(
+	ctx context.Context,
+	req *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	log := r.l.With(
+		zap.String("operation", "ListScheduled"),
+		zap.String("templateID", req.TemplateID.String()),
+	)
+
+	versions := make([]*formulatemplate.FormulaTemplateVersion, 0)
+	err := r.db.DB().
+		NewSelect().
+		Model(&versions).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("ftv.template_id = ?", req.TemplateID).
+				Where("ftv.organization_id = ?", req.TenantInfo.OrgID).
+				Where("ftv.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("ftv.effective_from IS NOT NULL")
+		}).
+		OrderExpr("ftv.effective_from ASC").
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to list scheduled versions", zap.Error(err))
+		return nil, err
+	}
+
+	return versions, nil
+}

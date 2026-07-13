@@ -65,7 +65,7 @@ type MockShipmentImportAssistantService_ArchiveHistory_Call struct {
 //   - ctx context.Context
 //   - documentID string
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentImportAssistantService_Expecter) ArchiveHistory(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockShipmentImportAssistantService_ArchiveHistory_Call {
+func (_e *MockShipmentImportAssistantService_Expecter) ArchiveHistory(ctx any, documentID any, tenantInfo any) *MockShipmentImportAssistantService_ArchiveHistory_Call {
 	return &MockShipmentImportAssistantService_ArchiveHistory_Call{Call: _e.mock.On("ArchiveHistory", ctx, documentID, tenantInfo)}
 }
 
@@ -138,7 +138,7 @@ type MockShipmentImportAssistantService_Chat_Call struct {
 // Chat is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.ShipmentImportChatRequest
-func (_e *MockShipmentImportAssistantService_Expecter) Chat(ctx interface{}, req interface{}) *MockShipmentImportAssistantService_Chat_Call {
+func (_e *MockShipmentImportAssistantService_Expecter) Chat(ctx any, req any) *MockShipmentImportAssistantService_Chat_Call {
 	return &MockShipmentImportAssistantService_Chat_Call{Call: _e.mock.On("Chat", ctx, req)}
 }
 
@@ -196,7 +196,7 @@ type MockShipmentImportAssistantService_ChatStream_Call struct {
 //   - ctx context.Context
 //   - req *services.ShipmentImportChatRequest
 //   - emit func(services.StreamEvent)
-func (_e *MockShipmentImportAssistantService_Expecter) ChatStream(ctx interface{}, req interface{}, emit interface{}) *MockShipmentImportAssistantService_ChatStream_Call {
+func (_e *MockShipmentImportAssistantService_Expecter) ChatStream(ctx any, req any, emit any) *MockShipmentImportAssistantService_ChatStream_Call {
 	return &MockShipmentImportAssistantService_ChatStream_Call{Call: _e.mock.On("ChatStream", ctx, req, emit)}
 }
 
@@ -259,7 +259,7 @@ type MockShipmentImportAssistantService_CompleteHistory_Call struct {
 //   - ctx context.Context
 //   - documentID string
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentImportAssistantService_Expecter) CompleteHistory(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockShipmentImportAssistantService_CompleteHistory_Call {
+func (_e *MockShipmentImportAssistantService_Expecter) CompleteHistory(ctx any, documentID any, tenantInfo any) *MockShipmentImportAssistantService_CompleteHistory_Call {
 	return &MockShipmentImportAssistantService_CompleteHistory_Call{Call: _e.mock.On("CompleteHistory", ctx, documentID, tenantInfo)}
 }
 
@@ -333,7 +333,7 @@ type MockShipmentImportAssistantService_GetHistory_Call struct {
 //   - ctx context.Context
 //   - documentID string
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentImportAssistantService_Expecter) GetHistory(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockShipmentImportAssistantService_GetHistory_Call {
+func (_e *MockShipmentImportAssistantService_Expecter) GetHistory(ctx any, documentID any, tenantInfo any) *MockShipmentImportAssistantService_GetHistory_Call {
 	return &MockShipmentImportAssistantService_GetHistory_Call{Call: _e.mock.On("GetHistory", ctx, documentID, tenantInfo)}
 }
 

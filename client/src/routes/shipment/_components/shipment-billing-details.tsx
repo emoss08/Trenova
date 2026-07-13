@@ -4,6 +4,7 @@ import {
 } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { TextShimmer } from "@/components/ui/text-shimmer";
@@ -13,7 +14,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import type { CreditStatus } from "@/types/customer";
 import type { GetPreviousRatesRequest, Shipment } from "@/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ShieldAlertIcon } from "lucide-react";
+import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon } from "lucide-react";
 import type React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { PreviousRatesButton } from "./previous-rates-dialog";
@@ -173,6 +174,75 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   );
 }
 
+function RatingBreakdownCard() {
+  const { control } = useFormContext<Shipment>();
+  const ratingDetail = useWatch({ control, name: "ratingDetail" });
+
+  const breakdown = ratingDetail?.breakdown ?? [];
+  const guardrail = ratingDetail?.guardrail;
+
+  if (!ratingDetail || (breakdown.length === 0 && !guardrail?.applied)) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border bg-muted/50 p-2">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div>
+          <span className="text-xs font-medium">Rating Breakdown</span>
+          <p className="mt-0.5 text-2xs text-muted-foreground">
+            Itemized amounts from {ratingDetail.formulaTemplateName || "the rating formula"}
+          </p>
+        </div>
+        {ratingDetail.versionNumber ? (
+          <Badge variant="outline" className="font-mono text-2xs">
+            v{ratingDetail.versionNumber}
+          </Badge>
+        ) : null}
+      </div>
+
+      {breakdown.length > 0 && (
+        <div className="space-y-2">
+          {breakdown.map((item) => (
+            <div key={item.name} className="flex items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground">{item.label || item.name}</span>
+              {item.error ? (
+                <span className="flex items-center gap-1 text-xs text-destructive">
+                  <AlertTriangleIcon className="size-3" />
+                  {item.error}
+                </span>
+              ) : (
+                <span className="text-sm tracking-tight text-muted-foreground tabular-nums">
+                  {formatCurrency(item.amount)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {guardrail?.applied && (
+        <div
+          className={cn(
+            "flex items-start gap-2 rounded-md border bg-background/50 px-2 py-1.5",
+            breakdown.length > 0 && "mt-3",
+          )}
+        >
+          <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+          <p className="text-2xs text-muted-foreground">
+            {guardrail.bound === "min" ? "Minimum" : "Maximum"} charge guardrail applied. The
+            formula produced {formatCurrency(guardrail.rawResult)} and was clamped to{" "}
+            {formatCurrency(
+              (guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge) ?? 0,
+            )}
+            .
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ShipmentBillingDetails() {
   const { control } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
@@ -218,6 +288,7 @@ export default function ShipmentBillingDetails() {
       </FormGroup>
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
+      <RatingBreakdownCard />
     </Inner>
   );
 }

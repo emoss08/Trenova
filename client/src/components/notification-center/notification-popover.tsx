@@ -32,14 +32,13 @@ function NotificationItem({
       className={cn(
         "group flex w-full gap-3 px-4 py-3 text-left transition-colors duration-150",
         "hover:bg-accent/50",
-        isUnread && "bg-primary/[0.03]",
+        isUnread && "bg-primary/3",
       )}
       onClick={() => {
         if (isUnread) onMarkRead(notification.id);
       }}
     >
       <div className="mt-0.5 shrink-0">{config.icon}</div>
-
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p
           className={cn(
@@ -49,17 +48,12 @@ function NotificationItem({
         >
           {notification.title}
         </p>
-
         {notification.message && notification.message !== notification.title && (
           <p className="line-clamp-2 text-2xs leading-relaxed text-muted-foreground">
             {notification.message}
           </p>
         )}
-
         <div className="flex items-center gap-1.5">
-          <Badge variant={config.badge} className="h-5 text-2xs">
-            {sourceLabel}
-          </Badge>
           <span className="text-2xs text-muted-foreground">
             {formatTimestamp(notification.createdAt)}
           </span>
@@ -135,16 +129,14 @@ export function NotificationPopover() {
             <span className="relative">
               <BellIcon className={cn("size-3 transition-colors", open && "text-foreground")} />
               {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] leading-none font-semibold text-destructive-foreground ring-2 ring-background">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
+                <span className="absolute -top-1.5 -right-1.5 flex size-2 items-center justify-center rounded-full bg-destructive" />
               )}
             </span>
           </Button>
         }
       />
-      <PopoverContent align="end" sideOffset={8} className="w-105 p-0">
-        <div className="flex items-center justify-between px-4 py-3">
+      <PopoverContent align="end" sideOffset={6} className="w-105 p-0 gap-0">
+        <div className="flex items-center justify-between px-4 py-1">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold">Notifications</h3>
             {unreadCount > 0 && (

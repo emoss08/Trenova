@@ -638,7 +638,7 @@ func applyTenderPayloadToShipment(
 		edi.MappingEntityTypeFormulaTemplate,
 		payload.FormulaTemplateID,
 	)
-	target.TenderStatus = tenderStatusPtr(shipment.TenderStatusAccepted)
+	target.TenderStatus = new(shipment.TenderStatusAccepted)
 	target.BOL = payload.BOL
 	target.Pieces = payload.Pieces
 	target.Weight = payload.Weight

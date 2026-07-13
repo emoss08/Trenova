@@ -66,7 +66,7 @@ type MockShipmentMutationObserver_AfterShipmentUpdate_Call struct {
 //   - original *shipment.Shipment
 //   - updated *shipment.Shipment
 //   - actor *services.RequestActor
-func (_e *MockShipmentMutationObserver_Expecter) AfterShipmentUpdate(ctx interface{}, original interface{}, updated interface{}, actor interface{}) *MockShipmentMutationObserver_AfterShipmentUpdate_Call {
+func (_e *MockShipmentMutationObserver_Expecter) AfterShipmentUpdate(ctx any, original any, updated any, actor any) *MockShipmentMutationObserver_AfterShipmentUpdate_Call {
 	return &MockShipmentMutationObserver_AfterShipmentUpdate_Call{Call: _e.mock.On("AfterShipmentUpdate", ctx, original, updated, actor)}
 }
 

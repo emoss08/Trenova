@@ -147,6 +147,60 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+func (r *repository) ListRatedByFormulaTemplate(
+	ctx context.Context,
+	req *repositories.ListRatedByFormulaTemplateRequest,
+) ([]*shipment.Shipment, error) {
+	sp := buncolgen.ShipmentColumns
+	sm := buncolgen.ShipmentMoveColumns
+	stp := buncolgen.StopColumns
+	entities := make([]*shipment.Shipment, 0, req.Limit)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+				Where(sp.FormulaTemplateID.Eq(), req.TemplateID)
+		}).
+		Relation(buncolgen.ShipmentRelations.Customer).
+		Relation(buncolgen.ShipmentRelations.TractorType).
+		Relation(buncolgen.ShipmentRelations.TrailerType).
+		RelationWithOpts(buncolgen.ShipmentRelations.Moves, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(sm.Sequence.OrderAsc())
+			},
+		}).
+		RelationWithOpts(
+			buncolgen.Rel(buncolgen.ShipmentRelations.Moves, buncolgen.ShipmentMoveRelations.Stops),
+			bun.RelationOpts{
+				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Order(stp.Sequence.OrderAsc())
+				},
+			},
+		).
+		RelationWithOpts(buncolgen.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation(buncolgen.AdditionalChargeRelations.AccessorialCharge)
+			},
+		}).
+		RelationWithOpts(buncolgen.ShipmentRelations.Commodities, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation(buncolgen.ShipmentCommodityRelations.Commodity).
+					Relation(buncolgen.Rel(
+						buncolgen.ShipmentCommodityRelations.Commodity,
+						buncolgen.CommodityRelations.HazardousMaterial))
+			},
+		}).
+		Order(sp.CreatedAt.OrderDesc()).
+		Limit(req.Limit).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.ShipmentSelectOptionsRequest,

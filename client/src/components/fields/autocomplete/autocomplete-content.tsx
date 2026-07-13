@@ -18,10 +18,10 @@ import {
 } from "@/lib/graphql/select-options";
 import { cn, pluralize, toTitleCase } from "@/lib/utils";
 import type { GenericLimitOffsetResponse } from "@/types/server";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export async function fetchOptions<T>(
   link: string,
@@ -43,8 +43,11 @@ export async function fetchOptions<T>(
 
   if (extraSearchParams) {
     Object.entries(extraSearchParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        fetchURL.searchParams.set(key, value.toString());
+      if (value === undefined || value === null) return;
+      if (Array.isArray(value)) {
+        value.forEach((entry) => fetchURL.searchParams.append(key, entry));
+      } else {
+        fetchURL.searchParams.set(key, value);
       }
     });
   }
@@ -52,6 +55,10 @@ export async function fetchOptions<T>(
   const response = await fetch(fetchURL.href, {
     credentials: "include",
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch options (${response.status})`);
+  }
 
   return response.json();
 }
@@ -118,95 +125,59 @@ export function AutocompleteCommandContent<TOption>({
   listboxId: string;
   filterOption?: (option: TOption) => boolean;
 }) {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
-  const [page, setPage] = useState(1);
-  const commandListRef = useRef<HTMLDivElement>(null);
 
-  const animationRef = useRef<number | null>(null);
-  const targetScrollRef = useRef<number | null>(null);
-  const isWheelScrollingRef = useRef(false);
-  const searchQueryKey = [
-    "autocomplete-search",
-    link,
-    debouncedSearchTerm,
-    page,
-    extraSearchParams,
-    graphql,
-    initialLimit,
-  ];
-  const getSearchQueryKey = useCallback(
-    (targetPage: number) => [
-      "autocomplete-search",
-      link,
-      debouncedSearchTerm,
-      targetPage,
-      extraSearchParams,
-      graphql,
-      initialLimit,
-    ],
-    [link, debouncedSearchTerm, extraSearchParams, graphql, initialLimit],
-  );
-
-  const { isLoading, isError, data } = useQuery({
-    queryKey: searchQueryKey,
-    queryFn: async () => {
-      if (graphql) {
-        return (await fetchGraphQLSelectOptions({
-          resource: graphql.resource,
-          query: debouncedSearchTerm,
-          page,
-          initialLimit,
-          filters: {
-            ...selectOptionFiltersFromSearchParams(extraSearchParams),
-            ...graphql.filters,
-          },
-        })) as GenericLimitOffsetResponse<TOption>;
-      }
-
-      const response = await fetchOptions<TOption>(
+  const { data, isLoading, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: [
+        "autocomplete-search",
         link,
         debouncedSearchTerm,
-        page,
-        initialLimit,
         extraSearchParams,
-      );
-      return response;
-    },
-    placeholderData: () => queryClient.getQueryData(searchQueryKey),
-    enabled: open,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
-  const hasMore = !!data?.next;
+        graphql,
+        initialLimit,
+      ],
+      queryFn: async ({ pageParam }) => {
+        if (graphql) {
+          return (await fetchGraphQLSelectOptions({
+            resource: graphql.resource,
+            query: debouncedSearchTerm,
+            page: pageParam,
+            initialLimit,
+            filters: {
+              ...selectOptionFiltersFromSearchParams(extraSearchParams),
+              ...graphql.filters,
+            },
+          })) as GenericLimitOffsetResponse<TOption>;
+        }
+
+        return fetchOptions<TOption>(
+          link,
+          debouncedSearchTerm,
+          pageParam,
+          initialLimit,
+          extraSearchParams,
+        );
+      },
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) => (lastPage.next ? allPages.length + 1 : undefined),
+      placeholderData: keepPreviousData,
+      enabled: open,
+      staleTime: 2 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    });
+
   const options = useMemo(() => {
-    const aggregatedOptions: TOption[] = [];
-
-    for (let targetPage = 1; targetPage <= page; targetPage += 1) {
-      const cachedPage = queryClient.getQueryData<GenericLimitOffsetResponse<TOption>>(
-        getSearchQueryKey(targetPage),
-      );
-      if (cachedPage?.results?.length) {
-        aggregatedOptions.push(...cachedPage.results);
-      }
-    }
-
-    const currentPageIsCached = queryClient.getQueryData<GenericLimitOffsetResponse<TOption>>(
-      getSearchQueryKey(page),
-    );
-    if (!currentPageIsCached && data?.results?.length) {
-      aggregatedOptions.push(...data.results);
-    }
-
+    const aggregatedOptions = data?.pages.flatMap((page) => page.results ?? []) ?? [];
     const filteredOptions = filterOption
       ? aggregatedOptions.filter(filterOption)
       : aggregatedOptions;
 
-    if (value && selectedOption && open) {
+    if (value && selectedOption) {
       const optionExists = filteredOptions.some((opt) => getOptionValue(opt).toString() === value);
       if (!optionExists) {
         return [selectedOption, ...filteredOptions];
@@ -214,77 +185,20 @@ export function AutocompleteCommandContent<TOption>({
     }
 
     return filteredOptions;
-  }, [
-    data,
-    page,
-    queryClient,
-    value,
-    selectedOption,
-    open,
-    getOptionValue,
-    getSearchQueryKey,
-    filterOption,
-  ]);
+  }, [data, filterOption, value, selectedOption, getOptionValue]);
 
-  useEffect(() => {
-    if (!open) {
-      setSearchTerm("");
-      setPage(1);
-    }
-  }, [open]);
-
-  const handleScrollEnd = useCallback(
+  const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLDivElement;
+      const target = e.currentTarget;
       const scrollBuffer = 50;
       const distanceFromBottom = target.scrollHeight - (target.scrollTop + target.clientHeight);
 
-      if (!isWheelScrollingRef.current) {
-        if (animationRef.current !== null) {
-          cancelAnimationFrame(animationRef.current);
-          animationRef.current = null;
-        }
-        targetScrollRef.current = null;
-      }
-
-      if (!isLoading && hasMore && distanceFromBottom <= scrollBuffer && distanceFromBottom >= 0) {
-        setPage((prev) => prev + 1);
+      if (distanceFromBottom <= scrollBuffer && hasNextPage && !isFetching) {
+        void fetchNextPage();
       }
     },
-    [isLoading, hasMore],
+    [hasNextPage, isFetching, fetchNextPage],
   );
-
-  useEffect(() => {
-    return () => {
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
-  const smoothScroll = useCallback(function smoothScrollFn() {
-    if (!commandListRef.current || targetScrollRef.current === null) return;
-
-    const element = commandListRef.current;
-    const target = targetScrollRef.current;
-    const current = element.scrollTop;
-
-    const distance = target - current;
-
-    if (Math.abs(distance) < 0.5) {
-      element.scrollTop = target;
-      targetScrollRef.current = null;
-      return;
-    }
-
-    const easeFactor = 0.25;
-
-    const movement = distance * easeFactor;
-
-    element.scrollTop += movement;
-
-    animationRef.current = requestAnimationFrame(smoothScrollFn);
-  }, []);
 
   const handleSelect = useCallback(
     (currentValue: string) => {
@@ -317,79 +231,35 @@ export function AutocompleteCommandContent<TOption>({
     ],
   );
 
-  const smoothScrollRef = useRef(smoothScroll);
-  smoothScrollRef.current = smoothScroll;
-
-  const commandListCallbackRef = useCallback((node: HTMLDivElement | null) => {
-    commandListRef.current = node;
-  }, []);
-
-  useEffect(() => {
-    const el = commandListRef.current;
-    if (!el) return;
-
-    function handleWheel(e: WheelEvent) {
-      if (!commandListRef.current) return;
-
-      const { scrollTop, scrollHeight, clientHeight } = commandListRef.current;
-      const isScrollingDown = e.deltaY > 0;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-      const isAtTop = scrollTop <= 0;
-
-      if ((isAtBottom && isScrollingDown) || (isAtTop && !isScrollingDown)) {
-        return;
-      }
-
-      e.stopPropagation();
-      e.preventDefault();
-
-      isWheelScrollingRef.current = true;
-
-      const scrollSensitivity = 0.8;
-      const delta = e.deltaY * scrollSensitivity;
-      const currentScroll = commandListRef.current.scrollTop;
-
-      targetScrollRef.current = currentScroll + delta;
-
-      if (animationRef.current === null) {
-        animationRef.current = requestAnimationFrame(smoothScrollRef.current);
-      }
-
-      setTimeout(() => {
-        isWheelScrollingRef.current = false;
-      }, 50);
-    }
-
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
-  });
-
   return (
     <Command shouldFilter={false} className="overflow-hidden">
       <CommandInput
         className="h-7 truncate bg-transparent"
-        placeholder={`Search ${label?.toLowerCase()}...`}
+        placeholder={label ? `Search ${label.toLowerCase()}...` : "Search..."}
         value={searchTerm}
-        onValueChange={(nextValue) => {
-          setSearchTerm(nextValue);
-          setPage(1);
-        }}
+        onValueChange={setSearchTerm}
       />
       <CommandList
         id={listboxId}
-        ref={commandListCallbackRef}
-        onScroll={handleScrollEnd}
-        className="max-h-62.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent overflow-y-auto"
+        onScroll={handleScroll}
+        className="max-h-62.5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent overflow-y-auto overscroll-contain"
       >
-        {isError && <div className="p-4 text-center text-destructive">Failed to fetch options</div>}
-        {!isLoading && data && options.length === 0 && (
+        {isError && (
+          <div className="flex flex-col items-center gap-2 p-4">
+            <p className="text-center text-xs text-destructive">Failed to load options.</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        )}
+        {!isError && !isFetching && data && options.length === 0 && (
           <div className="flex size-full flex-col items-center justify-center gap-2 p-4">
             <CommandEmpty className="p-0 text-center">
               {noResultsMessage ??
                 `No ${pluralize(toTitleCase(label ?? ""), options.length)} found.`}
             </CommandEmpty>
             <span className="text-center text-2xs text-muted-foreground">
-              We can&apos;t find any {label?.toLowerCase()} in your organization.
+              We can&apos;t find any {label ? label.toLowerCase() : "results"} in your organization.
             </span>
             {popoutLink && (
               <Button size="sm" onClick={(event) => openPopoutWindow(popoutLink, event)}>
@@ -414,12 +284,12 @@ export function AutocompleteCommandContent<TOption>({
               <Spinner className="size-4" />
             </div>
           )}
-          {isLoading && options.length > 0 && (
+          {(isFetchingNextPage || (isFetching && !isLoading && options.length > 0)) && (
             <div className="flex justify-center p-2">
               <Spinner className="size-4" />
             </div>
           )}
-          {hasMore && !isLoading && (
+          {hasNextPage && !isFetchingNextPage && (
             <div className="p-2 text-center text-xs text-muted-foreground">Scroll for more</div>
           )}
         </CommandGroup>
@@ -447,8 +317,7 @@ export function AutocompleteCommandOption<TOption>({
   return (
     <CommandItem
       className="cursor-pointer [&_svg]:size-3"
-      key={getOptionValue(option).toString()}
-      value={getOptionValue(option).toString()}
+      value={optionValue}
       onSelect={handleSelect}
     >
       {renderOption(option)}

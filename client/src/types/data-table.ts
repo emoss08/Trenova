@@ -115,6 +115,9 @@ export type DataTableGraphQLConfig<
   extraVariables?:
     | Partial<Omit<TVariables, "input">>
     | ((params: DataTableGraphQLExtraVariableParams) => Partial<Omit<TVariables, "input">>);
+  inputExtraVariables?:
+    | Record<string, unknown>
+    | ((params: DataTableGraphQLExtraVariableParams) => Record<string, unknown>);
   mapNode?: (node: unknown) => TData;
 };
 

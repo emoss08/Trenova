@@ -76,7 +76,7 @@ type MockCustomerPaymentRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customerpayment.Payment
-func (_e *MockCustomerPaymentRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockCustomerPaymentRepository_Create_Call {
+func (_e *MockCustomerPaymentRepository_Expecter) Create(ctx any, entity any) *MockCustomerPaymentRepository_Create_Call {
 	return &MockCustomerPaymentRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockCustomerPaymentRepository_FindMatchCandidates_Call struct {
 // FindMatchCandidates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.FindCustomerPaymentMatchCandidatesRequest
-func (_e *MockCustomerPaymentRepository_Expecter) FindMatchCandidates(ctx interface{}, req interface{}) *MockCustomerPaymentRepository_FindMatchCandidates_Call {
+func (_e *MockCustomerPaymentRepository_Expecter) FindMatchCandidates(ctx any, req any) *MockCustomerPaymentRepository_FindMatchCandidates_Call {
 	return &MockCustomerPaymentRepository_FindMatchCandidates_Call{Call: _e.mock.On("FindMatchCandidates", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockCustomerPaymentRepository_FindSuggestedMatchCandidates_Call struct {
 // FindSuggestedMatchCandidates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.FindCustomerPaymentMatchCandidatesRequest
-func (_e *MockCustomerPaymentRepository_Expecter) FindSuggestedMatchCandidates(ctx interface{}, req interface{}) *MockCustomerPaymentRepository_FindSuggestedMatchCandidates_Call {
+func (_e *MockCustomerPaymentRepository_Expecter) FindSuggestedMatchCandidates(ctx any, req any) *MockCustomerPaymentRepository_FindSuggestedMatchCandidates_Call {
 	return &MockCustomerPaymentRepository_FindSuggestedMatchCandidates_Call{Call: _e.mock.On("FindSuggestedMatchCandidates", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockCustomerPaymentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCustomerPaymentByIDRequest
-func (_e *MockCustomerPaymentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockCustomerPaymentRepository_GetByID_Call {
+func (_e *MockCustomerPaymentRepository_Expecter) GetByID(ctx any, req any) *MockCustomerPaymentRepository_GetByID_Call {
 	return &MockCustomerPaymentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockCustomerPaymentRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCustomerPaymentsRequest
-func (_e *MockCustomerPaymentRepository_Expecter) List(ctx interface{}, req interface{}) *MockCustomerPaymentRepository_List_Call {
+func (_e *MockCustomerPaymentRepository_Expecter) List(ctx any, req any) *MockCustomerPaymentRepository_List_Call {
 	return &MockCustomerPaymentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockCustomerPaymentRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customerpayment.Payment
-func (_e *MockCustomerPaymentRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockCustomerPaymentRepository_Update_Call {
+func (_e *MockCustomerPaymentRepository_Expecter) Update(ctx any, entity any) *MockCustomerPaymentRepository_Update_Call {
 	return &MockCustomerPaymentRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

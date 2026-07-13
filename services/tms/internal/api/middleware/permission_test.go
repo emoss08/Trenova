@@ -245,12 +245,9 @@ func TestRequireAnyPermission_OneAllowed(t *testing.T) {
 
 	pm := newPermissionMiddleware(engine)
 
-	checks := []struct {
-		Resource  string
-		Operation permission.Operation
-	}{
-		{"shipment", permission.OpRead},
-		{"order", permission.OpRead},
+	checks := []PermissionCheck{
+		{Resource: "shipment", Operation: permission.OpRead},
+		{Resource: "order", Operation: permission.OpRead},
 	}
 
 	handlerCalled := false
@@ -288,12 +285,9 @@ func TestRequireAnyPermission_AllDenied(t *testing.T) {
 
 	pm := newPermissionMiddleware(engine)
 
-	checks := []struct {
-		Resource  string
-		Operation permission.Operation
-	}{
-		{"shipment", permission.OpRead},
-		{"order", permission.OpRead},
+	checks := []PermissionCheck{
+		{Resource: "shipment", Operation: permission.OpRead},
+		{Resource: "order", Operation: permission.OpRead},
 	}
 
 	handlerCalled := false
@@ -331,12 +325,9 @@ func TestRequireAllPermissions_AllAllowed(t *testing.T) {
 
 	pm := newPermissionMiddleware(engine)
 
-	checks := []struct {
-		Resource  string
-		Operation permission.Operation
-	}{
-		{"shipment", permission.OpRead},
-		{"order", permission.OpCreate},
+	checks := []PermissionCheck{
+		{Resource: "shipment", Operation: permission.OpRead},
+		{Resource: "order", Operation: permission.OpCreate},
 	}
 
 	handlerCalled := false
@@ -380,12 +371,9 @@ func TestRequireAllPermissions_OneDenied(t *testing.T) {
 
 	pm := newPermissionMiddleware(engine)
 
-	checks := []struct {
-		Resource  string
-		Operation permission.Operation
-	}{
-		{"shipment", permission.OpRead},
-		{"order", permission.OpCreate},
+	checks := []PermissionCheck{
+		{Resource: "shipment", Operation: permission.OpRead},
+		{Resource: "order", Operation: permission.OpCreate},
 	}
 
 	handlerCalled := false

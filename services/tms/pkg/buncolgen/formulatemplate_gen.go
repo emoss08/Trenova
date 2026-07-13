@@ -59,6 +59,14 @@ var FormulaTemplateColumns = struct {
 	Status               Column // "status" → qualified: "ft.status"
 	SchemaID             Column // "schema_id" → qualified: "ft.schema_id"
 	VariableDefinitions  Column // "variable_definitions" → qualified: "ft.variable_definitions"
+	BreakdownDefinitions Column // "breakdown_definitions" → qualified: "ft.breakdown_definitions"
+	MinCharge            Column // "min_charge" → qualified: "ft.min_charge"
+	MaxCharge            Column // "max_charge" → qualified: "ft.max_charge"
+	SubmittedByID        Column // "submitted_by_id" → qualified: "ft.submitted_by_id"
+	SubmittedAt          Column // "submitted_at" → qualified: "ft.submitted_at"
+	ApprovedByID         Column // "approved_by_id" → qualified: "ft.approved_by_id"
+	ApprovedAt           Column // "approved_at" → qualified: "ft.approved_at"
+	ReviewComment        Column // "review_comment" → qualified: "ft.review_comment"
 	SearchVector         Column // "search_vector" → qualified: "ft.search_vector"
 	Rank                 Column // "rank" → qualified: "ft.rank"
 	Metadata             Column // "metadata" → qualified: "ft.metadata"
@@ -79,6 +87,14 @@ var FormulaTemplateColumns = struct {
 	Status:               NewColumn("status", "ft"),
 	SchemaID:             NewColumn("schema_id", "ft"),
 	VariableDefinitions:  NewColumn("variable_definitions", "ft"),
+	BreakdownDefinitions: NewColumn("breakdown_definitions", "ft"),
+	MinCharge:            NewColumn("min_charge", "ft"),
+	MaxCharge:            NewColumn("max_charge", "ft"),
+	SubmittedByID:        NewColumn("submitted_by_id", "ft"),
+	SubmittedAt:          NewColumn("submitted_at", "ft"),
+	ApprovedByID:         NewColumn("approved_by_id", "ft"),
+	ApprovedAt:           NewColumn("approved_at", "ft"),
+	ReviewComment:        NewColumn("review_comment", "ft"),
 	SearchVector:         NewColumn("search_vector", "ft"),
 	Rank:                 NewColumn("rank", "ft"),
 	Metadata:             NewColumn("metadata", "ft"),
@@ -105,6 +121,14 @@ var FormulaTemplateFieldMap = map[string]string{
 	"status":               "status",
 	"schemaId":             "schema_id",
 	"variableDefinitions":  "variable_definitions",
+	"breakdownDefinitions": "breakdown_definitions",
+	"minCharge":            "min_charge",
+	"maxCharge":            "max_charge",
+	"submittedById":        "submitted_by_id",
+	"submittedAt":          "submitted_at",
+	"approvedById":         "approved_by_id",
+	"approvedAt":           "approved_at",
+	"reviewComment":        "review_comment",
 	"metadata":             "metadata",
 	"version":              "version",
 	"sourceTemplateId":     "source_template_id",
@@ -127,6 +151,14 @@ var FormulaTemplateInsertableColumns = []string{
 	"status",
 	"schema_id",
 	"variable_definitions",
+	"breakdown_definitions",
+	"min_charge",
+	"max_charge",
+	"submitted_by_id",
+	"submitted_at",
+	"approved_by_id",
+	"approved_at",
+	"review_comment",
 	"metadata",
 	"version",
 	"source_template_id",
@@ -213,6 +245,14 @@ var FormulaTemplateFilter = struct {
 	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	SchemaID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
 	VariableDefinitions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
+	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
+	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
+	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
+	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
+	SubmittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
+	ApprovedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
+	ApprovedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
+	ReviewComment        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewComment" → DB: "review_comment"
 	Metadata             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
 	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	SourceTemplateID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceTemplateId" → DB: "source_template_id"
@@ -250,6 +290,30 @@ var FormulaTemplateFilter = struct {
 	},
 	VariableDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("variableDefinitions", op, value)
+	},
+	BreakdownDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("breakdownDefinitions", op, value)
+	},
+	MinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minCharge", op, value)
+	},
+	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxCharge", op, value)
+	},
+	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("submittedById", op, value)
+	},
+	SubmittedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("submittedAt", op, value)
+	},
+	ApprovedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("approvedById", op, value)
+	},
+	ApprovedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("approvedAt", op, value)
+	},
+	ReviewComment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reviewComment", op, value)
 	},
 	Metadata: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("metadata", op, value)
@@ -300,43 +364,51 @@ var FormulaTemplateVersionTable = TableInfo{
 //	q.Where(FormulaTemplateVersionColumns.ID.Eq(), id)           // WHERE ftv.id = ?
 //	q.Order(FormulaTemplateVersionColumns.CreatedAt.OrderDesc())  // ORDER BY ftv.created_at DESC
 var FormulaTemplateVersionColumns = struct {
-	ID                  Column // "id" → qualified: "ftv.id"
-	TemplateID          Column // "template_id" → qualified: "ftv.template_id"
-	OrganizationID      Column // "organization_id" → qualified: "ftv.organization_id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "ftv.business_unit_id"
-	VersionNumber       Column // "version_number" → qualified: "ftv.version_number"
-	Name                Column // "name" → qualified: "ftv.name"
-	Description         Column // "description" → qualified: "ftv.description"
-	Type                Column // "type" → qualified: "ftv.type"
-	Expression          Column // "expression" → qualified: "ftv.expression"
-	Status              Column // "status" → qualified: "ftv.status"
-	SchemaID            Column // "schema_id" → qualified: "ftv.schema_id"
-	VariableDefinitions Column // "variable_definitions" → qualified: "ftv.variable_definitions"
-	Metadata            Column // "metadata" → qualified: "ftv.metadata"
-	ChangeMessage       Column // "change_message" → qualified: "ftv.change_message"
-	ChangeSummary       Column // "change_summary" → qualified: "ftv.change_summary"
-	Tags                Column // "tags" → qualified: "ftv.tags"
-	CreatedByID         Column // "created_by_id" → qualified: "ftv.created_by_id"
-	CreatedAt           Column // "created_at" → qualified: "ftv.created_at"
+	ID                   Column // "id" → qualified: "ftv.id"
+	TemplateID           Column // "template_id" → qualified: "ftv.template_id"
+	OrganizationID       Column // "organization_id" → qualified: "ftv.organization_id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "ftv.business_unit_id"
+	VersionNumber        Column // "version_number" → qualified: "ftv.version_number"
+	Name                 Column // "name" → qualified: "ftv.name"
+	Description          Column // "description" → qualified: "ftv.description"
+	Type                 Column // "type" → qualified: "ftv.type"
+	Expression           Column // "expression" → qualified: "ftv.expression"
+	Status               Column // "status" → qualified: "ftv.status"
+	SchemaID             Column // "schema_id" → qualified: "ftv.schema_id"
+	VariableDefinitions  Column // "variable_definitions" → qualified: "ftv.variable_definitions"
+	BreakdownDefinitions Column // "breakdown_definitions" → qualified: "ftv.breakdown_definitions"
+	MinCharge            Column // "min_charge" → qualified: "ftv.min_charge"
+	MaxCharge            Column // "max_charge" → qualified: "ftv.max_charge"
+	EffectiveFrom        Column // "effective_from" → qualified: "ftv.effective_from"
+	Metadata             Column // "metadata" → qualified: "ftv.metadata"
+	ChangeMessage        Column // "change_message" → qualified: "ftv.change_message"
+	ChangeSummary        Column // "change_summary" → qualified: "ftv.change_summary"
+	Tags                 Column // "tags" → qualified: "ftv.tags"
+	CreatedByID          Column // "created_by_id" → qualified: "ftv.created_by_id"
+	CreatedAt            Column // "created_at" → qualified: "ftv.created_at"
 }{
-	ID:                  NewColumn("id", "ftv"),
-	TemplateID:          NewColumn("template_id", "ftv"),
-	OrganizationID:      NewColumn("organization_id", "ftv"),
-	BusinessUnitID:      NewColumn("business_unit_id", "ftv"),
-	VersionNumber:       NewColumn("version_number", "ftv"),
-	Name:                NewColumn("name", "ftv"),
-	Description:         NewColumn("description", "ftv"),
-	Type:                NewColumn("type", "ftv"),
-	Expression:          NewColumn("expression", "ftv"),
-	Status:              NewColumn("status", "ftv"),
-	SchemaID:            NewColumn("schema_id", "ftv"),
-	VariableDefinitions: NewColumn("variable_definitions", "ftv"),
-	Metadata:            NewColumn("metadata", "ftv"),
-	ChangeMessage:       NewColumn("change_message", "ftv"),
-	ChangeSummary:       NewColumn("change_summary", "ftv"),
-	Tags:                NewColumn("tags", "ftv"),
-	CreatedByID:         NewColumn("created_by_id", "ftv"),
-	CreatedAt:           NewColumn("created_at", "ftv"),
+	ID:                   NewColumn("id", "ftv"),
+	TemplateID:           NewColumn("template_id", "ftv"),
+	OrganizationID:       NewColumn("organization_id", "ftv"),
+	BusinessUnitID:       NewColumn("business_unit_id", "ftv"),
+	VersionNumber:        NewColumn("version_number", "ftv"),
+	Name:                 NewColumn("name", "ftv"),
+	Description:          NewColumn("description", "ftv"),
+	Type:                 NewColumn("type", "ftv"),
+	Expression:           NewColumn("expression", "ftv"),
+	Status:               NewColumn("status", "ftv"),
+	SchemaID:             NewColumn("schema_id", "ftv"),
+	VariableDefinitions:  NewColumn("variable_definitions", "ftv"),
+	BreakdownDefinitions: NewColumn("breakdown_definitions", "ftv"),
+	MinCharge:            NewColumn("min_charge", "ftv"),
+	MaxCharge:            NewColumn("max_charge", "ftv"),
+	EffectiveFrom:        NewColumn("effective_from", "ftv"),
+	Metadata:             NewColumn("metadata", "ftv"),
+	ChangeMessage:        NewColumn("change_message", "ftv"),
+	ChangeSummary:        NewColumn("change_summary", "ftv"),
+	Tags:                 NewColumn("tags", "ftv"),
+	CreatedByID:          NewColumn("created_by_id", "ftv"),
+	CreatedAt:            NewColumn("created_at", "ftv"),
 }
 
 // FormulaTemplateVersionFieldMap maps JSON API field names to database column names.
@@ -344,24 +416,28 @@ var FormulaTemplateVersionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by FormulaTemplateVersion.GetStaticFieldMap().
 var FormulaTemplateVersionFieldMap = map[string]string{
-	"id":                  "id",
-	"templateId":          "template_id",
-	"organizationId":      "organization_id",
-	"businessUnitId":      "business_unit_id",
-	"versionNumber":       "version_number",
-	"name":                "name",
-	"description":         "description",
-	"type":                "type",
-	"expression":          "expression",
-	"status":              "status",
-	"schemaId":            "schema_id",
-	"variableDefinitions": "variable_definitions",
-	"metadata":            "metadata",
-	"changeMessage":       "change_message",
-	"changeSummary":       "change_summary",
-	"tags":                "tags",
-	"createdById":         "created_by_id",
-	"createdAt":           "created_at",
+	"id":                   "id",
+	"templateId":           "template_id",
+	"organizationId":       "organization_id",
+	"businessUnitId":       "business_unit_id",
+	"versionNumber":        "version_number",
+	"name":                 "name",
+	"description":          "description",
+	"type":                 "type",
+	"expression":           "expression",
+	"status":               "status",
+	"schemaId":             "schema_id",
+	"variableDefinitions":  "variable_definitions",
+	"breakdownDefinitions": "breakdown_definitions",
+	"minCharge":            "min_charge",
+	"maxCharge":            "max_charge",
+	"effectiveFrom":        "effective_from",
+	"metadata":             "metadata",
+	"changeMessage":        "change_message",
+	"changeSummary":        "change_summary",
+	"tags":                 "tags",
+	"createdById":          "created_by_id",
+	"createdAt":            "created_at",
 }
 
 // FormulaTemplateVersionInsertableColumns lists column names suitable for INSERT statements on the "formula_template_versions" table.
@@ -379,6 +455,10 @@ var FormulaTemplateVersionInsertableColumns = []string{
 	"status",
 	"schema_id",
 	"variable_definitions",
+	"breakdown_definitions",
+	"min_charge",
+	"max_charge",
+	"effective_from",
 	"metadata",
 	"change_message",
 	"change_summary",
@@ -448,24 +528,28 @@ func FormulaTemplateVersionApplyTenant(ti pagination.TenantInfo) func(*bun.Selec
 //	FormulaTemplateVersionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var FormulaTemplateVersionFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	TemplateID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	VersionNumber       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
-	Name                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Type                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Expression          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expression" → DB: "expression"
-	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	SchemaID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
-	VariableDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
-	Metadata            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
-	ChangeMessage       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
-	ChangeSummary       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeSummary" → DB: "change_summary"
-	Tags                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
-	CreatedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	VersionNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
+	Name                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Type                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
+	Expression           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expression" → DB: "expression"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	SchemaID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
+	VariableDefinitions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
+	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
+	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
+	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
+	EffectiveFrom        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	Metadata             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
+	ChangeMessage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
+	ChangeSummary        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeSummary" → DB: "change_summary"
+	Tags                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
+	CreatedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -502,6 +586,18 @@ var FormulaTemplateVersionFilter = struct {
 	},
 	VariableDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("variableDefinitions", op, value)
+	},
+	BreakdownDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("breakdownDefinitions", op, value)
+	},
+	MinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minCharge", op, value)
+	},
+	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxCharge", op, value)
+	},
+	EffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("effectiveFrom", op, value)
 	},
 	Metadata: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("metadata", op, value)

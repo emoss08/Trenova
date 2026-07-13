@@ -3,6 +3,7 @@ package resolver
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -10,21 +11,28 @@ import (
 
 type TransformFunc func(value any) (any, error)
 
-var transforms = map[string]TransformFunc{
-	"decimalToFloat64": decimalToFloat64,
-	"int64ToFloat64":   int64ToFloat64,
-	"int16ToFloat64":   int16ToFloat64,
-	"stringToUpper":    stringToUpper,
-	"stringToLower":    stringToLower,
-	"unixToISO8601":    unixToISO8601,
-}
+var (
+	transformsMu sync.RWMutex
+	transforms   = map[string]TransformFunc{
+		"decimalToFloat64": decimalToFloat64,
+		"int64ToFloat64":   int64ToFloat64,
+		"int16ToFloat64":   int16ToFloat64,
+		"stringToUpper":    stringToUpper,
+		"stringToLower":    stringToLower,
+		"unixToISO8601":    unixToISO8601,
+	}
+)
 
 func GetTransform(name string) (TransformFunc, bool) {
+	transformsMu.RLock()
+	defer transformsMu.RUnlock()
 	fn, ok := transforms[name]
 	return fn, ok
 }
 
 func RegisterTransform(name string, fn TransformFunc) {
+	transformsMu.Lock()
+	defer transformsMu.Unlock()
 	transforms[name] = fn
 }
 

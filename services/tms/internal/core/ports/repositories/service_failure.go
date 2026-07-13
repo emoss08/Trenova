@@ -18,6 +18,7 @@ type ListServiceFailureConnectionRequest struct {
 	Filter                *pagination.QueryOptions `json:"filter"`
 	Cursor                pagination.CursorInfo    `json:"-"`
 	ServiceFailureColumns []string                 `json:"-"`
+	ShipmentID            *pulid.ID                `json:"-"`
 }
 
 type GetServiceFailureByIDRequest struct {

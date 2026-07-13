@@ -76,7 +76,7 @@ type MockEquipmentManufacturerRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateEquipmentManufacturerStatusRequest
-func (_e *MockEquipmentManufacturerRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockEquipmentManufacturerRepository_BulkUpdateStatus_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockEquipmentManufacturerRepository_BulkUpdateStatus_Call {
 	return &MockEquipmentManufacturerRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockEquipmentManufacturerRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *equipmentmanufacturer.EquipmentManufacturer
-func (_e *MockEquipmentManufacturerRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockEquipmentManufacturerRepository_Create_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) Create(ctx any, entity any) *MockEquipmentManufacturerRepository_Create_Call {
 	return &MockEquipmentManufacturerRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockEquipmentManufacturerRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEquipmentManufacturerByIDRequest
-func (_e *MockEquipmentManufacturerRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockEquipmentManufacturerRepository_GetByID_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) GetByID(ctx any, req any) *MockEquipmentManufacturerRepository_GetByID_Call {
 	return &MockEquipmentManufacturerRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEquipmentManufacturerRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEquipmentManufacturersByIDsRequest
-func (_e *MockEquipmentManufacturerRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockEquipmentManufacturerRepository_GetByIDs_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) GetByIDs(ctx any, req any) *MockEquipmentManufacturerRepository_GetByIDs_Call {
 	return &MockEquipmentManufacturerRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -308,74 +308,6 @@ func (_c *MockEquipmentManufacturerRepository_GetByIDs_Call) Return(equipmentMan
 }
 
 func (_c *MockEquipmentManufacturerRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEquipmentManufacturersByIDsRequest) ([]*equipmentmanufacturer.EquipmentManufacturer, error)) *MockEquipmentManufacturerRepository_GetByIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockEquipmentManufacturerRepository
-func (_mock *MockEquipmentManufacturerRepository) ListConnection(ctx context.Context, req *repositories.ListEquipmentManufacturerConnectionRequest) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentManufacturerConnectionRequest) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentManufacturerConnectionRequest) *pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEquipmentManufacturerConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEquipmentManufacturerRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockEquipmentManufacturerRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListEquipmentManufacturerConnectionRequest
-func (_e *MockEquipmentManufacturerRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockEquipmentManufacturerRepository_ListConnection_Call {
-	return &MockEquipmentManufacturerRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockEquipmentManufacturerRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListEquipmentManufacturerConnectionRequest)) *MockEquipmentManufacturerRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListEquipmentManufacturerConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListEquipmentManufacturerConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEquipmentManufacturerRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], err error) *MockEquipmentManufacturerRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockEquipmentManufacturerRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEquipmentManufacturerConnectionRequest) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error)) *MockEquipmentManufacturerRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +348,7 @@ type MockEquipmentManufacturerRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEquipmentManufacturersRequest
-func (_e *MockEquipmentManufacturerRepository_Expecter) List(ctx interface{}, req interface{}) *MockEquipmentManufacturerRepository_List_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) List(ctx any, req any) *MockEquipmentManufacturerRepository_List_Call {
 	return &MockEquipmentManufacturerRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -444,6 +376,74 @@ func (_c *MockEquipmentManufacturerRepository_List_Call) Return(listResult *pagi
 }
 
 func (_c *MockEquipmentManufacturerRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEquipmentManufacturersRequest) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error)) *MockEquipmentManufacturerRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockEquipmentManufacturerRepository
+func (_mock *MockEquipmentManufacturerRepository) ListConnection(ctx context.Context, req *repositories.ListEquipmentManufacturerConnectionRequest) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentManufacturerConnectionRequest) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEquipmentManufacturerConnectionRequest) *pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEquipmentManufacturerConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEquipmentManufacturerRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockEquipmentManufacturerRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEquipmentManufacturerConnectionRequest
+func (_e *MockEquipmentManufacturerRepository_Expecter) ListConnection(ctx any, req any) *MockEquipmentManufacturerRepository_ListConnection_Call {
+	return &MockEquipmentManufacturerRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockEquipmentManufacturerRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListEquipmentManufacturerConnectionRequest)) *MockEquipmentManufacturerRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEquipmentManufacturerConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEquipmentManufacturerConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEquipmentManufacturerRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], err error) *MockEquipmentManufacturerRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEquipmentManufacturerRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEquipmentManufacturerConnectionRequest) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error)) *MockEquipmentManufacturerRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -484,7 +484,7 @@ type MockEquipmentManufacturerRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockEquipmentManufacturerRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockEquipmentManufacturerRepository_SelectOptions_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) SelectOptions(ctx any, req any) *MockEquipmentManufacturerRepository_SelectOptions_Call {
 	return &MockEquipmentManufacturerRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -552,7 +552,7 @@ type MockEquipmentManufacturerRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *equipmentmanufacturer.EquipmentManufacturer
-func (_e *MockEquipmentManufacturerRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockEquipmentManufacturerRepository_Update_Call {
+func (_e *MockEquipmentManufacturerRepository_Expecter) Update(ctx any, entity any) *MockEquipmentManufacturerRepository_Update_Call {
 	return &MockEquipmentManufacturerRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

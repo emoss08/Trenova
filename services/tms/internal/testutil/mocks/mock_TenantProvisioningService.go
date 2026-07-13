@@ -74,7 +74,7 @@ type MockTenantProvisioningService_ProvisionTenant_Call struct {
 // ProvisionTenant is a helper method to define mock.On call
 //   - context1 context.Context
 //   - v *services.TenantProvisioningRequest
-func (_e *MockTenantProvisioningService_Expecter) ProvisionTenant(context1 interface{}, v interface{}) *MockTenantProvisioningService_ProvisionTenant_Call {
+func (_e *MockTenantProvisioningService_Expecter) ProvisionTenant(context1 any, v any) *MockTenantProvisioningService_ProvisionTenant_Call {
 	return &MockTenantProvisioningService_ProvisionTenant_Call{Call: _e.mock.On("ProvisionTenant", context1, v)}
 }
 

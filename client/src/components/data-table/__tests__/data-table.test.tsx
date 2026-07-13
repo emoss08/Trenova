@@ -142,6 +142,7 @@ describe("DataTable", () => {
         sort: [],
       }),
       true,
+      undefined,
     ]);
   });
 

@@ -24,13 +24,31 @@ import (
 
 var _ pagination.CursorEntity = (*Shipment)(nil)
 
+type RatingBreakdownItem struct {
+	Name   string  `json:"name"`
+	Label  string  `json:"label,omitempty"`
+	Amount float64 `json:"amount"`
+	Error  string  `json:"error,omitempty"`
+}
+
+type RatingGuardrail struct {
+	Applied   bool     `json:"applied"`
+	Bound     string   `json:"bound,omitempty"`
+	RawResult float64  `json:"rawResult"`
+	MinCharge *float64 `json:"minCharge,omitempty"`
+	MaxCharge *float64 `json:"maxCharge,omitempty"`
+}
+
 type RatingDetail struct {
-	FormulaTemplateID   string         `json:"formulaTemplateId"`
-	FormulaTemplateName string         `json:"formulaTemplateName"`
-	Expression          string         `json:"expression"`
-	ResolvedVariables   map[string]any `json:"resolvedVariables"`
-	Result              float64        `json:"result"`
-	RatedAt             int64          `json:"ratedAt"`
+	FormulaTemplateID   string                `json:"formulaTemplateId"`
+	FormulaTemplateName string                `json:"formulaTemplateName"`
+	Expression          string                `json:"expression"`
+	ResolvedVariables   map[string]any        `json:"resolvedVariables"`
+	Result              float64               `json:"result"`
+	RatedAt             int64                 `json:"ratedAt"`
+	VersionNumber       int64                 `json:"versionNumber,omitempty"`
+	Breakdown           []RatingBreakdownItem `json:"breakdown,omitempty"`
+	Guardrail           *RatingGuardrail      `json:"guardrail,omitempty"`
 }
 
 type Shipment struct {

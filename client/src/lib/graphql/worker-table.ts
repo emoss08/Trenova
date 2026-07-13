@@ -17,7 +17,7 @@ export const workerTableGraphQLConfigs = {
     document: WorkerPtoTableDocument,
     operationName: "WorkerPtoTable",
     connectionKey: "workerPTOEntries",
-    extraVariables: {
+    inputExtraVariables: {
       includeWorker: true,
     },
   }),

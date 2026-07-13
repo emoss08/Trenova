@@ -7,7 +7,7 @@ import {
 } from "@/lib/graphql/select-options";
 import { cn } from "@/lib/utils";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useId, useMemo, useState } from "react";
 import type { Control, Path, RegisterOptions } from "react-hook-form";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -183,6 +183,10 @@ export interface BaseAutocompleteFieldProps<
   value: string | null | undefined;
   /** Callback when selection changes */
   onChange: (...event: any[]) => void;
+  /** Callback fired when the popover closes (used for form touched state) */
+  onBlur?: () => void;
+  /** Ref forwarded to the trigger button */
+  ref?: React.Ref<HTMLButtonElement>;
   /** Label for the select field */
   label?: string;
   /** Placeholder text when no selection */
@@ -216,7 +220,7 @@ export interface BaseAutocompleteFieldProps<
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
   BaseAutocompleteFieldProps<TOption, TForm>,
-  "onChange" | "value"
+  "onChange" | "value" | "onBlur" | "ref"
 > &
   AutocompleteFormControlProps<TForm> & {
     description?: string;
@@ -233,6 +237,8 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   placeholder = "Select...",
   value,
   onChange,
+  onBlur,
+  ref,
   disabled = false,
   className,
   triggerClassName,
@@ -246,6 +252,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   initialLimit,
   filterOption,
 }: BaseAutocompleteFieldProps<TOption, TForm>) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const listboxId = useId();
   const [userSelectedOptionState, setUserSelectedOptionState] = useState<{
@@ -266,7 +273,24 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     [graphQLFilters],
   );
 
-  const { data: fetchedOption } = useQuery({
+  const getOptionQueryKey = useCallback(
+    (optionValue: string) => [
+      "autocomplete-option",
+      link,
+      valueLookupLink,
+      optionValue,
+      graphql,
+      graphql?.resource,
+      normalizedGraphQLFilters,
+    ],
+    [link, valueLookupLink, graphql, normalizedGraphQLFilters],
+  );
+
+  const {
+    data: fetchedOption,
+    isLoading: isSelectedOptionLoading,
+    isError: isSelectedOptionError,
+  } = useQuery({
     queryKey: [
       "autocomplete-option",
       link,
@@ -370,12 +394,48 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     }
   }, [onChange, onOptionChange]);
 
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen && disabled) return;
+      setOpen(nextOpen);
+      if (!nextOpen) {
+        onBlur?.();
+      }
+    },
+    [disabled, onBlur],
+  );
+
+  const handleTriggerKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (!clearable || disabled || !value) return;
+      if (e.key === "Backspace" || e.key === "Delete") {
+        e.preventDefault();
+        handleClear();
+      }
+    },
+    [clearable, disabled, value, handleClear],
+  );
+
+  const handleUserSelectedOption = useCallback(
+    (option: TOption | null) => {
+      if (!option) {
+        setUserSelectedOptionState(null);
+        return;
+      }
+      const optionValue = getOptionValue(option).toString();
+      setUserSelectedOptionState({ option, value: optionValue });
+      queryClient.setQueryData(getOptionQueryKey(optionValue), option);
+    },
+    [getOptionValue, getOptionQueryKey, queryClient],
+  );
+
   return (
     <div className="relative">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger
           render={
             <AutocompleteTrigger
+              ref={ref}
               open={open}
               disabled={disabled}
               isInvalid={isInvalid}
@@ -383,10 +443,13 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
               clearable={clearable}
               currentValue={value}
               selectedOption={selectedOption}
+              isLoadingSelected={isSelectedOptionLoading}
+              isErrorSelected={isSelectedOptionError}
               getDisplayValue={getDisplayValue}
               placeholder={placeholder}
               handleClear={handleClear}
               listboxId={listboxId}
+              onKeyDown={handleTriggerKeyDown}
             />
           }
         />
@@ -402,11 +465,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             getOptionValue={getOptionValue}
             renderOption={renderOption}
             setOpen={setOpen}
-            setSelectedOption={(option) =>
-              setUserSelectedOptionState(
-                option ? { option, value: getOptionValue(option).toString() } : null,
-              )
-            }
+            setSelectedOption={handleUserSelectedOption}
             selectedOption={selectedOption}
             onOptionChange={onOptionChange}
             onChange={onChange}
@@ -459,7 +518,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
       name={name}
       control={control}
       rules={rules}
-      render={({ field: { onChange, value, disabled }, fieldState }) => {
+      render={({ field, fieldState }) => {
         return (
           <FieldWrapper
             label={label}
@@ -483,9 +542,11 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
               selectedValueLink={selectedValueLink}
               filterOption={filterOption}
               placeholder={placeholder}
-              value={value}
-              onChange={onChange}
-              disabled={disabled}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              disabled={field.disabled}
               isInvalid={fieldState.invalid}
               {...props}
             />

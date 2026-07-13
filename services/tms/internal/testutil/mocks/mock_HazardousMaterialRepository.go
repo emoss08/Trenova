@@ -76,7 +76,7 @@ type MockHazardousMaterialRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateHazardousMaterialStatusRequest
-func (_e *MockHazardousMaterialRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_BulkUpdateStatus_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockHazardousMaterialRepository_BulkUpdateStatus_Call {
 	return &MockHazardousMaterialRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockHazardousMaterialRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazardousmaterial.HazardousMaterial
-func (_e *MockHazardousMaterialRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockHazardousMaterialRepository_Create_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) Create(ctx any, entity any) *MockHazardousMaterialRepository_Create_Call {
 	return &MockHazardousMaterialRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockHazardousMaterialRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHazardousMaterialByIDRequest
-func (_e *MockHazardousMaterialRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_GetByID_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) GetByID(ctx any, req any) *MockHazardousMaterialRepository_GetByID_Call {
 	return &MockHazardousMaterialRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockHazardousMaterialRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHazardousMaterialsByIDsRequest
-func (_e *MockHazardousMaterialRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_GetByIDs_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) GetByIDs(ctx any, req any) *MockHazardousMaterialRepository_GetByIDs_Call {
 	return &MockHazardousMaterialRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -308,74 +308,6 @@ func (_c *MockHazardousMaterialRepository_GetByIDs_Call) Return(hazardousMateria
 }
 
 func (_c *MockHazardousMaterialRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetHazardousMaterialsByIDsRequest) ([]*hazardousmaterial.HazardousMaterial, error)) *MockHazardousMaterialRepository_GetByIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockHazardousMaterialRepository
-func (_mock *MockHazardousMaterialRepository) ListConnection(ctx context.Context, req *repositories.ListHazardousMaterialConnectionRequest) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*hazardousmaterial.HazardousMaterial]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazardousMaterialConnectionRequest) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazardousMaterialConnectionRequest) *pagination.CursorListResult[*hazardousmaterial.HazardousMaterial]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListHazardousMaterialConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockHazardousMaterialRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockHazardousMaterialRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListHazardousMaterialConnectionRequest
-func (_e *MockHazardousMaterialRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_ListConnection_Call {
-	return &MockHazardousMaterialRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockHazardousMaterialRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListHazardousMaterialConnectionRequest)) *MockHazardousMaterialRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListHazardousMaterialConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListHazardousMaterialConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockHazardousMaterialRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], err error) *MockHazardousMaterialRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockHazardousMaterialRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHazardousMaterialConnectionRequest) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error)) *MockHazardousMaterialRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +348,7 @@ type MockHazardousMaterialRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListHazardousMaterialsRequest
-func (_e *MockHazardousMaterialRepository_Expecter) List(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_List_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) List(ctx any, req any) *MockHazardousMaterialRepository_List_Call {
 	return &MockHazardousMaterialRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -444,6 +376,74 @@ func (_c *MockHazardousMaterialRepository_List_Call) Return(listResult *paginati
 }
 
 func (_c *MockHazardousMaterialRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHazardousMaterialsRequest) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error)) *MockHazardousMaterialRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockHazardousMaterialRepository
+func (_mock *MockHazardousMaterialRepository) ListConnection(ctx context.Context, req *repositories.ListHazardousMaterialConnectionRequest) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*hazardousmaterial.HazardousMaterial]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazardousMaterialConnectionRequest) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazardousMaterialConnectionRequest) *pagination.CursorListResult[*hazardousmaterial.HazardousMaterial]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListHazardousMaterialConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockHazardousMaterialRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockHazardousMaterialRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListHazardousMaterialConnectionRequest
+func (_e *MockHazardousMaterialRepository_Expecter) ListConnection(ctx any, req any) *MockHazardousMaterialRepository_ListConnection_Call {
+	return &MockHazardousMaterialRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockHazardousMaterialRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListHazardousMaterialConnectionRequest)) *MockHazardousMaterialRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListHazardousMaterialConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListHazardousMaterialConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHazardousMaterialRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], err error) *MockHazardousMaterialRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockHazardousMaterialRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHazardousMaterialConnectionRequest) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error)) *MockHazardousMaterialRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -484,7 +484,7 @@ type MockHazardousMaterialRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.HazardousMaterialSelectOptionsRequest
-func (_e *MockHazardousMaterialRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockHazardousMaterialRepository_SelectOptions_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) SelectOptions(ctx any, req any) *MockHazardousMaterialRepository_SelectOptions_Call {
 	return &MockHazardousMaterialRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -552,7 +552,7 @@ type MockHazardousMaterialRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazardousmaterial.HazardousMaterial
-func (_e *MockHazardousMaterialRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockHazardousMaterialRepository_Update_Call {
+func (_e *MockHazardousMaterialRepository_Expecter) Update(ctx any, entity any) *MockHazardousMaterialRepository_Update_Call {
 	return &MockHazardousMaterialRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

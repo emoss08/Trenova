@@ -481,6 +481,14 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/configuration-files/rate-tables",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateTable)),
+            async lazy() {
+              const { RateTablesPage } = await import("@/routes/rate-table/page");
+              return { Component: RateTablesPage };
+            },
+          },
+          {
             path: "/equipment/tractors",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Tractor)),
             async lazy() {

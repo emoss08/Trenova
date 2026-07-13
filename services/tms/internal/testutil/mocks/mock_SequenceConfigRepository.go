@@ -75,7 +75,7 @@ type MockSequenceConfigRepository_GetByTenant_Call struct {
 // GetByTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetSequenceConfigRequest
-func (_e *MockSequenceConfigRepository_Expecter) GetByTenant(ctx interface{}, req interface{}) *MockSequenceConfigRepository_GetByTenant_Call {
+func (_e *MockSequenceConfigRepository_Expecter) GetByTenant(ctx any, req any) *MockSequenceConfigRepository_GetByTenant_Call {
 	return &MockSequenceConfigRepository_GetByTenant_Call{Call: _e.mock.On("GetByTenant", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockSequenceConfigRepository_UpdateByTenant_Call struct {
 // UpdateByTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doc *tenant.SequenceConfigDocument
-func (_e *MockSequenceConfigRepository_Expecter) UpdateByTenant(ctx interface{}, doc interface{}) *MockSequenceConfigRepository_UpdateByTenant_Call {
+func (_e *MockSequenceConfigRepository_Expecter) UpdateByTenant(ctx any, doc any) *MockSequenceConfigRepository_UpdateByTenant_Call {
 	return &MockSequenceConfigRepository_UpdateByTenant_Call{Call: _e.mock.On("UpdateByTenant", ctx, doc)}
 }
 

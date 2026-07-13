@@ -75,7 +75,7 @@ type MockJournalSourceRepository_GetByObject_Call struct {
 // GetByObject is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetJournalSourceByObjectRequest
-func (_e *MockJournalSourceRepository_Expecter) GetByObject(ctx interface{}, req interface{}) *MockJournalSourceRepository_GetByObject_Call {
+func (_e *MockJournalSourceRepository_Expecter) GetByObject(ctx any, req any) *MockJournalSourceRepository_GetByObject_Call {
 	return &MockJournalSourceRepository_GetByObject_Call{Call: _e.mock.On("GetByObject", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockJournalSourceRepository_GetByObjectAndEvent_Call struct {
 //   - ctx context.Context
 //   - req repositories.GetJournalSourceByObjectRequest
 //   - sourceEventType string
-func (_e *MockJournalSourceRepository_Expecter) GetByObjectAndEvent(ctx interface{}, req interface{}, sourceEventType interface{}) *MockJournalSourceRepository_GetByObjectAndEvent_Call {
+func (_e *MockJournalSourceRepository_Expecter) GetByObjectAndEvent(ctx any, req any, sourceEventType any) *MockJournalSourceRepository_GetByObjectAndEvent_Call {
 	return &MockJournalSourceRepository_GetByObjectAndEvent_Call{Call: _e.mock.On("GetByObjectAndEvent", ctx, req, sourceEventType)}
 }
 

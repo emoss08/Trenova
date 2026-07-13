@@ -48,7 +48,7 @@ type FreightInvoiceCharge struct {
 	Code        string              `json:"code,omitempty"`
 	Description string              `json:"description,omitempty"`
 	Amount      decimal.Decimal     `json:"amount"`
-	Rate        decimal.NullDecimal `json:"rate,omitempty"`
+	Rate        decimal.NullDecimal `json:"rate"`
 	Weight      *int64              `json:"weight,omitempty"`
 }
 

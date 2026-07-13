@@ -27,6 +27,14 @@ type ServiceFailureShipment {
   bol: String
 }
 
+type ServiceFailureStop {
+  id: ID!
+  type: StopType!
+  sequence: Int!
+  locationId: ID!
+  location: Location
+}
+
 type ServiceFailure {
   id: ID!
   businessUnitId: ID!
@@ -40,6 +48,9 @@ type ServiceFailure {
   source: ServiceFailureSource!
   status: ServiceFailureStatus!
   stopType: StopType!
+  scheduledCutoff: Int!
+  actualArrival: Int!
+  gracePeriodMinutes: Int!
   lateMinutes: Int!
   notes: String!
   detectedAt: Int!
@@ -47,6 +58,7 @@ type ServiceFailure {
   createdAt: Int!
   updatedAt: Int!
   shipment: ServiceFailureShipment
+  stop: ServiceFailureStop
   reasonCode: ServiceFailureReasonCode
 }
 
@@ -62,6 +74,6 @@ type ServiceFailureConnection {
 }
 
 extend type Query {
-  serviceFailures(input: DataTableConnectionInput!): ServiceFailureConnection!
+  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
 }

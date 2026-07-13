@@ -1,0 +1,42 @@
+type Customer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String
+  addressLine2: String
+  city: String
+  postalCode: String!
+  isGeocoded: Boolean!
+  longitude: Float
+  latitude: Float
+  placeId: String
+  externalId: String
+  allowConsolidation: Boolean!
+  exclusiveConsolidation: Boolean!
+  consolidationPriority: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type CustomerEdge {
+  node: Customer!
+  cursor: String!
+}
+
+type CustomerConnection {
+  edges: [CustomerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  customers(input: DataTableConnectionInput!): CustomerConnection!
+  customer(id: ID!): Customer
+}

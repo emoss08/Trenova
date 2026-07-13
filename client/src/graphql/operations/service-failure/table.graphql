@@ -6,6 +6,10 @@ fragment ServiceFailureTableRowFields on ServiceFailure {
   source
   status
   stopType
+  stopId
+  scheduledCutoff
+  actualArrival
+  gracePeriodMinutes
   lateMinutes
   reasonCodeId
   notes
@@ -16,6 +20,21 @@ fragment ServiceFailureTableRowFields on ServiceFailure {
     proNumber
     bol
   }
+  stop {
+    id
+    type
+    sequence
+    locationId
+    location {
+      id
+      name
+      code
+      city
+      state {
+        abbreviation
+      }
+    }
+  }
   reasonCode {
     id
     code
@@ -23,8 +42,8 @@ fragment ServiceFailureTableRowFields on ServiceFailure {
   }
 }
 
-query ServiceFailureTable($input: DataTableConnectionInput!) {
-  serviceFailures(input: $input) {
+query ServiceFailureTable($input: DataTableConnectionInput!, $shipmentId: ID) {
+  serviceFailures(input: $input, shipmentId: $shipmentId) {
     edges {
       node {
         ...ServiceFailureTableRowFields

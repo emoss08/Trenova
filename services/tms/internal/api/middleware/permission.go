@@ -57,11 +57,12 @@ func (m *PermissionMiddleware) RequirePermission(
 	}
 }
 
-func (m *PermissionMiddleware) RequireAnyPermission(checks ...struct {
+type PermissionCheck struct {
 	Resource  string
 	Operation permission.Operation
-},
-) gin.HandlerFunc {
+}
+
+func (m *PermissionMiddleware) RequireAnyPermission(checks ...PermissionCheck) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authCtx := authctx.GetAuthContext(c)
 
@@ -87,11 +88,7 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...struct {
 	}
 }
 
-func (m *PermissionMiddleware) RequireAllPermissions(checks ...struct {
-	Resource  string
-	Operation permission.Operation
-},
-) gin.HandlerFunc {
+func (m *PermissionMiddleware) RequireAllPermissions(checks ...PermissionCheck) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authCtx := authctx.GetAuthContext(c)
 

@@ -76,7 +76,7 @@ type MockEDITestCaseRepository_CreateTestCase_Call struct {
 // CreateTestCase is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDITestCase
-func (_e *MockEDITestCaseRepository_Expecter) CreateTestCase(ctx interface{}, entity interface{}) *MockEDITestCaseRepository_CreateTestCase_Call {
+func (_e *MockEDITestCaseRepository_Expecter) CreateTestCase(ctx any, entity any) *MockEDITestCaseRepository_CreateTestCase_Call {
 	return &MockEDITestCaseRepository_CreateTestCase_Call{Call: _e.mock.On("CreateTestCase", ctx, entity)}
 }
 
@@ -133,7 +133,7 @@ type MockEDITestCaseRepository_DeleteTestCase_Call struct {
 // DeleteTestCase is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteEDITestCaseRequest
-func (_e *MockEDITestCaseRepository_Expecter) DeleteTestCase(ctx interface{}, req interface{}) *MockEDITestCaseRepository_DeleteTestCase_Call {
+func (_e *MockEDITestCaseRepository_Expecter) DeleteTestCase(ctx any, req any) *MockEDITestCaseRepository_DeleteTestCase_Call {
 	return &MockEDITestCaseRepository_DeleteTestCase_Call{Call: _e.mock.On("DeleteTestCase", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockEDITestCaseRepository_GetTestCaseByID_Call struct {
 // GetTestCaseByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITestCaseByIDRequest
-func (_e *MockEDITestCaseRepository_Expecter) GetTestCaseByID(ctx interface{}, req interface{}) *MockEDITestCaseRepository_GetTestCaseByID_Call {
+func (_e *MockEDITestCaseRepository_Expecter) GetTestCaseByID(ctx any, req any) *MockEDITestCaseRepository_GetTestCaseByID_Call {
 	return &MockEDITestCaseRepository_GetTestCaseByID_Call{Call: _e.mock.On("GetTestCaseByID", ctx, req)}
 }
 
@@ -269,7 +269,7 @@ type MockEDITestCaseRepository_ListTestCases_Call struct {
 // ListTestCases is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITestCasesRequest
-func (_e *MockEDITestCaseRepository_Expecter) ListTestCases(ctx interface{}, req interface{}) *MockEDITestCaseRepository_ListTestCases_Call {
+func (_e *MockEDITestCaseRepository_Expecter) ListTestCases(ctx any, req any) *MockEDITestCaseRepository_ListTestCases_Call {
 	return &MockEDITestCaseRepository_ListTestCases_Call{Call: _e.mock.On("ListTestCases", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockEDITestCaseRepository_ListTestCasesCursor_Call struct {
 // ListTestCasesCursor is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDITestCasesRequest
-func (_e *MockEDITestCaseRepository_Expecter) ListTestCasesCursor(ctx interface{}, req interface{}) *MockEDITestCaseRepository_ListTestCasesCursor_Call {
+func (_e *MockEDITestCaseRepository_Expecter) ListTestCasesCursor(ctx any, req any) *MockEDITestCaseRepository_ListTestCasesCursor_Call {
 	return &MockEDITestCaseRepository_ListTestCasesCursor_Call{Call: _e.mock.On("ListTestCasesCursor", ctx, req)}
 }
 
@@ -365,6 +365,63 @@ func (_c *MockEDITestCaseRepository_ListTestCasesCursor_Call) Return(cursorListR
 }
 
 func (_c *MockEDITestCaseRepository_ListTestCasesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITestCasesRequest) (*pagination.CursorListResult[*edi.EDITestCase], error)) *MockEDITestCaseRepository_ListTestCasesCursor_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RecordTestCaseRun provides a mock function for the type MockEDITestCaseRepository
+func (_mock *MockEDITestCaseRepository) RecordTestCaseRun(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordTestCaseRun")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RecordEDITestCaseRunRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEDITestCaseRepository_RecordTestCaseRun_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordTestCaseRun'
+type MockEDITestCaseRepository_RecordTestCaseRun_Call struct {
+	*mock.Call
+}
+
+// RecordTestCaseRun is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.RecordEDITestCaseRunRequest
+func (_e *MockEDITestCaseRepository_Expecter) RecordTestCaseRun(ctx any, req any) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	return &MockEDITestCaseRepository_RecordTestCaseRun_Call{Call: _e.mock.On("RecordTestCaseRun", ctx, req)}
+}
+
+func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) Run(run func(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest)) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.RecordEDITestCaseRunRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.RecordEDITestCaseRunRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) Return(err error) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) RunAndReturn(run func(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest) error) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -405,7 +462,7 @@ type MockEDITestCaseRepository_UpdateTestCase_Call struct {
 // UpdateTestCase is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDITestCase
-func (_e *MockEDITestCaseRepository_Expecter) UpdateTestCase(ctx interface{}, entity interface{}) *MockEDITestCaseRepository_UpdateTestCase_Call {
+func (_e *MockEDITestCaseRepository_Expecter) UpdateTestCase(ctx any, entity any) *MockEDITestCaseRepository_UpdateTestCase_Call {
 	return &MockEDITestCaseRepository_UpdateTestCase_Call{Call: _e.mock.On("UpdateTestCase", ctx, entity)}
 }
 
@@ -433,63 +490,6 @@ func (_c *MockEDITestCaseRepository_UpdateTestCase_Call) Return(eDITestCase *edi
 }
 
 func (_c *MockEDITestCaseRepository_UpdateTestCase_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)) *MockEDITestCaseRepository_UpdateTestCase_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RecordTestCaseRun provides a mock function for the type MockEDITestCaseRepository
-func (_mock *MockEDITestCaseRepository) RecordTestCaseRun(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest) error {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RecordTestCaseRun")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RecordEDITestCaseRunRequest) error); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockEDITestCaseRepository_RecordTestCaseRun_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordTestCaseRun'
-type MockEDITestCaseRepository_RecordTestCaseRun_Call struct {
-	*mock.Call
-}
-
-// RecordTestCaseRun is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.RecordEDITestCaseRunRequest
-func (_e *MockEDITestCaseRepository_Expecter) RecordTestCaseRun(ctx interface{}, req interface{}) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
-	return &MockEDITestCaseRepository_RecordTestCaseRun_Call{Call: _e.mock.On("RecordTestCaseRun", ctx, req)}
-}
-
-func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) Run(run func(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest)) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.RecordEDITestCaseRunRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.RecordEDITestCaseRunRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) Return(err error) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) RunAndReturn(run func(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest) error) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
 	_c.Call.Return(run)
 	return _c
 }

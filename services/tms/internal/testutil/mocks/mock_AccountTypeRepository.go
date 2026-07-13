@@ -76,7 +76,7 @@ type MockAccountTypeRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateAccountTypeStatusRequest
-func (_e *MockAccountTypeRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockAccountTypeRepository_BulkUpdateStatus_Call {
+func (_e *MockAccountTypeRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockAccountTypeRepository_BulkUpdateStatus_Call {
 	return &MockAccountTypeRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockAccountTypeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accounttype.AccountType
-func (_e *MockAccountTypeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockAccountTypeRepository_Create_Call {
+func (_e *MockAccountTypeRepository_Expecter) Create(ctx any, entity any) *MockAccountTypeRepository_Create_Call {
 	return &MockAccountTypeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockAccountTypeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetAccountTypeByIDRequest
-func (_e *MockAccountTypeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockAccountTypeRepository_GetByID_Call {
+func (_e *MockAccountTypeRepository_Expecter) GetByID(ctx any, req any) *MockAccountTypeRepository_GetByID_Call {
 	return &MockAccountTypeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockAccountTypeRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetAccountTypesByIDsRequest
-func (_e *MockAccountTypeRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockAccountTypeRepository_GetByIDs_Call {
+func (_e *MockAccountTypeRepository_Expecter) GetByIDs(ctx any, req any) *MockAccountTypeRepository_GetByIDs_Call {
 	return &MockAccountTypeRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockAccountTypeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListAccountTypesRequest
-func (_e *MockAccountTypeRepository_Expecter) List(ctx interface{}, req interface{}) *MockAccountTypeRepository_List_Call {
+func (_e *MockAccountTypeRepository_Expecter) List(ctx any, req any) *MockAccountTypeRepository_List_Call {
 	return &MockAccountTypeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -376,6 +376,74 @@ func (_c *MockAccountTypeRepository_List_Call) Return(listResult *pagination.Lis
 }
 
 func (_c *MockAccountTypeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListAccountTypesRequest) (*pagination.ListResult[*accounttype.AccountType], error)) *MockAccountTypeRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockAccountTypeRepository
+func (_mock *MockAccountTypeRepository) ListConnection(ctx context.Context, req *repositories.ListAccountTypesConnectionRequest) (*pagination.CursorListResult[*accounttype.AccountType], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*accounttype.AccountType]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAccountTypesConnectionRequest) (*pagination.CursorListResult[*accounttype.AccountType], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAccountTypesConnectionRequest) *pagination.CursorListResult[*accounttype.AccountType]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*accounttype.AccountType])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListAccountTypesConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAccountTypeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockAccountTypeRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListAccountTypesConnectionRequest
+func (_e *MockAccountTypeRepository_Expecter) ListConnection(ctx any, req any) *MockAccountTypeRepository_ListConnection_Call {
+	return &MockAccountTypeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockAccountTypeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListAccountTypesConnectionRequest)) *MockAccountTypeRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListAccountTypesConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListAccountTypesConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAccountTypeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*accounttype.AccountType], err error) *MockAccountTypeRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockAccountTypeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListAccountTypesConnectionRequest) (*pagination.CursorListResult[*accounttype.AccountType], error)) *MockAccountTypeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +484,7 @@ type MockAccountTypeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.AccountTypeSelectOptionsRequest
-func (_e *MockAccountTypeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockAccountTypeRepository_SelectOptions_Call {
+func (_e *MockAccountTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockAccountTypeRepository_SelectOptions_Call {
 	return &MockAccountTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +552,7 @@ type MockAccountTypeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *accounttype.AccountType
-func (_e *MockAccountTypeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockAccountTypeRepository_Update_Call {
+func (_e *MockAccountTypeRepository_Expecter) Update(ctx any, entity any) *MockAccountTypeRepository_Update_Call {
 	return &MockAccountTypeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -512,74 +580,6 @@ func (_c *MockAccountTypeRepository_Update_Call) Return(accountType *accounttype
 }
 
 func (_c *MockAccountTypeRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *accounttype.AccountType) (*accounttype.AccountType, error)) *MockAccountTypeRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockAccountTypeRepository
-func (_mock *MockAccountTypeRepository) ListConnection(ctx context.Context, req *repositories.ListAccountTypesConnectionRequest) (*pagination.CursorListResult[*accounttype.AccountType], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*accounttype.AccountType]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAccountTypesConnectionRequest) (*pagination.CursorListResult[*accounttype.AccountType], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListAccountTypesConnectionRequest) *pagination.CursorListResult[*accounttype.AccountType]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*accounttype.AccountType])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListAccountTypesConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAccountTypeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockAccountTypeRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListAccountTypesConnectionRequest
-func (_e *MockAccountTypeRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockAccountTypeRepository_ListConnection_Call {
-	return &MockAccountTypeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockAccountTypeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListAccountTypesConnectionRequest)) *MockAccountTypeRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListAccountTypesConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListAccountTypesConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAccountTypeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*accounttype.AccountType], err error) *MockAccountTypeRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockAccountTypeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListAccountTypesConnectionRequest) (*pagination.CursorListResult[*accounttype.AccountType], error)) *MockAccountTypeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

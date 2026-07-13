@@ -151,6 +151,10 @@ type InvoiceService interface {
 		ctx context.Context,
 		req *repositories.ListInvoicesRequest,
 	) (*pagination.ListResult[*invoice.Invoice], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListInvoiceConnectionRequest,
+	) (*pagination.CursorListResult[*invoice.Invoice], error)
 	GetByID(
 		ctx context.Context,
 		req repositories.GetInvoiceByIDRequest,

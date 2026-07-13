@@ -103,6 +103,7 @@ export const Resource = {
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",
   FormulaTemplate: "formula_template",
+  RateTable: "rate_table",
   Customer: "customer",
   CustomerContact: "customer_contact",
   Location: "location",

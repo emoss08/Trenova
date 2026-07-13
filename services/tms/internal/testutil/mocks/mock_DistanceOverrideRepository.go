@@ -76,7 +76,7 @@ type MockDistanceOverrideRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distanceoverride.DistanceOverride
-func (_e *MockDistanceOverrideRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDistanceOverrideRepository_Create_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) Create(ctx any, entity any) *MockDistanceOverrideRepository_Create_Call {
 	return &MockDistanceOverrideRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -133,7 +133,7 @@ type MockDistanceOverrideRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteDistanceOverrideRequest
-func (_e *MockDistanceOverrideRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_Delete_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) Delete(ctx any, req any) *MockDistanceOverrideRepository_Delete_Call {
 	return &MockDistanceOverrideRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockDistanceOverrideRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDistanceOverrideByIDRequest
-func (_e *MockDistanceOverrideRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_GetByID_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) GetByID(ctx any, req any) *MockDistanceOverrideRepository_GetByID_Call {
 	return &MockDistanceOverrideRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -270,7 +270,7 @@ type MockDistanceOverrideRepository_GetByRouteSignature_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - routeSignature string
-func (_e *MockDistanceOverrideRepository_Expecter) GetByRouteSignature(ctx interface{}, tenantInfo interface{}, routeSignature interface{}) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) GetByRouteSignature(ctx any, tenantInfo any, routeSignature any) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
 	return &MockDistanceOverrideRepository_GetByRouteSignature_Call{Call: _e.mock.On("GetByRouteSignature", ctx, tenantInfo, routeSignature)}
 }
 
@@ -343,7 +343,7 @@ type MockDistanceOverrideRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDistanceOverrideRequest
-func (_e *MockDistanceOverrideRepository_Expecter) List(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_List_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) List(ctx any, req any) *MockDistanceOverrideRepository_List_Call {
 	return &MockDistanceOverrideRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -371,6 +371,74 @@ func (_c *MockDistanceOverrideRepository_List_Call) Return(listResult *paginatio
 }
 
 func (_c *MockDistanceOverrideRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDistanceOverrideRequest) (*pagination.ListResult[*distanceoverride.DistanceOverride], error)) *MockDistanceOverrideRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockDistanceOverrideRepository
+func (_mock *MockDistanceOverrideRepository) ListConnection(ctx context.Context, req *repositories.ListDistanceOverrideConnectionRequest) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*distanceoverride.DistanceOverride]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceOverrideConnectionRequest) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceOverrideConnectionRequest) *pagination.CursorListResult[*distanceoverride.DistanceOverride]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*distanceoverride.DistanceOverride])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDistanceOverrideConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDistanceOverrideRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockDistanceOverrideRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListDistanceOverrideConnectionRequest
+func (_e *MockDistanceOverrideRepository_Expecter) ListConnection(ctx any, req any) *MockDistanceOverrideRepository_ListConnection_Call {
+	return &MockDistanceOverrideRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockDistanceOverrideRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListDistanceOverrideConnectionRequest)) *MockDistanceOverrideRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListDistanceOverrideConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListDistanceOverrideConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDistanceOverrideRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*distanceoverride.DistanceOverride], err error) *MockDistanceOverrideRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockDistanceOverrideRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDistanceOverrideConnectionRequest) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error)) *MockDistanceOverrideRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -411,7 +479,7 @@ type MockDistanceOverrideRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distanceoverride.DistanceOverride
-func (_e *MockDistanceOverrideRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDistanceOverrideRepository_Update_Call {
+func (_e *MockDistanceOverrideRepository_Expecter) Update(ctx any, entity any) *MockDistanceOverrideRepository_Update_Call {
 	return &MockDistanceOverrideRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -439,72 +507,6 @@ func (_c *MockDistanceOverrideRepository_Update_Call) Return(distanceOverride *d
 }
 
 func (_c *MockDistanceOverrideRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *distanceoverride.DistanceOverride) (*distanceoverride.DistanceOverride, error)) *MockDistanceOverrideRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockDistanceOverrideRepository
-func (_mock *MockDistanceOverrideRepository) ListConnection(ctx context.Context, req *repositories.ListDistanceOverrideConnectionRequest) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*distanceoverride.DistanceOverride]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceOverrideConnectionRequest) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceOverrideConnectionRequest) *pagination.CursorListResult[*distanceoverride.DistanceOverride]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*distanceoverride.DistanceOverride])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDistanceOverrideConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockDistanceOverrideRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockDistanceOverrideRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-func (_e *MockDistanceOverrideRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockDistanceOverrideRepository_ListConnection_Call {
-	return &MockDistanceOverrideRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockDistanceOverrideRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListDistanceOverrideConnectionRequest)) *MockDistanceOverrideRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListDistanceOverrideConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListDistanceOverrideConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockDistanceOverrideRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*distanceoverride.DistanceOverride], err error) *MockDistanceOverrideRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockDistanceOverrideRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDistanceOverrideConnectionRequest) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error)) *MockDistanceOverrideRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

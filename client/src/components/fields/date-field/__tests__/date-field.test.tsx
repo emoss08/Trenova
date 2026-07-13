@@ -1,8 +1,8 @@
 import { generateDateOnlyString, generateDateTimeString, toUnixTimeStamp } from "@/lib/date";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, useWatch } from "react-hook-form";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { AutoCompleteDateField } from "../date-field";
 import { AutoCompleteDateTimeField } from "../datetime-field";
 
@@ -55,6 +55,10 @@ function DateTimeFieldHarness({ initialDateTime }: { initialDateTime: Date }) {
   );
 }
 
+afterEach(() => {
+  cleanup();
+});
+
 describe("AutoCompleteDateField", () => {
   it("keeps the value cleared after the user backspaces the whole input", async () => {
     const user = userEvent.setup();
@@ -63,7 +67,7 @@ describe("AutoCompleteDateField", () => {
 
     render(<DateFieldHarness initialDate={initialDate} />);
 
-    const input = screen.getByRole("textbox", { name: "Date" });
+    const input = screen.getByRole("combobox", { name: "Date" });
     expect(input).toHaveValue(expectedDisplayValue);
 
     await user.click(input);
@@ -80,6 +84,76 @@ describe("AutoCompleteDateField", () => {
     await user.click(input);
     expect(input).toHaveValue("");
   });
+
+  it("commits typed text when the input loses focus", async () => {
+    const user = userEvent.setup();
+    const initialDate = new Date(2024, 0, 15);
+
+    render(<DateFieldHarness initialDate={initialDate} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}01/20/2024");
+    await user.tab();
+
+    const expectedDate = new Date(2024, 0, 20);
+    expect(input).toHaveValue(generateDateOnlyString(expectedDate));
+    expect(screen.getByLabelText("date value")).toHaveTextContent(
+      String(toUnixTimeStamp(expectedDate)),
+    );
+  });
+
+  it("reverts unparseable text on blur without changing the value", async () => {
+    const user = userEvent.setup();
+    const initialDate = new Date(2024, 0, 15);
+    const initialTimestamp = toUnixTimeStamp(initialDate);
+
+    render(<DateFieldHarness initialDate={initialDate} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}zzzz");
+    await user.tab();
+
+    expect(input).toHaveValue(generateDateOnlyString(initialDate));
+    expect(screen.getByLabelText("date value")).toHaveTextContent(String(initialTimestamp));
+  });
+
+  it("reverts typed text when Escape is pressed", async () => {
+    const user = userEvent.setup();
+    const initialDate = new Date(2024, 0, 15);
+    const initialTimestamp = toUnixTimeStamp(initialDate);
+
+    render(<DateFieldHarness initialDate={initialDate} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}01/20/2024");
+    await user.keyboard("{Escape}");
+
+    expect(input).toHaveValue(generateDateOnlyString(initialDate));
+    expect(screen.getByLabelText("date value")).toHaveTextContent(String(initialTimestamp));
+  });
+
+  it("commits the highlighted suggestion with Enter", async () => {
+    const user = userEvent.setup();
+    const initialDate = new Date(2024, 0, 15);
+
+    render(<DateFieldHarness initialDate={initialDate} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}t+1{Enter}");
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    expect(input).toHaveValue(generateDateOnlyString(tomorrow));
+    expect(screen.getByLabelText("date value")).toHaveTextContent(
+      String(toUnixTimeStamp(tomorrow)),
+    );
+  });
 });
 
 describe("AutoCompleteDateTimeField", () => {
@@ -90,7 +164,7 @@ describe("AutoCompleteDateTimeField", () => {
 
     render(<DateTimeFieldHarness initialDateTime={initialDateTime} />);
 
-    const input = screen.getByRole("textbox", { name: "Date time" });
+    const input = screen.getByRole("combobox", { name: "Date time" });
     expect(input).toHaveValue(expectedDisplayValue);
 
     await user.click(input);
@@ -106,5 +180,23 @@ describe("AutoCompleteDateTimeField", () => {
 
     await user.click(input);
     expect(input).toHaveValue("");
+  });
+
+  it("commits typed text with an explicit time on blur", async () => {
+    const user = userEvent.setup();
+    const initialDateTime = new Date(2024, 0, 15, 9, 30);
+
+    render(<DateTimeFieldHarness initialDateTime={initialDateTime} />);
+
+    const input = screen.getByRole("combobox", { name: "Date time" });
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}01/20/2024 14:45");
+    await user.tab();
+
+    const expectedDateTime = new Date(2024, 0, 20, 14, 45);
+    expect(input).toHaveValue(generateDateTimeString(expectedDateTime));
+    expect(screen.getByLabelText("dateTime value")).toHaveTextContent(
+      String(toUnixTimeStamp(expectedDateTime)),
+    );
   });
 });

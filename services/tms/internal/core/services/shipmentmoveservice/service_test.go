@@ -228,11 +228,11 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 		NewDeliveryLocationID: pulid.MustNew("loc_"),
 		SplitPickupTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: 5,
-			ScheduledWindowEnd:   int64Ptr(6),
+			ScheduledWindowEnd:   new(int64(6)),
 		},
 		NewDeliveryTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: 7,
-			ScheduledWindowEnd:   int64Ptr(8),
+			ScheduledWindowEnd:   new(int64(8)),
 		},
 	})
 
@@ -277,14 +277,14 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 					Type:                 shipment.StopTypePickup,
 					ScheduleType:         shipment.StopScheduleTypeOpen,
 					ScheduledWindowStart: 1,
-					ScheduledWindowEnd:   int64Ptr(2),
+					ScheduledWindowEnd:   new(int64(2)),
 					LocationID:           pulid.MustNew("loc_"),
 				},
 				{
 					Type:                 shipment.StopTypeDelivery,
 					ScheduleType:         shipment.StopScheduleTypeOpen,
 					ScheduledWindowStart: 3,
-					ScheduledWindowEnd:   int64Ptr(4),
+					ScheduledWindowEnd:   new(int64(4)),
 					LocationID:           bridgeLocationID,
 				},
 			},
@@ -350,11 +350,11 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		NewDeliveryLocationID: newLocationID,
 		SplitPickupTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: 5,
-			ScheduledWindowEnd:   int64Ptr(6),
+			ScheduledWindowEnd:   new(int64(6)),
 		},
 		NewDeliveryTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: 7,
-			ScheduledWindowEnd:   int64Ptr(8),
+			ScheduledWindowEnd:   new(int64(8)),
 		},
 	})
 
@@ -409,12 +409,12 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 						{
 							Type:               shipment.StopTypePickup,
 							Status:             shipment.StopStatusInTransit,
-							ScheduledWindowEnd: int64Ptr(100),
+							ScheduledWindowEnd: new(int64(100)),
 						},
 						{
 							Type:               shipment.StopTypeDelivery,
 							Status:             shipment.StopStatusNew,
-							ScheduledWindowEnd: int64Ptr(4000),
+							ScheduledWindowEnd: new(int64(4000)),
 						},
 					},
 				},
@@ -434,7 +434,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.ShipmentControl{
 			AutoDelayShipments:          true,
-			AutoDelayShipmentsThreshold: ptrInt16(1),
+			AutoDelayShipmentsThreshold: new(int16(1)),
 		}, nil).
 		Once()
 	holdRepo := mocks.NewMockShipmentHoldRepository(t)
@@ -522,12 +522,12 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 						{
 							Type:               shipment.StopTypePickup,
 							Status:             shipment.StopStatusInTransit,
-							ScheduledWindowEnd: int64Ptr(100),
+							ScheduledWindowEnd: new(int64(100)),
 						},
 						{
 							Type:               shipment.StopTypeDelivery,
 							Status:             shipment.StopStatusNew,
-							ScheduledWindowEnd: int64Ptr(4000),
+							ScheduledWindowEnd: new(int64(4000)),
 						},
 					},
 				},
@@ -547,7 +547,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.ShipmentControl{
 			AutoDelayShipments:          false,
-			AutoDelayShipmentsThreshold: ptrInt16(1),
+			AutoDelayShipmentsThreshold: new(int16(1)),
 		}, nil).
 		Once()
 	holdRepo := mocks.NewMockShipmentHoldRepository(t)

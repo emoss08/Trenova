@@ -10,12 +10,12 @@ export const commodityPlacementSchema = z.object({
   stackable: z.boolean(),
   fragile: z.boolean(),
   isHazmat: z.boolean(),
-  hazmatClass: z.string().optional(),
+  hazmatClass: z.string().nullish(),
   minTemp: z.number().nullable().optional(),
   maxTemp: z.number().nullable().optional(),
-  loadingInstructions: z.string().optional(),
+  loadingInstructions: z.string().nullish(),
   estimatedLength: z.boolean(),
-  stopNumber: z.number().optional(),
+  stopNumber: z.number().nullish(),
 });
 
 export type CommodityPlacement = z.infer<typeof commodityPlacementSchema>;
@@ -38,7 +38,7 @@ export const loadingWarningSchema = z.object({
   type: z.string(),
   message: z.string(),
   severity: z.enum(["error", "warning", "info"]),
-  commodityIds: z.array(z.string()).optional(),
+  commodityIds: z.array(z.string()).nullish(),
 });
 
 export type LoadingWarning = z.infer<typeof loadingWarningSchema>;
@@ -58,8 +58,8 @@ export const loadingRecommendationSchema = z.object({
   priority: z.enum(["critical", "suggested", "optimization"]),
   title: z.string(),
   description: z.string(),
-  impact: z.string().optional(),
-  commodityIds: z.array(z.string()).optional(),
+  impact: z.string().nullish(),
+  commodityIds: z.array(z.string()).nullish(),
 });
 
 export type LoadingRecommendation = z.infer<typeof loadingRecommendationSchema>;
@@ -86,8 +86,8 @@ export const loadingOptimizationResultSchema = z.object({
   warnings: z.array(loadingWarningSchema),
   axleWeights: z.array(axleWeightSchema),
   recommendations: z.array(loadingRecommendationSchema),
-  stopDividers: z.array(stopDividerSchema).optional(),
-  aiAnalysis: z.string().optional(),
+  stopDividers: z.array(stopDividerSchema).nullish(),
+  aiAnalysis: z.string().nullish(),
 });
 
 export type LoadingOptimizationResult = z.infer<typeof loadingOptimizationResultSchema>;

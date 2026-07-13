@@ -225,7 +225,7 @@ Rounds a number to the specified decimal places.
 **Parameters:**
 
 - `x` (number): The number to round
-- `precision` (number, optional): Number of decimal places (default: 0)
+- `precision` (number, optional): Number of decimal places (default: 0, must be between -12 and 12)
 
 **Returns:** number
 
@@ -237,6 +237,7 @@ round(3.14159, 2)      // 3.14
 round(3.14159, 4)      // 3.1416
 round(1234.5)          // 1235
 round(1234.5, -2)      // 1200
+round(1.5, 400)        // Error: round decimals must be between -12 and 12
 ```
 
 #### floor(x)
@@ -557,7 +558,7 @@ if(score > 90, "A",
 
 #### coalesce(...values)
 
-Returns the first non-null, non-empty, non-zero value from the arguments.
+Returns the first non-null value from the arguments.
 
 **Parameters:**
 
@@ -567,19 +568,58 @@ Returns the first non-null, non-empty, non-zero value from the arguments.
 
 **Behavior:**
 
-- Skips null values
-- Skips empty strings
-- Skips zero numbers
-- Returns first "truthy" value or null if all are falsy
+- Skips null values only — zero numbers and empty strings are valid values
+- Returns null when every argument is null (a null final result fails decimal conversion)
 
 **Examples:**
 
 ```javascript
-coalesce(null, 0, "", "hello")   // "hello"
 coalesce(null, 42)               // 42
-coalesce(0, 10, 20)              // 10
-coalesce("", "default")          // "default"
+coalesce(null, 0, 10)            // 0
+coalesce(0, 10, 20)              // 0
+coalesce(null, null)             // null
 ```
+
+## Rate Table Functions
+
+Rate tables are tenant-defined lookup tables (managed under Billing → Rate Tables) referenced
+by their key. Two lookup modes exist: **Exact** (string key → value) and **Range** (numeric key
+matched against bands; band minimum inclusive, maximum exclusive, open-ended final band allowed).
+
+#### lookup(table, key)
+
+Returns the value for `key` in the rate table identified by `table`.
+
+**Parameters:**
+
+- `table` (string): The rate table key (must exist and be active in your organization)
+- `key` (string | number): Exact match key or numeric value for range tables
+
+**Returns:** number
+
+**Errors:** unknown table, no matching entry, or a non-numeric key against a range table.
+
+**Examples:**
+
+```javascript
+lookup("fuel_surcharge", 3.85)          // 0.18 (range band 3.5–3.999)
+lookup("lane_rate", "ATL-MIA")          // 1450
+baseRate * (1 + lookup("fuel_surcharge", fuelPrice))
+```
+
+#### lookupOr(table, key, default)
+
+Like `lookup`, but returns `default` instead of erroring when the table or entry is missing.
+
+**Examples:**
+
+```javascript
+lookupOr("lane_rate", laneCode, 0)       // 0 when the lane has no configured rate
+```
+
+Template validation verifies that every string-literal table name referenced by
+`lookup`/`lookupOr` exists in your organization. `lookup` and `lookupOr` are reserved names —
+variables and schema fields cannot use them.
 
 ## Function Composition
 

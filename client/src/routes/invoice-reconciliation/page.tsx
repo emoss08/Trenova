@@ -1,5 +1,5 @@
-import { EmptyState } from "@/components/empty-state";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,9 +12,14 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ExternalLinkIcon, ReceiptTextIcon, WalletCardsIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ExternalLinkIcon,
+  ReceiptTextIcon,
+  WalletCardsIcon,
+} from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { Link } from "react-router";
@@ -36,7 +41,10 @@ export function InvoiceReconciliationPage() {
       next.set("query", deferredQuery.trim());
     }
     if (status) {
-      next.set("fieldFilters", JSON.stringify([{ field: "status", operator: "eq", value: status }]));
+      next.set(
+        "fieldFilters",
+        JSON.stringify([{ field: "status", operator: "eq", value: status }]),
+      );
     }
     return Object.fromEntries(next.entries());
   }, [deferredQuery, status]);
@@ -63,14 +71,24 @@ export function InvoiceReconciliationPage() {
     <BillingWorkspaceLayout
       pageHeaderProps={{
         title: "Reconciliation Exceptions",
-        description: "Investigate adjustment-created finance exceptions and trace them back to source artifacts.",
+        description:
+          "Investigate adjustment-created finance exceptions and trace them back to source artifacts.",
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
-          <SummaryCard label="Open Exceptions" value={String(summaryQuery.data?.reconciliationPending ?? 0)} />
-          <SummaryCard label="Pending Approvals" value={String(summaryQuery.data?.approvalsPending ?? 0)} />
+          <SummaryCard
+            label="Open Exceptions"
+            value={String(summaryQuery.data?.reconciliationPending ?? 0)}
+          />
+          <SummaryCard
+            label="Pending Approvals"
+            value={String(summaryQuery.data?.approvalsPending ?? 0)}
+          />
           <SummaryCard label="Write-Offs" value={String(summaryQuery.data?.writeOffPending ?? 0)} />
-          <SummaryCard label="Batches In Flight" value={String(summaryQuery.data?.batchesInFlight ?? 0)} />
+          <SummaryCard
+            label="Batches In Flight"
+            value={String(summaryQuery.data?.batchesInFlight ?? 0)}
+          />
         </div>
       }
       sidebar={
@@ -85,7 +103,9 @@ export function InvoiceReconciliationPage() {
             <Select
               value={status ?? "all"}
               items={statusChoices}
-              onValueChange={(value) => void setSearchParams({ status: value === "all" ? null : value })}
+              onValueChange={(value) =>
+                void setSearchParams({ status: value === "all" ? null : value })
+              }
             >
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="All statuses" />
@@ -101,7 +121,12 @@ export function InvoiceReconciliationPage() {
             </Select>
           </div>
           <ScrollArea className="flex-1">
-            <div className="flex flex-col gap-2 p-2">
+            <div
+              className={cn(
+                "flex flex-col gap-1.5 p-2",
+                !listQuery.isLoading && listQuery.data?.results.length === 0 && "h-full gap-0 p-0",
+              )}
+            >
               {listQuery.isLoading
                 ? Array.from({ length: 6 }).map((_, index) => (
                     <Skeleton key={index} className="h-24 w-full rounded-xl" />
@@ -113,7 +138,7 @@ export function InvoiceReconciliationPage() {
                     title="No reconciliation exceptions"
                     description="Open issues will appear here when adjustments need finance follow-up."
                     icons={[AlertTriangleIcon, WalletCardsIcon, ReceiptTextIcon]}
-                    className="border-none shadow-none"
+                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
                   />
                 </div>
               ) : null}
@@ -124,7 +149,9 @@ export function InvoiceReconciliationPage() {
                   onClick={() => void setSearchParams({ item: row.exceptionId })}
                   className={[
                     "rounded-xl border p-3 text-left transition-colors",
-                    row.exceptionId === selectedRow?.exceptionId ? "border-primary bg-primary/5" : "hover:bg-muted/40",
+                    row.exceptionId === selectedRow?.exceptionId
+                      ? "border-primary bg-primary/5"
+                      : "hover:bg-muted/40",
                   ].join(" ")}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -174,17 +201,28 @@ export function InvoiceReconciliationPage() {
                   <Metric label="Amount" value={formatCurrency(Number(selectedRow.amount))} />
                   <Metric label="Adjustment Kind" value={selectedRow.adjustmentKind} />
                   <Metric label="Adjustment Status" value={selectedRow.adjustmentStatus} />
-                  <Metric label="Requested By" value={selectedRow.submittedByName || selectedRow.submittedById || "Unknown"} />
+                  <Metric
+                    label="Requested By"
+                    value={selectedRow.submittedByName || selectedRow.submittedById || "Unknown"}
+                  />
                   <Metric label="Submitted At" value={formatTimestamp(selectedRow.submittedAt)} />
-                  <Metric label="Policy Source" value={selectedRow.policySource || "Policy-controlled"} />
-                  <Metric label="Finance Notes" value={selectedRow.financeNotes || "No finance notes recorded"} />
+                  <Metric
+                    label="Policy Source"
+                    value={selectedRow.policySource || "Policy-controlled"}
+                  />
+                  <Metric
+                    label="Finance Notes"
+                    value={selectedRow.financeNotes || "No finance notes recorded"}
+                  />
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="border-b">
                   <CardTitle>Linked Artifacts</CardTitle>
-                  <CardDescription>Jump directly into the related billing and invoice surfaces.</CardDescription>
+                  <CardDescription>
+                    Jump directly into the related billing and invoice surfaces.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2 pt-4">
                   <LinkButton to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}>
@@ -201,7 +239,9 @@ export function InvoiceReconciliationPage() {
                     </LinkButton>
                   ) : null}
                   {selectedRow.rebillQueueItemId ? (
-                    <LinkButton to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}>
+                    <LinkButton
+                      to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
+                    >
                       Rebill Queue Item
                     </LinkButton>
                   ) : null}
@@ -211,7 +251,9 @@ export function InvoiceReconciliationPage() {
               <Card>
                 <CardHeader className="border-b">
                   <CardTitle>Adjustment Detail</CardTitle>
-                  <CardDescription>Line-level credit and rebill values that created the exception.</CardDescription>
+                  <CardDescription>
+                    Line-level credit and rebill values that created the exception.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="overflow-hidden rounded-xl border">
@@ -229,8 +271,12 @@ export function InvoiceReconciliationPage() {
                           <tr key={line.id} className="border-t">
                             <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
                             <td className="px-4 py-3">{line.description}</td>
-                            <td className="px-4 py-3 text-right">{formatCurrency(Number(line.creditAmount))}</td>
-                            <td className="px-4 py-3 text-right">{formatCurrency(Number(line.rebillAmount))}</td>
+                            <td className="px-4 py-3 text-right">
+                              {formatCurrency(Number(line.creditAmount))}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {formatCurrency(Number(line.rebillAmount))}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -268,7 +314,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function LinkButton({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link to={to} className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-muted">
+    <Link
+      to={to}
+      className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-muted"
+    >
       <ExternalLinkIcon className="size-3.5" />
       {children}
     </Link>

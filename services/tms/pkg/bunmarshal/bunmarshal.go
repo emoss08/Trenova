@@ -60,7 +60,6 @@ func fieldMappings(targetType reflect.Type) map[string]string {
 	fields := make(map[string]string)
 
 	for field := range targetType.Fields() {
-		field := field
 		if field.PkgPath != "" && !field.Anonymous {
 			continue
 		}

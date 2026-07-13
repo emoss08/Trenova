@@ -74,7 +74,7 @@ type MockBillingProvider_GetBillingSummary_Call struct {
 // GetBillingSummary is a helper method to define mock.On call
 //   - context1 context.Context
 //   - billingSummaryRequest *services.BillingSummaryRequest
-func (_e *MockBillingProvider_Expecter) GetBillingSummary(context1 interface{}, billingSummaryRequest interface{}) *MockBillingProvider_GetBillingSummary_Call {
+func (_e *MockBillingProvider_Expecter) GetBillingSummary(context1 any, billingSummaryRequest any) *MockBillingProvider_GetBillingSummary_Call {
 	return &MockBillingProvider_GetBillingSummary_Call{Call: _e.mock.On("GetBillingSummary", context1, billingSummaryRequest)}
 }
 

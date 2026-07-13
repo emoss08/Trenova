@@ -78,7 +78,7 @@ type MockServiceFailureService_BulkEvaluate_Call struct {
 //   - ctx context.Context
 //   - req *services.BulkEvaluateServiceFailuresRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) BulkEvaluate(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_BulkEvaluate_Call {
+func (_e *MockServiceFailureService_Expecter) BulkEvaluate(ctx any, req any, actor any) *MockServiceFailureService_BulkEvaluate_Call {
 	return &MockServiceFailureService_BulkEvaluate_Call{Call: _e.mock.On("BulkEvaluate", ctx, req, actor)}
 }
 
@@ -152,7 +152,7 @@ type MockServiceFailureService_CreateManual_Call struct {
 //   - ctx context.Context
 //   - req *services.CreateManualServiceFailureRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) CreateManual(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_CreateManual_Call {
+func (_e *MockServiceFailureService_Expecter) CreateManual(ctx any, req any, actor any) *MockServiceFailureService_CreateManual_Call {
 	return &MockServiceFailureService_CreateManual_Call{Call: _e.mock.On("CreateManual", ctx, req, actor)}
 }
 
@@ -226,7 +226,7 @@ type MockServiceFailureService_EvaluateShipment_Call struct {
 //   - ctx context.Context
 //   - req *services.EvaluateShipmentServiceFailuresRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) EvaluateShipment(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_EvaluateShipment_Call {
+func (_e *MockServiceFailureService_Expecter) EvaluateShipment(ctx any, req any, actor any) *MockServiceFailureService_EvaluateShipment_Call {
 	return &MockServiceFailureService_EvaluateShipment_Call{Call: _e.mock.On("EvaluateShipment", ctx, req, actor)}
 }
 
@@ -300,7 +300,7 @@ type MockServiceFailureService_EvaluateStop_Call struct {
 //   - ctx context.Context
 //   - req *services.EvaluateStopServiceFailuresRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) EvaluateStop(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_EvaluateStop_Call {
+func (_e *MockServiceFailureService_Expecter) EvaluateStop(ctx any, req any, actor any) *MockServiceFailureService_EvaluateStop_Call {
 	return &MockServiceFailureService_EvaluateStop_Call{Call: _e.mock.On("EvaluateStop", ctx, req, actor)}
 }
 
@@ -373,7 +373,7 @@ type MockServiceFailureService_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetServiceFailureByIDRequest
-func (_e *MockServiceFailureService_Expecter) GetByID(ctx interface{}, req interface{}) *MockServiceFailureService_GetByID_Call {
+func (_e *MockServiceFailureService_Expecter) GetByID(ctx any, req any) *MockServiceFailureService_GetByID_Call {
 	return &MockServiceFailureService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -441,7 +441,7 @@ type MockServiceFailureService_GetByShipment_Call struct {
 // GetByShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetServiceFailureByShipmentRequest
-func (_e *MockServiceFailureService_Expecter) GetByShipment(ctx interface{}, req interface{}) *MockServiceFailureService_GetByShipment_Call {
+func (_e *MockServiceFailureService_Expecter) GetByShipment(ctx any, req any) *MockServiceFailureService_GetByShipment_Call {
 	return &MockServiceFailureService_GetByShipment_Call{Call: _e.mock.On("GetByShipment", ctx, req)}
 }
 
@@ -509,7 +509,7 @@ type MockServiceFailureService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListServiceFailuresRequest
-func (_e *MockServiceFailureService_Expecter) List(ctx interface{}, req interface{}) *MockServiceFailureService_List_Call {
+func (_e *MockServiceFailureService_Expecter) List(ctx any, req any) *MockServiceFailureService_List_Call {
 	return &MockServiceFailureService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -577,7 +577,7 @@ type MockServiceFailureService_ListConnection_Call struct {
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListServiceFailureConnectionRequest
-func (_e *MockServiceFailureService_Expecter) ListConnection(ctx interface{}, req interface{}) *MockServiceFailureService_ListConnection_Call {
+func (_e *MockServiceFailureService_Expecter) ListConnection(ctx any, req any) *MockServiceFailureService_ListConnection_Call {
 	return &MockServiceFailureService_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
@@ -646,7 +646,7 @@ type MockServiceFailureService_Resolve_Call struct {
 //   - ctx context.Context
 //   - req *services.ServiceFailureLifecycleRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) Resolve(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_Resolve_Call {
+func (_e *MockServiceFailureService_Expecter) Resolve(ctx any, req any, actor any) *MockServiceFailureService_Resolve_Call {
 	return &MockServiceFailureService_Resolve_Call{Call: _e.mock.On("Resolve", ctx, req, actor)}
 }
 
@@ -720,7 +720,7 @@ type MockServiceFailureService_Review_Call struct {
 //   - ctx context.Context
 //   - req *services.ServiceFailureLifecycleRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) Review(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_Review_Call {
+func (_e *MockServiceFailureService_Expecter) Review(ctx any, req any, actor any) *MockServiceFailureService_Review_Call {
 	return &MockServiceFailureService_Review_Call{Call: _e.mock.On("Review", ctx, req, actor)}
 }
 
@@ -794,7 +794,7 @@ type MockServiceFailureService_Update_Call struct {
 //   - ctx context.Context
 //   - req *services.UpdateServiceFailureRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) Update(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_Update_Call {
+func (_e *MockServiceFailureService_Expecter) Update(ctx any, req any, actor any) *MockServiceFailureService_Update_Call {
 	return &MockServiceFailureService_Update_Call{Call: _e.mock.On("Update", ctx, req, actor)}
 }
 
@@ -868,7 +868,7 @@ type MockServiceFailureService_Void_Call struct {
 //   - ctx context.Context
 //   - req *services.ServiceFailureLifecycleRequest
 //   - actor *services.RequestActor
-func (_e *MockServiceFailureService_Expecter) Void(ctx interface{}, req interface{}, actor interface{}) *MockServiceFailureService_Void_Call {
+func (_e *MockServiceFailureService_Expecter) Void(ctx any, req any, actor any) *MockServiceFailureService_Void_Call {
 	return &MockServiceFailureService_Void_Call{Call: _e.mock.On("Void", ctx, req, actor)}
 }
 

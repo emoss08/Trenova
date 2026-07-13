@@ -1,6 +1,7 @@
 package engine_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -15,12 +16,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testSchemaJSON = `{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "test",
+	"type": "object",
+	"x-formula-context": {
+		"entityType": "TestEntity"
+	},
+	"x-data-source": {
+		"table": "tests",
+		"preloads": []
+	},
+	"properties": {
+		"weight": {
+			"type": "number",
+			"x-source": {
+				"field": "Weight",
+				"nullable": true
+			}
+		}
+	}
+}`
+
 func setupEngine(t *testing.T) *engine.Engine {
 	t.Helper()
 
-	engine, _ := setupEngineWithRegistry(t)
+	e, _ := setupEngineWithRegistry(t)
 
-	return engine
+	return e
 }
 
 func setupEngineWithRegistry(t *testing.T) (*engine.Engine, *schema.Registry) {
@@ -30,16 +53,21 @@ func setupEngineWithRegistry(t *testing.T) (*engine.Engine, *schema.Registry) {
 	res := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(res)
 
+	require.NoError(t, registry.Register("test", []byte(testSchemaJSON)))
+
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
 		Resolver: res,
 	})
 
-	return engine.NewEngine(engine.Params{
+	e, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
-	}), registry
+	})
+	require.NoError(t, err)
+
+	return e, registry
 }
 
 func TestEngine_Compile(t *testing.T) {
@@ -93,6 +121,12 @@ func TestEngine_Compile(t *testing.T) {
 		{
 			name:       "undefined variable",
 			expression: "undefinedVar * 2",
+			env:        map[string]any{},
+			wantErr:    true,
+		},
+		{
+			name:       "exceeds max node count",
+			expression: "1" + strings.Repeat(" + 1", 1_100),
 			env:        map[string]any{},
 			wantErr:    true,
 		},
@@ -150,6 +184,7 @@ func TestEngine_Evaluate(t *testing.T) {
 		variables map[string]any
 		want      decimal.Decimal
 		wantErr   bool
+		wantErrIs error
 	}{
 		{
 			name: "simple multiplication",
@@ -218,18 +253,53 @@ func TestEngine_Evaluate(t *testing.T) {
 			variables: map[string]any{},
 			want:      decimal.Zero,
 			wantErr:   true,
+			wantErrIs: engine.ErrTemplateNil,
+		},
+		{
+			name: "unknown schema returns error",
+			template: &formulatemplate.FormulaTemplate{
+				ID:         pulid.MustNew("FT"),
+				Expression: "baseRate * distance",
+				SchemaID:   "nonexistent",
+			},
+			entity: struct{}{},
+			variables: map[string]any{
+				"baseRate": 2.5,
+				"distance": 100.0,
+			},
+			want:      decimal.Zero,
+			wantErr:   true,
+			wantErrIs: engine.ErrSchemaNotFound,
+		},
+		{
+			name: "undeclared variable shadowing schema field returns error",
+			template: &formulatemplate.FormulaTemplate{
+				ID:         pulid.MustNew("FT"),
+				Expression: "weight * 2",
+				SchemaID:   "test",
+			},
+			entity: struct{}{},
+			variables: map[string]any{
+				"weight": 10.0,
+			},
+			want:      decimal.Zero,
+			wantErr:   true,
+			wantErrIs: engine.ErrVariableShadowsField,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := e.Evaluate(&formulatemplatetypes.EvaluationRequest{
+			result, err := e.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 				Template:  tt.template,
 				Entity:    tt.entity,
 				Variables: tt.variables,
 			})
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -266,7 +336,7 @@ func TestEngine_Evaluate_WithVariableDefaults(t *testing.T) {
 		},
 	}
 
-	result, err := e.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := e.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    struct{}{},
 		Variables: map[string]any{},
@@ -298,7 +368,7 @@ func TestEngine_Evaluate_VariablesOverrideDefaults(t *testing.T) {
 		},
 	}
 
-	result, err := e.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := e.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
 		Entity:   struct{}{},
 		Variables: map[string]any{
@@ -309,6 +379,34 @@ func TestEngine_Evaluate_VariablesOverrideDefaults(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.True(t, decimal.NewFromFloat(250.0).Equal(result.Value))
+}
+
+func TestEngine_Evaluate_DeclaredVariableOverridesSchemaField(t *testing.T) {
+	e := setupEngine(t)
+
+	template := &formulatemplate.FormulaTemplate{
+		ID:         pulid.MustNew("FT"),
+		Expression: "weight * 2",
+		SchemaID:   "test",
+		VariableDefinitions: []*formulatypes.VariableDefinition{
+			{
+				Name: "weight",
+				Type: formulatypes.VariableValueTypeNumber,
+			},
+		},
+	}
+
+	result, err := e.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+		Template: template,
+		Entity:   struct{}{},
+		Variables: map[string]any{
+			"weight": 10.0,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.True(t, decimal.NewFromFloat(20.0).Equal(result.Value))
 }
 
 func TestEngine_EvaluateExpression(t *testing.T) {
@@ -322,6 +420,7 @@ func TestEngine_EvaluateExpression(t *testing.T) {
 		variables  map[string]any
 		want       decimal.Decimal
 		wantErr    bool
+		wantErrIs  error
 	}{
 		{
 			name:       "simple expression",
@@ -349,18 +448,37 @@ func TestEngine_EvaluateExpression(t *testing.T) {
 			want:    decimal.NewFromFloat(350.0),
 			wantErr: false,
 		},
+		{
+			name:       "unknown schema returns error",
+			expression: "x + y",
+			entity:     struct{}{},
+			schemaID:   "nonexistent",
+			variables: map[string]any{
+				"x": 10.0,
+				"y": 20.0,
+			},
+			want:      decimal.Zero,
+			wantErr:   true,
+			wantErrIs: engine.ErrSchemaNotFound,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := e.EvaluateExpression(
-				tt.expression,
-				tt.entity,
-				tt.schemaID,
-				tt.variables,
+				t.Context(),
+				&formulatemplatetypes.ExpressionEvaluationRequest{
+					Expression: tt.expression,
+					Entity:     tt.entity,
+					SchemaID:   tt.schemaID,
+					Variables:  tt.variables,
+				},
 			)
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -417,10 +535,14 @@ func TestEngine_ValidateExpression_UsesSchemaTypes(t *testing.T) {
 	err := registry.Register("test-validation-types", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	err = e.ValidateExpression(`hasHazmat ? 150 : 0`, "test-validation-types")
+	err = e.ValidateExpression(t.Context(), `hasHazmat ? 150 : 0`, "test-validation-types")
 	require.NoError(t, err)
 
-	err = e.ValidateExpression(`customer.name == "Acme" ? 150 : 0`, "test-validation-types")
+	err = e.ValidateExpression(
+		t.Context(),
+		`customer.name == "Acme" ? 150 : 0`,
+		"test-validation-types",
+	)
 	require.NoError(t, err)
 }
 
@@ -432,20 +554,38 @@ func TestEngine_ValidateExpression(t *testing.T) {
 		expression string
 		schemaID   string
 		wantErr    bool
+		wantErrIs  error
 	}{
 		{
 			name:       "schema not found returns error",
 			expression: "x * y",
 			schemaID:   "nonexistent",
 			wantErr:    true,
+			wantErrIs:  engine.ErrSchemaNotFound,
+		},
+		{
+			name:       "numeric expression is valid",
+			expression: "weight * 2",
+			schemaID:   "test",
+			wantErr:    false,
+		},
+		{
+			name:       "string expression is invalid",
+			expression: `"hello"`,
+			schemaID:   "test",
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonNumericResult,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := e.ValidateExpression(tt.expression, tt.schemaID)
+			err := e.ValidateExpression(t.Context(), tt.expression, tt.schemaID)
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -461,10 +601,20 @@ func TestEngine_ValidateExpressionWithEnv(t *testing.T) {
 		expression string
 		env        map[string]any
 		wantErr    bool
+		wantErrIs  error
 	}{
 		{
 			name:       "valid expression",
 			expression: "x + y",
+			env: map[string]any{
+				"x": 0.0,
+				"y": 0.0,
+			},
+			wantErr: false,
+		},
+		{
+			name:       "boolean result is valid",
+			expression: "x > y",
 			env: map[string]any{
 				"x": 0.0,
 				"y": 0.0,
@@ -487,13 +637,40 @@ func TestEngine_ValidateExpressionWithEnv(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name:       "string result is invalid",
+			expression: `"hello"`,
+			env:        map[string]any{},
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonNumericResult,
+		},
+		{
+			name:       "string concatenation is invalid",
+			expression: `name + "!"`,
+			env: map[string]any{
+				"name": "",
+			},
+			wantErr:   true,
+			wantErrIs: engine.ErrNonNumericResult,
+		},
+		{
+			name:       "runtime error during trial run is tolerated",
+			expression: "arr[10]",
+			env: map[string]any{
+				"arr": []any{},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := e.ValidateExpressionWithEnv(tt.expression, tt.env)
+			err := e.ValidateExpressionWithEnv(t.Context(), tt.expression, tt.env)
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -536,6 +713,7 @@ func TestEngine_EvaluateWithEnv(t *testing.T) {
 		env        map[string]any
 		want       decimal.Decimal
 		wantErr    bool
+		wantErrIs  error
 	}{
 		{
 			name:       "simple addition",
@@ -586,14 +764,48 @@ func TestEngine_EvaluateWithEnv(t *testing.T) {
 			want:       decimal.Zero,
 			wantErr:    true,
 		},
+		{
+			name:       "positive infinity result",
+			expression: "x / y",
+			env:        map[string]any{"x": 1.0, "y": 0.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonFiniteResult,
+		},
+		{
+			name:       "negative infinity result",
+			expression: "x / y",
+			env:        map[string]any{"x": -1.0, "y": 0.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonFiniteResult,
+		},
+		{
+			name:       "NaN result",
+			expression: "x / y",
+			env:        map[string]any{"x": 0.0, "y": 0.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonFiniteResult,
+		},
+		{
+			name:       "sqrt of negative errors at runtime",
+			expression: "sqrt(x)",
+			env:        map[string]any{"x": -1.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result, err := e.EvaluateWithEnv(tt.expression, tt.env)
+			result, err := e.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -615,7 +827,7 @@ func TestEngine_EvaluateWithEnv_Int64Result(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": int64(42)}
-	result, err := e.EvaluateWithEnv("x", env)
+	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromInt(42).Equal(result.Value))
 }
@@ -626,7 +838,7 @@ func TestEngine_EvaluateWithEnv_Int32Result(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": int32(10)}
-	result, err := e.EvaluateWithEnv("x", env)
+	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromInt(10).Equal(result.Value))
 }
@@ -637,9 +849,76 @@ func TestEngine_EvaluateWithEnv_Float32Result(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": float32(3.5)}
-	result, err := e.EvaluateWithEnv("x", env)
+	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
 	require.NoError(t, err)
 	assert.InDelta(t, 3.5, result.Value.InexactFloat64(), 0.01)
+}
+
+func TestEngine_EvaluateWithEnv_UintResults(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	tests := []struct {
+		name string
+		env  map[string]any
+		want decimal.Decimal
+	}{
+		{name: "uint", env: map[string]any{"x": uint(5)}, want: decimal.NewFromInt(5)},
+		{name: "uint64", env: map[string]any{"x": uint64(10)}, want: decimal.NewFromInt(10)},
+		{name: "uint32", env: map[string]any{"x": uint32(20)}, want: decimal.NewFromInt(20)},
+		{name: "uint16", env: map[string]any{"x": uint16(30)}, want: decimal.NewFromInt(30)},
+		{name: "uint8", env: map[string]any{"x": uint8(40)}, want: decimal.NewFromInt(40)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result, err := e.EvaluateWithEnv(t.Context(), "x", tt.env)
+			require.NoError(t, err)
+			assert.True(
+				t,
+				tt.want.Equal(result.Value),
+				"expected %s, got %s",
+				tt.want,
+				result.Value,
+			)
+		})
+	}
+}
+
+func TestEngine_EvaluateWithEnv_NullDecimalResult(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	t.Run("valid null decimal", func(t *testing.T) {
+		t.Parallel()
+		env := map[string]any{
+			"x": decimal.NullDecimal{Decimal: decimal.NewFromFloat(12.5), Valid: true},
+		}
+		result, err := e.EvaluateWithEnv(t.Context(), "x", env)
+		require.NoError(t, err)
+		assert.True(t, decimal.NewFromFloat(12.5).Equal(result.Value))
+	})
+
+	t.Run("invalid null decimal", func(t *testing.T) {
+		t.Parallel()
+		env := map[string]any{"x": decimal.NullDecimal{}}
+		_, err := e.EvaluateWithEnv(t.Context(), "x", env)
+		require.ErrorIs(t, err, engine.ErrNullResult)
+	})
+}
+
+func TestEngine_EvaluateWithEnv_CoalesceAllNilResult(t *testing.T) {
+	t.Parallel()
+
+	e := setupEngine(t)
+
+	env := map[string]any{"a": nil, "b": nil}
+	_, err := e.EvaluateWithEnv(t.Context(), "coalesce(a, b)", env)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "cannot convert <nil> to decimal")
 }
 
 func TestEngine_EvaluateWithEnv_StringResultError(t *testing.T) {
@@ -648,7 +927,7 @@ func TestEngine_EvaluateWithEnv_StringResultError(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": "hello"}
-	_, err := e.EvaluateWithEnv("x", env)
+	_, err := e.EvaluateWithEnv(t.Context(), "x", env)
 	require.Error(t, err)
 }
 
@@ -694,21 +973,22 @@ func TestEngine_ValidateExpression_WithRegisteredSchema(t *testing.T) {
 		Resolver: res,
 	})
 
-	e := engine.NewEngine(engine.Params{
+	e, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
+	require.NoError(t, err)
 
 	t.Run("valid expression with schema", func(t *testing.T) {
 		t.Parallel()
-		err := e.ValidateExpression("weight + distance", "test-validate")
+		err := e.ValidateExpression(t.Context(), "weight + distance", "test-validate")
 		require.NoError(t, err)
 	})
 
 	t.Run("invalid expression with schema", func(t *testing.T) {
 		t.Parallel()
-		err := e.ValidateExpression("weight +", "test-validate")
+		err := e.ValidateExpression(t.Context(), "weight +", "test-validate")
 		require.Error(t, err)
 	})
 }
@@ -719,11 +999,12 @@ func TestEngine_EvaluateExpression_NonNumericResult(t *testing.T) {
 	e := setupEngine(t)
 
 	_, err := e.EvaluateExpression(
-		"x",
-		struct{}{},
-		"test",
-		map[string]any{
-			"x": "hello",
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: "x",
+			Entity:     struct{}{},
+			SchemaID:   "test",
+			Variables:  map[string]any{"x": "hello"},
 		},
 	)
 	require.Error(t, err)
@@ -735,10 +1016,13 @@ func TestEngine_EvaluateExpression_CompileError(t *testing.T) {
 	e := setupEngine(t)
 
 	_, err := e.EvaluateExpression(
-		"x +",
-		struct{}{},
-		"test",
-		map[string]any{"x": 1.0},
+		t.Context(),
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: "x +",
+			Entity:     struct{}{},
+			SchemaID:   "test",
+			Variables:  map[string]any{"x": 1.0},
+		},
 	)
 	require.Error(t, err)
 }
@@ -749,12 +1033,12 @@ func TestEngine_EvaluateWithEnv_DecimalResult(t *testing.T) {
 	e := setupEngine(t)
 
 	env := map[string]any{"x": decimal.NewFromFloat(42.5)}
-	result, err := e.EvaluateWithEnv("x", env)
+	result, err := e.EvaluateWithEnv(t.Context(), "x", env)
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromFloat(42.5).Equal(result.Value))
 }
 
-func TestEngine_Evaluate_BuildEnvError(t *testing.T) {
+func TestEngine_Evaluate_UnresolvedNonNullableField(t *testing.T) {
 	t.Parallel()
 
 	registry := schema.NewRegistry()
@@ -789,47 +1073,57 @@ func TestEngine_Evaluate_BuildEnvError(t *testing.T) {
 		Resolver: res,
 	})
 
-	e := engine.NewEngine(engine.Params{
+	e, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
-
-	template := &formulatemplate.FormulaTemplate{
-		ID:         pulid.MustNew("FT"),
-		Expression: "weight * 2",
-		SchemaID:   "test-env-err",
-	}
-
-	result, err := e.Evaluate(&formulatemplatetypes.EvaluationRequest{
-		Template:  template,
-		Entity:    struct{}{},
-		Variables: map[string]any{"weight": 10.0},
-	})
 	require.NoError(t, err)
-	assert.True(t, decimal.NewFromFloat(20.0).Equal(result.Value))
+
+	t.Run("undeclared variable shadowing field is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		template := &formulatemplate.FormulaTemplate{
+			ID:         pulid.MustNew("FT"),
+			Expression: "weight * 2",
+			SchemaID:   "test-env-err",
+		}
+
+		_, evalErr := e.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+			Template:  template,
+			Entity:    struct{}{},
+			Variables: map[string]any{"weight": 10.0},
+		})
+		require.ErrorIs(t, evalErr, engine.ErrVariableShadowsField)
+	})
+
+	t.Run("unresolved field surfaces in evaluation error", func(t *testing.T) {
+		t.Parallel()
+
+		template := &formulatemplate.FormulaTemplate{
+			ID:         pulid.MustNew("FT"),
+			Expression: "weight * 2",
+			SchemaID:   "test-env-err",
+		}
+
+		_, evalErr := e.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+			Template:  template,
+			Entity:    struct{}{},
+			Variables: map[string]any{},
+		})
+		require.Error(t, evalErr)
+		require.ErrorContains(t, evalErr, "unresolved fields")
+		require.ErrorContains(t, evalErr, "weight")
+	})
 }
 
 func TestEngine_EvaluateWithEnv_RuntimeError(t *testing.T) {
 	t.Parallel()
 
-	registry := schema.NewRegistry()
-	res := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(res)
-
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
-
-	e := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
+	e := setupEngine(t)
 
 	env := map[string]any{"arr": []int{1, 2, 3}}
-	_, err := e.EvaluateWithEnv("arr[10]", env)
+	_, err := e.EvaluateWithEnv(t.Context(), "arr[10]", env)
 	require.Error(t, err)
 }
 
@@ -843,11 +1137,12 @@ func TestNewEngine(t *testing.T) {
 		Resolver: res,
 	})
 
-	e := engine.NewEngine(engine.Params{
+	e, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
 
+	require.NoError(t, err)
 	require.NotNil(t, e)
 }

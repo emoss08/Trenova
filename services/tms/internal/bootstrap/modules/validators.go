@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
+	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
@@ -143,6 +144,7 @@ var ValidatorModule = fx.Module("validators",
 		ediservice.NewValidator,
 		emailservice.NewValidator,
 		holdreasonservice.NewValidator,
+		ratetableservice.NewValidator,
 		invoiceadjustmentcontrolservice.NewValidator,
 		invoiceadjustmentservice.NewValidator,
 		invoiceservice.NewValidator,

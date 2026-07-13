@@ -48,6 +48,22 @@ function resolveExtraVariables<TData extends Record<string, unknown>>(
   return config.extraVariables as Record<string, unknown>;
 }
 
+function resolveInputExtraVariables<TData extends Record<string, unknown>>(
+  config: DataTableGraphQLConfig<TData>,
+  pageSize: number,
+  options?: DataTableQueryOptions,
+): Record<string, unknown> {
+  if (!config.inputExtraVariables) {
+    return {};
+  }
+
+  if (typeof config.inputExtraVariables === "function") {
+    return config.inputExtraVariables({ pageSize, options });
+  }
+
+  return config.inputExtraVariables;
+}
+
 function buildGraphQLVariables<TData extends Record<string, unknown>>(
   pageSize: number,
   config: DataTableGraphQLConfig<TData>,
@@ -61,6 +77,7 @@ function buildGraphQLVariables<TData extends Record<string, unknown>>(
       fieldFilters: options?.fieldFilters ?? [],
       filterGroups: options?.filterGroups ?? [],
       sort: options?.sort ?? [],
+      ...resolveInputExtraVariables(config, pageSize, options),
     },
     ...resolveExtraVariables(config, pageSize, options),
   };

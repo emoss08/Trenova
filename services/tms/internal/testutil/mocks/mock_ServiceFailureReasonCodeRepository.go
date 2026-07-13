@@ -79,7 +79,7 @@ type MockServiceFailureReasonCodeRepository_Activate_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - actorID pulid.ID
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) Activate(ctx interface{}, id interface{}, tenantInfo interface{}, actorID interface{}) *MockServiceFailureReasonCodeRepository_Activate_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) Activate(ctx any, id any, tenantInfo any, actorID any) *MockServiceFailureReasonCodeRepository_Activate_Call {
 	return &MockServiceFailureReasonCodeRepository_Activate_Call{Call: _e.mock.On("Activate", ctx, id, tenantInfo, actorID)}
 }
 
@@ -159,7 +159,7 @@ type MockServiceFailureReasonCodeRepository_Archive_Call struct {
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
 //   - actorID pulid.ID
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) Archive(ctx interface{}, id interface{}, tenantInfo interface{}, actorID interface{}) *MockServiceFailureReasonCodeRepository_Archive_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) Archive(ctx any, id any, tenantInfo any, actorID any) *MockServiceFailureReasonCodeRepository_Archive_Call {
 	return &MockServiceFailureReasonCodeRepository_Archive_Call{Call: _e.mock.On("Archive", ctx, id, tenantInfo, actorID)}
 }
 
@@ -237,7 +237,7 @@ type MockServiceFailureReasonCodeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *servicefailure.ReasonCode
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockServiceFailureReasonCodeRepository_Create_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) Create(ctx any, entity any) *MockServiceFailureReasonCodeRepository_Create_Call {
 	return &MockServiceFailureReasonCodeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -306,7 +306,7 @@ type MockServiceFailureReasonCodeRepository_FindDefault_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - appliesTo servicefailure.ReasonCodeAppliesTo
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) FindDefault(ctx interface{}, tenantInfo interface{}, appliesTo interface{}) *MockServiceFailureReasonCodeRepository_FindDefault_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) FindDefault(ctx any, tenantInfo any, appliesTo any) *MockServiceFailureReasonCodeRepository_FindDefault_Call {
 	return &MockServiceFailureReasonCodeRepository_FindDefault_Call{Call: _e.mock.On("FindDefault", ctx, tenantInfo, appliesTo)}
 }
 
@@ -379,7 +379,7 @@ type MockServiceFailureReasonCodeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetServiceFailureReasonCodeByIDRequest
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeRepository_GetByID_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) GetByID(ctx any, req any) *MockServiceFailureReasonCodeRepository_GetByID_Call {
 	return &MockServiceFailureReasonCodeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -447,7 +447,7 @@ type MockServiceFailureReasonCodeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListServiceFailureReasonCodesRequest
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) List(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeRepository_List_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) List(ctx any, req any) *MockServiceFailureReasonCodeRepository_List_Call {
 	return &MockServiceFailureReasonCodeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -475,6 +475,74 @@ func (_c *MockServiceFailureReasonCodeRepository_List_Call) Return(listResult *p
 }
 
 func (_c *MockServiceFailureReasonCodeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListServiceFailureReasonCodesRequest) (*pagination.ListResult[*servicefailure.ReasonCode], error)) *MockServiceFailureReasonCodeRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockServiceFailureReasonCodeRepository
+func (_mock *MockServiceFailureReasonCodeRepository) ListConnection(ctx context.Context, req *repositories.ListServiceFailureReasonCodeConnectionRequest) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*servicefailure.ReasonCode]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListServiceFailureReasonCodeConnectionRequest) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListServiceFailureReasonCodeConnectionRequest) *pagination.CursorListResult[*servicefailure.ReasonCode]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*servicefailure.ReasonCode])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListServiceFailureReasonCodeConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockServiceFailureReasonCodeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockServiceFailureReasonCodeRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListServiceFailureReasonCodeConnectionRequest
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) ListConnection(ctx any, req any) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
+	return &MockServiceFailureReasonCodeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockServiceFailureReasonCodeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListServiceFailureReasonCodeConnectionRequest)) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListServiceFailureReasonCodeConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListServiceFailureReasonCodeConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockServiceFailureReasonCodeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*servicefailure.ReasonCode], err error) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockServiceFailureReasonCodeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListServiceFailureReasonCodeConnectionRequest) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -515,7 +583,7 @@ type MockServiceFailureReasonCodeRepository_Reorder_Call struct {
 // Reorder is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ReorderServiceFailureReasonCodesRequest
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) Reorder(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeRepository_Reorder_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) Reorder(ctx any, req any) *MockServiceFailureReasonCodeRepository_Reorder_Call {
 	return &MockServiceFailureReasonCodeRepository_Reorder_Call{Call: _e.mock.On("Reorder", ctx, req)}
 }
 
@@ -583,7 +651,7 @@ type MockServiceFailureReasonCodeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ServiceFailureReasonCodeSelectOptionsRequest
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeRepository_SelectOptions_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) SelectOptions(ctx any, req any) *MockServiceFailureReasonCodeRepository_SelectOptions_Call {
 	return &MockServiceFailureReasonCodeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -651,7 +719,7 @@ type MockServiceFailureReasonCodeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *servicefailure.ReasonCode
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockServiceFailureReasonCodeRepository_Update_Call {
+func (_e *MockServiceFailureReasonCodeRepository_Expecter) Update(ctx any, entity any) *MockServiceFailureReasonCodeRepository_Update_Call {
 	return &MockServiceFailureReasonCodeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -679,72 +747,6 @@ func (_c *MockServiceFailureReasonCodeRepository_Update_Call) Return(reasonCode 
 }
 
 func (_c *MockServiceFailureReasonCodeRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *servicefailure.ReasonCode) (*servicefailure.ReasonCode, error)) *MockServiceFailureReasonCodeRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockServiceFailureReasonCodeRepository
-func (_mock *MockServiceFailureReasonCodeRepository) ListConnection(ctx context.Context, req *repositories.ListServiceFailureReasonCodeConnectionRequest) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*servicefailure.ReasonCode]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListServiceFailureReasonCodeConnectionRequest) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListServiceFailureReasonCodeConnectionRequest) *pagination.CursorListResult[*servicefailure.ReasonCode]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*servicefailure.ReasonCode])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListServiceFailureReasonCodeConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockServiceFailureReasonCodeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockServiceFailureReasonCodeRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-func (_e *MockServiceFailureReasonCodeRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
-	return &MockServiceFailureReasonCodeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockServiceFailureReasonCodeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListServiceFailureReasonCodeConnectionRequest)) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListServiceFailureReasonCodeConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListServiceFailureReasonCodeConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockServiceFailureReasonCodeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*servicefailure.ReasonCode], err error) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockServiceFailureReasonCodeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListServiceFailureReasonCodeConnectionRequest) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)) *MockServiceFailureReasonCodeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

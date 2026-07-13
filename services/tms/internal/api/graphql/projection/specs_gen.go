@@ -76,6 +76,8 @@ var HazmatSegregationRuleSpec TypeSpec
 
 var HoldReasonSpec TypeSpec
 
+var InvoiceSpec TypeSpec
+
 var JournalReversalSpec TypeSpec
 
 var LocationSpec TypeSpec
@@ -86,6 +88,8 @@ var ManualJournalSpec TypeSpec
 
 var OrganizationSpec TypeSpec
 
+var RateTableSpec TypeSpec
+
 var RoleSpec TypeSpec
 
 var SCIMGroupRoleMappingSpec TypeSpec
@@ -95,6 +99,8 @@ var ServiceFailureSpec TypeSpec
 var ServiceFailureReasonCodeSpec TypeSpec
 
 var ServiceFailureShipmentSpec TypeSpec
+
+var ServiceFailureStopSpec TypeSpec
 
 var ServiceTypeSpec TypeSpec
 
@@ -843,8 +849,102 @@ func init() {
 				FieldMapKey: "id",
 			},
 			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "stateId",
+				FieldMapKey: "stateId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
 				Name:        "name",
 				FieldMapKey: "name",
+			},
+			{
+				Name:        "addressLine1",
+				FieldMapKey: "addressLine1",
+			},
+			{
+				Name:        "addressLine2",
+				FieldMapKey: "addressLine2",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "postalCode",
+				FieldMapKey: "postalCode",
+			},
+			{
+				Name:        "isGeocoded",
+				FieldMapKey: "isGeocoded",
+			},
+			{
+				Name:        "longitude",
+				FieldMapKey: "longitude",
+			},
+			{
+				Name:        "latitude",
+				FieldMapKey: "latitude",
+			},
+			{
+				Name:        "placeId",
+				FieldMapKey: "placeId",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "allowConsolidation",
+				FieldMapKey: "allowConsolidation",
+			},
+			{
+				Name:        "exclusiveConsolidation",
+				FieldMapKey: "exclusiveConsolidation",
+			},
+			{
+				Name:        "consolidationPriority",
+				FieldMapKey: "consolidationPriority",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "businessUnit",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &BusinessUnitSpec,
+				},
+			},
+			{
+				Name:        "organization",
+				FieldMapKey: "organizationId",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
 			},
 		},
 	}
@@ -3035,6 +3135,144 @@ func init() {
 		},
 	}
 
+	InvoiceSpec = TypeSpec{
+		TypeName: "Invoice",
+		FieldMap: buncolgen.InvoiceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "billingQueueItemId",
+				FieldMapKey: "billingQueueItemId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "number",
+				FieldMapKey: "number",
+			},
+			{
+				Name:        "billType",
+				FieldMapKey: "billType",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "paymentTerm",
+				FieldMapKey: "paymentTerm",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "invoiceDate",
+				FieldMapKey: "invoiceDate",
+			},
+			{
+				Name:        "dueDate",
+				FieldMapKey: "dueDate",
+			},
+			{
+				Name:        "postedAt",
+				FieldMapKey: "postedAt",
+			},
+			{
+				Name:        "shipmentProNumber",
+				FieldMapKey: "shipmentProNumber",
+			},
+			{
+				Name:        "shipmentBol",
+				FieldMapKey: "shipmentBol",
+			},
+			{
+				Name:        "serviceDate",
+				FieldMapKey: "serviceDate",
+			},
+			{
+				Name:        "billToName",
+				FieldMapKey: "billToName",
+			},
+			{
+				Name:        "subtotalAmount",
+				FieldMapKey: "subtotalAmount",
+			},
+			{
+				Name:        "otherAmount",
+				FieldMapKey: "otherAmount",
+			},
+			{
+				Name:        "totalAmount",
+				FieldMapKey: "totalAmount",
+			},
+			{
+				Name:        "appliedAmount",
+				FieldMapKey: "appliedAmount",
+			},
+			{
+				Name:        "settlementStatus",
+				FieldMapKey: "settlementStatus",
+			},
+			{
+				Name:        "disputeStatus",
+				FieldMapKey: "disputeStatus",
+			},
+			{
+				Name:        "sendStatus",
+				FieldMapKey: "sendStatus",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "isAdjustmentArtifact",
+				FieldMapKey: "isAdjustmentArtifact",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+		},
+	}
+
 	JournalReversalSpec = TypeSpec{
 		TypeName: "JournalReversal",
 		FieldMap: buncolgen.ReversalFieldMap,
@@ -3582,6 +3820,75 @@ func init() {
 		},
 	}
 
+	RateTableSpec = TypeSpec{
+		TypeName: "RateTable",
+		FieldMap: buncolgen.RateTableFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "key",
+				FieldMapKey: "key",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "lookupType",
+				FieldMapKey: "lookupType",
+			},
+			{
+				Name:        "active",
+				FieldMapKey: "active",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "businessUnit",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &BusinessUnitSpec,
+				},
+			},
+			{
+				Name:        "organization",
+				FieldMapKey: "organizationId",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
+			},
+		},
+	}
+
 	RoleSpec = TypeSpec{
 		TypeName: "Role",
 		FieldMap: buncolgen.RoleFieldMap,
@@ -3756,6 +4063,18 @@ func init() {
 				FieldMapKey: "stopType",
 			},
 			{
+				Name:        "scheduledCutoff",
+				FieldMapKey: "scheduledCutoff",
+			},
+			{
+				Name:        "actualArrival",
+				FieldMapKey: "actualArrival",
+			},
+			{
+				Name:        "gracePeriodMinutes",
+				FieldMapKey: "gracePeriodMinutes",
+			},
+			{
 				Name:        "lateMinutes",
 				FieldMapKey: "lateMinutes",
 			},
@@ -3784,6 +4103,13 @@ func init() {
 				FieldMapKey: "businessUnitId",
 				Relation: &RelationSpec{
 					Target: &ServiceFailureShipmentSpec,
+				},
+			},
+			{
+				Name:        "stop",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &ServiceFailureStopSpec,
 				},
 			},
 			{
@@ -3912,6 +4238,40 @@ func init() {
 			{
 				Name:        "bol",
 				FieldMapKey: "bol",
+			},
+		},
+	}
+
+	ServiceFailureStopSpec = TypeSpec{
+		TypeName: "ServiceFailureStop",
+		FieldMap: buncolgen.StopFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "locationId",
+				FieldMapKey: "locationId",
+			},
+			{
+				Name:        "location",
+				FieldMapKey: "locationId",
+				Relation: &RelationSpec{
+					Target: &LocationSpec,
+				},
 			},
 		},
 	}

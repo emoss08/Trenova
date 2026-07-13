@@ -158,7 +158,7 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(135)),
 		ProNumber:           "PRO123",
 		BOL:                 "BOL123",
-		ActualDeliveryDate:  int64Ptr(1_700_000_500),
+		ActualDeliveryDate:  new(int64(1_700_000_500)),
 		AdditionalCharges: []*shipment.AdditionalCharge{
 			{
 				Method: accessorialcharge.MethodPerUnit,
@@ -389,7 +389,7 @@ func TestInvoiceDeliveryTemplates(t *testing.T) {
 	entity := &invoice.Invoice{
 		Number:                 "INV-1001",
 		InvoiceDate:            1_700_000_000,
-		DueDate:                int64Ptr(1_700_086_400),
+		DueDate:                new(int64(1_700_086_400)),
 		PaymentTerm:            invoice.PaymentTermNet30,
 		CurrencyCode:           "USD",
 		TotalAmount:            decimal.NewFromInt(1250),
@@ -1582,7 +1582,7 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 		ShipmentProNumber: "PRO123",
 		ShipmentBOL:       "BOL123",
 		CurrencyCode:      "USD",
-		ServiceDate:       int64Ptr(1_700_000_000),
+		ServiceDate:       new(int64(1_700_000_000)),
 		Lines: []*invoice.InoviceLine{
 			{
 				Description: "Freight",
@@ -1591,10 +1591,10 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 		},
 	}
 	shp := &shipment.Shipment{
-		ActualShipDate:     int64Ptr(1_699_900_000),
-		ActualDeliveryDate: int64Ptr(1_700_100_000),
-		Pieces:             int64Ptr(12),
-		Weight:             int64Ptr(24000),
+		ActualShipDate:     new(int64(1_699_900_000)),
+		ActualDeliveryDate: new(int64(1_700_100_000)),
+		Pieces:             new(int64(12)),
+		Weight:             new(int64(24000)),
 		Moves: []*shipment.ShipmentMove{
 			{
 				Stops: []*shipment.Stop{

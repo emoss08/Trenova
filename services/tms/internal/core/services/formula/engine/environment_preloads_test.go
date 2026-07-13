@@ -332,9 +332,10 @@ func TestEnvironmentBuilder_Build_WithSchemaDirectFields(t *testing.T) {
 		Pieces: 100,
 	}
 
-	env, buildErr := builder.Build(entity, "test-direct-fields")
+	env, failures, buildErr := builder.Build(entity, "test-direct-fields")
 	require.NoError(t, buildErr)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
 	assert.Equal(t, int64(5000), env["weight"])
 	assert.Equal(t, int64(100), env["pieces"])
@@ -384,9 +385,10 @@ func TestEnvironmentBuilder_Build_WithComputedAndDirect(t *testing.T) {
 		},
 	}
 
-	env, buildErr := builder.Build(entity, "test-mixed-fields")
+	env, failures, buildErr := builder.Build(entity, "test-mixed-fields")
 	require.NoError(t, buildErr)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
 	assert.Equal(t, int64(3000), env["weight"])
 	assert.InDelta(t, 300.0, env["totalDistance"], 0.1)
@@ -424,14 +426,16 @@ func TestEnvironmentBuilder_Build_NullableFieldWithError(t *testing.T) {
 
 	entity := &TestShipment{Weight: 5000}
 
-	env, buildErr := builder.Build(entity, "test-nullable-error")
+	env, failures, buildErr := builder.Build(entity, "test-nullable-error")
 	require.NoError(t, buildErr)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
+	assert.Contains(t, env, "missingField")
 	assert.Nil(t, env["missingField"])
 }
 
-func TestEnvironmentBuilder_Build_NonNullableFieldSkipped(t *testing.T) {
+func TestEnvironmentBuilder_Build_NonNullableFieldRecordedAsFailure(t *testing.T) {
 	t.Parallel()
 
 	builder, registry := setupEnvironmentBuilder(t)
@@ -468,12 +472,14 @@ func TestEnvironmentBuilder_Build_NonNullableFieldSkipped(t *testing.T) {
 
 	entity := &TestShipment{Weight: 5000}
 
-	env, buildErr := builder.Build(entity, "test-non-nullable-skip")
+	env, failures, buildErr := builder.Build(entity, "test-non-nullable-skip")
 	require.NoError(t, buildErr)
 	require.NotNil(t, env)
 
-	_, exists := env["missingField"]
-	assert.False(t, exists)
+	assert.Contains(t, env, "missingField")
+	assert.Nil(t, env["missingField"])
+	require.Contains(t, failures, "missingField")
+	require.Error(t, failures["missingField"])
 	assert.Equal(t, int64(5000), env["weight"])
 }
 

@@ -20,8 +20,11 @@ import { cn } from "@/lib/utils";
 import type { IntegrationCatalogItem } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { useState } from "react";
-import { integrationCatalogSearchParamsParser } from "../integration-marketplace-state";
+import {
+  type IntegrationModalType,
+  integrationCatalogSearchParamsParser,
+  integrationModalTypes,
+} from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-modal";
@@ -195,14 +198,6 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
 export function IntegrationCatalogCard() {
   const { theme } = useTheme();
   const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
-  const [isSamsaraModalOpen, setIsSamsaraModalOpen] = useState(false);
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
-  const [isOpenWeatherMapModalOpen, setIsOpenWeatherMapModalOpen] = useState(false);
-  const [isOANDAModalOpen, setIsOANDAModalOpen] = useState(false);
-  const [isPCMilerModalOpen, setIsPCMilerModalOpen] = useState(false);
-  const [isResendModalOpen, setIsResendModalOpen] = useState(false);
-  const [isPostmarkModalOpen, setIsPostmarkModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -253,46 +248,17 @@ export function IntegrationCatalogCard() {
   });
   const categoryGroups = groupCatalogItemsByCategory(filteredAndSortedItems);
 
+  const hasModal = (type: string): type is IntegrationModalType =>
+    (integrationModalTypes as readonly string[]).includes(type);
+
   const openModal = (type: string) => {
-    switch (type) {
-      case "Samsara":
-        setIsSamsaraModalOpen(true);
-        break;
-      case "GoogleMaps":
-        setIsGoogleModalOpen(true);
-        break;
-      case "OpenAI":
-        setIsOpenAIModalOpen(true);
-        break;
-      case "OpenWeatherMap":
-        setIsOpenWeatherMapModalOpen(true);
-        break;
-      case "OANDAExchangeRates":
-        setIsOANDAModalOpen(true);
-        break;
-      case "PCMiler":
-        setIsPCMilerModalOpen(true);
-        break;
-      case "Resend":
-        setIsResendModalOpen(true);
-        break;
-      case "Postmark":
-        setIsPostmarkModalOpen(true);
-        break;
-      default:
-        break;
+    if (hasModal(type)) {
+      setSearchParams({ type });
     }
   };
 
-  const hasModal = (type: string) =>
-    type === "Samsara" ||
-    type === "GoogleMaps" ||
-    type === "OpenAI" ||
-    type === "OpenWeatherMap" ||
-    type === "OANDAExchangeRates" ||
-    type === "PCMiler" ||
-    type === "Resend" ||
-    type === "Postmark";
+  const setModalOpen = (type: IntegrationModalType) => (open: boolean) =>
+    setSearchParams({ type: open ? type : null });
 
   return (
     <>
@@ -413,20 +379,38 @@ export function IntegrationCatalogCard() {
           )}
         </div>
       </section>
-      <SamsaraIntegrationModal open={isSamsaraModalOpen} onOpenChange={setIsSamsaraModalOpen} />
-      <GoogleIntegrationModal open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen} />
-      <OpenAIIntegrationModal open={isOpenAIModalOpen} onOpenChange={setIsOpenAIModalOpen} />
+      <SamsaraIntegrationModal
+        open={searchParams.type === "Samsara"}
+        onOpenChange={setModalOpen("Samsara")}
+      />
+      <GoogleIntegrationModal
+        open={searchParams.type === "GoogleMaps"}
+        onOpenChange={setModalOpen("GoogleMaps")}
+      />
+      <OpenAIIntegrationModal
+        open={searchParams.type === "OpenAI"}
+        onOpenChange={setModalOpen("OpenAI")}
+      />
       <OpenWeatherMapIntegrationModal
-        open={isOpenWeatherMapModalOpen}
-        onOpenChange={setIsOpenWeatherMapModalOpen}
+        open={searchParams.type === "OpenWeatherMap"}
+        onOpenChange={setModalOpen("OpenWeatherMap")}
       />
       <OANDAExchangeRatesIntegrationModal
-        open={isOANDAModalOpen}
-        onOpenChange={setIsOANDAModalOpen}
+        open={searchParams.type === "OANDAExchangeRates"}
+        onOpenChange={setModalOpen("OANDAExchangeRates")}
       />
-      <PCMilerIntegrationModal open={isPCMilerModalOpen} onOpenChange={setIsPCMilerModalOpen} />
-      <ResendIntegrationModal open={isResendModalOpen} onOpenChange={setIsResendModalOpen} />
-      <PostmarkIntegrationModal open={isPostmarkModalOpen} onOpenChange={setIsPostmarkModalOpen} />
+      <PCMilerIntegrationModal
+        open={searchParams.type === "PCMiler"}
+        onOpenChange={setModalOpen("PCMiler")}
+      />
+      <ResendIntegrationModal
+        open={searchParams.type === "Resend"}
+        onOpenChange={setModalOpen("Resend")}
+      />
+      <PostmarkIntegrationModal
+        open={searchParams.type === "Postmark"}
+        onOpenChange={setModalOpen("Postmark")}
+      />
     </>
   );
 }

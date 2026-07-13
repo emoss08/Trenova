@@ -1,0 +1,44 @@
+fragment InvoiceTableRowFields on Invoice {
+  id
+  billingQueueItemId
+  shipmentId
+  customerId
+  number
+  billType
+  status
+  paymentTerm
+  currencyCode
+  invoiceDate
+  dueDate
+  billToName
+  subtotalAmount
+  otherAmount
+  totalAmount
+  appliedAmount
+  settlementStatus
+  disputeStatus
+  sendStatus
+  isAdjustmentArtifact
+  version
+  createdAt
+  updatedAt
+  customer {
+    id
+    name
+    code
+  }
+}
+
+query InvoiceTable($input: DataTableConnectionInput!) {
+  invoices(input: $input) {
+    edges {
+      node {
+        ...InvoiceTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

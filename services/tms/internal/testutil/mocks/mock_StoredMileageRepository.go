@@ -66,7 +66,7 @@ type MockStoredMileageRepository_BulkUpsert_Call struct {
 // BulkUpsert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entities []*storedmileage.StoredMileage
-func (_e *MockStoredMileageRepository_Expecter) BulkUpsert(ctx interface{}, entities interface{}) *MockStoredMileageRepository_BulkUpsert_Call {
+func (_e *MockStoredMileageRepository_Expecter) BulkUpsert(ctx any, entities any) *MockStoredMileageRepository_BulkUpsert_Call {
 	return &MockStoredMileageRepository_BulkUpsert_Call{Call: _e.mock.On("BulkUpsert", ctx, entities)}
 }
 
@@ -123,7 +123,7 @@ type MockStoredMileageRepository_Deactivate_Call struct {
 // Deactivate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteStoredMileageRequest
-func (_e *MockStoredMileageRepository_Expecter) Deactivate(ctx interface{}, req interface{}) *MockStoredMileageRepository_Deactivate_Call {
+func (_e *MockStoredMileageRepository_Expecter) Deactivate(ctx any, req any) *MockStoredMileageRepository_Deactivate_Call {
 	return &MockStoredMileageRepository_Deactivate_Call{Call: _e.mock.On("Deactivate", ctx, req)}
 }
 
@@ -191,7 +191,7 @@ type MockStoredMileageRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetStoredMileageByIDRequest
-func (_e *MockStoredMileageRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockStoredMileageRepository_GetByID_Call {
+func (_e *MockStoredMileageRepository_Expecter) GetByID(ctx any, req any) *MockStoredMileageRepository_GetByID_Call {
 	return &MockStoredMileageRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -249,7 +249,7 @@ type MockStoredMileageRepository_IncrementHit_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockStoredMileageRepository_Expecter) IncrementHit(ctx interface{}, id interface{}, tenantInfo interface{}) *MockStoredMileageRepository_IncrementHit_Call {
+func (_e *MockStoredMileageRepository_Expecter) IncrementHit(ctx any, id any, tenantInfo any) *MockStoredMileageRepository_IncrementHit_Call {
 	return &MockStoredMileageRepository_IncrementHit_Call{Call: _e.mock.On("IncrementHit", ctx, id, tenantInfo)}
 }
 
@@ -322,7 +322,7 @@ type MockStoredMileageRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListStoredMileageRequest
-func (_e *MockStoredMileageRepository_Expecter) List(ctx interface{}, req interface{}) *MockStoredMileageRepository_List_Call {
+func (_e *MockStoredMileageRepository_Expecter) List(ctx any, req any) *MockStoredMileageRepository_List_Call {
 	return &MockStoredMileageRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -350,6 +350,74 @@ func (_c *MockStoredMileageRepository_List_Call) Return(listResult *pagination.L
 }
 
 func (_c *MockStoredMileageRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListStoredMileageRequest) (*pagination.ListResult[*storedmileage.StoredMileage], error)) *MockStoredMileageRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockStoredMileageRepository
+func (_mock *MockStoredMileageRepository) ListConnection(ctx context.Context, req *repositories.ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*storedmileage.StoredMileage]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListStoredMileageConnectionRequest) *pagination.CursorListResult[*storedmileage.StoredMileage]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*storedmileage.StoredMileage])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListStoredMileageConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStoredMileageRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockStoredMileageRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListStoredMileageConnectionRequest
+func (_e *MockStoredMileageRepository_Expecter) ListConnection(ctx any, req any) *MockStoredMileageRepository_ListConnection_Call {
+	return &MockStoredMileageRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockStoredMileageRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListStoredMileageConnectionRequest)) *MockStoredMileageRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListStoredMileageConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListStoredMileageConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStoredMileageRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*storedmileage.StoredMileage], err error) *MockStoredMileageRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockStoredMileageRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)) *MockStoredMileageRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -390,7 +458,7 @@ type MockStoredMileageRepository_Lookup_Call struct {
 // Lookup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.StoredMileageLookupRequest
-func (_e *MockStoredMileageRepository_Expecter) Lookup(ctx interface{}, req interface{}) *MockStoredMileageRepository_Lookup_Call {
+func (_e *MockStoredMileageRepository_Expecter) Lookup(ctx any, req any) *MockStoredMileageRepository_Lookup_Call {
 	return &MockStoredMileageRepository_Lookup_Call{Call: _e.mock.On("Lookup", ctx, req)}
 }
 
@@ -418,72 +486,6 @@ func (_c *MockStoredMileageRepository_Lookup_Call) Return(storedMileage *storedm
 }
 
 func (_c *MockStoredMileageRepository_Lookup_Call) RunAndReturn(run func(ctx context.Context, req repositories.StoredMileageLookupRequest) (*storedmileage.StoredMileage, error)) *MockStoredMileageRepository_Lookup_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockStoredMileageRepository
-func (_mock *MockStoredMileageRepository) ListConnection(ctx context.Context, req *repositories.ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*storedmileage.StoredMileage]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListStoredMileageConnectionRequest) *pagination.CursorListResult[*storedmileage.StoredMileage]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*storedmileage.StoredMileage])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListStoredMileageConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockStoredMileageRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockStoredMileageRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-func (_e *MockStoredMileageRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockStoredMileageRepository_ListConnection_Call {
-	return &MockStoredMileageRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockStoredMileageRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListStoredMileageConnectionRequest)) *MockStoredMileageRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListStoredMileageConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListStoredMileageConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockStoredMileageRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*storedmileage.StoredMileage], err error) *MockStoredMileageRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockStoredMileageRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)) *MockStoredMileageRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -8,6 +8,10 @@ This directory contains comprehensive documentation for the Trenova Formula pack
 
 ## Documentation Structure
 
+### For Users
+
+- **[Rating Guide](RATING_GUIDE.md)** - The user-facing guide to formula templates and rate tables: variables, functions, rate tables, breakdowns, guardrails, approvals, scheduling, backtesting, and worked examples
+
 ### Core Documentation
 
 - **[Expression Syntax Guide](expression-syntax.md)** - Complete syntax reference for formula expressions

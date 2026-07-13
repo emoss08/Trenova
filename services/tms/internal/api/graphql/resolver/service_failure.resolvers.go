@@ -12,12 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // ServiceFailures is the resolver for the serviceFailures field.
-func (r *queryResolver) ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureConnection, error) {
+func (r *queryResolver) ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceServiceFailure, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -28,11 +29,21 @@ func (r *queryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
+	var shipmentFilter *pulid.ID
+	if shipmentID != nil && *shipmentID != "" {
+		parsed, parseErr := pulid.MustParse(*shipmentID)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		shipmentFilter = &parsed
+	}
+
 	result, err := r.serviceFailureSvc.ListConnection(
 		ctx,
 		&repositories.ListServiceFailureConnectionRequest{
-			Filter: tableInput.Filter,
-			Cursor: tableInput.Cursor,
+			Filter:     tableInput.Filter,
+			Cursor:     tableInput.Cursor,
+			ShipmentID: shipmentFilter,
 		},
 	)
 	if err != nil {
@@ -65,9 +76,22 @@ func (r *serviceFailureResolver) StopType(ctx context.Context, obj *servicefailu
 	return gqlmodel.StopType(obj.StopType), nil
 }
 
+// Type is the resolver for the type field.
+func (r *serviceFailureStopResolver) Type(ctx context.Context, obj *shipment.Stop) (gqlmodel.StopType, error) {
+	return gqlmodel.StopType(obj.Type), nil
+}
+
 // ServiceFailure returns generated.ServiceFailureResolver implementation.
 func (r *Resolver) ServiceFailure() generated.ServiceFailureResolver {
 	return &serviceFailureResolver{r}
 }
 
-type serviceFailureResolver struct{ *Resolver }
+// ServiceFailureStop returns generated.ServiceFailureStopResolver implementation.
+func (r *Resolver) ServiceFailureStop() generated.ServiceFailureStopResolver {
+	return &serviceFailureStopResolver{r}
+}
+
+type (
+	serviceFailureResolver     struct{ *Resolver }
+	serviceFailureStopResolver struct{ *Resolver }
+)

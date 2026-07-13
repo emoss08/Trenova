@@ -76,7 +76,7 @@ type MockHazmatSegregationRuleRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazmatsegregationrule.HazmatSegregationRule
-func (_e *MockHazmatSegregationRuleRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockHazmatSegregationRuleRepository_Create_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) Create(ctx any, entity any) *MockHazmatSegregationRuleRepository_Create_Call {
 	return &MockHazmatSegregationRuleRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockHazmatSegregationRuleRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHazmatSegregationRuleByIDRequest
-func (_e *MockHazmatSegregationRuleRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockHazmatSegregationRuleRepository_GetByID_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) GetByID(ctx any, req any) *MockHazmatSegregationRuleRepository_GetByID_Call {
 	return &MockHazmatSegregationRuleRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -172,74 +172,6 @@ func (_c *MockHazmatSegregationRuleRepository_GetByID_Call) Return(hazmatSegrega
 }
 
 func (_c *MockHazmatSegregationRuleRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetHazmatSegregationRuleByIDRequest) (*hazmatsegregationrule.HazmatSegregationRule, error)) *MockHazmatSegregationRuleRepository_GetByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockHazmatSegregationRuleRepository
-func (_mock *MockHazmatSegregationRuleRepository) ListConnection(ctx context.Context, req *repositories.ListHazmatSegregationRuleConnectionRequest) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazmatSegregationRuleConnectionRequest) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazmatSegregationRuleConnectionRequest) *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListHazmatSegregationRuleConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockHazmatSegregationRuleRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockHazmatSegregationRuleRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListHazmatSegregationRuleConnectionRequest
-func (_e *MockHazmatSegregationRuleRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockHazmatSegregationRuleRepository_ListConnection_Call {
-	return &MockHazmatSegregationRuleRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockHazmatSegregationRuleRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListHazmatSegregationRuleConnectionRequest)) *MockHazmatSegregationRuleRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListHazmatSegregationRuleConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListHazmatSegregationRuleConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockHazmatSegregationRuleRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], err error) *MockHazmatSegregationRuleRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockHazmatSegregationRuleRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHazmatSegregationRuleConnectionRequest) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error)) *MockHazmatSegregationRuleRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -280,7 +212,7 @@ type MockHazmatSegregationRuleRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListHazmatSegregationRuleRequest
-func (_e *MockHazmatSegregationRuleRepository_Expecter) List(ctx interface{}, req interface{}) *MockHazmatSegregationRuleRepository_List_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) List(ctx any, req any) *MockHazmatSegregationRuleRepository_List_Call {
 	return &MockHazmatSegregationRuleRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -348,7 +280,7 @@ type MockHazmatSegregationRuleRepository_ListActiveByTenant_Call struct {
 // ListActiveByTenant is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockHazmatSegregationRuleRepository_Expecter) ListActiveByTenant(ctx interface{}, tenantInfo interface{}) *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) ListActiveByTenant(ctx any, tenantInfo any) *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call {
 	return &MockHazmatSegregationRuleRepository_ListActiveByTenant_Call{Call: _e.mock.On("ListActiveByTenant", ctx, tenantInfo)}
 }
 
@@ -376,6 +308,74 @@ func (_c *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call) Return(ha
 }
 
 func (_c *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*hazmatsegregationrule.HazmatSegregationRule, error)) *MockHazmatSegregationRuleRepository_ListActiveByTenant_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockHazmatSegregationRuleRepository
+func (_mock *MockHazmatSegregationRuleRepository) ListConnection(ctx context.Context, req *repositories.ListHazmatSegregationRuleConnectionRequest) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazmatSegregationRuleConnectionRequest) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHazmatSegregationRuleConnectionRequest) *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListHazmatSegregationRuleConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockHazmatSegregationRuleRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockHazmatSegregationRuleRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListHazmatSegregationRuleConnectionRequest
+func (_e *MockHazmatSegregationRuleRepository_Expecter) ListConnection(ctx any, req any) *MockHazmatSegregationRuleRepository_ListConnection_Call {
+	return &MockHazmatSegregationRuleRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockHazmatSegregationRuleRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListHazmatSegregationRuleConnectionRequest)) *MockHazmatSegregationRuleRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListHazmatSegregationRuleConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListHazmatSegregationRuleConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHazmatSegregationRuleRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], err error) *MockHazmatSegregationRuleRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockHazmatSegregationRuleRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHazmatSegregationRuleConnectionRequest) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error)) *MockHazmatSegregationRuleRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +416,7 @@ type MockHazmatSegregationRuleRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *hazmatsegregationrule.HazmatSegregationRule
-func (_e *MockHazmatSegregationRuleRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockHazmatSegregationRuleRepository_Update_Call {
+func (_e *MockHazmatSegregationRuleRepository_Expecter) Update(ctx any, entity any) *MockHazmatSegregationRuleRepository_Update_Call {
 	return &MockHazmatSegregationRuleRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

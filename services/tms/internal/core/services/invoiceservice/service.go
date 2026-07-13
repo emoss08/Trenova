@@ -151,6 +151,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListInvoiceConnectionRequest,
+) (*pagination.CursorListResult[*invoice.Invoice], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req repositories.GetInvoiceByIDRequest,

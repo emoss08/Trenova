@@ -69,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
@@ -184,6 +185,7 @@ type RouterParams struct {
 	LocationHandler                 *locationhandler.Handler
 	DocumentTypeHandler             *documenttypehandler.Handler
 	HoldReasonHandler               *holdreasonhandler.Handler
+	RateTableHandler                *ratetablehandler.Handler
 	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
 	InvoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
@@ -284,6 +286,7 @@ type Router struct {
 	locationHandler                 *locationhandler.Handler
 	documentTypeHandler             *documenttypehandler.Handler
 	holdReasonHandler               *holdreasonhandler.Handler
+	rateTableHandler                *ratetablehandler.Handler
 	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
 	invoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
@@ -386,6 +389,7 @@ func NewRouter(p RouterParams) *Router {
 		locationHandler:                 p.LocationHandler,
 		documentTypeHandler:             p.DocumentTypeHandler,
 		holdReasonHandler:               p.HoldReasonHandler,
+		rateTableHandler:                p.RateTableHandler,
 		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
 		invoiceAdjustmentHandler:        p.InvoiceAdjustmentHandler,
@@ -553,6 +557,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.locationHandler.RegisterRoutes(protected)
 	r.documentTypeHandler.RegisterRoutes(protected)
 	r.holdReasonHandler.RegisterRoutes(protected)
+	r.rateTableHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
 	r.invoiceHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentHandler.RegisterRoutes(protected)

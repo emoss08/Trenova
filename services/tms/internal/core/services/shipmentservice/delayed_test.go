@@ -29,7 +29,7 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			AutoDelayShipments:          true,
-			AutoDelayShipmentsThreshold: ptrInt16(45),
+			AutoDelayShipmentsThreshold: new(int16(45)),
 		}, nil).
 		Once()
 
@@ -99,7 +99,7 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			AutoDelayShipments:          true,
-			AutoDelayShipmentsThreshold: ptrInt16(15),
+			AutoDelayShipmentsThreshold: new(int16(15)),
 		}, nil).
 		Once()
 
@@ -152,11 +152,11 @@ func TestDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T)
 	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, delayThresholdMinutes(nil))
 	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, delayThresholdMinutes(&tenant.ShipmentControl{
 		AutoDelayShipments:          false,
-		AutoDelayShipmentsThreshold: ptrInt16(15),
+		AutoDelayShipmentsThreshold: new(int16(15)),
 	}))
 	assert.Equal(t, int16(15), delayThresholdMinutes(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: ptrInt16(15),
+		AutoDelayShipmentsThreshold: new(int16(15)),
 	}))
 }
 

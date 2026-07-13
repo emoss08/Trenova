@@ -82,7 +82,7 @@ type MockExchangeRateService_Convert_Call struct {
 //   - toCurrency string
 //   - amount decimal.Decimal
 //   - date time.Time
-func (_e *MockExchangeRateService_Expecter) Convert(ctx interface{}, tenantInfo interface{}, fromCurrency interface{}, toCurrency interface{}, amount interface{}, date interface{}) *MockExchangeRateService_Convert_Call {
+func (_e *MockExchangeRateService_Expecter) Convert(ctx any, tenantInfo any, fromCurrency any, toCurrency any, amount any, date any) *MockExchangeRateService_Convert_Call {
 	return &MockExchangeRateService_Convert_Call{Call: _e.mock.On("Convert", ctx, tenantInfo, fromCurrency, toCurrency, amount, date)}
 }
 
@@ -171,7 +171,7 @@ type MockExchangeRateService_CreateSettlementQuote_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - req *services.CreateSettlementQuoteRequest
-func (_e *MockExchangeRateService_Expecter) CreateSettlementQuote(ctx interface{}, tenantInfo interface{}, req interface{}) *MockExchangeRateService_CreateSettlementQuote_Call {
+func (_e *MockExchangeRateService_Expecter) CreateSettlementQuote(ctx any, tenantInfo any, req any) *MockExchangeRateService_CreateSettlementQuote_Call {
 	return &MockExchangeRateService_CreateSettlementQuote_Call{Call: _e.mock.On("CreateSettlementQuote", ctx, tenantInfo, req)}
 }
 
@@ -245,7 +245,7 @@ type MockExchangeRateService_GetLatestRates_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - baseCurrency string
-func (_e *MockExchangeRateService_Expecter) GetLatestRates(ctx interface{}, tenantInfo interface{}, baseCurrency interface{}) *MockExchangeRateService_GetLatestRates_Call {
+func (_e *MockExchangeRateService_Expecter) GetLatestRates(ctx any, tenantInfo any, baseCurrency any) *MockExchangeRateService_GetLatestRates_Call {
 	return &MockExchangeRateService_GetLatestRates_Call{Call: _e.mock.On("GetLatestRates", ctx, tenantInfo, baseCurrency)}
 }
 
@@ -308,7 +308,7 @@ type MockExchangeRateService_RefreshRates_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - baseCurrency string
-func (_e *MockExchangeRateService_Expecter) RefreshRates(ctx interface{}, tenantInfo interface{}, baseCurrency interface{}) *MockExchangeRateService_RefreshRates_Call {
+func (_e *MockExchangeRateService_Expecter) RefreshRates(ctx any, tenantInfo any, baseCurrency any) *MockExchangeRateService_RefreshRates_Call {
 	return &MockExchangeRateService_RefreshRates_Call{Call: _e.mock.On("RefreshRates", ctx, tenantInfo, baseCurrency)}
 }
 

@@ -210,6 +210,11 @@ func TestSqrtFn_ErrorBranch(t *testing.T) {
 			expression: "sqrt(x)",
 			env:        map[string]any{"x": false},
 		},
+		{
+			name:       "negative input",
+			expression: "sqrt(x)",
+			env:        map[string]any{"x": -9.0},
+		},
 	}
 
 	for _, tt := range tests {
@@ -462,6 +467,16 @@ func TestRoundFn_ErrorBranches(t *testing.T) {
 			name:       "string value with decimals",
 			expression: "round(x, 2)",
 			env:        map[string]any{"x": "abc"},
+		},
+		{
+			name:       "decimals above allowed range",
+			expression: "round(3.14, d)",
+			env:        map[string]any{"d": 13},
+		},
+		{
+			name:       "decimals below allowed range",
+			expression: "round(3.14, d)",
+			env:        map[string]any{"d": -13},
 		},
 	}
 

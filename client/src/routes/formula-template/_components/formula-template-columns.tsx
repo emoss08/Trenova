@@ -8,6 +8,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";
 
+const editableStatusChoices = formulaTemplateStatusChoices.filter(
+  (choice) => choice.value !== "InReview",
+);
+
 // eslint-disable-next-line react-refresh/only-export-components
 function FormulaTemplateStatusCell({
   id,
@@ -35,8 +39,9 @@ function FormulaTemplateStatusCell({
   return (
     <EditableStatusBadge
       status={status}
-      options={formulaTemplateStatusChoices}
+      options={editableStatusChoices}
       onStatusChange={handleStatusChange}
+      disabled={status === "InReview"}
     />
   );
 }

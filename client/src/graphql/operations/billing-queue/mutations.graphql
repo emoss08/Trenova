@@ -1,0 +1,42 @@
+fragment BillingQueueActionFields on BillingQueueItem {
+  id
+  organizationId
+  businessUnitId
+  shipmentId
+  assignedBillerId
+  number
+  status
+  billType
+  exceptionReasonCode
+  reviewNotes
+  exceptionNotes
+  reviewStartedAt
+  reviewCompletedAt
+  canceledById
+  canceledAt
+  cancelReason
+  isAdjustmentOrigin
+  sourceInvoiceId
+  sourceInvoiceAdjustmentId
+  sourceCreditMemoInvoiceId
+  correctionGroupId
+  rebillStrategy
+  requiresReplacementReview
+  rerateVariancePercent
+  adjustmentContext
+  version
+  createdAt
+  updatedAt
+}
+
+mutation UpdateBillingQueueStatus($id: ID!, $input: BillingQueueUpdateStatusInput!) {
+  updateBillingQueueStatus(id: $id, input: $input) {
+    ...BillingQueueActionFields
+  }
+}
+
+mutation AssignBillingQueueBiller($id: ID!, $input: BillingQueueAssignInput!) {
+  assignBillingQueueBiller(id: $id, input: $input) {
+    ...BillingQueueActionFields
+  }
+}

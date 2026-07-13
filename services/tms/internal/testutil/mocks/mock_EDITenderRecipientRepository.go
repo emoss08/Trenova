@@ -75,7 +75,7 @@ type MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentRefere
 // GetActiveExternalRecipientByShipmentReference is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest
-func (_e *MockEDITenderRecipientRepository_Expecter) GetActiveExternalRecipientByShipmentReference(ctx interface{}, req interface{}) *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call {
+func (_e *MockEDITenderRecipientRepository_Expecter) GetActiveExternalRecipientByShipmentReference(ctx any, req any) *MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call {
 	return &MockEDITenderRecipientRepository_GetActiveExternalRecipientByShipmentReference_Call{Call: _e.mock.On("GetActiveExternalRecipientByShipmentReference", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockEDITenderRecipientRepository_GetTenderRecipientByID_Call struct {
 // GetTenderRecipientByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDITenderRecipientByIDRequest
-func (_e *MockEDITenderRecipientRepository_Expecter) GetTenderRecipientByID(ctx interface{}, req interface{}) *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call {
+func (_e *MockEDITenderRecipientRepository_Expecter) GetTenderRecipientByID(ctx any, req any) *MockEDITenderRecipientRepository_GetTenderRecipientByID_Call {
 	return &MockEDITenderRecipientRepository_GetTenderRecipientByID_Call{Call: _e.mock.On("GetTenderRecipientByID", ctx, req)}
 }
 
@@ -211,7 +211,7 @@ type MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipmen
 // ListActiveTenderRecipientsForSourceShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListEDITenderRecipientsForSourceShipmentRequest
-func (_e *MockEDITenderRecipientRepository_Expecter) ListActiveTenderRecipientsForSourceShipment(ctx interface{}, req interface{}) *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call {
+func (_e *MockEDITenderRecipientRepository_Expecter) ListActiveTenderRecipientsForSourceShipment(ctx any, req any) *MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call {
 	return &MockEDITenderRecipientRepository_ListActiveTenderRecipientsForSourceShipment_Call{Call: _e.mock.On("ListActiveTenderRecipientsForSourceShipment", ctx, req)}
 }
 
@@ -279,7 +279,7 @@ type MockEDITenderRecipientRepository_UpdateTenderRecipient_Call struct {
 // UpdateTenderRecipient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.TenderRecipient
-func (_e *MockEDITenderRecipientRepository_Expecter) UpdateTenderRecipient(ctx interface{}, entity interface{}) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
+func (_e *MockEDITenderRecipientRepository_Expecter) UpdateTenderRecipient(ctx any, entity any) *MockEDITenderRecipientRepository_UpdateTenderRecipient_Call {
 	return &MockEDITenderRecipientRepository_UpdateTenderRecipient_Call{Call: _e.mock.On("UpdateTenderRecipient", ctx, entity)}
 }
 
@@ -347,7 +347,7 @@ type MockEDITenderRecipientRepository_UpsertTenderRecipient_Call struct {
 // UpsertTenderRecipient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.UpsertEDITenderRecipientRequest
-func (_e *MockEDITenderRecipientRepository_Expecter) UpsertTenderRecipient(ctx interface{}, req interface{}) *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call {
+func (_e *MockEDITenderRecipientRepository_Expecter) UpsertTenderRecipient(ctx any, req any) *MockEDITenderRecipientRepository_UpsertTenderRecipient_Call {
 	return &MockEDITenderRecipientRepository_UpsertTenderRecipient_Call{Call: _e.mock.On("UpsertTenderRecipient", ctx, req)}
 }
 

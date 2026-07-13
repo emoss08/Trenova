@@ -2,8 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextShimmer } from "@/components/ui/text-shimmer";
+import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import { usePermission } from "@/hooks/use-permission";
 import { formatToUserTimezone } from "@/lib/date";
+import { auditLogTableGraphQLConfig } from "@/lib/graphql/audit-log-table";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import {
@@ -15,7 +17,6 @@ import {
   userInitials,
   type NormalizedAuditChange,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
-import { apiService } from "@/services/api";
 import type { AuditEntry } from "@/types/audit-entry";
 import { Operation, Resource } from "@/types/permission";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -34,19 +35,15 @@ function auditEntryUrl(entryId: string) {
 export default function AuditTab({ resourceId }: { resourceId: string }) {
   const query = useInfiniteQuery({
     queryKey: [...queries.audit.history(resourceId).queryKey],
-    queryFn: async ({ pageParam }) => {
-      return await apiService.auditService.listByResourceId(resourceId, {
-        limit: PAGE_SIZE,
-        offset: pageParam,
-      });
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === PAGE_SIZE) {
-        return lastPageParam + PAGE_SIZE;
-      }
-      return undefined;
-    },
+    queryFn: async ({ pageParam }) =>
+      fetchGraphQLData(PAGE_SIZE, auditLogTableGraphQLConfig, {
+        cursor: pageParam ?? undefined,
+        fieldFilters: [{ field: "resourceId", operator: "eq", value: resourceId }],
+        sort: [{ field: "timestamp", direction: "desc" }],
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageInfo?.hasNextPage ? (lastPage.pageInfo.endCursor ?? undefined) : undefined,
   });
 
   const { allowed: canViewAuditLogs } = usePermission(Resource.AuditLog, Operation.Read);

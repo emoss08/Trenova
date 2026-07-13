@@ -9,10 +9,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TextShimmer } from "@/components/ui/text-shimmer";
+import {
+  InvoiceTableDocument,
+  type DataTablePageInfoFieldsFragment,
+  type InvoiceTableQueryVariables,
+  type InvoiceTableRowFieldsFragment,
+} from "@/graphql/generated/graphql";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
 import { billTypeChoices, invoiceStatusChoices } from "@/lib/choices";
+import { requestGraphQL } from "@/lib/graphql";
 import { cn } from "@/lib/utils";
-import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
@@ -21,6 +27,14 @@ import { invoiceSidebarSearchParamsParser } from "../use-invoice-state";
 import { InvoiceItemCard } from "./invoice-item-card";
 
 const PAGE_SIZE = 20;
+
+type InvoiceTablePage = {
+  invoices: {
+    edges: Array<{ node: InvoiceTableRowFieldsFragment }>;
+    totalCount: number | null;
+    pageInfo: DataTablePageInfoFieldsFragment;
+  };
+};
 
 export function InvoiceSidebar({
   selectedInvoiceId,
@@ -43,37 +57,39 @@ export function InvoiceSidebar({
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams({
-        limit: String(PAGE_SIZE),
-        offset: String(pageParam),
-      });
-      const filters: Array<{ field: string; operator: string; value: string }> = [];
+      const fieldFilters: Array<{ field: string; operator: string; value: string }> = [];
 
       if (status) {
-        filters.push({ field: "status", operator: "eq", value: status });
+        fieldFilters.push({ field: "status", operator: "eq", value: status });
       }
       if (billType) {
-        filters.push({ field: "billType", operator: "eq", value: billType });
-      }
-      if (deferredSearch.trim()) {
-        params.set("query", deferredSearch.trim());
-      }
-      if (filters.length > 0) {
-        params.set("fieldFilters", JSON.stringify(filters));
+        fieldFilters.push({ field: "billType", operator: "eq", value: billType });
       }
 
-      return apiService.invoiceService.list(Object.fromEntries(params.entries()));
+      return requestGraphQL<InvoiceTablePage, InvoiceTableQueryVariables>({
+        document: InvoiceTableDocument,
+        operationName: "InvoiceTable",
+        variables: {
+          input: {
+            first: PAGE_SIZE,
+            after: pageParam ?? undefined,
+            query: deferredSearch.trim() || undefined,
+            fieldFilters,
+          },
+        },
+      });
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === PAGE_SIZE) {
-        return lastPageParam + PAGE_SIZE;
-      }
-      return undefined;
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => {
+      const { pageInfo } = lastPage.invoices;
+      return pageInfo.hasNextPage ? pageInfo.endCursor : undefined;
     },
   });
 
-  const invoices = useMemo(() => data?.pages.flatMap((page) => page.results) ?? [], [data?.pages]);
+  const invoices = useMemo(
+    () => data?.pages.flatMap((page) => page.invoices.edges.map((edge) => edge.node)) ?? [],
+    [data?.pages],
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(

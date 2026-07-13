@@ -189,35 +189,46 @@ input WorkerPatchInput {
   driverType: DriverType
 }
 
+input WorkerPTOEntriesInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  status: PTOStatus
+  type: PTOType
+  startDateFrom: Int
+  startDateTo: Int
+  workerId: ID
+  includeWorker: Boolean = false
+}
+
+input UpcomingWorkerPTOInput {
+  first: Int = 20
+  after: String
+  status: PTOStatus
+  type: PTOType
+  startDate: Int
+  endDate: Int
+  workerId: ID
+  fleetCodeId: ID
+  timezone: String
+}
+
+input WorkerPTOChartInput {
+  startDateFrom: Int!
+  startDateTo: Int!
+  type: PTOType
+  workerId: ID
+  timezone: String
+}
+
 extend type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
-  workerPTOEntries(
-    input: DataTableConnectionInput!
-    status: PTOStatus
-    type: PTOType
-    startDateFrom: Int
-    startDateTo: Int
-    workerId: ID
-    includeWorker: Boolean = false
-  ): WorkerPTOConnection!
-  upcomingWorkerPTO(
-    first: Int = 20
-    after: String
-    status: PTOStatus
-    type: PTOType
-    startDate: Int
-    endDate: Int
-    workerId: ID
-    fleetCodeId: ID
-    timezone: String
-  ): WorkerPTOConnection!
-  workerPTOChartData(
-    startDateFrom: Int!
-    startDateTo: Int!
-    type: PTOType
-    workerId: ID
-    timezone: String
-  ): [PTOChartDataPoint!]!
+  workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
+  upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
+  workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
 }
 
 extend type Mutation {

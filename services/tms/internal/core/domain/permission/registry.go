@@ -3,6 +3,7 @@ package permission
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 )
 
@@ -877,11 +878,47 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceFormulaTemplate.String(),
-		DisplayName:        "Formula Template",
-		Description:        "Rate formula templates",
-		Category:           "Billing",
-		Operations:         standardOps,
+		Resource:    ResourceFormulaTemplate.String(),
+		DisplayName: "Formula Template",
+		Description: "Rate formula templates",
+		Category:    "Billing",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpDuplicate,
+				DisplayName: "Duplicate",
+				Description: "Duplicate formula templates",
+			},
+			OperationDefinition{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Submit formula templates for review",
+			},
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve formula templates and schedule rate changes",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Reject formula templates under review",
+			},
+		),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateTable.String(),
+		DisplayName: "Rate Table",
+		Description: "Tenant rate lookup tables (fuel surcharges, lane rates, weight breaks)",
+		Category:    "Billing",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Delete rate tables",
+			},
+		),
 		DefaultSensitivity: SensitivityInternal,
 	})
 }

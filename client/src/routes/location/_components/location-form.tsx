@@ -8,12 +8,18 @@ import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
+import { queries } from "@/lib/queries";
 import type { Location } from "@/types/location";
+import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 import { LocationGeofenceControls } from "./location-geofence-editor";
 
 export function LocationForm() {
   const { control } = useFormContext<Location>();
+  const googleMapsQuery = useQuery({
+    ...queries.integration.runtimeConfig("GoogleMaps"),
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <div className="space-y-6 p-3">
@@ -54,12 +60,18 @@ export function LocationForm() {
               description="The category this location belongs to."
             />
           </FormControl>
-          <FormControl cols="full">
-            <div className="space-y-1.5">
-              <p className="required text-sm leading-none font-medium">Geofence</p>
-              <LocationGeofenceControls />
+          {googleMapsQuery.isLoading ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Loading Maps Configuration..
             </div>
-          </FormControl>
+          ) : googleMapsQuery.data?.config.apiKey ? (
+            <FormControl cols="full">
+              <div className="space-y-1.5">
+                <p className="required text-sm leading-none font-medium">Geofence</p>
+                <LocationGeofenceControls />
+              </div>
+            </FormControl>
+          ) : null}
           <FormGroup cols={2}>
             <FormControl cols="full" id="address-field-container">
               <AddressField control={control} />

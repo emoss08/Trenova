@@ -76,7 +76,7 @@ type MockDistanceControlRepository_EnsureDefault_Call struct {
 // EnsureDefault is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDistanceControlRepository_Expecter) EnsureDefault(ctx interface{}, tenantInfo interface{}) *MockDistanceControlRepository_EnsureDefault_Call {
+func (_e *MockDistanceControlRepository_Expecter) EnsureDefault(ctx any, tenantInfo any) *MockDistanceControlRepository_EnsureDefault_Call {
 	return &MockDistanceControlRepository_EnsureDefault_Call{Call: _e.mock.On("EnsureDefault", ctx, tenantInfo)}
 }
 
@@ -144,7 +144,7 @@ type MockDistanceControlRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDistanceControlRepository_Expecter) Get(ctx interface{}, tenantInfo interface{}) *MockDistanceControlRepository_Get_Call {
+func (_e *MockDistanceControlRepository_Expecter) Get(ctx any, tenantInfo any) *MockDistanceControlRepository_Get_Call {
 	return &MockDistanceControlRepository_Get_Call{Call: _e.mock.On("Get", ctx, tenantInfo)}
 }
 
@@ -211,7 +211,7 @@ type MockDistanceControlRepository_ResolveProfile_Call struct {
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - purpose string
-func (_e *MockDistanceControlRepository_Expecter) ResolveProfile(ctx interface{}, tenantInfo interface{}, purpose interface{}) *MockDistanceControlRepository_ResolveProfile_Call {
+func (_e *MockDistanceControlRepository_Expecter) ResolveProfile(ctx any, tenantInfo any, purpose any) *MockDistanceControlRepository_ResolveProfile_Call {
 	return &MockDistanceControlRepository_ResolveProfile_Call{Call: _e.mock.On("ResolveProfile", ctx, tenantInfo, purpose)}
 }
 
@@ -284,7 +284,7 @@ type MockDistanceControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distancecontrol.DistanceControl
-func (_e *MockDistanceControlRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDistanceControlRepository_Update_Call {
+func (_e *MockDistanceControlRepository_Expecter) Update(ctx any, entity any) *MockDistanceControlRepository_Update_Call {
 	return &MockDistanceControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

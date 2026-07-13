@@ -1,0 +1,16 @@
+input BillingQueueUpdateStatusInput {
+  status: BillingQueueStatus!
+  exceptionReasonCode: BillingQueueExceptionReasonCode
+  exceptionNotes: String
+  reviewNotes: String
+  cancelReason: String
+}
+
+input BillingQueueAssignInput {
+  billerId: ID!
+}
+
+extend type Mutation {
+  updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
+  assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+}

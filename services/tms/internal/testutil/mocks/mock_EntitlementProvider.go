@@ -74,7 +74,7 @@ type MockEntitlementProvider_CheckFeature_Call struct {
 // CheckFeature is a helper method to define mock.On call
 //   - context1 context.Context
 //   - featureCheckRequest *services.FeatureCheckRequest
-func (_e *MockEntitlementProvider_Expecter) CheckFeature(context1 interface{}, featureCheckRequest interface{}) *MockEntitlementProvider_CheckFeature_Call {
+func (_e *MockEntitlementProvider_Expecter) CheckFeature(context1 any, featureCheckRequest any) *MockEntitlementProvider_CheckFeature_Call {
 	return &MockEntitlementProvider_CheckFeature_Call{Call: _e.mock.On("CheckFeature", context1, featureCheckRequest)}
 }
 
@@ -142,7 +142,7 @@ type MockEntitlementProvider_ListEntitlements_Call struct {
 // ListEntitlements is a helper method to define mock.On call
 //   - context1 context.Context
 //   - entitlementsRequest *services.EntitlementsRequest
-func (_e *MockEntitlementProvider_Expecter) ListEntitlements(context1 interface{}, entitlementsRequest interface{}) *MockEntitlementProvider_ListEntitlements_Call {
+func (_e *MockEntitlementProvider_Expecter) ListEntitlements(context1 any, entitlementsRequest any) *MockEntitlementProvider_ListEntitlements_Call {
 	return &MockEntitlementProvider_ListEntitlements_Call{Call: _e.mock.On("ListEntitlements", context1, entitlementsRequest)}
 }
 

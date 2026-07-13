@@ -23,7 +23,7 @@ func TestStop_EffectiveScheduledCutoff(t *testing.T) {
 			name: "uses scheduled window end when present",
 			stop: &Stop{
 				ScheduledWindowStart: 100,
-				ScheduledWindowEnd:   int64Ptr(200),
+				ScheduledWindowEnd:   new(int64(200)),
 			},
 			want: 200,
 		},

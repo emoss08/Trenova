@@ -1,9 +1,13 @@
+import googleMapsEmptyState from "@/assets/integrations/empty-state/map-preview.webp";
+import { Button } from "@/components/ui/button";
 import { useMapId } from "@/hooks/use-map-id";
 import { locationGeofenceTypeChoices } from "@/lib/choices";
 import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { usePermissionStore } from "@/stores/permission-store";
 import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@/types/location";
+import { Operation, Resource } from "@/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {
   AdvancedMarker,
@@ -14,9 +18,10 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { Circle as CircleIcon, PenTool, Sparkles, Square } from "lucide-react";
+import { Circle as CircleIcon, PenTool, PlusIcon, Sparkles, Square } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
+import { useNavigate } from "react-router";
 
 const DEFAULT_GEOFENCE_RADIUS_METERS = 50;
 const LOCATION_ZOOM = 18;
@@ -209,6 +214,11 @@ export function LocationGeofenceControls({ className }: { className?: string }) 
 }
 
 export function LocationGeofenceMap({ className }: { className?: string }) {
+  const navigate = useNavigate();
+  const canCreateIntegrations = usePermissionStore((state) =>
+    state.hasPermission(Resource.Integration, Operation.Create),
+  );
+
   const mapId = useMapId();
   const {
     geofenceType,
@@ -236,9 +246,24 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
           Loading map editor...
         </div>
       ) : !googleMapsQuery.data?.config.apiKey ? (
-        <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-          Google Maps is not configured for this environment, so the geofence editor cannot be
-          displayed.
+        <div className="relative flex h-full flex-col items-center justify-center gap-4 px-6">
+          <img
+            src={googleMapsEmptyState}
+            alt="Google Maps Empty State"
+            className="absolute inset-0 size-full object-cover opacity-50 pointer-events-none select-none blur-sm"
+          />
+          <div className="relative z-10 flex flex-col items-center gap-4 text-center text-sm text-foreground">
+            <span>
+              Google Maps is not configured for this environment, so the geofence editor cannot be
+              displayed.
+            </span>
+            {canCreateIntegrations ? (
+              <Button onClick={() => navigate("/admin/integrations?type=GoogleMaps")}>
+                <PlusIcon className="size-4 shrink-0" aria-hidden />
+                Configure Google Maps
+              </Button>
+            ) : null}
+          </div>
         </div>
       ) : (
         <APIProvider apiKey={googleMapsQuery.data.config.apiKey}>

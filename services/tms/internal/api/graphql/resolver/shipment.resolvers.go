@@ -492,37 +492,30 @@ func (r *mutationResolver) DeleteShipmentComment(ctx context.Context, shipmentID
 }
 
 // Shipments is the resolver for the shipments field.
-func (r *queryResolver) Shipments(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, expandShipmentDetails *bool, status *string) (*gqlmodel.ShipmentConnection, error) {
+func (r *queryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsInput) (*gqlmodel.ShipmentConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
-		First: first,
-		After: after,
-	})
+	connection, err := dataTableConnectionFromGraphQL(&gqlmodel.DataTableConnectionInput{
+		First:        input.First,
+		After:        input.After,
+		Query:        input.Query,
+		FieldFilters: input.FieldFilters,
+		FilterGroups: input.FilterGroups,
+		Sort:         input.Sort,
+	}, tenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
-	filter := queryOptionsFromGraphQL(gqlListOptions{
-		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Cursor.Limit,
-		Query:        stringValue(query),
-		FieldFilters: fieldFilters,
-		FilterGroups: filterGroups,
-		Sort:         sort,
-	})
-	expand := false
-	if expandShipmentDetails != nil {
-		expand = *expandShipmentDetails
-	}
+
 	result, err := r.shipmentService.List(ctx, &repositories.ListShipmentsRequest{
-		Filter: filter,
-		Cursor: page.Cursor,
+		Filter: connection.Filter,
+		Cursor: connection.Cursor,
 		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: expand,
-			Status:                stringValue(status),
+			ExpandShipmentDetails: boolValue(input.ExpandShipmentDetails),
+			Status:                stringValue(input.Status),
 		},
 	})
 	if err != nil {
@@ -690,7 +683,7 @@ func (r *queryResolver) ShipmentBillingReadiness(ctx context.Context, shipmentID
 }
 
 // ShipmentEvents is the resolver for the shipmentEvents field.
-func (r *queryResolver) ShipmentEvents(ctx context.Context, shipmentID *string, types []gqlmodel.ShipmentEventType, limit *int, before *int) ([]*gqlmodel.ShipmentEvent, error) {
+func (r *queryResolver) ShipmentEvents(ctx context.Context, input gqlmodel.ShipmentEventsInput) ([]*gqlmodel.ShipmentEvent, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -698,12 +691,12 @@ func (r *queryResolver) ShipmentEvents(ctx context.Context, shipmentID *string, 
 
 	req := &repositories.ListShipmentEventsRequest{
 		TenantInfo: tenantInfo(authCtx),
-		Types:      shipmentEventTypesFromGraphQL(types),
-		Limit:      intValue(limit),
-		Before:     int64Value(before),
+		Types:      shipmentEventTypesFromGraphQL(input.Types),
+		Limit:      intValue(input.Limit),
+		Before:     int64Value(input.Before),
 	}
-	if shipmentID != nil && *shipmentID != "" {
-		parsedShipmentID, parseErr := pulid.MustParse(*shipmentID)
+	if input.ShipmentID != nil && *input.ShipmentID != "" {
+		parsedShipmentID, parseErr := pulid.MustParse(*input.ShipmentID)
 		if parseErr != nil {
 			return nil, parseErr
 		}
@@ -719,7 +712,7 @@ func (r *queryResolver) ShipmentEvents(ctx context.Context, shipmentID *string, 
 }
 
 // ShipmentAnalytics is the resolver for the shipmentAnalytics field.
-func (r *queryResolver) ShipmentAnalytics(ctx context.Context, startDate *int, endDate *int, limit *int, offset *int, timezone *string, windowDays *int, include *string) (*gqlmodel.ShipmentAnalytics, error) {
+func (r *queryResolver) ShipmentAnalytics(ctx context.Context, input gqlmodel.ShipmentAnalyticsInput) (*gqlmodel.ShipmentAnalytics, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil {
 		return nil, errortypes.NewAuthenticationError("Authentication required")
@@ -730,12 +723,12 @@ func (r *queryResolver) ShipmentAnalytics(ctx context.Context, startDate *int, e
 		BuID:       authCtx.BusinessUnitID,
 		UserID:     authCtx.UserID,
 		Page:       services.ShipmentAnalyticsPage,
-		Timezone:   stringValue(timezone),
-		Limit:      intValue(limit),
-		Offset:     intValue(offset),
-		WindowDays: intValue(windowDays),
-		Include:    stringValue(include),
-		DateRange:  analyticsDateRange(startDate, endDate),
+		Timezone:   stringValue(input.Timezone),
+		Limit:      intValue(input.Limit),
+		Offset:     intValue(input.Offset),
+		WindowDays: intValue(input.WindowDays),
+		Include:    stringValue(input.Include),
+		DateRange:  analyticsDateRange(input.StartDate, input.EndDate),
 	})
 	if err != nil {
 		return nil, err

@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { serviceFailureTableGraphQLConfig } from "@/lib/graphql/service-failure-table";
 import { usePermission } from "@/hooks/use-permission";
+import { createServiceFailureTableGraphQLConfig } from "@/lib/graphql/service-failure-table";
 import { apiService } from "@/services/api";
 import type { RowAction } from "@/types/data-table";
 import { Operation, Resource } from "@/types/permission";
@@ -8,14 +8,20 @@ import type { ServiceFailure } from "@/types/service-failure";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { ArchiveIcon, CheckCircle2Icon, ClipboardIcon, ShieldCheckIcon } from "lucide-react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./service-failure-columns";
 import { ServiceFailurePanel } from "./service-failure-panel";
 
 type LifecycleAction = "review" | "resolve" | "void";
 
-export default function ServiceFailureTable() {
+type ServiceFailureTableProps = {
+  shipmentId?: string;
+};
+
+export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableProps) {
   const queryClient = useQueryClient();
+  const graphql = useMemo(() => createServiceFailureTableGraphQLConfig(shipmentId), [shipmentId]);
   const canApprove = usePermission(Resource.ServiceFailure, Operation.Approve);
   const canUpdate = usePermission(Resource.ServiceFailure, Operation.Update);
   const canArchive = usePermission(Resource.ServiceFailure, Operation.Archive);
@@ -39,20 +45,24 @@ export default function ServiceFailureTable() {
       version: entity.version ?? 0,
     };
 
-    if (action === "review") {
-      await apiService.serviceFailureService.review(entity.id ?? "", payload);
-      toast.success("Service failure reviewed");
-    } else if (action === "resolve") {
-      await apiService.serviceFailureService.resolve(entity.id ?? "", payload);
-      toast.success("Service failure resolved");
-    } else {
-      const notes = window.prompt("Enter a void reason");
-      if (!notes?.trim()) return;
-      await apiService.serviceFailureService.void(entity.id ?? "", {
-        ...payload,
-        notes: notes.trim(),
-      });
-      toast.success("Service failure voided");
+    switch (action) {
+      case "review":
+        await apiService.serviceFailureService.review(entity.id ?? "", payload);
+        toast.success("Service failure reviewed");
+        break;
+      case "resolve":
+        await apiService.serviceFailureService.resolve(entity.id ?? "", payload);
+        toast.success("Service failure resolved");
+        break;
+      case "void":
+        const notes = window.prompt("Enter a void reason");
+        if (!notes?.trim()) return;
+        await apiService.serviceFailureService.void(entity.id ?? "", {
+          ...payload,
+          notes: notes.trim(),
+        });
+        toast.success("Service failure voided");
+        break;
     }
     invalidate(entity.shipmentId);
   };
@@ -109,7 +119,7 @@ export default function ServiceFailureTable() {
     <DataTable<ServiceFailure>
       name="Service Failure"
       queryKey="service-failure-list"
-      graphql={serviceFailureTableGraphQLConfig}
+      graphql={graphql}
       resource={Resource.ServiceFailure}
       columns={columns}
       contextMenuActions={contextMenuActions}

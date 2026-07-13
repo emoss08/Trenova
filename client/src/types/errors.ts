@@ -65,3 +65,52 @@ export const apiErrorResponseSchema = z.object({
 });
 
 export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
+
+export function parseProblemType(type: string | undefined): ProblemType | null {
+  if (!type) {
+    return null;
+  }
+  const suffix = type.split("/").pop();
+  const parsed = ProblemType.safeParse(suffix);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseFieldErrors(value: unknown): ValidationError[] {
+  const parsed = z.array(validationErrorSchema).safeParse(value);
+  return parsed.success ? parsed.data : [];
+}
+
+export type ProblemClassification = {
+  problemType: ProblemType | null;
+  status: number;
+  fieldErrors: ValidationError[];
+};
+
+export type NormalizedApiError = ProblemClassification & {
+  message: string;
+  title?: string;
+  detail?: string;
+  traceId?: string;
+};
+
+export const apiProblem = {
+  isValidationError: (p: ProblemClassification): boolean =>
+    p.problemType === "validation-error",
+  isBusinessError: (p: ProblemClassification): boolean =>
+    p.problemType === "business-rule-violation",
+  isAuthenticationError: (p: ProblemClassification): boolean =>
+    p.problemType === "authentication-error",
+  isAuthorizationError: (p: ProblemClassification): boolean =>
+    p.problemType === "authorization-error",
+  isNotFoundError: (p: ProblemClassification): boolean =>
+    p.problemType === "resource-not-found",
+  isRateLimitError: (p: ProblemClassification): boolean =>
+    p.status === 429 || p.problemType === "rate-limit-exceeded",
+  isConflictError: (p: ProblemClassification): boolean =>
+    p.status === 409 || p.problemType === "resource-conflict",
+  isTimeoutError: (p: ProblemClassification): boolean =>
+    p.status === 504 || p.problemType === "request-timeout",
+  isVersionMismatchError: (p: ProblemClassification): boolean =>
+    apiProblem.isValidationError(p) &&
+    p.fieldErrors.some((e) => e.code === "VERSION_MISMATCH"),
+} as const;

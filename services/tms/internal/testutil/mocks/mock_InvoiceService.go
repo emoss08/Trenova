@@ -78,7 +78,7 @@ type MockInvoiceService_AutoSendInvoiceAfterPDFGeneration_Call struct {
 //   - ctx context.Context
 //   - req *services.AutoSendInvoiceAfterPDFGenerationRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) AutoSendInvoiceAfterPDFGeneration(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_AutoSendInvoiceAfterPDFGeneration_Call {
+func (_e *MockInvoiceService_Expecter) AutoSendInvoiceAfterPDFGeneration(ctx any, req any, actor any) *MockInvoiceService_AutoSendInvoiceAfterPDFGeneration_Call {
 	return &MockInvoiceService_AutoSendInvoiceAfterPDFGeneration_Call{Call: _e.mock.On("AutoSendInvoiceAfterPDFGeneration", ctx, req, actor)}
 }
 
@@ -152,7 +152,7 @@ type MockInvoiceService_CreateFromApprovedBillingQueueItem_Call struct {
 //   - ctx context.Context
 //   - req *services.CreateInvoiceFromBillingQueueRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) CreateFromApprovedBillingQueueItem(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_CreateFromApprovedBillingQueueItem_Call {
+func (_e *MockInvoiceService_Expecter) CreateFromApprovedBillingQueueItem(ctx any, req any, actor any) *MockInvoiceService_CreateFromApprovedBillingQueueItem_Call {
 	return &MockInvoiceService_CreateFromApprovedBillingQueueItem_Call{Call: _e.mock.On("CreateFromApprovedBillingQueueItem", ctx, req, actor)}
 }
 
@@ -226,7 +226,7 @@ type MockInvoiceService_CreateFromShipments_Call struct {
 //   - ctx context.Context
 //   - req *services.CreateInvoiceFromShipmentsRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) CreateFromShipments(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_CreateFromShipments_Call {
+func (_e *MockInvoiceService_Expecter) CreateFromShipments(ctx any, req any, actor any) *MockInvoiceService_CreateFromShipments_Call {
 	return &MockInvoiceService_CreateFromShipments_Call{Call: _e.mock.On("CreateFromShipments", ctx, req, actor)}
 }
 
@@ -299,7 +299,7 @@ type MockInvoiceService_DownloadSharedDocument_Call struct {
 // DownloadSharedDocument is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.DownloadInvoiceDocumentRequest
-func (_e *MockInvoiceService_Expecter) DownloadSharedDocument(ctx interface{}, req interface{}) *MockInvoiceService_DownloadSharedDocument_Call {
+func (_e *MockInvoiceService_Expecter) DownloadSharedDocument(ctx any, req any) *MockInvoiceService_DownloadSharedDocument_Call {
 	return &MockInvoiceService_DownloadSharedDocument_Call{Call: _e.mock.On("DownloadSharedDocument", ctx, req)}
 }
 
@@ -357,7 +357,7 @@ type MockInvoiceService_EnqueueAutoPost_Call struct {
 //   - ctx context.Context
 //   - entity *invoice.Invoice
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) EnqueueAutoPost(ctx interface{}, entity interface{}, actor interface{}) *MockInvoiceService_EnqueueAutoPost_Call {
+func (_e *MockInvoiceService_Expecter) EnqueueAutoPost(ctx any, entity any, actor any) *MockInvoiceService_EnqueueAutoPost_Call {
 	return &MockInvoiceService_EnqueueAutoPost_Call{Call: _e.mock.On("EnqueueAutoPost", ctx, entity, actor)}
 }
 
@@ -431,7 +431,7 @@ type MockInvoiceService_GeneratePDF_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoicePreviewRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) GeneratePDF(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_GeneratePDF_Call {
+func (_e *MockInvoiceService_Expecter) GeneratePDF(ctx any, req any, actor any) *MockInvoiceService_GeneratePDF_Call {
 	return &MockInvoiceService_GeneratePDF_Call{Call: _e.mock.On("GeneratePDF", ctx, req, actor)}
 }
 
@@ -504,7 +504,7 @@ type MockInvoiceService_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetInvoiceByIDRequest
-func (_e *MockInvoiceService_Expecter) GetByID(ctx interface{}, req interface{}) *MockInvoiceService_GetByID_Call {
+func (_e *MockInvoiceService_Expecter) GetByID(ctx any, req any) *MockInvoiceService_GetByID_Call {
 	return &MockInvoiceService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -572,7 +572,7 @@ type MockInvoiceService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListInvoicesRequest
-func (_e *MockInvoiceService_Expecter) List(ctx interface{}, req interface{}) *MockInvoiceService_List_Call {
+func (_e *MockInvoiceService_Expecter) List(ctx any, req any) *MockInvoiceService_List_Call {
 	return &MockInvoiceService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -600,6 +600,74 @@ func (_c *MockInvoiceService_List_Call) Return(listResult *pagination.ListResult
 }
 
 func (_c *MockInvoiceService_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListInvoicesRequest) (*pagination.ListResult[*invoice.Invoice], error)) *MockInvoiceService_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) ListConnection(ctx context.Context, req *repositories.ListInvoiceConnectionRequest) (*pagination.CursorListResult[*invoice.Invoice], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*invoice.Invoice]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListInvoiceConnectionRequest) (*pagination.CursorListResult[*invoice.Invoice], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListInvoiceConnectionRequest) *pagination.CursorListResult[*invoice.Invoice]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*invoice.Invoice])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListInvoiceConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockInvoiceService_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListInvoiceConnectionRequest
+func (_e *MockInvoiceService_Expecter) ListConnection(ctx any, req any) *MockInvoiceService_ListConnection_Call {
+	return &MockInvoiceService_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockInvoiceService_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListInvoiceConnectionRequest)) *MockInvoiceService_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListInvoiceConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListInvoiceConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*invoice.Invoice], err error) *MockInvoiceService_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListInvoiceConnectionRequest) (*pagination.CursorListResult[*invoice.Invoice], error)) *MockInvoiceService_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -640,7 +708,7 @@ type MockInvoiceService_ListEmailAttempts_Call struct {
 // ListEmailAttempts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListInvoiceEmailAttemptsRequest
-func (_e *MockInvoiceService_Expecter) ListEmailAttempts(ctx interface{}, req interface{}) *MockInvoiceService_ListEmailAttempts_Call {
+func (_e *MockInvoiceService_Expecter) ListEmailAttempts(ctx any, req any) *MockInvoiceService_ListEmailAttempts_Call {
 	return &MockInvoiceService_ListEmailAttempts_Call{Call: _e.mock.On("ListEmailAttempts", ctx, req)}
 }
 
@@ -708,7 +776,7 @@ type MockInvoiceService_PlanSend_Call struct {
 // PlanSend is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.InvoiceSendPlanRequest
-func (_e *MockInvoiceService_Expecter) PlanSend(ctx interface{}, req interface{}) *MockInvoiceService_PlanSend_Call {
+func (_e *MockInvoiceService_Expecter) PlanSend(ctx any, req any) *MockInvoiceService_PlanSend_Call {
 	return &MockInvoiceService_PlanSend_Call{Call: _e.mock.On("PlanSend", ctx, req)}
 }
 
@@ -777,7 +845,7 @@ type MockInvoiceService_Post_Call struct {
 //   - ctx context.Context
 //   - req *services.PostInvoiceRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) Post(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_Post_Call {
+func (_e *MockInvoiceService_Expecter) Post(ctx any, req any, actor any) *MockInvoiceService_Post_Call {
 	return &MockInvoiceService_Post_Call{Call: _e.mock.On("Post", ctx, req, actor)}
 }
 
@@ -850,7 +918,7 @@ type MockInvoiceService_RenderPreview_Call struct {
 // RenderPreview is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.InvoicePreviewRequest
-func (_e *MockInvoiceService_Expecter) RenderPreview(ctx interface{}, req interface{}) *MockInvoiceService_RenderPreview_Call {
+func (_e *MockInvoiceService_Expecter) RenderPreview(ctx any, req any) *MockInvoiceService_RenderPreview_Call {
 	return &MockInvoiceService_RenderPreview_Call{Call: _e.mock.On("RenderPreview", ctx, req)}
 }
 
@@ -919,7 +987,7 @@ type MockInvoiceService_Send_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoiceSendRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) Send(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_Send_Call {
+func (_e *MockInvoiceService_Expecter) Send(ctx any, req any, actor any) *MockInvoiceService_Send_Call {
 	return &MockInvoiceService_Send_Call{Call: _e.mock.On("Send", ctx, req, actor)}
 }
 
@@ -993,7 +1061,7 @@ type MockInvoiceService_SendFromWorkflow_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoiceSendRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) SendFromWorkflow(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_SendFromWorkflow_Call {
+func (_e *MockInvoiceService_Expecter) SendFromWorkflow(ctx any, req any, actor any) *MockInvoiceService_SendFromWorkflow_Call {
 	return &MockInvoiceService_SendFromWorkflow_Call{Call: _e.mock.On("SendFromWorkflow", ctx, req, actor)}
 }
 
@@ -1067,7 +1135,7 @@ type MockInvoiceService_UpdateDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.UpdateInvoiceDraftRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceService_Expecter) UpdateDraft(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceService_UpdateDraft_Call {
+func (_e *MockInvoiceService_Expecter) UpdateDraft(ctx any, req any, actor any) *MockInvoiceService_UpdateDraft_Call {
 	return &MockInvoiceService_UpdateDraft_Call{Call: _e.mock.On("UpdateDraft", ctx, req, actor)}
 }
 

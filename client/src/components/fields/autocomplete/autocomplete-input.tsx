@@ -10,6 +10,8 @@ type AutocompleteTriggerProps<TOption> = {
   clearable: boolean;
   currentValue: string | null | undefined;
   selectedOption: TOption | null;
+  isLoadingSelected?: boolean;
+  isErrorSelected?: boolean;
   getDisplayValue: (option: TOption) => React.ReactNode;
   placeholder: string;
   handleClear: () => void;
@@ -25,6 +27,8 @@ export function AutocompleteTrigger<TOption>({
   clearable,
   currentValue,
   selectedOption,
+  isLoadingSelected,
+  isErrorSelected,
   getDisplayValue,
   placeholder,
   handleClear,
@@ -53,6 +57,9 @@ export function AutocompleteTrigger<TOption>({
     >
       <AutocompleteInputInner
         selectedOption={selectedOption}
+        currentValue={currentValue}
+        isLoadingSelected={isLoadingSelected}
+        isErrorSelected={isErrorSelected}
         getDisplayValue={getDisplayValue}
         isInvalid={isInvalid}
         placeholder={placeholder}
@@ -61,6 +68,7 @@ export function AutocompleteTrigger<TOption>({
         clearable={clearable}
         currentValue={currentValue}
         handleClear={handleClear}
+        disabled={disabled}
         open={open}
       />
     </Button>
@@ -69,38 +77,64 @@ export function AutocompleteTrigger<TOption>({
 
 export function AutocompleteInputInner<TOption>({
   selectedOption,
+  currentValue,
+  isLoadingSelected,
+  isErrorSelected,
   getDisplayValue,
   placeholder,
   isInvalid,
 }: {
   selectedOption: TOption | null;
+  currentValue: string | null | undefined;
+  isLoadingSelected?: boolean;
+  isErrorSelected?: boolean;
   getDisplayValue: (option: TOption) => React.ReactNode;
   placeholder: string;
   isInvalid?: boolean;
 }) {
-  const displayValue = selectedOption ? (
-    getDisplayValue(selectedOption)
-  ) : (
-    <p className={cn("text-muted-foreground", isInvalid && "text-red-500")}>{placeholder}</p>
-  );
+  if (selectedOption) {
+    return <div className="truncate">{getDisplayValue(selectedOption)}</div>;
+  }
 
-  return <div className="truncate">{displayValue}</div>;
+  if (currentValue && isLoadingSelected) {
+    return (
+      <div className="truncate">
+        <span className="animate-pulse text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
+
+  if (currentValue && isErrorSelected) {
+    return (
+      <div className="truncate">
+        <span className="text-muted-foreground">{currentValue}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="truncate">
+      <p className={cn("text-muted-foreground", isInvalid && "text-red-500")}>{placeholder}</p>
+    </div>
+  );
 }
 
 export function AutocompleteInputActions({
   clearable,
   currentValue,
   handleClear,
+  disabled,
   open,
 }: {
   clearable: boolean;
   currentValue: string | null | undefined;
   handleClear: () => void;
+  disabled?: boolean;
   open: boolean;
 }) {
   return (
     <div className="ml-auto flex items-center gap-1">
-      {clearable && currentValue && (
+      {clearable && currentValue && !disabled && (
         <span
           onClick={(e) => {
             e.stopPropagation();

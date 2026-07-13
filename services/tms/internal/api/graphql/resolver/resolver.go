@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
+	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
@@ -31,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
@@ -66,6 +69,7 @@ type Params struct {
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
 	CommodityService             *commodityservice.Service
+	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
@@ -83,6 +87,7 @@ type Params struct {
 	WorkerPTOService             *workerptoservice.Service
 	FiscalYearService            *fiscalyearservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
+	RateTableService             *ratetableservice.Service
 	EmailService                 *emailservice.Service
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
@@ -93,6 +98,8 @@ type Params struct {
 	AuditService                 services.AuditService
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
 	ServiceFailureSvc            services.ServiceFailureService
+	BillingQueueService          services.BillingQueueService
+	InvoiceService               services.InvoiceService
 	IAMService                   services.IAMService
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service
@@ -115,6 +122,7 @@ type Resolver struct {
 	accessorialChargeService     *accessorialchargeservice.Service
 	accountTypeService           *accounttypeservice.Service
 	commodityService             *commodityservice.Service
+	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
 	fleetCodeService             *fleetcodeservice.Service
 	hazardousMaterialService     *hazardousmaterialservice.Service
@@ -133,6 +141,7 @@ type Resolver struct {
 	workerPTOService             *workerptoservice.Service
 	fiscalYearService            *fiscalyearservice.Service
 	formulaTemplateService       *formulatemplateservice.Service
+	rateTableService             *ratetableservice.Service
 	emailService                 *emailservice.Service
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
@@ -143,6 +152,8 @@ type Resolver struct {
 	auditService                 services.AuditService
 	serviceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
 	serviceFailureSvc            services.ServiceFailureService
+	billingQueueService          services.BillingQueueService
+	invoiceService               services.InvoiceService
 	iamService                   services.IAMService
 	roleService                  *roleservice.Service
 	userService                  *userservice.Service
@@ -166,6 +177,7 @@ func New(p Params) *Resolver {
 		accessorialChargeService:     p.AccessorialChargeService,
 		accountTypeService:           p.AccountTypeService,
 		commodityService:             p.CommodityService,
+		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,
 		fleetCodeService:             p.FleetCodeService,
 		hazardousMaterialService:     p.HazardousMaterialService,
@@ -184,6 +196,7 @@ func New(p Params) *Resolver {
 		workerPTOService:             p.WorkerPTOService,
 		fiscalYearService:            p.FiscalYearService,
 		formulaTemplateService:       p.FormulaTemplateService,
+		rateTableService:             p.RateTableService,
 		emailService:                 p.EmailService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
 		distanceOverrideService:      p.DistanceOverrideService,
@@ -194,6 +207,8 @@ func New(p Params) *Resolver {
 		auditService:                 p.AuditService,
 		serviceFailureReasonCodeSvc:  p.ServiceFailureReasonCodeSvc,
 		serviceFailureSvc:            p.ServiceFailureSvc,
+		billingQueueService:          p.BillingQueueService,
+		invoiceService:               p.InvoiceService,
 		iamService:                   p.IAMService,
 		roleService:                  p.RoleService,
 		userService:                  p.UserService,
@@ -222,7 +237,11 @@ func (r *Resolver) requirePermission(
 	}
 	if !result.Allowed {
 		return nil, errortypes.NewAuthorizationError(
-			"You don't have permission to perform this action",
+			fmt.Sprintf(
+				"You don't have permission to perform this action: %s %s",
+				resource,
+				operation,
+			),
 		)
 	}
 

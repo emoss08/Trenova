@@ -55,7 +55,8 @@ export function getMappingProfileColumns(): ColumnDef<EDIMappingProfile>[] {
       id: "mappings",
       header: "Mappings",
       cell: ({ row }) => {
-        const count = row.original.entries.length;
+        const rowEntries = row.original.entries;
+        const count = rowEntries ? rowEntries.length : 0;
         return count > 0 ? (
           <Badge variant="secondary">{count.toLocaleString()}</Badge>
         ) : (

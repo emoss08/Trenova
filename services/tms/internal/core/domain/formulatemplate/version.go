@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -45,24 +46,28 @@ var _ bun.BeforeAppendModelHook = (*FormulaTemplateVersion)(nil)
 type FormulaTemplateVersion struct {
 	bun.BaseModel `bun:"table:formula_template_versions,alias:ftv" json:"-"`
 
-	ID                  pulid.ID                           `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
-	TemplateID          pulid.ID                           `json:"templateId"          bun:"template_id,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID                           `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID                           `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	VersionNumber       int64                              `json:"versionNumber"       bun:"version_number,type:BIGINT,notnull"`
-	Name                string                             `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
-	Description         string                             `json:"description"         bun:"description,type:TEXT"`
-	Type                TemplateType                       `json:"type"                bun:"type,type:formula_template_type_enum,notnull"`
-	Expression          string                             `json:"expression"          bun:"expression,type:TEXT,notnull"`
-	Status              Status                             `json:"status"              bun:"status,type:formula_template_status_enum,notnull"`
-	SchemaID            string                             `json:"schemaId"            bun:"schema_id,type:VARCHAR(100),notnull"`
-	VariableDefinitions []*formulatypes.VariableDefinition `json:"variableDefinitions" bun:"variable_definitions,type:JSONB,notnull"`
-	Metadata            map[string]any                     `json:"metadata"            bun:"metadata,type:JSONB"`
-	ChangeMessage       string                             `json:"changeMessage"       bun:"change_message,type:TEXT"`
-	ChangeSummary       map[string]jsonutils.FieldChange   `json:"changeSummary"       bun:"change_summary,type:JSONB"`
-	Tags                []VersionTag                       `json:"tags"                bun:"tags,type:TEXT[],array"`
-	CreatedByID         pulid.ID                           `json:"createdById"         bun:"created_by_id,type:VARCHAR(100),notnull"`
-	CreatedAt           int64                              `json:"createdAt"           bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID                            `json:"id"                   bun:"id,pk,type:VARCHAR(100)"`
+	TemplateID           pulid.ID                            `json:"templateId"           bun:"template_id,type:VARCHAR(100),notnull"`
+	OrganizationID       pulid.ID                            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID       pulid.ID                            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	VersionNumber        int64                               `json:"versionNumber"        bun:"version_number,type:BIGINT,notnull"`
+	Name                 string                              `json:"name"                 bun:"name,type:VARCHAR(100),notnull"`
+	Description          string                              `json:"description"          bun:"description,type:TEXT"`
+	Type                 TemplateType                        `json:"type"                 bun:"type,type:formula_template_type_enum,notnull"`
+	Expression           string                              `json:"expression"           bun:"expression,type:TEXT,notnull"`
+	Status               Status                              `json:"status"               bun:"status,type:formula_template_status_enum,notnull"`
+	SchemaID             string                              `json:"schemaId"             bun:"schema_id,type:VARCHAR(100),notnull"`
+	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"  bun:"variable_definitions,type:JSONB,notnull"`
+	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions" bun:"breakdown_definitions,type:JSONB,notnull,default:'[]'"`
+	MinCharge            decimal.NullDecimal                 `json:"minCharge"            bun:"min_charge,type:NUMERIC(19,4)"`
+	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"            bun:"max_charge,type:NUMERIC(19,4)"`
+	EffectiveFrom        *int64                              `json:"effectiveFrom"        bun:"effective_from,type:BIGINT"`
+	Metadata             map[string]any                      `json:"metadata"             bun:"metadata,type:JSONB"`
+	ChangeMessage        string                              `json:"changeMessage"        bun:"change_message,type:TEXT"`
+	ChangeSummary        map[string]jsonutils.FieldChange    `json:"changeSummary"        bun:"change_summary,type:JSONB"`
+	Tags                 []VersionTag                        `json:"tags"                 bun:"tags,type:TEXT[],array"`
+	CreatedByID          pulid.ID                            `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
+	CreatedAt            int64                               `json:"createdAt"            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	CreatedBy *tenant.User `json:"createdBy,omitempty" bun:"rel:belongs-to,join:created_by_id=id"`
 }
@@ -98,21 +103,24 @@ func NewVersionFromTemplate(
 	changeSummary map[string]jsonutils.FieldChange,
 ) *FormulaTemplateVersion {
 	return &FormulaTemplateVersion{
-		TemplateID:          ft.ID,
-		OrganizationID:      ft.OrganizationID,
-		BusinessUnitID:      ft.BusinessUnitID,
-		VersionNumber:       versionNumber,
-		Name:                ft.Name,
-		Description:         ft.Description,
-		Type:                ft.Type,
-		Expression:          ft.Expression,
-		Status:              ft.Status,
-		SchemaID:            ft.SchemaID,
-		VariableDefinitions: ft.VariableDefinitions,
-		Metadata:            ft.Metadata,
-		ChangeMessage:       changeMessage,
-		ChangeSummary:       changeSummary,
-		CreatedByID:         createdByID,
+		TemplateID:           ft.ID,
+		OrganizationID:       ft.OrganizationID,
+		BusinessUnitID:       ft.BusinessUnitID,
+		VersionNumber:        versionNumber,
+		Name:                 ft.Name,
+		Description:          ft.Description,
+		Type:                 ft.Type,
+		Expression:           ft.Expression,
+		Status:               ft.Status,
+		SchemaID:             ft.SchemaID,
+		VariableDefinitions:  ft.VariableDefinitions,
+		BreakdownDefinitions: ft.BreakdownDefinitions,
+		MinCharge:            ft.MinCharge,
+		MaxCharge:            ft.MaxCharge,
+		Metadata:             ft.Metadata,
+		ChangeMessage:        changeMessage,
+		ChangeSummary:        changeSummary,
+		CreatedByID:          createdByID,
 	}
 }
 

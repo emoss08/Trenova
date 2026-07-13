@@ -126,9 +126,9 @@ type MockWorkflowStarter_StartWorkflow_Call struct {
 //   - options client.StartWorkflowOptions
 //   - workflow any
 //   - args ...any
-func (_e *MockWorkflowStarter_Expecter) StartWorkflow(ctx interface{}, options interface{}, workflow interface{}, args ...interface{}) *MockWorkflowStarter_StartWorkflow_Call {
+func (_e *MockWorkflowStarter_Expecter) StartWorkflow(ctx any, options any, workflow any, args ...any) *MockWorkflowStarter_StartWorkflow_Call {
 	return &MockWorkflowStarter_StartWorkflow_Call{Call: _e.mock.On("StartWorkflow",
-		append([]interface{}{ctx, options, workflow}, args...)...)}
+		append([]any{ctx, options, workflow}, args...)...)}
 }
 
 func (_c *MockWorkflowStarter_StartWorkflow_Call) Run(run func(ctx context.Context, options client.StartWorkflowOptions, workflow any, args ...any)) *MockWorkflowStarter_StartWorkflow_Call {

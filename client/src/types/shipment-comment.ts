@@ -50,7 +50,7 @@ const shipmentCommentMentionSchema = z.object({
   businessUnitId: z.string().optional(),
   shipmentId: z.string().optional(),
   createdAt: z.number(),
-  mentionedUser: commentUserSchema.optional(),
+  mentionedUser: commentUserSchema.nullish(),
 });
 
 export type ShipmentCommentMention = z.infer<typeof shipmentCommentMentionSchema>;
@@ -72,8 +72,8 @@ export const shipmentCommentSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   mentionedUserIds: z.array(z.string()).optional().default([]),
-  user: commentUserSchema.optional(),
-  mentionedUsers: z.array(shipmentCommentMentionSchema).optional(),
+  user: commentUserSchema.nullish(),
+  mentionedUsers: z.array(shipmentCommentMentionSchema).nullish(),
 });
 
 export type ShipmentComment = z.infer<typeof shipmentCommentSchema>;

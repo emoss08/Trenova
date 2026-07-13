@@ -74,7 +74,7 @@ type MockAutoCompleteService_GetPlaceDetails_Call struct {
 // GetPlaceDetails is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.AutoCompleteRequest
-func (_e *MockAutoCompleteService_Expecter) GetPlaceDetails(ctx interface{}, req interface{}) *MockAutoCompleteService_GetPlaceDetails_Call {
+func (_e *MockAutoCompleteService_Expecter) GetPlaceDetails(ctx any, req any) *MockAutoCompleteService_GetPlaceDetails_Call {
 	return &MockAutoCompleteService_GetPlaceDetails_Call{Call: _e.mock.On("GetPlaceDetails", ctx, req)}
 }
 

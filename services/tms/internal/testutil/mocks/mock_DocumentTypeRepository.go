@@ -76,7 +76,7 @@ type MockDocumentTypeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documenttype.DocumentType
-func (_e *MockDocumentTypeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentTypeRepository_Create_Call {
+func (_e *MockDocumentTypeRepository_Expecter) Create(ctx any, entity any) *MockDocumentTypeRepository_Create_Call {
 	return &MockDocumentTypeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockDocumentTypeRepository_GetByCode_Call struct {
 // GetByCode is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentTypeByCodeRequest
-func (_e *MockDocumentTypeRepository_Expecter) GetByCode(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByCode_Call {
+func (_e *MockDocumentTypeRepository_Expecter) GetByCode(ctx any, req any) *MockDocumentTypeRepository_GetByCode_Call {
 	return &MockDocumentTypeRepository_GetByCode_Call{Call: _e.mock.On("GetByCode", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockDocumentTypeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentTypeByIDRequest
-func (_e *MockDocumentTypeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByID_Call {
+func (_e *MockDocumentTypeRepository_Expecter) GetByID(ctx any, req any) *MockDocumentTypeRepository_GetByID_Call {
 	return &MockDocumentTypeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockDocumentTypeRepository_GetByName_Call struct {
 // GetByName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentTypeByNameRequest
-func (_e *MockDocumentTypeRepository_Expecter) GetByName(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByName_Call {
+func (_e *MockDocumentTypeRepository_Expecter) GetByName(ctx any, req any) *MockDocumentTypeRepository_GetByName_Call {
 	return &MockDocumentTypeRepository_GetByName_Call{Call: _e.mock.On("GetByName", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockDocumentTypeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentTypesRequest
-func (_e *MockDocumentTypeRepository_Expecter) List(ctx interface{}, req interface{}) *MockDocumentTypeRepository_List_Call {
+func (_e *MockDocumentTypeRepository_Expecter) List(ctx any, req any) *MockDocumentTypeRepository_List_Call {
 	return &MockDocumentTypeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -376,6 +376,74 @@ func (_c *MockDocumentTypeRepository_List_Call) Return(listResult *pagination.Li
 }
 
 func (_c *MockDocumentTypeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentTypesRequest) (*pagination.ListResult[*documenttype.DocumentType], error)) *MockDocumentTypeRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockDocumentTypeRepository
+func (_mock *MockDocumentTypeRepository) ListConnection(ctx context.Context, req *repositories.ListDocumentTypeConnectionRequest) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*documenttype.DocumentType]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentTypeConnectionRequest) (*pagination.CursorListResult[*documenttype.DocumentType], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentTypeConnectionRequest) *pagination.CursorListResult[*documenttype.DocumentType]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*documenttype.DocumentType])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDocumentTypeConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentTypeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockDocumentTypeRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListDocumentTypeConnectionRequest
+func (_e *MockDocumentTypeRepository_Expecter) ListConnection(ctx any, req any) *MockDocumentTypeRepository_ListConnection_Call {
+	return &MockDocumentTypeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockDocumentTypeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListDocumentTypeConnectionRequest)) *MockDocumentTypeRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListDocumentTypeConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListDocumentTypeConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentTypeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*documenttype.DocumentType], err error) *MockDocumentTypeRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockDocumentTypeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentTypeConnectionRequest) (*pagination.CursorListResult[*documenttype.DocumentType], error)) *MockDocumentTypeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +484,7 @@ type MockDocumentTypeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockDocumentTypeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockDocumentTypeRepository_SelectOptions_Call {
+func (_e *MockDocumentTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockDocumentTypeRepository_SelectOptions_Call {
 	return &MockDocumentTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +552,7 @@ type MockDocumentTypeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documenttype.DocumentType
-func (_e *MockDocumentTypeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentTypeRepository_Update_Call {
+func (_e *MockDocumentTypeRepository_Expecter) Update(ctx any, entity any) *MockDocumentTypeRepository_Update_Call {
 	return &MockDocumentTypeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -512,74 +580,6 @@ func (_c *MockDocumentTypeRepository_Update_Call) Return(documentType *documentt
 }
 
 func (_c *MockDocumentTypeRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *documenttype.DocumentType) (*documenttype.DocumentType, error)) *MockDocumentTypeRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockDocumentTypeRepository
-func (_mock *MockDocumentTypeRepository) ListConnection(ctx context.Context, req *repositories.ListDocumentTypeConnectionRequest) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*documenttype.DocumentType]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentTypeConnectionRequest) (*pagination.CursorListResult[*documenttype.DocumentType], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentTypeConnectionRequest) *pagination.CursorListResult[*documenttype.DocumentType]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*documenttype.DocumentType])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDocumentTypeConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockDocumentTypeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockDocumentTypeRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListDocumentTypeConnectionRequest
-func (_e *MockDocumentTypeRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockDocumentTypeRepository_ListConnection_Call {
-	return &MockDocumentTypeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockDocumentTypeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListDocumentTypeConnectionRequest)) *MockDocumentTypeRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListDocumentTypeConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListDocumentTypeConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockDocumentTypeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*documenttype.DocumentType], err error) *MockDocumentTypeRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockDocumentTypeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentTypeConnectionRequest) (*pagination.CursorListResult[*documenttype.DocumentType], error)) *MockDocumentTypeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

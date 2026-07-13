@@ -76,7 +76,7 @@ type MockJournalReversalRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *journalreversal.Reversal
-func (_e *MockJournalReversalRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockJournalReversalRepository_Create_Call {
+func (_e *MockJournalReversalRepository_Expecter) Create(ctx any, entity any) *MockJournalReversalRepository_Create_Call {
 	return &MockJournalReversalRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockJournalReversalRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetJournalReversalByIDRequest
-func (_e *MockJournalReversalRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockJournalReversalRepository_GetByID_Call {
+func (_e *MockJournalReversalRepository_Expecter) GetByID(ctx any, req any) *MockJournalReversalRepository_GetByID_Call {
 	return &MockJournalReversalRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockJournalReversalRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListJournalReversalsRequest
-func (_e *MockJournalReversalRepository_Expecter) List(ctx interface{}, req interface{}) *MockJournalReversalRepository_List_Call {
+func (_e *MockJournalReversalRepository_Expecter) List(ctx any, req any) *MockJournalReversalRepository_List_Call {
 	return &MockJournalReversalRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockJournalReversalRepository_ListConnection_Call struct {
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListJournalReversalConnectionRequest
-func (_e *MockJournalReversalRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockJournalReversalRepository_ListConnection_Call {
+func (_e *MockJournalReversalRepository_Expecter) ListConnection(ctx any, req any) *MockJournalReversalRepository_ListConnection_Call {
 	return &MockJournalReversalRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockJournalReversalRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *journalreversal.Reversal
-func (_e *MockJournalReversalRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockJournalReversalRepository_Update_Call {
+func (_e *MockJournalReversalRepository_Expecter) Update(ctx any, entity any) *MockJournalReversalRepository_Update_Call {
 	return &MockJournalReversalRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

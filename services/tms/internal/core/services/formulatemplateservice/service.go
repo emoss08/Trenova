@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,6 +27,7 @@ type Params struct {
 	Logger         *zap.Logger
 	Repo           repositories.FormulaTemplateRepository
 	VersionRepo    repositories.FormulaTemplateVersionRepository
+	ShipmentRepo   repositories.ShipmentRepository
 	FormulaService *formula.Service
 	AuditService   services.AuditService
 }
@@ -33,15 +36,17 @@ type Service struct {
 	l              *zap.Logger
 	repo           repositories.FormulaTemplateRepository
 	versionRepo    repositories.FormulaTemplateVersionRepository
+	shipmentRepo   repositories.ShipmentRepository
 	formulaService *formula.Service
 	auditService   services.AuditService
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
 		l:              p.Logger.Named("service.formulatemplate"),
 		repo:           p.Repo,
 		versionRepo:    p.VersionRepo,
+		shipmentRepo:   p.ShipmentRepo,
 		formulaService: p.FormulaService,
 		auditService:   p.AuditService,
 	}
@@ -57,7 +62,7 @@ func (s *Service) Create(
 		zap.String("name", entity.Name),
 	)
 
-	if err := s.validateTemplate(entity); err != nil {
+	if err := s.validateTemplate(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -92,7 +97,7 @@ func (s *Service) Update(
 		zap.String("id", entity.ID.String()),
 	)
 
-	if err := s.validateTemplate(entity); err != nil {
+	if err := s.validateTemplate(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -105,6 +110,28 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to get original formula template", zap.Error(err))
 		return nil, err
+	}
+
+	if entity.Status != original.Status &&
+		!formulatemplate.CanTransition(original.Status, entity.Status) {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"Cannot transition template status from %s to %s",
+				original.Status,
+				entity.Status,
+			),
+		)
+	}
+
+	auditComment := "Formula template updated"
+	if (original.Status == formulatemplate.StatusActive ||
+		original.Status == formulatemplate.StatusInReview) &&
+		entity.HasMaterialChange(original) {
+		entity.Status = formulatemplate.StatusDraft
+		clearApprovalFields(entity)
+		auditComment = "Material change reverted approval"
 	}
 
 	newVersionNumber := original.CurrentVersionNumber + 1
@@ -128,7 +155,7 @@ func (s *Service) Update(
 		permission.OpUpdate,
 		userID,
 		original,
-		"Formula template updated",
+		auditComment,
 	)
 
 	return updatedEntity, nil
@@ -167,6 +194,40 @@ func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
+	if req.Status != formulatemplate.StatusActive &&
+		req.Status != formulatemplate.StatusInactive {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Bulk status updates only support Active and Inactive",
+		)
+	}
+
+	templates, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+		TenantInfo:  req.TenantInfo,
+		TemplateIDs: req.TemplateIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, template := range templates {
+		if template.Status == formulatemplate.StatusActive ||
+			template.Status == formulatemplate.StatusInactive {
+			continue
+		}
+
+		return nil, errortypes.NewValidationError(
+			"templateIds",
+			errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"Template %s is %s; only Active and Inactive templates can be bulk updated",
+				template.Name,
+				template.Status,
+			),
+		)
+	}
+
 	return s.repo.BulkUpdateStatus(ctx, req)
 }
 
@@ -523,34 +584,67 @@ type TestExpressionRequest struct {
 	Expression string
 	SchemaID   string
 	Variables  map[string]any
+	ShipmentID *pulid.ID
+	TenantInfo pagination.TenantInfo
+	Breakdowns []*formulatypes.BreakdownDefinition
 }
+
+const msgExpressionValidationFailed = "Expression validation failed"
 
 type TestExpressionResponse struct {
-	Valid   bool   `json:"valid"`
-	Result  any    `json:"result,omitempty"`
-	Error   string `json:"error,omitempty"`
-	Message string `json:"message"`
+	Valid             bool                                   `json:"valid"`
+	Result            any                                    `json:"result,omitempty"`
+	Error             string                                 `json:"error,omitempty"`
+	Message           string                                 `json:"message"`
+	Breakdown         []formulatemplatetypes.BreakdownAmount `json:"breakdown,omitempty"`
+	ResolvedVariables map[string]any                         `json:"resolvedVariables,omitempty"`
 }
 
-func (s *Service) TestExpression(req *TestExpressionRequest) *TestExpressionResponse {
-	env, err := s.formulaService.BuildValidationEnvironment(req.SchemaID, req.Variables)
+func (s *Service) TestExpression(
+	ctx context.Context,
+	req *TestExpressionRequest,
+) *TestExpressionResponse {
+	err := s.formulaService.ValidateLookupTables(ctx, req.Expression, req.TenantInfo)
 	if err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,
 			Error:   err.Error(),
-			Message: "Expression validation failed",
+			Message: msgExpressionValidationFailed,
 		}
 	}
 
-	if err = s.formulaService.ValidateExpressionWithEnv(req.Expression, env); err != nil {
+	if req.ShipmentID != nil {
+		return s.testExpressionAgainstShipment(ctx, req)
+	}
+
+	return s.testExpressionWithEnv(ctx, req)
+}
+
+func (s *Service) testExpressionAgainstShipment(
+	ctx context.Context,
+	req *TestExpressionRequest,
+) *TestExpressionResponse {
+	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:              *req.ShipmentID,
+		TenantInfo:      req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+	})
+	if err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,
 			Error:   err.Error(),
-			Message: "Expression validation failed",
+			Message: "Failed to load shipment",
 		}
 	}
 
-	result, err := s.formulaService.EvaluateWithEnv(req.Expression, env)
+	resp, err := s.formulaService.EvaluateExpression(ctx, &formula.EvaluateExpressionRequest{
+		Expression: req.Expression,
+		Entity:     entity,
+		SchemaID:   req.SchemaID,
+		Variables:  req.Variables,
+		Breakdowns: req.Breakdowns,
+		TenantInfo: req.TenantInfo,
+	})
 	if err != nil {
 		return &TestExpressionResponse{
 			Valid:   false,
@@ -560,13 +654,85 @@ func (s *Service) TestExpression(req *TestExpressionRequest) *TestExpressionResp
 	}
 
 	return &TestExpressionResponse{
+		Valid:             true,
+		Result:            resp.Amount,
+		Breakdown:         resp.Breakdown,
+		ResolvedVariables: sanitizeResolvedVariables(resp.Variables),
+		Message:           "Expression evaluated against shipment",
+	}
+}
+
+func (s *Service) testExpressionWithEnv(
+	ctx context.Context,
+	req *TestExpressionRequest,
+) *TestExpressionResponse {
+	env, err := s.formulaService.BuildValidationEnvironment(req.SchemaID, req.Variables)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: msgExpressionValidationFailed,
+		}
+	}
+
+	if err = s.formulaService.ValidateExpressionWithEnv(ctx, req.Expression, env); err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: msgExpressionValidationFailed,
+		}
+	}
+
+	result, err := s.formulaService.EvaluateWithEnv(ctx, req.Expression, env)
+	if err != nil {
+		return &TestExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Expression evaluation failed",
+		}
+	}
+
+	resp := &TestExpressionResponse{
 		Valid:   true,
 		Result:  result.Amount,
 		Message: "Expression is valid",
 	}
+
+	if len(req.Breakdowns) > 0 {
+		resp.Breakdown = s.evaluateBreakdownsWithEnv(ctx, req.Breakdowns, env)
+	}
+
+	return resp
 }
 
-func (s *Service) validateTemplate(entity *formulatemplate.FormulaTemplate) error {
+func (s *Service) evaluateBreakdownsWithEnv(
+	ctx context.Context,
+	defs []*formulatypes.BreakdownDefinition,
+	env map[string]any,
+) []formulatemplatetypes.BreakdownAmount {
+	items := make([]formulatemplatetypes.BreakdownAmount, 0, len(defs))
+	for _, def := range defs {
+		if def == nil {
+			continue
+		}
+
+		item := formulatemplatetypes.BreakdownAmount{Name: def.Name, Label: def.Label}
+		if result, err := s.formulaService.EvaluateWithEnv(ctx, def.Expression, env); err != nil {
+			item.Error = err.Error()
+		} else {
+			item.Amount = result.Amount
+		}
+
+		items = append(items, item)
+	}
+
+	return items
+}
+
+func (s *Service) validateTemplate(
+	ctx context.Context,
+	entity *formulatemplate.FormulaTemplate,
+) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 
@@ -574,10 +740,13 @@ func (s *Service) validateTemplate(entity *formulatemplate.FormulaTemplate) erro
 		return multiErr
 	}
 
-	return s.validateExpression(entity)
+	return s.validateExpression(ctx, entity)
 }
 
-func (s *Service) validateExpression(entity *formulatemplate.FormulaTemplate) error {
+func (s *Service) validateExpression(
+	ctx context.Context,
+	entity *formulatemplate.FormulaTemplate,
+) error {
 	variables := make(map[string]any, len(entity.VariableDefinitions))
 	for _, varDef := range entity.VariableDefinitions {
 		if varDef.DefaultValue != nil {
@@ -593,7 +762,51 @@ func (s *Service) validateExpression(entity *formulatemplate.FormulaTemplate) er
 		return err
 	}
 
-	return s.formulaService.ValidateExpressionWithEnv(entity.Expression, env)
+	if err = s.formulaService.ValidateExpressionWithEnv(ctx, entity.Expression, env); err != nil {
+		return err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for i, def := range entity.BreakdownDefinitions {
+		if def == nil {
+			continue
+		}
+		defErr := s.formulaService.ValidateExpressionWithEnv(ctx, def.Expression, env)
+		if defErr != nil {
+			multiErr.Add(
+				fmt.Sprintf("breakdownDefinitions[%d].expression", i),
+				errortypes.ErrInvalid,
+				defErr.Error(),
+			)
+		}
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}
+
+	if err = s.formulaService.ValidateLookupTables(ctx, entity.Expression, tenantInfo); err != nil {
+		return err
+	}
+
+	for _, def := range entity.BreakdownDefinitions {
+		if def == nil {
+			continue
+		}
+		if err = s.formulaService.ValidateLookupTables(
+			ctx,
+			def.Expression,
+			tenantInfo,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) getTemplateByID(
@@ -645,6 +858,7 @@ func (s *Service) logAuditAction(
 	userID pulid.ID,
 	previousState *formulatemplate.FormulaTemplate,
 	comment string,
+	extraOpts ...services.LogOption,
 ) {
 	params := &services.LogActionParams{
 		Resource:       permission.ResourceFormulaTemplate,
@@ -662,6 +876,8 @@ func (s *Service) logAuditAction(
 		params.PreviousState = jsonutils.MustToJSON(previousState)
 		opts = append(opts, auditservice.WithDiff(previousState, entity))
 	}
+
+	opts = append(opts, extraOpts...)
 
 	if err := s.auditService.LogAction(params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))

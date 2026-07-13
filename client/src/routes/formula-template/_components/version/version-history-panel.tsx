@@ -1,3 +1,4 @@
+import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,13 +27,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserHoverCard } from "@/components/user-hover-card";
-import { formatToUserTimezone } from "@/lib/date";
+import { usePermission } from "@/hooks/use-permission";
+import { formatToUserTimezone, toDate, toUnixTimeStamp } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
@@ -44,10 +42,13 @@ import {
   type TemplateUsageResponse,
   type VersionTag,
 } from "@/types/formula-template";
+import { Operation, Resource } from "@/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertCircleIcon,
+  CalendarClockIcon,
+  CalendarOffIcon,
   CheckIcon,
   ClockIcon,
   DotIcon,
@@ -79,25 +80,21 @@ export function VersionHistoryPanel({
   onRollback,
 }: VersionHistoryPanelProps) {
   const queryClient = useQueryClient();
+  const { allowed: canApprove } = usePermission(Resource.FormulaTemplate, Operation.Approve);
+  const canSchedule = canApprove && template?.status === "Active";
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const [compareVersions, setCompareVersions] = useState<{
     from: number;
     to: number;
   } | null>(null);
-  const [rollingBackVersion, setRollingBackVersion] = useState<number | null>(
-    null,
-  );
+  const [rollingBackVersion, setRollingBackVersion] = useState<number | null>(null);
   const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
   const [pendingRollbackVersion, setPendingRollbackVersion] =
     useState<FormulaTemplateVersion | null>(null);
-  const [usageData, setUsageData] = useState<TemplateUsageResponse | null>(
-    null,
-  );
+  const [usageData, setUsageData] = useState<TemplateUsageResponse | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
-  const [selectedForCompare, setSelectedForCompare] = useState<number | null>(
-    null,
-  );
+  const [selectedForCompare, setSelectedForCompare] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     ...queries.formulaTemplate.versions(template?.id),
@@ -108,9 +105,7 @@ export function VersionHistoryPanel({
 
   const handleCompare = (fromVersion: number, toVersion: number) => {
     const [from, to] =
-      fromVersion < toVersion
-        ? [fromVersion, toVersion]
-        : [toVersion, fromVersion];
+      fromVersion < toVersion ? [fromVersion, toVersion] : [toVersion, fromVersion];
     setCompareVersions({ from, to });
     setCompareDialogOpen(true);
     setCompareMode(false);
@@ -236,16 +231,10 @@ export function VersionHistoryPanel({
                   <GitCompareArrowsIcon className="size-4 text-primary" />
                   <span className="text-foreground">
                     Select another version to compare with{" "}
-                    <span className="font-mono font-semibold">
-                      v{selectedForCompare}
-                    </span>
+                    <span className="font-mono font-semibold">v{selectedForCompare}</span>
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={handleCancelCompareMode}
-                >
+                <Button variant="ghost" size="icon-xs" onClick={handleCancelCompareMode}>
                   <XIcon className="size-4" />
                 </Button>
               </div>
@@ -264,19 +253,13 @@ export function VersionHistoryPanel({
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <AlertCircleIcon className="mb-4 size-12 text-destructive" />
-                  <p className="text-muted-foreground">
-                    Failed to load version history
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Please try again later
-                  </p>
+                  <p className="text-muted-foreground">Failed to load version history</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Please try again later</p>
                 </div>
               ) : versions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <ClockIcon className="mb-4 size-12 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    No version history yet
-                  </p>
+                  <p className="text-muted-foreground">No version history yet</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -285,9 +268,7 @@ export function VersionHistoryPanel({
                       key={version.id}
                       templateId={template?.id ?? ""}
                       version={version}
-                      isCurrent={
-                        version.versionNumber === template?.currentVersionNumber
-                      }
+                      isCurrent={version.versionNumber === template?.currentVersionNumber}
                       onComparePrevious={
                         index < versions.length - 1
                           ? () =>
@@ -297,26 +278,16 @@ export function VersionHistoryPanel({
                               )
                           : undefined
                       }
-                      onRollback={
-                        index !== 0
-                          ? () => void handleRollbackClick(version)
-                          : undefined
-                      }
-                      isRollingBack={
-                        rollingBackVersion === version.versionNumber
-                      }
+                      onRollback={index !== 0 ? () => void handleRollbackClick(version) : undefined}
+                      isRollingBack={rollingBackVersion === version.versionNumber}
+                      canSchedule={canSchedule}
                       onExport={() => handleExportVersion(version)}
                       compareMode={compareMode}
                       selectedForCompare={selectedForCompare}
-                      onSelectForCompare={() =>
-                        handleSelectForCompare(version.versionNumber)
-                      }
+                      onSelectForCompare={() => handleSelectForCompare(version.versionNumber)}
                       onCompareWith={() => {
                         if (selectedForCompare !== null) {
-                          handleCompare(
-                            selectedForCompare,
-                            version.versionNumber,
-                          );
+                          handleCompare(selectedForCompare, version.versionNumber);
                         }
                       }}
                     />
@@ -367,6 +338,7 @@ type VersionItemProps = {
   onComparePrevious?: () => void;
   onRollback?: () => void;
   isRollingBack: boolean;
+  canSchedule: boolean;
   onExport: () => void;
   compareMode: boolean;
   selectedForCompare: number | null;
@@ -389,9 +361,7 @@ function getChangeBadges(
   const badges: ChangeBadgeInfo[] = [];
 
   const hasExpression = changes.some(([k]) => k === "expression");
-  const variableChanges = changes.filter(([k]) =>
-    k.startsWith("variableDefinitions"),
-  );
+  const variableChanges = changes.filter(([k]) => k.startsWith("variableDefinitions"));
   const metadataChanges = changes.filter(([k]) => k.startsWith("metadata"));
   const hasStatus = changes.some(([k]) => k === "status");
   const hasName = changes.some(([k]) => k === "name");
@@ -409,8 +379,7 @@ function getChangeBadges(
   if (variableChanges.length > 0) {
     badges.push({
       label: `Vars${variableChanges.length > 1 ? ` (${variableChanges.length})` : ""}`,
-      color:
-        "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+      color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
       tooltip: `${variableChanges.length} variable change${variableChanges.length > 1 ? "s" : ""}`,
     });
   }
@@ -418,25 +387,20 @@ function getChangeBadges(
   if (hasStatus) {
     badges.push({
       label: "Status",
-      color:
-        "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+      color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
       tooltip: "Status changed",
     });
   }
 
   const otherCount =
-    (hasName ? 1 : 0) +
-    (hasDescription ? 1 : 0) +
-    (hasType ? 1 : 0) +
-    metadataChanges.length;
+    (hasName ? 1 : 0) + (hasDescription ? 1 : 0) + (hasType ? 1 : 0) + metadataChanges.length;
 
   if (otherCount > 0) {
     const otherLabels: string[] = [];
     if (hasName) otherLabels.push("name");
     if (hasDescription) otherLabels.push("description");
     if (hasType) otherLabels.push("type");
-    if (metadataChanges.length > 0)
-      otherLabels.push(`${metadataChanges.length} metadata`);
+    if (metadataChanges.length > 0) otherLabels.push(`${metadataChanges.length} metadata`);
 
     badges.push({
       label: `+${otherCount}`,
@@ -455,6 +419,7 @@ function VersionItem({
   onComparePrevious,
   onRollback,
   isRollingBack,
+  canSchedule,
   onExport,
   compareMode,
   selectedForCompare,
@@ -463,17 +428,47 @@ function VersionItem({
 }: VersionItemProps) {
   const queryClient = useQueryClient();
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<VersionTag[]>(
-    version.tags ?? [],
-  );
+  const [selectedTags, setSelectedTags] = useState<VersionTag[]>(version.tags ?? []);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>(undefined);
+
+  const updateEffectiveDateMutation = useMutation({
+    mutationFn: (effectiveFrom: number | null) =>
+      apiService.formulaTemplateService.updateVersionEffectiveDate(
+        templateId,
+        version.versionNumber,
+        effectiveFrom,
+      ),
+    onSuccess: (_data, effectiveFrom) => {
+      void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
+      toast.success(effectiveFrom === null ? "Schedule cleared" : "Activation scheduled", {
+        description:
+          effectiveFrom === null
+            ? `v${version.versionNumber} will no longer activate automatically`
+            : `v${version.versionNumber} activates ${formatToUserTimezone(effectiveFrom)}`,
+      });
+      setScheduleDialogOpen(false);
+    },
+    onError: () => {
+      toast.error("Failed to update activation schedule");
+    },
+  });
+
+  const handleOpenScheduleDialog = () => {
+    setScheduleDate(version.effectiveFrom ? toDate(version.effectiveFrom) : undefined);
+    setScheduleDialogOpen(true);
+  };
+
+  const handleSaveSchedule = () => {
+    const effectiveFrom = toUnixTimeStamp(scheduleDate);
+    if (!effectiveFrom) return;
+
+    updateEffectiveDateMutation.mutate(effectiveFrom);
+  };
 
   const updateTagsMutation = useMutation({
     mutationFn: (tags: VersionTag[]) =>
-      apiService.formulaTemplateService.updateVersionTags(
-        templateId,
-        version.versionNumber,
-        tags,
-      ),
+      apiService.formulaTemplateService.updateVersionTags(templateId, version.versionNumber, tags),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
       toast.success("Tags updated");
@@ -501,9 +496,7 @@ function VersionItem({
 
   const isSelectedForCompare = selectedForCompare === version.versionNumber;
   const canCompareWith =
-    compareMode &&
-    selectedForCompare !== null &&
-    selectedForCompare !== version.versionNumber;
+    compareMode && selectedForCompare !== null && selectedForCompare !== version.versionNumber;
   const changeBadges = getChangeBadges(version.changeSummary);
   const currentTags = version.tags ?? [];
 
@@ -521,28 +514,27 @@ function VersionItem({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex flex-wrap items-center gap-2">
-              <span className="font-mono text-sm font-medium">
-                v{version.versionNumber}
-              </span>
+              <span className="font-mono text-sm font-medium">v{version.versionNumber}</span>
               {isCurrent && (
                 <Badge variant="active" className="text-xs">
                   Current
                 </Badge>
               )}
               {isSelectedForCompare && (
-                <Badge
-                  variant="outline"
-                  className="border-primary text-xs text-primary"
-                >
+                <Badge variant="outline" className="border-primary text-xs text-primary">
                   Selected
+                </Badge>
+              )}
+              {version.effectiveFrom != null && (
+                <Badge variant="warning" className="gap-1 text-xs">
+                  <CalendarClockIcon className="size-2.5" />
+                  Activates {formatToUserTimezone(version.effectiveFrom)}
                 </Badge>
               )}
               {currentTags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {currentTags.map((tag) => {
-                    const tagOption = VERSION_TAG_OPTIONS.find(
-                      (t) => t.value === tag,
-                    );
+                    const tagOption = VERSION_TAG_OPTIONS.find((t) => t.value === tag);
                     return (
                       <Tooltip key={tag}>
                         <TooltipTrigger
@@ -550,8 +542,7 @@ function VersionItem({
                             <span
                               className={cn(
                                 "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
-                                tagOption?.color ??
-                                  "bg-muted text-muted-foreground",
+                                tagOption?.color ?? "bg-muted text-muted-foreground",
                               )}
                             >
                               <TagIcon className="size-2.5" />
@@ -624,9 +615,7 @@ function VersionItem({
           <div
             className={cn(
               "flex items-center gap-1 transition-opacity",
-              canCompareWith
-                ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100",
+              canCompareWith ? "opacity-100" : "opacity-0 group-hover:opacity-100",
             )}
           >
             {canCompareWith ? (
@@ -656,9 +645,7 @@ function VersionItem({
                   <DropdownMenuGroup>
                     {compareMode && isSelectedForCompare ? null : (
                       <DropdownMenuItem
-                        startContent={
-                          <GitCompareArrowsIcon className="size-4" />
-                        }
+                        startContent={<GitCompareArrowsIcon className="size-4" />}
                         title="Select for Compare"
                         description="Compare with any version"
                         onClick={(e) => {
@@ -676,6 +663,28 @@ function VersionItem({
                       />
                     )}
                   </DropdownMenuGroup>
+                  {canSchedule && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          startContent={<CalendarClockIcon className="size-4" />}
+                          title="Schedule Activation"
+                          description="Set the date this version takes effect"
+                          onClick={handleOpenScheduleDialog}
+                        />
+                        {version.effectiveFrom != null && (
+                          <DropdownMenuItem
+                            startContent={<CalendarOffIcon className="size-4" />}
+                            title="Clear Schedule"
+                            description="Remove the scheduled activation"
+                            onClick={() => updateEffectiveDateMutation.mutate(null)}
+                            disabled={updateEffectiveDateMutation.isPending}
+                          />
+                        )}
+                      </DropdownMenuGroup>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem
@@ -691,9 +700,7 @@ function VersionItem({
                       startContent={<RotateCcw className="size-4" />}
                       title="Rollback"
                       description={
-                        isCurrent
-                          ? "Already on this version"
-                          : "Rollback to this version"
+                        isCurrent ? "Already on this version" : "Rollback to this version"
                       }
                       color="danger"
                       onClick={onRollback}
@@ -707,6 +714,60 @@ function VersionItem({
         </div>
       </div>
 
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="sm:max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarClockIcon className="size-4" />
+              Schedule Activation
+            </DialogTitle>
+            <DialogDescription>
+              Choose when version {version.versionNumber} becomes the rating source. Shipments rated
+              after this date use this version.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <label htmlFor={`schedule-date-${version.id}`} className="text-xs font-medium">
+              Effective from
+            </label>
+            <DateTimePicker
+              id={`schedule-date-${version.id}`}
+              dateTime={scheduleDate}
+              setDateTime={setScheduleDate}
+              placeholder="Select date and time"
+              clearable
+            />
+            {version.effectiveFrom != null && (
+              <p className="text-2xs text-muted-foreground">
+                Currently scheduled for{" "}
+                {formatToUserTimezone(version.effectiveFrom, {
+                  showSeconds: false,
+                })}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setScheduleDialogOpen(false)}
+              disabled={updateEffectiveDateMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveSchedule}
+              disabled={!scheduleDate}
+              isLoading={updateEffectiveDateMutation.isPending}
+              loadingText="Scheduling..."
+            >
+              Schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={tagsDialogOpen} onOpenChange={setTagsDialogOpen}>
         <DialogContent className="sm:max-w-[360px]">
           <DialogHeader>
@@ -714,9 +775,7 @@ function VersionItem({
               <TagIcon className="size-4" />
               Manage Tags
             </DialogTitle>
-            <DialogDescription>
-              Select tags for version {version.versionNumber}
-            </DialogDescription>
+            <DialogDescription>Select tags for version {version.versionNumber}</DialogDescription>
           </DialogHeader>
           <div className="space-y-1 py-2">
             {VERSION_TAG_OPTIONS.map((option) => (
@@ -741,26 +800,16 @@ function VersionItem({
                   >
                     {option.label}
                   </span>
-                  <span className="mt-0.5 text-xs text-muted-foreground">
-                    {option.description}
-                  </span>
+                  <span className="mt-0.5 text-xs text-muted-foreground">{option.description}</span>
                 </label>
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTagsDialogOpen(false)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setTagsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSaveTags}
-              disabled={updateTagsMutation.isPending}
-            >
+            <Button size="sm" onClick={handleSaveTags} disabled={updateTagsMutation.isPending}>
               {updateTagsMutation.isPending ? (
                 "Saving..."
               ) : (

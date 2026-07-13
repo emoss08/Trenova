@@ -92,8 +92,8 @@ func TestStateCoordinator_PrepareForCreate_DerivesDelayedShipment(t *testing.T) 
 	t.Parallel()
 
 	entity := validShipmentForValidation()
-	entity.Moves[0].Stops[0].ActualArrival = ptrInt64(150)
-	entity.Moves[0].Stops[0].ScheduledWindowEnd = ptrInt64(100)
+	entity.Moves[0].Stops[0].ActualArrival = new(int64(150))
+	entity.Moves[0].Stops[0].ScheduledWindowEnd = new(int64(100))
 
 	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 200 })
 
@@ -400,7 +400,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
-			AutoDelayShipmentsThreshold: ptrInt16(30),
+			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -507,7 +507,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
-			AutoDelayShipmentsThreshold: ptrInt16(30),
+			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 
@@ -618,7 +618,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
-			AutoDelayShipmentsThreshold: ptrInt16(30),
+			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 
@@ -716,7 +716,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
-			AutoDelayShipmentsThreshold: ptrInt16(30),
+			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 
@@ -852,7 +852,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
-			AutoDelayShipmentsThreshold: ptrInt16(30),
+			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 
@@ -962,7 +962,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			CheckForDuplicateBOLs:       true,
-			AutoDelayShipmentsThreshold: ptrInt16(30),
+			AutoDelayShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -1127,7 +1127,7 @@ func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipmen
 	entity.Status = status
 	entity.Moves[0].Status = shipment.MoveStatusInTransit
 	entity.Moves[0].Stops[0].Status = shipment.StopStatusInTransit
-	entity.Moves[0].Stops[0].ScheduledWindowEnd = ptrInt64(100)
+	entity.Moves[0].Stops[0].ScheduledWindowEnd = new(int64(100))
 
 	if status != shipment.StatusPartiallyCompleted {
 		return entity
@@ -1138,8 +1138,8 @@ func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipmen
 	completedMove.Sequence = 0
 	for _, stop := range completedMove.Stops {
 		stop.Status = shipment.StopStatusCompleted
-		stop.ActualArrival = ptrInt64(10)
-		stop.ActualDeparture = ptrInt64(20)
+		stop.ActualArrival = new(int64(10))
+		stop.ActualDeparture = new(int64(20))
 	}
 
 	activeMove := entity.Moves[0]

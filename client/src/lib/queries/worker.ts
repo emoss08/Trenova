@@ -52,15 +52,17 @@ export async function fetchUpcomingWorkerPTO(
     document: UpcomingWorkerPtoDocument,
     operationName: "UpcomingWorkerPto",
     variables: {
-      first: req.filter.limit,
-      after: req.filter.after,
-      status: req.status,
-      type: req.type,
-      startDate: req.startDate,
-      endDate: req.endDate,
-      workerId: req.workerId,
-      fleetCodeId: req.fleetCodeId,
-      timezone: req.timezone,
+      input: {
+        first: req.filter.limit,
+        after: req.filter.after,
+        status: req.status,
+        type: req.type,
+        startDate: req.startDate,
+        endDate: req.endDate,
+        workerId: req.workerId,
+        fleetCodeId: req.fleetCodeId,
+        timezone: req.timezone,
+      },
     },
   });
 
@@ -83,7 +85,7 @@ export const worker = createQueryKeys("worker", {
       >({
         document: WorkerPtoChartDataDocument,
         operationName: "WorkerPtoChartData",
-        variables: req,
+        variables: { input: req },
       });
 
       return data.workerPTOChartData as PTOChartDataPoint[];

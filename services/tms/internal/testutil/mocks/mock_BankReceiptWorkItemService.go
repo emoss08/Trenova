@@ -77,7 +77,7 @@ type MockBankReceiptWorkItemService_Assign_Call struct {
 //   - ctx context.Context
 //   - req *services.AssignBankReceiptWorkItemRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptWorkItemService_Expecter) Assign(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptWorkItemService_Assign_Call {
+func (_e *MockBankReceiptWorkItemService_Expecter) Assign(ctx any, req any, actor any) *MockBankReceiptWorkItemService_Assign_Call {
 	return &MockBankReceiptWorkItemService_Assign_Call{Call: _e.mock.On("Assign", ctx, req, actor)}
 }
 
@@ -151,7 +151,7 @@ type MockBankReceiptWorkItemService_Dismiss_Call struct {
 //   - ctx context.Context
 //   - req *services.DismissBankReceiptWorkItemRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptWorkItemService_Expecter) Dismiss(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptWorkItemService_Dismiss_Call {
+func (_e *MockBankReceiptWorkItemService_Expecter) Dismiss(ctx any, req any, actor any) *MockBankReceiptWorkItemService_Dismiss_Call {
 	return &MockBankReceiptWorkItemService_Dismiss_Call{Call: _e.mock.On("Dismiss", ctx, req, actor)}
 }
 
@@ -224,7 +224,7 @@ type MockBankReceiptWorkItemService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetBankReceiptWorkItemRequest
-func (_e *MockBankReceiptWorkItemService_Expecter) Get(ctx interface{}, req interface{}) *MockBankReceiptWorkItemService_Get_Call {
+func (_e *MockBankReceiptWorkItemService_Expecter) Get(ctx any, req any) *MockBankReceiptWorkItemService_Get_Call {
 	return &MockBankReceiptWorkItemService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -292,7 +292,7 @@ type MockBankReceiptWorkItemService_ListActive_Call struct {
 // ListActive is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptWorkItemService_Expecter) ListActive(ctx interface{}, tenantInfo interface{}) *MockBankReceiptWorkItemService_ListActive_Call {
+func (_e *MockBankReceiptWorkItemService_Expecter) ListActive(ctx any, tenantInfo any) *MockBankReceiptWorkItemService_ListActive_Call {
 	return &MockBankReceiptWorkItemService_ListActive_Call{Call: _e.mock.On("ListActive", ctx, tenantInfo)}
 }
 
@@ -361,7 +361,7 @@ type MockBankReceiptWorkItemService_Resolve_Call struct {
 //   - ctx context.Context
 //   - req *services.ResolveBankReceiptWorkItemRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptWorkItemService_Expecter) Resolve(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptWorkItemService_Resolve_Call {
+func (_e *MockBankReceiptWorkItemService_Expecter) Resolve(ctx any, req any, actor any) *MockBankReceiptWorkItemService_Resolve_Call {
 	return &MockBankReceiptWorkItemService_Resolve_Call{Call: _e.mock.On("Resolve", ctx, req, actor)}
 }
 
@@ -435,7 +435,7 @@ type MockBankReceiptWorkItemService_StartReview_Call struct {
 //   - ctx context.Context
 //   - req *services.GetBankReceiptWorkItemRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptWorkItemService_Expecter) StartReview(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptWorkItemService_StartReview_Call {
+func (_e *MockBankReceiptWorkItemService_Expecter) StartReview(ctx any, req any, actor any) *MockBankReceiptWorkItemService_StartReview_Call {
 	return &MockBankReceiptWorkItemService_StartReview_Call{Call: _e.mock.On("StartReview", ctx, req, actor)}
 }
 

@@ -74,7 +74,7 @@ type MockAILogRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *ailog.Log
-func (_e *MockAILogRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockAILogRepository_Create_Call {
+func (_e *MockAILogRepository_Expecter) Create(ctx any, entity any) *MockAILogRepository_Create_Call {
 	return &MockAILogRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 

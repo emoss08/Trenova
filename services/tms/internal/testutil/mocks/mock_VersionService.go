@@ -73,7 +73,7 @@ type MockVersionService_CheckForUpdates_Call struct {
 
 // CheckForUpdates is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockVersionService_Expecter) CheckForUpdates(ctx interface{}) *MockVersionService_CheckForUpdates_Call {
+func (_e *MockVersionService_Expecter) CheckForUpdates(ctx any) *MockVersionService_CheckForUpdates_Call {
 	return &MockVersionService_CheckForUpdates_Call{Call: _e.mock.On("CheckForUpdates", ctx)}
 }
 
@@ -135,7 +135,7 @@ type MockVersionService_GetUpdateStatus_Call struct {
 
 // GetUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockVersionService_Expecter) GetUpdateStatus(ctx interface{}) *MockVersionService_GetUpdateStatus_Call {
+func (_e *MockVersionService_Expecter) GetUpdateStatus(ctx any) *MockVersionService_GetUpdateStatus_Call {
 	return &MockVersionService_GetUpdateStatus_Call{Call: _e.mock.On("GetUpdateStatus", ctx)}
 }
 
@@ -197,7 +197,7 @@ type MockVersionService_GetVersionInfo_Call struct {
 
 // GetVersionInfo is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockVersionService_Expecter) GetVersionInfo(ctx interface{}) *MockVersionService_GetVersionInfo_Call {
+func (_e *MockVersionService_Expecter) GetVersionInfo(ctx any) *MockVersionService_GetVersionInfo_Call {
 	return &MockVersionService_GetVersionInfo_Call{Call: _e.mock.On("GetVersionInfo", ctx)}
 }
 

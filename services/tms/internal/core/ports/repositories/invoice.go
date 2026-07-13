@@ -13,6 +13,11 @@ type ListInvoicesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 }
 
+type ListInvoiceConnectionRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
+}
+
 type GetInvoiceByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -54,6 +59,10 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		req *ListInvoicesRequest,
 	) (*pagination.ListResult[*invoice.Invoice], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListInvoiceConnectionRequest,
+	) (*pagination.CursorListResult[*invoice.Invoice], error)
 	GetByID(
 		ctx context.Context,
 		req GetInvoiceByIDRequest,

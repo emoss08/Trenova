@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 import type { FormControlProps } from "@/types/fields";
 import { format } from "date-fns";
 import { CalendarIcon, XIcon } from "lucide-react";
+import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
 import { AutoCompleteDatePicker } from "./date-picker";
+
 export type BaseDateFieldProps = {
   label: string;
   description?: string;
@@ -33,6 +35,88 @@ const styles = {
   disabled: "text-muted-foreground hover:text-muted-foreground",
 };
 
+type DateFieldControlProps = {
+  dateValue: Date | undefined;
+  isLocked: boolean;
+  readOnly: boolean;
+  isInvalid: boolean;
+  placeholder?: string;
+  clearable?: boolean;
+  onSelect: (date: Date | undefined) => void;
+  onClear: () => void;
+  onBlur: () => void;
+};
+
+function DateFieldControl({
+  dateValue,
+  isLocked,
+  readOnly,
+  isInvalid,
+  placeholder,
+  clearable,
+  onSelect,
+  onClear,
+  onBlur,
+}: DateFieldControlProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (next && isLocked) return;
+        setOpen(next);
+        if (!next) {
+          onBlur();
+        }
+      }}
+    >
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            disabled={isLocked}
+            aria-readonly={readOnly || undefined}
+            className={cn(
+              styles.base,
+              styles.focusVisible,
+              styles.hover,
+              !dateValue && styles.disabled,
+              isLocked && "cursor-not-allowed opacity-50",
+              isInvalid && styles.invalid,
+            )}
+          >
+            <CalendarIcon className="mr-0.5" />
+            {dateValue ? format(dateValue, "PPP") : <span>{placeholder || "Pick a date"}</span>}
+            {clearable && dateValue && !isLocked && (
+              <XIcon
+                className="ml-auto h-4 w-4 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onClear();
+                }}
+              />
+            )}
+          </Button>
+        }
+      />
+
+      <PopoverContent className="w-auto p-0">
+        <Calendar
+          mode="single"
+          selected={dateValue}
+          defaultMonth={dateValue}
+          onSelect={(date) => {
+            onSelect(date);
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function DateField<T extends FieldValues>({
   label,
   description,
@@ -52,7 +136,7 @@ export function DateField<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => {
         const dateValue = toDate(field.value);
-        const isLocked = disabled || field.disabled || readOnly;
+        const isLocked = disabled || !!field.disabled || readOnly;
 
         return (
           <FieldWrapper
@@ -62,74 +146,43 @@ export function DateField<T extends FieldValues>({
             error={fieldState.error?.message}
             className={className}
           >
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    disabled={isLocked}
-                    aria-readonly={readOnly || undefined}
-                    className={cn(
-                      styles.base,
-                      styles.focusVisible,
-                      styles.hover,
-                      !dateValue && styles.disabled,
-                      isLocked && "cursor-not-allowed opacity-50",
-                      fieldState.invalid && styles.invalid,
-                    )}
-                  >
-                    <CalendarIcon className="mr-0.5" />
-                    {dateValue ? (
-                      format(dateValue, "PPP")
-                    ) : (
-                      <span>{placeholder || "Pick a date"}</span>
-                    )}
-                    {clearable && dateValue && !isLocked && (
-                      <XIcon
-                        className="ml-auto h-4 w-4 cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isLocked) return;
-                          field.onChange(null);
-                        }}
-                      />
-                    )}
-                  </Button>
-                }
-              />
-
-              <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateValue}
-                  onSelect={(date) => {
-                    if (isLocked) return;
-                    field.onChange(toUnixTimeStamp(date));
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+            <DateFieldControl
+              dateValue={dateValue}
+              isLocked={isLocked}
+              readOnly={readOnly}
+              isInvalid={fieldState.invalid}
+              placeholder={placeholder}
+              clearable={clearable}
+              onSelect={(date) => {
+                if (isLocked) return;
+                field.onChange(toUnixTimeStamp(date) ?? null);
+              }}
+              onClear={() => field.onChange(null)}
+              onBlur={field.onBlur}
+            />
           </FieldWrapper>
         );
       }}
     />
   );
 }
-export interface DatePickerProps extends React.InputHTMLAttributes<HTMLInputElement> {
+
+export interface DatePickerProps
+  extends Omit<React.ComponentProps<"input">, "value" | "defaultValue" | "onChange"> {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   isInvalid?: boolean;
-  placeholder?: string;
   clearable?: boolean;
-  label?: string;
-  description?: string;
 }
 
 export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
   DatePickerProps,
   "date" | "setDate"
 > &
-  FormControlProps<T>;
+  FormControlProps<T> & {
+    label?: string;
+    description?: string;
+  };
 
 export function AutoCompleteDateField<T extends FieldValues>({
   name,
@@ -139,7 +192,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
   label,
   description,
   placeholder,
-  isInvalid,
+  disabled,
   ...props
 }: AutoCompleteDateFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -156,25 +209,27 @@ export function AutoCompleteDateField<T extends FieldValues>({
           <FieldWrapper
             label={label}
             description={description}
+            descriptionId={descriptionId}
+            errorId={errorId}
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
           >
             <AutoCompleteDatePicker
-              {...field}
               {...props}
-              name={name}
               id={inputId}
+              name={field.name}
+              ref={field.ref}
               aria-label={label}
-              aria-invalid={isInvalid}
               date={field.value ? toDate(field.value) : undefined}
-              placeholder={placeholder}
-              setDate={(date) => field.onChange(date ? toUnixTimeStamp(date) : null)}
+              setDate={(date) => field.onChange(date ? (toUnixTimeStamp(date) ?? null) : null)}
               onBlur={field.onBlur}
-              className={className}
+              placeholder={placeholder}
+              disabled={disabled || field.disabled}
               isInvalid={fieldState.invalid}
-              autoComplete="off"
-              aria-describedby={cn(description && descriptionId, fieldState.error && errorId)}
+              aria-describedby={
+                cn(description && descriptionId, fieldState.error && errorId) || undefined
+              }
             />
           </FieldWrapper>
         );

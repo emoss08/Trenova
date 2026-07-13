@@ -616,10 +616,11 @@ func ValidateUserFormula(formula string) error {
 
 The evaluator enforces resource limits:
 
-- **Timeout**: 100ms default (configurable)
-- **Memory**: 1MB limit per evaluation
-- **Depth**: Maximum nesting depth of 50
-- **Iterations**: Maximum 10,000 evaluations
+- **Timeout**: 5s per evaluation (also bounded by the caller's context deadline)
+- **Memory**: expr VM memory budget (1e6 units) per evaluation
+- **Complexity**: Maximum 1,000 AST nodes per expression, enforced at compile time
+- **Compile cache**: Bounded LRU (1,024 entries) keyed by expression and environment type signature
+- **Results**: Must be numeric — NaN and ±Infinity are rejected, and non-numeric results fail template validation
 
 ### Safe Execution
 

@@ -1,4 +1,5 @@
 import type { ApiRequestError } from "@/lib/api";
+import type { GraphQLRequestError } from "@/lib/graphql";
 import {
   useMutation,
   useQueryClient,
@@ -12,6 +13,8 @@ import type {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { handleMutationError } from "./use-api-mutation";
+
+type MutationError = ApiRequestError | GraphQLRequestError;
 
 type OptimisticContext<TQueryData = unknown, TVariables = unknown> = {
   previousData: TQueryData | undefined;
@@ -45,13 +48,13 @@ export type OptimisticMutationOptions<
     context: TContext | undefined,
   ) => unknown;
   onError?: (
-    error: ApiRequestError,
+    error: MutationError,
     variables: TVariables,
     context: TContext | undefined,
   ) => unknown;
   onSettled?: (
     data: TData | undefined,
-    error: ApiRequestError | null,
+    error: MutationError | null,
     variables: TVariables,
     context: TContext | undefined,
   ) => unknown;
@@ -88,7 +91,7 @@ export function useOptimisticMutation<
 
   return useMutation<
     TData,
-    ApiRequestError,
+    MutationError,
     TVariables,
     OptimisticContext<TQueryData, TVariables>
   >({
@@ -127,7 +130,7 @@ export function useOptimisticMutation<
         await onSuccess(data, variables, context as TContext);
       }
     },
-    onError: async (error: ApiRequestError, variables, context) => {
+    onError: async (error: MutationError, variables, context) => {
       if (context && typeof context === "object" && "previousData" in context) {
         queryClient.setQueryData(options.queryKey, context.previousData);
       }

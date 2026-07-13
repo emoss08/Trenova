@@ -76,7 +76,7 @@ type MockFormulaTemplateRepository_BulkDuplicate_Call struct {
 // BulkDuplicate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkDuplicateFormulaTemplateRequest
-func (_e *MockFormulaTemplateRepository_Expecter) BulkDuplicate(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_BulkDuplicate_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) BulkDuplicate(ctx any, req any) *MockFormulaTemplateRepository_BulkDuplicate_Call {
 	return &MockFormulaTemplateRepository_BulkDuplicate_Call{Call: _e.mock.On("BulkDuplicate", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockFormulaTemplateRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateFormulaTemplateStatusRequest
-func (_e *MockFormulaTemplateRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_BulkUpdateStatus_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockFormulaTemplateRepository_BulkUpdateStatus_Call {
 	return &MockFormulaTemplateRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockFormulaTemplateRepository_CountUsages_Call struct {
 // CountUsages is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetTemplateUsageRequest
-func (_e *MockFormulaTemplateRepository_Expecter) CountUsages(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_CountUsages_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) CountUsages(ctx any, req any) *MockFormulaTemplateRepository_CountUsages_Call {
 	return &MockFormulaTemplateRepository_CountUsages_Call{Call: _e.mock.On("CountUsages", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockFormulaTemplateRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *formulatemplate.FormulaTemplate
-func (_e *MockFormulaTemplateRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockFormulaTemplateRepository_Create_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) Create(ctx any, entity any) *MockFormulaTemplateRepository_Create_Call {
 	return &MockFormulaTemplateRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -348,7 +348,7 @@ type MockFormulaTemplateRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFormulaTemplateByIDRequest
-func (_e *MockFormulaTemplateRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_GetByID_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) GetByID(ctx any, req any) *MockFormulaTemplateRepository_GetByID_Call {
 	return &MockFormulaTemplateRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockFormulaTemplateRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFormulaTemplatesByIDsRequest
-func (_e *MockFormulaTemplateRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_GetByIDs_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) GetByIDs(ctx any, req any) *MockFormulaTemplateRepository_GetByIDs_Call {
 	return &MockFormulaTemplateRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -484,7 +484,7 @@ type MockFormulaTemplateRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListFormulaTemplatesRequest
-func (_e *MockFormulaTemplateRepository_Expecter) List(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_List_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) List(ctx any, req any) *MockFormulaTemplateRepository_List_Call {
 	return &MockFormulaTemplateRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -512,6 +512,74 @@ func (_c *MockFormulaTemplateRepository_List_Call) Return(listResult *pagination
 }
 
 func (_c *MockFormulaTemplateRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)) *MockFormulaTemplateRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) ListConnection(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*formulatemplate.FormulaTemplate]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) *pagination.CursorListResult[*formulatemplate.FormulaTemplate]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*formulatemplate.FormulaTemplate])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockFormulaTemplateRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListFormulaTemplateConnectionRequest
+func (_e *MockFormulaTemplateRepository_Expecter) ListConnection(ctx any, req any) *MockFormulaTemplateRepository_ListConnection_Call {
+	return &MockFormulaTemplateRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest)) *MockFormulaTemplateRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListFormulaTemplateConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListFormulaTemplateConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*formulatemplate.FormulaTemplate], err error) *MockFormulaTemplateRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)) *MockFormulaTemplateRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -552,7 +620,7 @@ type MockFormulaTemplateRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.FormulaTemplateSelectOptionsRequest
-func (_e *MockFormulaTemplateRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_SelectOptions_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) SelectOptions(ctx any, req any) *MockFormulaTemplateRepository_SelectOptions_Call {
 	return &MockFormulaTemplateRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -620,7 +688,7 @@ type MockFormulaTemplateRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *formulatemplate.FormulaTemplate
-func (_e *MockFormulaTemplateRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockFormulaTemplateRepository_Update_Call {
+func (_e *MockFormulaTemplateRepository_Expecter) Update(ctx any, entity any) *MockFormulaTemplateRepository_Update_Call {
 	return &MockFormulaTemplateRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -648,74 +716,6 @@ func (_c *MockFormulaTemplateRepository_Update_Call) Return(formulaTemplate *for
 }
 
 func (_c *MockFormulaTemplateRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error)) *MockFormulaTemplateRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockFormulaTemplateRepository
-func (_mock *MockFormulaTemplateRepository) ListConnection(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*formulatemplate.FormulaTemplate]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) *pagination.CursorListResult[*formulatemplate.FormulaTemplate]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*formulatemplate.FormulaTemplate])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListFormulaTemplateConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockFormulaTemplateRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockFormulaTemplateRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListFormulaTemplateConnectionRequest
-func (_e *MockFormulaTemplateRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_ListConnection_Call {
-	return &MockFormulaTemplateRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockFormulaTemplateRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest)) *MockFormulaTemplateRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListFormulaTemplateConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListFormulaTemplateConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockFormulaTemplateRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*formulatemplate.FormulaTemplate], err error) *MockFormulaTemplateRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockFormulaTemplateRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFormulaTemplateConnectionRequest) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error)) *MockFormulaTemplateRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

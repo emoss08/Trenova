@@ -47,18 +47,20 @@ describe("shipment GraphQL helpers", () => {
       document: ShipmentCommandCenterTableDocument,
       operationName: "ShipmentCommandCenterTable",
       variables: {
-        first: 20,
-        after: "cursor-0",
-        query: "SHP",
-        fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
-        filterGroups: [
-          {
-					filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
-				},
-			],
-			expandShipmentDetails: true,
-		},
-	});
+        input: {
+          first: 20,
+          after: "cursor-0",
+          query: "SHP",
+          fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
+          filterGroups: [
+            {
+              filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
+            },
+          ],
+          expandShipmentDetails: true,
+        },
+      },
+    });
     expect(response).toEqual({
       results: [{ id: "shp_1", proNumber: "SHP-1" }],
       count: 25,
@@ -131,10 +133,12 @@ describe("shipment GraphQL helpers", () => {
       document: ShipmentEventsDocument,
       operationName: "ShipmentEvents",
       variables: {
-        shipmentId: "shp_1",
-        types: ["StatusChanged"],
-        limit: 20,
-        before: 1_700_000_000,
+        input: {
+          shipmentId: "shp_1",
+          types: ["StatusChanged"],
+          limit: 20,
+          before: 1_700_000_000,
+        },
       },
     });
     expect(response).toBe(events);

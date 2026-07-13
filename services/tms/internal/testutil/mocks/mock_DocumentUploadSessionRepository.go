@@ -67,7 +67,7 @@ type MockDocumentUploadSessionRepository_ClearDocumentReference_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentUploadSessionRepository_Expecter) ClearDocumentReference(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentUploadSessionRepository_ClearDocumentReference_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) ClearDocumentReference(ctx any, documentID any, tenantInfo any) *MockDocumentUploadSessionRepository_ClearDocumentReference_Call {
 	return &MockDocumentUploadSessionRepository_ClearDocumentReference_Call{Call: _e.mock.On("ClearDocumentReference", ctx, documentID, tenantInfo)}
 }
 
@@ -130,7 +130,7 @@ type MockDocumentUploadSessionRepository_ClearDocumentReferences_Call struct {
 //   - ctx context.Context
 //   - documentIDs []pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentUploadSessionRepository_Expecter) ClearDocumentReferences(ctx interface{}, documentIDs interface{}, tenantInfo interface{}) *MockDocumentUploadSessionRepository_ClearDocumentReferences_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) ClearDocumentReferences(ctx any, documentIDs any, tenantInfo any) *MockDocumentUploadSessionRepository_ClearDocumentReferences_Call {
 	return &MockDocumentUploadSessionRepository_ClearDocumentReferences_Call{Call: _e.mock.On("ClearDocumentReferences", ctx, documentIDs, tenantInfo)}
 }
 
@@ -203,7 +203,7 @@ type MockDocumentUploadSessionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentupload.DocumentUploadSession
-func (_e *MockDocumentUploadSessionRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentUploadSessionRepository_Create_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) Create(ctx any, entity any) *MockDocumentUploadSessionRepository_Create_Call {
 	return &MockDocumentUploadSessionRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -271,7 +271,7 @@ type MockDocumentUploadSessionRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentUploadSessionByIDRequest
-func (_e *MockDocumentUploadSessionRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_GetByID_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) GetByID(ctx any, req any) *MockDocumentUploadSessionRepository_GetByID_Call {
 	return &MockDocumentUploadSessionRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -339,7 +339,7 @@ type MockDocumentUploadSessionRepository_ListActive_Call struct {
 // ListActive is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListActiveDocumentUploadSessionsRequest
-func (_e *MockDocumentUploadSessionRepository_Expecter) ListActive(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_ListActive_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) ListActive(ctx any, req any) *MockDocumentUploadSessionRepository_ListActive_Call {
 	return &MockDocumentUploadSessionRepository_ListActive_Call{Call: _e.mock.On("ListActive", ctx, req)}
 }
 
@@ -407,7 +407,7 @@ type MockDocumentUploadSessionRepository_ListForReconciliation_Call struct {
 // ListForReconciliation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentUploadReconciliationRequest
-func (_e *MockDocumentUploadSessionRepository_Expecter) ListForReconciliation(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) ListForReconciliation(ctx any, req any) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
 	return &MockDocumentUploadSessionRepository_ListForReconciliation_Call{Call: _e.mock.On("ListForReconciliation", ctx, req)}
 }
 
@@ -475,7 +475,7 @@ type MockDocumentUploadSessionRepository_ListReconciliationTenants_Call struct {
 // ListReconciliationTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentUploadReconciliationRequest
-func (_e *MockDocumentUploadSessionRepository_Expecter) ListReconciliationTenants(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) ListReconciliationTenants(ctx any, req any) *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call {
 	return &MockDocumentUploadSessionRepository_ListReconciliationTenants_Call{Call: _e.mock.On("ListReconciliationTenants", ctx, req)}
 }
 
@@ -543,7 +543,7 @@ type MockDocumentUploadSessionRepository_ListRelated_Call struct {
 // ListRelated is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListRelatedDocumentUploadSessionsRequest
-func (_e *MockDocumentUploadSessionRepository_Expecter) ListRelated(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_ListRelated_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) ListRelated(ctx any, req any) *MockDocumentUploadSessionRepository_ListRelated_Call {
 	return &MockDocumentUploadSessionRepository_ListRelated_Call{Call: _e.mock.On("ListRelated", ctx, req)}
 }
 
@@ -611,7 +611,7 @@ type MockDocumentUploadSessionRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *documentupload.DocumentUploadSession
-func (_e *MockDocumentUploadSessionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentUploadSessionRepository_Update_Call {
+func (_e *MockDocumentUploadSessionRepository_Expecter) Update(ctx any, entity any) *MockDocumentUploadSessionRepository_Update_Call {
 	return &MockDocumentUploadSessionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

@@ -86,6 +86,7 @@ import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { LocationGeofenceType } from "@/types/location";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
 import type { ManualJournalStatus } from "@/types/manual-journal";
+import type { RateTableLookupType } from "@/types/rate-table";
 import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
   ServiceFailureSource,
@@ -121,12 +122,18 @@ export const formulaTemplateStatusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
   { label: "Inactive", value: "Inactive", color: "#dc2626" },
   { label: "Draft", value: "Draft", color: "#a3a3a3" },
+  { label: "In Review", value: "InReview", color: "#d97706" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateStatus>>;
 
 export const formulaTemplateTypeChoices = [
   { label: "Freight Charge", value: "FreightCharge" },
   { label: "Accessorial Charge", value: "AccessorialCharge" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateType>>;
+
+export const rateTableLookupTypeChoices = [
+  { label: "Exact", value: "Exact", color: "#2563eb" },
+  { label: "Range", value: "Range", color: "#9333ea" },
+] satisfies ReadonlyArray<GenericSelectOption<RateTableLookupType>>;
 
 export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },

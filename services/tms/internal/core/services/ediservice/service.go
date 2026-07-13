@@ -1558,7 +1558,7 @@ func (s *Service) buildTargetShipment(
 		EnteredByID:         approverID,
 		FormulaTemplateID:   formulaTemplateID,
 		Status:              shipment.StatusNew,
-		TenderStatus:        tenderStatusPtr(shipment.TenderStatusAccepted),
+		TenderStatus:        new(shipment.TenderStatusAccepted),
 		EntryMethod:         shipment.EntryMethodEDI,
 		BOL:                 payload.BOL,
 		Pieces:              payload.Pieces,

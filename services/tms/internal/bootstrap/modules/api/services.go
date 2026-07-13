@@ -78,6 +78,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
+	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
@@ -249,6 +250,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	locationservice.New,
 	documenttypeservice.New,
 	holdreasonservice.New,
+	ratetableservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
 		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },

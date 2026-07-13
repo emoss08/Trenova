@@ -74,7 +74,7 @@ type MockUsStateCacheRepository_GetByAbbreviation_Call struct {
 // GetByAbbreviation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - abbreviation string
-func (_e *MockUsStateCacheRepository_Expecter) GetByAbbreviation(ctx interface{}, abbreviation interface{}) *MockUsStateCacheRepository_GetByAbbreviation_Call {
+func (_e *MockUsStateCacheRepository_Expecter) GetByAbbreviation(ctx any, abbreviation any) *MockUsStateCacheRepository_GetByAbbreviation_Call {
 	return &MockUsStateCacheRepository_GetByAbbreviation_Call{Call: _e.mock.On("GetByAbbreviation", ctx, abbreviation)}
 }
 
@@ -130,7 +130,7 @@ type MockUsStateCacheRepository_Invalidate_Call struct {
 
 // Invalidate is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockUsStateCacheRepository_Expecter) Invalidate(ctx interface{}) *MockUsStateCacheRepository_Invalidate_Call {
+func (_e *MockUsStateCacheRepository_Expecter) Invalidate(ctx any) *MockUsStateCacheRepository_Invalidate_Call {
 	return &MockUsStateCacheRepository_Invalidate_Call{Call: _e.mock.On("Invalidate", ctx)}
 }
 
@@ -182,7 +182,7 @@ type MockUsStateCacheRepository_Set_Call struct {
 // Set is a helper method to define mock.On call
 //   - ctx context.Context
 //   - states []*usstate.UsState
-func (_e *MockUsStateCacheRepository_Expecter) Set(ctx interface{}, states interface{}) *MockUsStateCacheRepository_Set_Call {
+func (_e *MockUsStateCacheRepository_Expecter) Set(ctx any, states any) *MockUsStateCacheRepository_Set_Call {
 	return &MockUsStateCacheRepository_Set_Call{Call: _e.mock.On("Set", ctx, states)}
 }
 

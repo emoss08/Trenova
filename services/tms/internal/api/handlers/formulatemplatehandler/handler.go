@@ -1,14 +1,20 @@
 package formulatemplatehandler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -18,44 +24,72 @@ import (
 type Params struct {
 	fx.In
 
-	Service      *formulatemplateservice.Service
-	ErrorHandler *helpers.ErrorHandler
+	Service              *formulatemplateservice.Service
+	ErrorHandler         *helpers.ErrorHandler
+	PermissionMiddleware *middleware.PermissionMiddleware
+	PermissionEngine     services.PermissionEngine
 }
 
 type Handler struct {
-	service *formulatemplateservice.Service
-	eh      *helpers.ErrorHandler
+	service    *formulatemplateservice.Service
+	eh         *helpers.ErrorHandler
+	pm         *middleware.PermissionMiddleware
+	permEngine services.PermissionEngine
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
+		service:    p.Service,
+		eh:         p.ErrorHandler,
+		pm:         p.PermissionMiddleware,
+		permEngine: p.PermissionEngine,
 	}
 }
 
-// TODO: Add permission middleware
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
+	resource := permission.ResourceFormulaTemplate.String()
+	requireRead := h.pm.RequirePermission(resource, permission.OpRead)
+	requireCreate := h.pm.RequirePermission(resource, permission.OpCreate)
+	requireUpdate := h.pm.RequirePermission(resource, permission.OpUpdate)
+	requireDuplicate := h.pm.RequirePermission(resource, permission.OpDuplicate)
+	requireSubmit := h.pm.RequirePermission(resource, permission.OpSubmit)
+	requireApprove := h.pm.RequirePermission(resource, permission.OpApprove)
+	requireReject := h.pm.RequirePermission(resource, permission.OpReject)
+	requireAuthoring := h.pm.RequireAnyPermission(
+		middleware.PermissionCheck{Resource: resource, Operation: permission.OpCreate},
+		middleware.PermissionCheck{Resource: resource, Operation: permission.OpUpdate},
+	)
+
 	api := rg.Group("/formula-templates")
-	api.GET("/", h.list)
-	api.POST("/", h.create)
-	api.POST("/bulk-update-status", h.bulkUpdateStatus)
-	api.POST("/test", h.testExpression)
-	api.POST("/duplicate", h.duplicate)
+	api.GET("/", requireRead, h.list)
+	api.POST("/", requireCreate, h.create)
+	api.POST("/bulk-update-status", requireUpdate, h.bulkUpdateStatus)
+	api.POST("/test", requireAuthoring, h.testExpression)
+	api.POST("/duplicate", requireDuplicate, h.duplicate)
 
 	idGroup := api.Group("/:templateID")
-	idGroup.GET("/", h.get)
-	idGroup.PUT("/", h.update)
-	idGroup.PATCH("/", h.patch)
-	idGroup.GET("/usage", h.getUsage)
-	idGroup.GET("/versions", h.listVersions)
-	idGroup.GET("/versions/:versionNumber", h.getVersion)
-	idGroup.POST("/versions", h.createVersion)
-	idGroup.POST("/rollback", h.rollback)
-	idGroup.POST("/fork", h.fork)
-	idGroup.GET("/compare", h.compareVersions)
-	idGroup.GET("/lineage", h.getLineage)
-	idGroup.PATCH("/versions/:versionNumber/tags", h.updateVersionTags)
+	idGroup.GET("/", requireRead, h.get)
+	idGroup.PUT("/", requireUpdate, h.update)
+	idGroup.PATCH("/", requireUpdate, h.patch)
+	idGroup.GET("/usage", requireRead, h.getUsage)
+	idGroup.GET("/versions", requireRead, h.listVersions)
+	idGroup.GET("/versions/:versionNumber", requireRead, h.getVersion)
+	idGroup.POST("/versions", requireUpdate, h.createVersion)
+	idGroup.POST("/rollback", requireUpdate, h.rollback)
+	idGroup.POST("/fork", requireCreate, h.fork)
+	idGroup.GET("/compare", requireRead, h.compareVersions)
+	idGroup.GET("/lineage", requireRead, h.getLineage)
+	idGroup.PATCH("/versions/:versionNumber/tags", requireUpdate, h.updateVersionTags)
+	idGroup.POST("/submit", requireSubmit, h.submit)
+	idGroup.POST("/approve", requireApprove, h.approve)
+	idGroup.POST("/reject", requireReject, h.reject)
+	idGroup.POST("/backtest", requireAuthoring, h.backtest)
+	idGroup.GET("/versions/scheduled", requireRead, h.listScheduledVersions)
+	idGroup.PATCH(
+		"/versions/:versionNumber/effective-date",
+		requireApprove,
+		h.updateVersionEffectiveDate,
+	)
 
 	selectOptions := api.Group("/select-options")
 	selectOptions.GET("/", h.selectOptions)
@@ -442,9 +476,11 @@ func (h *Handler) patch(c *gin.Context) {
 }
 
 type testExpressionRequest struct {
-	Expression string         `json:"expression"`
-	SchemaID   string         `json:"schemaId"`
-	Variables  map[string]any `json:"variables"`
+	Expression string                              `json:"expression"`
+	SchemaID   string                              `json:"schemaId"`
+	Variables  map[string]any                      `json:"variables"`
+	ShipmentID string                              `json:"shipmentId"`
+	Breakdowns []*formulatypes.BreakdownDefinition `json:"breakdowns"`
 }
 
 // @Summary Test a formula expression
@@ -460,6 +496,8 @@ type testExpressionRequest struct {
 // @Security BearerAuth
 // @Router /formula-templates/test [post]
 func (h *Handler) testExpression(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
 	var req testExpressionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
@@ -470,13 +508,59 @@ func (h *Handler) testExpression(c *gin.Context) {
 		req.SchemaID = "shipment"
 	}
 
-	result := h.service.TestExpression(&formulatemplateservice.TestExpressionRequest{
+	serviceReq := &formulatemplateservice.TestExpressionRequest{
 		Expression: req.Expression,
 		SchemaID:   req.SchemaID,
 		Variables:  req.Variables,
-	})
+		Breakdowns: req.Breakdowns,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	}
+
+	if req.ShipmentID != "" {
+		shipmentID, err := pulid.MustParse(req.ShipmentID)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+
+		if !h.allowShipmentRead(c, authCtx) {
+			return
+		}
+
+		serviceReq.ShipmentID = &shipmentID
+	}
+
+	result := h.service.TestExpression(c.Request.Context(), serviceReq)
 
 	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) allowShipmentRead(c *gin.Context, authCtx *authctx.AuthContext) bool {
+	result, err := h.permEngine.Check(
+		c.Request.Context(),
+		middleware.BuildPermissionCheckRequest(
+			authCtx,
+			permission.ResourceShipment.String(),
+			permission.OpRead,
+		),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return false
+	}
+
+	if !result.Allowed {
+		h.eh.HandleError(c, errortypes.NewAuthorizationError(
+			"You don't have permission to read shipments",
+		))
+		return false
+	}
+
+	return true
 }
 
 // @Summary List formula template versions
@@ -890,4 +974,257 @@ func (h *Handler) updateVersionTags(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, version)
+}
+
+type approvalActionRequest struct {
+	Comment string `json:"comment"`
+}
+
+func (h *Handler) handleApprovalAction(
+	c *gin.Context,
+	action func(
+		ctx context.Context,
+		req *formulatemplateservice.ApprovalActionRequest,
+	) (*formulatemplate.FormulaTemplate, error),
+) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req approvalActionRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	template, err := action(c.Request.Context(), &formulatemplateservice.ApprovalActionRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		TemplateID: templateID,
+		Comment:    req.Comment,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, template)
+}
+
+// @Summary Submit a formula template for review
+// @ID submitFormulaTemplate
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body approvalActionRequest true "Submit request"
+// @Success 200 {object} formulatemplate.FormulaTemplate
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/submit [post]
+func (h *Handler) submit(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.Submit)
+}
+
+// @Summary Approve a formula template
+// @ID approveFormulaTemplate
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body approvalActionRequest true "Approve request"
+// @Success 200 {object} formulatemplate.FormulaTemplate
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/approve [post]
+func (h *Handler) approve(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.Approve)
+}
+
+// @Summary Reject a formula template
+// @ID rejectFormulaTemplate
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body approvalActionRequest true "Reject request"
+// @Success 200 {object} formulatemplate.FormulaTemplate
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/reject [post]
+func (h *Handler) reject(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.Reject)
+}
+
+type updateEffectiveDateRequest struct {
+	EffectiveFrom *int64 `json:"effectiveFrom"`
+}
+
+// @Summary Update a formula template version effective date
+// @ID updateFormulaTemplateVersionEffectiveDate
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param versionNumber path int true "Version number"
+// @Param request body updateEffectiveDateRequest true "Effective date update request"
+// @Success 200 {object} formulatemplate.FormulaTemplateVersion
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/versions/{versionNumber}/effective-date [patch]
+func (h *Handler) updateVersionEffectiveDate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	versionNumber, err := strconv.ParseInt(c.Param("versionNumber"), 10, 64)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req updateEffectiveDateRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	version, err := h.service.UpdateVersionEffectiveDate(
+		c.Request.Context(),
+		&repositories.UpdateEffectiveDateRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID:    templateID,
+			VersionNumber: versionNumber,
+			EffectiveFrom: req.EffectiveFrom,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, version)
+}
+
+// @Summary List scheduled formula template versions
+// @ID listScheduledFormulaTemplateVersions
+// @Tags Formula Templates
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Success 200 {array} formulatemplate.FormulaTemplateVersion
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/versions/scheduled [get]
+func (h *Handler) listScheduledVersions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	versions, err := h.service.ListScheduledVersions(
+		c.Request.Context(),
+		&repositories.ListScheduledVersionsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID: templateID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, versions)
+}
+
+type backtestRequest struct {
+	Expression    string `json:"expression"`
+	VersionNumber *int64 `json:"versionNumber"`
+	Limit         int    `json:"limit"`
+}
+
+// @Summary Backtest a formula template candidate against rated shipments
+// @ID backtestFormulaTemplate
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Param request body backtestRequest true "Backtest request"
+// @Success 200 {object} formulatemplateservice.BacktestResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/backtest [post]
+func (h *Handler) backtest(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req backtestRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	response, err := h.service.Backtest(
+		c.Request.Context(),
+		&formulatemplateservice.BacktestRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID:    templateID,
+			Expression:    req.Expression,
+			VersionNumber: req.VersionNumber,
+			Limit:         req.Limit,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }

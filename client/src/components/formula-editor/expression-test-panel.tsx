@@ -1,13 +1,26 @@
+import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { VariableDefinitionInput } from "@/types/formula-template";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { cn, formatCurrency } from "@/lib/utils";
+import type {
+  BreakdownDefinitionInput,
+  TestBreakdownItem,
+  TestExpressionRequest,
+  VariableDefinitionInput,
+} from "@/types/formula-template";
 import {
+  AlertTriangleIcon,
+  Braces,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   FlaskConical,
+  ListTree,
   RotateCcw,
   Sparkles,
+  Truck,
   XCircle,
 } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -18,23 +31,88 @@ type ExpressionTestPanelProps = {
   expression: string;
   schemaId?: string;
   customVariables?: VariableDefinitionInput[];
+  breakdowns?: BreakdownDefinitionInput[];
   className?: string;
 };
+
+function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
+  return (
+    <div className="mt-4 space-y-2">
+      <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <ListTree className="size-3" />
+        Breakdown
+      </div>
+      <div className="overflow-hidden rounded-md border bg-background/50">
+        {items.map((item) => (
+          <div
+            key={item.name}
+            className="flex items-center justify-between gap-3 border-b px-3 py-1.5 text-sm last:border-b-0"
+          >
+            <div className="min-w-0">
+              <span className="font-mono text-xs">{item.name}</span>
+              {item.label && (
+                <span className="ml-2 text-xs text-muted-foreground">{item.label}</span>
+              )}
+            </div>
+            {item.error ? (
+              <span className="flex items-center gap-1 text-xs text-destructive">
+                <AlertTriangleIcon className="size-3" />
+                {item.error}
+              </span>
+            ) : (
+              <span className="font-mono text-xs font-medium tabular-nums">
+                {formatCurrency(item.amount)}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ResolvedVariablesView({ variables }: { variables: Record<string, unknown> }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const count = Object.keys(variables).length;
+
+  return (
+    <div className="mt-4 space-y-2">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase hover:text-foreground"
+      >
+        {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        <Braces className="size-3" />
+        Resolved Variables ({count})
+      </button>
+      {isOpen && (
+        <pre className="max-h-64 overflow-auto rounded-md border bg-background/50 p-3 font-mono text-xs whitespace-pre-wrap">
+          {JSON.stringify(variables, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
 
 export function ExpressionTestPanel({
   expression,
   schemaId = "shipment",
   customVariables = [],
+  breakdowns = [],
   className,
 }: ExpressionTestPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [testValues, setTestValues] = useState<Record<string, unknown>>({
     ...DEFAULT_TEST_VALUES,
   });
+  const [useRealShipment, setUseRealShipment] = useState(false);
+  const [shipmentId, setShipmentId] = useState("");
   const { mutate, data, isPending, reset } = useExpressionTest();
 
   const handleTest = useCallback(() => {
-    const variables: Record<string, unknown> = { ...testValues };
+    const usingShipment = useRealShipment && !!shipmentId;
+    const variables: Record<string, unknown> = usingShipment ? {} : { ...testValues };
 
     customVariables.forEach((v) => {
       if (v.defaultValue !== undefined) {
@@ -42,9 +120,28 @@ export function ExpressionTestPanel({
       }
     });
 
-    mutate({ expression, schemaId, variables });
+    const validBreakdowns = breakdowns.filter((b) => b.name.trim() && b.expression.trim());
+
+    const request: TestExpressionRequest = {
+      expression,
+      schemaId,
+      variables,
+      ...(usingShipment ? { shipmentId } : {}),
+      ...(validBreakdowns.length > 0 ? { breakdowns: validBreakdowns } : {}),
+    };
+
+    mutate(request);
     setIsExpanded(true);
-  }, [expression, schemaId, customVariables, testValues, mutate]);
+  }, [
+    expression,
+    schemaId,
+    customVariables,
+    breakdowns,
+    testValues,
+    useRealShipment,
+    shipmentId,
+    mutate,
+  ]);
 
   const handleToggle = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -54,12 +151,53 @@ export function ExpressionTestPanel({
     reset();
   }, [reset]);
 
+  const handleUseRealShipmentChange = useCallback(
+    (checked: boolean) => {
+      setUseRealShipment(checked);
+      if (!checked) {
+        setShipmentId("");
+      }
+      reset();
+    },
+    [reset],
+  );
+
   const hasResult = data !== undefined;
   const isValid = data?.valid ?? false;
 
   return (
     <div className={cn("mt-3 space-y-3", className)}>
-      <TestDataEditor values={testValues} onChange={setTestValues} />
+      <div className="rounded-lg border bg-muted/30 px-3 py-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Truck className="size-3.5 text-muted-foreground" />
+            <Label htmlFor="use-real-shipment" className="text-xs font-medium">
+              Use real shipment
+            </Label>
+          </div>
+          <Switch
+            id="use-real-shipment"
+            size="sm"
+            checked={useRealShipment}
+            onCheckedChange={handleUseRealShipmentChange}
+          />
+        </div>
+        {useRealShipment && (
+          <div className="mt-2 space-y-1.5">
+            <ControlledShipmentAutocompleteField
+              value={shipmentId}
+              onValueChange={setShipmentId}
+              clearable
+            />
+            <p className="text-2xs text-muted-foreground">
+              Variables are resolved from the selected shipment; manual test data is ignored. Custom
+              variable defaults still apply.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {!useRealShipment && <TestDataEditor values={testValues} onChange={setTestValues} />}
 
       <div className="flex items-center gap-2">
         <Button
@@ -69,6 +207,7 @@ export function ExpressionTestPanel({
           onClick={handleTest}
           isLoading={isPending}
           loadingText="Testing..."
+          disabled={useRealShipment && !shipmentId}
           className="gap-2"
         >
           <FlaskConical className="size-3.5" />
@@ -112,11 +251,7 @@ export function ExpressionTestPanel({
                     : "bg-destructive/10 text-destructive",
                 )}
               >
-                {isValid ? (
-                  <CheckCircle2 className="size-3.5" />
-                ) : (
-                  <XCircle className="size-3.5" />
-                )}
+                {isValid ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
                 {isValid ? "Valid" : "Invalid"}
               </div>
             )}
@@ -172,9 +307,7 @@ export function ExpressionTestPanel({
                       : String(data.result)}
                   </span>
                   {typeof data.result === "number" && (
-                    <span className="text-sm text-muted-foreground">
-                      (numeric)
-                    </span>
+                    <span className="text-sm text-muted-foreground">(numeric)</span>
                   )}
                 </div>
               </div>
@@ -191,11 +324,15 @@ export function ExpressionTestPanel({
               </div>
             )}
 
-            {data.message && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                {data.message}
-              </p>
+            {isValid && data.breakdown && data.breakdown.length > 0 && (
+              <BreakdownResultTable items={data.breakdown} />
             )}
+
+            {data.resolvedVariables && Object.keys(data.resolvedVariables).length > 0 && (
+              <ResolvedVariablesView variables={data.resolvedVariables} />
+            )}
+
+            {data.message && <p className="mt-3 text-xs text-muted-foreground">{data.message}</p>}
           </div>
         </div>
       )}

@@ -27,7 +27,7 @@ type FilterConfig struct {
 	Value    any             `json:"value"`
 }
 
-type Defintion struct {
+type Definition struct {
 	ID             string                  `json:"$id"`
 	Schema         string                  `json:"$schema"`
 	Title          string                  `json:"title"`

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,6 +25,8 @@ var (
 
 type Customer struct {
 	bun.BaseModel `bun:"table:customers,alias:cus" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -105,6 +108,10 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 
 func (c *Customer) GetID() pulid.ID {
 	return c.ID
+}
+
+func (c *Customer) GetCreatedAt() int64 {
+	return c.CreatedAt
 }
 
 func (c *Customer) GetTableName() string {

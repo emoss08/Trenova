@@ -76,7 +76,7 @@ type MockDistanceProfileRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distanceprofile.DistanceProfile
-func (_e *MockDistanceProfileRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDistanceProfileRepository_Create_Call {
+func (_e *MockDistanceProfileRepository_Expecter) Create(ctx any, entity any) *MockDistanceProfileRepository_Create_Call {
 	return &MockDistanceProfileRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -133,7 +133,7 @@ type MockDistanceProfileRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteDistanceProfileRequest
-func (_e *MockDistanceProfileRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockDistanceProfileRepository_Delete_Call {
+func (_e *MockDistanceProfileRepository_Expecter) Delete(ctx any, req any) *MockDistanceProfileRepository_Delete_Call {
 	return &MockDistanceProfileRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -201,7 +201,7 @@ type MockDistanceProfileRepository_EnsureDefault_Call struct {
 // EnsureDefault is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDistanceProfileRepository_Expecter) EnsureDefault(ctx interface{}, tenantInfo interface{}) *MockDistanceProfileRepository_EnsureDefault_Call {
+func (_e *MockDistanceProfileRepository_Expecter) EnsureDefault(ctx any, tenantInfo any) *MockDistanceProfileRepository_EnsureDefault_Call {
 	return &MockDistanceProfileRepository_EnsureDefault_Call{Call: _e.mock.On("EnsureDefault", ctx, tenantInfo)}
 }
 
@@ -269,7 +269,7 @@ type MockDistanceProfileRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDistanceProfileByIDRequest
-func (_e *MockDistanceProfileRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDistanceProfileRepository_GetByID_Call {
+func (_e *MockDistanceProfileRepository_Expecter) GetByID(ctx any, req any) *MockDistanceProfileRepository_GetByID_Call {
 	return &MockDistanceProfileRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -337,7 +337,7 @@ type MockDistanceProfileRepository_GetDefault_Call struct {
 // GetDefault is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDistanceProfileRepository_Expecter) GetDefault(ctx interface{}, tenantInfo interface{}) *MockDistanceProfileRepository_GetDefault_Call {
+func (_e *MockDistanceProfileRepository_Expecter) GetDefault(ctx any, tenantInfo any) *MockDistanceProfileRepository_GetDefault_Call {
 	return &MockDistanceProfileRepository_GetDefault_Call{Call: _e.mock.On("GetDefault", ctx, tenantInfo)}
 }
 
@@ -405,7 +405,7 @@ type MockDistanceProfileRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDistanceProfileRequest
-func (_e *MockDistanceProfileRepository_Expecter) List(ctx interface{}, req interface{}) *MockDistanceProfileRepository_List_Call {
+func (_e *MockDistanceProfileRepository_Expecter) List(ctx any, req any) *MockDistanceProfileRepository_List_Call {
 	return &MockDistanceProfileRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -433,6 +433,74 @@ func (_c *MockDistanceProfileRepository_List_Call) Return(listResult *pagination
 }
 
 func (_c *MockDistanceProfileRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDistanceProfileRequest) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)) *MockDistanceProfileRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockDistanceProfileRepository
+func (_mock *MockDistanceProfileRepository) ListConnection(ctx context.Context, req *repositories.ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*distanceprofile.DistanceProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceProfileConnectionRequest) *pagination.CursorListResult[*distanceprofile.DistanceProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*distanceprofile.DistanceProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDistanceProfileConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDistanceProfileRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockDistanceProfileRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListDistanceProfileConnectionRequest
+func (_e *MockDistanceProfileRepository_Expecter) ListConnection(ctx any, req any) *MockDistanceProfileRepository_ListConnection_Call {
+	return &MockDistanceProfileRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockDistanceProfileRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListDistanceProfileConnectionRequest)) *MockDistanceProfileRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListDistanceProfileConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListDistanceProfileConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDistanceProfileRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*distanceprofile.DistanceProfile], err error) *MockDistanceProfileRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockDistanceProfileRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)) *MockDistanceProfileRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -473,7 +541,7 @@ type MockDistanceProfileRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.DistanceProfileSelectOptionsRequest
-func (_e *MockDistanceProfileRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockDistanceProfileRepository_SelectOptions_Call {
+func (_e *MockDistanceProfileRepository_Expecter) SelectOptions(ctx any, req any) *MockDistanceProfileRepository_SelectOptions_Call {
 	return &MockDistanceProfileRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -541,7 +609,7 @@ type MockDistanceProfileRepository_SetDefault_Call struct {
 // SetDefault is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDistanceProfileByIDRequest
-func (_e *MockDistanceProfileRepository_Expecter) SetDefault(ctx interface{}, req interface{}) *MockDistanceProfileRepository_SetDefault_Call {
+func (_e *MockDistanceProfileRepository_Expecter) SetDefault(ctx any, req any) *MockDistanceProfileRepository_SetDefault_Call {
 	return &MockDistanceProfileRepository_SetDefault_Call{Call: _e.mock.On("SetDefault", ctx, req)}
 }
 
@@ -609,7 +677,7 @@ type MockDistanceProfileRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *distanceprofile.DistanceProfile
-func (_e *MockDistanceProfileRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDistanceProfileRepository_Update_Call {
+func (_e *MockDistanceProfileRepository_Expecter) Update(ctx any, entity any) *MockDistanceProfileRepository_Update_Call {
 	return &MockDistanceProfileRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -637,72 +705,6 @@ func (_c *MockDistanceProfileRepository_Update_Call) Return(distanceProfile *dis
 }
 
 func (_c *MockDistanceProfileRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *distanceprofile.DistanceProfile) (*distanceprofile.DistanceProfile, error)) *MockDistanceProfileRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockDistanceProfileRepository
-func (_mock *MockDistanceProfileRepository) ListConnection(ctx context.Context, req *repositories.ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*distanceprofile.DistanceProfile]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDistanceProfileConnectionRequest) *pagination.CursorListResult[*distanceprofile.DistanceProfile]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*distanceprofile.DistanceProfile])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDistanceProfileConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockDistanceProfileRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockDistanceProfileRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-func (_e *MockDistanceProfileRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockDistanceProfileRepository_ListConnection_Call {
-	return &MockDistanceProfileRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockDistanceProfileRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListDistanceProfileConnectionRequest)) *MockDistanceProfileRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListDistanceProfileConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListDistanceProfileConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockDistanceProfileRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*distanceprofile.DistanceProfile], err error) *MockDistanceProfileRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockDistanceProfileRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)) *MockDistanceProfileRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

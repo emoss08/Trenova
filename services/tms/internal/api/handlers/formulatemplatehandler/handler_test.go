@@ -8,8 +8,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/ratetable"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
@@ -17,10 +21,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -155,6 +162,9 @@ type mockVersionRepo struct {
 	getLatestVersionFunc      func(ctx context.Context, templateID pulid.ID, tenantInfo pagination.TenantInfo) (*formulatemplate.FormulaTemplateVersion, error)
 	getForkedTemplatesFunc    func(ctx context.Context, req *repositories.GetForkedTemplatesRequest) ([]*formulatemplate.FormulaTemplate, error)
 	updateTagsFunc            func(ctx context.Context, req *repositories.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	getEffectiveVersionFunc   func(ctx context.Context, req *repositories.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	updateEffectiveDateFunc   func(ctx context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	listScheduledFunc         func(ctx context.Context, req *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)
 }
 
 func (m *mockVersionRepo) Create(
@@ -232,7 +242,39 @@ func (m *mockVersionRepo) UpdateTags(
 	return &formulatemplate.FormulaTemplateVersion{}, nil
 }
 
-func newTestFormulaService() *formula.Service {
+func (m *mockVersionRepo) GetEffectiveVersion(
+	ctx context.Context,
+	req *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	if m.getEffectiveVersionFunc != nil {
+		return m.getEffectiveVersionFunc(ctx, req)
+	}
+	return nil, nil
+}
+
+func (m *mockVersionRepo) UpdateEffectiveDate(
+	ctx context.Context,
+	req *repositories.UpdateEffectiveDateRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	if m.updateEffectiveDateFunc != nil {
+		return m.updateEffectiveDateFunc(ctx, req)
+	}
+	return &formulatemplate.FormulaTemplateVersion{}, nil
+}
+
+func (m *mockVersionRepo) ListScheduled(
+	ctx context.Context,
+	req *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	if m.listScheduledFunc != nil {
+		return m.listScheduledFunc(ctx, req)
+	}
+	return []*formulatemplate.FormulaTemplateVersion{}, nil
+}
+
+func newTestFormulaService(t *testing.T) *formula.Service {
+	t.Helper()
+
 	registry := schema.NewRegistry()
 	registerShipmentSchema(registry)
 	res := resolver.NewResolver()
@@ -240,17 +282,49 @@ func newTestFormulaService() *formula.Service {
 		Registry: registry,
 		Resolver: res,
 	})
-	eng := engine.NewEngine(engine.Params{
+	eng, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
+	require.NoError(t, err)
 	return formula.NewService(formula.ServiceParams{
-		Logger:   zap.NewNop(),
-		Registry: registry,
-		Engine:   eng,
-		Resolver: res,
+		Logger:        zap.NewNop(),
+		Registry:      registry,
+		Engine:        eng,
+		Resolver:      res,
+		VersionRepo:   &stubFormulaVersionRepo{},
+		RateTableRepo: &stubRateTableRepo{},
 	})
+}
+
+type stubFormulaVersionRepo struct {
+	repositories.FormulaTemplateVersionRepository
+}
+
+func (s *stubFormulaVersionRepo) GetEffectiveVersion(
+	_ context.Context,
+	_ *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+type stubRateTableRepo struct {
+	repositories.RateTableRepository
+}
+
+func (s *stubRateTableRepo) GetLookupData(
+	_ context.Context,
+	_ *repositories.GetRateTableLookupDataRequest,
+) ([]*ratetable.RateTable, error) {
+	return nil, nil
+}
+
+func (s *stubRateTableRepo) GetByKeys(
+	_ context.Context,
+	_ *repositories.GetRateTablesByKeysRequest,
+) ([]*ratetable.RateTable, error) {
+	return nil, nil
 }
 
 func registerShipmentSchema(registry *schema.Registry) {
@@ -295,10 +369,65 @@ func registerShipmentSchema(registry *schema.Registry) {
 	}
 }
 
+type mockShipmentRepo struct {
+	repositories.ShipmentRepository
+	getByIDFunc   func(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	listRatedFunc func(ctx context.Context, req *repositories.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error)
+}
+
+func (m *mockShipmentRepo) GetByID(
+	ctx context.Context,
+	req *repositories.GetShipmentByIDRequest,
+) (*shipment.Shipment, error) {
+	if m.getByIDFunc != nil {
+		return m.getByIDFunc(ctx, req)
+	}
+	return nil, errNotFound
+}
+
+func (m *mockShipmentRepo) ListRatedByFormulaTemplate(
+	ctx context.Context,
+	req *repositories.ListRatedByFormulaTemplateRequest,
+) ([]*shipment.Shipment, error) {
+	if m.listRatedFunc != nil {
+		return m.listRatedFunc(ctx, req)
+	}
+	return []*shipment.Shipment{}, nil
+}
+
 func setupHandler(
 	t *testing.T,
 	repo *mockFormulaTemplateRepo,
 	versionRepo *mockVersionRepo,
+) *formulatemplatehandler.Handler {
+	t.Helper()
+
+	return setupHandlerWithDeps(
+		t,
+		repo,
+		versionRepo,
+		&mockShipmentRepo{},
+		&mocks.AllowAllPermissionEngine{},
+	)
+}
+
+func setupHandlerWithPermissions(
+	t *testing.T,
+	repo *mockFormulaTemplateRepo,
+	versionRepo *mockVersionRepo,
+	permEngine serviceports.PermissionEngine,
+) *formulatemplatehandler.Handler {
+	t.Helper()
+
+	return setupHandlerWithDeps(t, repo, versionRepo, &mockShipmentRepo{}, permEngine)
+}
+
+func setupHandlerWithDeps(
+	t *testing.T,
+	repo *mockFormulaTemplateRepo,
+	versionRepo *mockVersionRepo,
+	shipmentRepo repositories.ShipmentRepository,
+	permEngine serviceports.PermissionEngine,
 ) *formulatemplatehandler.Handler {
 	t.Helper()
 
@@ -308,7 +437,8 @@ func setupHandler(
 		Logger:         logger,
 		Repo:           repo,
 		VersionRepo:    versionRepo,
-		FormulaService: newTestFormulaService(),
+		ShipmentRepo:   shipmentRepo,
+		FormulaService: newTestFormulaService(t),
 		AuditService:   &mocks.NoopAuditService{},
 	})
 
@@ -323,9 +453,16 @@ func setupHandler(
 		Config: cfg,
 	})
 
+	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
+		PermissionEngine: permEngine,
+		ErrorHandler:     errorHandler,
+	})
+
 	return formulatemplatehandler.New(formulatemplatehandler.Params{
-		Service:      service,
-		ErrorHandler: errorHandler,
+		Service:              service,
+		ErrorHandler:         errorHandler,
+		PermissionMiddleware: pm,
+		PermissionEngine:     permEngine,
 	})
 }
 
@@ -617,6 +754,43 @@ func TestFormulaTemplateHandler_Create_ServiceError(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func TestFormulaTemplateHandler_Create_PermissionDenied(t *testing.T) {
+	t.Parallel()
+
+	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine.EXPECT().
+		Check(mock.Anything, mock.Anything).
+		Return(&serviceports.PermissionCheckResult{Allowed: false}, nil)
+
+	createCalled := false
+	repo := &mockFormulaTemplateRepo{
+		createFunc: func(_ context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
+			createCalled = true
+			return entity, nil
+		},
+	}
+
+	handler := setupHandlerWithPermissions(t, repo, &mockVersionRepo{}, permEngine)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"name":       "New Template",
+			"type":       "FreightCharge",
+			"expression": "totalDistance * 3.0",
+			"status":     "Active",
+			"schemaId":   "shipment",
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+	assert.False(t, createCalled)
 }
 
 func TestFormulaTemplateHandler_Update_Success(t *testing.T) {
@@ -1141,7 +1315,7 @@ func TestFormulaTemplateHandler_Patch_PreservesAllFields(t *testing.T) {
 		WithPath("/api/v1/formula-templates/" + templateID.String() + "/").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]string{
-			"status": "Active",
+			"status": "InReview",
 		})
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -1157,7 +1331,7 @@ func TestFormulaTemplateHandler_Patch_PreservesAllFields(t *testing.T) {
 	assert.Equal(t, "A test formula template", updatedEntity.Description)
 	assert.Equal(t, formulatemplate.TemplateTypeAccessorialCharge, updatedEntity.Type)
 	assert.Equal(t, "freightChargeAmount * 0.15", updatedEntity.Expression)
-	assert.Equal(t, formulatemplate.StatusActive, updatedEntity.Status)
+	assert.Equal(t, formulatemplate.StatusInReview, updatedEntity.Status)
 	assert.Equal(t, "shipment", updatedEntity.SchemaID)
 	assert.Equal(t, int64(5), updatedEntity.Version)
 }
@@ -2248,4 +2422,413 @@ func TestFormulaTemplateHandler_UpdateVersionTags_ServiceError(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func newApprovalTemplateRepo(
+	status formulatemplate.Status,
+) (*mockFormulaTemplateRepo, *pulid.ID) {
+	ftID := pulid.MustNew("ft_")
+	repo := &mockFormulaTemplateRepo{
+		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+			return &formulatemplate.FormulaTemplate{
+				ID:                   req.TemplateID,
+				OrganizationID:       testutil.TestOrgID,
+				BusinessUnitID:       testutil.TestBuID,
+				Name:                 "Approval Template",
+				Type:                 formulatemplate.TemplateTypeFreightCharge,
+				Expression:           "totalDistance * 2.5",
+				Status:               status,
+				SchemaID:             "shipment",
+				CurrentVersionNumber: 1,
+			}, nil
+		},
+		updateFunc: func(_ context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
+			return entity, nil
+		},
+	}
+	return repo, &ftID
+}
+
+func TestFormulaTemplateHandler_Submit_Success(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusDraft)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/submit").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]string{"comment": "please review"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, "InReview", resp["status"])
+	assert.Equal(t, "please review", resp["reviewComment"])
+	assert.NotEmpty(t, resp["submittedById"])
+}
+
+func TestFormulaTemplateHandler_Submit_InvalidStatus(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusActive)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/submit").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]string{"comment": "please review"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func TestFormulaTemplateHandler_Submit_PermissionDenied(t *testing.T) {
+	t.Parallel()
+
+	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine.EXPECT().
+		Check(mock.Anything, mock.Anything).
+		Return(&serviceports.PermissionCheckResult{Allowed: false}, nil)
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusDraft)
+	handler := setupHandlerWithPermissions(t, repo, &mockVersionRepo{}, permEngine)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/submit").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]string{"comment": "please review"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+}
+
+func TestFormulaTemplateHandler_Approve_Success(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusInReview)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/approve").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]string{"comment": "approved"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, "Active", resp["status"])
+	assert.NotEmpty(t, resp["approvedById"])
+}
+
+func TestFormulaTemplateHandler_Reject_Success(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusInReview)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/reject").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]string{"comment": "needs work"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, "Draft", resp["status"])
+	assert.Equal(t, "needs work", resp["reviewComment"])
+}
+
+func TestFormulaTemplateHandler_Reject_MissingComment(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusInReview)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/reject").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]string{})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func TestFormulaTemplateHandler_UpdateEffectiveDate_Success(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusActive)
+	future := timeutils.NowUnix() + 7200
+
+	versionRepo := &mockVersionRepo{
+		getByTemplateAndVersionFn: func(_ context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+			return &formulatemplate.FormulaTemplateVersion{
+				VersionNumber: req.VersionNumber,
+			}, nil
+		},
+		updateEffectiveDateFunc: func(_ context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+			return &formulatemplate.FormulaTemplateVersion{
+				VersionNumber: req.VersionNumber,
+				EffectiveFrom: req.EffectiveFrom,
+			}, nil
+		},
+	}
+
+	handler := setupHandler(t, repo, versionRepo)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPatch).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/versions/2/effective-date").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"effectiveFrom": future})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.EqualValues(t, future, resp["effectiveFrom"])
+}
+
+func TestFormulaTemplateHandler_UpdateEffectiveDate_InvalidVersionNumber(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusActive)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPatch).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/versions/abc/effective-date").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"effectiveFrom": nil})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func TestFormulaTemplateHandler_ListScheduledVersions_Success(t *testing.T) {
+	t.Parallel()
+
+	ftID := pulid.MustNew("ft_")
+	future := timeutils.NowUnix() + 7200
+
+	versionRepo := &mockVersionRepo{
+		listScheduledFunc: func(_ context.Context, _ *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
+			return []*formulatemplate.FormulaTemplateVersion{
+				{VersionNumber: 3, EffectiveFrom: &future},
+			}, nil
+		},
+	}
+
+	handler := setupHandler(t, &mockFormulaTemplateRepo{}, versionRepo)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/versions/scheduled").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp []map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.Len(t, resp, 1)
+	assert.EqualValues(t, 3, resp[0]["versionNumber"])
+}
+
+func TestFormulaTemplateHandler_Backtest_Success(t *testing.T) {
+	t.Parallel()
+
+	ftID := pulid.MustNew("ft_")
+	repo := &mockFormulaTemplateRepo{
+		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+			return &formulatemplate.FormulaTemplate{
+				ID:             req.TemplateID,
+				OrganizationID: testutil.TestOrgID,
+				BusinessUnitID: testutil.TestBuID,
+				Name:           "Backtest Template",
+				Type:           formulatemplate.TemplateTypeFreightCharge,
+				Expression:     "baseRate",
+				Status:         formulatemplate.StatusActive,
+				SchemaID:       "shipment",
+				VariableDefinitions: []*formulatypes.VariableDefinition{
+					{Name: "baseRate", Type: "number", DefaultValue: 100.0},
+				},
+			}, nil
+		},
+	}
+
+	shipmentRepo := &mockShipmentRepo{
+		listRatedFunc: func(_ context.Context, _ *repositories.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error) {
+			return []*shipment.Shipment{
+				{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1", CreatedAt: 1700000000},
+			}, nil
+		},
+	}
+
+	handler := setupHandlerWithDeps(
+		t,
+		repo,
+		&mockVersionRepo{},
+		shipmentRepo,
+		&mocks.AllowAllPermissionEngine{},
+	)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/backtest").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"expression": "baseRate * 2"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp struct {
+		Results []map[string]any `json:"results"`
+		Summary map[string]any   `json:"summary"`
+	}
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "100", resp.Results[0]["currentAmount"])
+	assert.Equal(t, "200", resp.Results[0]["candidateAmount"])
+	assert.EqualValues(t, 1, resp.Summary["shipmentCount"])
+	assert.EqualValues(t, 1, resp.Summary["increasedCount"])
+}
+
+func TestFormulaTemplateHandler_Backtest_ValidationError(t *testing.T) {
+	t.Parallel()
+
+	ftID := pulid.MustNew("ft_")
+	handler := setupHandler(t, &mockFormulaTemplateRepo{}, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/backtest").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.True(t, ginCtx.ResponseCode() >= 400)
+}
+
+func TestFormulaTemplateHandler_TestExpression_WithShipment_Success(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	shipmentRepo := &mockShipmentRepo{
+		getByIDFunc: func(_ context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+			return &shipment.Shipment{ID: req.ID, ProNumber: "PRO-1"}, nil
+		},
+	}
+
+	handler := setupHandlerWithDeps(
+		t,
+		&mockFormulaTemplateRepo{},
+		&mockVersionRepo{},
+		shipmentRepo,
+		&mocks.AllowAllPermissionEngine{},
+	)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/test").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"expression": "customRate * 2",
+			"schemaId":   "shipment",
+			"variables":  map[string]any{"customRate": 10.0},
+			"shipmentId": shipmentID.String(),
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, true, resp["valid"])
+	assert.Equal(t, "20", resp["result"])
+	assert.NotNil(t, resp["resolvedVariables"])
+}
+
+func TestFormulaTemplateHandler_TestExpression_WithShipment_PermissionDenied(t *testing.T) {
+	t.Parallel()
+
+	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine.EXPECT().
+		Check(mock.Anything, mock.MatchedBy(func(req *serviceports.PermissionCheckRequest) bool {
+			return req.Resource == "shipment"
+		})).
+		Return(&serviceports.PermissionCheckResult{Allowed: false}, nil)
+	permEngine.EXPECT().
+		Check(mock.Anything, mock.MatchedBy(func(req *serviceports.PermissionCheckRequest) bool {
+			return req.Resource != "shipment"
+		})).
+		Return(&serviceports.PermissionCheckResult{Allowed: true}, nil)
+
+	shipmentRepo := &mockShipmentRepo{
+		getByIDFunc: func(_ context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+			t.Fatal("shipment must not be loaded when read permission is denied")
+			return nil, nil
+		},
+	}
+
+	handler := setupHandlerWithDeps(
+		t,
+		&mockFormulaTemplateRepo{},
+		&mockVersionRepo{},
+		shipmentRepo,
+		permEngine,
+	)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/formula-templates/test").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"expression": "customRate * 2",
+			"schemaId":   "shipment",
+			"variables":  map[string]any{"customRate": 10.0},
+			"shipmentId": pulid.MustNew("shp_").String(),
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
 }

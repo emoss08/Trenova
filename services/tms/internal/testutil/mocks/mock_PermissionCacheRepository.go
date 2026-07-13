@@ -66,7 +66,7 @@ type MockPermissionCacheRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockPermissionCacheRepository_Expecter) Delete(ctx interface{}, userID interface{}, orgID interface{}) *MockPermissionCacheRepository_Delete_Call {
+func (_e *MockPermissionCacheRepository_Expecter) Delete(ctx any, userID any, orgID any) *MockPermissionCacheRepository_Delete_Call {
 	return &MockPermissionCacheRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, userID, orgID)}
 }
 
@@ -140,7 +140,7 @@ type MockPermissionCacheRepository_Get_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - orgID pulid.ID
-func (_e *MockPermissionCacheRepository_Expecter) Get(ctx interface{}, userID interface{}, orgID interface{}) *MockPermissionCacheRepository_Get_Call {
+func (_e *MockPermissionCacheRepository_Expecter) Get(ctx any, userID any, orgID any) *MockPermissionCacheRepository_Get_Call {
 	return &MockPermissionCacheRepository_Get_Call{Call: _e.mock.On("Get", ctx, userID, orgID)}
 }
 
@@ -203,7 +203,7 @@ type MockPermissionCacheRepository_InvalidateByRole_Call struct {
 //   - ctx context.Context
 //   - roleID pulid.ID
 //   - roleRepo repositories.RoleRepository
-func (_e *MockPermissionCacheRepository_Expecter) InvalidateByRole(ctx interface{}, roleID interface{}, roleRepo interface{}) *MockPermissionCacheRepository_InvalidateByRole_Call {
+func (_e *MockPermissionCacheRepository_Expecter) InvalidateByRole(ctx any, roleID any, roleRepo any) *MockPermissionCacheRepository_InvalidateByRole_Call {
 	return &MockPermissionCacheRepository_InvalidateByRole_Call{Call: _e.mock.On("InvalidateByRole", ctx, roleID, roleRepo)}
 }
 
@@ -265,7 +265,7 @@ type MockPermissionCacheRepository_InvalidateOrganization_Call struct {
 // InvalidateOrganization is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
-func (_e *MockPermissionCacheRepository_Expecter) InvalidateOrganization(ctx interface{}, orgID interface{}) *MockPermissionCacheRepository_InvalidateOrganization_Call {
+func (_e *MockPermissionCacheRepository_Expecter) InvalidateOrganization(ctx any, orgID any) *MockPermissionCacheRepository_InvalidateOrganization_Call {
 	return &MockPermissionCacheRepository_InvalidateOrganization_Call{Call: _e.mock.On("InvalidateOrganization", ctx, orgID)}
 }
 
@@ -325,7 +325,7 @@ type MockPermissionCacheRepository_Set_Call struct {
 //   - orgID pulid.ID
 //   - perms *repositories.CachedPermissions
 //   - ttl time.Duration
-func (_e *MockPermissionCacheRepository_Expecter) Set(ctx interface{}, userID interface{}, orgID interface{}, perms interface{}, ttl interface{}) *MockPermissionCacheRepository_Set_Call {
+func (_e *MockPermissionCacheRepository_Expecter) Set(ctx any, userID any, orgID any, perms any, ttl any) *MockPermissionCacheRepository_Set_Call {
 	return &MockPermissionCacheRepository_Set_Call{Call: _e.mock.On("Set", ctx, userID, orgID, perms, ttl)}
 }
 

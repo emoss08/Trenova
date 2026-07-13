@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -1022,17 +1023,20 @@ func newIntegrationShipmentService(
 		Registry: registry,
 		Resolver: res,
 	})
-	formulaEngine := engine.NewEngine(engine.Params{
+	formulaEngine, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
+	require.NoError(t, err)
 	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:   zap.NewNop(),
-		Registry: registry,
-		Engine:   formulaEngine,
-		Resolver: res,
-		Repo:     formulaRepo,
+		Logger:        zap.NewNop(),
+		Registry:      registry,
+		Engine:        formulaEngine,
+		Resolver:      res,
+		Repo:          formulaRepo,
+		VersionRepo:   shipIntgStubVersionRepo{},
+		RateTableRepo: shipIntgStubRateTableRepo{},
 	})
 
 	validator := NewValidator(ValidatorParams{
@@ -1292,4 +1296,26 @@ func int64PtrForIntegration(v int64) *int64 {
 
 func timeutilsNow() int64 {
 	return timeutils.NowUnix()
+}
+
+type shipIntgStubVersionRepo struct {
+	repositories.FormulaTemplateVersionRepository
+}
+
+func (shipIntgStubVersionRepo) GetEffectiveVersion(
+	_ context.Context,
+	_ *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+type shipIntgStubRateTableRepo struct {
+	repositories.RateTableRepository
+}
+
+func (shipIntgStubRateTableRepo) GetLookupData(
+	_ context.Context,
+	_ *repositories.GetRateTableLookupDataRequest,
+) ([]*ratetable.RateTable, error) {
+	return nil, nil
 }

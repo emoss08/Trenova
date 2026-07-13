@@ -76,7 +76,7 @@ type MockShipmentTypeRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateShipmentTypeStatusRequest
-func (_e *MockShipmentTypeRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockShipmentTypeRepository_BulkUpdateStatus_Call {
+func (_e *MockShipmentTypeRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockShipmentTypeRepository_BulkUpdateStatus_Call {
 	return &MockShipmentTypeRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockShipmentTypeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmenttype.ShipmentType
-func (_e *MockShipmentTypeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockShipmentTypeRepository_Create_Call {
+func (_e *MockShipmentTypeRepository_Expecter) Create(ctx any, entity any) *MockShipmentTypeRepository_Create_Call {
 	return &MockShipmentTypeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockShipmentTypeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetShipmentTypeByIDRequest
-func (_e *MockShipmentTypeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockShipmentTypeRepository_GetByID_Call {
+func (_e *MockShipmentTypeRepository_Expecter) GetByID(ctx any, req any) *MockShipmentTypeRepository_GetByID_Call {
 	return &MockShipmentTypeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockShipmentTypeRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetShipmentTypesByIDsRequest
-func (_e *MockShipmentTypeRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockShipmentTypeRepository_GetByIDs_Call {
+func (_e *MockShipmentTypeRepository_Expecter) GetByIDs(ctx any, req any) *MockShipmentTypeRepository_GetByIDs_Call {
 	return &MockShipmentTypeRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockShipmentTypeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListShipmentTypesRequest
-func (_e *MockShipmentTypeRepository_Expecter) List(ctx interface{}, req interface{}) *MockShipmentTypeRepository_List_Call {
+func (_e *MockShipmentTypeRepository_Expecter) List(ctx any, req any) *MockShipmentTypeRepository_List_Call {
 	return &MockShipmentTypeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -376,6 +376,74 @@ func (_c *MockShipmentTypeRepository_List_Call) Return(listResult *pagination.Li
 }
 
 func (_c *MockShipmentTypeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentTypesRequest) (*pagination.ListResult[*shipmenttype.ShipmentType], error)) *MockShipmentTypeRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockShipmentTypeRepository
+func (_mock *MockShipmentTypeRepository) ListConnection(ctx context.Context, req *repositories.ListShipmentTypesConnectionRequest) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*shipmenttype.ShipmentType]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentTypesConnectionRequest) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentTypesConnectionRequest) *pagination.CursorListResult[*shipmenttype.ShipmentType]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*shipmenttype.ShipmentType])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListShipmentTypesConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentTypeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockShipmentTypeRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListShipmentTypesConnectionRequest
+func (_e *MockShipmentTypeRepository_Expecter) ListConnection(ctx any, req any) *MockShipmentTypeRepository_ListConnection_Call {
+	return &MockShipmentTypeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockShipmentTypeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListShipmentTypesConnectionRequest)) *MockShipmentTypeRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListShipmentTypesConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListShipmentTypesConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentTypeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*shipmenttype.ShipmentType], err error) *MockShipmentTypeRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockShipmentTypeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentTypesConnectionRequest) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error)) *MockShipmentTypeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +484,7 @@ type MockShipmentTypeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ShipmentTypeSelectOptionsRequest
-func (_e *MockShipmentTypeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockShipmentTypeRepository_SelectOptions_Call {
+func (_e *MockShipmentTypeRepository_Expecter) SelectOptions(ctx any, req any) *MockShipmentTypeRepository_SelectOptions_Call {
 	return &MockShipmentTypeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +552,7 @@ type MockShipmentTypeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipmenttype.ShipmentType
-func (_e *MockShipmentTypeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockShipmentTypeRepository_Update_Call {
+func (_e *MockShipmentTypeRepository_Expecter) Update(ctx any, entity any) *MockShipmentTypeRepository_Update_Call {
 	return &MockShipmentTypeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -512,74 +580,6 @@ func (_c *MockShipmentTypeRepository_Update_Call) Return(shipmentType *shipmentt
 }
 
 func (_c *MockShipmentTypeRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *shipmenttype.ShipmentType) (*shipmenttype.ShipmentType, error)) *MockShipmentTypeRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockShipmentTypeRepository
-func (_mock *MockShipmentTypeRepository) ListConnection(ctx context.Context, req *repositories.ListShipmentTypesConnectionRequest) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*shipmenttype.ShipmentType]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentTypesConnectionRequest) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentTypesConnectionRequest) *pagination.CursorListResult[*shipmenttype.ShipmentType]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*shipmenttype.ShipmentType])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListShipmentTypesConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentTypeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockShipmentTypeRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListShipmentTypesConnectionRequest
-func (_e *MockShipmentTypeRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockShipmentTypeRepository_ListConnection_Call {
-	return &MockShipmentTypeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockShipmentTypeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListShipmentTypesConnectionRequest)) *MockShipmentTypeRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListShipmentTypesConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListShipmentTypesConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockShipmentTypeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*shipmenttype.ShipmentType], err error) *MockShipmentTypeRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockShipmentTypeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentTypesConnectionRequest) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error)) *MockShipmentTypeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

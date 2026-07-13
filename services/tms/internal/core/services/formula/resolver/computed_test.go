@@ -387,13 +387,13 @@ func TestComputeTemperatureDifferential(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing max temperature returns zero no error",
+			name: "missing max temperature returns error",
 			entity: &ShipmentEntity{
 				TemperatureMin: &minTemp,
 				TemperatureMax: nil,
 			},
 			want:    0.0,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name: "both nil returns error",

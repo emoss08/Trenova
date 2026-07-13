@@ -125,35 +125,38 @@ func (r *queryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 }
 
 // WorkerPTOEntries is the resolver for the workerPTOEntries field.
-func (r *queryResolver) WorkerPTOEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) (*gqlmodel.WorkerPTOConnection, error) {
+func (r *queryResolver) WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	connection, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
-	if err != nil {
-		return nil, err
-	}
-	filter := connection.Filter
-	workerIDValue, err := optionalID(workerID)
+	connection, err := dataTableConnectionFromGraphQL(&gqlmodel.DataTableConnectionInput{
+		First:        input.First,
+		After:        input.After,
+		Query:        input.Query,
+		FieldFilters: input.FieldFilters,
+		FilterGroups: input.FilterGroups,
+		Sort:         input.Sort,
+	}, tenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	includeWorkerValue := false
-	if includeWorker != nil {
-		includeWorkerValue = *includeWorker
+	workerIDValue, err := optionalID(input.WorkerID)
+	if err != nil {
+		return nil, err
 	}
+
 	result, err := r.workerPTOService.List(ctx, &repositories.ListPTORequest{
-		Filter:        filter,
+		Filter:        connection.Filter,
 		Cursor:        connection.Cursor,
-		Status:        ptoStatusString(status),
-		Type:          ptoTypeString(typeArg),
-		StartDateFrom: int64Value(startDateFrom),
-		StartDateTo:   int64Value(startDateTo),
+		Status:        ptoStatusString(input.Status),
+		Type:          ptoTypeString(input.Type),
+		StartDateFrom: int64Value(input.StartDateFrom),
+		StartDateTo:   int64Value(input.StartDateTo),
 		WorkerID:      workerIDValue,
-		IncludeWorker: includeWorkerValue,
+		IncludeWorker: boolValue(input.IncludeWorker),
 	})
 	if err != nil {
 		return nil, err
@@ -163,15 +166,15 @@ func (r *queryResolver) WorkerPTOEntries(ctx context.Context, input gqlmodel.Dat
 }
 
 // UpcomingWorkerPto is the resolver for the upcomingWorkerPTO field.
-func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, after *string, status *worker.PTOStatus, typeArg *worker.PTOType, startDate *int, endDate *int, workerID *string, fleetCodeID *string, timezone *string) (*gqlmodel.WorkerPTOConnection, error) {
+func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
 	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
-		First: first,
-		After: after,
+		First: input.First,
+		After: input.After,
 	})
 	if err != nil {
 		return nil, err
@@ -185,13 +188,13 @@ func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, after
 		Filter: filter,
 		Cursor: page.Cursor,
 		ListWorkerPTOFilterOptions: repositories.ListWorkerPTOFilterOptions{
-			Status:      ptoStatusString(status),
-			Type:        ptoTypeString(typeArg),
-			StartDate:   int64Value(startDate),
-			EndDate:     int64Value(endDate),
-			WorkerID:    stringValue(workerID),
-			FleetCodeID: stringValue(fleetCodeID),
-			Timezone:    stringValue(timezone),
+			Status:      ptoStatusString(input.Status),
+			Type:        ptoTypeString(input.Type),
+			StartDate:   int64Value(input.StartDate),
+			EndDate:     int64Value(input.EndDate),
+			WorkerID:    stringValue(input.WorkerID),
+			FleetCodeID: stringValue(input.FleetCodeID),
+			Timezone:    stringValue(input.Timezone),
 		},
 	})
 	if err != nil {
@@ -202,7 +205,7 @@ func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, after
 }
 
 // WorkerPTOChartData is the resolver for the workerPTOChartData field.
-func (r *queryResolver) WorkerPTOChartData(ctx context.Context, startDateFrom int, startDateTo int, typeArg *worker.PTOType, workerID *string, timezone *string) ([]*repositories.PTOChartDataPoint, error) {
+func (r *queryResolver) WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*repositories.PTOChartDataPoint, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -214,11 +217,11 @@ func (r *queryResolver) WorkerPTOChartData(ctx context.Context, startDateFrom in
 	})
 	return r.workerPTOService.GetChartData(ctx, &repositories.PTOChartRequest{
 		Filter:        filter,
-		StartDateFrom: int64(startDateFrom),
-		StartDateTo:   int64(startDateTo),
-		Type:          ptoTypeString(typeArg),
-		WorkerID:      stringValue(workerID),
-		Timezone:      stringValue(timezone),
+		StartDateFrom: int64(input.StartDateFrom),
+		StartDateTo:   int64(input.StartDateTo),
+		Type:          ptoTypeString(input.Type),
+		WorkerID:      stringValue(input.WorkerID),
+		Timezone:      stringValue(input.Timezone),
 	})
 }
 

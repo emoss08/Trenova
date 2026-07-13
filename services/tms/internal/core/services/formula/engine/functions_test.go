@@ -521,8 +521,9 @@ func TestCoalesceFunctionAllNil(t *testing.T) {
 	program, err := expr.Compile("coalesce(a, b)", options...)
 	require.NoError(t, err)
 
-	_, err = expr.Run(program, env)
-	require.Error(t, err)
+	result, err := expr.Run(program, env)
+	require.NoError(t, err)
+	assert.Nil(t, result)
 }
 
 func TestClampFunction(t *testing.T) {

@@ -65,7 +65,7 @@ type MockShipmentCommodityRepository_SyncForShipment_Call struct {
 //   - ctx context.Context
 //   - tx bun.IDB
 //   - entity *shipment.Shipment
-func (_e *MockShipmentCommodityRepository_Expecter) SyncForShipment(ctx interface{}, tx interface{}, entity interface{}) *MockShipmentCommodityRepository_SyncForShipment_Call {
+func (_e *MockShipmentCommodityRepository_Expecter) SyncForShipment(ctx any, tx any, entity any) *MockShipmentCommodityRepository_SyncForShipment_Call {
 	return &MockShipmentCommodityRepository_SyncForShipment_Call{Call: _e.mock.On("SyncForShipment", ctx, tx, entity)}
 }
 

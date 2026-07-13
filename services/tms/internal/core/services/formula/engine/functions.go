@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	"math"
 
@@ -28,6 +27,8 @@ func BuiltinFunctions() []expr.Option {
 	}
 }
 
+const maxRoundDecimals = 12
+
 func roundFn(args ...any) (any, error) {
 	value, err := toFloat64(args[0])
 	if err != nil {
@@ -38,6 +39,12 @@ func roundFn(args ...any) (any, error) {
 		d, dErr := toInt(args[1])
 		if dErr != nil {
 			return nil, dErr
+		}
+		if d < -maxRoundDecimals || d > maxRoundDecimals {
+			return nil, fmt.Errorf(
+				"round decimals must be between %d and %d, got %d",
+				-maxRoundDecimals, maxRoundDecimals, d,
+			)
 		}
 		decimals = d
 	}
@@ -131,7 +138,7 @@ func coalesceFn(args ...any) (any, error) {
 			return v, nil
 		}
 	}
-	return nil, errors.New("no value found")
+	return nil, nil //nolint:nilnil // coalesce of all-nil arguments is nil by contract
 }
 
 func clampFn(args ...any) (any, error) {
@@ -172,6 +179,9 @@ func sqrtFn(args ...any) (any, error) {
 	value, err := toFloat64(args[0])
 	if err != nil {
 		return nil, err
+	}
+	if value < 0 {
+		return nil, fmt.Errorf("sqrt of negative number %v", value)
 	}
 	return math.Sqrt(value), nil
 }

@@ -39,7 +39,7 @@ func TestIsStopOverdue_UsesCurrentTimeAndScheduledCutoff(t *testing.T) {
 	stop := &shipment.Stop{
 		Status:               shipment.StopStatusInTransit,
 		ScheduledWindowStart: 100,
-		ScheduledWindowEnd:   int64Ptr(200),
+		ScheduledWindowEnd:   new(int64(200)),
 	}
 
 	assert.False(t, IsStopOverdue(stop, 200+(30*60), 30))

@@ -77,7 +77,7 @@ type MockBankReceiptBatchService_DistinctSources_Call struct {
 // DistinctSources is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockBankReceiptBatchService_Expecter) DistinctSources(ctx interface{}, req interface{}) *MockBankReceiptBatchService_DistinctSources_Call {
+func (_e *MockBankReceiptBatchService_Expecter) DistinctSources(ctx any, req any) *MockBankReceiptBatchService_DistinctSources_Call {
 	return &MockBankReceiptBatchService_DistinctSources_Call{Call: _e.mock.On("DistinctSources", ctx, req)}
 }
 
@@ -145,7 +145,7 @@ type MockBankReceiptBatchService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetBankReceiptBatchRequest
-func (_e *MockBankReceiptBatchService_Expecter) Get(ctx interface{}, req interface{}) *MockBankReceiptBatchService_Get_Call {
+func (_e *MockBankReceiptBatchService_Expecter) Get(ctx any, req any) *MockBankReceiptBatchService_Get_Call {
 	return &MockBankReceiptBatchService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -214,7 +214,7 @@ type MockBankReceiptBatchService_Import_Call struct {
 //   - ctx context.Context
 //   - req *services.ImportBankReceiptBatchRequest
 //   - actor *services.RequestActor
-func (_e *MockBankReceiptBatchService_Expecter) Import(ctx interface{}, req interface{}, actor interface{}) *MockBankReceiptBatchService_Import_Call {
+func (_e *MockBankReceiptBatchService_Expecter) Import(ctx any, req any, actor any) *MockBankReceiptBatchService_Import_Call {
 	return &MockBankReceiptBatchService_Import_Call{Call: _e.mock.On("Import", ctx, req, actor)}
 }
 
@@ -287,7 +287,7 @@ type MockBankReceiptBatchService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockBankReceiptBatchService_Expecter) List(ctx interface{}, tenantInfo interface{}) *MockBankReceiptBatchService_List_Call {
+func (_e *MockBankReceiptBatchService_Expecter) List(ctx any, tenantInfo any) *MockBankReceiptBatchService_List_Call {
 	return &MockBankReceiptBatchService_List_Call{Call: _e.mock.On("List", ctx, tenantInfo)}
 }
 

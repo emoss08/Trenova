@@ -76,7 +76,7 @@ type MockHoldReasonRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *holdreason.HoldReason
-func (_e *MockHoldReasonRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockHoldReasonRepository_Create_Call {
+func (_e *MockHoldReasonRepository_Expecter) Create(ctx any, entity any) *MockHoldReasonRepository_Create_Call {
 	return &MockHoldReasonRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockHoldReasonRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetHoldReasonByIDRequest
-func (_e *MockHoldReasonRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockHoldReasonRepository_GetByID_Call {
+func (_e *MockHoldReasonRepository_Expecter) GetByID(ctx any, req any) *MockHoldReasonRepository_GetByID_Call {
 	return &MockHoldReasonRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockHoldReasonRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListHoldReasonRequest
-func (_e *MockHoldReasonRepository_Expecter) List(ctx interface{}, req interface{}) *MockHoldReasonRepository_List_Call {
+func (_e *MockHoldReasonRepository_Expecter) List(ctx any, req any) *MockHoldReasonRepository_List_Call {
 	return &MockHoldReasonRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -240,6 +240,74 @@ func (_c *MockHoldReasonRepository_List_Call) Return(listResult *pagination.List
 }
 
 func (_c *MockHoldReasonRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHoldReasonRequest) (*pagination.ListResult[*holdreason.HoldReason], error)) *MockHoldReasonRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockHoldReasonRepository
+func (_mock *MockHoldReasonRepository) ListConnection(ctx context.Context, req *repositories.ListHoldReasonConnectionRequest) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*holdreason.HoldReason]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHoldReasonConnectionRequest) (*pagination.CursorListResult[*holdreason.HoldReason], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHoldReasonConnectionRequest) *pagination.CursorListResult[*holdreason.HoldReason]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*holdreason.HoldReason])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListHoldReasonConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockHoldReasonRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockHoldReasonRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListHoldReasonConnectionRequest
+func (_e *MockHoldReasonRepository_Expecter) ListConnection(ctx any, req any) *MockHoldReasonRepository_ListConnection_Call {
+	return &MockHoldReasonRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockHoldReasonRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListHoldReasonConnectionRequest)) *MockHoldReasonRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListHoldReasonConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListHoldReasonConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockHoldReasonRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*holdreason.HoldReason], err error) *MockHoldReasonRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockHoldReasonRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHoldReasonConnectionRequest) (*pagination.CursorListResult[*holdreason.HoldReason], error)) *MockHoldReasonRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -280,7 +348,7 @@ type MockHoldReasonRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.HoldReasonSelectOptionsRequest
-func (_e *MockHoldReasonRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockHoldReasonRepository_SelectOptions_Call {
+func (_e *MockHoldReasonRepository_Expecter) SelectOptions(ctx any, req any) *MockHoldReasonRepository_SelectOptions_Call {
 	return &MockHoldReasonRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -348,7 +416,7 @@ type MockHoldReasonRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *holdreason.HoldReason
-func (_e *MockHoldReasonRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockHoldReasonRepository_Update_Call {
+func (_e *MockHoldReasonRepository_Expecter) Update(ctx any, entity any) *MockHoldReasonRepository_Update_Call {
 	return &MockHoldReasonRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -376,74 +444,6 @@ func (_c *MockHoldReasonRepository_Update_Call) Return(holdReason *holdreason.Ho
 }
 
 func (_c *MockHoldReasonRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *holdreason.HoldReason) (*holdreason.HoldReason, error)) *MockHoldReasonRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockHoldReasonRepository
-func (_mock *MockHoldReasonRepository) ListConnection(ctx context.Context, req *repositories.ListHoldReasonConnectionRequest) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*holdreason.HoldReason]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHoldReasonConnectionRequest) (*pagination.CursorListResult[*holdreason.HoldReason], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListHoldReasonConnectionRequest) *pagination.CursorListResult[*holdreason.HoldReason]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*holdreason.HoldReason])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListHoldReasonConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockHoldReasonRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockHoldReasonRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListHoldReasonConnectionRequest
-func (_e *MockHoldReasonRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockHoldReasonRepository_ListConnection_Call {
-	return &MockHoldReasonRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockHoldReasonRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListHoldReasonConnectionRequest)) *MockHoldReasonRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListHoldReasonConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListHoldReasonConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockHoldReasonRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*holdreason.HoldReason], err error) *MockHoldReasonRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockHoldReasonRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListHoldReasonConnectionRequest) (*pagination.CursorListResult[*holdreason.HoldReason], error)) *MockHoldReasonRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

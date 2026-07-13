@@ -80,6 +80,7 @@ export type BaseEndpoint =
   | "/document-types/"
   | "/documents/"
   | "/hold-reasons/"
+  | "/rate-tables/"
   | "/service-failures/"
   | "/service-failure-reason-codes/"
   | "/hazmat-segregation-rules/"

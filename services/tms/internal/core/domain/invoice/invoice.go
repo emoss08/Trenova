@@ -541,6 +541,10 @@ func (i *Invoice) GetID() pulid.ID {
 	return i.ID
 }
 
+func (i *Invoice) GetCreatedAt() int64 {
+	return i.CreatedAt
+}
+
 func (i *Invoice) GetTableName() string {
 	return "invoices"
 }

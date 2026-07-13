@@ -77,7 +77,7 @@ type MockFormulaTemplateVersionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - version *formulatemplate.FormulaTemplateVersion
-func (_e *MockFormulaTemplateVersionRepository_Expecter) Create(ctx interface{}, version interface{}) *MockFormulaTemplateVersionRepository_Create_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) Create(ctx any, version any) *MockFormulaTemplateVersionRepository_Create_Call {
 	return &MockFormulaTemplateVersionRepository_Create_Call{Call: _e.mock.On("Create", ctx, version)}
 }
 
@@ -145,7 +145,7 @@ type MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call struct {
 // GetByTemplateAndVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetVersionRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetByTemplateAndVersion(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetByTemplateAndVersion(ctx any, req any) *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call {
 	return &MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call{Call: _e.mock.On("GetByTemplateAndVersion", ctx, req)}
 }
 
@@ -173,6 +173,74 @@ func (_c *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call) Ret
 }
 
 func (_c *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)) *MockFormulaTemplateVersionRepository_GetByTemplateAndVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetEffectiveVersion provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) GetEffectiveVersion(ctx context.Context, req *repositories.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetEffectiveVersion")
+	}
+
+	var r0 *formulatemplate.FormulaTemplateVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEffectiveVersionRequest) *formulatemplate.FormulaTemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*formulatemplate.FormulaTemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetEffectiveVersionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetEffectiveVersion'
+type MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call struct {
+	*mock.Call
+}
+
+// GetEffectiveVersion is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetEffectiveVersionRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetEffectiveVersion(ctx any, req any) *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call {
+	return &MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call{Call: _e.mock.On("GetEffectiveVersion", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call) Run(run func(ctx context.Context, req *repositories.GetEffectiveVersionRequest)) *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetEffectiveVersionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetEffectiveVersionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call) Return(formulaTemplateVersion *formulatemplate.FormulaTemplateVersion, err error) *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call {
+	_c.Call.Return(formulaTemplateVersion, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)) *MockFormulaTemplateVersionRepository_GetEffectiveVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -213,7 +281,7 @@ type MockFormulaTemplateVersionRepository_GetForkedTemplates_Call struct {
 // GetForkedTemplates is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetForkedTemplatesRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetForkedTemplates(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_GetForkedTemplates_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetForkedTemplates(ctx any, req any) *MockFormulaTemplateVersionRepository_GetForkedTemplates_Call {
 	return &MockFormulaTemplateVersionRepository_GetForkedTemplates_Call{Call: _e.mock.On("GetForkedTemplates", ctx, req)}
 }
 
@@ -282,7 +350,7 @@ type MockFormulaTemplateVersionRepository_GetLatestVersion_Call struct {
 //   - ctx context.Context
 //   - templateID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetLatestVersion(ctx interface{}, templateID interface{}, tenantInfo interface{}) *MockFormulaTemplateVersionRepository_GetLatestVersion_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetLatestVersion(ctx any, templateID any, tenantInfo any) *MockFormulaTemplateVersionRepository_GetLatestVersion_Call {
 	return &MockFormulaTemplateVersionRepository_GetLatestVersion_Call{Call: _e.mock.On("GetLatestVersion", ctx, templateID, tenantInfo)}
 }
 
@@ -355,7 +423,7 @@ type MockFormulaTemplateVersionRepository_GetVersionRange_Call struct {
 // GetVersionRange is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetVersionRangeRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) GetVersionRange(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_GetVersionRange_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) GetVersionRange(ctx any, req any) *MockFormulaTemplateVersionRepository_GetVersionRange_Call {
 	return &MockFormulaTemplateVersionRepository_GetVersionRange_Call{Call: _e.mock.On("GetVersionRange", ctx, req)}
 }
 
@@ -423,7 +491,7 @@ type MockFormulaTemplateVersionRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListVersionsRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) List(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_List_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) List(ctx any, req any) *MockFormulaTemplateVersionRepository_List_Call {
 	return &MockFormulaTemplateVersionRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -451,6 +519,142 @@ func (_c *MockFormulaTemplateVersionRepository_List_Call) Return(listResult *pag
 }
 
 func (_c *MockFormulaTemplateVersionRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListVersionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error)) *MockFormulaTemplateVersionRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListScheduled provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) ListScheduled(ctx context.Context, req *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListScheduled")
+	}
+
+	var r0 []*formulatemplate.FormulaTemplateVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListScheduledVersionsRequest) []*formulatemplate.FormulaTemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*formulatemplate.FormulaTemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListScheduledVersionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_ListScheduled_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListScheduled'
+type MockFormulaTemplateVersionRepository_ListScheduled_Call struct {
+	*mock.Call
+}
+
+// ListScheduled is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListScheduledVersionsRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) ListScheduled(ctx any, req any) *MockFormulaTemplateVersionRepository_ListScheduled_Call {
+	return &MockFormulaTemplateVersionRepository_ListScheduled_Call{Call: _e.mock.On("ListScheduled", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListScheduled_Call) Run(run func(ctx context.Context, req *repositories.ListScheduledVersionsRequest)) *MockFormulaTemplateVersionRepository_ListScheduled_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListScheduledVersionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListScheduledVersionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListScheduled_Call) Return(formulaTemplateVersions []*formulatemplate.FormulaTemplateVersion, err error) *MockFormulaTemplateVersionRepository_ListScheduled_Call {
+	_c.Call.Return(formulaTemplateVersions, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListScheduled_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)) *MockFormulaTemplateVersionRepository_ListScheduled_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateEffectiveDate provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) UpdateEffectiveDate(ctx context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateEffectiveDate")
+	}
+
+	var r0 *formulatemplate.FormulaTemplateVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateEffectiveDateRequest) *formulatemplate.FormulaTemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*formulatemplate.FormulaTemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.UpdateEffectiveDateRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateEffectiveDate'
+type MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call struct {
+	*mock.Call
+}
+
+// UpdateEffectiveDate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateEffectiveDateRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) UpdateEffectiveDate(ctx any, req any) *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call {
+	return &MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call{Call: _e.mock.On("UpdateEffectiveDate", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call) Run(run func(ctx context.Context, req *repositories.UpdateEffectiveDateRequest)) *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateEffectiveDateRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateEffectiveDateRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call) Return(formulaTemplateVersion *formulatemplate.FormulaTemplateVersion, err error) *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call {
+	_c.Call.Return(formulaTemplateVersion, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error)) *MockFormulaTemplateVersionRepository_UpdateEffectiveDate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -491,7 +695,7 @@ type MockFormulaTemplateVersionRepository_UpdateTags_Call struct {
 // UpdateTags is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateVersionTagsRequest
-func (_e *MockFormulaTemplateVersionRepository_Expecter) UpdateTags(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_UpdateTags_Call {
+func (_e *MockFormulaTemplateVersionRepository_Expecter) UpdateTags(ctx any, req any) *MockFormulaTemplateVersionRepository_UpdateTags_Call {
 	return &MockFormulaTemplateVersionRepository_UpdateTags_Call{Call: _e.mock.On("UpdateTags", ctx, req)}
 }
 

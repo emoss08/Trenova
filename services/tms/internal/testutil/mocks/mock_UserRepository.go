@@ -77,7 +77,7 @@ type MockUserRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateUserStatusRequest
-func (_e *MockUserRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockUserRepository_BulkUpdateStatus_Call {
+func (_e *MockUserRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockUserRepository_BulkUpdateStatus_Call {
 	return &MockUserRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -145,7 +145,7 @@ type MockUserRepository_FindByEmail_Call struct {
 // FindByEmail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - emailAddress string
-func (_e *MockUserRepository_Expecter) FindByEmail(ctx interface{}, emailAddress interface{}) *MockUserRepository_FindByEmail_Call {
+func (_e *MockUserRepository_Expecter) FindByEmail(ctx any, emailAddress any) *MockUserRepository_FindByEmail_Call {
 	return &MockUserRepository_FindByEmail_Call{Call: _e.mock.On("FindByEmail", ctx, emailAddress)}
 }
 
@@ -213,7 +213,7 @@ type MockUserRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetUserByIDRequest
-func (_e *MockUserRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockUserRepository_GetByID_Call {
+func (_e *MockUserRepository_Expecter) GetByID(ctx any, req any) *MockUserRepository_GetByID_Call {
 	return &MockUserRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -281,7 +281,7 @@ type MockUserRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetUsersByIDsRequest
-func (_e *MockUserRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockUserRepository_GetByIDs_Call {
+func (_e *MockUserRepository_Expecter) GetByIDs(ctx any, req any) *MockUserRepository_GetByIDs_Call {
 	return &MockUserRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -349,7 +349,7 @@ type MockUserRepository_GetOrganizationByID_Call struct {
 // GetOrganizationByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - organizationID pulid.ID
-func (_e *MockUserRepository_Expecter) GetOrganizationByID(ctx interface{}, organizationID interface{}) *MockUserRepository_GetOrganizationByID_Call {
+func (_e *MockUserRepository_Expecter) GetOrganizationByID(ctx any, organizationID any) *MockUserRepository_GetOrganizationByID_Call {
 	return &MockUserRepository_GetOrganizationByID_Call{Call: _e.mock.On("GetOrganizationByID", ctx, organizationID)}
 }
 
@@ -417,7 +417,7 @@ type MockUserRepository_GetOrganizations_Call struct {
 // GetOrganizations is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID pulid.ID
-func (_e *MockUserRepository_Expecter) GetOrganizations(ctx interface{}, userID interface{}) *MockUserRepository_GetOrganizations_Call {
+func (_e *MockUserRepository_Expecter) GetOrganizations(ctx any, userID any) *MockUserRepository_GetOrganizations_Call {
 	return &MockUserRepository_GetOrganizations_Call{Call: _e.mock.On("GetOrganizations", ctx, userID)}
 }
 
@@ -485,7 +485,7 @@ type MockUserRepository_GetOrganizationsByBusinessUnit_Call struct {
 // GetOrganizationsByBusinessUnit is a helper method to define mock.On call
 //   - ctx context.Context
 //   - businessUnitID pulid.ID
-func (_e *MockUserRepository_Expecter) GetOrganizationsByBusinessUnit(ctx interface{}, businessUnitID interface{}) *MockUserRepository_GetOrganizationsByBusinessUnit_Call {
+func (_e *MockUserRepository_Expecter) GetOrganizationsByBusinessUnit(ctx any, businessUnitID any) *MockUserRepository_GetOrganizationsByBusinessUnit_Call {
 	return &MockUserRepository_GetOrganizationsByBusinessUnit_Call{Call: _e.mock.On("GetOrganizationsByBusinessUnit", ctx, businessUnitID)}
 }
 
@@ -559,9 +559,9 @@ type MockUserRepository_GetSystemUser_Call struct {
 // GetSystemUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - columns ...string
-func (_e *MockUserRepository_Expecter) GetSystemUser(ctx interface{}, columns ...interface{}) *MockUserRepository_GetSystemUser_Call {
+func (_e *MockUserRepository_Expecter) GetSystemUser(ctx any, columns ...any) *MockUserRepository_GetSystemUser_Call {
 	return &MockUserRepository_GetSystemUser_Call{Call: _e.mock.On("GetSystemUser",
-		append([]interface{}{ctx}, columns...)...)}
+		append([]any{ctx}, columns...)...)}
 }
 
 func (_c *MockUserRepository_GetSystemUser_Call) Run(run func(ctx context.Context, columns ...string)) *MockUserRepository_GetSystemUser_Call {
@@ -630,7 +630,7 @@ type MockUserRepository_GetUserOrganizationSummaries_Call struct {
 // GetUserOrganizationSummaries is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID pulid.ID
-func (_e *MockUserRepository_Expecter) GetUserOrganizationSummaries(ctx interface{}, userID interface{}) *MockUserRepository_GetUserOrganizationSummaries_Call {
+func (_e *MockUserRepository_Expecter) GetUserOrganizationSummaries(ctx any, userID any) *MockUserRepository_GetUserOrganizationSummaries_Call {
 	return &MockUserRepository_GetUserOrganizationSummaries_Call{Call: _e.mock.On("GetUserOrganizationSummaries", ctx, userID)}
 }
 
@@ -698,7 +698,7 @@ type MockUserRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListUsersRequest
-func (_e *MockUserRepository_Expecter) List(ctx interface{}, req interface{}) *MockUserRepository_List_Call {
+func (_e *MockUserRepository_Expecter) List(ctx any, req any) *MockUserRepository_List_Call {
 	return &MockUserRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -726,6 +726,74 @@ func (_c *MockUserRepository_List_Call) Return(listResult *pagination.ListResult
 }
 
 func (_c *MockUserRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUsersRequest) (*pagination.ListResult[*tenant.User], error)) *MockUserRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) ListConnection(ctx context.Context, req *repositories.ListUserConnectionRequest) (*pagination.CursorListResult[*tenant.User], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*tenant.User]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUserConnectionRequest) (*pagination.CursorListResult[*tenant.User], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUserConnectionRequest) *pagination.CursorListResult[*tenant.User]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*tenant.User])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListUserConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockUserRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListUserConnectionRequest
+func (_e *MockUserRepository_Expecter) ListConnection(ctx any, req any) *MockUserRepository_ListConnection_Call {
+	return &MockUserRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockUserRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListUserConnectionRequest)) *MockUserRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListUserConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListUserConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*tenant.User], err error) *MockUserRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockUserRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUserConnectionRequest) (*pagination.CursorListResult[*tenant.User], error)) *MockUserRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -767,7 +835,7 @@ type MockUserRepository_ListOrganizationMemberships_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - businessUnitID pulid.ID
-func (_e *MockUserRepository_Expecter) ListOrganizationMemberships(ctx interface{}, userID interface{}, businessUnitID interface{}) *MockUserRepository_ListOrganizationMemberships_Call {
+func (_e *MockUserRepository_Expecter) ListOrganizationMemberships(ctx any, userID any, businessUnitID any) *MockUserRepository_ListOrganizationMemberships_Call {
 	return &MockUserRepository_ListOrganizationMemberships_Call{Call: _e.mock.On("ListOrganizationMemberships", ctx, userID, businessUnitID)}
 }
 
@@ -840,7 +908,7 @@ type MockUserRepository_ReplaceOrganizationMemberships_Call struct {
 // ReplaceOrganizationMemberships is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ReplaceOrganizationMembershipsRequest
-func (_e *MockUserRepository_Expecter) ReplaceOrganizationMemberships(ctx interface{}, req interface{}) *MockUserRepository_ReplaceOrganizationMemberships_Call {
+func (_e *MockUserRepository_Expecter) ReplaceOrganizationMemberships(ctx any, req any) *MockUserRepository_ReplaceOrganizationMemberships_Call {
 	return &MockUserRepository_ReplaceOrganizationMemberships_Call{Call: _e.mock.On("ReplaceOrganizationMemberships", ctx, req)}
 }
 
@@ -908,7 +976,7 @@ type MockUserRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockUserRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockUserRepository_SelectOptions_Call {
+func (_e *MockUserRepository_Expecter) SelectOptions(ctx any, req any) *MockUserRepository_SelectOptions_Call {
 	return &MockUserRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -976,7 +1044,7 @@ type MockUserRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tenant.User
-func (_e *MockUserRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockUserRepository_Update_Call {
+func (_e *MockUserRepository_Expecter) Update(ctx any, entity any) *MockUserRepository_Update_Call {
 	return &MockUserRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -1035,7 +1103,7 @@ type MockUserRepository_UpdateCurrentOrganization_Call struct {
 //   - userID pulid.ID
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockUserRepository_Expecter) UpdateCurrentOrganization(ctx interface{}, userID interface{}, orgID interface{}, buID interface{}) *MockUserRepository_UpdateCurrentOrganization_Call {
+func (_e *MockUserRepository_Expecter) UpdateCurrentOrganization(ctx any, userID any, orgID any, buID any) *MockUserRepository_UpdateCurrentOrganization_Call {
 	return &MockUserRepository_UpdateCurrentOrganization_Call{Call: _e.mock.On("UpdateCurrentOrganization", ctx, userID, orgID, buID)}
 }
 
@@ -1102,7 +1170,7 @@ type MockUserRepository_UpdateLastLoginAt_Call struct {
 // UpdateLastLoginAt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID pulid.ID
-func (_e *MockUserRepository_Expecter) UpdateLastLoginAt(ctx interface{}, userID interface{}) *MockUserRepository_UpdateLastLoginAt_Call {
+func (_e *MockUserRepository_Expecter) UpdateLastLoginAt(ctx any, userID any) *MockUserRepository_UpdateLastLoginAt_Call {
 	return &MockUserRepository_UpdateLastLoginAt_Call{Call: _e.mock.On("UpdateLastLoginAt", ctx, userID)}
 }
 
@@ -1159,7 +1227,7 @@ type MockUserRepository_UpdatePassword_Call struct {
 // UpdatePassword is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.UpdateUserPasswordRequest
-func (_e *MockUserRepository_Expecter) UpdatePassword(ctx interface{}, req interface{}) *MockUserRepository_UpdatePassword_Call {
+func (_e *MockUserRepository_Expecter) UpdatePassword(ctx any, req any) *MockUserRepository_UpdatePassword_Call {
 	return &MockUserRepository_UpdatePassword_Call{Call: _e.mock.On("UpdatePassword", ctx, req)}
 }
 
@@ -1187,74 +1255,6 @@ func (_c *MockUserRepository_UpdatePassword_Call) Return(err error) *MockUserRep
 }
 
 func (_c *MockUserRepository_UpdatePassword_Call) RunAndReturn(run func(ctx context.Context, req repositories.UpdateUserPasswordRequest) error) *MockUserRepository_UpdatePassword_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) ListConnection(ctx context.Context, req *repositories.ListUserConnectionRequest) (*pagination.CursorListResult[*tenant.User], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*tenant.User]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUserConnectionRequest) (*pagination.CursorListResult[*tenant.User], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUserConnectionRequest) *pagination.CursorListResult[*tenant.User]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*tenant.User])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListUserConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockUserRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockUserRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListUserConnectionRequest
-func (_e *MockUserRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockUserRepository_ListConnection_Call {
-	return &MockUserRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockUserRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListUserConnectionRequest)) *MockUserRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListUserConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListUserConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*tenant.User], err error) *MockUserRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockUserRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUserConnectionRequest) (*pagination.CursorListResult[*tenant.User], error)) *MockUserRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

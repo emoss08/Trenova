@@ -315,11 +315,11 @@ func TestSplitMove_CreatesDownstreamMoveAndUpdatesOriginalStop(t *testing.T) {
 		NewDeliveryLocationID: newDeliveryLocationID,
 		SplitPickupTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: 5,
-			ScheduledWindowEnd:   int64Ptr(6),
+			ScheduledWindowEnd:   new(int64(6)),
 		},
 		NewDeliveryTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: 7,
-			ScheduledWindowEnd:   int64Ptr(8),
+			ScheduledWindowEnd:   new(int64(8)),
 		},
 	})
 
@@ -338,7 +338,7 @@ func newShipmentEntity() *shipment.Shipment {
 		ScheduleType:         shipment.StopScheduleTypeOpen,
 		Sequence:             0,
 		ScheduledWindowStart: 1,
-		ScheduledWindowEnd:   int64Ptr(1),
+		ScheduledWindowEnd:   new(int64(1)),
 	}
 	stopTwo := &shipment.Stop{
 		LocationID:           pulid.MustNew("loc_"),
@@ -347,7 +347,7 @@ func newShipmentEntity() *shipment.Shipment {
 		ScheduleType:         shipment.StopScheduleTypeOpen,
 		Sequence:             1,
 		ScheduledWindowStart: 2,
-		ScheduledWindowEnd:   int64Ptr(2),
+		ScheduledWindowEnd:   new(int64(2)),
 	}
 
 	return &shipment.Shipment{

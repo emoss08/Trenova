@@ -17,7 +17,6 @@ export default function JournalReversalTable() {
       resource={Resource.JournalReversal}
       columns={columns}
       TablePanel={JournalReversalPanel}
-      preferDetailRowForEdit
     />
   );
 }

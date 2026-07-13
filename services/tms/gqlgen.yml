@@ -162,6 +162,35 @@ models:
   BillingQueueExceptionReasonCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.ExceptionReasonCode
+  InvoiceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.Status
+  InvoicePaymentTerm:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.PaymentTerm
+  InvoiceSettlementStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.SettlementStatus
+  InvoiceDisputeStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.DisputeStatus
+  InvoiceSendStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.SendStatus
+  Invoice:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.Invoice
+    fields:
+      shipmentBol:
+        fieldName: ShipmentBOL
+      subtotalAmount:
+        resolver: true
+      otherAmount:
+        resolver: true
+      totalAmount:
+        resolver: true
+      appliedAmount:
+        resolver: true
   EquipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType
@@ -218,6 +247,12 @@ models:
   FormulaTemplate:
     model:
       - github.com/emoss08/trenova/internal/core/domain/formulatemplate.FormulaTemplate
+  RateTableLookupType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ratetable.LookupType
+  RateTable:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/ratetable.RateTable
   EmailProvider:
     model:
       - github.com/emoss08/trenova/internal/core/domain/email.Provider
@@ -441,6 +476,12 @@ models:
   ServiceFailureShipment:
     model:
       - github.com/emoss08/trenova/internal/core/domain/shipment.Shipment
+  ServiceFailureStop:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.Stop
+    fields:
+      type:
+        resolver: true
   SCIMGroupRoleMapping:
     model:
       - github.com/emoss08/trenova/internal/core/domain/iam.SCIMGroupRoleMapping

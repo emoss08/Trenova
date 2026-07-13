@@ -75,7 +75,7 @@ type MockAccountingControlRepository_GetByOrgID_Call struct {
 // GetByOrgID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
-func (_e *MockAccountingControlRepository_Expecter) GetByOrgID(ctx interface{}, orgID interface{}) *MockAccountingControlRepository_GetByOrgID_Call {
+func (_e *MockAccountingControlRepository_Expecter) GetByOrgID(ctx any, orgID any) *MockAccountingControlRepository_GetByOrgID_Call {
 	return &MockAccountingControlRepository_GetByOrgID_Call{Call: _e.mock.On("GetByOrgID", ctx, orgID)}
 }
 
@@ -142,7 +142,7 @@ type MockAccountingControlRepository_ListWithScheduledPeriodClose_Call struct {
 
 // ListWithScheduledPeriodClose is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockAccountingControlRepository_Expecter) ListWithScheduledPeriodClose(ctx interface{}) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
+func (_e *MockAccountingControlRepository_Expecter) ListWithScheduledPeriodClose(ctx any) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
 	return &MockAccountingControlRepository_ListWithScheduledPeriodClose_Call{Call: _e.mock.On("ListWithScheduledPeriodClose", ctx)}
 }
 
@@ -205,7 +205,7 @@ type MockAccountingControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ac *tenant.AccountingControl
-func (_e *MockAccountingControlRepository_Expecter) Update(ctx interface{}, ac interface{}) *MockAccountingControlRepository_Update_Call {
+func (_e *MockAccountingControlRepository_Expecter) Update(ctx any, ac any) *MockAccountingControlRepository_Update_Call {
 	return &MockAccountingControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, ac)}
 }
 

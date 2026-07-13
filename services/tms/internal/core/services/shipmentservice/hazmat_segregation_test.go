@@ -154,7 +154,7 @@ func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
 				ClassA:          hazardousmaterial.HazardousClass1,
 				ClassB:          hazardousmaterial.HazardousClass3,
 				SegregationType: hazmatsegregationrule.SegregationTypeDistance,
-				MinimumDistance: float64Ptr(10),
+				MinimumDistance: new(float64(10)),
 				DistanceUnit:    "FT",
 				OrganizationID:  entity.OrganizationID,
 				BusinessUnitID:  entity.BusinessUnitID,

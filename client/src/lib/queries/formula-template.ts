@@ -3,11 +3,7 @@ import type { FormulaTemplate } from "@/types/formula-template";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const formulaTemplate = createQueryKeys("formulaTemplate", {
-  versions: (
-    templateId: FormulaTemplate["id"],
-    limit?: number,
-    offset?: number,
-  ) => ({
+  versions: (templateId: FormulaTemplate["id"], limit?: number, offset?: number) => ({
     queryKey: [templateId, limit, offset],
     queryFn: async () =>
       apiService.formulaTemplateService.listVersions(templateId, {
@@ -20,5 +16,9 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryFn: async () => {
       return apiService.formulaTemplateService.getLineage(templateId);
     },
+  }),
+  scheduledVersions: (templateId: FormulaTemplate["id"]) => ({
+    queryKey: [templateId],
+    queryFn: async () => apiService.formulaTemplateService.listScheduledVersions(templateId),
   }),
 });

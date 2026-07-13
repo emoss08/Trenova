@@ -74,7 +74,7 @@ type MockAnalyticsPageProvider_GetAnalyticsData_Call struct {
 // GetAnalyticsData is a helper method to define mock.On call
 //   - ctx context.Context
 //   - opts *services.AnalyticsRequestOptions
-func (_e *MockAnalyticsPageProvider_Expecter) GetAnalyticsData(ctx interface{}, opts interface{}) *MockAnalyticsPageProvider_GetAnalyticsData_Call {
+func (_e *MockAnalyticsPageProvider_Expecter) GetAnalyticsData(ctx any, opts any) *MockAnalyticsPageProvider_GetAnalyticsData_Call {
 	return &MockAnalyticsPageProvider_GetAnalyticsData_Call{Call: _e.mock.On("GetAnalyticsData", ctx, opts)}
 }
 

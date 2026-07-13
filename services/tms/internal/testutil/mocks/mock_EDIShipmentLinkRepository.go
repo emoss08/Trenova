@@ -76,7 +76,7 @@ type MockEDIShipmentLinkRepository_CreateShipmentLink_Call struct {
 // CreateShipmentLink is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.ShipmentLink
-func (_e *MockEDIShipmentLinkRepository_Expecter) CreateShipmentLink(ctx interface{}, entity interface{}) *MockEDIShipmentLinkRepository_CreateShipmentLink_Call {
+func (_e *MockEDIShipmentLinkRepository_Expecter) CreateShipmentLink(ctx any, entity any) *MockEDIShipmentLinkRepository_CreateShipmentLink_Call {
 	return &MockEDIShipmentLinkRepository_CreateShipmentLink_Call{Call: _e.mock.On("CreateShipmentLink", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIShipmentLinkRepository_GetShipmentLinkByID_Call struct {
 // GetShipmentLinkByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIShipmentLinkByIDRequest
-func (_e *MockEDIShipmentLinkRepository_Expecter) GetShipmentLinkByID(ctx interface{}, req interface{}) *MockEDIShipmentLinkRepository_GetShipmentLinkByID_Call {
+func (_e *MockEDIShipmentLinkRepository_Expecter) GetShipmentLinkByID(ctx any, req any) *MockEDIShipmentLinkRepository_GetShipmentLinkByID_Call {
 	return &MockEDIShipmentLinkRepository_GetShipmentLinkByID_Call{Call: _e.mock.On("GetShipmentLinkByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call struct {
 // GetShipmentLinksByShipmentID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIShipmentLinksByShipmentIDRequest
-func (_e *MockEDIShipmentLinkRepository_Expecter) GetShipmentLinksByShipmentID(ctx interface{}, req interface{}) *MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call {
+func (_e *MockEDIShipmentLinkRepository_Expecter) GetShipmentLinksByShipmentID(ctx any, req any) *MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call {
 	return &MockEDIShipmentLinkRepository_GetShipmentLinksByShipmentID_Call{Call: _e.mock.On("GetShipmentLinksByShipmentID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockEDIShipmentLinkRepository_ListShipmentLinks_Call struct {
 // ListShipmentLinks is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIShipmentLinksRequest
-func (_e *MockEDIShipmentLinkRepository_Expecter) ListShipmentLinks(ctx interface{}, req interface{}) *MockEDIShipmentLinkRepository_ListShipmentLinks_Call {
+func (_e *MockEDIShipmentLinkRepository_Expecter) ListShipmentLinks(ctx any, req any) *MockEDIShipmentLinkRepository_ListShipmentLinks_Call {
 	return &MockEDIShipmentLinkRepository_ListShipmentLinks_Call{Call: _e.mock.On("ListShipmentLinks", ctx, req)}
 }
 

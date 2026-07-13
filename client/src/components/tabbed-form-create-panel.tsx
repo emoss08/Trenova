@@ -213,7 +213,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
               onValueChange={(value) => setActiveTab(value as string)}
               className="flex flex-1 flex-col overflow-hidden"
             >
-              <div className="border-b border-border px-4 pt-2">
+              <div className="no-scrollbar overflow-x-auto border-b border-border px-4 pt-2">
                 <TabsList variant="underline">
                   {formTabs.map((tab) => (
                     <TabsTab key={tab.value} value={tab.value} className="hover:text-foreground">

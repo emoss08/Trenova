@@ -65,7 +65,7 @@ type MockDocumentRepository_BulkDelete_Call struct {
 // BulkDelete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.BulkDeleteDocumentRequest
-func (_e *MockDocumentRepository_Expecter) BulkDelete(ctx interface{}, req interface{}) *MockDocumentRepository_BulkDelete_Call {
+func (_e *MockDocumentRepository_Expecter) BulkDelete(ctx any, req any) *MockDocumentRepository_BulkDelete_Call {
 	return &MockDocumentRepository_BulkDelete_Call{Call: _e.mock.On("BulkDelete", ctx, req)}
 }
 
@@ -133,7 +133,7 @@ type MockDocumentRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *document.Document
-func (_e *MockDocumentRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentRepository_Create_Call {
+func (_e *MockDocumentRepository_Expecter) Create(ctx any, entity any) *MockDocumentRepository_Create_Call {
 	return &MockDocumentRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -190,7 +190,7 @@ type MockDocumentRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteDocumentRequest
-func (_e *MockDocumentRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockDocumentRepository_Delete_Call {
+func (_e *MockDocumentRepository_Expecter) Delete(ctx any, req any) *MockDocumentRepository_Delete_Call {
 	return &MockDocumentRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -247,7 +247,7 @@ type MockDocumentRepository_DeleteByLineageIDs_Call struct {
 // DeleteByLineageIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteDocumentLineageRequest
-func (_e *MockDocumentRepository_Expecter) DeleteByLineageIDs(ctx interface{}, req interface{}) *MockDocumentRepository_DeleteByLineageIDs_Call {
+func (_e *MockDocumentRepository_Expecter) DeleteByLineageIDs(ctx any, req any) *MockDocumentRepository_DeleteByLineageIDs_Call {
 	return &MockDocumentRepository_DeleteByLineageIDs_Call{Call: _e.mock.On("DeleteByLineageIDs", ctx, req)}
 }
 
@@ -315,7 +315,7 @@ type MockDocumentRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentByIDRequest
-func (_e *MockDocumentRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockDocumentRepository_GetByID_Call {
+func (_e *MockDocumentRepository_Expecter) GetByID(ctx any, req any) *MockDocumentRepository_GetByID_Call {
 	return &MockDocumentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -383,7 +383,7 @@ type MockDocumentRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.BulkDeleteDocumentRequest
-func (_e *MockDocumentRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockDocumentRepository_GetByIDs_Call {
+func (_e *MockDocumentRepository_Expecter) GetByIDs(ctx any, req any) *MockDocumentRepository_GetByIDs_Call {
 	return &MockDocumentRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -451,7 +451,7 @@ type MockDocumentRepository_GetByResourceID_Call struct {
 // GetByResourceID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetDocumentsByResourceRequest
-func (_e *MockDocumentRepository_Expecter) GetByResourceID(ctx interface{}, req interface{}) *MockDocumentRepository_GetByResourceID_Call {
+func (_e *MockDocumentRepository_Expecter) GetByResourceID(ctx any, req any) *MockDocumentRepository_GetByResourceID_Call {
 	return &MockDocumentRepository_GetByResourceID_Call{Call: _e.mock.On("GetByResourceID", ctx, req)}
 }
 
@@ -519,7 +519,7 @@ type MockDocumentRepository_GetByStoragePath_Call struct {
 // GetByStoragePath is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetDocumentByStoragePathRequest
-func (_e *MockDocumentRepository_Expecter) GetByStoragePath(ctx interface{}, req interface{}) *MockDocumentRepository_GetByStoragePath_Call {
+func (_e *MockDocumentRepository_Expecter) GetByStoragePath(ctx any, req any) *MockDocumentRepository_GetByStoragePath_Call {
 	return &MockDocumentRepository_GetByStoragePath_Call{Call: _e.mock.On("GetByStoragePath", ctx, req)}
 }
 
@@ -587,7 +587,7 @@ type MockDocumentRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListDocumentsRequest
-func (_e *MockDocumentRepository_Expecter) List(ctx interface{}, req interface{}) *MockDocumentRepository_List_Call {
+func (_e *MockDocumentRepository_Expecter) List(ctx any, req any) *MockDocumentRepository_List_Call {
 	return &MockDocumentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -655,7 +655,7 @@ type MockDocumentRepository_ListPendingPreviewReconciliation_Call struct {
 // ListPendingPreviewReconciliation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPendingPreviewReconciliationRequest
-func (_e *MockDocumentRepository_Expecter) ListPendingPreviewReconciliation(ctx interface{}, req interface{}) *MockDocumentRepository_ListPendingPreviewReconciliation_Call {
+func (_e *MockDocumentRepository_Expecter) ListPendingPreviewReconciliation(ctx any, req any) *MockDocumentRepository_ListPendingPreviewReconciliation_Call {
 	return &MockDocumentRepository_ListPendingPreviewReconciliation_Call{Call: _e.mock.On("ListPendingPreviewReconciliation", ctx, req)}
 }
 
@@ -723,7 +723,7 @@ type MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call struct 
 // ListPendingPreviewReconciliationTenants is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPendingPreviewReconciliationRequest
-func (_e *MockDocumentRepository_Expecter) ListPendingPreviewReconciliationTenants(ctx interface{}, req interface{}) *MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call {
+func (_e *MockDocumentRepository_Expecter) ListPendingPreviewReconciliationTenants(ctx any, req any) *MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call {
 	return &MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call{Call: _e.mock.On("ListPendingPreviewReconciliationTenants", ctx, req)}
 }
 
@@ -791,7 +791,7 @@ type MockDocumentRepository_ListVersions_Call struct {
 // ListVersions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.ListDocumentVersionsRequest
-func (_e *MockDocumentRepository_Expecter) ListVersions(ctx interface{}, req interface{}) *MockDocumentRepository_ListVersions_Call {
+func (_e *MockDocumentRepository_Expecter) ListVersions(ctx any, req any) *MockDocumentRepository_ListVersions_Call {
 	return &MockDocumentRepository_ListVersions_Call{Call: _e.mock.On("ListVersions", ctx, req)}
 }
 
@@ -848,7 +848,7 @@ type MockDocumentRepository_MoveLineageToResource_Call struct {
 // MoveLineageToResource is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.MoveDocumentLineageRequest
-func (_e *MockDocumentRepository_Expecter) MoveLineageToResource(ctx interface{}, req interface{}) *MockDocumentRepository_MoveLineageToResource_Call {
+func (_e *MockDocumentRepository_Expecter) MoveLineageToResource(ctx any, req any) *MockDocumentRepository_MoveLineageToResource_Call {
 	return &MockDocumentRepository_MoveLineageToResource_Call{Call: _e.mock.On("MoveLineageToResource", ctx, req)}
 }
 
@@ -905,7 +905,7 @@ type MockDocumentRepository_PromoteVersion_Call struct {
 // PromoteVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.PromoteDocumentVersionRequest
-func (_e *MockDocumentRepository_Expecter) PromoteVersion(ctx interface{}, req interface{}) *MockDocumentRepository_PromoteVersion_Call {
+func (_e *MockDocumentRepository_Expecter) PromoteVersion(ctx any, req any) *MockDocumentRepository_PromoteVersion_Call {
 	return &MockDocumentRepository_PromoteVersion_Call{Call: _e.mock.On("PromoteVersion", ctx, req)}
 }
 
@@ -973,7 +973,7 @@ type MockDocumentRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.DocumentSelectOptionsRequest
-func (_e *MockDocumentRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockDocumentRepository_SelectOptions_Call {
+func (_e *MockDocumentRepository_Expecter) SelectOptions(ctx any, req any) *MockDocumentRepository_SelectOptions_Call {
 	return &MockDocumentRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -1041,7 +1041,7 @@ type MockDocumentRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *document.Document
-func (_e *MockDocumentRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentRepository_Update_Call {
+func (_e *MockDocumentRepository_Expecter) Update(ctx any, entity any) *MockDocumentRepository_Update_Call {
 	return &MockDocumentRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -1098,7 +1098,7 @@ type MockDocumentRepository_UpdateIntelligence_Call struct {
 // UpdateIntelligence is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateDocumentIntelligenceRequest
-func (_e *MockDocumentRepository_Expecter) UpdateIntelligence(ctx interface{}, req interface{}) *MockDocumentRepository_UpdateIntelligence_Call {
+func (_e *MockDocumentRepository_Expecter) UpdateIntelligence(ctx any, req any) *MockDocumentRepository_UpdateIntelligence_Call {
 	return &MockDocumentRepository_UpdateIntelligence_Call{Call: _e.mock.On("UpdateIntelligence", ctx, req)}
 }
 
@@ -1155,7 +1155,7 @@ type MockDocumentRepository_UpdatePreview_Call struct {
 // UpdatePreview is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdateDocumentPreviewRequest
-func (_e *MockDocumentRepository_Expecter) UpdatePreview(ctx interface{}, req interface{}) *MockDocumentRepository_UpdatePreview_Call {
+func (_e *MockDocumentRepository_Expecter) UpdatePreview(ctx any, req any) *MockDocumentRepository_UpdatePreview_Call {
 	return &MockDocumentRepository_UpdatePreview_Call{Call: _e.mock.On("UpdatePreview", ctx, req)}
 }
 

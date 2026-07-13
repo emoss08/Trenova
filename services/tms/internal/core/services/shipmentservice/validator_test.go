@@ -385,7 +385,7 @@ func TestValidateUpdate_RejectsScheduledWindowEndBeforeArrivalOnNestedStop(t *te
 	entity.Moves[1].Stops[1].ID = pulid.MustNew("stp_")
 	entity.Moves[1].Stops[1].ShipmentMoveID = entity.Moves[1].ID
 	entity.Moves[1].Stops[1].ScheduledWindowStart = 200
-	entity.Moves[1].Stops[1].ScheduledWindowEnd = ptrInt64(100)
+	entity.Moves[1].Stops[1].ScheduledWindowEnd = new(int64(100))
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
@@ -449,7 +449,7 @@ func TestValidateCreate_RejectsDeliveryBeforePickup(t *testing.T) {
 			ScheduleType:         shipment.StopScheduleTypeOpen,
 			Sequence:             0,
 			ScheduledWindowStart: 1,
-			ScheduledWindowEnd:   ptrInt64(2),
+			ScheduledWindowEnd:   new(int64(2)),
 		},
 		{
 			LocationID:           pulid.MustNew("loc_"),
@@ -458,7 +458,7 @@ func TestValidateCreate_RejectsDeliveryBeforePickup(t *testing.T) {
 			ScheduleType:         shipment.StopScheduleTypeOpen,
 			Sequence:             1,
 			ScheduledWindowStart: 3,
-			ScheduledWindowEnd:   ptrInt64(4),
+			ScheduledWindowEnd:   new(int64(4)),
 		},
 	}
 
@@ -474,7 +474,7 @@ func TestValidateCreate_RejectsMoveWithOutOfOrderPlannedStops(t *testing.T) {
 
 	v := NewTestValidator(t)
 	entity := validShipmentForValidation()
-	entity.Moves[0].Stops[0].ScheduledWindowEnd = ptrInt64(10)
+	entity.Moves[0].Stops[0].ScheduledWindowEnd = new(int64(10))
 	entity.Moves[0].Stops[1].ScheduledWindowStart = 5
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -895,7 +895,7 @@ func validStop() *shipment.Stop {
 		ScheduleType:         shipment.StopScheduleTypeOpen,
 		Sequence:             0,
 		ScheduledWindowStart: 1,
-		ScheduledWindowEnd:   ptrInt64(1),
+		ScheduledWindowEnd:   new(int64(1)),
 	}
 }
 

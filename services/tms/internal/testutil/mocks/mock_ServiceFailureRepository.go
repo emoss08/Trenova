@@ -74,7 +74,7 @@ type MockServiceFailureRepository_CountUnresolvedByShipment_Call struct {
 // CountUnresolvedByShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ServiceFailuresByShipmentRequest
-func (_e *MockServiceFailureRepository_Expecter) CountUnresolvedByShipment(ctx interface{}, req interface{}) *MockServiceFailureRepository_CountUnresolvedByShipment_Call {
+func (_e *MockServiceFailureRepository_Expecter) CountUnresolvedByShipment(ctx any, req any) *MockServiceFailureRepository_CountUnresolvedByShipment_Call {
 	return &MockServiceFailureRepository_CountUnresolvedByShipment_Call{Call: _e.mock.On("CountUnresolvedByShipment", ctx, req)}
 }
 
@@ -142,7 +142,7 @@ type MockServiceFailureRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *servicefailure.ServiceFailure
-func (_e *MockServiceFailureRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockServiceFailureRepository_Create_Call {
+func (_e *MockServiceFailureRepository_Expecter) Create(ctx any, entity any) *MockServiceFailureRepository_Create_Call {
 	return &MockServiceFailureRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -210,7 +210,7 @@ type MockServiceFailureRepository_FindUnresolvedByStop_Call struct {
 // FindUnresolvedByStop is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ServiceFailureActiveStopRequest
-func (_e *MockServiceFailureRepository_Expecter) FindUnresolvedByStop(ctx interface{}, req interface{}) *MockServiceFailureRepository_FindUnresolvedByStop_Call {
+func (_e *MockServiceFailureRepository_Expecter) FindUnresolvedByStop(ctx any, req any) *MockServiceFailureRepository_FindUnresolvedByStop_Call {
 	return &MockServiceFailureRepository_FindUnresolvedByStop_Call{Call: _e.mock.On("FindUnresolvedByStop", ctx, req)}
 }
 
@@ -278,7 +278,7 @@ type MockServiceFailureRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetServiceFailureByIDRequest
-func (_e *MockServiceFailureRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockServiceFailureRepository_GetByID_Call {
+func (_e *MockServiceFailureRepository_Expecter) GetByID(ctx any, req any) *MockServiceFailureRepository_GetByID_Call {
 	return &MockServiceFailureRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -346,7 +346,7 @@ type MockServiceFailureRepository_GetByShipment_Call struct {
 // GetByShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetServiceFailureByShipmentRequest
-func (_e *MockServiceFailureRepository_Expecter) GetByShipment(ctx interface{}, req interface{}) *MockServiceFailureRepository_GetByShipment_Call {
+func (_e *MockServiceFailureRepository_Expecter) GetByShipment(ctx any, req any) *MockServiceFailureRepository_GetByShipment_Call {
 	return &MockServiceFailureRepository_GetByShipment_Call{Call: _e.mock.On("GetByShipment", ctx, req)}
 }
 
@@ -414,7 +414,7 @@ type MockServiceFailureRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListServiceFailuresRequest
-func (_e *MockServiceFailureRepository_Expecter) List(ctx interface{}, req interface{}) *MockServiceFailureRepository_List_Call {
+func (_e *MockServiceFailureRepository_Expecter) List(ctx any, req any) *MockServiceFailureRepository_List_Call {
 	return &MockServiceFailureRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -482,7 +482,7 @@ type MockServiceFailureRepository_ListConnection_Call struct {
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListServiceFailureConnectionRequest
-func (_e *MockServiceFailureRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockServiceFailureRepository_ListConnection_Call {
+func (_e *MockServiceFailureRepository_Expecter) ListConnection(ctx any, req any) *MockServiceFailureRepository_ListConnection_Call {
 	return &MockServiceFailureRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
@@ -550,7 +550,7 @@ type MockServiceFailureRepository_ListUnresolvedByShipment_Call struct {
 // ListUnresolvedByShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ServiceFailuresByShipmentRequest
-func (_e *MockServiceFailureRepository_Expecter) ListUnresolvedByShipment(ctx interface{}, req interface{}) *MockServiceFailureRepository_ListUnresolvedByShipment_Call {
+func (_e *MockServiceFailureRepository_Expecter) ListUnresolvedByShipment(ctx any, req any) *MockServiceFailureRepository_ListUnresolvedByShipment_Call {
 	return &MockServiceFailureRepository_ListUnresolvedByShipment_Call{Call: _e.mock.On("ListUnresolvedByShipment", ctx, req)}
 }
 
@@ -618,7 +618,7 @@ type MockServiceFailureRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *servicefailure.ServiceFailure
-func (_e *MockServiceFailureRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockServiceFailureRepository_Update_Call {
+func (_e *MockServiceFailureRepository_Expecter) Update(ctx any, entity any) *MockServiceFailureRepository_Update_Call {
 	return &MockServiceFailureRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -686,7 +686,7 @@ type MockServiceFailureRepository_UpdateDetectionSnapshot_Call struct {
 // UpdateDetectionSnapshot is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *servicefailure.ServiceFailure
-func (_e *MockServiceFailureRepository_Expecter) UpdateDetectionSnapshot(ctx interface{}, entity interface{}) *MockServiceFailureRepository_UpdateDetectionSnapshot_Call {
+func (_e *MockServiceFailureRepository_Expecter) UpdateDetectionSnapshot(ctx any, entity any) *MockServiceFailureRepository_UpdateDetectionSnapshot_Call {
 	return &MockServiceFailureRepository_UpdateDetectionSnapshot_Call{Call: _e.mock.On("UpdateDetectionSnapshot", ctx, entity)}
 }
 

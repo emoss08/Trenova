@@ -1,0 +1,36 @@
+enum RateTableLookupType {
+  Exact
+  Range
+}
+
+type RateTable {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  key: String!
+  description: String!
+  lookupType: RateTableLookupType!
+  active: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}
+
+type RateTableEdge {
+  node: RateTable!
+  cursor: String!
+}
+
+type RateTableConnection {
+  edges: [RateTableEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  rateTables(input: DataTableConnectionInput!): RateTableConnection!
+  rateTable(id: ID!): RateTable
+}

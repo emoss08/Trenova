@@ -137,8 +137,8 @@ query WorkerTable($input: DataTableConnectionInput!) {
   }
 }
 
-query WorkerPtoTable($input: DataTableConnectionInput!, $includeWorker: Boolean = true) {
-  workerPTOEntries(input: $input, includeWorker: $includeWorker) {
+query WorkerPtoTable($input: WorkerPTOEntriesInput!) {
+  workerPTOEntries(input: $input) {
     edges {
       node {
         ...WorkerPtoRowFields
@@ -151,28 +151,8 @@ query WorkerPtoTable($input: DataTableConnectionInput!, $includeWorker: Boolean 
   }
 }
 
-query UpcomingWorkerPto(
-  $first: Int!
-  $after: String
-  $status: PTOStatus
-  $type: PTOType
-  $startDate: Int
-  $endDate: Int
-  $workerId: ID
-  $fleetCodeId: ID
-  $timezone: String
-) {
-  upcomingWorkerPTO(
-    first: $first
-    after: $after
-    status: $status
-    type: $type
-    startDate: $startDate
-    endDate: $endDate
-    workerId: $workerId
-    fleetCodeId: $fleetCodeId
-    timezone: $timezone
-  ) {
+query UpcomingWorkerPto($input: UpcomingWorkerPTOInput!) {
+  upcomingWorkerPTO(input: $input) {
     edges {
       node {
         ...WorkerPtoRowFields
@@ -185,20 +165,8 @@ query UpcomingWorkerPto(
   }
 }
 
-query WorkerPtoChartData(
-  $startDateFrom: Int!
-  $startDateTo: Int!
-  $type: PTOType
-  $workerId: ID
-  $timezone: String
-) {
-  workerPTOChartData(
-    startDateFrom: $startDateFrom
-    startDateTo: $startDateTo
-    type: $type
-    workerId: $workerId
-    timezone: $timezone
-  ) {
+query WorkerPtoChartData($input: WorkerPTOChartInput!) {
+  workerPTOChartData(input: $input) {
     date
     vacation
     sick

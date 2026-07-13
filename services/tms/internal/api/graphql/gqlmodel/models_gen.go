@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
@@ -31,11 +32,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
@@ -92,6 +95,10 @@ type AuditEntryEdge struct {
 	Cursor string       `json:"cursor"`
 }
 
+type BillingQueueAssignInput struct {
+	BillerID string `json:"billerId"`
+}
+
 type BillingQueueItem struct {
 	ID                        string                            `json:"id"`
 	OrganizationID            string                            `json:"organizationId"`
@@ -125,6 +132,14 @@ type BillingQueueItem struct {
 	Shipment          *Shipment      `json:"shipment,omitempty"`
 	AssignedBiller    *tenant.User   `json:"assignedBiller,omitempty"`
 	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
+}
+
+type BillingQueueUpdateStatusInput struct {
+	Status              billingqueue.Status               `json:"status"`
+	ExceptionReasonCode *billingqueue.ExceptionReasonCode `json:"exceptionReasonCode,omitempty"`
+	ExceptionNotes      *string                           `json:"exceptionNotes,omitempty"`
+	ReviewNotes         *string                           `json:"reviewNotes,omitempty"`
+	CancelReason        *string                           `json:"cancelReason,omitempty"`
 }
 
 type BulkUpdateEquipmentManufacturerStatusInput struct {
@@ -167,6 +182,17 @@ type CustomFieldDefinitionConnection struct {
 type CustomFieldDefinitionEdge struct {
 	Node   *customfield.CustomFieldDefinition `json:"node"`
 	Cursor string                             `json:"cursor"`
+}
+
+type CustomerConnection struct {
+	Edges      []*CustomerEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type CustomerEdge struct {
+	Node   *customer.Customer `json:"node"`
+	Cursor string             `json:"cursor"`
 }
 
 type DataTableConnectionInput struct {
@@ -512,6 +538,17 @@ type HoldReasonEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type InvoiceConnection struct {
+	Edges      []*InvoiceEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type InvoiceEdge struct {
+	Node   *invoice.Invoice `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
 type JournalReversalConnection struct {
 	Edges      []*JournalReversalEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -597,6 +634,17 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type RateTableConnection struct {
+	Edges      []*RateTableEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type RateTableEdge struct {
+	Node   *ratetable.RateTable `json:"node"`
+	Cursor string               `json:"cursor"`
 }
 
 type RoleConnection struct {
@@ -800,6 +848,16 @@ type ShipmentAnalytics struct {
 	CustomerMix        *ShipmentCustomerMix         `json:"customerMix,omitempty"`
 	TomorrowsPickups   *ShipmentTomorrowsPickups    `json:"tomorrowsPickups,omitempty"`
 	LaneHeatmap        *ShipmentLaneHeatmap         `json:"laneHeatmap,omitempty"`
+}
+
+type ShipmentAnalyticsInput struct {
+	StartDate  *int    `json:"startDate,omitempty"`
+	EndDate    *int    `json:"endDate,omitempty"`
+	Limit      *int    `json:"limit,omitempty"`
+	Offset     *int    `json:"offset,omitempty"`
+	Timezone   *string `json:"timezone,omitempty"`
+	WindowDays *int    `json:"windowDays,omitempty"`
+	Include    *string `json:"include,omitempty"`
 }
 
 type ShipmentAssignment struct {
@@ -1180,6 +1238,13 @@ type ShipmentEvent struct {
 type ShipmentEventShipmentReference struct {
 	ID        *string `json:"id,omitempty"`
 	ProNumber *string `json:"proNumber,omitempty"`
+}
+
+type ShipmentEventsInput struct {
+	ShipmentID *string             `json:"shipmentId,omitempty"`
+	Types      []ShipmentEventType `json:"types,omitempty"`
+	Limit      *int                `json:"limit,omitempty"`
+	Before     *int                `json:"before,omitempty"`
 }
 
 type ShipmentFormulaTemplate struct {
@@ -1597,6 +1662,17 @@ type ShipmentValidationResponse struct {
 	Valid bool `json:"valid"`
 }
 
+type ShipmentsInput struct {
+	First                 *int                `json:"first,omitempty"`
+	After                 *string             `json:"after,omitempty"`
+	Query                 *string             `json:"query,omitempty"`
+	FieldFilters          []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	FilterGroups          []*FilterGroupInput `json:"filterGroups,omitempty"`
+	Sort                  []*SortFieldInput   `json:"sort,omitempty"`
+	ExpandShipmentDetails *bool               `json:"expandShipmentDetails,omitempty"`
+	Status                *string             `json:"status,omitempty"`
+}
+
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
@@ -1726,6 +1802,18 @@ type TrailerPatchInput struct {
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
 }
 
+type UpcomingWorkerPTOInput struct {
+	First       *int              `json:"first,omitempty"`
+	After       *string           `json:"after,omitempty"`
+	Status      *worker.PTOStatus `json:"status,omitempty"`
+	Type        *worker.PTOType   `json:"type,omitempty"`
+	StartDate   *int              `json:"startDate,omitempty"`
+	EndDate     *int              `json:"endDate,omitempty"`
+	WorkerID    *string           `json:"workerId,omitempty"`
+	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
+	Timezone    *string           `json:"timezone,omitempty"`
+}
+
 type UserConnection struct {
 	Edges      []*UserEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
@@ -1748,6 +1836,14 @@ type WorkerEdge struct {
 	Cursor string         `json:"cursor"`
 }
 
+type WorkerPTOChartInput struct {
+	StartDateFrom int             `json:"startDateFrom"`
+	StartDateTo   int             `json:"startDateTo"`
+	Type          *worker.PTOType `json:"type,omitempty"`
+	WorkerID      *string         `json:"workerId,omitempty"`
+	Timezone      *string         `json:"timezone,omitempty"`
+}
+
 type WorkerPTOConnection struct {
 	Edges      []*WorkerPTOEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
@@ -1757,6 +1853,21 @@ type WorkerPTOConnection struct {
 type WorkerPTOEdge struct {
 	Node   *worker.WorkerPTO `json:"node"`
 	Cursor string            `json:"cursor"`
+}
+
+type WorkerPTOEntriesInput struct {
+	First         *int                `json:"first,omitempty"`
+	After         *string             `json:"after,omitempty"`
+	Query         *string             `json:"query,omitempty"`
+	FieldFilters  []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	FilterGroups  []*FilterGroupInput `json:"filterGroups,omitempty"`
+	Sort          []*SortFieldInput   `json:"sort,omitempty"`
+	Status        *worker.PTOStatus   `json:"status,omitempty"`
+	Type          *worker.PTOType     `json:"type,omitempty"`
+	StartDateFrom *int                `json:"startDateFrom,omitempty"`
+	StartDateTo   *int                `json:"startDateTo,omitempty"`
+	WorkerID      *string             `json:"workerId,omitempty"`
+	IncludeWorker *bool               `json:"includeWorker,omitempty"`
 }
 
 type WorkerPatchInput struct {

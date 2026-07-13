@@ -3,9 +3,10 @@ import type { WarningProps } from "@/types/fields";
 import React, { useMemo } from "react";
 import { Label } from "../ui/label";
 
-export function ErrorMessage({ formError }: { formError?: string }) {
+export function ErrorMessage({ formError, id }: { formError?: string; id?: string }) {
   return (
     <span
+      id={id}
       role="alert"
       className="mt-1 inline-block rounded-md bg-red-50 px-2 py-1 text-left text-xs leading-tight text-destructive dark:bg-destructive/40 dark:text-red-50"
     >
@@ -17,12 +18,18 @@ export function ErrorMessage({ formError }: { formError?: string }) {
 export function FieldDescription({
   description,
   warning,
+  id,
 }: {
   description?: string | React.ReactNode;
   warning?: WarningProps;
+  id?: string;
 }) {
   if (warning?.show) {
-    return <p className="text-left text-2xs text-amber-600">{warning.message}</p>;
+    return (
+      <p id={id} className="text-left text-2xs text-amber-600">
+        {warning.message}
+      </p>
+    );
   }
 
   if (!description) {
@@ -33,7 +40,11 @@ export function FieldDescription({
     return description;
   }
 
-  return <p className="text-left text-2xs text-foreground/70">{description}</p>;
+  return (
+    <p id={id} className="text-left text-2xs text-foreground/70">
+      {description}
+    </p>
+  );
 }
 
 type FieldWrapperProps = {
@@ -44,6 +55,8 @@ type FieldWrapperProps = {
   className?: string;
   children: React.ReactNode;
   error?: string;
+  descriptionId?: string;
+  errorId?: string;
 };
 
 export function FieldLabel({ label, required }: { label?: React.ReactNode; required?: boolean }) {
@@ -76,16 +89,18 @@ export function FieldWrapper({
   className,
   children,
   error,
+  descriptionId,
+  errorId,
 }: FieldWrapperProps) {
   const descriptionElement = useMemo(() => {
     return !error && (description || warning?.show) ? (
-      <FieldDescription description={description} warning={warning} />
+      <FieldDescription description={description} warning={warning} id={descriptionId} />
     ) : null;
-  }, [description, error, warning]);
+  }, [description, descriptionId, error, warning]);
 
   const errorElement = useMemo(() => {
-    return error ? <ErrorMessage formError={error} /> : null;
-  }, [error]);
+    return error ? <ErrorMessage formError={error} id={errorId} /> : null;
+  }, [error, errorId]);
 
   return (
     <div className={cn("flex flex-col gap-0.5", className)}>

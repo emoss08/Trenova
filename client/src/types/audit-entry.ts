@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { createLimitOffsetResponse } from "./server";
 import { userSchema } from "./user";
 
 export const auditCategorySchema = z.enum(["System", "User"]);
@@ -38,8 +37,5 @@ export const auditEntrySchema = z.object({
   user: userSchema.partial().optional(),
 });
 
-export const listByResourceIdSchema = createLimitOffsetResponse(auditEntrySchema);
-
-export type ListByResourceIdResponse = z.infer<typeof listByResourceIdSchema>;
 export type AuditEntry = z.infer<typeof auditEntrySchema>;
 export type AuditChanges = AuditEntry["changes"];

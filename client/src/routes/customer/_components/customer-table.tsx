@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
+import { customerTableGraphQLConfig } from "@/lib/graphql/customer-table";
 import { apiService } from "@/services/api";
 import type { Customer } from "@/types/customer";
 import type { DockAction } from "@/types/data-table";
@@ -58,19 +59,13 @@ export default function CustomerTable() {
   return (
     <DataTable<Customer>
       name="Customer"
-      link="/customers/"
       queryKey="customer-list"
-      exportModelName="customer"
       resource={Resource.Customer}
       columns={columns}
       dockActions={dockActions}
       TablePanel={CustomerPanel}
       enableRowSelection
-      extraSearchParams={{
-        includeState: true,
-        includeBillingProfile: true,
-        includeEmailProfile: true,
-      }}
+      graphql={customerTableGraphQLConfig}
     />
   );
 }

@@ -77,7 +77,7 @@ type MockTCASubscriptionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *tablechangealert.TCASubscription
-func (_e *MockTCASubscriptionRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockTCASubscriptionRepository_Create_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) Create(ctx any, entity any) *MockTCASubscriptionRepository_Create_Call {
 	return &MockTCASubscriptionRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -135,7 +135,7 @@ type MockTCASubscriptionRepository_Delete_Call struct {
 //   - ctx context.Context
 //   - id pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockTCASubscriptionRepository_Expecter) Delete(ctx interface{}, id interface{}, tenantInfo interface{}) *MockTCASubscriptionRepository_Delete_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) Delete(ctx any, id any, tenantInfo any) *MockTCASubscriptionRepository_Delete_Call {
 	return &MockTCASubscriptionRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id, tenantInfo)}
 }
 
@@ -208,7 +208,7 @@ type MockTCASubscriptionRepository_FindMatchingSubscriptions_Call struct {
 // FindMatchingSubscriptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.FindMatchingTCASubscriptionsRequest
-func (_e *MockTCASubscriptionRepository_Expecter) FindMatchingSubscriptions(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_FindMatchingSubscriptions_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) FindMatchingSubscriptions(ctx any, req any) *MockTCASubscriptionRepository_FindMatchingSubscriptions_Call {
 	return &MockTCASubscriptionRepository_FindMatchingSubscriptions_Call{Call: _e.mock.On("FindMatchingSubscriptions", ctx, req)}
 }
 
@@ -276,7 +276,7 @@ type MockTCASubscriptionRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetTCASubscriptionByIDRequest
-func (_e *MockTCASubscriptionRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_GetByID_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) GetByID(ctx any, req any) *MockTCASubscriptionRepository_GetByID_Call {
 	return &MockTCASubscriptionRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -344,7 +344,7 @@ type MockTCASubscriptionRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListTCASubscriptionsRequest
-func (_e *MockTCASubscriptionRepository_Expecter) List(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_List_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) List(ctx any, req any) *MockTCASubscriptionRepository_List_Call {
 	return &MockTCASubscriptionRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -372,74 +372,6 @@ func (_c *MockTCASubscriptionRepository_List_Call) Return(listResult *pagination
 }
 
 func (_c *MockTCASubscriptionRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTCASubscriptionsRequest) (*pagination.ListResult[*tablechangealert.TCASubscription], error)) *MockTCASubscriptionRepository_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Update provides a mock function for the type MockTCASubscriptionRepository
-func (_mock *MockTCASubscriptionRepository) Update(ctx context.Context, entity *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error) {
-	ret := _mock.Called(ctx, entity)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Update")
-	}
-
-	var r0 *tablechangealert.TCASubscription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error)); ok {
-		return returnFunc(ctx, entity)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tablechangealert.TCASubscription) *tablechangealert.TCASubscription); ok {
-		r0 = returnFunc(ctx, entity)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tablechangealert.TCASubscription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tablechangealert.TCASubscription) error); ok {
-		r1 = returnFunc(ctx, entity)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockTCASubscriptionRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
-type MockTCASubscriptionRepository_Update_Call struct {
-	*mock.Call
-}
-
-// Update is a helper method to define mock.On call
-//   - ctx context.Context
-//   - entity *tablechangealert.TCASubscription
-func (_e *MockTCASubscriptionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockTCASubscriptionRepository_Update_Call {
-	return &MockTCASubscriptionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
-}
-
-func (_c *MockTCASubscriptionRepository_Update_Call) Run(run func(ctx context.Context, entity *tablechangealert.TCASubscription)) *MockTCASubscriptionRepository_Update_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *tablechangealert.TCASubscription
-		if args[1] != nil {
-			arg1 = args[1].(*tablechangealert.TCASubscription)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockTCASubscriptionRepository_Update_Call) Return(tCASubscription *tablechangealert.TCASubscription, err error) *MockTCASubscriptionRepository_Update_Call {
-	_c.Call.Return(tCASubscription, err)
-	return _c
-}
-
-func (_c *MockTCASubscriptionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error)) *MockTCASubscriptionRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -480,7 +412,7 @@ type MockTCASubscriptionRepository_ListConnection_Call struct {
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListTCASubscriptionConnectionRequest
-func (_e *MockTCASubscriptionRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockTCASubscriptionRepository_ListConnection_Call {
+func (_e *MockTCASubscriptionRepository_Expecter) ListConnection(ctx any, req any) *MockTCASubscriptionRepository_ListConnection_Call {
 	return &MockTCASubscriptionRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
@@ -508,6 +440,74 @@ func (_c *MockTCASubscriptionRepository_ListConnection_Call) Return(cursorListRe
 }
 
 func (_c *MockTCASubscriptionRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTCASubscriptionConnectionRequest) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error)) *MockTCASubscriptionRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Update provides a mock function for the type MockTCASubscriptionRepository
+func (_mock *MockTCASubscriptionRepository) Update(ctx context.Context, entity *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *tablechangealert.TCASubscription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *tablechangealert.TCASubscription) *tablechangealert.TCASubscription); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tablechangealert.TCASubscription)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *tablechangealert.TCASubscription) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockTCASubscriptionRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type MockTCASubscriptionRepository_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *tablechangealert.TCASubscription
+func (_e *MockTCASubscriptionRepository_Expecter) Update(ctx any, entity any) *MockTCASubscriptionRepository_Update_Call {
+	return &MockTCASubscriptionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
+}
+
+func (_c *MockTCASubscriptionRepository_Update_Call) Run(run func(ctx context.Context, entity *tablechangealert.TCASubscription)) *MockTCASubscriptionRepository_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *tablechangealert.TCASubscription
+		if args[1] != nil {
+			arg1 = args[1].(*tablechangealert.TCASubscription)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTCASubscriptionRepository_Update_Call) Return(tCASubscription *tablechangealert.TCASubscription, err error) *MockTCASubscriptionRepository_Update_Call {
+	_c.Call.Return(tCASubscription, err)
+	return _c
+}
+
+func (_c *MockTCASubscriptionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error)) *MockTCASubscriptionRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

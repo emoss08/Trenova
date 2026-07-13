@@ -71,6 +71,24 @@ type UpdateVersionTagsRequest struct {
 	Tags          []string
 }
 
+type GetEffectiveVersionRequest struct {
+	TenantInfo pagination.TenantInfo
+	TemplateID pulid.ID
+	AsOf       int64
+}
+
+type UpdateEffectiveDateRequest struct {
+	TenantInfo    pagination.TenantInfo
+	TemplateID    pulid.ID
+	VersionNumber int64
+	EffectiveFrom *int64
+}
+
+type ListScheduledVersionsRequest struct {
+	TenantInfo pagination.TenantInfo
+	TemplateID pulid.ID
+}
+
 type FormulaTemplateVersionRepository interface {
 	Create(
 		ctx context.Context,
@@ -107,4 +125,19 @@ type FormulaTemplateVersionRepository interface {
 		ctx context.Context,
 		req *UpdateVersionTagsRequest,
 	) (*formulatemplate.FormulaTemplateVersion, error)
+
+	GetEffectiveVersion(
+		ctx context.Context,
+		req *GetEffectiveVersionRequest,
+	) (*formulatemplate.FormulaTemplateVersion, error)
+
+	UpdateEffectiveDate(
+		ctx context.Context,
+		req *UpdateEffectiveDateRequest,
+	) (*formulatemplate.FormulaTemplateVersion, error)
+
+	ListScheduled(
+		ctx context.Context,
+		req *ListScheduledVersionsRequest,
+	) ([]*formulatemplate.FormulaTemplateVersion, error)
 }

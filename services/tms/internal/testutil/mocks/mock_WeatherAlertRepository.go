@@ -75,7 +75,7 @@ type MockWeatherAlertRepository_ExpireStaleAlerts_Call struct {
 
 // ExpireStaleAlerts is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockWeatherAlertRepository_Expecter) ExpireStaleAlerts(ctx interface{}) *MockWeatherAlertRepository_ExpireStaleAlerts_Call {
+func (_e *MockWeatherAlertRepository_Expecter) ExpireStaleAlerts(ctx any) *MockWeatherAlertRepository_ExpireStaleAlerts_Call {
 	return &MockWeatherAlertRepository_ExpireStaleAlerts_Call{Call: _e.mock.On("ExpireStaleAlerts", ctx)}
 }
 
@@ -138,7 +138,7 @@ type MockWeatherAlertRepository_GetActiveAlerts_Call struct {
 // GetActiveAlerts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockWeatherAlertRepository_Expecter) GetActiveAlerts(ctx interface{}, tenantInfo interface{}) *MockWeatherAlertRepository_GetActiveAlerts_Call {
+func (_e *MockWeatherAlertRepository_Expecter) GetActiveAlerts(ctx any, tenantInfo any) *MockWeatherAlertRepository_GetActiveAlerts_Call {
 	return &MockWeatherAlertRepository_GetActiveAlerts_Call{Call: _e.mock.On("GetActiveAlerts", ctx, tenantInfo)}
 }
 
@@ -206,7 +206,7 @@ type MockWeatherAlertRepository_GetActivities_Call struct {
 // GetActivities is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetWeatherAlertByIDRequest
-func (_e *MockWeatherAlertRepository_Expecter) GetActivities(ctx interface{}, req interface{}) *MockWeatherAlertRepository_GetActivities_Call {
+func (_e *MockWeatherAlertRepository_Expecter) GetActivities(ctx any, req any) *MockWeatherAlertRepository_GetActivities_Call {
 	return &MockWeatherAlertRepository_GetActivities_Call{Call: _e.mock.On("GetActivities", ctx, req)}
 }
 
@@ -274,7 +274,7 @@ type MockWeatherAlertRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetWeatherAlertByIDRequest
-func (_e *MockWeatherAlertRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockWeatherAlertRepository_GetByID_Call {
+func (_e *MockWeatherAlertRepository_Expecter) GetByID(ctx any, req any) *MockWeatherAlertRepository_GetByID_Call {
 	return &MockWeatherAlertRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -341,7 +341,7 @@ type MockWeatherAlertRepository_ListTenants_Call struct {
 
 // ListTenants is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockWeatherAlertRepository_Expecter) ListTenants(ctx interface{}) *MockWeatherAlertRepository_ListTenants_Call {
+func (_e *MockWeatherAlertRepository_Expecter) ListTenants(ctx any) *MockWeatherAlertRepository_ListTenants_Call {
 	return &MockWeatherAlertRepository_ListTenants_Call{Call: _e.mock.On("ListTenants", ctx)}
 }
 
@@ -404,7 +404,7 @@ type MockWeatherAlertRepository_UpsertAlert_Call struct {
 // UpsertAlert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - alert *weatheralert.WeatherAlert
-func (_e *MockWeatherAlertRepository_Expecter) UpsertAlert(ctx interface{}, alert interface{}) *MockWeatherAlertRepository_UpsertAlert_Call {
+func (_e *MockWeatherAlertRepository_Expecter) UpsertAlert(ctx any, alert any) *MockWeatherAlertRepository_UpsertAlert_Call {
 	return &MockWeatherAlertRepository_UpsertAlert_Call{Call: _e.mock.On("UpsertAlert", ctx, alert)}
 }
 

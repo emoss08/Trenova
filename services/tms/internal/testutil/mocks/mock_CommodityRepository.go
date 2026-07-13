@@ -76,7 +76,7 @@ type MockCommodityRepository_BulkUpdateStatus_Call struct {
 // BulkUpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.BulkUpdateCommodityStatusRequest
-func (_e *MockCommodityRepository_Expecter) BulkUpdateStatus(ctx interface{}, req interface{}) *MockCommodityRepository_BulkUpdateStatus_Call {
+func (_e *MockCommodityRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockCommodityRepository_BulkUpdateStatus_Call {
 	return &MockCommodityRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
 }
 
@@ -144,7 +144,7 @@ type MockCommodityRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *commodity.Commodity
-func (_e *MockCommodityRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockCommodityRepository_Create_Call {
+func (_e *MockCommodityRepository_Expecter) Create(ctx any, entity any) *MockCommodityRepository_Create_Call {
 	return &MockCommodityRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -212,7 +212,7 @@ type MockCommodityRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCommodityByIDRequest
-func (_e *MockCommodityRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockCommodityRepository_GetByID_Call {
+func (_e *MockCommodityRepository_Expecter) GetByID(ctx any, req any) *MockCommodityRepository_GetByID_Call {
 	return &MockCommodityRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockCommodityRepository_GetByIDs_Call struct {
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCommoditiesByIDsRequest
-func (_e *MockCommodityRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockCommodityRepository_GetByIDs_Call {
+func (_e *MockCommodityRepository_Expecter) GetByIDs(ctx any, req any) *MockCommodityRepository_GetByIDs_Call {
 	return &MockCommodityRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockCommodityRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCommodityRequest
-func (_e *MockCommodityRepository_Expecter) List(ctx interface{}, req interface{}) *MockCommodityRepository_List_Call {
+func (_e *MockCommodityRepository_Expecter) List(ctx any, req any) *MockCommodityRepository_List_Call {
 	return &MockCommodityRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -376,6 +376,74 @@ func (_c *MockCommodityRepository_List_Call) Return(listResult *pagination.ListR
 }
 
 func (_c *MockCommodityRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListCommodityRequest) (*pagination.ListResult[*commodity.Commodity], error)) *MockCommodityRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockCommodityRepository
+func (_mock *MockCommodityRepository) ListConnection(ctx context.Context, req *repositories.ListCommodityConnectionRequest) (*pagination.CursorListResult[*commodity.Commodity], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*commodity.Commodity]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCommodityConnectionRequest) (*pagination.CursorListResult[*commodity.Commodity], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCommodityConnectionRequest) *pagination.CursorListResult[*commodity.Commodity]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*commodity.Commodity])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListCommodityConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCommodityRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockCommodityRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListCommodityConnectionRequest
+func (_e *MockCommodityRepository_Expecter) ListConnection(ctx any, req any) *MockCommodityRepository_ListConnection_Call {
+	return &MockCommodityRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockCommodityRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListCommodityConnectionRequest)) *MockCommodityRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListCommodityConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListCommodityConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCommodityRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*commodity.Commodity], err error) *MockCommodityRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockCommodityRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListCommodityConnectionRequest) (*pagination.CursorListResult[*commodity.Commodity], error)) *MockCommodityRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -416,7 +484,7 @@ type MockCommodityRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.CommoditySelectOptionsRequest
-func (_e *MockCommodityRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockCommodityRepository_SelectOptions_Call {
+func (_e *MockCommodityRepository_Expecter) SelectOptions(ctx any, req any) *MockCommodityRepository_SelectOptions_Call {
 	return &MockCommodityRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +552,7 @@ type MockCommodityRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *commodity.Commodity
-func (_e *MockCommodityRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockCommodityRepository_Update_Call {
+func (_e *MockCommodityRepository_Expecter) Update(ctx any, entity any) *MockCommodityRepository_Update_Call {
 	return &MockCommodityRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -512,74 +580,6 @@ func (_c *MockCommodityRepository_Update_Call) Return(commodity1 *commodity.Comm
 }
 
 func (_c *MockCommodityRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *commodity.Commodity) (*commodity.Commodity, error)) *MockCommodityRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockCommodityRepository
-func (_mock *MockCommodityRepository) ListConnection(ctx context.Context, req *repositories.ListCommodityConnectionRequest) (*pagination.CursorListResult[*commodity.Commodity], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*commodity.Commodity]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCommodityConnectionRequest) (*pagination.CursorListResult[*commodity.Commodity], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCommodityConnectionRequest) *pagination.CursorListResult[*commodity.Commodity]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*commodity.Commodity])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListCommodityConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockCommodityRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockCommodityRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListCommodityConnectionRequest
-func (_e *MockCommodityRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockCommodityRepository_ListConnection_Call {
-	return &MockCommodityRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockCommodityRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListCommodityConnectionRequest)) *MockCommodityRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListCommodityConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListCommodityConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockCommodityRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*commodity.Commodity], err error) *MockCommodityRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockCommodityRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListCommodityConnectionRequest) (*pagination.CursorListResult[*commodity.Commodity], error)) *MockCommodityRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }

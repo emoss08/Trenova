@@ -65,7 +65,7 @@ type MockEDIMappingProfileRepository_DeleteMappingItem_Call struct {
 // DeleteMappingItem is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteMappingItemRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) DeleteMappingItem(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_DeleteMappingItem_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) DeleteMappingItem(ctx any, req any) *MockEDIMappingProfileRepository_DeleteMappingItem_Call {
 	return &MockEDIMappingProfileRepository_DeleteMappingItem_Call{Call: _e.mock.On("DeleteMappingItem", ctx, req)}
 }
 
@@ -122,7 +122,7 @@ type MockEDIMappingProfileRepository_DeleteMappingProfileItem_Call struct {
 // DeleteMappingProfileItem is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.DeleteMappingProfileItemRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) DeleteMappingProfileItem(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_DeleteMappingProfileItem_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) DeleteMappingProfileItem(ctx any, req any) *MockEDIMappingProfileRepository_DeleteMappingProfileItem_Call {
 	return &MockEDIMappingProfileRepository_DeleteMappingProfileItem_Call{Call: _e.mock.On("DeleteMappingProfileItem", ctx, req)}
 }
 
@@ -190,7 +190,7 @@ type MockEDIMappingProfileRepository_GetMappingItems_Call struct {
 // GetMappingItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetMappingItemsRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingItems(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_GetMappingItems_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingItems(ctx any, req any) *MockEDIMappingProfileRepository_GetMappingItems_Call {
 	return &MockEDIMappingProfileRepository_GetMappingItems_Call{Call: _e.mock.On("GetMappingItems", ctx, req)}
 }
 
@@ -258,7 +258,7 @@ type MockEDIMappingProfileRepository_GetMappingProfile_Call struct {
 // GetMappingProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetMappingProfileRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingProfile(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_GetMappingProfile_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingProfile(ctx any, req any) *MockEDIMappingProfileRepository_GetMappingProfile_Call {
 	return &MockEDIMappingProfileRepository_GetMappingProfile_Call{Call: _e.mock.On("GetMappingProfile", ctx, req)}
 }
 
@@ -326,7 +326,7 @@ type MockEDIMappingProfileRepository_GetMappingProfileByID_Call struct {
 // GetMappingProfileByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetMappingProfileByIDRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingProfileByID(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_GetMappingProfileByID_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) GetMappingProfileByID(ctx any, req any) *MockEDIMappingProfileRepository_GetMappingProfileByID_Call {
 	return &MockEDIMappingProfileRepository_GetMappingProfileByID_Call{Call: _e.mock.On("GetMappingProfileByID", ctx, req)}
 }
 
@@ -394,7 +394,7 @@ type MockEDIMappingProfileRepository_ListMappingProfiles_Call struct {
 // ListMappingProfiles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIMappingProfilesRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) ListMappingProfiles(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_ListMappingProfiles_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) ListMappingProfiles(ctx any, req any) *MockEDIMappingProfileRepository_ListMappingProfiles_Call {
 	return &MockEDIMappingProfileRepository_ListMappingProfiles_Call{Call: _e.mock.On("ListMappingProfiles", ctx, req)}
 }
 
@@ -462,7 +462,7 @@ type MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call struct {
 // ListMappingProfilesCursor is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIMappingProfilesRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) ListMappingProfilesCursor(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) ListMappingProfilesCursor(ctx any, req any) *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call {
 	return &MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call{Call: _e.mock.On("ListMappingProfilesCursor", ctx, req)}
 }
 
@@ -530,7 +530,7 @@ type MockEDIMappingProfileRepository_SaveMappingItems_Call struct {
 // SaveMappingItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SaveMappingItemsRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) SaveMappingItems(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_SaveMappingItems_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) SaveMappingItems(ctx any, req any) *MockEDIMappingProfileRepository_SaveMappingItems_Call {
 	return &MockEDIMappingProfileRepository_SaveMappingItems_Call{Call: _e.mock.On("SaveMappingItems", ctx, req)}
 }
 
@@ -598,7 +598,7 @@ type MockEDIMappingProfileRepository_SaveMappingProfileItems_Call struct {
 // SaveMappingProfileItems is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.SaveMappingProfileItemsRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) SaveMappingProfileItems(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_SaveMappingProfileItems_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) SaveMappingProfileItems(ctx any, req any) *MockEDIMappingProfileRepository_SaveMappingProfileItems_Call {
 	return &MockEDIMappingProfileRepository_SaveMappingProfileItems_Call{Call: _e.mock.On("SaveMappingProfileItems", ctx, req)}
 }
 
@@ -666,7 +666,7 @@ type MockEDIMappingProfileRepository_SelectMappingProfileOptions_Call struct {
 // SelectMappingProfileOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EDIMappingProfileSelectOptionsRequest
-func (_e *MockEDIMappingProfileRepository_Expecter) SelectMappingProfileOptions(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_SelectMappingProfileOptions_Call {
+func (_e *MockEDIMappingProfileRepository_Expecter) SelectMappingProfileOptions(ctx any, req any) *MockEDIMappingProfileRepository_SelectMappingProfileOptions_Call {
 	return &MockEDIMappingProfileRepository_SelectMappingProfileOptions_Call{Call: _e.mock.On("SelectMappingProfileOptions", ctx, req)}
 }
 

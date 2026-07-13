@@ -64,8 +64,92 @@ func setupEnvironmentBuilder(t *testing.T) (*engine.EnvironmentBuilder, *schema.
 	return envBuilder, registry
 }
 
-func TestEnvironmentBuilder_Build_WithoutSchema(t *testing.T) {
+func TestEnvironmentBuilder_Build_UnknownSchema(t *testing.T) {
 	builder, _ := setupEnvironmentBuilder(t)
+
+	entity := &TestShipment{
+		ProNumber: "PRO123",
+		Weight:    5000,
+		Moves: []Move{
+			{Distance: 100.0},
+		},
+	}
+
+	env, failures, err := builder.Build(entity, "nonexistent-schema")
+	require.ErrorIs(t, err, engine.ErrSchemaNotFound)
+	assert.Nil(t, env)
+	assert.Nil(t, failures)
+}
+
+func TestEnvironmentBuilder_Build_AllComputedFields(t *testing.T) {
+	builder, registry := setupEnvironmentBuilder(t)
+
+	schemaJSON := `{
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"$id": "test-all-computed",
+		"type": "object",
+		"x-formula-context": {
+			"entityType": "TestShipment"
+		},
+		"x-data-source": {
+			"table": "shipments",
+			"preloads": []
+		},
+		"properties": {
+			"totalDistance": {
+				"type": "number",
+				"x-source": {
+					"computed": true,
+					"function": "computeTotalDistance"
+				}
+			},
+			"totalStops": {
+				"type": "integer",
+				"x-source": {
+					"computed": true,
+					"function": "computeTotalStops"
+				}
+			},
+			"hasHazmat": {
+				"type": "boolean",
+				"x-source": {
+					"computed": true,
+					"function": "computeHasHazmat"
+				}
+			},
+			"requiresTemperatureControl": {
+				"type": "boolean",
+				"x-source": {
+					"computed": true,
+					"function": "computeRequiresTemperatureControl"
+				}
+			},
+			"temperatureDifferential": {
+				"type": "number",
+				"x-source": {
+					"computed": true,
+					"function": "computeTemperatureDifferential"
+				}
+			},
+			"totalWeight": {
+				"type": "number",
+				"x-source": {
+					"computed": true,
+					"function": "computeTotalWeight"
+				}
+			},
+			"totalPieces": {
+				"type": "integer",
+				"x-source": {
+					"computed": true,
+					"function": "computeTotalPieces"
+				}
+			}
+		}
+	}`
+
+	err := registry.Register("test-all-computed", []byte(schemaJSON))
+	require.NoError(t, err)
 
 	minTemp := int16(32)
 	maxTemp := int16(40)
@@ -86,9 +170,10 @@ func TestEnvironmentBuilder_Build_WithoutSchema(t *testing.T) {
 		},
 	}
 
-	env, err := builder.Build(entity, "nonexistent-schema")
+	env, failures, err := builder.Build(entity, "test-all-computed")
 	require.NoError(t, err)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
 	assert.InDelta(t, 300.8, env["totalDistance"], 0.1)
 	assert.Equal(t, 3, env["totalStops"])
@@ -99,45 +184,74 @@ func TestEnvironmentBuilder_Build_WithoutSchema(t *testing.T) {
 	assert.Equal(t, int64(100), env["totalPieces"])
 }
 
-func TestEnvironmentBuilder_Build_FallbackToComputed(t *testing.T) {
-	builder, _ := setupEnvironmentBuilder(t)
-
-	entity := &TestShipment{
-		ProNumber: "PRO123",
-		Weight:    5000,
-		Customer: &Customer{
-			Name: "Acme Corp",
-			Code: "ACME",
-		},
-		Moves: []Move{
-			{Distance: 100.0},
-		},
-	}
-
-	env, err := builder.Build(entity, "unknown-schema")
-	require.NoError(t, err)
-	require.NotNil(t, env)
-
-	assert.Equal(t, 100.0, env["totalDistance"])
-}
-
 func TestEnvironmentBuilder_Build_WithNilNested(t *testing.T) {
-	builder, _ := setupEnvironmentBuilder(t)
+	builder, registry := setupEnvironmentBuilder(t)
+
+	schemaJSON := `{
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"$id": "test-nil-nested",
+		"type": "object",
+		"x-formula-context": {
+			"entityType": "TestShipment"
+		},
+		"x-data-source": {
+			"table": "shipments",
+			"preloads": []
+		},
+		"properties": {
+			"hasHazmat": {
+				"type": "boolean",
+				"x-source": {
+					"computed": true,
+					"function": "computeHasHazmat"
+				}
+			}
+		}
+	}`
+
+	err := registry.Register("test-nil-nested", []byte(schemaJSON))
+	require.NoError(t, err)
 
 	entity := &TestShipment{
 		ProNumber: "PRO123",
 		Customer:  nil,
 	}
 
-	env, err := builder.Build(entity, "unknown-schema")
+	env, failures, err := builder.Build(entity, "test-nil-nested")
 	require.NoError(t, err)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
 	assert.Equal(t, false, env["hasHazmat"])
 }
 
 func TestEnvironmentBuilder_BuildWithVariables(t *testing.T) {
-	builder, _ := setupEnvironmentBuilder(t)
+	builder, registry := setupEnvironmentBuilder(t)
+
+	schemaJSON := `{
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"$id": "test-build-vars",
+		"type": "object",
+		"x-formula-context": {
+			"entityType": "TestShipment"
+		},
+		"x-data-source": {
+			"table": "shipments",
+			"preloads": []
+		},
+		"properties": {
+			"totalDistance": {
+				"type": "number",
+				"x-source": {
+					"computed": true,
+					"function": "computeTotalDistance"
+				}
+			}
+		}
+	}`
+
+	err := registry.Register("test-build-vars", []byte(schemaJSON))
+	require.NoError(t, err)
 
 	entity := &TestShipment{
 		ProNumber: "PRO123",
@@ -152,14 +266,28 @@ func TestEnvironmentBuilder_BuildWithVariables(t *testing.T) {
 		"customValue": "test",
 	}
 
-	env, err := builder.BuildWithVariables(entity, "nonexistent", variables)
+	env, failures, err := builder.BuildWithVariables(entity, "test-build-vars", variables)
 	require.NoError(t, err)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
 	assert.Equal(t, 2.5, env["baseRate"])
 	assert.Equal(t, 150.0, env["hazmatFee"])
 	assert.Equal(t, "test", env["customValue"])
 	assert.Equal(t, 100.0, env["totalDistance"])
+}
+
+func TestEnvironmentBuilder_BuildWithVariables_UnknownSchema(t *testing.T) {
+	builder, _ := setupEnvironmentBuilder(t)
+
+	entity := &TestShipment{ProNumber: "PRO123"}
+
+	env, failures, err := builder.BuildWithVariables(entity, "nonexistent", map[string]any{
+		"baseRate": 2.5,
+	})
+	require.ErrorIs(t, err, engine.ErrSchemaNotFound)
+	assert.Nil(t, env)
+	assert.Nil(t, failures)
 }
 
 func TestEnvironmentBuilder_GetRequiredPreloads(t *testing.T) {
@@ -267,10 +395,11 @@ func TestEnvironmentBuilder_BuildValidationEnvironment_UsesSchemaTypes(t *testin
 	err := registry.Register("test-validation-env", []byte(schemaJSON))
 	require.NoError(t, err)
 
-	env, err := builder.BuildValidationEnvironment("test-validation-env", map[string]any{
+	env, failures, err := builder.BuildValidationEnvironment("test-validation-env", map[string]any{
 		"customer": map[string]any{"name": "Acme"},
 	})
 	require.NoError(t, err)
+	assert.Nil(t, failures)
 
 	assert.Equal(t, false, env["hasHazmat"])
 	assert.Equal(t, int64(0), env["ratingUnit"])
@@ -322,9 +451,10 @@ func TestEnvironmentBuilder_Build_ComputedFields(t *testing.T) {
 		},
 	}
 
-	env, err := builder.Build(entity, "test-computed")
+	env, failures, err := builder.Build(entity, "test-computed")
 	require.NoError(t, err)
 	require.NotNil(t, env)
+	assert.Empty(t, failures)
 
 	assert.InDelta(t, 300.8, env["totalDistance"], 0.1)
 	assert.Equal(t, 3, env["totalStops"])

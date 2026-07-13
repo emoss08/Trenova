@@ -66,6 +66,13 @@ func intValue(value *int) int {
 	return *value
 }
 
+func boolValue(value *bool) bool {
+	if value == nil {
+		return false
+	}
+	return *value
+}
+
 func intPtr(value *int64) *int {
 	if value == nil {
 		return nil

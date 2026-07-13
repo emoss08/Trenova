@@ -74,7 +74,7 @@ type MockAccessAuthorizer_AuthorizeAccess_Call struct {
 // AuthorizeAccess is a helper method to define mock.On call
 //   - context1 context.Context
 //   - accessAuthorizeRequest *services.AccessAuthorizeRequest
-func (_e *MockAccessAuthorizer_Expecter) AuthorizeAccess(context1 interface{}, accessAuthorizeRequest interface{}) *MockAccessAuthorizer_AuthorizeAccess_Call {
+func (_e *MockAccessAuthorizer_Expecter) AuthorizeAccess(context1 any, accessAuthorizeRequest any) *MockAccessAuthorizer_AuthorizeAccess_Call {
 	return &MockAccessAuthorizer_AuthorizeAccess_Call{Call: _e.mock.On("AuthorizeAccess", context1, accessAuthorizeRequest)}
 }
 

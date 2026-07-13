@@ -454,6 +454,12 @@ type ShipmentSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 }
 
+type ListRatedByFormulaTemplateRequest struct {
+	TemplateID pulid.ID              `json:"templateId"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
 type UpdateShipmentStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ShipmentID pulid.ID              `json:"shipmentId"`
@@ -482,6 +488,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *GetPreviousRatesRequest,
 	) (*pagination.ListResult[*PreviousRateSummary], error)
+	ListRatedByFormulaTemplate(
+		ctx context.Context,
+		req *ListRatedByFormulaTemplateRequest,
+	) ([]*shipment.Shipment, error)
 	Create(
 		ctx context.Context,
 		entity *shipment.Shipment,

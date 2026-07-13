@@ -76,7 +76,7 @@ type MockFleetCodeRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fleetcode.FleetCode
-func (_e *MockFleetCodeRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockFleetCodeRepository_Create_Call {
+func (_e *MockFleetCodeRepository_Expecter) Create(ctx any, entity any) *MockFleetCodeRepository_Create_Call {
 	return &MockFleetCodeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockFleetCodeRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetFleetCodeByIDRequest
-func (_e *MockFleetCodeRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockFleetCodeRepository_GetByID_Call {
+func (_e *MockFleetCodeRepository_Expecter) GetByID(ctx any, req any) *MockFleetCodeRepository_GetByID_Call {
 	return &MockFleetCodeRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -172,74 +172,6 @@ func (_c *MockFleetCodeRepository_GetByID_Call) Return(fleetCode *fleetcode.Flee
 }
 
 func (_c *MockFleetCodeRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetFleetCodeByIDRequest) (*fleetcode.FleetCode, error)) *MockFleetCodeRepository_GetByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockFleetCodeRepository
-func (_mock *MockFleetCodeRepository) ListConnection(ctx context.Context, req *repositories.ListFleetCodeConnectionRequest) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*fleetcode.FleetCode]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFleetCodeConnectionRequest) (*pagination.CursorListResult[*fleetcode.FleetCode], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFleetCodeConnectionRequest) *pagination.CursorListResult[*fleetcode.FleetCode]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*fleetcode.FleetCode])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListFleetCodeConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockFleetCodeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockFleetCodeRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListFleetCodeConnectionRequest
-func (_e *MockFleetCodeRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockFleetCodeRepository_ListConnection_Call {
-	return &MockFleetCodeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockFleetCodeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListFleetCodeConnectionRequest)) *MockFleetCodeRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListFleetCodeConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListFleetCodeConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockFleetCodeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*fleetcode.FleetCode], err error) *MockFleetCodeRepository_ListConnection_Call {
-	_c.Call.Return(cursorListResult, err)
-	return _c
-}
-
-func (_c *MockFleetCodeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFleetCodeConnectionRequest) (*pagination.CursorListResult[*fleetcode.FleetCode], error)) *MockFleetCodeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -280,7 +212,7 @@ type MockFleetCodeRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListFleetCodesRequest
-func (_e *MockFleetCodeRepository_Expecter) List(ctx interface{}, req interface{}) *MockFleetCodeRepository_List_Call {
+func (_e *MockFleetCodeRepository_Expecter) List(ctx any, req any) *MockFleetCodeRepository_List_Call {
 	return &MockFleetCodeRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -308,6 +240,74 @@ func (_c *MockFleetCodeRepository_List_Call) Return(listResult *pagination.ListR
 }
 
 func (_c *MockFleetCodeRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFleetCodesRequest) (*pagination.ListResult[*fleetcode.FleetCode], error)) *MockFleetCodeRepository_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockFleetCodeRepository
+func (_mock *MockFleetCodeRepository) ListConnection(ctx context.Context, req *repositories.ListFleetCodeConnectionRequest) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*fleetcode.FleetCode]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFleetCodeConnectionRequest) (*pagination.CursorListResult[*fleetcode.FleetCode], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListFleetCodeConnectionRequest) *pagination.CursorListResult[*fleetcode.FleetCode]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*fleetcode.FleetCode])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListFleetCodeConnectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFleetCodeRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockFleetCodeRepository_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListFleetCodeConnectionRequest
+func (_e *MockFleetCodeRepository_Expecter) ListConnection(ctx any, req any) *MockFleetCodeRepository_ListConnection_Call {
+	return &MockFleetCodeRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockFleetCodeRepository_ListConnection_Call) Run(run func(ctx context.Context, req *repositories.ListFleetCodeConnectionRequest)) *MockFleetCodeRepository_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListFleetCodeConnectionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListFleetCodeConnectionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFleetCodeRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*fleetcode.FleetCode], err error) *MockFleetCodeRepository_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockFleetCodeRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListFleetCodeConnectionRequest) (*pagination.CursorListResult[*fleetcode.FleetCode], error)) *MockFleetCodeRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -348,7 +348,7 @@ type MockFleetCodeRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *pagination.SelectQueryRequest
-func (_e *MockFleetCodeRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockFleetCodeRepository_SelectOptions_Call {
+func (_e *MockFleetCodeRepository_Expecter) SelectOptions(ctx any, req any) *MockFleetCodeRepository_SelectOptions_Call {
 	return &MockFleetCodeRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockFleetCodeRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *fleetcode.FleetCode
-func (_e *MockFleetCodeRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockFleetCodeRepository_Update_Call {
+func (_e *MockFleetCodeRepository_Expecter) Update(ctx any, entity any) *MockFleetCodeRepository_Update_Call {
 	return &MockFleetCodeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

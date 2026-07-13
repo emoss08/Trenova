@@ -1,24 +1,13 @@
 "use no memo";
 import { cn } from "@/lib/utils";
 import type { SelectOption } from "@/types/fields";
-import {
-  CheckCheckIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ClockIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckCheckIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { StatusBadge } from "./status-badge";
 import { Badge, type BadgeVariant } from "./ui/badge";
-import {
-  Command,
-  CommandGroup,
-  CommandList,
-  SelectCommandItem,
-} from "./ui/command";
+import { Command, CommandGroup, CommandList, SelectCommandItem } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Spinner } from "./ui/spinner";
 
@@ -30,6 +19,7 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   completed: "default",
   cancelled: "inactive",
   processing: "secondary",
+  inreview: "warning",
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -40,6 +30,7 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
   completed: <CheckIcon className="size-3" />,
   cancelled: <XIcon className="size-3" />,
   processing: <ClockIcon className="size-3" />,
+  inreview: <ClockIcon className="size-3" />,
 };
 
 type EditableStatusBadgeProps<T extends string> = {
@@ -100,11 +91,7 @@ export function EditableStatusBadge<T extends string>({
           >
             {icon}
             {status}
-            {isLoading ? (
-              <Spinner className="size-3" />
-            ) : (
-              <ChevronDownIcon className="size-3" />
-            )}
+            {isLoading ? <Spinner className="size-3" /> : <ChevronDownIcon className="size-3" />}
           </Badge>
         }
       />
@@ -116,9 +103,7 @@ export function EditableStatusBadge<T extends string>({
                 <SelectCommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={(currentValue) =>
-                    handleStatusChange(currentValue as T)
-                  }
+                  onSelect={(currentValue) => handleStatusChange(currentValue as T)}
                   className="text-xs"
                   label={option.label}
                   color={option.color}

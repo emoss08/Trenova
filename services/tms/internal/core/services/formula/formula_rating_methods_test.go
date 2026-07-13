@@ -7,8 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
-	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
-	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,25 +50,6 @@ type RatingMethodCommodity struct {
 	ID                string
 	Name              string
 	LinearFeetPerUnit float64
-}
-
-func setupRatingMethodEngine(t *testing.T) *engine.Engine {
-	t.Helper()
-
-	reg := schema.NewRegistry()
-	res := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(res)
-
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: reg,
-		Resolver: res,
-	})
-
-	return engine.NewEngine(engine.Params{
-		Registry:   reg,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
 }
 
 func createRatingMethodShipment() *RatingMethodShipment {
@@ -136,7 +115,7 @@ func createRatingMethodShipment() *RatingMethodShipment {
 }
 
 func TestRatingMethod_FlatRate(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -148,7 +127,7 @@ func TestRatingMethod_FlatRate(t *testing.T) {
 
 	shipment := createRatingMethodShipment()
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -160,7 +139,7 @@ func TestRatingMethod_FlatRate(t *testing.T) {
 }
 
 func TestRatingMethod_PerMile(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -182,7 +161,7 @@ func TestRatingMethod_PerMile(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -196,7 +175,7 @@ func TestRatingMethod_PerMile(t *testing.T) {
 }
 
 func TestRatingMethod_PerStop(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -225,7 +204,7 @@ func TestRatingMethod_PerStop(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -239,7 +218,7 @@ func TestRatingMethod_PerStop(t *testing.T) {
 }
 
 func TestRatingMethod_PerPound(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -260,7 +239,7 @@ func TestRatingMethod_PerPound(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -274,7 +253,7 @@ func TestRatingMethod_PerPound(t *testing.T) {
 }
 
 func TestRatingMethod_PerPallet(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -295,7 +274,7 @@ func TestRatingMethod_PerPallet(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -309,7 +288,7 @@ func TestRatingMethod_PerPallet(t *testing.T) {
 }
 
 func TestRatingMethod_PerLinearFoot(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -347,7 +326,7 @@ func TestRatingMethod_PerLinearFoot(t *testing.T) {
 		},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -362,7 +341,7 @@ func TestRatingMethod_PerLinearFoot(t *testing.T) {
 }
 
 func TestRatingMethod_FlatFee_ExistingCharges(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -374,7 +353,7 @@ func TestRatingMethod_FlatFee_ExistingCharges(t *testing.T) {
 
 	shipment := createRatingMethodShipment()
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -388,7 +367,7 @@ func TestRatingMethod_FlatFee_ExistingCharges(t *testing.T) {
 }
 
 func TestRatingMethod_PerCWT(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -409,7 +388,7 @@ func TestRatingMethod_PerCWT(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -423,7 +402,7 @@ func TestRatingMethod_PerCWT(t *testing.T) {
 }
 
 func TestRatingMethod_PerMileWithMinimum(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -455,7 +434,7 @@ func TestRatingMethod_PerMileWithMinimum(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -470,7 +449,7 @@ func TestRatingMethod_PerMileWithMinimum(t *testing.T) {
 }
 
 func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -491,7 +470,7 @@ func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template: template,
 		Entity:   shipment,
 		Variables: map[string]any{
@@ -507,7 +486,7 @@ func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
 }
 
 func TestRatingMethod_CombinedRateWithAccessorials(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -567,7 +546,7 @@ func TestRatingMethod_CombinedRateWithAccessorials(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -584,7 +563,7 @@ func TestRatingMethod_CombinedRateWithAccessorials(t *testing.T) {
 }
 
 func TestRatingMethod_UseCurrentTotalCharge(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -596,7 +575,7 @@ func TestRatingMethod_UseCurrentTotalCharge(t *testing.T) {
 
 	shipment := createRatingMethodShipment()
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -609,7 +588,7 @@ func TestRatingMethod_UseCurrentTotalCharge(t *testing.T) {
 }
 
 func TestRatingMethod_NilChargeAmounts(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -628,20 +607,68 @@ func TestRatingMethod_NilChargeAmounts(t *testing.T) {
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
 	})
 
-	require.NoError(t, err)
-	require.NotNil(t, result)
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "unresolved fields")
+	assert.Contains(t, err.Error(), "freightChargeAmount")
+	assert.Contains(t, err.Error(), "otherChargeAmount")
+}
 
-	assert.InDelta(t, 0.0, result.Value.InexactFloat64(), 0.01)
+func TestRatingMethod_NonFiniteResult(t *testing.T) {
+	eng := newTestEngine(t)
+
+	template := &formulatemplate.FormulaTemplate{
+		ID:         pulid.MustNew("FT"),
+		Name:       "Rate Divided by Unit Count",
+		SchemaID:   "shipment",
+		Expression: `numerator / denominator`,
+		VariableDefinitions: []*formulatypes.VariableDefinition{
+			{Name: "numerator", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1.0},
+			{Name: "denominator", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1.0},
+		},
+	}
+
+	tests := []struct {
+		name      string
+		variables map[string]any
+	}{
+		{
+			name:      "positive infinity errors",
+			variables: map[string]any{"numerator": 1500.0, "denominator": 0.0},
+		},
+		{
+			name:      "negative infinity errors",
+			variables: map[string]any{"numerator": -1500.0, "denominator": 0.0},
+		},
+		{
+			name:      "NaN errors",
+			variables: map[string]any{"numerator": 0.0, "denominator": 0.0},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+				Template:  template,
+				Entity:    createRatingMethodShipment(),
+				Variables: tt.variables,
+			})
+
+			require.Error(t, err)
+			require.ErrorIs(t, err, engine.ErrNonFiniteResult)
+			assert.Nil(t, result)
+		})
+	}
 }
 
 func TestRatingMethod_ZeroLinearFeet(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -669,7 +696,7 @@ func TestRatingMethod_ZeroLinearFeet(t *testing.T) {
 		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -682,7 +709,7 @@ func TestRatingMethod_ZeroLinearFeet(t *testing.T) {
 }
 
 func TestRatingMethod_InvalidNullDecimalHandling(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -702,7 +729,7 @@ func TestRatingMethod_InvalidNullDecimalHandling(t *testing.T) {
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},
@@ -715,7 +742,7 @@ func TestRatingMethod_InvalidNullDecimalHandling(t *testing.T) {
 }
 
 func TestRatingMethod_MixedValidInvalidCharges(t *testing.T) {
-	eng := setupRatingMethodEngine(t)
+	eng := newTestEngine(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:                  pulid.MustNew("FT"),
@@ -736,7 +763,7 @@ func TestRatingMethod_MixedValidInvalidCharges(t *testing.T) {
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
 
-	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
 		Template:  template,
 		Entity:    shipment,
 		Variables: map[string]any{},

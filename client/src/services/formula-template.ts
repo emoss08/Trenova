@@ -1,12 +1,15 @@
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
+  backtestResponseSchema,
   forkLineageSchema,
   formulaTemplateSchema,
   formulaTemplateVersionSchema,
   listFormulaTemplateResponseSchema,
   templateUsageResponseSchema,
   versionDiffSchema,
+  type BacktestRequest,
+  type BacktestResponse,
   type BulkDuplicateFormulaTemplateRequest,
   type BulkUpdateStatusRequest,
   type CreateVersionRequest,
@@ -50,15 +53,17 @@ export class FormulaTemplateService {
     if (params?.offset) searchParams.set("offset", String(params.offset));
 
     const queryString = searchParams.toString();
-    const response = await api.get<
-      GenericLimitOffsetResponse<FormulaTemplateVersion>
-    >(
+    const response = await api.get<GenericLimitOffsetResponse<FormulaTemplateVersion>>(
       `/formula-templates/${templateId}/versions${queryString ? `?${queryString}` : ""}`,
     );
 
     return {
       ...response,
-      results: await safeParse(z.array(formulaTemplateVersionSchema), response.results, "Formula Template Version"),
+      results: await safeParse(
+        z.array(formulaTemplateVersionSchema),
+        response.results,
+        "Formula Template Version",
+      ),
     };
   }
 
@@ -101,10 +106,7 @@ export class FormulaTemplateService {
     templateId: FormulaTemplate["id"],
     data: ForkRequest,
   ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(
-      `/formula-templates/${templateId}/fork`,
-      data,
-    );
+    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/fork`, data);
 
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
@@ -121,22 +123,14 @@ export class FormulaTemplateService {
     return safeParse(versionDiffSchema, response, "Version Diff");
   }
 
-  public async getLineage(
-    templateId: FormulaTemplate["id"],
-  ): Promise<ForkLineage> {
-    const response = await api.get<ForkLineage>(
-      `/formula-templates/${templateId}/lineage`,
-    );
+  public async getLineage(templateId: FormulaTemplate["id"]): Promise<ForkLineage> {
+    const response = await api.get<ForkLineage>(`/formula-templates/${templateId}/lineage`);
 
     return safeParse(forkLineageSchema, response, "Fork Lineage");
   }
 
-  public async getUsage(
-    templateId: FormulaTemplate["id"],
-  ): Promise<TemplateUsageResponse> {
-    const response = await api.get<TemplateUsageResponse>(
-      `/formula-templates/${templateId}/usage`,
-    );
+  public async getUsage(templateId: FormulaTemplate["id"]): Promise<TemplateUsageResponse> {
+    const response = await api.get<TemplateUsageResponse>(`/formula-templates/${templateId}/usage`);
 
     return safeParse(templateUsageResponseSchema, response, "Template Usage");
   }
@@ -152,5 +146,73 @@ export class FormulaTemplateService {
     );
 
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
+  }
+
+  public async submit(
+    templateId: FormulaTemplate["id"],
+    comment: string,
+  ): Promise<FormulaTemplate> {
+    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/submit`, {
+      comment,
+    });
+
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async approve(
+    templateId: FormulaTemplate["id"],
+    comment: string,
+  ): Promise<FormulaTemplate> {
+    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/approve`, {
+      comment,
+    });
+
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async reject(
+    templateId: FormulaTemplate["id"],
+    comment: string,
+  ): Promise<FormulaTemplate> {
+    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/reject`, {
+      comment,
+    });
+
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async updateVersionEffectiveDate(
+    templateId: FormulaTemplate["id"],
+    versionNumber: number,
+    effectiveFrom: number | null,
+  ): Promise<FormulaTemplateVersion> {
+    const response = await api.patch<FormulaTemplateVersion>(
+      `/formula-templates/${templateId}/versions/${versionNumber}/effective-date`,
+      { effectiveFrom },
+    );
+
+    return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
+  }
+
+  public async listScheduledVersions(
+    templateId: FormulaTemplate["id"],
+  ): Promise<FormulaTemplateVersion[]> {
+    const response = await api.get<FormulaTemplateVersion[]>(
+      `/formula-templates/${templateId}/versions/scheduled`,
+    );
+
+    return safeParse(z.array(formulaTemplateVersionSchema), response, "Formula Template Version");
+  }
+
+  public async backtest(
+    templateId: FormulaTemplate["id"],
+    request: BacktestRequest,
+  ): Promise<BacktestResponse> {
+    const response = await api.post<BacktestResponse>(
+      `/formula-templates/${templateId}/backtest`,
+      request,
+    );
+
+    return safeParse(backtestResponseSchema, response, "Backtest");
   }
 }

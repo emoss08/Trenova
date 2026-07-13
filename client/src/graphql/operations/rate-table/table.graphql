@@ -1,0 +1,27 @@
+fragment RateTableTableRowFields on RateTable {
+  id
+  businessUnitId
+  organizationId
+  name
+  key
+  description
+  lookupType
+  active
+  version
+  createdAt
+  updatedAt
+}
+
+query RateTableTable($input: DataTableConnectionInput!) {
+  rateTables(input: $input) {
+    edges {
+      node {
+        ...RateTableTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

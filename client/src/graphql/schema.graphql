@@ -165,6 +165,10 @@ enum BillType {
   Invoice
 }
 
+input BillingQueueAssignInput {
+  billerId: ID!
+}
+
 enum BillingQueueExceptionReasonCode {
   AccessorialDispute
   CustomerInformationError
@@ -224,6 +228,14 @@ enum BillingQueueStatus {
   Posted
   ReadyForReview
   SentBackToOps
+}
+
+input BillingQueueUpdateStatusInput {
+  cancelReason: String
+  exceptionNotes: String
+  exceptionReasonCode: BillingQueueExceptionReasonCode
+  reviewNotes: String
+  status: BillingQueueStatus!
 }
 
 input BulkUpdateEquipmentManufacturerStatusInput {
@@ -332,8 +344,41 @@ type CustomFieldDefinitionEdge {
 }
 
 type Customer {
+  addressLine1: String
+  addressLine2: String
+  allowConsolidation: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  city: String
+  code: String!
+  consolidationPriority: Int!
+  createdAt: Int!
+  exclusiveConsolidation: Boolean!
+  externalId: String
   id: ID!
+  isGeocoded: Boolean!
+  latitude: Float
+  longitude: Float
   name: String!
+  organization: Organization
+  organizationId: ID!
+  placeId: String
+  postalCode: String!
+  stateId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type CustomerConnection {
+  edges: [CustomerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CustomerEdge {
+  cursor: String!
+  node: Customer!
 }
 
 input DataTableConnectionInput {
@@ -1088,12 +1133,10 @@ type EquipmentManufacturerEdge {
 }
 
 input EquipmentManufacturerInput {
-  createdAt: Int!
-  description: String!
+  description: String
   name: String!
-  status: EntityStatus!
-  updatedAt: Int!
-  version: Int!
+  status: EntityStatus = Active
+  version: Int
 }
 
 input EquipmentManufacturerPatchInput {
@@ -1469,6 +1512,85 @@ enum HoldType {
   OperationalHold
 }
 
+type Invoice {
+  appliedAmount: String!
+  billToName: String!
+  billType: BillType!
+  billingQueueItemId: ID!
+  businessUnitId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  customer: Customer
+  customerId: ID!
+  disputeStatus: InvoiceDisputeStatus!
+  dueDate: Int
+  id: ID!
+  invoiceDate: Int!
+  isAdjustmentArtifact: Boolean!
+  number: String!
+  organizationId: ID!
+  otherAmount: String!
+  paymentTerm: InvoicePaymentTerm!
+  postedAt: Int
+  sendStatus: InvoiceSendStatus!
+  sentAt: Int
+  serviceDate: Int
+  settlementStatus: InvoiceSettlementStatus!
+  shipmentBol: String!
+  shipmentId: ID!
+  shipmentProNumber: String!
+  status: InvoiceStatus!
+  subtotalAmount: String!
+  totalAmount: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type InvoiceConnection {
+  edges: [InvoiceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum InvoiceDisputeStatus {
+  Disputed
+  None
+}
+
+type InvoiceEdge {
+  cursor: String!
+  node: Invoice!
+}
+
+enum InvoicePaymentTerm {
+  DueOnReceipt
+  Net10
+  Net15
+  Net30
+  Net45
+  Net60
+  Net90
+}
+
+enum InvoiceSendStatus {
+  Failed
+  NotSent
+  PartiallySent
+  Sending
+  Sent
+}
+
+enum InvoiceSettlementStatus {
+  Paid
+  PartiallyPaid
+  Unpaid
+}
+
+enum InvoiceStatus {
+  Draft
+  Posted
+}
+
 scalar JSON
 
 type JournalReversal {
@@ -1686,6 +1808,7 @@ enum MoveStatus {
 
 type Mutation {
   approveWorkerPTO(id: ID!): WorkerPTO!
+  assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
@@ -1717,6 +1840,7 @@ type Mutation {
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
+  updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
@@ -1819,6 +1943,8 @@ type Query {
   commodity(id: ID!): Commodity
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
+  customer(id: ID!): Customer
+  customers(input: DataTableConnectionInput!): CustomerConnection!
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceProfile(id: ID!): DistanceProfile
@@ -1857,6 +1983,8 @@ type Query {
   hazmatSegregationRules(input: DataTableConnectionInput!): HazmatSegregationRuleConnection!
   holdReason(id: ID!): HoldReason
   holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
+  invoice(id: ID!): Invoice
+  invoices(input: DataTableConnectionInput!): InvoiceConnection!
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   location(id: ID!): Location
@@ -1866,6 +1994,8 @@ type Query {
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
+  rateTable(id: ID!): RateTable
+  rateTables(input: DataTableConnectionInput!): RateTableConnection!
   role(id: ID!): Role
   roles(input: DataTableConnectionInput!): RoleConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
@@ -1873,20 +2003,20 @@ type Query {
   serviceFailure(id: ID!): ServiceFailure
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
   serviceFailureReasonCodes(input: DataTableConnectionInput!): ServiceFailureReasonCodeConnection!
-  serviceFailures(input: DataTableConnectionInput!): ServiceFailureConnection!
+  serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
   serviceType(id: ID!): ServiceType
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
-  shipmentAnalytics(endDate: Int, include: String, limit: Int, offset: Int, startDate: Int, timezone: String, windowDays: Int): ShipmentAnalytics!
+  shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
-  shipmentEvents(before: Int, limit: Int, shipmentId: ID, types: [ShipmentEventType!]): [ShipmentEvent!]!
+  shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
   shipmentType(id: ID!): ShipmentType
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentUIPolicy: ShipmentUIPolicy!
-  shipments(after: String, expandShipmentDetails: Boolean = false, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, query: String, sort: [SortFieldInput!], status: String): ShipmentConnection!
+  shipments(input: ShipmentsInput!): ShipmentConnection!
   storedMileage(id: ID!): StoredMileage
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
   tcaSubscription(id: ID!): TCASubscription
@@ -1896,12 +2026,44 @@ type Query {
   trailer(id: ID!): Trailer
   trailers(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TrailerConnection!
   unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
-  upcomingWorkerPTO(after: String, endDate: Int, first: Int = 20, fleetCodeId: ID, startDate: Int, status: PTOStatus, timezone: String, type: PTOType, workerId: ID): WorkerPTOConnection!
+  upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
   users(input: DataTableConnectionInput!): UserConnection!
-  workerPTOChartData(startDateFrom: Int!, startDateTo: Int!, timezone: String, type: PTOType, workerId: ID): [PTOChartDataPoint!]!
-  workerPTOEntries(includeWorker: Boolean = false, input: DataTableConnectionInput!, startDateFrom: Int, startDateTo: Int, status: PTOStatus, type: PTOType, workerId: ID): WorkerPTOConnection!
+  workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
+  workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   workers(input: DataTableConnectionInput!): WorkerConnection!
+}
+
+type RateTable {
+  active: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  key: String!
+  lookupType: RateTableLookupType!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RateTableConnection {
+  edges: [RateTableEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateTableEdge {
+  cursor: String!
+  node: RateTable!
+}
+
+enum RateTableLookupType {
+  Exact
+  Range
 }
 
 enum RateUnit {
@@ -2008,9 +2170,11 @@ input SelectOptionsInput {
 }
 
 type ServiceFailure {
+  actualArrival: Int!
   businessUnitId: ID!
   createdAt: Int!
   detectedAt: Int!
+  gracePeriodMinutes: Int!
   id: ID!
   lateMinutes: Int!
   notes: String!
@@ -2018,11 +2182,13 @@ type ServiceFailure {
   organizationId: ID!
   reasonCode: ServiceFailureReasonCode
   reasonCodeId: ID
+  scheduledCutoff: Int!
   shipment: ServiceFailureShipment
   shipmentId: ID!
   shipmentMoveId: ID!
   source: ServiceFailureSource!
   status: ServiceFailureStatus!
+  stop: ServiceFailureStop
   stopId: ID!
   stopType: StopType!
   type: ServiceFailureType!
@@ -2114,6 +2280,14 @@ enum ServiceFailureStatus {
   Resolved
   Reviewed
   Voided
+}
+
+type ServiceFailureStop {
+  id: ID!
+  location: Location
+  locationId: ID!
+  sequence: Int!
+  type: StopType!
 }
 
 enum ServiceFailureType {
@@ -2270,6 +2444,16 @@ type ShipmentAnalytics {
   savedViewCounts: ShipmentSavedViewCounts
   tomorrowsPickups: ShipmentTomorrowsPickups
   unassigned: ShipmentUnassignedAnalytics
+}
+
+input ShipmentAnalyticsInput {
+  endDate: Int
+  include: String
+  limit: Int
+  offset: Int
+  startDate: Int
+  timezone: String
+  windowDays: Int
 }
 
 type ShipmentAssignment {
@@ -2733,6 +2917,13 @@ enum ShipmentEventType {
   StopCompleted
 }
 
+input ShipmentEventsInput {
+  before: Int
+  limit: Int
+  shipmentId: ID
+  types: [ShipmentEventType!]
+}
+
 type ShipmentFormulaTemplate {
   businessUnitId: ID!
   createdAt: Int!
@@ -3192,6 +3383,17 @@ type ShipmentValidationResponse {
   valid: Boolean!
 }
 
+input ShipmentsInput {
+  after: String
+  expandShipmentDetails: Boolean = false
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  query: String
+  sort: [SortFieldInput!]
+  status: String
+}
+
 input SortFieldInput {
   direction: String!
   field: String!
@@ -3478,6 +3680,18 @@ input TrailerPatchInput {
   year: Int
 }
 
+input UpcomingWorkerPTOInput {
+  after: String
+  endDate: Int
+  first: Int = 20
+  fleetCodeId: ID
+  startDate: Int
+  status: PTOStatus
+  timezone: String
+  type: PTOType
+  workerId: ID
+}
+
 type UsState {
   abbreviation: String!
   countryIso3: String!
@@ -3597,6 +3811,14 @@ type WorkerPTO {
   workerId: ID!
 }
 
+input WorkerPTOChartInput {
+  startDateFrom: Int!
+  startDateTo: Int!
+  timezone: String
+  type: PTOType
+  workerId: ID
+}
+
 type WorkerPTOConnection {
   edges: [WorkerPTOEdge!]!
   pageInfo: PageInfo!
@@ -3606,6 +3828,21 @@ type WorkerPTOConnection {
 type WorkerPTOEdge {
   cursor: String!
   node: WorkerPTO!
+}
+
+input WorkerPTOEntriesInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  includeWorker: Boolean = false
+  query: String
+  sort: [SortFieldInput!]
+  startDateFrom: Int
+  startDateTo: Int
+  status: PTOStatus
+  type: PTOType
+  workerId: ID
 }
 
 input WorkerPatchInput {

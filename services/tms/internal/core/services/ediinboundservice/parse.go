@@ -3,6 +3,7 @@ package ediinboundservice
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -852,10 +853,8 @@ func addRequiredMappingID(
 	if id == "" {
 		return
 	}
-	for _, existing := range payload.RequiredMappingEntityIDs[entityType] {
-		if existing == id {
-			return
-		}
+	if slices.Contains(payload.RequiredMappingEntityIDs[entityType], id) {
+		return
 	}
 	payload.RequiredMappingEntityIDs[entityType] = append(
 		payload.RequiredMappingEntityIDs[entityType],

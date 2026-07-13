@@ -66,7 +66,7 @@ type MockDocumentSearchProjectionService_Delete_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDocumentSearchProjectionService_Expecter) Delete(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentSearchProjectionService_Delete_Call {
+func (_e *MockDocumentSearchProjectionService_Expecter) Delete(ctx any, documentID any, tenantInfo any) *MockDocumentSearchProjectionService_Delete_Call {
 	return &MockDocumentSearchProjectionService_Delete_Call{Call: _e.mock.On("Delete", ctx, documentID, tenantInfo)}
 }
 
@@ -129,7 +129,7 @@ type MockDocumentSearchProjectionService_Upsert_Call struct {
 //   - ctx context.Context
 //   - doc *document.Document
 //   - contentText string
-func (_e *MockDocumentSearchProjectionService_Expecter) Upsert(ctx interface{}, doc interface{}, contentText interface{}) *MockDocumentSearchProjectionService_Upsert_Call {
+func (_e *MockDocumentSearchProjectionService_Expecter) Upsert(ctx any, doc any, contentText any) *MockDocumentSearchProjectionService_Upsert_Call {
 	return &MockDocumentSearchProjectionService_Upsert_Call{Call: _e.mock.On("Upsert", ctx, doc, contentText)}
 }
 

@@ -34,7 +34,7 @@ func TestComplexityRoot_Trailers(t *testing.T) {
 		},
 		{
 			name:            "caps at max limit",
-			first:           intPtrForTest(pagination.MaxLimit + 1),
+			first:           new(pagination.MaxLimit + 1),
 			childComplexity: 2,
 			expected:        200,
 		},

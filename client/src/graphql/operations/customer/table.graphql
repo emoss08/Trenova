@@ -1,0 +1,28 @@
+fragment CustomerTableRowFields on Customer {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  status
+  code
+  name
+  city
+  postalCode
+  version
+  createdAt
+  updatedAt
+}
+
+query CustomerTable($input: DataTableConnectionInput!) {
+  customers(input: $input) {
+    edges {
+      node {
+        ...CustomerTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

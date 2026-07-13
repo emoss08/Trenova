@@ -1100,38 +1100,44 @@ input ShipmentCommentUpdateInput {
   version: Int!
 }
 
+input ShipmentsInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+  expandShipmentDetails: Boolean = false
+  status: String
+}
+
+input ShipmentEventsInput {
+  shipmentId: ID
+  types: [ShipmentEventType!]
+  limit: Int
+  before: Int
+}
+
+input ShipmentAnalyticsInput {
+  startDate: Int
+  endDate: Int
+  limit: Int
+  offset: Int
+  timezone: String
+  windowDays: Int
+  include: String
+}
+
 extend type Query {
-  shipments(
-    first: Int = 20
-    after: String
-    query: String
-    fieldFilters: [FieldFilterInput!]
-    filterGroups: [FilterGroupInput!]
-    sort: [SortFieldInput!]
-    expandShipmentDetails: Boolean = false
-    status: String
-  ): ShipmentConnection!
+  shipments(input: ShipmentsInput!): ShipmentConnection!
   shipment(id: ID!, expandShipmentDetails: Boolean = false, status: String): Shipment
   unassignedShipments(first: Int = 20, after: String): ShipmentConnection!
   shipmentComments(shipmentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
-  shipmentEvents(
-    shipmentId: ID
-    types: [ShipmentEventType!]
-    limit: Int
-    before: Int
-  ): [ShipmentEvent!]!
-  shipmentAnalytics(
-    startDate: Int
-    endDate: Int
-    limit: Int
-    offset: Int
-    timezone: String
-    windowDays: Int
-    include: String
-  ): ShipmentAnalytics!
+  shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
+  shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
 }
 

@@ -206,7 +206,7 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 						Type:                 shipment.StopTypeDelivery,
 						Sequence:             2,
 						ScheduledWindowStart: 1715814000,
-						ScheduledWindowEnd:   int64Ptr(1715817600),
+						ScheduledWindowEnd:   new(int64(1715817600)),
 						Location: &location.Location{
 							Code:         "DAL",
 							Name:         "Dallas Terminal",

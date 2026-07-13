@@ -76,7 +76,7 @@ type MockEDIPartnerRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDIPartner
-func (_e *MockEDIPartnerRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockEDIPartnerRepository_Create_Call {
+func (_e *MockEDIPartnerRepository_Expecter) Create(ctx any, entity any) *MockEDIPartnerRepository_Create_Call {
 	return &MockEDIPartnerRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockEDIPartnerRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetEDIPartnerByIDRequest
-func (_e *MockEDIPartnerRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockEDIPartnerRepository_GetByID_Call {
+func (_e *MockEDIPartnerRepository_Expecter) GetByID(ctx any, req any) *MockEDIPartnerRepository_GetByID_Call {
 	return &MockEDIPartnerRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -172,6 +172,74 @@ func (_c *MockEDIPartnerRepository_GetByID_Call) Return(eDIPartner *edi.EDIPartn
 }
 
 func (_c *MockEDIPartnerRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIPartnerByIDRequest) (*edi.EDIPartner, error)) *MockEDIPartnerRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetReadiness provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) GetReadiness(ctx context.Context, req *repositories.GetEDIPartnerReadinessRequest) ([]*repositories.EDIPartnerReadinessRow, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetReadiness")
+	}
+
+	var r0 []*repositories.EDIPartnerReadinessRow
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDIPartnerReadinessRequest) ([]*repositories.EDIPartnerReadinessRow, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDIPartnerReadinessRequest) []*repositories.EDIPartnerReadinessRow); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.EDIPartnerReadinessRow)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetEDIPartnerReadinessRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_GetReadiness_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetReadiness'
+type MockEDIPartnerRepository_GetReadiness_Call struct {
+	*mock.Call
+}
+
+// GetReadiness is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetEDIPartnerReadinessRequest
+func (_e *MockEDIPartnerRepository_Expecter) GetReadiness(ctx any, req any) *MockEDIPartnerRepository_GetReadiness_Call {
+	return &MockEDIPartnerRepository_GetReadiness_Call{Call: _e.mock.On("GetReadiness", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_GetReadiness_Call) Run(run func(ctx context.Context, req *repositories.GetEDIPartnerReadinessRequest)) *MockEDIPartnerRepository_GetReadiness_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetEDIPartnerReadinessRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetEDIPartnerReadinessRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_GetReadiness_Call) Return(eDIPartnerReadinessRows []*repositories.EDIPartnerReadinessRow, err error) *MockEDIPartnerRepository_GetReadiness_Call {
+	_c.Call.Return(eDIPartnerReadinessRows, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_GetReadiness_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetEDIPartnerReadinessRequest) ([]*repositories.EDIPartnerReadinessRow, error)) *MockEDIPartnerRepository_GetReadiness_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -212,7 +280,7 @@ type MockEDIPartnerRepository_GetReciprocalInternalPartner_Call struct {
 // GetReciprocalInternalPartner is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetReciprocalInternalPartnerRequest
-func (_e *MockEDIPartnerRepository_Expecter) GetReciprocalInternalPartner(ctx interface{}, req interface{}) *MockEDIPartnerRepository_GetReciprocalInternalPartner_Call {
+func (_e *MockEDIPartnerRepository_Expecter) GetReciprocalInternalPartner(ctx any, req any) *MockEDIPartnerRepository_GetReciprocalInternalPartner_Call {
 	return &MockEDIPartnerRepository_GetReciprocalInternalPartner_Call{Call: _e.mock.On("GetReciprocalInternalPartner", ctx, req)}
 }
 
@@ -280,7 +348,7 @@ type MockEDIPartnerRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnersRequest
-func (_e *MockEDIPartnerRepository_Expecter) List(ctx interface{}, req interface{}) *MockEDIPartnerRepository_List_Call {
+func (_e *MockEDIPartnerRepository_Expecter) List(ctx any, req any) *MockEDIPartnerRepository_List_Call {
 	return &MockEDIPartnerRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -348,7 +416,7 @@ type MockEDIPartnerRepository_ListCursor_Call struct {
 // ListCursor is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListEDIPartnersRequest
-func (_e *MockEDIPartnerRepository_Expecter) ListCursor(ctx interface{}, req interface{}) *MockEDIPartnerRepository_ListCursor_Call {
+func (_e *MockEDIPartnerRepository_Expecter) ListCursor(ctx any, req any) *MockEDIPartnerRepository_ListCursor_Call {
 	return &MockEDIPartnerRepository_ListCursor_Call{Call: _e.mock.On("ListCursor", ctx, req)}
 }
 
@@ -416,7 +484,7 @@ type MockEDIPartnerRepository_SelectOptions_Call struct {
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.EDIPartnerSelectOptionsRequest
-func (_e *MockEDIPartnerRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockEDIPartnerRepository_SelectOptions_Call {
+func (_e *MockEDIPartnerRepository_Expecter) SelectOptions(ctx any, req any) *MockEDIPartnerRepository_SelectOptions_Call {
 	return &MockEDIPartnerRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
 
@@ -484,7 +552,7 @@ type MockEDIPartnerRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *edi.EDIPartner
-func (_e *MockEDIPartnerRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockEDIPartnerRepository_Update_Call {
+func (_e *MockEDIPartnerRepository_Expecter) Update(ctx any, entity any) *MockEDIPartnerRepository_Update_Call {
 	return &MockEDIPartnerRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
@@ -512,74 +580,6 @@ func (_c *MockEDIPartnerRepository_Update_Call) Return(eDIPartner *edi.EDIPartne
 }
 
 func (_c *MockEDIPartnerRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error)) *MockEDIPartnerRepository_Update_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetReadiness provides a mock function for the type MockEDIPartnerRepository
-func (_mock *MockEDIPartnerRepository) GetReadiness(ctx context.Context, req *repositories.GetEDIPartnerReadinessRequest) ([]*repositories.EDIPartnerReadinessRow, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetReadiness")
-	}
-
-	var r0 []*repositories.EDIPartnerReadinessRow
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDIPartnerReadinessRequest) ([]*repositories.EDIPartnerReadinessRow, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDIPartnerReadinessRequest) []*repositories.EDIPartnerReadinessRow); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*repositories.EDIPartnerReadinessRow)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetEDIPartnerReadinessRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIPartnerRepository_GetReadiness_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetReadiness'
-type MockEDIPartnerRepository_GetReadiness_Call struct {
-	*mock.Call
-}
-
-// GetReadiness is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.GetEDIPartnerReadinessRequest
-func (_e *MockEDIPartnerRepository_Expecter) GetReadiness(ctx interface{}, req interface{}) *MockEDIPartnerRepository_GetReadiness_Call {
-	return &MockEDIPartnerRepository_GetReadiness_Call{Call: _e.mock.On("GetReadiness", ctx, req)}
-}
-
-func (_c *MockEDIPartnerRepository_GetReadiness_Call) Run(run func(ctx context.Context, req *repositories.GetEDIPartnerReadinessRequest)) *MockEDIPartnerRepository_GetReadiness_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.GetEDIPartnerReadinessRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.GetEDIPartnerReadinessRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_GetReadiness_Call) Return(rows []*repositories.EDIPartnerReadinessRow, err error) *MockEDIPartnerRepository_GetReadiness_Call {
-	_c.Call.Return(rows, err)
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_GetReadiness_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetEDIPartnerReadinessRequest) ([]*repositories.EDIPartnerReadinessRow, error)) *MockEDIPartnerRepository_GetReadiness_Call {
 	_c.Call.Return(run)
 	return _c
 }

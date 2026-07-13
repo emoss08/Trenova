@@ -1,6 +1,10 @@
 package formulatemplateservice
 
-import "github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+import (
+	"reflect"
+
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+)
 
 var versionDiffIgnoreFields = []string{
 	"id",
@@ -9,6 +13,30 @@ var versionDiffIgnoreFields = []string{
 	"versionNumber",
 	"changeMessage",
 	"changeSummary",
+}
+
+func clearApprovalFields(template *formulatemplate.FormulaTemplate) {
+	template.SubmittedByID = nil
+	template.SubmittedAt = nil
+	template.ApprovedByID = nil
+	template.ApprovedAt = nil
+	template.ReviewComment = ""
+}
+
+func sanitizeResolvedVariables(variables map[string]any) map[string]any {
+	if len(variables) == 0 {
+		return nil
+	}
+
+	sanitized := make(map[string]any, len(variables))
+	for name, value := range variables {
+		if value != nil && reflect.TypeOf(value).Kind() == reflect.Func {
+			continue
+		}
+		sanitized[name] = value
+	}
+
+	return sanitized
 }
 
 func extractVersionPair(

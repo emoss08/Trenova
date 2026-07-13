@@ -75,7 +75,7 @@ type MockShipmentControlRepository_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetShipmentControlRequest
-func (_e *MockShipmentControlRepository_Expecter) Get(ctx interface{}, req interface{}) *MockShipmentControlRepository_Get_Call {
+func (_e *MockShipmentControlRepository_Expecter) Get(ctx any, req any) *MockShipmentControlRepository_Get_Call {
 	return &MockShipmentControlRepository_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -143,7 +143,7 @@ type MockShipmentControlRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sc *tenant.ShipmentControl
-func (_e *MockShipmentControlRepository_Expecter) Update(ctx interface{}, sc interface{}) *MockShipmentControlRepository_Update_Call {
+func (_e *MockShipmentControlRepository_Expecter) Update(ctx any, sc any) *MockShipmentControlRepository_Update_Call {
 	return &MockShipmentControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, sc)}
 }
 

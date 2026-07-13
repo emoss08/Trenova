@@ -76,7 +76,7 @@ type MockWorkerPTORepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *worker.WorkerPTO
-func (_e *MockWorkerPTORepository_Expecter) Create(ctx interface{}, entity interface{}) *MockWorkerPTORepository_Create_Call {
+func (_e *MockWorkerPTORepository_Expecter) Create(ctx any, entity any) *MockWorkerPTORepository_Create_Call {
 	return &MockWorkerPTORepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockWorkerPTORepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.GetPTOByIDRequest
-func (_e *MockWorkerPTORepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockWorkerPTORepository_GetByID_Call {
+func (_e *MockWorkerPTORepository_Expecter) GetByID(ctx any, req any) *MockWorkerPTORepository_GetByID_Call {
 	return &MockWorkerPTORepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockWorkerPTORepository_GetChartData_Call struct {
 // GetChartData is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.PTOChartRequest
-func (_e *MockWorkerPTORepository_Expecter) GetChartData(ctx interface{}, req interface{}) *MockWorkerPTORepository_GetChartData_Call {
+func (_e *MockWorkerPTORepository_Expecter) GetChartData(ctx any, req any) *MockWorkerPTORepository_GetChartData_Call {
 	return &MockWorkerPTORepository_GetChartData_Call{Call: _e.mock.On("GetChartData", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockWorkerPTORepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListPTORequest
-func (_e *MockWorkerPTORepository_Expecter) List(ctx interface{}, req interface{}) *MockWorkerPTORepository_List_Call {
+func (_e *MockWorkerPTORepository_Expecter) List(ctx any, req any) *MockWorkerPTORepository_List_Call {
 	return &MockWorkerPTORepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockWorkerPTORepository_ListUpcoming_Call struct {
 // ListUpcoming is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListUpcomingPTORequest
-func (_e *MockWorkerPTORepository_Expecter) ListUpcoming(ctx interface{}, req interface{}) *MockWorkerPTORepository_ListUpcoming_Call {
+func (_e *MockWorkerPTORepository_Expecter) ListUpcoming(ctx any, req any) *MockWorkerPTORepository_ListUpcoming_Call {
 	return &MockWorkerPTORepository_ListUpcoming_Call{Call: _e.mock.On("ListUpcoming", ctx, req)}
 }
 
@@ -416,7 +416,7 @@ type MockWorkerPTORepository_UpdateStatus_Call struct {
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.UpdatePTOStatusRequest
-func (_e *MockWorkerPTORepository_Expecter) UpdateStatus(ctx interface{}, req interface{}) *MockWorkerPTORepository_UpdateStatus_Call {
+func (_e *MockWorkerPTORepository_Expecter) UpdateStatus(ctx any, req any) *MockWorkerPTORepository_UpdateStatus_Call {
 	return &MockWorkerPTORepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
 }
 

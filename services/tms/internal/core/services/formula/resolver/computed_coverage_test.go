@@ -324,12 +324,12 @@ func TestGetFieldInt16_ViaComputed(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "nil max returns zero",
+			name: "nil max returns error",
 			entity: &ShipmentEntity{
 				TemperatureMin: &min16,
 				TemperatureMax: nil,
 			},
-			want: 0.0,
+			wantErr: true,
 		},
 	}
 

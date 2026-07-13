@@ -58,6 +58,7 @@ const STATUS_VARIANTS: Record<
   completed: "default",
   cancelled: "inactive",
   processing: "secondary",
+  inreview: "warning",
   // Compliance statuses
   compliant: "active",
   noncompliant: "inactive",
@@ -71,6 +72,7 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
   completed: <CheckIcon />,
   cancelled: <XIcon />,
   processing: <ClockIcon />,
+  inreview: <ClockIcon />,
   // Compliance statuses
   compliant: <CheckCheckIcon />,
   noncompliant: <XIcon />,
@@ -557,7 +559,11 @@ export function EDIPartnerReadinessBadge({
 }) {
   if (ready) {
     return (
-      <Badge variant="active" className="max-h-5" title="All onboarding checklist items are complete.">
+      <Badge
+        variant="active"
+        className="max-h-5"
+        title="All onboarding checklist items are complete."
+      >
         Ready
       </Badge>
     );
@@ -679,11 +685,7 @@ export function EDIMessageAckStatusBadge({
   );
 }
 
-export function EDIInboundFileStatusBadge({
-  status,
-}: {
-  status?: EDIInboundFileStatus | string;
-}) {
+export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileStatus | string }) {
   if (!status) return null;
 
   const attrs: Record<EDIInboundFileStatus, BadgeAttrProps> = {

@@ -7,9 +7,9 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { InvoiceTableRowFieldsFragment } from "@/graphql/generated/graphql";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { formatCurrency } from "@/lib/utils";
-import type { Invoice } from "@/types/invoice";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react";
 
@@ -19,7 +19,7 @@ export function InvoiceItemCard({
   onClick,
   onPost,
 }: {
-  invoice: Invoice;
+  invoice: InvoiceTableRowFieldsFragment;
   isSelected: boolean;
   onClick: () => void;
   onPost: () => void;

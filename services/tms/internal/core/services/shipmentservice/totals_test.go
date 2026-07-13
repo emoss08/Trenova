@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -32,7 +33,7 @@ func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t 
 
 	entity := validShipmentForValidation()
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(2.5))
-	entity.Moves[0].Distance = ptrFloat64(100)
+	entity.Moves[0].Distance = new(float64(100))
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
 			AccessorialChargeID: pulid.MustNew("acc_"),
@@ -62,6 +63,7 @@ func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t 
 			assert.Equal(t, entity.OrganizationID, req.TenantInfo.OrgID)
 			assert.Equal(t, entity.BusinessUnitID, req.TenantInfo.BuID)
 			return &formulatemplate.FormulaTemplate{
+				Status:     formulatemplate.StatusActive,
 				ID:         req.TemplateID,
 				SchemaID:   "shipment",
 				Expression: "freightChargeAmount * totalDistance",
@@ -145,7 +147,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 
 	entity := validShipmentForValidation()
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(3))
-	entity.Moves[0].Distance = ptrFloat64(10)
+	entity.Moves[0].Distance = new(float64(10))
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
 			AccessorialChargeID: pulid.MustNew("acc_"),
@@ -178,6 +180,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 			req repositories.GetFormulaTemplateByIDRequest,
 		) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
+				Status:     formulatemplate.StatusActive,
 				ID:         req.TemplateID,
 				SchemaID:   "shipment",
 				Expression: "freightChargeAmount * totalDistance",
@@ -237,6 +240,7 @@ func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChar
 			req repositories.GetFormulaTemplateByIDRequest,
 		) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
+				Status:     formulatemplate.StatusActive,
 				ID:         req.TemplateID,
 				SchemaID:   "shipment",
 				Expression: "freightChargeAmount + otherChargeAmount",
@@ -286,6 +290,7 @@ func TestServiceCalculateTotals_PropagatesFormulaErrors(t *testing.T) {
 			req repositories.GetFormulaTemplateByIDRequest,
 		) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
+				Status:     formulatemplate.StatusActive,
 				ID:         req.TemplateID,
 				SchemaID:   "shipment",
 				Expression: "missingVariable +",
@@ -322,7 +327,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 			Pieces:      5,
 			Weight:      1000,
 			Commodity: &commodity.Commodity{
-				LinearFeetPerUnit: ptrFloat(2),
+				LinearFeetPerUnit: new(float64(2)),
 				HazardousMaterial: &hazardousmaterial.HazardousMaterial{
 					ID: pulid.MustNew("hm_"),
 				},
@@ -355,6 +360,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 			req repositories.GetFormulaTemplateByIDRequest,
 		) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
+				Status:     formulatemplate.StatusActive,
 				ID:         req.TemplateID,
 				SchemaID:   "shipment",
 				Expression: "totalWeight + totalLinearFeet + (hasHazmat ? 100 : 0)",
@@ -434,7 +440,7 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 			},
 			{
 				ID:                secondCommodityID,
-				LinearFeetPerUnit: ptrFloat(2),
+				LinearFeetPerUnit: new(float64(2)),
 			},
 		}, nil).
 		Once()
@@ -445,6 +451,7 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 			req repositories.GetFormulaTemplateByIDRequest,
 		) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
+				Status:     formulatemplate.StatusActive,
 				ID:         req.TemplateID,
 				SchemaID:   "shipment",
 				Expression: "totalLinearFeet + (hasHazmat ? 25 : 0)",
@@ -478,6 +485,7 @@ func newTestFormulaService(
 	t.Helper()
 
 	registry := schema.NewRegistry()
+	registerShipmentSchema(t, registry)
 	res := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(res)
 
@@ -486,19 +494,122 @@ func newTestFormulaService(
 		Resolver: res,
 	})
 
-	eng := engine.NewEngine(engine.Params{
+	eng, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
+	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:   zap.NewNop(),
-		Registry: registry,
-		Engine:   eng,
-		Resolver: res,
-		Repo:     repo,
+		Logger:        zap.NewNop(),
+		Registry:      registry,
+		Engine:        eng,
+		Resolver:      res,
+		Repo:          repo,
+		VersionRepo:   stubTotalsVersionRepo{},
+		RateTableRepo: stubTotalsRateTableRepo{},
 	})
+}
+
+type stubTotalsVersionRepo struct {
+	repositories.FormulaTemplateVersionRepository
+}
+
+func (stubTotalsVersionRepo) GetEffectiveVersion(
+	_ context.Context,
+	_ *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+type stubTotalsRateTableRepo struct {
+	repositories.RateTableRepository
+}
+
+func (stubTotalsRateTableRepo) GetLookupData(
+	_ context.Context,
+	_ *repositories.GetRateTableLookupDataRequest,
+) ([]*ratetable.RateTable, error) {
+	return nil, nil
+}
+
+func registerShipmentSchema(t *testing.T, registry *schema.Registry) {
+	t.Helper()
+
+	const shipmentSchema = `{
+		"$schema": "https://json-schema.org/draft/2020-12/schema",
+		"$id": "https://trenova.com/schemas/formula/shipment.schema.json",
+		"type": "object",
+		"x-formula-context": {
+			"category": "shipment",
+			"entities": ["Shipment"]
+		},
+		"x-data-source": {
+			"table": "shipments",
+			"preloads": ["Customer", "Moves.Stops", "Commodities.Commodity", "Commodities.Commodity.HazardousMaterial"]
+		},
+		"properties": {
+			"weight": {
+				"type": ["number", "null"],
+				"x-source": { "field": "Weight", "nullable": true, "transform": "int64ToFloat64" }
+			},
+			"pieces": {
+				"type": ["integer", "null"],
+				"x-source": { "field": "Pieces", "nullable": true }
+			},
+			"freightChargeAmount": {
+				"type": "number",
+				"x-source": { "field": "FreightChargeAmount", "transform": "decimalToFloat64" }
+			},
+			"otherChargeAmount": {
+				"type": "number",
+				"x-source": { "computed": true, "function": "computeOtherChargeAmount" }
+			},
+			"currentTotalCharge": {
+				"type": "number",
+				"x-source": { "computed": true, "function": "computeCurrentTotalCharge" }
+			},
+			"ratingUnit": {
+				"type": "integer",
+				"x-source": { "field": "RatingUnit" }
+			},
+			"totalDistance": {
+				"type": "number",
+				"x-source": { "computed": true, "function": "computeTotalDistance" }
+			},
+			"totalStops": {
+				"type": "integer",
+				"x-source": { "computed": true, "function": "computeTotalStops" }
+			},
+			"totalWeight": {
+				"type": "number",
+				"x-source": { "computed": true, "function": "computeTotalWeight" }
+			},
+			"totalPieces": {
+				"type": "integer",
+				"x-source": { "computed": true, "function": "computeTotalPieces" }
+			},
+			"totalLinearFeet": {
+				"type": "number",
+				"x-source": { "computed": true, "function": "computeTotalLinearFeet" }
+			},
+			"hasHazmat": {
+				"type": "boolean",
+				"x-source": { "computed": true, "function": "computeHasHazmat" }
+			},
+			"requiresTemperatureControl": {
+				"type": "boolean",
+				"x-source": { "computed": true, "function": "computeRequiresTemperatureControl" }
+			},
+			"temperatureDifferential": {
+				"type": "number",
+				"x-source": { "computed": true, "function": "computeTemperatureDifferential" }
+			}
+		}
+	}`
+
+	require.NoError(t, registry.Register("shipment", []byte(shipmentSchema)))
 }
 
 type stubFormulaTemplateRepository struct {

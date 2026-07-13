@@ -56,3 +56,10 @@ Backend root: `services/tms`  •  Frontend root: `client`
 - Projection generator broken — hand-add spec (step 11).
 - decimal/other non-marshalable fields → gqlgen resolver fields.
 - Some entities already have a `.graphqls` WITH a connection (e.g. equipmentManufacturer) → frontend-only (steps 14-18). Some have a `.graphqls` WITHOUT connection → add connection + rest.
+
+## CRITICAL FRONTEND VERIFICATION (learned late)
+`pnpm tsc --noEmit` uses the ROOT tsconfig and DOES NOT type-check `src/` — it falsely reports 0 errors. The REAL check is project-references build mode:
+```
+cd client && npx tsc -b --force 2>&1 | grep "error TS"
+```
+Confirm ZERO errors for migrated table files. Ignore pre-existing unrelated errors in `src/components/ui/chart.tsx` and `edi-trend-charts.tsx` (recharts typing, not ours). `DataTableProps` does NOT include `link`, `exportModelName`, `extraSearchParams`, `preferDetailRowForEdit`, `shipmentId`, `initialFilters`. Any such prop left on `<DataTable>` OR passed by a parent `page.tsx` into the table component is a compile error — remove it, or preserve its behavior via a parent-scoped query arg + `extraVariables` (like SCIM's `directoryId`).

@@ -76,7 +76,7 @@ type MockManualJournalRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *manualjournal.Request
-func (_e *MockManualJournalRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockManualJournalRepository_Create_Call {
+func (_e *MockManualJournalRepository_Expecter) Create(ctx any, entity any) *MockManualJournalRepository_Create_Call {
 	return &MockManualJournalRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -144,7 +144,7 @@ type MockManualJournalRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetManualJournalByIDRequest
-func (_e *MockManualJournalRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockManualJournalRepository_GetByID_Call {
+func (_e *MockManualJournalRepository_Expecter) GetByID(ctx any, req any) *MockManualJournalRepository_GetByID_Call {
 	return &MockManualJournalRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -212,7 +212,7 @@ type MockManualJournalRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListManualJournalRequest
-func (_e *MockManualJournalRepository_Expecter) List(ctx interface{}, req interface{}) *MockManualJournalRepository_List_Call {
+func (_e *MockManualJournalRepository_Expecter) List(ctx any, req any) *MockManualJournalRepository_List_Call {
 	return &MockManualJournalRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -280,7 +280,7 @@ type MockManualJournalRepository_ListConnection_Call struct {
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListManualJournalConnectionRequest
-func (_e *MockManualJournalRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockManualJournalRepository_ListConnection_Call {
+func (_e *MockManualJournalRepository_Expecter) ListConnection(ctx any, req any) *MockManualJournalRepository_ListConnection_Call {
 	return &MockManualJournalRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
@@ -348,7 +348,7 @@ type MockManualJournalRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *manualjournal.Request
-func (_e *MockManualJournalRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockManualJournalRepository_Update_Call {
+func (_e *MockManualJournalRepository_Expecter) Update(ctx any, entity any) *MockManualJournalRepository_Update_Call {
 	return &MockManualJournalRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -80,25 +81,40 @@ func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListServiceFailureConnectionRequest,
 ) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
+	q, err := querybuilder.ApplyCursorFilters(
 		q,
 		buncolgen.ServiceFailureTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*servicefailure.ServiceFailure)(nil),
 	)
+	if err != nil {
+		return q, err
+	}
+
+	return applyShipmentFilter(q, req.ShipmentID), nil
 }
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListServiceFailureConnectionRequest,
 ) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
+	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
 		buncolgen.ServiceFailureTable.Alias,
 		req.Filter,
 		(*servicefailure.ServiceFailure)(nil),
 	)
+
+	return applyShipmentFilter(q, req.ShipmentID)
+}
+
+func applyShipmentFilter(q *bun.SelectQuery, shipmentID *pulid.ID) *bun.SelectQuery {
+	if shipmentID == nil {
+		return q
+	}
+
+	return q.Where(buncolgen.ServiceFailureColumns.ShipmentID.Eq(), *shipmentID)
 }
 
 func (r *repository) ListConnection(
@@ -135,6 +151,9 @@ func (r *repository) ListConnection(
 					Model(entities).
 					ColumnExpr(buncolgen.ServiceFailureTable.All()).
 					Relation("Shipment").
+					Relation("Stop").
+					Relation("Stop.Location").
+					Relation("Stop.Location.State").
 					Relation("ReasonCode")
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {

@@ -75,7 +75,7 @@ type MockWorkerCacheRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetWorkerByIDRequest
-func (_e *MockWorkerCacheRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockWorkerCacheRepository_GetByID_Call {
+func (_e *MockWorkerCacheRepository_Expecter) GetByID(ctx any, req any) *MockWorkerCacheRepository_GetByID_Call {
 	return &MockWorkerCacheRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 

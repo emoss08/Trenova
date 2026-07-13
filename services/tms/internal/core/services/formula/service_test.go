@@ -3,9 +3,11 @@ package formula_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
@@ -98,6 +100,40 @@ func (m *mockFormulaTemplateRepo) SelectOptions(
 	return nil, nil
 }
 
+func newTestRegistry(t *testing.T) *schema.Registry {
+	t.Helper()
+
+	registry := schema.NewRegistry()
+
+	shipmentSchema, err := os.ReadFile("schema/definitions/shipment.schema.json")
+	require.NoError(t, err)
+	require.NoError(t, registry.Register("shipment", shipmentSchema))
+
+	return registry
+}
+
+func newTestEngine(t *testing.T) *engine.Engine {
+	t.Helper()
+
+	registry := newTestRegistry(t)
+	res := resolver.NewResolver()
+	resolver.RegisterDefaultComputed(res)
+
+	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+		Registry: registry,
+		Resolver: res,
+	})
+
+	eng, err := engine.NewEngine(engine.Params{
+		Registry:   registry,
+		Resolver:   res,
+		EnvBuilder: envBuilder,
+	})
+	require.NoError(t, err)
+
+	return eng
+}
+
 func setupService(t *testing.T) *formula.Service {
 	t.Helper()
 	return setupServiceWithRepo(t, nil)
@@ -109,7 +145,7 @@ func setupServiceWithRepo(
 ) *formula.Service {
 	t.Helper()
 
-	registry := schema.NewRegistry()
+	registry := newTestRegistry(t)
 	res := resolver.NewResolver()
 
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
@@ -117,21 +153,63 @@ func setupServiceWithRepo(
 		Resolver: res,
 	})
 
-	eng := engine.NewEngine(engine.Params{
+	eng, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
+	require.NoError(t, err)
 
 	logger := zap.NewNop()
 
 	return formula.NewService(formula.ServiceParams{
-		Logger:   logger,
-		Registry: registry,
-		Engine:   eng,
-		Resolver: res,
-		Repo:     repo,
+		Logger:        logger,
+		Registry:      registry,
+		Engine:        eng,
+		Resolver:      res,
+		Repo:          repo,
+		VersionRepo:   &stubVersionRepo{},
+		RateTableRepo: &stubRateTableRepo{},
 	})
+}
+
+type stubVersionRepo struct {
+	repositories.FormulaTemplateVersionRepository
+	effectiveVersion *formulatemplate.FormulaTemplateVersion
+}
+
+func (s *stubVersionRepo) GetEffectiveVersion(
+	_ context.Context,
+	_ *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return s.effectiveVersion, nil
+}
+
+type stubRateTableRepo struct {
+	repositories.RateTableRepository
+	tables []*ratetable.RateTable
+}
+
+func (s *stubRateTableRepo) GetLookupData(
+	_ context.Context,
+	_ *repositories.GetRateTableLookupDataRequest,
+) ([]*ratetable.RateTable, error) {
+	return s.tables, nil
+}
+
+func (s *stubRateTableRepo) GetByKeys(
+	_ context.Context,
+	req *repositories.GetRateTablesByKeysRequest,
+) ([]*ratetable.RateTable, error) {
+	matched := make([]*ratetable.RateTable, 0, len(req.Keys))
+	for _, table := range s.tables {
+		for _, key := range req.Keys {
+			if table.Key == key {
+				matched = append(matched, table)
+			}
+		}
+	}
+	return matched, nil
 }
 
 func TestService_ValidateExpression(t *testing.T) {
@@ -139,10 +217,24 @@ func TestService_ValidateExpression(t *testing.T) {
 
 	svc := setupService(t)
 
-	t.Run("invalid schema returns error", func(t *testing.T) {
+	t.Run("unknown schema returns error", func(t *testing.T) {
 		t.Parallel()
-		err := svc.ValidateExpression("x + y", "nonexistent")
+		err := svc.ValidateExpression(t.Context(), "x + y", "nonexistent")
 		require.Error(t, err)
+		require.ErrorIs(t, err, engine.ErrSchemaNotFound)
+	})
+
+	t.Run("registered schema validates numeric expression", func(t *testing.T) {
+		t.Parallel()
+		err := svc.ValidateExpression(t.Context(), "weight + totalDistance", "shipment")
+		require.NoError(t, err)
+	})
+
+	t.Run("registered schema rejects non-numeric result", func(t *testing.T) {
+		t.Parallel()
+		err := svc.ValidateExpression(t.Context(), "proNumber", "shipment")
+		require.Error(t, err)
+		require.ErrorIs(t, err, engine.ErrNonNumericResult)
 	})
 }
 
@@ -187,12 +279,30 @@ func TestService_ValidateExpressionWithEnv(t *testing.T) {
 			env:        map[string]any{"flag": false, "a": 0.0, "b": 0.0},
 			wantErr:    false,
 		},
+		{
+			name:       "string result is invalid",
+			expression: `"hello"`,
+			env:        map[string]any{},
+			wantErr:    true,
+		},
+		{
+			name:       "string concatenation is invalid",
+			expression: `label + "-suffix"`,
+			env:        map[string]any{"label": "abc"},
+			wantErr:    true,
+		},
+		{
+			name:       "runtime error during trial run is tolerated",
+			expression: "round(x, 100)",
+			env:        map[string]any{"x": 1.0},
+			wantErr:    false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			err := svc.ValidateExpressionWithEnv(tt.expression, tt.env)
+			err := svc.ValidateExpressionWithEnv(t.Context(), tt.expression, tt.env)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
@@ -213,6 +323,7 @@ func TestService_EvaluateWithEnv(t *testing.T) {
 		env        map[string]any
 		want       decimal.Decimal
 		wantErr    bool
+		wantErrIs  error
 	}{
 		{
 			name:       "simple addition",
@@ -296,14 +407,61 @@ func TestService_EvaluateWithEnv(t *testing.T) {
 			want:       decimal.NewFromInt(0),
 			wantErr:    false,
 		},
+		{
+			name:       "NaN result errors",
+			expression: "x / y",
+			env:        map[string]any{"x": 0.0, "y": 0.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonFiniteResult,
+		},
+		{
+			name:       "infinite result errors",
+			expression: "x / y",
+			env:        map[string]any{"x": 1.0, "y": 0.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+			wantErrIs:  engine.ErrNonFiniteResult,
+		},
+		{
+			name:       "sqrt of negative errors",
+			expression: "sqrt(x)",
+			env:        map[string]any{"x": -4.0},
+			want:       decimal.Zero,
+			wantErr:    true,
+		},
+		{
+			name:       "round decimals beyond limit errors",
+			expression: "round(x, 13)",
+			env:        map[string]any{"x": 1.23456},
+			want:       decimal.Zero,
+			wantErr:    true,
+		},
+		{
+			name:       "coalesce of all nil errors",
+			expression: "coalesce(a, b)",
+			env:        map[string]any{"a": nil, "b": nil},
+			want:       decimal.Zero,
+			wantErr:    true,
+		},
+		{
+			name:       "coalesce picks first non-nil",
+			expression: "coalesce(a, b)",
+			env:        map[string]any{"a": nil, "b": 2.5},
+			want:       decimal.NewFromFloat(2.5),
+			wantErr:    false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -319,18 +477,20 @@ func TestService_EvaluateExpression(t *testing.T) {
 	svc := setupService(t)
 
 	tests := []struct {
-		name    string
-		req     *formula.EvaluateExpressionRequest
-		want    decimal.Decimal
-		wantErr bool
+		name            string
+		req             *formula.EvaluateExpressionRequest
+		want            decimal.Decimal
+		wantErr         bool
+		wantErrIs       error
+		wantErrContains string
 	}{
 		{
 			name: "simple with variables",
 			req: &formula.EvaluateExpressionRequest{
-				Expression: "rate * weight",
+				Expression: "rate * quantity",
 				Entity:     struct{}{},
-				SchemaID:   "unknown",
-				Variables:  map[string]any{"rate": 1.5, "weight": 1000.0},
+				SchemaID:   "shipment",
+				Variables:  map[string]any{"rate": 1.5, "quantity": 1000.0},
 			},
 			want:    decimal.NewFromFloat(1500.0),
 			wantErr: false,
@@ -340,7 +500,7 @@ func TestService_EvaluateExpression(t *testing.T) {
 			req: &formula.EvaluateExpressionRequest{
 				Expression: "clamp(x, lo, hi)",
 				Entity:     struct{}{},
-				SchemaID:   "unknown",
+				SchemaID:   "shipment",
 				Variables:  map[string]any{"x": 500.0, "lo": 100.0, "hi": 300.0},
 			},
 			want:    decimal.NewFromFloat(300.0),
@@ -351,20 +511,50 @@ func TestService_EvaluateExpression(t *testing.T) {
 			req: &formula.EvaluateExpressionRequest{
 				Expression: "invalid +++",
 				Entity:     struct{}{},
-				SchemaID:   "unknown",
+				SchemaID:   "shipment",
 				Variables:  map[string]any{},
 			},
 			want:    decimal.Zero,
 			wantErr: true,
+		},
+		{
+			name: "unknown schema errors",
+			req: &formula.EvaluateExpressionRequest{
+				Expression: "rate * quantity",
+				Entity:     struct{}{},
+				SchemaID:   "unknown",
+				Variables:  map[string]any{"rate": 1.5, "quantity": 1000.0},
+			},
+			want:      decimal.Zero,
+			wantErr:   true,
+			wantErrIs: engine.ErrSchemaNotFound,
+		},
+		{
+			name: "unresolved non-nullable field surfaces in error",
+			req: &formula.EvaluateExpressionRequest{
+				Expression: "baseRate * 2",
+				Entity:     struct{}{},
+				SchemaID:   "shipment",
+				Variables:  map[string]any{},
+			},
+			want:            decimal.Zero,
+			wantErr:         true,
+			wantErrContains: "unresolved fields",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateExpression(tt.req)
+			resp, err := svc.EvaluateExpression(t.Context(), tt.req)
 			if tt.wantErr {
 				require.Error(t, err)
+				if tt.wantErrIs != nil {
+					require.ErrorIs(t, err, tt.wantErrIs)
+				}
+				if tt.wantErrContains != "" {
+					assert.Contains(t, err.Error(), tt.wantErrContains)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -463,7 +653,7 @@ func TestService_EvaluateWithEnvClampFormulas(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
 			require.NoError(t, err)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
 		})
@@ -504,7 +694,7 @@ func TestService_EvaluateWithEnvWeightBased(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			resp, err := svc.EvaluateWithEnv(tt.expression, tt.env)
+			resp, err := svc.EvaluateWithEnv(t.Context(), tt.expression, tt.env)
 			require.NoError(t, err)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
 		})
@@ -520,7 +710,9 @@ func TestService_Calculate_Success(t *testing.T) {
 			assert.Equal(t, templateID, req.TemplateID)
 			return &formulatemplate.FormulaTemplate{
 				ID:         templateID,
+				Status:     formulatemplate.StatusActive,
 				Name:       "Distance Rate",
+				SchemaID:   "shipment",
 				Expression: "distance * rate",
 				VariableDefinitions: []*formulatypes.VariableDefinition{
 					{Name: "distance", Type: "number", DefaultValue: 0},
@@ -586,7 +778,9 @@ func TestService_Calculate_EvaluateError(t *testing.T) {
 		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:         templateID,
+				Status:     formulatemplate.StatusActive,
 				Name:       "Bad Formula",
+				SchemaID:   "shipment",
 				Expression: "invalid +++",
 			}, nil
 		},
@@ -606,4 +800,113 @@ func TestService_Calculate_EvaluateError(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, resp)
+}
+
+func TestService_Calculate_UnknownSchema(t *testing.T) {
+	t.Parallel()
+
+	templateID := pulid.MustNew("ft_")
+	repo := &mockFormulaTemplateRepo{
+		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+			return &formulatemplate.FormulaTemplate{
+				ID:         templateID,
+				Status:     formulatemplate.StatusActive,
+				Name:       "Unknown Schema",
+				SchemaID:   "nonexistent",
+				Expression: "1 + 1",
+			}, nil
+		},
+	}
+
+	svc := setupServiceWithRepo(t, repo)
+
+	resp, err := svc.Calculate(t.Context(), &formulatemplatetypes.CalculateRequest{
+		TemplateID: templateID,
+		Entity:     struct{}{},
+		Variables:  map[string]any{},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
+	})
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, engine.ErrSchemaNotFound)
+	assert.Nil(t, resp)
+}
+
+func TestService_Calculate_UndeclaredVariableShadowsField(t *testing.T) {
+	t.Parallel()
+
+	templateID := pulid.MustNew("ft_")
+	repo := &mockFormulaTemplateRepo{
+		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+			return &formulatemplate.FormulaTemplate{
+				ID:         templateID,
+				Status:     formulatemplate.StatusActive,
+				Name:       "Weight Rate",
+				SchemaID:   "shipment",
+				Expression: "weight * rate",
+				VariableDefinitions: []*formulatypes.VariableDefinition{
+					{Name: "rate", Type: "number", DefaultValue: 1.0},
+				},
+			}, nil
+		},
+	}
+
+	svc := setupServiceWithRepo(t, repo)
+
+	weight := int64(5000)
+	entity := &struct{ Weight *int64 }{Weight: &weight}
+
+	tests := []struct {
+		name      string
+		variables map[string]any
+		want      decimal.Decimal
+		wantErr   bool
+	}{
+		{
+			name:      "undeclared variable shadowing schema field is rejected",
+			variables: map[string]any{"weight": 1.0},
+			wantErr:   true,
+		},
+		{
+			name:      "undeclared nested variable shadowing schema field root is rejected",
+			variables: map[string]any{"weight.override": 1.0},
+			wantErr:   true,
+		},
+		{
+			name:      "declared variable override is allowed",
+			variables: map[string]any{"rate": 2.0},
+			want:      decimal.NewFromFloat(10000.0),
+		},
+		{
+			name:      "undeclared variable without field collision is allowed",
+			variables: map[string]any{"customRate": 9.99},
+			want:      decimal.NewFromFloat(5000.0),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			resp, err := svc.Calculate(t.Context(), &formulatemplatetypes.CalculateRequest{
+				TemplateID: templateID,
+				Entity:     entity,
+				Variables:  tt.variables,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: pulid.MustNew("org_"),
+					BuID:  pulid.MustNew("bu_"),
+				},
+			})
+			if tt.wantErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, engine.ErrVariableShadowsField)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
+		})
+	}
 }

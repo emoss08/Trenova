@@ -91,6 +91,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
@@ -136,6 +137,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	userrepository.New,
 	formulatemplaterepository.New,
 	formulatemplateversionrepository.New,
+	ratetablerepository.New,
 	tableconfigurationrepository.New,
 	pagefavoriterepository.New,
 	billingqueuefilterpresetrepository.New,

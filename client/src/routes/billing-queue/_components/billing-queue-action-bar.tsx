@@ -1,25 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { exceptionReasonLabels } from "@/lib/choices";
-import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
-  exceptionReasonCodeSchema,
-  type BillingQueueItem,
-  type BillingQueueStatus,
-  type ExceptionReasonCode,
+  assignBillingQueueBillerGraphQL,
+  updateBillingQueueStatusGraphQL,
+} from "@/lib/graphql/billing-queue";
+import { queries } from "@/lib/queries";
+import { useAuthStore } from "@/stores/auth-store";
+import type {
+  BillingQueueItem,
+  BillingQueueUpdateStatusInput,
 } from "@/types/billing-queue";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -29,9 +21,9 @@ import {
   UndoIcon,
   UserPlusIcon,
 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
-
+import { BillingQueueExceptionPopover } from "./billing-queue-exception-popover";
+import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 export function BillingQueueActionBar({
   item,
@@ -42,8 +34,8 @@ export function BillingQueueActionBar({
   onAssignBiller: () => void;
   onAutoAdvance?: () => void;
 }) {
-  const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
+  const invalidate = useInvalidateBillingQueue();
 
   const { data: billingReadiness } = useQuery({
     ...queries.shipment.billingReadiness(item.shipmentId),
@@ -53,55 +45,26 @@ export function BillingQueueActionBar({
   const canApprove = billingReadiness?.canMarkReadyToInvoice !== false;
   const missingCount = billingReadiness?.missingRequirements?.length ?? 0;
 
-  const invalidateAll = () => {
-    void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
-    void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-  };
-
-  const { mutate: updateStatus, isPending: isStatusPending } = useMutation({
-    mutationFn: ({
-      status,
-      exceptionReasonCode,
-      exceptionNotes,
-      reviewNotes,
-      cancelReason,
-    }: {
-      status: BillingQueueStatus;
-      exceptionReasonCode?: ExceptionReasonCode;
-      exceptionNotes?: string;
-      reviewNotes?: string;
-      cancelReason?: string;
-    }) =>
-      apiService.billingQueueService.updateStatus(item.id, {
-        status,
-        exceptionReasonCode,
-        exceptionNotes,
-        reviewNotes,
-        cancelReason,
-      }),
-    onSuccess: (_, variables) => {
-      invalidateAll();
-      toast.success(`Status updated to ${variables.status}`);
-      if (variables.status === "Approved" && onAutoAdvance) {
+  const { mutate: updateStatus, isPending: isStatusPending } = useApiMutation({
+    mutationFn: (input: BillingQueueUpdateStatusInput) =>
+      updateBillingQueueStatusGraphQL(item.id, input),
+    resourceName: "BillingQueueItem",
+    onSuccess: (_, input) => {
+      invalidate();
+      toast.success(`Status updated to ${input.status}`);
+      if (input.status === "Approved" && onAutoAdvance) {
         onAutoAdvance();
       }
     },
-    onError: () => {
-      toast.error("Failed to update status");
-    },
   });
 
-  const { mutate: assignAndReview, isPending: isAssignPending } = useMutation({
-    mutationFn: () =>
-      apiService.billingQueueService.assign(item.id, {
-        billerId: currentUser?.id ?? "",
-      }),
+  const { mutate: assignAndReview, isPending: isAssignPending } = useApiMutation({
+    mutationFn: (billerId: string) =>
+      assignBillingQueueBillerGraphQL(item.id, { billerId }),
+    resourceName: "BillingQueueItem",
     onSuccess: () => {
-      invalidateAll();
+      invalidate();
       toast.success("Review started");
-    },
-    onError: () => {
-      toast.error("Failed to start review");
     },
   });
 
@@ -113,7 +76,7 @@ export function BillingQueueActionBar({
         <div className="flex items-center gap-2 border-b px-4 py-2">
           <Button
             size="sm"
-            onClick={() => assignAndReview()}
+            onClick={() => currentUser?.id && assignAndReview(currentUser.id)}
             disabled={isPending || !currentUser?.id}
           >
             <PlayIcon className="size-3.5" />
@@ -160,31 +123,25 @@ export function BillingQueueActionBar({
               </TooltipContent>
             )}
           </Tooltip>
-          <ExceptionPopover
-            onSubmit={(reasonCode, notes) =>
-              updateStatus({
-                status: "Exception",
-                exceptionReasonCode: reasonCode,
-                exceptionNotes: notes,
-              })
-            }
-            disabled={isPending}
+          <BillingQueueExceptionPopover
+            itemId={item.id}
+            targetStatus="Exception"
             label="Exception"
             icon={<AlertTriangleIcon className="size-3.5" />}
             variant="destructive"
-          />
-          <ExceptionPopover
-            onSubmit={(reasonCode, notes) =>
-              updateStatus({
-                status: "SentBackToOps",
-                exceptionReasonCode: reasonCode,
-                exceptionNotes: notes,
-              })
-            }
             disabled={isPending}
+            successMessage="Marked as exception"
+            onSuccess={invalidate}
+          />
+          <BillingQueueExceptionPopover
+            itemId={item.id}
+            targetStatus="SentBackToOps"
             label="Send Back"
             icon={<SendIcon className="size-3.5" />}
             variant="outline"
+            disabled={isPending}
+            successMessage="Sent back to ops"
+            onSuccess={invalidate}
           />
           <Button
             size="sm"
@@ -245,76 +202,4 @@ export function BillingQueueActionBar({
     default:
       return null;
   }
-}
-
-function ExceptionPopover({
-  onSubmit,
-  disabled,
-  label,
-  icon,
-  variant = "outline",
-}: {
-  onSubmit: (reasonCode: ExceptionReasonCode, notes: string) => void;
-  disabled: boolean;
-  label: string;
-  icon: React.ReactNode;
-  variant?: "outline" | "destructive";
-}) {
-  const [open, setOpen] = useState(false);
-  const [reasonCode, setReasonCode] = useState<ExceptionReasonCode | "">("");
-  const [notes, setNotes] = useState("");
-
-  const handleSubmit = () => {
-    if (!reasonCode) return;
-    onSubmit(reasonCode, notes);
-    setOpen(false);
-    setReasonCode("");
-    setNotes("");
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button size="sm" variant={variant} disabled={disabled}>
-            {icon}
-            {label}
-          </Button>
-        }
-      />
-      <PopoverContent className="w-80" align="start">
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium">{label}</p>
-          <Select
-            value={reasonCode}
-            onValueChange={(v) => setReasonCode(v as ExceptionReasonCode)}
-            items={exceptionReasonCodeSchema.options.map((code) => ({
-              label: exceptionReasonLabels[code],
-              value: code,
-            }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select reason..." />
-            </SelectTrigger>
-            <SelectContent>
-              {exceptionReasonCodeSchema.options.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {exceptionReasonLabels[code]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Textarea
-            placeholder="Notes (required for Exception status)..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            minRows={3}
-          />
-          <Button size="sm" onClick={handleSubmit} disabled={!reasonCode}>
-            Submit
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
 }

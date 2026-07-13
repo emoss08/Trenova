@@ -113,7 +113,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: ptrInt16(30)}, nil).
+		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 	formula := mocks.NewMockFormulaCalculator(t)
 	formula.EXPECT().
@@ -440,7 +440,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: ptrInt16(30)}, nil).
+		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	dispatchControlRepo := mocks.NewMockDispatchControlRepository(t)
@@ -570,7 +570,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: ptrInt16(30)}, nil).
+		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 	formula := mocks.NewMockFormulaCalculator(t)
 	formula.EXPECT().
@@ -747,7 +747,7 @@ func validShipment(
 						LocationID:           pulid.MustNew("loc_"),
 						ScheduleType:         shipment.StopScheduleTypeOpen,
 						ScheduledWindowStart: 1,
-						ScheduledWindowEnd:   ptrInt64(2),
+						ScheduledWindowEnd:   new(int64(2)),
 					},
 					{
 						ID:                   pulid.MustNew("stp_"),
@@ -760,7 +760,7 @@ func validShipment(
 						LocationID:           pulid.MustNew("loc_"),
 						ScheduleType:         shipment.StopScheduleTypeOpen,
 						ScheduledWindowStart: 3,
-						ScheduledWindowEnd:   ptrInt64(4),
+						ScheduledWindowEnd:   new(int64(4)),
 					},
 				},
 			},
@@ -785,10 +785,10 @@ func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *tes
 	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(nil))
 	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(&tenant.ShipmentControl{
 		AutoDelayShipments:          false,
-		AutoDelayShipmentsThreshold: ptrInt16(30),
+		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
 	assert.Equal(t, int16(30), resolveDelayThresholdMinutes(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: ptrInt16(30),
+		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
 }

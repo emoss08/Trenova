@@ -166,6 +166,7 @@ func (c *Calculator) calculateBaseCharge(
 			BuID:   entity.BusinessUnitID,
 			UserID: userID,
 		},
+		RatingDate: ratingDate(entity, c.now),
 	})
 	if err != nil {
 		return decimal.Zero, nil, err
@@ -179,9 +180,67 @@ func (c *Calculator) calculateBaseCharge(
 		ResolvedVariables:   resp.Variables,
 		Result:              result,
 		RatedAt:             c.now(),
+		VersionNumber:       resp.VersionNumber,
+		Breakdown:           ratingBreakdown(resp.Breakdown),
+		Guardrail:           ratingGuardrail(resp.Guardrail),
 	}
 
 	return resp.Amount, detail, nil
+}
+
+func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
+	if entity.ActualShipDate != nil && *entity.ActualShipDate > 0 {
+		return *entity.ActualShipDate
+	}
+	if entity.CreatedAt > 0 {
+		return entity.CreatedAt
+	}
+	return now()
+}
+
+func ratingBreakdown(
+	items []formulatemplatetypes.BreakdownAmount,
+) []shipment.RatingBreakdownItem {
+	if len(items) == 0 {
+		return nil
+	}
+
+	breakdown := make([]shipment.RatingBreakdownItem, 0, len(items))
+	for _, item := range items {
+		amount, _ := item.Amount.Float64()
+		breakdown = append(breakdown, shipment.RatingBreakdownItem{
+			Name:   item.Name,
+			Label:  item.Label,
+			Amount: amount,
+			Error:  item.Error,
+		})
+	}
+
+	return breakdown
+}
+
+func ratingGuardrail(result *formulatemplatetypes.GuardrailResult) *shipment.RatingGuardrail {
+	if result == nil {
+		return nil
+	}
+
+	raw, _ := result.RawAmount.Float64()
+	guardrail := &shipment.RatingGuardrail{
+		Applied:   result.Applied,
+		Bound:     result.Bound,
+		RawResult: raw,
+	}
+
+	if result.MinCharge != nil {
+		minCharge, _ := result.MinCharge.Float64()
+		guardrail.MinCharge = &minCharge
+	}
+	if result.MaxCharge != nil {
+		maxCharge, _ := result.MaxCharge.Float64()
+		guardrail.MaxCharge = &maxCharge
+	}
+
+	return guardrail
 }
 
 func (c *Calculator) syncDetentionCharge(

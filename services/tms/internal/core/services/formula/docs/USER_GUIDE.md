@@ -301,6 +301,58 @@ coalesce(customerSpecificRate, standardRate) * totalDistance
 
 ---
 
+## Rating Features
+
+### Rate Tables
+
+Instead of encoding tiers as nested conditions, define a rate table (Billing → Rate Tables) and
+reference it with `lookup("table_key", value)` or `lookupOr("table_key", value, default)`.
+Exact tables map string keys to values (lane rates); Range tables map numeric bands
+(fuel surcharge matrices, weight breaks). Only active tables resolve; validation rejects
+expressions referencing unknown tables.
+
+### Rate Breakdown
+
+Templates can define named sub-expressions (breakdown definitions) — e.g. `base`,
+`fuelSurcharge`, `hazmatFee` — each evaluated against the same shipment data as the main
+expression. The per-component amounts are persisted on the shipment's rating detail, so audits
+and customer disputes can see exactly how a total was composed. A failing breakdown component
+never fails the rating itself; the error is recorded on that component.
+
+### Guardrails
+
+Set a minimum and/or maximum charge on the template. Results outside the bounds are clamped,
+and the rating detail records the raw result plus which bound was applied — a formula bug can't
+produce a $0 or $400,000 invoice.
+
+### Approval Workflow
+
+Templates move through Draft → In Review → Active. Submitting for review, approving, and
+rejecting are separate permissions (`submit`, `approve`, `reject` on Formula Template). Only
+Active templates can rate shipments. Editing a material field (expression, variables,
+breakdowns, guardrails, schema, type) on an Active or In-Review template reverts it to Draft
+for re-approval.
+
+### Effective-Dated Versions
+
+Schedule a version to become the rating source at a future date (e.g. a rate increase on
+January 1) instead of manually flipping templates. Rating resolves the version by the
+shipment's ship date (falling back to its creation date), so late-rated shipments still price
+under the rates in force when they shipped.
+
+### Backtesting
+
+Before activating a change, run it against your organization's recently rated shipments
+(up to 500) to see a per-shipment and aggregate diff between the current template and the
+candidate — catching "the new formula silently doubles rates" before it reaches an invoice.
+
+### Testing Against Real Shipments
+
+The expression tester can evaluate against a real shipment (by shipment number) instead of
+hand-typed sample values, resolving the full environment exactly as production rating would.
+
+---
+
 ## Best Practices
 
 ### 1. Always Set a Minimum Charge

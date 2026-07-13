@@ -6,7 +6,6 @@ import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
 import { ARService } from "./ar";
 import { AssignmentService } from "./assignment";
-import { AuditService } from "./audit";
 import { BankReceiptService } from "./bank-receipt";
 import { BankReceiptBatchService } from "./bank-receipt-batch";
 import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
@@ -54,6 +53,7 @@ import { NotificationService } from "./notification";
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
+import { RateTableService } from "./rate-table";
 import { RealtimeService } from "./realtime";
 import { SequenceConfigService } from "./sequence-config";
 import { ServiceFailureService } from "./service-failure";
@@ -105,6 +105,7 @@ class APIService {
   public fiscalPeriodService: FiscalPeriodService;
   public locationService: LocationService;
   public holdReasonService: HoldReasonService;
+  public rateTableService: RateTableService;
   public shipmentCommentService: ShipmentCommentService;
   public shipmentControlService: ShipmentControlService;
   public shipmentEventService: ShipmentEventService;
@@ -124,7 +125,6 @@ class APIService {
   public exchangeRateService: ExchangeRateService;
   public integrationService: IntegrationService;
   public analyticService: AnalyticsService;
-  public auditService: AuditService;
   public apiKeyService: APIKeyService;
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
@@ -181,6 +181,7 @@ class APIService {
     this.fiscalPeriodService = new FiscalPeriodService();
     this.locationService = new LocationService();
     this.holdReasonService = new HoldReasonService();
+    this.rateTableService = new RateTableService();
     this.shipmentCommentService = new ShipmentCommentService();
     this.shipmentControlService = new ShipmentControlService();
     this.shipmentEventService = new ShipmentEventService();
@@ -201,7 +202,6 @@ class APIService {
     this.integrationService = new IntegrationService();
     this.apiKeyService = new APIKeyService();
     this.analyticService = new AnalyticsService();
-    this.auditService = new AuditService();
     this.assignmentService = new AssignmentService();
     this.notificationService = new NotificationService();
     this.tableChangeAlertService = new TableChangeAlertService();

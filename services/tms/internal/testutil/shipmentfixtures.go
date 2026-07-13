@@ -389,7 +389,7 @@ func MustCreateHazmatSegregationRule(
 		MinimumDistance: nil,
 	}
 	if segType == hazmatsegregationrule.SegregationTypeDistance {
-		entity.MinimumDistance = float64Ptr(10)
+		entity.MinimumDistance = new(float64(10))
 		entity.DistanceUnit = "FT"
 	}
 	_, err := db.NewInsert().Model(entity).Exec(ctx)

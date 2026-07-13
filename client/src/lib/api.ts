@@ -1,8 +1,11 @@
 import {
   type ApiErrorResponse,
+  type NormalizedApiError,
   type ProblemType,
   type ValidationError,
   apiErrorResponseSchema,
+  apiProblem,
+  parseProblemType,
 } from "@/types/errors";
 import { API_BASE_URL } from "./constants";
 
@@ -27,60 +30,58 @@ export class ApiRequestError extends Error {
     this.data = data;
   }
 
+  normalize(): NormalizedApiError {
+    const detail = this.data.detail;
+    const title = this.data.title;
+    return {
+      problemType: this.getProblemType(),
+      status: this.status,
+      fieldErrors: this.getFieldErrors(),
+      message: detail || title || "An error occurred",
+      title,
+      detail,
+      traceId: this.data.traceId,
+    };
+  }
+
   getProblemType(): ProblemType | null {
-    if (!this.data.type) return null;
-    const suffix = this.data.type.split("/").pop();
-    const validTypes: ProblemType[] = [
-      "validation-error",
-      "business-rule-violation",
-      "database-error",
-      "authentication-error",
-      "authorization-error",
-      "resource-not-found",
-      "rate-limit-exceeded",
-      "resource-conflict",
-      "request-timeout",
-      "internal-error",
-    ];
-    return validTypes.includes(suffix as ProblemType) ? (suffix as ProblemType) : null;
+    return parseProblemType(this.data.type);
   }
 
   isValidationError(): boolean {
-    return this.getProblemType() === "validation-error";
+    return apiProblem.isValidationError(this.normalize());
   }
 
   isBusinessError(): boolean {
-    return this.getProblemType() === "business-rule-violation";
+    return apiProblem.isBusinessError(this.normalize());
   }
 
   isAuthenticationError(): boolean {
-    return this.getProblemType() === "authentication-error";
+    return apiProblem.isAuthenticationError(this.normalize());
   }
 
   isAuthorizationError(): boolean {
-    return this.getProblemType() === "authorization-error";
+    return apiProblem.isAuthorizationError(this.normalize());
   }
 
   isNotFoundError(): boolean {
-    return this.getProblemType() === "resource-not-found";
+    return apiProblem.isNotFoundError(this.normalize());
   }
 
   isRateLimitError(): boolean {
-    return this.status === 429 || this.getProblemType() === "rate-limit-exceeded";
+    return apiProblem.isRateLimitError(this.normalize());
   }
 
   isVersionMismatchError(): boolean {
-    return (
-      this.isValidationError() && this.getFieldErrors().some((e) => e.code === "VERSION_MISMATCH")
-    );
+    return apiProblem.isVersionMismatchError(this.normalize());
   }
 
   isConflictError(): boolean {
-    return this.status === 409 || this.getProblemType() === "resource-conflict";
+    return apiProblem.isConflictError(this.normalize());
   }
 
   isTimeoutError(): boolean {
-    return this.status === 504 || this.getProblemType() === "request-timeout";
+    return apiProblem.isTimeoutError(this.normalize());
   }
 
   getUsageStats(): unknown {

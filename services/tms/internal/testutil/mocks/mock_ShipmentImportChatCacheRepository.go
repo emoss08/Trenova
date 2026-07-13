@@ -66,7 +66,7 @@ type MockShipmentImportChatCacheRepository_DeleteHistory_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentImportChatCacheRepository_Expecter) DeleteHistory(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockShipmentImportChatCacheRepository_DeleteHistory_Call {
+func (_e *MockShipmentImportChatCacheRepository_Expecter) DeleteHistory(ctx any, documentID any, tenantInfo any) *MockShipmentImportChatCacheRepository_DeleteHistory_Call {
 	return &MockShipmentImportChatCacheRepository_DeleteHistory_Call{Call: _e.mock.On("DeleteHistory", ctx, documentID, tenantInfo)}
 }
 
@@ -140,7 +140,7 @@ type MockShipmentImportChatCacheRepository_GetHistory_Call struct {
 //   - ctx context.Context
 //   - documentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentImportChatCacheRepository_Expecter) GetHistory(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockShipmentImportChatCacheRepository_GetHistory_Call {
+func (_e *MockShipmentImportChatCacheRepository_Expecter) GetHistory(ctx any, documentID any, tenantInfo any) *MockShipmentImportChatCacheRepository_GetHistory_Call {
 	return &MockShipmentImportChatCacheRepository_GetHistory_Call{Call: _e.mock.On("GetHistory", ctx, documentID, tenantInfo)}
 }
 
@@ -203,7 +203,7 @@ type MockShipmentImportChatCacheRepository_SetHistory_Call struct {
 //   - ctx context.Context
 //   - snapshot *shipmentimportchat.HistorySnapshot
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentImportChatCacheRepository_Expecter) SetHistory(ctx interface{}, snapshot interface{}, tenantInfo interface{}) *MockShipmentImportChatCacheRepository_SetHistory_Call {
+func (_e *MockShipmentImportChatCacheRepository_Expecter) SetHistory(ctx any, snapshot any, tenantInfo any) *MockShipmentImportChatCacheRepository_SetHistory_Call {
 	return &MockShipmentImportChatCacheRepository_SetHistory_Call{Call: _e.mock.On("SetHistory", ctx, snapshot, tenantInfo)}
 }
 

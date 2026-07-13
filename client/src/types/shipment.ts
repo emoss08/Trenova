@@ -184,14 +184,14 @@ const shipmentMoveBaseSchema = z.object({
   loaded: z.boolean().default(true),
   sequence: z.number().int().nonnegative().default(0),
   distance: z.number().nullable().optional(),
-  distanceSource: z.string().optional(),
-  distanceProvider: z.string().optional(),
+  distanceSource: z.string().nullish(),
+  distanceProvider: z.string().nullish(),
   distanceCalculatedAt: z.number().nullable().optional(),
-  distanceRouteSignature: z.string().optional(),
-  distanceDataVersion: z.string().optional(),
-  distanceRoutingType: z.string().optional(),
-  distanceUnits: z.string().optional(),
-  distanceMetadata: z.record(z.string(), z.unknown()).optional(),
+  distanceRouteSignature: z.string().nullish(),
+  distanceDataVersion: z.string().nullish(),
+  distanceRoutingType: z.string().nullish(),
+  distanceUnits: z.string().nullish(),
+  distanceMetadata: z.record(z.string(), z.unknown()).nullish(),
 });
 
 const shipmentMoveReadMetadataSchema = z.object({
@@ -265,6 +265,23 @@ export type ShipmentCommodity = z.infer<typeof shipmentCommoditySchema>;
 export const shipmentCommodityCreateSchema = shipmentCommodityBaseSchema;
 export type ShipmentCommodityCreateInput = z.infer<typeof shipmentCommodityCreateSchema>;
 
+export const ratingBreakdownItemSchema = z.object({
+  name: z.string(),
+  label: z.string().optional().default(""),
+  amount: z.number(),
+  error: z.string().optional(),
+});
+export type RatingBreakdownItem = z.output<typeof ratingBreakdownItemSchema>;
+
+export const ratingGuardrailSchema = z.object({
+  applied: z.boolean(),
+  bound: z.string().optional(),
+  rawResult: z.number(),
+  minCharge: z.number().nullish(),
+  maxCharge: z.number().nullish(),
+});
+export type RatingGuardrail = z.output<typeof ratingGuardrailSchema>;
+
 export const ratingDetailSchema = z.object({
   formulaTemplateId: z.string(),
   formulaTemplateName: z.string(),
@@ -272,11 +289,14 @@ export const ratingDetailSchema = z.object({
   resolvedVariables: z.record(z.string(), z.any()),
   result: z.number(),
   ratedAt: z.number(),
+  versionNumber: z.number().nullish(),
+  breakdown: z.array(ratingBreakdownItemSchema).nullish(),
+  guardrail: ratingGuardrailSchema.nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
 const shipmentBaseSchema = z.object({
-  sourceDocumentId: z.string().optional(),
+  sourceDocumentId: nullableStringSchema,
   serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
   shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
   customerId: z.string().min(1, { error: "Customer is required" }),

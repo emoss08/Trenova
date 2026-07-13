@@ -79,7 +79,7 @@ type MockInvoiceAdjustmentService_Approve_Call struct {
 //   - ctx context.Context
 //   - req *services.ApproveInvoiceAdjustmentRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) Approve(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_Approve_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) Approve(ctx any, req any, actor any) *MockInvoiceAdjustmentService_Approve_Call {
 	return &MockInvoiceAdjustmentService_Approve_Call{Call: _e.mock.On("Approve", ctx, req, actor)}
 }
 
@@ -153,7 +153,7 @@ type MockInvoiceAdjustmentService_BulkPreview_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoiceAdjustmentBulkRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) BulkPreview(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_BulkPreview_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) BulkPreview(ctx any, req any, actor any) *MockInvoiceAdjustmentService_BulkPreview_Call {
 	return &MockInvoiceAdjustmentService_BulkPreview_Call{Call: _e.mock.On("BulkPreview", ctx, req, actor)}
 }
 
@@ -227,7 +227,7 @@ type MockInvoiceAdjustmentService_BulkSubmit_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoiceAdjustmentBulkRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) BulkSubmit(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_BulkSubmit_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) BulkSubmit(ctx any, req any, actor any) *MockInvoiceAdjustmentService_BulkSubmit_Call {
 	return &MockInvoiceAdjustmentService_BulkSubmit_Call{Call: _e.mock.On("BulkSubmit", ctx, req, actor)}
 }
 
@@ -301,7 +301,7 @@ type MockInvoiceAdjustmentService_CreateDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.CreateDraftInvoiceAdjustmentRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) CreateDraft(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_CreateDraft_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) CreateDraft(ctx any, req any, actor any) *MockInvoiceAdjustmentService_CreateDraft_Call {
 	return &MockInvoiceAdjustmentService_CreateDraft_Call{Call: _e.mock.On("CreateDraft", ctx, req, actor)}
 }
 
@@ -375,7 +375,7 @@ type MockInvoiceAdjustmentService_GetBatch_Call struct {
 //   - ctx context.Context
 //   - batchID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockInvoiceAdjustmentService_Expecter) GetBatch(ctx interface{}, batchID interface{}, tenantInfo interface{}) *MockInvoiceAdjustmentService_GetBatch_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) GetBatch(ctx any, batchID any, tenantInfo any) *MockInvoiceAdjustmentService_GetBatch_Call {
 	return &MockInvoiceAdjustmentService_GetBatch_Call{Call: _e.mock.On("GetBatch", ctx, batchID, tenantInfo)}
 }
 
@@ -448,7 +448,7 @@ type MockInvoiceAdjustmentService_GetDetail_Call struct {
 // GetDetail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetInvoiceAdjustmentDetailRequest
-func (_e *MockInvoiceAdjustmentService_Expecter) GetDetail(ctx interface{}, req interface{}) *MockInvoiceAdjustmentService_GetDetail_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) GetDetail(ctx any, req any) *MockInvoiceAdjustmentService_GetDetail_Call {
 	return &MockInvoiceAdjustmentService_GetDetail_Call{Call: _e.mock.On("GetDetail", ctx, req)}
 }
 
@@ -516,7 +516,7 @@ type MockInvoiceAdjustmentService_GetLineage_Call struct {
 // GetLineage is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetInvoiceAdjustmentLineageRequest
-func (_e *MockInvoiceAdjustmentService_Expecter) GetLineage(ctx interface{}, req interface{}) *MockInvoiceAdjustmentService_GetLineage_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) GetLineage(ctx any, req any) *MockInvoiceAdjustmentService_GetLineage_Call {
 	return &MockInvoiceAdjustmentService_GetLineage_Call{Call: _e.mock.On("GetLineage", ctx, req)}
 }
 
@@ -584,7 +584,7 @@ type MockInvoiceAdjustmentService_GetOperationsSummary_Call struct {
 // GetOperationsSummary is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockInvoiceAdjustmentService_Expecter) GetOperationsSummary(ctx interface{}, tenantInfo interface{}) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) GetOperationsSummary(ctx any, tenantInfo any) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
 	return &MockInvoiceAdjustmentService_GetOperationsSummary_Call{Call: _e.mock.On("GetOperationsSummary", ctx, tenantInfo)}
 }
 
@@ -652,7 +652,7 @@ type MockInvoiceAdjustmentService_ListApprovals_Call struct {
 // ListApprovals is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter pagination.QueryOptions
-func (_e *MockInvoiceAdjustmentService_Expecter) ListApprovals(ctx interface{}, filter interface{}) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) ListApprovals(ctx any, filter any) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	return &MockInvoiceAdjustmentService_ListApprovals_Call{Call: _e.mock.On("ListApprovals", ctx, filter)}
 }
 
@@ -720,7 +720,7 @@ type MockInvoiceAdjustmentService_ListBatches_Call struct {
 // ListBatches is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter pagination.QueryOptions
-func (_e *MockInvoiceAdjustmentService_Expecter) ListBatches(ctx interface{}, filter interface{}) *MockInvoiceAdjustmentService_ListBatches_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) ListBatches(ctx any, filter any) *MockInvoiceAdjustmentService_ListBatches_Call {
 	return &MockInvoiceAdjustmentService_ListBatches_Call{Call: _e.mock.On("ListBatches", ctx, filter)}
 }
 
@@ -788,7 +788,7 @@ type MockInvoiceAdjustmentService_ListReconciliationExceptions_Call struct {
 // ListReconciliationExceptions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter pagination.QueryOptions
-func (_e *MockInvoiceAdjustmentService_Expecter) ListReconciliationExceptions(ctx interface{}, filter interface{}) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) ListReconciliationExceptions(ctx any, filter any) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
 	return &MockInvoiceAdjustmentService_ListReconciliationExceptions_Call{Call: _e.mock.On("ListReconciliationExceptions", ctx, filter)}
 }
 
@@ -857,7 +857,7 @@ type MockInvoiceAdjustmentService_Preview_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoiceAdjustmentRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) Preview(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_Preview_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) Preview(ctx any, req any, actor any) *MockInvoiceAdjustmentService_Preview_Call {
 	return &MockInvoiceAdjustmentService_Preview_Call{Call: _e.mock.On("Preview", ctx, req, actor)}
 }
 
@@ -931,7 +931,7 @@ type MockInvoiceAdjustmentService_PreviewDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.GetInvoiceAdjustmentDetailRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) PreviewDraft(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_PreviewDraft_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) PreviewDraft(ctx any, req any, actor any) *MockInvoiceAdjustmentService_PreviewDraft_Call {
 	return &MockInvoiceAdjustmentService_PreviewDraft_Call{Call: _e.mock.On("PreviewDraft", ctx, req, actor)}
 }
 
@@ -1005,7 +1005,7 @@ type MockInvoiceAdjustmentService_Reject_Call struct {
 //   - ctx context.Context
 //   - req *services.RejectInvoiceAdjustmentRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) Reject(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_Reject_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) Reject(ctx any, req any, actor any) *MockInvoiceAdjustmentService_Reject_Call {
 	return &MockInvoiceAdjustmentService_Reject_Call{Call: _e.mock.On("Reject", ctx, req, actor)}
 }
 
@@ -1079,7 +1079,7 @@ type MockInvoiceAdjustmentService_Submit_Call struct {
 //   - ctx context.Context
 //   - req *services.InvoiceAdjustmentRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) Submit(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_Submit_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) Submit(ctx any, req any, actor any) *MockInvoiceAdjustmentService_Submit_Call {
 	return &MockInvoiceAdjustmentService_Submit_Call{Call: _e.mock.On("Submit", ctx, req, actor)}
 }
 
@@ -1153,7 +1153,7 @@ type MockInvoiceAdjustmentService_SubmitDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.GetInvoiceAdjustmentDetailRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) SubmitDraft(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_SubmitDraft_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) SubmitDraft(ctx any, req any, actor any) *MockInvoiceAdjustmentService_SubmitDraft_Call {
 	return &MockInvoiceAdjustmentService_SubmitDraft_Call{Call: _e.mock.On("SubmitDraft", ctx, req, actor)}
 }
 
@@ -1227,7 +1227,7 @@ type MockInvoiceAdjustmentService_UpdateDraft_Call struct {
 //   - ctx context.Context
 //   - req *services.UpdateDraftInvoiceAdjustmentRequest
 //   - actor *services.RequestActor
-func (_e *MockInvoiceAdjustmentService_Expecter) UpdateDraft(ctx interface{}, req interface{}, actor interface{}) *MockInvoiceAdjustmentService_UpdateDraft_Call {
+func (_e *MockInvoiceAdjustmentService_Expecter) UpdateDraft(ctx any, req any, actor any) *MockInvoiceAdjustmentService_UpdateDraft_Call {
 	return &MockInvoiceAdjustmentService_UpdateDraft_Call{Call: _e.mock.On("UpdateDraft", ctx, req, actor)}
 }
 

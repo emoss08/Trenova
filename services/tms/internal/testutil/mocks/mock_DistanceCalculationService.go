@@ -78,7 +78,7 @@ type MockDistanceCalculationService_RecalculateShipment_Call struct {
 //   - ctx context.Context
 //   - shipmentID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockDistanceCalculationService_Expecter) RecalculateShipment(ctx interface{}, shipmentID interface{}, tenantInfo interface{}) *MockDistanceCalculationService_RecalculateShipment_Call {
+func (_e *MockDistanceCalculationService_Expecter) RecalculateShipment(ctx any, shipmentID any, tenantInfo any) *MockDistanceCalculationService_RecalculateShipment_Call {
 	return &MockDistanceCalculationService_RecalculateShipment_Call{Call: _e.mock.On("RecalculateShipment", ctx, shipmentID, tenantInfo)}
 }
 
@@ -151,7 +151,7 @@ type MockDistanceCalculationService_ResolveForShipment_Call struct {
 // ResolveForShipment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *shipment.Shipment
-func (_e *MockDistanceCalculationService_Expecter) ResolveForShipment(ctx interface{}, entity interface{}) *MockDistanceCalculationService_ResolveForShipment_Call {
+func (_e *MockDistanceCalculationService_Expecter) ResolveForShipment(ctx any, entity any) *MockDistanceCalculationService_ResolveForShipment_Call {
 	return &MockDistanceCalculationService_ResolveForShipment_Call{Call: _e.mock.On("ResolveForShipment", ctx, entity)}
 }
 

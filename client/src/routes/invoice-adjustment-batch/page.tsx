@@ -1,5 +1,5 @@
-import { EmptyState } from "@/components/empty-state";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, Layers3Icon } from "lucide-react";
 import { useQueryStates } from "nuqs";
@@ -39,7 +40,10 @@ export function InvoiceAdjustmentBatchPage() {
       next.set("query", deferredQuery.trim());
     }
     if (status) {
-      next.set("fieldFilters", JSON.stringify([{ field: "status", operator: "eq", value: status }]));
+      next.set(
+        "fieldFilters",
+        JSON.stringify([{ field: "status", operator: "eq", value: status }]),
+      );
     }
     return Object.fromEntries(next.entries());
   }, [deferredQuery, status]);
@@ -53,7 +57,9 @@ export function InvoiceAdjustmentBatchPage() {
   });
 
   const selectedRow =
-    listQuery.data?.results.find((row) => row.batchId === selectedBatchId) ?? listQuery.data?.results[0] ?? null;
+    listQuery.data?.results.find((row) => row.batchId === selectedBatchId) ??
+    listQuery.data?.results[0] ??
+    null;
 
   const detailQuery = useQuery({
     ...queries["invoice-adjustment"].batch(selectedRow?.batchId ?? ""),
@@ -68,9 +74,18 @@ export function InvoiceAdjustmentBatchPage() {
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
-          <SummaryCard label="Batches In Flight" value={String(summaryQuery.data?.batchesInFlight ?? 0)} />
-          <SummaryCard label="Failed Items" value={String(summaryQuery.data?.failedBatchItems ?? 0)} />
-          <SummaryCard label="Approvals Pending" value={String(summaryQuery.data?.approvalsPending ?? 0)} />
+          <SummaryCard
+            label="Batches In Flight"
+            value={String(summaryQuery.data?.batchesInFlight ?? 0)}
+          />
+          <SummaryCard
+            label="Failed Items"
+            value={String(summaryQuery.data?.failedBatchItems ?? 0)}
+          />
+          <SummaryCard
+            label="Approvals Pending"
+            value={String(summaryQuery.data?.approvalsPending ?? 0)}
+          />
           <SummaryCard label="Write-Offs" value={String(summaryQuery.data?.writeOffPending ?? 0)} />
         </div>
       }
@@ -86,7 +101,9 @@ export function InvoiceAdjustmentBatchPage() {
             <Select
               value={status ?? "all"}
               items={statusChoices}
-              onValueChange={(value) => void setSearchParams({ status: value === "all" ? null : value })}
+              onValueChange={(value) =>
+                void setSearchParams({ status: value === "all" ? null : value })
+              }
             >
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="All statuses" />
@@ -102,7 +119,12 @@ export function InvoiceAdjustmentBatchPage() {
             </Select>
           </div>
           <ScrollArea className="flex-1">
-            <div className="flex flex-col gap-2 p-2">
+            <div
+              className={cn(
+                "flex flex-col gap-1.5 p-2",
+                !listQuery.isLoading && listQuery.data?.results.length === 0 && "h-full gap-0 p-0",
+              )}
+            >
               {listQuery.isLoading
                 ? Array.from({ length: 6 }).map((_, index) => (
                     <Skeleton key={index} className="h-24 w-full rounded-xl" />
@@ -114,7 +136,7 @@ export function InvoiceAdjustmentBatchPage() {
                     title="No batches found"
                     description="Batch submissions will appear here when operators submit multi-invoice adjustments."
                     icons={[Layers3Icon, CheckCircle2Icon, AlertTriangleIcon]}
-                    className="border-none shadow-none"
+                    className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
                   />
                 </div>
               ) : null}
@@ -125,13 +147,17 @@ export function InvoiceAdjustmentBatchPage() {
                   onClick={() => void setSearchParams({ item: row.batchId })}
                   className={[
                     "rounded-xl border p-3 text-left transition-colors",
-                    row.batchId === selectedRow?.batchId ? "border-primary bg-primary/5" : "hover:bg-muted/40",
+                    row.batchId === selectedRow?.batchId
+                      ? "border-primary bg-primary/5"
+                      : "hover:bg-muted/40",
                   ].join(" ")}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">{row.batchId}</p>
-                      <p className="text-xs text-muted-foreground">{row.submittedByName || row.submittedById || "System"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {row.submittedByName || row.submittedById || "System"}
+                      </p>
                     </div>
                     <span className="rounded-full border px-2 py-0.5 text-[10px] tracking-[0.16em] uppercase">
                       {row.status}
@@ -173,7 +199,9 @@ export function InvoiceAdjustmentBatchPage() {
               <Card>
                 <CardHeader className="border-b">
                   <CardTitle>{selectedRow.batchId}</CardTitle>
-                  <CardDescription>{selectedRow.submittedByName || selectedRow.submittedById || "System batch"}</CardDescription>
+                  <CardDescription>
+                    {selectedRow.submittedByName || selectedRow.submittedById || "System batch"}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 pt-4 md:grid-cols-4">
                   <Metric label="Total" value={String(selectedRow.totalCount)} />
@@ -190,7 +218,9 @@ export function InvoiceAdjustmentBatchPage() {
               <Card>
                 <CardHeader className="border-b">
                   <CardTitle>Item Results</CardTitle>
-                  <CardDescription>Per-item outcome, failure reason, and created artifacts.</CardDescription>
+                  <CardDescription>
+                    Per-item outcome, failure reason, and created artifacts.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">
                   <div className="overflow-hidden rounded-xl border">
@@ -213,9 +243,13 @@ export function InvoiceAdjustmentBatchPage() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-2">
-                                <LinkButton to={`/billing/invoices?item=${item.invoiceId}`}>Invoice</LinkButton>
+                                <LinkButton to={`/billing/invoices?item=${item.invoiceId}`}>
+                                  Invoice
+                                </LinkButton>
                                 {item.adjustmentId ? (
-                                  <LinkButton to={`/billing/pending-approvals?item=${item.adjustmentId}`}>
+                                  <LinkButton
+                                    to={`/billing/pending-approvals?item=${item.adjustmentId}`}
+                                  >
                                     Adjustment
                                   </LinkButton>
                                 ) : null}
@@ -258,7 +292,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function LinkButton({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link to={to} className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-muted">
+    <Link
+      to={to}
+      className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-muted"
+    >
       <ExternalLinkIcon className="size-3.5" />
       {children}
     </Link>

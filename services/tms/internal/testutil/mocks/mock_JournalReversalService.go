@@ -78,7 +78,7 @@ type MockJournalReversalService_Approve_Call struct {
 //   - ctx context.Context
 //   - req *services.GetJournalReversalRequest
 //   - actor *services.RequestActor
-func (_e *MockJournalReversalService_Expecter) Approve(ctx interface{}, req interface{}, actor interface{}) *MockJournalReversalService_Approve_Call {
+func (_e *MockJournalReversalService_Expecter) Approve(ctx any, req any, actor any) *MockJournalReversalService_Approve_Call {
 	return &MockJournalReversalService_Approve_Call{Call: _e.mock.On("Approve", ctx, req, actor)}
 }
 
@@ -152,7 +152,7 @@ type MockJournalReversalService_Cancel_Call struct {
 //   - ctx context.Context
 //   - req *services.CancelJournalReversalRequest
 //   - actor *services.RequestActor
-func (_e *MockJournalReversalService_Expecter) Cancel(ctx interface{}, req interface{}, actor interface{}) *MockJournalReversalService_Cancel_Call {
+func (_e *MockJournalReversalService_Expecter) Cancel(ctx any, req any, actor any) *MockJournalReversalService_Cancel_Call {
 	return &MockJournalReversalService_Cancel_Call{Call: _e.mock.On("Cancel", ctx, req, actor)}
 }
 
@@ -226,7 +226,7 @@ type MockJournalReversalService_Create_Call struct {
 //   - ctx context.Context
 //   - req *services.CreateJournalReversalRequest
 //   - actor *services.RequestActor
-func (_e *MockJournalReversalService_Expecter) Create(ctx interface{}, req interface{}, actor interface{}) *MockJournalReversalService_Create_Call {
+func (_e *MockJournalReversalService_Expecter) Create(ctx any, req any, actor any) *MockJournalReversalService_Create_Call {
 	return &MockJournalReversalService_Create_Call{Call: _e.mock.On("Create", ctx, req, actor)}
 }
 
@@ -299,7 +299,7 @@ type MockJournalReversalService_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *services.GetJournalReversalRequest
-func (_e *MockJournalReversalService_Expecter) Get(ctx interface{}, req interface{}) *MockJournalReversalService_Get_Call {
+func (_e *MockJournalReversalService_Expecter) Get(ctx any, req any) *MockJournalReversalService_Get_Call {
 	return &MockJournalReversalService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
 
@@ -367,7 +367,7 @@ type MockJournalReversalService_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListJournalReversalsRequest
-func (_e *MockJournalReversalService_Expecter) List(ctx interface{}, req interface{}) *MockJournalReversalService_List_Call {
+func (_e *MockJournalReversalService_Expecter) List(ctx any, req any) *MockJournalReversalService_List_Call {
 	return &MockJournalReversalService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -436,7 +436,7 @@ type MockJournalReversalService_Post_Call struct {
 //   - ctx context.Context
 //   - req *services.GetJournalReversalRequest
 //   - actor *services.RequestActor
-func (_e *MockJournalReversalService_Expecter) Post(ctx interface{}, req interface{}, actor interface{}) *MockJournalReversalService_Post_Call {
+func (_e *MockJournalReversalService_Expecter) Post(ctx any, req any, actor any) *MockJournalReversalService_Post_Call {
 	return &MockJournalReversalService_Post_Call{Call: _e.mock.On("Post", ctx, req, actor)}
 }
 
@@ -510,7 +510,7 @@ type MockJournalReversalService_Reject_Call struct {
 //   - ctx context.Context
 //   - req *services.RejectJournalReversalRequest
 //   - actor *services.RequestActor
-func (_e *MockJournalReversalService_Expecter) Reject(ctx interface{}, req interface{}, actor interface{}) *MockJournalReversalService_Reject_Call {
+func (_e *MockJournalReversalService_Expecter) Reject(ctx any, req any, actor any) *MockJournalReversalService_Reject_Call {
 	return &MockJournalReversalService_Reject_Call{Call: _e.mock.On("Reject", ctx, req, actor)}
 }
 

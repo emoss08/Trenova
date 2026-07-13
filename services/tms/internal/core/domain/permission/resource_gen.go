@@ -66,6 +66,7 @@ const (
 	ResourceChargeType        Resource = "charge_type"
 	ResourceRevenueCode       Resource = "revenue_code"
 	ResourceFormulaTemplate   Resource = "formula_template"
+	ResourceRateTable         Resource = "rate_table"
 
 	// Customers
 	ResourceCustomer        Resource = "customer"

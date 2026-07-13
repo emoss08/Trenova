@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -236,17 +238,20 @@ func newIntegrationService(
 		Registry: registry,
 		Resolver: res,
 	})
-	formulaEngine := engine.NewEngine(engine.Params{
+	formulaEngine, err := engine.NewEngine(engine.Params{
 		Registry:   registry,
 		Resolver:   res,
 		EnvBuilder: envBuilder,
 	})
+	require.NoError(t, err)
 	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:   zap.NewNop(),
-		Registry: registry,
-		Engine:   formulaEngine,
-		Resolver: res,
-		Repo:     formulaRepo,
+		Logger:        zap.NewNop(),
+		Registry:      registry,
+		Engine:        formulaEngine,
+		Resolver:      res,
+		Repo:          formulaRepo,
+		VersionRepo:   moveIntgStubVersionRepo{},
+		RateTableRepo: moveIntgStubRateTableRepo{},
 	})
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
 		Formula:         formulaSvc,
@@ -281,4 +286,26 @@ func int16Ptr(value int16) *int16 {
 
 func integrationInt64Ptr(value int64) *int64 {
 	return &value
+}
+
+type moveIntgStubVersionRepo struct {
+	repositories.FormulaTemplateVersionRepository
+}
+
+func (moveIntgStubVersionRepo) GetEffectiveVersion(
+	_ context.Context,
+	_ *repositories.GetEffectiveVersionRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
+type moveIntgStubRateTableRepo struct {
+	repositories.RateTableRepository
+}
+
+func (moveIntgStubRateTableRepo) GetLookupData(
+	_ context.Context,
+	_ *repositories.GetRateTableLookupDataRequest,
+) ([]*ratetable.RateTable, error) {
+	return nil, nil
 }

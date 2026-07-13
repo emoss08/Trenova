@@ -74,7 +74,7 @@ type MockCustomFieldDefinitionRepository_CountByResourceType_Call struct {
 // CountByResourceType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.CountByResourceTypeRequest
-func (_e *MockCustomFieldDefinitionRepository_Expecter) CountByResourceType(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_CountByResourceType_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) CountByResourceType(ctx any, req any) *MockCustomFieldDefinitionRepository_CountByResourceType_Call {
 	return &MockCustomFieldDefinitionRepository_CountByResourceType_Call{Call: _e.mock.On("CountByResourceType", ctx, req)}
 }
 
@@ -142,7 +142,7 @@ type MockCustomFieldDefinitionRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customfield.CustomFieldDefinition
-func (_e *MockCustomFieldDefinitionRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockCustomFieldDefinitionRepository_Create_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) Create(ctx any, entity any) *MockCustomFieldDefinitionRepository_Create_Call {
 	return &MockCustomFieldDefinitionRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
@@ -199,7 +199,7 @@ type MockCustomFieldDefinitionRepository_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCustomFieldDefinitionByIDRequest
-func (_e *MockCustomFieldDefinitionRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_Delete_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) Delete(ctx any, req any) *MockCustomFieldDefinitionRepository_Delete_Call {
 	return &MockCustomFieldDefinitionRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
 
@@ -267,7 +267,7 @@ type MockCustomFieldDefinitionRepository_GetActiveByResourceType_Call struct {
 // GetActiveByResourceType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetActiveByResourceTypeRequest
-func (_e *MockCustomFieldDefinitionRepository_Expecter) GetActiveByResourceType(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_GetActiveByResourceType_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) GetActiveByResourceType(ctx any, req any) *MockCustomFieldDefinitionRepository_GetActiveByResourceType_Call {
 	return &MockCustomFieldDefinitionRepository_GetActiveByResourceType_Call{Call: _e.mock.On("GetActiveByResourceType", ctx, req)}
 }
 
@@ -335,7 +335,7 @@ type MockCustomFieldDefinitionRepository_GetByID_Call struct {
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req repositories.GetCustomFieldDefinitionByIDRequest
-func (_e *MockCustomFieldDefinitionRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_GetByID_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) GetByID(ctx any, req any) *MockCustomFieldDefinitionRepository_GetByID_Call {
 	return &MockCustomFieldDefinitionRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
@@ -403,7 +403,7 @@ type MockCustomFieldDefinitionRepository_List_Call struct {
 // List is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCustomFieldDefinitionsRequest
-func (_e *MockCustomFieldDefinitionRepository_Expecter) List(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_List_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) List(ctx any, req any) *MockCustomFieldDefinitionRepository_List_Call {
 	return &MockCustomFieldDefinitionRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
 
@@ -471,7 +471,7 @@ type MockCustomFieldDefinitionRepository_ListConnection_Call struct {
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req *repositories.ListCustomFieldDefinitionConnectionRequest
-func (_e *MockCustomFieldDefinitionRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockCustomFieldDefinitionRepository_ListConnection_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) ListConnection(ctx any, req any) *MockCustomFieldDefinitionRepository_ListConnection_Call {
 	return &MockCustomFieldDefinitionRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
@@ -539,7 +539,7 @@ type MockCustomFieldDefinitionRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entity *customfield.CustomFieldDefinition
-func (_e *MockCustomFieldDefinitionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockCustomFieldDefinitionRepository_Update_Call {
+func (_e *MockCustomFieldDefinitionRepository_Expecter) Update(ctx any, entity any) *MockCustomFieldDefinitionRepository_Update_Call {
 	return &MockCustomFieldDefinitionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 

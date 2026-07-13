@@ -98,8 +98,8 @@ func computeTemperatureDifferential(entity any) (any, error) {
 	tempMin, errMin := getFieldInt16(entity, "TemperatureMin")
 	tempMax, errMax := getFieldInt16(entity, "TemperatureMax")
 
-	if errMin != nil || errMax != nil {
-		return 0.0, errMin
+	if err := errors.Join(errMin, errMax); err != nil {
+		return 0.0, err
 	}
 
 	return float64(tempMax - tempMin), nil

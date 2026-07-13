@@ -63,7 +63,7 @@ type MockClient_AbortMultipartUpload_Call struct {
 // AbortMultipartUpload is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.AbortMultipartUploadParams
-func (_e *MockClient_Expecter) AbortMultipartUpload(ctx interface{}, params interface{}) *MockClient_AbortMultipartUpload_Call {
+func (_e *MockClient_Expecter) AbortMultipartUpload(ctx any, params any) *MockClient_AbortMultipartUpload_Call {
 	return &MockClient_AbortMultipartUpload_Call{Call: _e.mock.On("AbortMultipartUpload", ctx, params)}
 }
 
@@ -120,7 +120,7 @@ type MockClient_CompleteMultipartUpload_Call struct {
 // CompleteMultipartUpload is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.CompleteMultipartUploadParams
-func (_e *MockClient_Expecter) CompleteMultipartUpload(ctx interface{}, params interface{}) *MockClient_CompleteMultipartUpload_Call {
+func (_e *MockClient_Expecter) CompleteMultipartUpload(ctx any, params any) *MockClient_CompleteMultipartUpload_Call {
 	return &MockClient_CompleteMultipartUpload_Call{Call: _e.mock.On("CompleteMultipartUpload", ctx, params)}
 }
 
@@ -177,7 +177,7 @@ type MockClient_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockClient_Expecter) Delete(ctx interface{}, key interface{}) *MockClient_Delete_Call {
+func (_e *MockClient_Expecter) Delete(ctx any, key any) *MockClient_Delete_Call {
 	return &MockClient_Delete_Call{Call: _e.mock.On("Delete", ctx, key)}
 }
 
@@ -234,7 +234,7 @@ type MockClient_DeleteObject_Call struct {
 // DeleteObject is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.DeleteObjectParams
-func (_e *MockClient_Expecter) DeleteObject(ctx interface{}, params interface{}) *MockClient_DeleteObject_Call {
+func (_e *MockClient_Expecter) DeleteObject(ctx any, params any) *MockClient_DeleteObject_Call {
 	return &MockClient_DeleteObject_Call{Call: _e.mock.On("DeleteObject", ctx, params)}
 }
 
@@ -302,7 +302,7 @@ type MockClient_Download_Call struct {
 // Download is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockClient_Expecter) Download(ctx interface{}, key interface{}) *MockClient_Download_Call {
+func (_e *MockClient_Expecter) Download(ctx any, key any) *MockClient_Download_Call {
 	return &MockClient_Download_Call{Call: _e.mock.On("Download", ctx, key)}
 }
 
@@ -368,7 +368,7 @@ type MockClient_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockClient_Expecter) Exists(ctx interface{}, key interface{}) *MockClient_Exists_Call {
+func (_e *MockClient_Expecter) Exists(ctx any, key any) *MockClient_Exists_Call {
 	return &MockClient_Exists_Call{Call: _e.mock.On("Exists", ctx, key)}
 }
 
@@ -436,7 +436,7 @@ type MockClient_GetFileInfo_Call struct {
 // GetFileInfo is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key string
-func (_e *MockClient_Expecter) GetFileInfo(ctx interface{}, key interface{}) *MockClient_GetFileInfo_Call {
+func (_e *MockClient_Expecter) GetFileInfo(ctx any, key any) *MockClient_GetFileInfo_Call {
 	return &MockClient_GetFileInfo_Call{Call: _e.mock.On("GetFileInfo", ctx, key)}
 }
 
@@ -502,7 +502,7 @@ type MockClient_GetMultipartUploadPartURL_Call struct {
 // GetMultipartUploadPartURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.MultipartUploadPartURLParams
-func (_e *MockClient_Expecter) GetMultipartUploadPartURL(ctx interface{}, params interface{}) *MockClient_GetMultipartUploadPartURL_Call {
+func (_e *MockClient_Expecter) GetMultipartUploadPartURL(ctx any, params any) *MockClient_GetMultipartUploadPartURL_Call {
 	return &MockClient_GetMultipartUploadPartURL_Call{Call: _e.mock.On("GetMultipartUploadPartURL", ctx, params)}
 }
 
@@ -568,7 +568,7 @@ type MockClient_GetPresignedURL_Call struct {
 // GetPresignedURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.PresignedURLParams
-func (_e *MockClient_Expecter) GetPresignedURL(ctx interface{}, params interface{}) *MockClient_GetPresignedURL_Call {
+func (_e *MockClient_Expecter) GetPresignedURL(ctx any, params any) *MockClient_GetPresignedURL_Call {
 	return &MockClient_GetPresignedURL_Call{Call: _e.mock.On("GetPresignedURL", ctx, params)}
 }
 
@@ -634,7 +634,7 @@ type MockClient_GetPresignedUploadURL_Call struct {
 // GetPresignedUploadURL is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.PresignedUploadURLParams
-func (_e *MockClient_Expecter) GetPresignedUploadURL(ctx interface{}, params interface{}) *MockClient_GetPresignedUploadURL_Call {
+func (_e *MockClient_Expecter) GetPresignedUploadURL(ctx any, params any) *MockClient_GetPresignedUploadURL_Call {
 	return &MockClient_GetPresignedUploadURL_Call{Call: _e.mock.On("GetPresignedUploadURL", ctx, params)}
 }
 
@@ -700,7 +700,7 @@ type MockClient_InitiateMultipartUpload_Call struct {
 // InitiateMultipartUpload is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.MultipartUploadParams
-func (_e *MockClient_Expecter) InitiateMultipartUpload(ctx interface{}, params interface{}) *MockClient_InitiateMultipartUpload_Call {
+func (_e *MockClient_Expecter) InitiateMultipartUpload(ctx any, params any) *MockClient_InitiateMultipartUpload_Call {
 	return &MockClient_InitiateMultipartUpload_Call{Call: _e.mock.On("InitiateMultipartUpload", ctx, params)}
 }
 
@@ -768,7 +768,7 @@ type MockClient_ListMultipartUploadParts_Call struct {
 // ListMultipartUploadParts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.ListMultipartUploadPartsParams
-func (_e *MockClient_Expecter) ListMultipartUploadParts(ctx interface{}, params interface{}) *MockClient_ListMultipartUploadParts_Call {
+func (_e *MockClient_Expecter) ListMultipartUploadParts(ctx any, params any) *MockClient_ListMultipartUploadParts_Call {
 	return &MockClient_ListMultipartUploadParts_Call{Call: _e.mock.On("ListMultipartUploadParts", ctx, params)}
 }
 
@@ -836,7 +836,7 @@ type MockClient_Upload_Call struct {
 // Upload is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params *storage.UploadParams
-func (_e *MockClient_Expecter) Upload(ctx interface{}, params interface{}) *MockClient_Upload_Call {
+func (_e *MockClient_Expecter) Upload(ctx any, params any) *MockClient_Upload_Call {
 	return &MockClient_Upload_Call{Call: _e.mock.On("Upload", ctx, params)}
 }
 

@@ -2,7 +2,10 @@ module github.com/emoss08/trenova
 
 go 1.26
 
-require github.com/emoss08/trenova/shared v0.0.0
+require (
+	github.com/emoss08/trenova/shared v0.0.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
+)
 
 require (
 	cloud.google.com/go/kms v1.31.0
@@ -92,7 +95,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.17 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
