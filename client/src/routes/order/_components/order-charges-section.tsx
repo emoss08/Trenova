@@ -1,22 +1,28 @@
 import { EmptyState } from "@/components/empty-state";
+import { InputField } from "@/components/fields/input-field";
+import { NumberField } from "@/components/fields/number-field";
 import { Button } from "@/components/ui/button";
 import { FormSection } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { addOrderCharge, fetchOrderDetail, removeOrderCharge } from "@/lib/graphql/order";
 import { formatCurrency } from "@/lib/utils";
-import type { Order } from "@/types/order";
+import { orderChargeFormSchema, type Order, type OrderChargeFormValues } from "@/types/order";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, ReceiptTextIcon, Trash2Icon } from "lucide-react";
-import { useCallback, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { useCallback } from "react";
+import { type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 export function OrderChargesSection() {
   const { control } = useFormContext<Order>();
   const orderId = useWatch({ control, name: "id" });
   const queryClient = useQueryClient();
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+
+  const addForm = useForm<OrderChargeFormValues>({
+    resolver: zodResolver(orderChargeFormSchema) as Resolver<OrderChargeFormValues>,
+    defaultValues: { description: "", amount: null as unknown as number },
+    mode: "onChange",
+  });
 
   const { data: order } = useQuery({
     queryKey: ["order-detail", orderId],
@@ -29,10 +35,10 @@ export function OrderChargesSection() {
   }, [queryClient, orderId]);
 
   const { mutate: addCharge, isPending: isAdding } = useMutation({
-    mutationFn: () => addOrderCharge(orderId!, description.trim(), amount),
+    mutationFn: (values: OrderChargeFormValues) =>
+      addOrderCharge(orderId!, values.description.trim(), String(values.amount)),
     onSuccess: () => {
-      setDescription("");
-      setAmount("");
+      addForm.reset({ description: "", amount: null as unknown as number });
       invalidateDetail();
       toast.success("Charge added");
     },
@@ -48,13 +54,15 @@ export function OrderChargesSection() {
     onError: () => toast.error("Failed to remove charge"),
   });
 
+  const handleAdd = addForm.handleSubmit((values) => addCharge(values));
+
   if (!orderId) {
     return null;
   }
 
   const charges = order?.charges ?? [];
   const currency = order?.currencyCode ?? "USD";
-  const canAdd = description.trim().length > 0 && amount.trim().length > 0 && !isAdding;
+  const canAdd = addForm.formState.isValid && !isAdding;
 
   return (
     <FormSection
@@ -103,25 +111,33 @@ export function OrderChargesSection() {
       )}
 
       <div className="grid grid-cols-12 items-end gap-2">
-        <div className="col-span-7 flex flex-col gap-1">
-          <label className="text-2xs text-muted-foreground">Description</label>
-          <Input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+        <div className="col-span-7">
+          <InputField
+            control={addForm.control}
+            name="description"
+            label="Description"
             placeholder="e.g. Customs brokerage"
           />
         </div>
-        <div className="col-span-3 flex flex-col gap-1">
-          <label className="text-2xs text-muted-foreground">Amount</label>
-          <Input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+        <div className="col-span-3">
+          <NumberField
+            control={addForm.control}
+            name="amount"
+            label="Amount"
             placeholder="0.00"
-            inputMode="decimal"
+            decimalScale={2}
+            thousandSeparator
+            sideText={currency}
           />
         </div>
         <div className="col-span-2">
-          <Button type="button" size="sm" className="w-full" disabled={!canAdd} onClick={() => addCharge()}>
+          <Button
+            type="button"
+            size="sm"
+            className="w-full"
+            disabled={!canAdd}
+            onClick={() => void handleAdd()}
+          >
             <PlusIcon className="mr-1.5 size-3.5" />
             Add
           </Button>

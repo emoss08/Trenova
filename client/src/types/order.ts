@@ -31,3 +31,12 @@ export type Order = z.infer<typeof orderSchema>;
 
 // Raw form values (before zod transforms) — amounts may still be strings here.
 export type OrderFormValues = z.input<typeof orderSchema>;
+
+export const orderChargeFormSchema = z.object({
+  description: z.string().trim().min(1, { error: "Description is required" }),
+  amount: z
+    .number({ error: "Amount is required" })
+    .positive({ error: "Amount must be greater than zero" }),
+});
+
+export type OrderChargeFormValues = z.infer<typeof orderChargeFormSchema>;
