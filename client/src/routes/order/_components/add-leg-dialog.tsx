@@ -18,9 +18,10 @@ type AddLegDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
+  customerId?: string;
 };
 
-export function AddLegDialog({ open, onOpenChange, orderId }: AddLegDialogProps) {
+export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLegDialogProps) {
   const queryClient = useQueryClient();
   const [shipmentId, setShipmentId] = useState("");
 
@@ -57,7 +58,8 @@ export function AddLegDialog({ open, onOpenChange, orderId }: AddLegDialogProps)
             <ControlledShipmentAutocompleteField
               value={shipmentId}
               onValueChange={setShipmentId}
-              description="Search for the shipment to attach to this order."
+              description="Only shipments for this order's customer are shown."
+              extraSearchParams={customerId ? { customerId } : undefined}
             />
           </FormControl>
         </FormGroup>

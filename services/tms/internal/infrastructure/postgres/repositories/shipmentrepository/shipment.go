@@ -228,6 +228,9 @@ func (r *repository) SelectOptions(
 			SearchColumnRefs: []buncolgen.Column{sp.ProNumber, sp.BOL},
 			EntityName:       "Shipment",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				if !req.CustomerID.IsNil() {
+					q = q.Where(sp.CustomerID.Eq(), req.CustomerID)
+				}
 				return q.Order(sp.CreatedAt.OrderDesc())
 			},
 		},

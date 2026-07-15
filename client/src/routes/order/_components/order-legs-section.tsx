@@ -154,7 +154,12 @@ export function OrderLegsSection() {
         )}
       </FormSection>
 
-      <AddLegDialog open={addLegOpen} onOpenChange={setAddLegOpen} orderId={orderId} />
+      <AddLegDialog
+        open={addLegOpen}
+        onOpenChange={setAddLegOpen}
+        orderId={orderId}
+        customerId={order?.customerId}
+      />
     </>
   );
 }

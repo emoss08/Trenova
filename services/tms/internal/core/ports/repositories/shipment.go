@@ -452,6 +452,7 @@ type GetShipmentsByIDsRequest struct {
 
 type ShipmentSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	CustomerID         pulid.ID                       `json:"customerId"`
 }
 
 type ListRatedByFormulaTemplateRequest struct {

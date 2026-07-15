@@ -452,6 +452,7 @@ func (r *Resolver) resolveShipmentSelectOptions(
 		ctx,
 		&repositories.ShipmentSelectOptionsRequest{
 			SelectQueryRequest: req.selectQuery,
+			CustomerID:         selectOptionCustomerFilter(req.filters),
 		},
 	)
 	if err != nil {
@@ -463,6 +464,24 @@ func (r *Resolver) resolveShipmentSelectOptions(
 		req.selectQuery.Pagination.SafeOffset(),
 		shipmentSelectOptionItem,
 	)
+}
+
+// selectOptionCustomerFilter extracts an optional customerId scope from select-option
+// filters (used to restrict the shipment picker to an order's customer).
+func selectOptionCustomerFilter(filters map[string]any) pulid.ID {
+	value, ok := filters["customerId"]
+	if !ok {
+		return pulid.Nil
+	}
+	str, ok := value.(string)
+	if !ok || str == "" {
+		return pulid.Nil
+	}
+	id, err := pulid.Parse(str)
+	if err != nil {
+		return pulid.Nil
+	}
+	return id
 }
 
 func (r *Resolver) resolveEDITransferSelectOptions(
