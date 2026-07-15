@@ -272,13 +272,16 @@ func (r *repository) GetShipmentStatuses(
 	orderID pulid.ID,
 ) ([]shipment.Status, error) {
 	statuses := make([]shipment.Status, 0)
+
+	cols := buncolgen.ShipmentColumns
 	err := r.db.DB().
 		NewSelect().
-		Table("shipments").
+		Model((*shipment.Shipment)(nil)).
 		Column("status").
-		Where("order_id = ?", orderID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
+				Where(cols.OrderID.Eq(), orderID)
+		}).
 		Scan(ctx, &statuses)
 	if err != nil {
 		r.l.Error("failed to get shipment statuses for order", zap.Error(err))
@@ -298,12 +301,14 @@ func (r *repository) AttachShipments(
 		return 0, nil
 	}
 
+	cols := buncolgen.ShipmentColumns
 	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Table("shipments").
+		Model((*shipment.Shipment)(nil)).
 		Set("order_id = ?", orderID).
-		Where("id IN (?)", bun.List(shipmentIDs)).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ShipmentScopeTenantUpdate(sq, tenantInfo).
+				Where(cols.ID.In(), bun.List(shipmentIDs))
+		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error("failed to attach shipments to order", zap.Error(err))
@@ -324,13 +329,15 @@ func (r *repository) DetachShipment(
 	orderID pulid.ID,
 	shipmentID pulid.ID,
 ) (int64, error) {
+	cols := buncolgen.ShipmentColumns
 	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Table("shipments").
+		Model((*shipment.Shipment)(nil)).
 		Set("order_id = NULL").
-		Where("id = ?", shipmentID).
-		Where("order_id = ?", orderID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ShipmentScopeTenantUpdate(uq, tenantInfo).
+				Where(cols.ID.Eq(), shipmentID).
+				Where(cols.OrderID.Eq(), orderID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error("failed to detach shipment from order", zap.Error(err))
@@ -355,12 +362,14 @@ func (r *repository) CountShipmentsWithDifferentCustomer(
 		return 0, nil
 	}
 
+	cols := buncolgen.ShipmentColumns
 	count, err := r.db.DB().NewSelect().
-		Table("shipments").
-		Where("id IN (?)", bun.List(shipmentIDs)).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Where("customer_id != ?", customerID).
+		Model((*shipment.Shipment)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
+				Where(cols.ID.In(), bun.List(shipmentIDs)).
+				Where(cols.CustomerID.Ne(), customerID)
+		}).
 		Count(ctx)
 	if err != nil {
 		r.l.Error("failed to count shipments with different customer", zap.Error(err))
@@ -388,12 +397,14 @@ func (r *repository) RemoveCharge(
 	orderID pulid.ID,
 	chargeID pulid.ID,
 ) (int64, error) {
+	cols := buncolgen.OrderChargeColumns
 	result, err := r.db.DB().NewDelete().
 		Model((*order.OrderCharge)(nil)).
-		Where("id = ?", chargeID).
-		Where("order_id = ?", orderID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.OrderChargeScopeTenantDelete(dq, tenantInfo).
+				Where(cols.ID.Eq(), chargeID).
+				Where(cols.OrderID.Eq(), orderID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error("failed to remove order charge", zap.Error(err))
@@ -409,12 +420,15 @@ func (r *repository) ListCharges(
 	orderID pulid.ID,
 ) ([]*order.OrderCharge, error) {
 	charges := make([]*order.OrderCharge, 0)
+
+	cols := buncolgen.OrderChargeColumns
 	err := r.db.DB().NewSelect().
 		Model(&charges).
-		Where("order_id = ?", orderID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Order("created_at ASC").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
+				Where(cols.OrderID.Eq(), orderID)
+		}).
+		Order(cols.CreatedAt.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to list order charges", zap.Error(err))
@@ -429,17 +443,31 @@ func (r *repository) RecalculateTotal(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) error {
-	_, err := r.db.DB().NewUpdate().
+	cols := buncolgen.OrderColumns
+	sc := buncolgen.ShipmentColumns
+	cc := buncolgen.OrderChargeColumns
+	db := r.db.DB()
+
+	legTotal := db.NewSelect().
+		Model((*shipment.Shipment)(nil)).
+		ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(sc.TotalChargeAmount.Name)).
+		Apply(buncolgen.ShipmentApplyTenant(tenantInfo)).
+		Where(sc.OrderID.Eq(), orderID)
+
+	chargeTotal := db.NewSelect().
+		Model((*order.OrderCharge)(nil)).
+		ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(cc.Amount.Name)).
+		Apply(buncolgen.OrderChargeApplyTenant(tenantInfo)).
+		Where(cc.OrderID.Eq(), orderID)
+
+	_, err := db.NewUpdate().
 		Model((*order.Order)(nil)).
-		Set(`total_amount = COALESCE((SELECT SUM(s.total_charge_amount) FROM shipments s `+
-			`WHERE s.order_id = ?0 AND s.organization_id = ?1 AND s.business_unit_id = ?2), 0) `+
-			`+ COALESCE((SELECT SUM(c.amount) FROM order_charges c `+
-			`WHERE c.order_id = ?0 AND c.organization_id = ?1 AND c.business_unit_id = ?2), 0)`,
-			orderID, tenantInfo.OrgID, tenantInfo.BuID).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Where("id = ?", orderID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		Set(cols.TotalAmount.SetExpr("? + ?"), legTotal, chargeTotal).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.OrderScopeTenantUpdate(uq, tenantInfo).
+				Where(cols.ID.Eq(), orderID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error("failed to recalculate order total", zap.Error(err))
