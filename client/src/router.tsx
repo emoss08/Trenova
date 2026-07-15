@@ -82,6 +82,14 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/shipment-management/orders",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Order)),
+            async lazy() {
+              const { OrdersPage } = await import("@/routes/order/page");
+              return { Component: OrdersPage };
+            },
+          },
+          {
             path: "/shipment-management/service-failures",
             loader: combineLoaders(
               protectedLoader,

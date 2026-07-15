@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -46,6 +47,7 @@ type Params struct {
 	Repo               repositories.InvoiceRepository
 	BillingQueueRepo   repositories.BillingQueueRepository
 	ShipmentRepo       repositories.ShipmentRepository
+	OrderRepo          repositories.OrderRepository
 	CustomerRepo       repositories.CustomerRepository
 	OrganizationRepo   repositories.OrganizationRepository
 	DocumentTypeRepo   repositories.DocumentTypeRepository
@@ -74,6 +76,7 @@ type Service struct {
 	repo               repositories.InvoiceRepository
 	billingQueueRepo   repositories.BillingQueueRepository
 	shipmentRepo       repositories.ShipmentRepository
+	orderRepo          repositories.OrderRepository
 	customerRepo       repositories.CustomerRepository
 	organizationRepo   repositories.OrganizationRepository
 	documentTypeRepo   repositories.DocumentTypeRepository
@@ -121,6 +124,7 @@ func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable AP
 		repo:               p.Repo,
 		billingQueueRepo:   p.BillingQueueRepo,
 		shipmentRepo:       p.ShipmentRepo,
+		orderRepo:          p.OrderRepo,
 		customerRepo:       p.CustomerRepo,
 		organizationRepo:   p.OrganizationRepo,
 		documentTypeRepo:   p.DocumentTypeRepo,
@@ -359,17 +363,8 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return updateErr
 		}
 
-		shp, shipErr := s.shipmentRepo.GetByID(
-			txCtx,
-			basicShipmentByIDRequest(updated.ShipmentID, req.TenantInfo),
-		)
+		shp, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
 		if shipErr != nil {
-			return shipErr
-		}
-
-		shp.Status = shipment.StatusInvoiced
-		shp.BilledAt = &now
-		if _, shipErr = s.shipmentRepo.UpdateDerivedState(txCtx, shp); shipErr != nil {
 			return shipErr
 		}
 
@@ -448,6 +443,67 @@ func (s *Service) notifyReconciliationWarning(
 	}
 }
 
+// markInvoicedLegs flips every shipment billed by this invoice to Invoiced. For a
+// single-shipment invoice that is one leg; for a grouped (order) invoice it is the set
+// of legs carried on the invoice lines. It returns the first leg for downstream
+// reconciliation notification.
+func (s *Service) markInvoicedLegs(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	now int64,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, error) {
+	legIDs := invoiceLegShipmentIDs(entity)
+	if len(legIDs) == 0 {
+		return nil, nil
+	}
+
+	var primary *shipment.Shipment
+	for _, legID := range legIDs {
+		shp, err := s.shipmentRepo.GetByID(ctx, basicShipmentByIDRequest(legID, tenantInfo))
+		if err != nil {
+			return nil, err
+		}
+
+		shp.Status = shipment.StatusInvoiced
+		shp.BilledAt = &now
+		if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
+			return nil, err
+		}
+
+		if primary == nil {
+			primary = shp
+		}
+	}
+
+	return primary, nil
+}
+
+// invoiceLegShipmentIDs returns the distinct shipments billed by an invoice, preferring
+// the per-line attribution (which covers grouped invoices) and falling back to the
+// header shipment id for legacy single-shipment invoices whose lines predate line-level
+// attribution.
+func invoiceLegShipmentIDs(entity *invoice.Invoice) []pulid.ID {
+	seen := make(map[pulid.ID]struct{}, len(entity.Lines))
+	ids := make([]pulid.ID, 0, len(entity.Lines))
+	for _, line := range entity.Lines {
+		if line == nil || line.ShipmentID.IsNil() {
+			continue
+		}
+		if _, ok := seen[line.ShipmentID]; ok {
+			continue
+		}
+		seen[line.ShipmentID] = struct{}{}
+		ids = append(ids, line.ShipmentID)
+	}
+
+	if len(ids) == 0 && !entity.ShipmentID.IsNil() {
+		ids = append(ids, entity.ShipmentID)
+	}
+
+	return ids
+}
+
 func (s *Service) markBillingQueueItemPosted(
 	ctx context.Context,
 	entity *invoice.Invoice,
@@ -473,6 +529,14 @@ func (s *Service) markBillingQueueItemPosted(
 	updated, err := s.billingQueueRepo.Update(ctx, item)
 	if err != nil {
 		return nil, err
+	}
+
+	// For a grouped invoice, settle every sibling leg's billing-queue item together so
+	// none linger in Approved after the order is billed.
+	if !entity.OrderID.IsNil() {
+		if _, sweepErr := s.billingQueueRepo.MarkPostedByOrderID(ctx, tenantInfo, entity.OrderID); sweepErr != nil {
+			return nil, sweepErr
+		}
 	}
 
 	return &postedBillingQueueResult{
@@ -679,6 +743,88 @@ func (s *Service) buildInvoiceEntity(
 	return entity
 }
 
+// buildInvoiceEntityForOrder builds a single grouped invoice covering every billable
+// leg of an order. Lines are appended per leg (each carrying its shipment identity)
+// and line numbers run continuously across legs. The header carries the order, not a
+// single shipment; the anchor billing-queue item keeps the header's single-valued FK
+// and idempotency lookup working.
+func (s *Service) buildInvoiceEntityForOrder(
+	anchor *billingqueue.BillingQueueItem,
+	ord *order.Order,
+	legs []*shipment.Shipment,
+	charges []*order.OrderCharge,
+	cus *customer.Customer,
+	control *tenant.BillingControl,
+) *invoice.Invoice {
+	invoiceDate := timeutils.NowUnix()
+	paymentTerm := resolvePaymentTerm(cus, control)
+	if paymentTerm == "" {
+		paymentTerm = invoice.PaymentTermNet30
+	}
+
+	lines := make([]*invoice.InoviceLine, 0, len(legs)+len(charges))
+	nextLineNumber := 1
+	for _, leg := range legs {
+		legLines := buildInvoiceLinesForShipment(anchor.BillType, leg, nextLineNumber)
+		lines = append(lines, legLines...)
+		nextLineNumber += len(legLines)
+	}
+
+	// Order-level charges (customs brokerage, order-wide fuel, etc.) become their own
+	// accessorial lines with no leg attribution.
+	for _, charge := range charges {
+		if charge == nil {
+			continue
+		}
+		amount := signedAmount(anchor.BillType, charge.Amount)
+		lines = append(lines, &invoice.InoviceLine{
+			LineNumber:  nextLineNumber,
+			Type:        invoice.InvoiceLineTypeAccessorial,
+			Description: charge.Description,
+			Quantity:    decimal.NewFromInt(1),
+			UnitPrice:   amount,
+			Amount:      amount,
+		})
+		nextLineNumber++
+	}
+
+	entity := &invoice.Invoice{
+		OrganizationID:     anchor.OrganizationID,
+		BusinessUnitID:     anchor.BusinessUnitID,
+		BillingQueueItemID: anchor.ID,
+		OrderID:            ord.ID,
+		OrderNumber:        ord.OrderNumber,
+		CustomerID:         cus.ID,
+		Number:             anchor.Number,
+		BillType:           anchor.BillType,
+		Status:             invoice.StatusDraft,
+		PaymentTerm:        paymentTerm,
+		CurrencyCode:       billingCurrencyFromCustomer(cus),
+		InvoiceDate:        invoiceDate,
+		DueDate:            invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
+		BillToName:         cus.Name,
+		BillToCode:         cus.Code,
+		BillToAddressLine1: cus.AddressLine1,
+		BillToAddressLine2: cus.AddressLine2,
+		BillToCity:         cus.City,
+		BillToPostalCode:   cus.PostalCode,
+		AppliedAmount:      decimal.Zero,
+		SettlementStatus:   invoice.SettlementStatusUnpaid,
+		DisputeStatus:      invoice.DisputeStatusNone,
+		Lines:              lines,
+	}
+
+	if cus.State != nil {
+		entity.BillToState = cus.State.Abbreviation
+		entity.BillToCountry = cus.State.CountryName
+	}
+
+	syncInvoiceTotalsFromLines(entity)
+	entity.SyncMinorAmounts()
+
+	return entity
+}
+
 type adjustmentInvoiceContext struct {
 	ReplacementLines   []*invoice.InoviceLine `json:"replacementLines"`
 	SubtotalAmount     decimal.Decimal        `json:"subtotalAmount"`
@@ -788,15 +934,30 @@ func buildInvoiceLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
 ) []*invoice.InoviceLine {
+	return buildInvoiceLinesForShipment(billType, shp, 1)
+}
+
+// buildInvoiceLinesForShipment builds the freight + accessorial lines for a single
+// leg, stamping each line with the leg's identity so a grouped (multi-leg) invoice
+// remains attributable per shipment. startLineNumber lets the caller keep line
+// numbers globally unique across legs.
+func buildInvoiceLinesForShipment(
+	billType billingqueue.BillType,
+	shp *shipment.Shipment,
+	startLineNumber int,
+) []*invoice.InoviceLine {
 	lines := make([]*invoice.InoviceLine, 0, 1+len(shp.AdditionalCharges))
 	freightAmount := signedAmount(billType, shp.FreightChargeAmount.Decimal)
 	lines = append(lines, &invoice.InoviceLine{
-		LineNumber:  1,
-		Type:        invoice.InvoiceLineTypeFreight,
-		Description: "Freight charge",
-		Quantity:    decimal.NewFromInt(1),
-		UnitPrice:   freightAmount,
-		Amount:      freightAmount,
+		ShipmentID:        shp.ID,
+		ShipmentProNumber: shp.ProNumber,
+		ShipmentBOL:       shp.BOL,
+		LineNumber:        startLineNumber,
+		Type:              invoice.InvoiceLineTypeFreight,
+		Description:       "Freight charge",
+		Quantity:          decimal.NewFromInt(1),
+		UnitPrice:         freightAmount,
+		Amount:            freightAmount,
 	})
 
 	for idx, charge := range shp.AdditionalCharges {
@@ -828,12 +989,15 @@ func buildInvoiceLines(
 		}
 
 		lines = append(lines, &invoice.InoviceLine{
-			LineNumber:  idx + 2,
-			Type:        invoice.InvoiceLineTypeAccessorial,
-			Description: description,
-			Quantity:    quantity,
-			UnitPrice:   unitPrice,
-			Amount:      amount,
+			ShipmentID:        shp.ID,
+			ShipmentProNumber: shp.ProNumber,
+			ShipmentBOL:       shp.BOL,
+			LineNumber:        startLineNumber + idx + 1,
+			Type:              invoice.InvoiceLineTypeAccessorial,
+			Description:       description,
+			Quantity:          quantity,
+			UnitPrice:         unitPrice,
+			Amount:            amount,
 		})
 	}
 

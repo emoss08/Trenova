@@ -1,0 +1,87 @@
+type Order {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  customerId: ID!
+  ownerId: ID
+  enteredById: ID
+  status: OrderStatus!
+  orderNumber: String!
+  poNumber: String
+  bol: String
+  currencyCode: String!
+  quotedAmount: String
+  baseAmount: String
+  totalAmount: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+  customer: Customer
+  legs: [OrderLeg!]!
+  charges: [OrderCharge!]!
+}
+
+type OrderCharge {
+  id: ID!
+  orderId: ID!
+  description: String!
+  amount: String!
+  createdAt: Int!
+}
+
+type OrderLeg {
+  id: ID!
+  proNumber: String!
+  status: ShipmentStatus!
+  bol: String
+  freightChargeAmount: String!
+  totalChargeAmount: String!
+}
+
+enum OrderStatus {
+  Draft
+  Confirmed
+  InProgress
+  Completed
+  Billed
+  Closed
+  Canceled
+}
+
+type OrderEdge {
+  node: Order!
+  cursor: String!
+}
+
+type OrderConnection {
+  edges: [OrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  orders(input: DataTableConnectionInput!): OrderConnection!
+  order(id: ID!): Order
+}
+
+input OrderInput {
+  customerId: ID!
+  ownerId: ID
+  status: OrderStatus
+  poNumber: String
+  bol: String
+  currencyCode: String
+  quotedAmount: String
+  baseAmount: String
+}
+
+extend type Mutation {
+  createOrder(input: OrderInput!): Order!
+  updateOrder(id: ID!, input: OrderInput!): Order!
+  attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
+  detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
+  addOrderCharge(orderId: ID!, description: String!, amount: String!): Order!
+  removeOrderCharge(orderId: ID!, chargeId: ID!): Order!
+}

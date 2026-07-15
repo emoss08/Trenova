@@ -37,7 +37,9 @@ type Invoice {
   organizationId: ID!
   businessUnitId: ID!
   billingQueueItemId: ID!
-  shipmentId: ID!
+  shipmentId: ID
+  orderId: ID
+  orderNumber: String
   customerId: ID!
   number: String!
   billType: BillType!
@@ -64,6 +66,31 @@ type Invoice {
   createdAt: Int!
   updatedAt: Int!
   customer: Customer
+  order: Order
+  lines: [InvoiceLine!]
+}
+
+enum InvoiceLineType {
+  Freight
+  Accessorial
+}
+
+type InvoiceLine {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  shipmentId: ID
+  shipmentProNumber: String
+  shipmentBol: String
+  lineNumber: Int!
+  type: InvoiceLineType!
+  description: String!
+  quantity: String!
+  unitPrice: String!
+  amount: String!
+  createdAt: Int!
+  updatedAt: Int!
 }
 
 type InvoiceEdge {
@@ -80,4 +107,9 @@ type InvoiceConnection {
 extend type Query {
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   invoice(id: ID!): Invoice
+}
+
+extend type Mutation {
+  createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
+  createInvoiceFromOrder(orderId: ID!): Invoice!
 }

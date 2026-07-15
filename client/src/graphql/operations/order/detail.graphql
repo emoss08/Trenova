@@ -1,0 +1,37 @@
+query OrderDetail($id: ID!) {
+  order(id: $id) {
+    id
+    orderNumber
+    status
+    customerId
+    ownerId
+    poNumber
+    bol
+    currencyCode
+    quotedAmount
+    baseAmount
+    totalAmount
+    version
+    createdAt
+    updatedAt
+    customer {
+      id
+      name
+      code
+    }
+    legs {
+      id
+      proNumber
+      status
+      bol
+      freightChargeAmount
+      totalChargeAmount
+    }
+    charges {
+      id
+      description
+      amount
+      createdAt
+    }
+  }
+}

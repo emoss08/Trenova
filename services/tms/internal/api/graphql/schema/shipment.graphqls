@@ -151,6 +151,7 @@ type Shipment {
   canceledById: ID
   formulaTemplateId: ID!
   consolidationGroupId: ID
+  orderId: ID
   status: ShipmentStatus!
   tenderStatus: ShipmentTenderStatus
   entryMethod: ShipmentEntryMethod
@@ -934,6 +935,7 @@ input ShipmentInput {
   canceledById: ID
   formulaTemplateId: ID!
   consolidationGroupId: ID
+  orderId: ID
   status: ShipmentStatus = New
   tenderStatus: ShipmentTenderStatus
   entryMethod: ShipmentEntryMethod = Manual

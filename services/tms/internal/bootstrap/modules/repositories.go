@@ -98,6 +98,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sequenceconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicetyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
@@ -178,6 +179,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	bankreceiptbatchrepository.New,
 	bankreceiptworkitemrepository.New,
 	servicetyperepository.New,
+	orderrepository.New,
 	servicefailurereasoncoderepository.New,
 	servicefailurerepository.New,
 	sequenceconfigrepository.New,

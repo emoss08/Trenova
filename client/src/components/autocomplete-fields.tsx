@@ -167,6 +167,10 @@ const shipmentSelectOptionsGraphQL = {
   resource: "SHIPMENT",
 } satisfies GraphQLSelectOptionsConfig;
 
+const orderSelectOptionsGraphQL = {
+  resource: "ORDER",
+} satisfies GraphQLSelectOptionsConfig;
+
 const ediTransferSelectOptionsGraphQL = {
   resource: "EDI_TRANSFER",
 } satisfies GraphQLSelectOptionsConfig;
@@ -532,6 +536,31 @@ export function WorkerAutocompleteField<T extends FieldValues>({
           {selectOptionMetaString(option, "fleetCode") && (
             <span className="w-full truncate text-2xs text-muted-foreground">
               Fleet: {selectOptionMetaString(option, "fleetCode")}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function OrderAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/orders/select-options/"
+      graphql={orderSelectOptionsGraphQL}
+      popoutLink="/shipment-management/orders"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          {option.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.description}
             </span>
           )}
         </div>

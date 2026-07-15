@@ -62,6 +62,10 @@ func shipmentFromInput(
 	if err != nil {
 		return nil, err
 	}
+	orderID, err := optionalID(input.OrderID)
+	if err != nil {
+		return nil, err
+	}
 	otherChargeAmount, err := nullDecimalFromInput(input.OtherChargeAmount)
 	if err != nil {
 		return nil, err
@@ -110,6 +114,7 @@ func shipmentFromInput(
 		CanceledByID:           canceledByID,
 		FormulaTemplateID:      formulaTemplateID,
 		ConsolidationGroupID:   consolidationGroupID,
+		OrderID:                orderID,
 		Status:                 status,
 		EntryMethod:            entryMethod,
 		ProNumber:              stringValue(input.ProNumber),
@@ -422,6 +427,7 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		CanceledByID:           idPtr(entity.CanceledByID),
 		FormulaTemplateID:      entity.FormulaTemplateID.String(),
 		ConsolidationGroupID:   idPtr(entity.ConsolidationGroupID),
+		OrderID:                idPtr(entity.OrderID),
 		Status:                 gqlmodel.ShipmentStatus(entity.Status),
 		TenderStatus:           tenderStatusToModel(entity.TenderStatus),
 		EntryMethod:            entryMethodToModel(entity.EntryMethod),

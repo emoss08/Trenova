@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -42,7 +43,8 @@ type Invoice struct {
 	OrganizationID            pulid.ID              `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID            pulid.ID              `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	BillingQueueItemID        pulid.ID              `json:"billingQueueItemId"        bun:"billing_queue_item_id,type:VARCHAR(100),notnull"`
-	ShipmentID                pulid.ID              `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),notnull"`
+	ShipmentID                pulid.ID              `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
+	OrderID                   pulid.ID              `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
 	CustomerID                pulid.ID              `json:"customerId"                bun:"customer_id,type:VARCHAR(100),notnull"`
 	Number                    string                `json:"number"                    bun:"number,type:VARCHAR(100),notnull"`
 	BillType                  billingqueue.BillType `json:"billType"                  bun:"bill_type,type:VARCHAR(50),notnull"`
@@ -54,6 +56,7 @@ type Invoice struct {
 	PostedAt                  *int64                `json:"postedAt"                  bun:"posted_at,type:BIGINT,nullzero"`
 	ShipmentProNumber         string                `json:"shipmentProNumber"         bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
 	ShipmentBOL               string                `json:"shipmentBol"               bun:"shipment_bol,type:VARCHAR(100),nullzero"`
+	OrderNumber               string                `json:"orderNumber"               bun:"order_number,type:VARCHAR(100),nullzero"`
 	ServiceDate               *int64                `json:"serviceDate"               bun:"service_date,type:BIGINT,nullzero"`
 	BillToName                string                `json:"billToName"                bun:"bill_to_name,type:VARCHAR(255),notnull"`
 	BillToCode                string                `json:"billToCode"                bun:"bill_to_code,type:VARCHAR(50),nullzero"`
@@ -97,6 +100,7 @@ type Invoice struct {
 
 	BillingQueueItem *billingqueue.BillingQueueItem `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Shipment         *shipment.Shipment             `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Order            *order.Order                   `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Customer         *customer.Customer             `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	PDFDocument      *document.Document             `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Lines            []*InoviceLine                 `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
@@ -107,20 +111,23 @@ type Invoice struct {
 type InoviceLine struct {
 	bun.BaseModel `bun:"table:invoice_lines,alias:invl" json:"-"`
 
-	ID             pulid.ID        `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	InvoiceID      pulid.ID        `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
-	LineNumber     int             `json:"lineNumber"     bun:"line_number,type:INTEGER,notnull"`
-	Type           InvoiceLineType `json:"type"           bun:"type,type:VARCHAR(50),notnull"`
-	Description    string          `json:"description"    bun:"description,type:TEXT,notnull"`
-	Quantity       decimal.Decimal `json:"quantity"       bun:"quantity,type:NUMERIC(19,4),notnull,default:0"`
-	UnitPrice      decimal.Decimal `json:"unitPrice"      bun:"unit_price,type:NUMERIC(19,4),notnull,default:0"`
-	Amount         decimal.Decimal `json:"amount"         bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
-	AmountMinor    int64           `json:"amountMinor"    bun:"amount_minor,type:BIGINT,notnull,default:0"`
-	Version        int64           `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	InvoiceID         pulid.ID        `json:"invoiceId"         bun:"invoice_id,type:VARCHAR(100),notnull"`
+	ShipmentID        pulid.ID        `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),nullzero"`
+	ShipmentProNumber string          `json:"shipmentProNumber" bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
+	ShipmentBOL       string          `json:"shipmentBol"       bun:"shipment_bol,type:VARCHAR(100),nullzero"`
+	LineNumber        int             `json:"lineNumber"        bun:"line_number,type:INTEGER,notnull"`
+	Type              InvoiceLineType `json:"type"              bun:"type,type:VARCHAR(50),notnull"`
+	Description       string          `json:"description"       bun:"description,type:TEXT,notnull"`
+	Quantity          decimal.Decimal `json:"quantity"          bun:"quantity,type:NUMERIC(19,4),notnull,default:0"`
+	UnitPrice         decimal.Decimal `json:"unitPrice"         bun:"unit_price,type:NUMERIC(19,4),notnull,default:0"`
+	Amount            decimal.Decimal `json:"amount"            bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
+	AmountMinor       int64           `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull,default:0"`
+	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Invoice *Invoice `json:"-" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
@@ -170,8 +177,8 @@ type EmailAttempt struct {
 	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Invoice     *Invoice                  `json:"-"                     bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Email       *email.Message            `json:"email,omitempty"        bun:"rel:belongs-to,join:email_message_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Attachments []*EmailAttemptAttachment `json:"attachments,omitempty"  bun:"rel:has-many,join:id=attempt_id"`
+	Email       *email.Message            `json:"email,omitempty"       bun:"rel:belongs-to,join:email_message_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Attachments []*EmailAttemptAttachment `json:"attachments,omitempty" bun:"rel:has-many,join:id=attempt_id"`
 }
 
 type EmailAttemptAttachment struct {
@@ -233,7 +240,6 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 			&i.BillingQueueItemID,
 			validation.Required.Error("Billing queue item ID is required"),
 		),
-		validation.Field(&i.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&i.CustomerID, validation.Required.Error("Customer ID is required")),
 		validation.Field(&i.Number,
 			validation.Required.Error("Invoice number is required"),
@@ -311,6 +317,14 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
+	}
+
+	if i.ShipmentID.IsNil() && i.OrderID.IsNil() {
+		multiErr.Add(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"An invoice must be attached to a shipment or an order",
+		)
 	}
 
 	if i.BillType == billingqueue.BillTypeCreditMemo {

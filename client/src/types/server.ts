@@ -60,6 +60,7 @@ export type BaseEndpoint =
   | "/service-types/"
   | "/sequence-configs/"
   | "/shipments/"
+  | "/orders/"
   | "/shipment-types/"
   | "/hazardous-materials/"
   | "/commodities/"

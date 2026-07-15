@@ -64,6 +64,11 @@ type Generator interface {
 		orgID, buID pulid.ID,
 		locationCode, businessUnitCode string,
 	) (string, error)
+	GenerateOrderNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
 	GenerateInvoiceNumber(
 		ctx context.Context,
 		orgID, buID pulid.ID,

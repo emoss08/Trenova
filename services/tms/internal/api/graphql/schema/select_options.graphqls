@@ -6,6 +6,7 @@ enum SelectOptionResource {
   WORKER
   US_STATE
   SHIPMENT
+  ORDER
   EDI_TRANSFER
 }
 

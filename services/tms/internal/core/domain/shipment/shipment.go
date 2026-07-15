@@ -68,6 +68,7 @@ type Shipment struct {
 	CanceledByID           pulid.ID              `json:"canceledById"               bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	FormulaTemplateID      pulid.ID              `json:"formulaTemplateId"          bun:"formula_template_id,type:VARCHAR(100)"`
 	ConsolidationGroupID   pulid.ID              `json:"consolidationGroupId"       bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
+	OrderID                pulid.ID              `json:"orderId"                    bun:"order_id,type:VARCHAR(100),nullzero"`
 	Status                 Status                `json:"status"                     bun:"status,type:shipment_status_enum,notnull,default:'New'"`
 	TenderStatus           *TenderStatus         `json:"tenderStatus"               bun:"tender_status,type:shipment_tender_status_enum,nullzero"`
 	EntryMethod            EntryMethod           `json:"entryMethod"                bun:"entry_method,type:shipment_entry_method_enum,notnull,default:'Manual'"`

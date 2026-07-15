@@ -585,6 +585,21 @@ func (r *Registry) registerWorkerResources() {
 
 func (r *Registry) registerOperationsResources() {
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceOrder.String(),
+		DisplayName: "Order",
+		Description: "Commercial order management (groups shipments/legs under one customer order)",
+		Category:    "Operations",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View orders"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create new orders"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify orders"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export order data"},
+			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel orders"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceShipment.String(),
 		DisplayName: "Shipment",
 		Description: "Shipment management",

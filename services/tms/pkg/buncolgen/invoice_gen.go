@@ -934,35 +934,41 @@ var InoviceLineTable = TableInfo{
 //	q.Where(InoviceLineColumns.ID.Eq(), id)           // WHERE invl.id = ?
 //	q.Order(InoviceLineColumns.CreatedAt.OrderDesc())  // ORDER BY invl.created_at DESC
 var InoviceLineColumns = struct {
-	ID             Column // "id" → qualified: "invl.id"
-	OrganizationID Column // "organization_id" → qualified: "invl.organization_id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "invl.business_unit_id"
-	InvoiceID      Column // "invoice_id" → qualified: "invl.invoice_id"
-	LineNumber     Column // "line_number" → qualified: "invl.line_number"
-	Type           Column // "type" → qualified: "invl.type"
-	Description    Column // "description" → qualified: "invl.description"
-	Quantity       Column // "quantity" → qualified: "invl.quantity"
-	UnitPrice      Column // "unit_price" → qualified: "invl.unit_price"
-	Amount         Column // "amount" → qualified: "invl.amount"
-	AmountMinor    Column // "amount_minor" → qualified: "invl.amount_minor"
-	Version        Column // "version" → qualified: "invl.version"
-	CreatedAt      Column // "created_at" → qualified: "invl.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "invl.updated_at"
+	ID                Column // "id" → qualified: "invl.id"
+	OrganizationID    Column // "organization_id" → qualified: "invl.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "invl.business_unit_id"
+	InvoiceID         Column // "invoice_id" → qualified: "invl.invoice_id"
+	ShipmentID        Column // "shipment_id" → qualified: "invl.shipment_id"
+	ShipmentProNumber Column // "shipment_pro_number" → qualified: "invl.shipment_pro_number"
+	ShipmentBOL       Column // "shipment_bol" → qualified: "invl.shipment_bol"
+	LineNumber        Column // "line_number" → qualified: "invl.line_number"
+	Type              Column // "type" → qualified: "invl.type"
+	Description       Column // "description" → qualified: "invl.description"
+	Quantity          Column // "quantity" → qualified: "invl.quantity"
+	UnitPrice         Column // "unit_price" → qualified: "invl.unit_price"
+	Amount            Column // "amount" → qualified: "invl.amount"
+	AmountMinor       Column // "amount_minor" → qualified: "invl.amount_minor"
+	Version           Column // "version" → qualified: "invl.version"
+	CreatedAt         Column // "created_at" → qualified: "invl.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "invl.updated_at"
 }{
-	ID:             NewColumn("id", "invl"),
-	OrganizationID: NewColumn("organization_id", "invl"),
-	BusinessUnitID: NewColumn("business_unit_id", "invl"),
-	InvoiceID:      NewColumn("invoice_id", "invl"),
-	LineNumber:     NewColumn("line_number", "invl"),
-	Type:           NewColumn("type", "invl"),
-	Description:    NewColumn("description", "invl"),
-	Quantity:       NewColumn("quantity", "invl"),
-	UnitPrice:      NewColumn("unit_price", "invl"),
-	Amount:         NewColumn("amount", "invl"),
-	AmountMinor:    NewColumn("amount_minor", "invl"),
-	Version:        NewColumn("version", "invl"),
-	CreatedAt:      NewColumn("created_at", "invl"),
-	UpdatedAt:      NewColumn("updated_at", "invl"),
+	ID:                NewColumn("id", "invl"),
+	OrganizationID:    NewColumn("organization_id", "invl"),
+	BusinessUnitID:    NewColumn("business_unit_id", "invl"),
+	InvoiceID:         NewColumn("invoice_id", "invl"),
+	ShipmentID:        NewColumn("shipment_id", "invl"),
+	ShipmentProNumber: NewColumn("shipment_pro_number", "invl"),
+	ShipmentBOL:       NewColumn("shipment_bol", "invl"),
+	LineNumber:        NewColumn("line_number", "invl"),
+	Type:              NewColumn("type", "invl"),
+	Description:       NewColumn("description", "invl"),
+	Quantity:          NewColumn("quantity", "invl"),
+	UnitPrice:         NewColumn("unit_price", "invl"),
+	Amount:            NewColumn("amount", "invl"),
+	AmountMinor:       NewColumn("amount_minor", "invl"),
+	Version:           NewColumn("version", "invl"),
+	CreatedAt:         NewColumn("created_at", "invl"),
+	UpdatedAt:         NewColumn("updated_at", "invl"),
 }
 
 // InoviceLineFieldMap maps JSON API field names to database column names.
@@ -970,20 +976,23 @@ var InoviceLineColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by InoviceLine.GetStaticFieldMap().
 var InoviceLineFieldMap = map[string]string{
-	"id":             "id",
-	"organizationId": "organization_id",
-	"businessUnitId": "business_unit_id",
-	"invoiceId":      "invoice_id",
-	"lineNumber":     "line_number",
-	"type":           "type",
-	"description":    "description",
-	"quantity":       "quantity",
-	"unitPrice":      "unit_price",
-	"amount":         "amount",
-	"amountMinor":    "amount_minor",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                "id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"invoiceId":         "invoice_id",
+	"shipmentId":        "shipment_id",
+	"shipmentProNumber": "shipment_pro_number",
+	"shipmentBol":       "shipment_bol",
+	"lineNumber":        "line_number",
+	"type":              "type",
+	"description":       "description",
+	"quantity":          "quantity",
+	"unitPrice":         "unit_price",
+	"amount":            "amount",
+	"amountMinor":       "amount_minor",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
 }
 
 // InoviceLineInsertableColumns lists column names suitable for INSERT statements on the "invoice_lines" table.
@@ -993,6 +1002,9 @@ var InoviceLineInsertableColumns = []string{
 	"organization_id",
 	"business_unit_id",
 	"invoice_id",
+	"shipment_id",
+	"shipment_pro_number",
+	"shipment_bol",
 	"line_number",
 	"type",
 	"description",
@@ -1066,20 +1078,23 @@ func InoviceLineApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bu
 //	InoviceLineFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var InoviceLineFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
-	LineNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
-	Type           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Quantity       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
-	UnitPrice      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitPrice" → DB: "unit_price"
-	Amount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
-	AmountMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	ShipmentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	ShipmentProNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
+	ShipmentBOL       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
+	LineNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
+	Type              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
+	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Quantity          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
+	UnitPrice         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitPrice" → DB: "unit_price"
+	Amount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	AmountMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1092,6 +1107,15 @@ var InoviceLineFilter = struct {
 	},
 	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceId", op, value)
+	},
+	ShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentId", op, value)
+	},
+	ShipmentProNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentProNumber", op, value)
+	},
+	ShipmentBOL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentBol", op, value)
 	},
 	LineNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lineNumber", op, value)
@@ -1156,6 +1180,7 @@ var InvoiceColumns = struct {
 	BusinessUnitID            Column // "business_unit_id" → qualified: "inv.business_unit_id"
 	BillingQueueItemID        Column // "billing_queue_item_id" → qualified: "inv.billing_queue_item_id"
 	ShipmentID                Column // "shipment_id" → qualified: "inv.shipment_id"
+	OrderID                   Column // "order_id" → qualified: "inv.order_id"
 	CustomerID                Column // "customer_id" → qualified: "inv.customer_id"
 	Number                    Column // "number" → qualified: "inv.number"
 	BillType                  Column // "bill_type" → qualified: "inv.bill_type"
@@ -1167,6 +1192,7 @@ var InvoiceColumns = struct {
 	PostedAt                  Column // "posted_at" → qualified: "inv.posted_at"
 	ShipmentProNumber         Column // "shipment_pro_number" → qualified: "inv.shipment_pro_number"
 	ShipmentBOL               Column // "shipment_bol" → qualified: "inv.shipment_bol"
+	OrderNumber               Column // "order_number" → qualified: "inv.order_number"
 	ServiceDate               Column // "service_date" → qualified: "inv.service_date"
 	BillToName                Column // "bill_to_name" → qualified: "inv.bill_to_name"
 	BillToCode                Column // "bill_to_code" → qualified: "inv.bill_to_code"
@@ -1213,6 +1239,7 @@ var InvoiceColumns = struct {
 	BusinessUnitID:            NewColumn("business_unit_id", "inv"),
 	BillingQueueItemID:        NewColumn("billing_queue_item_id", "inv"),
 	ShipmentID:                NewColumn("shipment_id", "inv"),
+	OrderID:                   NewColumn("order_id", "inv"),
 	CustomerID:                NewColumn("customer_id", "inv"),
 	Number:                    NewColumn("number", "inv"),
 	BillType:                  NewColumn("bill_type", "inv"),
@@ -1224,6 +1251,7 @@ var InvoiceColumns = struct {
 	PostedAt:                  NewColumn("posted_at", "inv"),
 	ShipmentProNumber:         NewColumn("shipment_pro_number", "inv"),
 	ShipmentBOL:               NewColumn("shipment_bol", "inv"),
+	OrderNumber:               NewColumn("order_number", "inv"),
 	ServiceDate:               NewColumn("service_date", "inv"),
 	BillToName:                NewColumn("bill_to_name", "inv"),
 	BillToCode:                NewColumn("bill_to_code", "inv"),
@@ -1276,6 +1304,7 @@ var InvoiceFieldMap = map[string]string{
 	"businessUnitId":            "business_unit_id",
 	"billingQueueItemId":        "billing_queue_item_id",
 	"shipmentId":                "shipment_id",
+	"orderId":                   "order_id",
 	"customerId":                "customer_id",
 	"number":                    "number",
 	"billType":                  "bill_type",
@@ -1287,6 +1316,7 @@ var InvoiceFieldMap = map[string]string{
 	"postedAt":                  "posted_at",
 	"shipmentProNumber":         "shipment_pro_number",
 	"shipmentBol":               "shipment_bol",
+	"orderNumber":               "order_number",
 	"serviceDate":               "service_date",
 	"billToName":                "bill_to_name",
 	"billToCode":                "bill_to_code",
@@ -1337,6 +1367,7 @@ var InvoiceInsertableColumns = []string{
 	"business_unit_id",
 	"billing_queue_item_id",
 	"shipment_id",
+	"order_id",
 	"customer_id",
 	"number",
 	"bill_type",
@@ -1348,6 +1379,7 @@ var InvoiceInsertableColumns = []string{
 	"posted_at",
 	"shipment_pro_number",
 	"shipment_bol",
+	"order_number",
 	"service_date",
 	"bill_to_name",
 	"bill_to_code",
@@ -1398,6 +1430,7 @@ var InvoiceInsertableColumns = []string{
 var InvoiceRelations = struct {
 	BillingQueueItem string
 	Shipment         string
+	Order            string
 	Customer         string
 	PDFDocument      string
 	Lines            string
@@ -1406,6 +1439,7 @@ var InvoiceRelations = struct {
 }{
 	BillingQueueItem: "BillingQueueItem",
 	Shipment:         "Shipment",
+	Order:            "Order",
 	Customer:         "Customer",
 	PDFDocument:      "PDFDocument",
 	Lines:            "Lines",
@@ -1468,6 +1502,7 @@ var InvoiceFilter = struct {
 	BusinessUnitID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	BillingQueueItemID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingQueueItemId" → DB: "billing_queue_item_id"
 	ShipmentID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	OrderID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderId" → DB: "order_id"
 	CustomerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	Number                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
 	BillType                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
@@ -1479,6 +1514,7 @@ var InvoiceFilter = struct {
 	PostedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
 	ShipmentProNumber         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
 	ShipmentBOL               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
+	OrderNumber               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderNumber" → DB: "order_number"
 	ServiceDate               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceDate" → DB: "service_date"
 	BillToName                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToName" → DB: "bill_to_name"
 	BillToCode                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCode" → DB: "bill_to_code"
@@ -1535,6 +1571,9 @@ var InvoiceFilter = struct {
 	ShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("shipmentId", op, value)
 	},
+	OrderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("orderId", op, value)
+	},
 	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("customerId", op, value)
 	},
@@ -1567,6 +1606,9 @@ var InvoiceFilter = struct {
 	},
 	ShipmentBOL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("shipmentBol", op, value)
+	},
+	OrderNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("orderNumber", op, value)
 	},
 	ServiceDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("serviceDate", op, value)

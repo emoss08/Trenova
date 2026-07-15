@@ -69,6 +69,7 @@ import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-se
 import type { EquipmentStatus, Status } from "@/types/helpers";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type { InvoiceStatus } from "@/types/invoice";
+import type { OrderStatus } from "@/types/order";
 import type {
   AdjustmentAccountingDatePolicy,
   AdjustmentAttachmentPolicy,
@@ -139,6 +140,16 @@ export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
   { label: "Inactive", value: "Inactive", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<Status>>;
+
+export const orderStatusChoices = [
+  { label: "Draft", value: "Draft", color: "#a3a3a3" },
+  { label: "Confirmed", value: "Confirmed", color: "#9333ea" },
+  { label: "In Progress", value: "InProgress", color: "#2563eb" },
+  { label: "Completed", value: "Completed", color: "#15803d" },
+  { label: "Billed", value: "Billed", color: "#0d9488" },
+  { label: "Closed", value: "Closed", color: "#525252" },
+  { label: "Canceled", value: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<OrderStatus>>;
 
 export const distanceProfileProviderChoices = [
   {

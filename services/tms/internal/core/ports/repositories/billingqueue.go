@@ -46,6 +46,11 @@ type BillingQueueRepository interface {
 		shipmentID pulid.ID,
 		billType billingqueue.BillType,
 	) (bool, error)
+	MarkPostedByOrderID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		orderID pulid.ID,
+	) (int64, error)
 	GetStatusCounts(
 		ctx context.Context,
 		req *GetBillingQueueStatsRequest,

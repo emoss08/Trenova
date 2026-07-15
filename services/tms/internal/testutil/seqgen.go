@@ -60,6 +60,16 @@ func (g TestSequenceGenerator) GenerateConsolidationNumber(
 	return g.SingleValue, nil
 }
 
+func (g TestSequenceGenerator) GenerateOrderNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}
+
 func (g TestSequenceGenerator) GenerateInvoiceNumber(
 	_ context.Context,
 	_ pulid.ID,

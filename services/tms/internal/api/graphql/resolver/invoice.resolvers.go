@@ -8,11 +8,13 @@ package resolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -34,6 +36,69 @@ func (r *invoiceResolver) TotalAmount(ctx context.Context, obj *invoice.Invoice)
 // AppliedAmount is the resolver for the appliedAmount field.
 func (r *invoiceResolver) AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error) {
 	return obj.AppliedAmount.String(), nil
+}
+
+// Quantity is the resolver for the quantity field.
+func (r *invoiceLineResolver) Quantity(ctx context.Context, obj *invoice.InoviceLine) (string, error) {
+	return obj.Quantity.String(), nil
+}
+
+// UnitPrice is the resolver for the unitPrice field.
+func (r *invoiceLineResolver) UnitPrice(ctx context.Context, obj *invoice.InoviceLine) (string, error) {
+	return obj.UnitPrice.String(), nil
+}
+
+// Amount is the resolver for the amount field.
+func (r *invoiceLineResolver) Amount(ctx context.Context, obj *invoice.InoviceLine) (string, error) {
+	return obj.Amount.String(), nil
+}
+
+// CreateInvoiceFromShipments is the resolver for the createInvoiceFromShipments field.
+func (r *mutationResolver) CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string) (*invoice.Invoice, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]pulid.ID, 0, len(shipmentIds))
+	for _, raw := range shipmentIds {
+		id, parseErr := pulid.MustParse(raw)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		ids = append(ids, id)
+	}
+
+	return r.invoiceService.CreateFromShipments(
+		ctx,
+		&services.CreateInvoiceFromShipmentsRequest{
+			ShipmentIDs: ids,
+			TenantInfo:  tenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+// CreateInvoiceFromOrder is the resolver for the createInvoiceFromOrder field.
+func (r *mutationResolver) CreateInvoiceFromOrder(ctx context.Context, orderID string) (*invoice.Invoice, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceInvoice, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.invoiceService.CreateFromOrder(
+		ctx,
+		&services.CreateInvoiceFromOrderRequest{
+			OrderID:    id,
+			TenantInfo: tenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 }
 
 // Invoices is the resolver for the invoices field.
@@ -83,4 +148,10 @@ func (r *queryResolver) Invoice(ctx context.Context, id string) (*invoice.Invoic
 // Invoice returns generated.InvoiceResolver implementation.
 func (r *Resolver) Invoice() generated.InvoiceResolver { return &invoiceResolver{r} }
 
-type invoiceResolver struct{ *Resolver }
+// InvoiceLine returns generated.InvoiceLineResolver implementation.
+func (r *Resolver) InvoiceLine() generated.InvoiceLineResolver { return &invoiceLineResolver{r} }
+
+type (
+	invoiceResolver     struct{ *Resolver }
+	invoiceLineResolver struct{ *Resolver }
+)

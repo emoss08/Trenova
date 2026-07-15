@@ -9,6 +9,7 @@ import (
 var requiredSequenceTypes = []SequenceType{
 	SequenceTypeProNumber,
 	SequenceTypeConsolidation,
+	SequenceTypeOrder,
 	SequenceTypeInvoice,
 	SequenceTypeWorkOrder,
 	SequenceTypeJournalBatch,
@@ -28,6 +29,7 @@ var sequenceTypeOrder = map[SequenceType]int{
 	SequenceTypeCreditMemo:           8,
 	SequenceTypeDebitMemo:            9,
 	SequenceTypeLocationCode:         10,
+	SequenceTypeOrder:                11,
 }
 
 func RequiredSequenceTypes() []SequenceType {
@@ -64,6 +66,15 @@ func DefaultSequenceFormat(sequenceType SequenceType) (*SequenceFormat, error) {
 		return &SequenceFormat{
 			Type:           sequenceType,
 			Prefix:         "C",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 5,
+		}, nil
+	case SequenceTypeOrder:
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "O",
 			IncludeYear:    true,
 			YearDigits:     2,
 			IncludeMonth:   true,

@@ -30,6 +30,11 @@ type CreateInvoiceFromShipmentsRequest struct {
 	TenantInfo  pagination.TenantInfo
 }
 
+type CreateInvoiceFromOrderRequest struct {
+	OrderID    pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type UpdateInvoiceDraftRequest struct {
 	InvoiceID              pulid.ID
 	TenantInfo             pagination.TenantInfo
@@ -167,6 +172,11 @@ type InvoiceService interface {
 	CreateFromShipments(
 		ctx context.Context,
 		req *CreateInvoiceFromShipmentsRequest,
+		actor *RequestActor,
+	) (*invoice.Invoice, error)
+	CreateFromOrder(
+		ctx context.Context,
+		req *CreateInvoiceFromOrderRequest,
 		actor *RequestActor,
 	) (*invoice.Invoice, error)
 	UpdateDraft(

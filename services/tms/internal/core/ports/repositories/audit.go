@@ -19,8 +19,9 @@ type ListAuditEntriesRequest struct {
 }
 
 type ListAuditEntriesConnectionRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-	Cursor pagination.CursorInfo    `json:"-"`
+	Filter     *pagination.QueryOptions `json:"filter"`
+	Cursor     pagination.CursorInfo    `json:"-"`
+	ResourceID pulid.ID                 `json:"resourceId"`
 }
 
 type ListByResourceIDRequest struct {

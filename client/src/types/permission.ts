@@ -85,6 +85,7 @@ export const Resource = {
   Worker: "worker",
   WorkerPTO: "worker_pto",
   Shipment: "shipment",
+  Order: "order",
   ShipmentControl: "shipment_control",
   DocumentControl: "document_control",
   ShipmentType: "shipment_type",

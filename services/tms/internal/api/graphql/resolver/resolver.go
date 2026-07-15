@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
@@ -81,6 +82,7 @@ type Params struct {
 	LocationCategoryService      *locationcategoryservice.Service
 	DocumentTypeService          *documenttypeservice.Service
 	ServiceTypeService           *servicetypeservice.Service
+	OrderService                 *orderservice.Service
 	ShipmentTypeService          *shipmenttypeservice.Service
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
@@ -136,6 +138,7 @@ type Resolver struct {
 	locationCategoryService      *locationcategoryservice.Service
 	documentTypeService          *documenttypeservice.Service
 	serviceTypeService           *servicetypeservice.Service
+	orderService                 *orderservice.Service
 	shipmentTypeService          *shipmenttypeservice.Service
 	equipmentManufacturerService *equipmentmanufacturerservice.Service
 	tractorService               *tractorservice.Service
@@ -193,6 +196,7 @@ func New(p Params) *Resolver {
 		locationCategoryService:      p.LocationCategoryService,
 		documentTypeService:          p.DocumentTypeService,
 		serviceTypeService:           p.ServiceTypeService,
+		orderService:                 p.OrderService,
 		shipmentTypeService:          p.ShipmentTypeService,
 		equipmentManufacturerService: p.EquipmentManufacturerService,
 		tractorService:               p.TractorService,

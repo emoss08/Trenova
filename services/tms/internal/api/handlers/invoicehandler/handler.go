@@ -51,6 +51,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCreate),
 		h.createFromShipments,
 	)
+	api.POST(
+		"/from-order/",
+		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCreate),
+		h.createFromOrder,
+	)
 	api.GET(
 		"/:invoiceID/",
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
@@ -108,6 +113,10 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 
 type createFromShipmentsRequest struct {
 	ShipmentIDs []pulid.ID `json:"shipmentIds"`
+}
+
+type createFromOrderRequest struct {
+	OrderID pulid.ID `json:"orderId"`
 }
 
 type updateDraftRequest struct {
@@ -203,6 +212,33 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 		c.Request.Context(),
 		&services.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs: req.ShipmentIDs,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, entity)
+}
+
+func (h *Handler) createFromOrder(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	var req createFromOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.CreateFromOrder(
+		c.Request.Context(),
+		&services.CreateInvoiceFromOrderRequest{
+			OrderID: req.OrderID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,
 				BuID:  authCtx.BusinessUnitID,

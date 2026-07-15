@@ -55,6 +55,12 @@ const shipmentManagementModule: NavModule = {
       resource: Resource.Shipment,
     },
     {
+      id: "orders",
+      label: "Orders",
+      path: "/shipment-management/orders",
+      resource: Resource.Order,
+    },
+    {
       id: "service-failures",
       label: "Service Failures",
       path: "/shipment-management/service-failures",

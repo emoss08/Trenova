@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -624,6 +625,45 @@ type NotificationEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type OrderCharge struct {
+	ID          string `json:"id"`
+	OrderID     string `json:"orderId"`
+	Description string `json:"description"`
+	Amount      string `json:"amount"`
+	CreatedAt   int    `json:"createdAt"`
+}
+
+type OrderConnection struct {
+	Edges      []*OrderEdge `json:"edges"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+	TotalCount *int         `json:"totalCount,omitempty"`
+}
+
+type OrderEdge struct {
+	Node   *order.Order `json:"node"`
+	Cursor string       `json:"cursor"`
+}
+
+type OrderInput struct {
+	CustomerID   string        `json:"customerId"`
+	OwnerID      *string       `json:"ownerId,omitempty"`
+	Status       *order.Status `json:"status,omitempty"`
+	PoNumber     *string       `json:"poNumber,omitempty"`
+	Bol          *string       `json:"bol,omitempty"`
+	CurrencyCode *string       `json:"currencyCode,omitempty"`
+	QuotedAmount *string       `json:"quotedAmount,omitempty"`
+	BaseAmount   *string       `json:"baseAmount,omitempty"`
+}
+
+type OrderLeg struct {
+	ID                  string         `json:"id"`
+	ProNumber           string         `json:"proNumber"`
+	Status              ShipmentStatus `json:"status"`
+	Bol                 *string        `json:"bol,omitempty"`
+	FreightChargeAmount string         `json:"freightChargeAmount"`
+	TotalChargeAmount   string         `json:"totalChargeAmount"`
+}
+
 type OrganizationInput struct {
 	Version      int     `json:"version"`
 	Name         string  `json:"name"`
@@ -757,6 +797,7 @@ type Shipment struct {
 	CanceledByID           *string                     `json:"canceledById,omitempty"`
 	FormulaTemplateID      string                      `json:"formulaTemplateId"`
 	ConsolidationGroupID   *string                     `json:"consolidationGroupId,omitempty"`
+	OrderID                *string                     `json:"orderId,omitempty"`
 	Status                 ShipmentStatus              `json:"status"`
 	TenderStatus           *ShipmentTenderStatus       `json:"tenderStatus,omitempty"`
 	EntryMethod            *ShipmentEntryMethod        `json:"entryMethod,omitempty"`
@@ -1319,6 +1360,7 @@ type ShipmentInput struct {
 	CanceledByID           *string                          `json:"canceledById,omitempty"`
 	FormulaTemplateID      string                           `json:"formulaTemplateId"`
 	ConsolidationGroupID   *string                          `json:"consolidationGroupId,omitempty"`
+	OrderID                *string                          `json:"orderId,omitempty"`
 	Status                 *ShipmentStatus                  `json:"status,omitempty"`
 	TenderStatus           *ShipmentTenderStatus            `json:"tenderStatus,omitempty"`
 	EntryMethod            *ShipmentEntryMethod             `json:"entryMethod,omitempty"`
@@ -2158,6 +2200,7 @@ const (
 	SelectOptionResourceWorker                SelectOptionResource = "WORKER"
 	SelectOptionResourceUsState               SelectOptionResource = "US_STATE"
 	SelectOptionResourceShipment              SelectOptionResource = "SHIPMENT"
+	SelectOptionResourceOrder                 SelectOptionResource = "ORDER"
 	SelectOptionResourceEdiTransfer           SelectOptionResource = "EDI_TRANSFER"
 )
 
@@ -2169,12 +2212,13 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceWorker,
 	SelectOptionResourceUsState,
 	SelectOptionResourceShipment,
+	SelectOptionResourceOrder,
 	SelectOptionResourceEdiTransfer,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceEdiTransfer:
+	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer:
 		return true
 	}
 	return false

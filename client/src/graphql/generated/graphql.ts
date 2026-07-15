@@ -424,6 +424,26 @@ export type NotificationPriority =
   | 'low'
   | 'medium';
 
+export type OrderInput = {
+  baseAmount?: string | null | undefined;
+  bol?: string | null | undefined;
+  currencyCode?: string | null | undefined;
+  customerId: string | number;
+  ownerId?: string | number | null | undefined;
+  poNumber?: string | null | undefined;
+  quotedAmount?: string | null | undefined;
+  status?: OrderStatus | null | undefined;
+};
+
+export type OrderStatus =
+  | 'Billed'
+  | 'Canceled'
+  | 'Closed'
+  | 'Completed'
+  | 'Confirmed'
+  | 'Draft'
+  | 'InProgress';
+
 export type OrganizationInput = {
   addressLine1: string;
   addressLine2?: string | null | undefined;
@@ -481,6 +501,7 @@ export type SelectOptionResource =
   | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'
+  | 'ORDER'
   | 'SHIPMENT'
   | 'TRACTOR'
   | 'TRAILER'
@@ -703,6 +724,7 @@ export type ShipmentInput = {
   freightChargeAmount?: string | null | undefined;
   markedReadyToBillAt?: number | null | undefined;
   moves?: Array<ShipmentMoveInput> | null | undefined;
+  orderId?: string | number | null | undefined;
   otherChargeAmount?: string | null | undefined;
   ownerId?: string | number | null | undefined;
   pieces?: number | null | undefined;
@@ -1297,7 +1319,7 @@ export type HoldReasonTableQueryVariables = Exact<{
 
 export type HoldReasonTableQuery = { holdReasons: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HoldReasonTableRowFieldsFragment': HoldReasonTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string, customerId: string, number: string, billType: BillType, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
+export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, customerId: string, number: string, billType: BillType, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
 
 export type InvoiceTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -1367,6 +1389,77 @@ export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: n
 
 
 export type MarkAllNotificationsReadMutation = { markAllNotificationsRead: boolean };
+
+export type OrderDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type OrderDetailQuery = { order: { id: string, orderNumber: string, status: OrderStatus, customerId: string, ownerId: string | null, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, legs: Array<{ id: string, proNumber: string, status: ShipmentStatus, bol: string | null, freightChargeAmount: string, totalChargeAmount: string }>, charges: Array<{ id: string, description: string, amount: string, createdAt: number }> } | null };
+
+export type AttachOrderShipmentsMutationVariables = Exact<{
+  orderId: string | number;
+  shipmentIds: Array<string | number> | string | number;
+}>;
+
+
+export type AttachOrderShipmentsMutation = { attachOrderShipments: { id: string, status: OrderStatus } };
+
+export type DetachOrderShipmentMutationVariables = Exact<{
+  orderId: string | number;
+  shipmentId: string | number;
+}>;
+
+
+export type DetachOrderShipmentMutation = { detachOrderShipment: { id: string, status: OrderStatus } };
+
+export type CreateInvoiceFromOrderMutationVariables = Exact<{
+  orderId: string | number;
+}>;
+
+
+export type CreateInvoiceFromOrderMutation = { createInvoiceFromOrder: { id: string, number: string } };
+
+export type CreateOrderMutationVariables = Exact<{
+  input: OrderInput;
+}>;
+
+
+export type CreateOrderMutation = { createOrder: { id: string, orderNumber: string, status: OrderStatus } };
+
+export type UpdateOrderMutationVariables = Exact<{
+  id: string | number;
+  input: OrderInput;
+}>;
+
+
+export type UpdateOrderMutation = { updateOrder: { id: string, orderNumber: string, status: OrderStatus } };
+
+export type AddOrderChargeMutationVariables = Exact<{
+  orderId: string | number;
+  description: string;
+  amount: string;
+}>;
+
+
+export type AddOrderChargeMutation = { addOrderCharge: { id: string, totalAmount: string | null } };
+
+export type RemoveOrderChargeMutationVariables = Exact<{
+  orderId: string | number;
+  chargeId: string | number;
+}>;
+
+
+export type RemoveOrderChargeMutation = { removeOrderCharge: { id: string, totalAmount: string | null } };
+
+export type OrderTableRowFieldsFragment = { id: string, ownerId: string | null, businessUnitId: string, organizationId: string, customerId: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'OrderTableRowFieldsFragment' };
+
+export type OrderTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type OrderTableQuery = { orders: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'OrderTableRowFieldsFragment': OrderTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
@@ -2953,6 +3046,26 @@ export const NotificationFieldsFragmentDoc = new TypedDocumentString(`
   createdAt
 }
     `, {"fragmentName":"NotificationFields"}) as unknown as TypedDocumentString<NotificationFieldsFragment, unknown>;
+export const OrderTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment OrderTableRowFields on Order {
+  id
+  ownerId
+  businessUnitId
+  organizationId
+  customerId
+  status
+  orderNumber
+  poNumber
+  bol
+  currencyCode
+  quotedAmount
+  baseAmount
+  totalAmount
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"OrderTableRowFields"}) as unknown as TypedDocumentString<OrderTableRowFieldsFragment, unknown>;
 export const OrganizationSettingsStateFieldsFragmentDoc = new TypedDocumentString(`
     fragment OrganizationSettingsStateFields on UsState {
   id
@@ -5958,6 +6071,139 @@ export const MarkAllNotificationsReadDocument = new TypedDocumentString(`
   markAllNotificationsRead
 }
     `, {"hash":"sha256:e919497b911d73638f8329785ecb0b4b48a247bb6d037bf89b2a498c5bca336d"}) as unknown as TypedDocumentString<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
+export const OrderDetailDocument = new TypedDocumentString(`
+    query OrderDetail($id: ID!) {
+  order(id: $id) {
+    id
+    orderNumber
+    status
+    customerId
+    ownerId
+    poNumber
+    bol
+    currencyCode
+    quotedAmount
+    baseAmount
+    totalAmount
+    version
+    createdAt
+    updatedAt
+    customer {
+      id
+      name
+      code
+    }
+    legs {
+      id
+      proNumber
+      status
+      bol
+      freightChargeAmount
+      totalChargeAmount
+    }
+    charges {
+      id
+      description
+      amount
+      createdAt
+    }
+  }
+}
+    `, {"hash":"sha256:ee4a6f12cb9122f7296b7dcbb96a56fb348b5ec771b91e11e27263a6785f2692"}) as unknown as TypedDocumentString<OrderDetailQuery, OrderDetailQueryVariables>;
+export const AttachOrderShipmentsDocument = new TypedDocumentString(`
+    mutation AttachOrderShipments($orderId: ID!, $shipmentIds: [ID!]!) {
+  attachOrderShipments(orderId: $orderId, shipmentIds: $shipmentIds) {
+    id
+    status
+  }
+}
+    `, {"hash":"sha256:2ff86ba24ab6e0c3eb920e91d67585ad10a0e926638dd32f6800a91d8183ecfd"}) as unknown as TypedDocumentString<AttachOrderShipmentsMutation, AttachOrderShipmentsMutationVariables>;
+export const DetachOrderShipmentDocument = new TypedDocumentString(`
+    mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {
+  detachOrderShipment(orderId: $orderId, shipmentId: $shipmentId) {
+    id
+    status
+  }
+}
+    `, {"hash":"sha256:fbec2b74f150d46045f34e1bccf77b3cbbe49d8cf7baed40e09d734ad398646f"}) as unknown as TypedDocumentString<DetachOrderShipmentMutation, DetachOrderShipmentMutationVariables>;
+export const CreateInvoiceFromOrderDocument = new TypedDocumentString(`
+    mutation CreateInvoiceFromOrder($orderId: ID!) {
+  createInvoiceFromOrder(orderId: $orderId) {
+    id
+    number
+  }
+}
+    `, {"hash":"sha256:cae43848db3ff746b04aca0c2e169bedeb64675591f61d673d246905ba337a3b"}) as unknown as TypedDocumentString<CreateInvoiceFromOrderMutation, CreateInvoiceFromOrderMutationVariables>;
+export const CreateOrderDocument = new TypedDocumentString(`
+    mutation CreateOrder($input: OrderInput!) {
+  createOrder(input: $input) {
+    id
+    orderNumber
+    status
+  }
+}
+    `, {"hash":"sha256:c48534ff5f2acc8688e709f14beb12c393e438536194c93bd72c91dbe20ba565"}) as unknown as TypedDocumentString<CreateOrderMutation, CreateOrderMutationVariables>;
+export const UpdateOrderDocument = new TypedDocumentString(`
+    mutation UpdateOrder($id: ID!, $input: OrderInput!) {
+  updateOrder(id: $id, input: $input) {
+    id
+    orderNumber
+    status
+  }
+}
+    `, {"hash":"sha256:69ed9c345d3fde3537e01d2be49cf02a622eccdbe7c42999314e6d097e23f2a9"}) as unknown as TypedDocumentString<UpdateOrderMutation, UpdateOrderMutationVariables>;
+export const AddOrderChargeDocument = new TypedDocumentString(`
+    mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: String!) {
+  addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {
+    id
+    totalAmount
+  }
+}
+    `, {"hash":"sha256:a2a68d44904a52d9aad6865dccfdf7d503f3e403144d6cef3a1ffc20bea90bdf"}) as unknown as TypedDocumentString<AddOrderChargeMutation, AddOrderChargeMutationVariables>;
+export const RemoveOrderChargeDocument = new TypedDocumentString(`
+    mutation RemoveOrderCharge($orderId: ID!, $chargeId: ID!) {
+  removeOrderCharge(orderId: $orderId, chargeId: $chargeId) {
+    id
+    totalAmount
+  }
+}
+    `, {"hash":"sha256:03f6923fb9554863167c01279b3f1605db40fd2c0c0a030b934ac49959b364c0"}) as unknown as TypedDocumentString<RemoveOrderChargeMutation, RemoveOrderChargeMutationVariables>;
+export const OrderTableDocument = new TypedDocumentString(`
+    query OrderTable($input: DataTableConnectionInput!) {
+  orders(input: $input) {
+    edges {
+      node {
+        ...OrderTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment OrderTableRowFields on Order {
+  id
+  ownerId
+  businessUnitId
+  organizationId
+  customerId
+  status
+  orderNumber
+  poNumber
+  bol
+  currencyCode
+  quotedAmount
+  baseAmount
+  totalAmount
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:213013aa6dff6a91519d84bc1f7e26294ced739bff9e9b76095fe7b4489115f2"}) as unknown as TypedDocumentString<OrderTableQuery, OrderTableQueryVariables>;
 export const OrganizationSettingsDocument = new TypedDocumentString(`
     query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
   organization(id: $id, includeState: $includeState, includeBu: $includeBu) {

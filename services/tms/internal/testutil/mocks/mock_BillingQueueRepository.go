@@ -391,6 +391,78 @@ func (_c *MockBillingQueueRepository_List_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// MarkPostedByOrderID provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) MarkPostedByOrderID(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkPostedByOrderID")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) (int64, error)); ok {
+		return returnFunc(ctx, tenantInfo, orderID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) int64); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_MarkPostedByOrderID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkPostedByOrderID'
+type MockBillingQueueRepository_MarkPostedByOrderID_Call struct {
+	*mock.Call
+}
+
+// MarkPostedByOrderID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+func (_e *MockBillingQueueRepository_Expecter) MarkPostedByOrderID(ctx any, tenantInfo any, orderID any) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+	return &MockBillingQueueRepository_MarkPostedByOrderID_Call{Call: _e.mock.On("MarkPostedByOrderID", ctx, tenantInfo, orderID)}
+}
+
+func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID)) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) Return(n int64, err error) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkPostedByOrderID_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error)) *MockBillingQueueRepository_MarkPostedByOrderID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockBillingQueueRepository
 func (_mock *MockBillingQueueRepository) Update(ctx context.Context, entity *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error) {
 	ret := _mock.Called(ctx, entity)

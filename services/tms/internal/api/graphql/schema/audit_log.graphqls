@@ -42,5 +42,9 @@ type AuditEntryConnection {
 
 extend type Query {
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  auditEntriesByResourceId(
+    input: DataTableConnectionInput!
+    resourceId: ID!
+  ): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
 }

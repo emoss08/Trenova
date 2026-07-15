@@ -173,6 +173,40 @@ func (r *repository) Update(
 	})
 }
 
+// MarkPostedByOrderID flips every non-posted billing-queue item belonging to an order
+// to Posted. Used when a grouped invoice posts so all of the order's leg items settle
+// together, not just the anchor. Returns the number of rows updated.
+func (r *repository) MarkPostedByOrderID(
+	ctx context.Context,
+	ti pagination.TenantInfo,
+	orderID pulid.ID,
+) (int64, error) {
+	if orderID.IsNil() {
+		return 0, nil
+	}
+
+	bqi := buncolgen.BillingQueueItemColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*billingqueue.BillingQueueItem)(nil)).
+		Where(bqi.OrderID.Eq(), orderID).
+		Where(bqi.OrganizationID.Eq(), ti.OrgID).
+		Where(bqi.BusinessUnitID.Eq(), ti.BuID).
+		Where(bqi.Status.Ne(), billingqueue.StatusPosted).
+		Set(bqi.Status.Set(), billingqueue.StatusPosted).
+		Set(bqi.Version.Inc(1)).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("mark billing queue items posted by order: %w", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("rows affected: %w", err)
+	}
+
+	return affected, nil
+}
+
 func (r *repository) ExistsByShipmentAndType(
 	ctx context.Context,
 	ti pagination.TenantInfo,

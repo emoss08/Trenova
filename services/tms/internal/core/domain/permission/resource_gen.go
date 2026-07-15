@@ -43,6 +43,7 @@ const (
 	ResourceWorkerPTO Resource = "worker_pto"
 
 	// Operations
+	ResourceOrder                    Resource = "order"
 	ResourceShipment                 Resource = "shipment"
 	ResourceShipmentComment          Resource = "shipment_comment"
 	ResourceShipmentMove             Resource = "shipment_move"

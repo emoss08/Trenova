@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
@@ -73,6 +72,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurereasoncodehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
@@ -98,7 +98,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	iamhandler.New,
 	userhandler.New,
 	authhandler.New,
-	audithandler.New,
 	formulatemplatehandler.New,
 	pagefavoritehandler.New,
 	equipmenttypehandler.New,
@@ -131,6 +130,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	versionhandler.New,
 	controlplaneprovisioninghandler.New,
 	servicetypehandler.New,
+	orderhandler.New,
 	servicefailurereasoncodehandler.New,
 	servicefailurehandler.New,
 	sequenceconfighandler.New,

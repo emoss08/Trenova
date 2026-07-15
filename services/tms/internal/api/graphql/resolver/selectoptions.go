@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -94,6 +95,9 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceShipment: {
 			resolve: r.resolveShipmentSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceOrder: {
+			resolve: r.resolveOrderSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceEdiTransfer: {
 			resolve: r.resolveEDITransferSelectOptions,
@@ -361,6 +365,67 @@ func (r *Resolver) resolveUSStateSelectOptions(
 		req.selectQuery.Pagination.SafeOffset(),
 		usStateSelectOptionItem,
 	)
+}
+
+func (r *Resolver) resolveOrderSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		entities, err := r.orderService.GetByIDs(
+			ctx,
+			repositories.GetOrdersByIDsRequest{
+				TenantInfo: req.tenantInfo,
+				OrderIDs:   req.ids,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items := orderedSelectOptionItems(req.ids, entities, orderID, orderSelectOptionItem)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.orderService.SelectOptions(
+		ctx,
+		&repositories.OrderSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		orderSelectOptionItem,
+	)
+}
+
+func orderSelectOption(entity *order.Order) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.OrderNumber,
+		Description: stringPtr(entity.PONumber),
+		Meta: map[string]any{
+			"status":      string(entity.Status),
+			"orderNumber": entity.OrderNumber,
+		},
+	}
+}
+
+func orderSelectOptionItem(entity *order.Order) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		orderSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func orderID(entity *order.Order) pulid.ID {
+	return entity.ID
 }
 
 func (r *Resolver) resolveShipmentSelectOptions(

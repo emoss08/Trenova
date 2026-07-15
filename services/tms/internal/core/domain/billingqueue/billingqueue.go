@@ -30,6 +30,7 @@ type BillingQueueItem struct {
 	OrganizationID            pulid.ID             `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID            pulid.ID             `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),notnull"`
+	OrderID                   pulid.ID             `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
 	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
 	Number                    string               `json:"number"                    bun:"number,type:VARCHAR(100),nullzero"`
 	Status                    Status               `json:"status"                    bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`

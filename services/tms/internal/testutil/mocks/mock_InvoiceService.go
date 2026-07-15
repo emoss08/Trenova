@@ -189,6 +189,80 @@ func (_c *MockInvoiceService_CreateFromApprovedBillingQueueItem_Call) RunAndRetu
 	return _c
 }
 
+// CreateFromOrder provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) CreateFromOrder(ctx context.Context, req *services.CreateInvoiceFromOrderRequest, actor *services.RequestActor) (*invoice.Invoice, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateFromOrder")
+	}
+
+	var r0 *invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateInvoiceFromOrderRequest, *services.RequestActor) (*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateInvoiceFromOrderRequest, *services.RequestActor) *invoice.Invoice); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.Invoice)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateInvoiceFromOrderRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_CreateFromOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateFromOrder'
+type MockInvoiceService_CreateFromOrder_Call struct {
+	*mock.Call
+}
+
+// CreateFromOrder is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CreateInvoiceFromOrderRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) CreateFromOrder(ctx any, req any, actor any) *MockInvoiceService_CreateFromOrder_Call {
+	return &MockInvoiceService_CreateFromOrder_Call{Call: _e.mock.On("CreateFromOrder", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_CreateFromOrder_Call) Run(run func(ctx context.Context, req *services.CreateInvoiceFromOrderRequest, actor *services.RequestActor)) *MockInvoiceService_CreateFromOrder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CreateInvoiceFromOrderRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CreateInvoiceFromOrderRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateFromOrder_Call) Return(invoice1 *invoice.Invoice, err error) *MockInvoiceService_CreateFromOrder_Call {
+	_c.Call.Return(invoice1, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateFromOrder_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateInvoiceFromOrderRequest, actor *services.RequestActor) (*invoice.Invoice, error)) *MockInvoiceService_CreateFromOrder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateFromShipments provides a mock function for the type MockInvoiceService
 func (_mock *MockInvoiceService) CreateFromShipments(ctx context.Context, req *services.CreateInvoiceFromShipmentsRequest, actor *services.RequestActor) (*invoice.Invoice, error) {
 	ret := _mock.Called(ctx, req, actor)

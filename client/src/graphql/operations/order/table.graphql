@@ -1,0 +1,32 @@
+fragment OrderTableRowFields on Order {
+  id
+  ownerId
+  businessUnitId
+  organizationId
+  customerId
+  status
+  orderNumber
+  poNumber
+  bol
+  currencyCode
+  quotedAmount
+  baseAmount
+  totalAmount
+  version
+  createdAt
+  updatedAt
+}
+
+query OrderTable($input: DataTableConnectionInput!) {
+  orders(input: $input) {
+    edges {
+      node {
+        ...OrderTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

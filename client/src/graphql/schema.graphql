@@ -1533,7 +1533,11 @@ type Invoice {
   id: ID!
   invoiceDate: Int!
   isAdjustmentArtifact: Boolean!
+  lines: [InvoiceLine!]
   number: String!
+  order: Order
+  orderId: ID
+  orderNumber: String
   organizationId: ID!
   otherAmount: String!
   paymentTerm: InvoicePaymentTerm!
@@ -1543,7 +1547,7 @@ type Invoice {
   serviceDate: Int
   settlementStatus: InvoiceSettlementStatus!
   shipmentBol: String!
-  shipmentId: ID!
+  shipmentId: ID
   shipmentProNumber: String!
   status: InvoiceStatus!
   subtotalAmount: String!
@@ -1566,6 +1570,29 @@ enum InvoiceDisputeStatus {
 type InvoiceEdge {
   cursor: String!
   node: Invoice!
+}
+
+type InvoiceLine {
+  amount: String!
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  invoiceId: ID!
+  lineNumber: Int!
+  organizationId: ID!
+  quantity: String!
+  shipmentBol: String
+  shipmentId: ID
+  shipmentProNumber: String
+  type: InvoiceLineType!
+  unitPrice: String!
+  updatedAt: Int!
+}
+
+enum InvoiceLineType {
+  Accessorial
+  Freight
 }
 
 enum InvoicePaymentTerm {
@@ -1813,8 +1840,10 @@ enum MoveStatus {
 }
 
 type Mutation {
+  addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
   approveWorkerPTO(id: ID!): WorkerPTO!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+  attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
@@ -1828,6 +1857,9 @@ type Mutation {
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
+  createInvoiceFromOrder(orderId: ID!): Invoice!
+  createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
+  createOrder(input: OrderInput!): Order!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
@@ -1835,6 +1867,7 @@ type Mutation {
   createTrailer(input: TrailerInput!): Trailer!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
+  detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
@@ -1848,6 +1881,7 @@ type Mutation {
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+  removeOrderCharge(chargeId: ID!, orderId: ID!): Order!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
@@ -1855,6 +1889,7 @@ type Mutation {
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
+  updateOrder(id: ID!, input: OrderInput!): Order!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
@@ -1919,6 +1954,80 @@ enum NotificationPriority {
   high
   low
   medium
+}
+
+type Order {
+  baseAmount: String
+  bol: String
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  charges: [OrderCharge!]!
+  createdAt: Int!
+  currencyCode: String!
+  customer: Customer
+  customerId: ID!
+  enteredById: ID
+  id: ID!
+  legs: [OrderLeg!]!
+  orderNumber: String!
+  organization: Organization
+  organizationId: ID!
+  ownerId: ID
+  poNumber: String
+  quotedAmount: String
+  status: OrderStatus!
+  totalAmount: String
+  updatedAt: Int!
+  version: Int!
+}
+
+type OrderCharge {
+  amount: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  orderId: ID!
+}
+
+type OrderConnection {
+  edges: [OrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type OrderEdge {
+  cursor: String!
+  node: Order!
+}
+
+input OrderInput {
+  baseAmount: String
+  bol: String
+  currencyCode: String
+  customerId: ID!
+  ownerId: ID
+  poNumber: String
+  quotedAmount: String
+  status: OrderStatus
+}
+
+type OrderLeg {
+  bol: String
+  freightChargeAmount: String!
+  id: ID!
+  proNumber: String!
+  status: ShipmentStatus!
+  totalChargeAmount: String!
+}
+
+enum OrderStatus {
+  Billed
+  Canceled
+  Closed
+  Completed
+  Confirmed
+  Draft
+  InProgress
 }
 
 type Organization {
@@ -2009,6 +2118,7 @@ type Query {
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
@@ -2067,6 +2177,8 @@ type Query {
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   notificationUnreadCount: Int!
   notifications(input: DataTableConnectionInput!): NotificationConnection!
+  order(id: ID!): Order
+  orders(input: DataTableConnectionInput!): OrderConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
@@ -2229,6 +2341,7 @@ enum SelectOptionResource {
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  ORDER
   SHIPMENT
   TRACTOR
   TRAILER
@@ -2426,6 +2539,7 @@ type Shipment {
   id: ID!
   markedReadyToBillAt: Int
   moves: [ShipmentMove!]!
+  orderId: ID
   organizationId: ID!
   otherChargeAmount: String!
   owner: User
@@ -3071,6 +3185,7 @@ input ShipmentInput {
   freightChargeAmount: String = "0"
   markedReadyToBillAt: Int
   moves: [ShipmentMoveInput!] = []
+  orderId: ID
   otherChargeAmount: String = "0"
   ownerId: ID
   pieces: Int

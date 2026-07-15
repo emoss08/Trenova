@@ -297,6 +297,7 @@ export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
 const shipmentBaseSchema = z.object({
   sourceDocumentId: nullableStringSchema,
+  orderId: optionalStringSchema,
   serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
   shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
   customerId: z.string().min(1, { error: "Customer is required" }),

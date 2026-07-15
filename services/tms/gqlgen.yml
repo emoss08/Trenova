@@ -191,6 +191,21 @@ models:
         resolver: true
       appliedAmount:
         resolver: true
+  InvoiceLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.InoviceLine
+    fields:
+      shipmentBol:
+        fieldName: ShipmentBOL
+      quantity:
+        resolver: true
+      unitPrice:
+        resolver: true
+      amount:
+        resolver: true
+  InvoiceLineType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.InvoiceLineType
   EquipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType
@@ -283,6 +298,23 @@ models:
   ServiceType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/servicetype.ServiceType
+  Order:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/order.Order
+    fields:
+      quotedAmount:
+        resolver: true
+      baseAmount:
+        resolver: true
+      totalAmount:
+        resolver: true
+      legs:
+        resolver: true
+      charges:
+        resolver: true
+  OrderStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/order.Status
   ShipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/shipmenttype.ShipmentType

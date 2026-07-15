@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
@@ -76,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurereasoncodehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
@@ -127,7 +127,6 @@ type RouterParams struct {
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
-	AuditHandler                    *audithandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
 	PageFavoriteHandler             *pagefavoritehandler.Handler
 	EquipmentTypeHandler            *equipmenttypehandler.Handler
@@ -153,6 +152,7 @@ type RouterParams struct {
 	ControlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
+	OrderHandler                    *orderhandler.Handler
 	ServiceFailureReasonCodeHandler *servicefailurereasoncodehandler.Handler
 	ServiceFailureHandler           *servicefailurehandler.Handler
 	SequenceConfigHandler           *sequenceconfighandler.Handler
@@ -226,10 +226,10 @@ type Router struct {
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
-	auditHandler                    *audithandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
 	serviceTypeHandler              *servicetypehandler.Handler
+	orderHandler                    *orderhandler.Handler
 	serviceFailureReasonCodeHandler *servicefailurereasoncodehandler.Handler
 	serviceFailureHandler           *servicefailurehandler.Handler
 	sequenceConfigHandler           *sequenceconfighandler.Handler
@@ -327,10 +327,10 @@ func NewRouter(p RouterParams) *Router {
 		bankReceiptHandler:              p.BankReceiptHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
-		auditHandler:                    p.AuditHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
 		serviceTypeHandler:              p.ServiceTypeHandler,
+		orderHandler:                    p.OrderHandler,
 		serviceFailureReasonCodeHandler: p.ServiceFailureReasonCodeHandler,
 		serviceFailureHandler:           p.ServiceFailureHandler,
 		sequenceConfigHandler:           p.SequenceConfigHandler,
@@ -496,7 +496,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
-	r.auditHandler.RegisterRoutes(protected)
 	r.formulaTemplateHandler.RegisterRoutes(protected)
 	r.pageFavoriteHandler.RegisterRoutes(protected)
 	r.equipmentManufacturerHandler.RegisterRoutes(protected)
@@ -518,6 +517,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
+	r.orderHandler.RegisterRoutes(protected)
 	r.serviceFailureReasonCodeHandler.RegisterRoutes(protected)
 	r.serviceFailureHandler.RegisterRoutes(protected)
 	r.sequenceConfigHandler.RegisterRoutes(protected)

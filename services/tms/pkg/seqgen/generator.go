@@ -64,6 +64,20 @@ func (g *generator) GenerateConsolidationNumber(
 	})
 }
 
+func (g *generator) GenerateOrderNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeOrder,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
 func (g *generator) GenerateInvoiceNumber(
 	ctx context.Context,
 	orgID, buID pulid.ID,

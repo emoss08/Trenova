@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -82,16 +83,28 @@ func (s *Service) CreateFromShipments(
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 	if len(req.ShipmentIDs) == 0 {
-		return nil, errortypes.NewValidationError("shipmentIds", errortypes.ErrRequired, "One shipment is required")
+		return nil, errortypes.NewValidationError(
+			"shipmentIds",
+			errortypes.ErrRequired,
+			"One shipment is required",
+		)
 	}
 	if len(req.ShipmentIDs) > 1 {
-		return nil, errortypes.NewValidationError("shipmentIds", errortypes.ErrInvalid, "Grouped invoices are not supported yet")
+		return s.groupedInvoiceFromShipments(ctx, req, actor)
 	}
 
 	shp, err := s.shipmentRepo.GetByID(
@@ -102,18 +115,35 @@ func (s *Service) CreateFromShipments(
 		return nil, err
 	}
 	if shp.Status != shipment.StatusReadyToInvoice && shp.Status != shipment.StatusCompleted {
-		return nil, errortypes.NewValidationError("shipmentIds", errortypes.ErrInvalid, "Shipment must be completed or ready to invoice")
+		return nil, errortypes.NewValidationError(
+			"shipmentIds",
+			errortypes.ErrInvalid,
+			"Shipment must be completed or ready to invoice",
+		)
 	}
 
-	exists, err := s.billingQueueRepo.ExistsByShipmentAndType(ctx, req.TenantInfo, shp.ID, billingqueue.BillTypeInvoice)
+	exists, err := s.billingQueueRepo.ExistsByShipmentAndType(
+		ctx,
+		req.TenantInfo,
+		shp.ID,
+		billingqueue.BillTypeInvoice,
+	)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
-		return nil, errortypes.NewConflictError("A billing queue item already exists for this shipment")
+		return nil, errortypes.NewConflictError(
+			"A billing queue item already exists for this shipment",
+		)
 	}
 
-	number, err := s.sequenceGenerator.GenerateInvoiceNumber(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID, "", "")
+	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
+		ctx,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -130,15 +160,247 @@ func (s *Service) CreateFromShipments(
 		return nil, err
 	}
 
-	result, err := s.CreateFromApprovedBillingQueueItem(ctx, &servicesports.CreateInvoiceFromBillingQueueRequest{
-		BillingQueueItemID: queueItem.ID,
-		TenantInfo:         req.TenantInfo,
-	}, actor)
+	result, err := s.CreateFromApprovedBillingQueueItem(
+		ctx,
+		&servicesports.CreateInvoiceFromBillingQueueRequest{
+			BillingQueueItemID: queueItem.ID,
+			TenantInfo:         req.TenantInfo,
+		},
+		actor,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return result.Invoice, nil
+}
+
+// collectBillableLegs gathers the shipments of an order that are ready to invoice,
+// loading each leg's full detail (charges) and guarding against double-billing and
+// mixed customers.
+func (s *Service) collectBillableLegs(
+	ctx context.Context,
+	ord *order.Order,
+	tenantInfo pagination.TenantInfo,
+) ([]*shipment.Shipment, error) {
+	legs := make([]*shipment.Shipment, 0, len(ord.Shipments))
+	for _, leg := range ord.Shipments {
+		if leg == nil {
+			continue
+		}
+		if leg.Status != shipment.StatusReadyToInvoice && leg.Status != shipment.StatusCompleted {
+			continue
+		}
+		if leg.CustomerID != ord.CustomerID {
+			return nil, errortypes.NewValidationError(
+				"orderId",
+				errortypes.ErrInvalid,
+				"All legs of a grouped invoice must share the order's customer",
+			)
+		}
+
+		exists, err := s.billingQueueRepo.ExistsByShipmentAndType(
+			ctx,
+			tenantInfo,
+			leg.ID,
+			billingqueue.BillTypeInvoice,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, errortypes.NewConflictError(
+				"A billing queue item already exists for a leg of this order",
+			)
+		}
+
+		full, err := s.shipmentRepo.GetByID(
+			ctx,
+			expandedShipmentByIDRequest(leg.ID, tenantInfo),
+		)
+		if err != nil {
+			return nil, err
+		}
+		legs = append(legs, full)
+	}
+
+	return legs, nil
+}
+
+// groupedInvoiceFromShipments resolves the single order shared by the given legs and
+// delegates to CreateFromOrder. It rejects legs that are not all under one order.
+func (s *Service) groupedInvoiceFromShipments(
+	ctx context.Context,
+	req *servicesports.CreateInvoiceFromShipmentsRequest,
+	actor *servicesports.RequestActor,
+) (*invoice.Invoice, error) {
+	var orderID pulid.ID
+	for _, shipmentID := range req.ShipmentIDs {
+		shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+			ID:         shipmentID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if shp.OrderID.IsNil() {
+			return nil, errortypes.NewValidationError(
+				"shipmentIds",
+				errortypes.ErrInvalid,
+				"Grouped invoicing requires every shipment to belong to an order",
+			)
+		}
+		if orderID.IsNil() {
+			orderID = shp.OrderID
+		} else if orderID != shp.OrderID {
+			return nil, errortypes.NewValidationError(
+				"shipmentIds",
+				errortypes.ErrInvalid,
+				"All shipments in a grouped invoice must belong to the same order",
+			)
+		}
+	}
+
+	return s.CreateFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
+		OrderID:    orderID,
+		TenantInfo: req.TenantInfo,
+	}, actor)
+}
+
+// CreateFromOrder issues a single grouped invoice covering every billable leg of an
+// order. Each billable leg gets its own approved billing-queue item (all carrying the
+// order id); the first is the anchor whose id backs the invoice header's single-valued
+// FK and idempotency lookup.
+func (s *Service) CreateFromOrder(
+	ctx context.Context,
+	req *servicesports.CreateInvoiceFromOrderRequest,
+	actor *servicesports.RequestActor,
+) (*invoice.Invoice, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
+	}
+	if actor == nil {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
+	}
+	if req.OrderID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"orderId",
+			errortypes.ErrRequired,
+			"Order is required",
+		)
+	}
+
+	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ID:              req.OrderID,
+		TenantInfo:      req.TenantInfo,
+		IncludeShipment: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	legs, err := s.collectBillableLegs(ctx, ord, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if len(legs) == 0 {
+		return nil, errortypes.NewValidationError(
+			"orderId",
+			errortypes.ErrInvalid,
+			"Order has no legs that are completed or ready to invoice",
+		)
+	}
+
+	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
+		ctx,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+		"",
+		"",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var anchor *billingqueue.BillingQueueItem
+	for _, leg := range legs {
+		// Only the anchor item carries the invoice number; sibling items leave it null
+		// (the billing-queue number is globally unique). The whole group is correlated
+		// by OrderID instead.
+		itemNumber := ""
+		if anchor == nil {
+			itemNumber = number
+		}
+
+		item, itemErr := s.billingQueueRepo.Create(ctx, &billingqueue.BillingQueueItem{
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			ShipmentID:     leg.ID,
+			OrderID:        ord.ID,
+			Status:         billingqueue.StatusApproved,
+			BillType:       billingqueue.BillTypeInvoice,
+			Number:         itemNumber,
+		})
+		if itemErr != nil {
+			return nil, itemErr
+		}
+		if anchor == nil {
+			anchor = item
+		}
+	}
+
+	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         ord.CustomerID,
+		TenantInfo: req.TenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+			IncludeState:          true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	control, err := s.billingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	charges, err := s.orderRepo.ListCharges(ctx, req.TenantInfo, ord.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := s.buildInvoiceEntityForOrder(anchor, ord, legs, charges, cus, control)
+	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+		return nil, multiErr
+	}
+
+	created, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	auditActor := actor.AuditActor()
+	s.logAction(
+		created,
+		auditActor,
+		permission.OpCreate,
+		nil,
+		created,
+		"Grouped invoice created from order",
+	)
+	s.publishInvalidation(ctx, created, auditActor, "created", created)
+
+	return created, nil
 }
 
 func (s *Service) UpdateDraft(
@@ -147,7 +409,11 @@ func (s *Service) UpdateDraft(
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
@@ -158,7 +424,11 @@ func (s *Service) UpdateDraft(
 		return nil, err
 	}
 	if entity.Status != invoice.StatusDraft {
-		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalid, "Only draft invoices can be updated")
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Only draft invoices can be updated",
+		)
 	}
 
 	previous := *entity
@@ -200,8 +470,18 @@ func (s *Service) UpdateDraft(
 		}
 	}
 
-	s.logAction(updated, actor.AuditActor(), permission.OpUpdate, &previous, updated, "Invoice draft delivery metadata updated")
-	return s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: updated.ID, TenantInfo: req.TenantInfo})
+	s.logAction(
+		updated,
+		actor.AuditActor(),
+		permission.OpUpdate,
+		&previous,
+		updated,
+		"Invoice draft delivery metadata updated",
+	)
+	return s.repo.GetByID(
+		ctx,
+		repositories.GetInvoiceByIDRequest{ID: updated.ID, TenantInfo: req.TenantInfo},
+	)
 }
 
 func (s *Service) RenderPreview(
@@ -243,10 +523,18 @@ func (s *Service) GeneratePDF(
 		).WithInternal(servicesports.ErrWorkflowStarterDisabled)
 	}
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 	userID := actorUserID(actor, req.TenantInfo)
 	if userID.IsNil() {
@@ -257,7 +545,11 @@ func (s *Service) GeneratePDF(
 		)
 	}
 
-	workflowID := fmt.Sprintf("invoice-pdf-generate-%s-%s", req.InvoiceID.String(), pulid.MustNew("wf_").String())
+	workflowID := fmt.Sprintf(
+		"invoice-pdf-generate-%s-%s",
+		req.InvoiceID.String(),
+		pulid.MustNew("wf_").String(),
+	)
 	run, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
@@ -284,7 +576,8 @@ func (s *Service) GeneratePDF(
 		},
 	)
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to start invoice PDF generation").WithInternal(err)
+		return nil, errortypes.NewDatabaseError("Failed to start invoice PDF generation").
+			WithInternal(err)
 	}
 
 	return &servicesports.GenerateInvoicePDFResult{
@@ -301,10 +594,18 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 	actor *servicesports.RequestActor,
 ) (*servicesports.InvoiceSendResult, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil {
-		return nil, errortypes.NewValidationError("actor", errortypes.ErrRequired, "Actor is required")
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrRequired,
+			"Actor is required",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
@@ -425,7 +726,10 @@ func (s *Service) PlanSend(
 		plan.Errors = append(plan.Errors, fromErr.Error())
 	}
 	if profile == nil {
-		plan.Errors = append(plan.Errors, "Assign an active Billing email profile before sending invoices")
+		plan.Errors = append(
+			plan.Errors,
+			"Assign an active Billing email profile before sending invoices",
+		)
 	}
 	if len(recipients.To) == 0 {
 		plan.Errors = append(plan.Errors, "No invoice recipients are configured")
@@ -444,10 +748,16 @@ func (s *Service) PlanSend(
 		}
 	}
 	pdfAttachment := planAttachment(pdfDoc, true)
-	if deliveryProfile.Email != nil && strings.TrimSpace(deliveryProfile.Email.AttachmentName) != "" {
-		attachmentResult := renderInvoiceTemplate(deliveryProfile.Email.AttachmentName, templateContext)
+	if deliveryProfile.Email != nil &&
+		strings.TrimSpace(deliveryProfile.Email.AttachmentName) != "" {
+		attachmentResult := renderInvoiceTemplate(
+			deliveryProfile.Email.AttachmentName,
+			templateContext,
+		)
 		pdfAttachment.FileName = invoicePDFAttachmentName(attachmentResult.Value, entity)
-		plan.Warnings = append(plan.Warnings, templateWarnings("attachmentName", attachmentResult.Unknown)...)
+		plan.Warnings = append(
+			plan.Warnings,
+			templateWarnings("attachmentName", attachmentResult.Unknown)...)
 	}
 	if plan.EstimatedBodyBytes+pdfAttachment.EncodedBytes > plan.ProviderLimitBytes {
 		plan.Errors = append(plan.Errors, "Invoice PDF exceeds the email provider message limit")
@@ -520,10 +830,17 @@ func (s *Service) Send(
 		return nil, err
 	}
 	if len(plan.Errors) > 0 {
-		return nil, errortypes.NewValidationError("sendPlan", errortypes.ErrInvalid, strings.Join(plan.Errors, "; "))
+		return nil, errortypes.NewValidationError(
+			"sendPlan",
+			errortypes.ErrInvalid,
+			strings.Join(plan.Errors, "; "),
+		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo})
+	entity, err := s.repo.GetByID(
+		ctx,
+		repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -544,7 +861,14 @@ func (s *Service) Send(
 		return nil, err
 	}
 
-	s.logAction(updated, actor.AuditActor(), permission.OpSubmit, &previous, updated, "Invoice email delivery queued")
+	s.logAction(
+		updated,
+		actor.AuditActor(),
+		permission.OpSubmit,
+		&previous,
+		updated,
+		"Invoice email delivery queued",
+	)
 	return &servicesports.InvoiceSendResult{Invoice: updated, Plan: plan}, nil
 }
 
@@ -572,7 +896,11 @@ func (s *Service) SendFromWorkflow(
 		return nil, err
 	}
 	if len(plan.Errors) > 0 {
-		return nil, errortypes.NewValidationError("sendPlan", errortypes.ErrInvalid, strings.Join(plan.Errors, "; "))
+		return nil, errortypes.NewValidationError(
+			"sendPlan",
+			errortypes.ErrInvalid,
+			strings.Join(plan.Errors, "; "),
+		)
 	}
 
 	if s.emailRepo == nil {
@@ -582,7 +910,10 @@ func (s *Service) SendFromWorkflow(
 	if err != nil {
 		return nil, err
 	}
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo})
+	entity, err := s.repo.GetByID(
+		ctx,
+		repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -603,25 +934,34 @@ func (s *Service) SendFromWorkflow(
 		} else {
 			partBody = strings.TrimSpace(plan.Body) + "\n\n" + partBody
 		}
-		emailAttachments, attachmentErr := s.emailAttachmentsForPlan(ctx, req.TenantInfo, part.Attachments)
+		emailAttachments, attachmentErr := s.emailAttachmentsForPlan(
+			ctx,
+			req.TenantInfo,
+			part.Attachments,
+		)
 		var message *email.Message
 		var sendErr error
 		if linkErr == nil && attachmentErr == nil {
 			message, sendErr = s.emailService.Send(ctx, &servicesports.SendEmailRequest{
-				TenantInfo:     req.TenantInfo,
-				ProfileID:      profile.ID,
-				Purpose:        email.PurposeBilling,
-				To:             plan.Recipients.To,
-				CC:             plan.Recipients.CC,
-				BCC:            plan.Recipients.BCC,
-				FromEmail:      plan.FromEmail,
-				Subject:        partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
-				HTML:           bodyHTML(partBody),
-				Text:           partBody,
-				Attachments:    emailAttachments,
-				Headers:        plan.Headers,
-				OpenTracking:   plan.OpenTracking,
-				IdempotencyKey: fmt.Sprintf("invoice-%s-part-%d-%d", entity.ID, part.PartNumber, now),
+				TenantInfo:   req.TenantInfo,
+				ProfileID:    profile.ID,
+				Purpose:      email.PurposeBilling,
+				To:           plan.Recipients.To,
+				CC:           plan.Recipients.CC,
+				BCC:          plan.Recipients.BCC,
+				FromEmail:    plan.FromEmail,
+				Subject:      partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
+				HTML:         bodyHTML(partBody),
+				Text:         partBody,
+				Attachments:  emailAttachments,
+				Headers:      plan.Headers,
+				OpenTracking: plan.OpenTracking,
+				IdempotencyKey: fmt.Sprintf(
+					"invoice-%s-part-%d-%d",
+					entity.ID,
+					part.PartNumber,
+					now,
+				),
 			})
 		} else if attachmentErr != nil {
 			sendErr = attachmentErr
@@ -665,7 +1005,10 @@ func (s *Service) SendFromWorkflow(
 		attempts = append(attempts, createdAttempt)
 	}
 
-	entity, err = s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo})
+	entity, err = s.repo.GetByID(
+		ctx,
+		repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -684,7 +1027,14 @@ func (s *Service) SendFromWorkflow(
 	if err != nil {
 		return nil, err
 	}
-	s.logAction(updated, actor.AuditActor(), permission.OpSubmit, &previous, updated, "Invoice email delivery attempted")
+	s.logAction(
+		updated,
+		actor.AuditActor(),
+		permission.OpSubmit,
+		&previous,
+		updated,
+		"Invoice email delivery attempted",
+	)
 	return &servicesports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
 }
 
@@ -755,7 +1105,14 @@ func (s *Service) markInvoiceSendFailed(
 		s.l.Error("failed to mark invoice send failure", zap.Error(err))
 		return
 	}
-	s.logAction(updated, actor.AuditActor(), permission.OpSubmit, &previous, updated, "Invoice email delivery failed")
+	s.logAction(
+		updated,
+		actor.AuditActor(),
+		permission.OpSubmit,
+		&previous,
+		updated,
+		"Invoice email delivery failed",
+	)
 }
 
 func (s *Service) ListEmailAttempts(
@@ -773,9 +1130,12 @@ func (s *Service) DownloadSharedDocument(
 		return nil, errortypes.NewBusinessError("Document service is not configured")
 	}
 	tokenHash := tokenHash(req.Token)
-	share, err := s.repo.GetDocumentShareToken(ctx, repositories.GetInvoiceDocumentShareTokenRequest{
-		TokenHash: tokenHash,
-	})
+	share, err := s.repo.GetDocumentShareToken(
+		ctx,
+		repositories.GetInvoiceDocumentShareTokenRequest{
+			TokenHash: tokenHash,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -804,11 +1164,14 @@ func (s *Service) DownloadSharedDocument(
 	}
 
 	return &servicesports.DownloadInvoiceDocumentResult{
-		FileName:           content.Document.OriginalName,
-		ContentType:        content.ContentType,
-		ContentLength:      int64(len(body)),
-		ContentDisposition: fileutils.ContentDisposition("attachment", content.Document.OriginalName),
-		Body:               body,
+		FileName:      content.Document.OriginalName,
+		ContentType:   content.ContentType,
+		ContentLength: int64(len(body)),
+		ContentDisposition: fileutils.ContentDisposition(
+			"attachment",
+			content.Document.OriginalName,
+		),
+		Body: body,
 	}, nil
 }
 
@@ -989,17 +1352,23 @@ func invoiceTemplateContext(
 	deliveryProfile *invoiceDeliveryProfile,
 ) map[string]string {
 	values := map[string]string{
-		"number":                  entity.Number,
-		"invoice.number":          entity.Number,
-		"invoiceNumber":           entity.Number,
-		"invoice.date":            unixDate(entity.InvoiceDate),
-		"invoiceDate":             unixDate(entity.InvoiceDate),
-		"invoice.dueDate":         unixDatePtr(entity.DueDate),
-		"dueDate":                 unixDatePtr(entity.DueDate),
-		"invoice.paymentTerm":     string(entity.PaymentTerm),
-		"paymentTerm":             string(entity.PaymentTerm),
-		"invoice.total":           moneyString(entity.CurrencyCode, entity.TotalAmount.StringFixed(2)),
-		"invoiceTotal":            moneyString(entity.CurrencyCode, entity.TotalAmount.StringFixed(2)),
+		"number":              entity.Number,
+		"invoice.number":      entity.Number,
+		"invoiceNumber":       entity.Number,
+		"invoice.date":        unixDate(entity.InvoiceDate),
+		"invoiceDate":         unixDate(entity.InvoiceDate),
+		"invoice.dueDate":     unixDatePtr(entity.DueDate),
+		"dueDate":             unixDatePtr(entity.DueDate),
+		"invoice.paymentTerm": string(entity.PaymentTerm),
+		"paymentTerm":         string(entity.PaymentTerm),
+		"invoice.total": moneyString(
+			entity.CurrencyCode,
+			entity.TotalAmount.StringFixed(2),
+		),
+		"invoiceTotal": moneyString(
+			entity.CurrencyCode,
+			entity.TotalAmount.StringFixed(2),
+		),
 		"invoice.currency":        entity.CurrencyCode,
 		"currency":                entity.CurrencyCode,
 		"customer":                entity.BillToName,
@@ -1028,8 +1397,14 @@ func invoiceTemplateContext(
 		values["organizationName"] = deliveryProfile.Organization.Name
 	}
 	if deliveryProfile.Customer != nil {
-		values["customer.name"] = stringutils.FirstNonEmpty(deliveryProfile.Customer.Name, values["customer.name"])
-		values["customer.code"] = stringutils.FirstNonEmpty(deliveryProfile.Customer.Code, values["customer.code"])
+		values["customer.name"] = stringutils.FirstNonEmpty(
+			deliveryProfile.Customer.Name,
+			values["customer.name"],
+		)
+		values["customer.code"] = stringutils.FirstNonEmpty(
+			deliveryProfile.Customer.Code,
+			values["customer.code"],
+		)
 		values["customer"] = values["customer.name"]
 		values["customerName"] = values["customer.name"]
 		values["customerCode"] = values["customer.code"]
@@ -1059,23 +1434,29 @@ func invoiceTemplateContext(
 
 func renderInvoiceTemplate(template string, values map[string]string) invoiceTemplateResult {
 	unknown := make([]string, 0)
-	rendered := invoiceTemplateVariablePattern.ReplaceAllStringFunc(template, func(match string) string {
-		parts := invoiceTemplateVariablePattern.FindStringSubmatch(match)
-		if len(parts) != 3 {
-			return match
-		}
-		key := parts[1]
-		if key == "" {
-			key = parts[2]
-		}
-		value, ok := values[key]
-		if !ok {
-			unknown = append(unknown, key)
-			return match
-		}
-		return value
-	})
-	return invoiceTemplateResult{Value: strings.TrimSpace(rendered), Unknown: uniqueStrings(unknown)}
+	rendered := invoiceTemplateVariablePattern.ReplaceAllStringFunc(
+		template,
+		func(match string) string {
+			parts := invoiceTemplateVariablePattern.FindStringSubmatch(match)
+			if len(parts) != 3 {
+				return match
+			}
+			key := parts[1]
+			if key == "" {
+				key = parts[2]
+			}
+			value, ok := values[key]
+			if !ok {
+				unknown = append(unknown, key)
+				return match
+			}
+			return value
+		},
+	)
+	return invoiceTemplateResult{
+		Value:   strings.TrimSpace(rendered),
+		Unknown: uniqueStrings(unknown),
+	}
 }
 
 func templateWarnings(field string, unknown []string) []string {
@@ -1103,7 +1484,11 @@ func resolveFromEmail(
 	override := strings.TrimSpace(emailProfile.FromEmail)
 	parsed, err := mail.ParseAddress(override)
 	if err != nil || parsed.Address != override {
-		return fromEmail, errortypes.NewValidationError("fromEmail", errortypes.ErrInvalid, "Customer invoice sender email is invalid")
+		return fromEmail, errortypes.NewValidationError(
+			"fromEmail",
+			errortypes.ErrInvalid,
+			"Customer invoice sender email is invalid",
+		)
 	}
 	return override, nil
 }
@@ -1342,7 +1727,10 @@ func (s *Service) documentForID(
 	if s.documentService == nil {
 		return nil, errortypes.NewBusinessError("Document service is not configured")
 	}
-	return s.documentService.Get(ctx, repositories.GetDocumentByIDRequest{ID: documentID, TenantInfo: tenantInfo})
+	return s.documentService.Get(
+		ctx,
+		repositories.GetDocumentByIDRequest{ID: documentID, TenantInfo: tenantInfo},
+	)
 }
 
 func (s *Service) emailAttachmentsForPlan(
@@ -1352,10 +1740,13 @@ func (s *Service) emailAttachmentsForPlan(
 ) ([]servicesports.EmailAttachment, error) {
 	result := make([]servicesports.EmailAttachment, 0, len(planned))
 	for _, item := range planned {
-		content, err := s.documentService.GetDownloadContent(ctx, repositories.GetDocumentByIDRequest{
-			ID:         item.DocumentID,
-			TenantInfo: tenantInfo,
-		})
+		content, err := s.documentService.GetDownloadContent(
+			ctx,
+			repositories.GetDocumentByIDRequest{
+				ID:         item.DocumentID,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err != nil {
 			return nil, fmt.Errorf("prepare attachment %s: %w", item.FileName, err)
 		}
@@ -1471,7 +1862,10 @@ func attemptWarnings(
 	return uniqueStrings(result)
 }
 
-func planAttachment(doc *document.Document, invoicePDF bool) *servicesports.InvoiceSendPlanAttachment {
+func planAttachment(
+	doc *document.Document,
+	invoicePDF bool,
+) *servicesports.InvoiceSendPlanAttachment {
 	return &servicesports.InvoiceSendPlanAttachment{
 		DocumentID:   doc.ID,
 		FileName:     doc.OriginalName,
@@ -1550,7 +1944,10 @@ func moneyString(currency, amount string) string {
 	return currency + " " + amount
 }
 
-func actorForDocument(actor *servicesports.RequestActor, tenantInfo pagination.TenantInfo) servicesports.RequestActor {
+func actorForDocument(
+	actor *servicesports.RequestActor,
+	tenantInfo pagination.TenantInfo,
+) servicesports.RequestActor {
 	if actor == nil {
 		return servicesports.RequestActor{
 			UserID:         tenantInfo.UserID,
@@ -1607,5 +2004,7 @@ func signedDocumentURL(baseURL, token string) string {
 	if baseURL == "" {
 		return "/api/v1/billing/invoices/shared-documents/" + url.PathEscape(token) + "/download/"
 	}
-	return baseURL + "/api/v1/billing/invoices/shared-documents/" + url.PathEscape(token) + "/download/"
+	return baseURL + "/api/v1/billing/invoices/shared-documents/" + url.PathEscape(
+		token,
+	) + "/download/"
 }

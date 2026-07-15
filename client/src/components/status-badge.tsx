@@ -2,6 +2,7 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BillingQueueStatus } from "@/types/billing-queue";
 import type { InvoiceStatus, SettlementStatus } from "@/types/invoice";
+import type { OrderStatus } from "@/types/order";
 import {
   shipmentStatusSchema,
   type ShipmentStatus,
@@ -484,6 +485,60 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
     >
       {statusAttributes[status].text}
     </span>
+  );
+}
+
+export function OrderStatusBadge({
+  status,
+  className,
+}: {
+  status?: OrderStatus;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<OrderStatus, BadgeAttrProps> = {
+    Draft: {
+      variant: "secondary",
+      text: "Draft",
+      description: "Order has been created but not yet confirmed.",
+    },
+    Confirmed: {
+      variant: "purple",
+      text: "Confirmed",
+      description: "Order has been confirmed and is ready to be worked.",
+    },
+    InProgress: {
+      variant: "info",
+      text: "In Progress",
+      description: "Order is actively being fulfilled.",
+    },
+    Completed: {
+      variant: "active",
+      text: "Completed",
+      description: "Order fulfillment has been completed.",
+    },
+    Billed: {
+      variant: "teal",
+      text: "Billed",
+      description: "Order has been billed to the customer.",
+    },
+    Closed: {
+      variant: "outline",
+      text: "Closed",
+      description: "Order has been closed and finalized.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "Order has been canceled and will not be fulfilled.",
+    },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
+      {statusAttributes[status].text}
+    </Badge>
   );
 }
 

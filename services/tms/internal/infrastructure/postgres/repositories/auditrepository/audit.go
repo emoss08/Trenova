@@ -83,6 +83,10 @@ func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListAuditEntriesConnectionRequest,
 ) (*bun.SelectQuery, error) {
+	if !req.ResourceID.IsNil() {
+		q = q.Where("ae.resource_id = ?", req.ResourceID)
+	}
+
 	return querybuilder.ApplyCursorFilters(
 		q,
 		buncolgen.EntryTable.Alias,
@@ -96,6 +100,10 @@ func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListAuditEntriesConnectionRequest,
 ) *bun.SelectQuery {
+	if !req.ResourceID.IsNil() {
+		q = q.Where("ae.resource_id = ?", req.ResourceID)
+	}
+
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
 		buncolgen.EntryTable.Alias,

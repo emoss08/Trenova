@@ -5,6 +5,7 @@ type SequenceType string
 const (
 	SequenceTypeProNumber            = SequenceType("pro_number")
 	SequenceTypeConsolidation        = SequenceType("consolidation")
+	SequenceTypeOrder                = SequenceType("order")
 	SequenceTypeInvoice              = SequenceType("invoice")
 	SequenceTypeCreditMemo           = SequenceType("credit_memo")
 	SequenceTypeDebitMemo            = SequenceType("debit_memo")

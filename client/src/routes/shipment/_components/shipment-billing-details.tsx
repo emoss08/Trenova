@@ -1,6 +1,7 @@
 import {
   CustomerAutocompleteField,
   FormulaTemplateAutocompleteField,
+  OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -260,6 +261,15 @@ export default function ShipmentBillingDetails() {
             label="Customer"
             placeholder="Select Customer"
             description="Choose the customer who requested this shipment."
+          />
+        </FormControl>
+        <FormControl>
+          <OrderAutocompleteField
+            control={control}
+            name="orderId"
+            label="Order"
+            placeholder="Select Order"
+            description="Optionally group this shipment under a commercial order."
           />
         </FormControl>
         <FormControl>

@@ -52,6 +52,38 @@ func (r *queryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTab
 	return auditEntryConnectionToModel(result)
 }
 
+// AuditEntriesByResourceID is the resolver for the auditEntriesByResourceId field.
+func (r *queryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedResourceID, err := pulid.MustParse(resourceID)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.auditService.ListConnection(
+		ctx,
+		&repositories.ListAuditEntriesConnectionRequest{
+			Filter:     tableInput.Filter,
+			Cursor:     tableInput.Cursor,
+			ResourceID: parsedResourceID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return auditEntryConnectionToModel(result)
+}
+
 // AuditEntry is the resolver for the auditEntry field.
 func (r *queryResolver) AuditEntry(ctx context.Context, id string) (*audit.Entry, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)

@@ -1,0 +1,50 @@
+mutation AttachOrderShipments($orderId: ID!, $shipmentIds: [ID!]!) {
+  attachOrderShipments(orderId: $orderId, shipmentIds: $shipmentIds) {
+    id
+    status
+  }
+}
+
+mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {
+  detachOrderShipment(orderId: $orderId, shipmentId: $shipmentId) {
+    id
+    status
+  }
+}
+
+mutation CreateInvoiceFromOrder($orderId: ID!) {
+  createInvoiceFromOrder(orderId: $orderId) {
+    id
+    number
+  }
+}
+
+mutation CreateOrder($input: OrderInput!) {
+  createOrder(input: $input) {
+    id
+    orderNumber
+    status
+  }
+}
+
+mutation UpdateOrder($id: ID!, $input: OrderInput!) {
+  updateOrder(id: $id, input: $input) {
+    id
+    orderNumber
+    status
+  }
+}
+
+mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: String!) {
+  addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {
+    id
+    totalAmount
+  }
+}
+
+mutation RemoveOrderCharge($orderId: ID!, $chargeId: ID!) {
+  removeOrderCharge(orderId: $orderId, chargeId: $chargeId) {
+    id
+    totalAmount
+  }
+}

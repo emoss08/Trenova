@@ -63,6 +63,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
+	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
@@ -85,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
+	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
@@ -189,6 +191,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	bankreceiptworkitemservice.New,
 	versionservice.New,
 	servicetypeservice.New,
+	orderservice.New,
 	servicefailurereasoncodeservice.New,
 	sequenceconfigservice.New,
 	shipmentcontrolservice.New,
@@ -196,6 +199,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	shipmenteventservice.New,
 	fx.Annotate(
 		internaledistatussync.New,
+		fx.As(new(services.ShipmentEventObserver)),
+		fx.ResultTags(`group:"shipment_event_observers"`),
+	),
+	fx.Annotate(
+		orderderivation.New,
 		fx.As(new(services.ShipmentEventObserver)),
 		fx.ResultTags(`group:"shipment_event_observers"`),
 	),

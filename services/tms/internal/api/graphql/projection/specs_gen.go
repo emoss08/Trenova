@@ -78,6 +78,8 @@ var HoldReasonSpec TypeSpec
 
 var InvoiceSpec TypeSpec
 
+var InvoiceLineSpec TypeSpec
+
 var JournalReversalSpec TypeSpec
 
 var LocationSpec TypeSpec
@@ -87,6 +89,8 @@ var LocationCategorySpec TypeSpec
 var ManualJournalSpec TypeSpec
 
 var NotificationSpec TypeSpec
+
+var OrderSpec TypeSpec
 
 var OrganizationSpec TypeSpec
 
@@ -3168,6 +3172,14 @@ func init() {
 				FieldMapKey: "shipmentId",
 			},
 			{
+				Name:        "orderId",
+				FieldMapKey: "orderId",
+			},
+			{
+				Name:        "orderNumber",
+				FieldMapKey: "orderNumber",
+			},
+			{
 				Name:        "customerId",
 				FieldMapKey: "customerId",
 			},
@@ -3273,6 +3285,90 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
+			},
+			{
+				Name:        "order",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &OrderSpec,
+				},
+			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &InvoiceLineSpec,
+				},
+			},
+		},
+	}
+
+	InvoiceLineSpec = TypeSpec{
+		TypeName: "InvoiceLine",
+		FieldMap: buncolgen.InoviceLineFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentProNumber",
+				FieldMapKey: "shipmentProNumber",
+			},
+			{
+				Name:        "shipmentBol",
+				FieldMapKey: "shipmentBol",
+			},
+			{
+				Name:        "lineNumber",
+				FieldMapKey: "lineNumber",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "quantity",
+				FieldMapKey: "quantity",
+			},
+			{
+				Name:        "unitPrice",
+				FieldMapKey: "unitPrice",
+			},
+			{
+				Name:        "amount",
+				FieldMapKey: "amount",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
@@ -3830,6 +3926,106 @@ func init() {
 			{
 				Name:        "version",
 				FieldMapKey: "version",
+			},
+		},
+	}
+
+	OrderSpec = TypeSpec{
+		TypeName: "Order",
+		FieldMap: buncolgen.OrderFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:        "enteredById",
+				FieldMapKey: "enteredById",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "orderNumber",
+				FieldMapKey: "orderNumber",
+			},
+			{
+				Name:        "poNumber",
+				FieldMapKey: "poNumber",
+			},
+			{
+				Name:        "bol",
+				FieldMapKey: "bol",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "quotedAmount",
+				FieldMapKey: "quotedAmount",
+			},
+			{
+				Name:        "baseAmount",
+				FieldMapKey: "baseAmount",
+			},
+			{
+				Name:        "totalAmount",
+				FieldMapKey: "totalAmount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "businessUnit",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &BusinessUnitSpec,
+				},
+			},
+			{
+				Name:        "organization",
+				FieldMapKey: "organizationId",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "customerId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
 			},
 		},
 	}
@@ -4515,6 +4711,10 @@ func init() {
 			{
 				Name:        "consolidationGroupId",
 				FieldMapKey: "consolidationGroupId",
+			},
+			{
+				Name:        "orderId",
+				FieldMapKey: "orderId",
 			},
 			{
 				Name:        "status",

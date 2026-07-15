@@ -3,6 +3,7 @@ package shipmentrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -28,6 +29,7 @@ type Params struct {
 	MoveRepository             repositories.ShipmentMoveRepository
 	AdditionalChargeRepository repositories.ShipmentAdditionalChargeRepository
 	CommodityRepository        repositories.ShipmentCommodityRepository
+	OrderRepository            repositories.OrderRepository
 }
 
 type repository struct {
@@ -37,6 +39,7 @@ type repository struct {
 	moveRepository             repositories.ShipmentMoveRepository
 	additionalChargeRepository repositories.ShipmentAdditionalChargeRepository
 	commodityRepository        repositories.ShipmentCommodityRepository
+	orderRepository            repositories.OrderRepository
 }
 
 //nolint:gocritic // This is a constructor function
@@ -48,6 +51,7 @@ func New(p Params) repositories.ShipmentRepository {
 		moveRepository:             p.MoveRepository,
 		additionalChargeRepository: p.AdditionalChargeRepository,
 		commodityRepository:        p.CommodityRepository,
+		orderRepository:            p.OrderRepository,
 	}
 }
 
@@ -374,7 +378,22 @@ func (r *repository) Create(
 	}
 	entity.ProNumber = proNumber
 
+	// A shipment created outside a commercial order gets its own single-leg order so
+	// everything has a commercial parent. The order number is minted before the tx,
+	// consistent with the pro-number lifecycle (a rolled-back tx burns a number).
+	newOrder, err := r.buildAutoOrder(ctx, entity, locationCode, businessUnitCode)
+	if err != nil {
+		return nil, err
+	}
+
 	err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		if newOrder != nil {
+			if err = r.orderRepository.CreateInTx(c, tx, newOrder); err != nil {
+				return err
+			}
+			entity.OrderID = newOrder.ID
+		}
+
 		if _, err = r.db.DBForContext(c).
 			NewInsert().
 			Model(entity).
@@ -401,6 +420,39 @@ func (r *repository) Create(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) buildAutoOrder(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	locationCode, businessUnitCode string,
+) (*order.Order, error) {
+	if !entity.OrderID.IsNil() {
+		return nil, nil
+	}
+
+	orderNumber, err := r.generator.GenerateOrderNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		locationCode,
+		businessUnitCode,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &order.Order{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		CustomerID:     entity.CustomerID,
+		OwnerID:        entity.OwnerID,
+		EnteredByID:    entity.EnteredByID,
+		Status:         order.StatusConfirmed,
+		OrderNumber:    orderNumber,
+		CurrencyCode:   "USD",
+		TotalAmount:    entity.TotalChargeAmount,
+	}, nil
 }
 
 func (r *repository) Update(
