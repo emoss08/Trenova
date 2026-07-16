@@ -1,0 +1,11 @@
+type AttentionSummary {
+  billingQueue: Int
+  pendingApprovals: Int
+  reconciliationExceptions: Int
+  serviceFailures: Int
+  ediAttention: Int
+}
+
+extend type Query {
+  attentionSummary: AttentionSummary!
+}

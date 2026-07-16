@@ -115,6 +115,72 @@ func (_c *MockServiceFailureService_BulkEvaluate_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// CountUnresolved provides a mock function for the type MockServiceFailureService
+func (_mock *MockServiceFailureService) CountUnresolved(ctx context.Context, req *repositories.CountUnresolvedServiceFailuresRequest) (int, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountUnresolved")
+	}
+
+	var r0 int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CountUnresolvedServiceFailuresRequest) (int, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CountUnresolvedServiceFailuresRequest) int); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CountUnresolvedServiceFailuresRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockServiceFailureService_CountUnresolved_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUnresolved'
+type MockServiceFailureService_CountUnresolved_Call struct {
+	*mock.Call
+}
+
+// CountUnresolved is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.CountUnresolvedServiceFailuresRequest
+func (_e *MockServiceFailureService_Expecter) CountUnresolved(ctx any, req any) *MockServiceFailureService_CountUnresolved_Call {
+	return &MockServiceFailureService_CountUnresolved_Call{Call: _e.mock.On("CountUnresolved", ctx, req)}
+}
+
+func (_c *MockServiceFailureService_CountUnresolved_Call) Run(run func(ctx context.Context, req *repositories.CountUnresolvedServiceFailuresRequest)) *MockServiceFailureService_CountUnresolved_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.CountUnresolvedServiceFailuresRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.CountUnresolvedServiceFailuresRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockServiceFailureService_CountUnresolved_Call) Return(n int, err error) *MockServiceFailureService_CountUnresolved_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockServiceFailureService_CountUnresolved_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CountUnresolvedServiceFailuresRequest) (int, error)) *MockServiceFailureService_CountUnresolved_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateManual provides a mock function for the type MockServiceFailureService
 func (_mock *MockServiceFailureService) CreateManual(ctx context.Context, req *services.CreateManualServiceFailureRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
 	ret := _mock.Called(ctx, req, actor)

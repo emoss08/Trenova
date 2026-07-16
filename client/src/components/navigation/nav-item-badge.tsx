@@ -1,33 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import type { NavItemBadgeKind } from "@/config/navigation.types";
-import { queries } from "@/lib/queries";
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation, Resource } from "@/types/permission";
-import { useQuery } from "@tanstack/react-query";
-
-const EDI_ATTENTION_REFETCH_INTERVAL = 60_000;
-
-type StatusCount = { status: string; count: number };
-
-function countFor(counts: StatusCount[], status: string) {
-  return counts.find((entry) => entry.status === status)?.count ?? 0;
-}
+import { useAttentionSummary } from "@/hooks/use-attention";
 
 function EDIAttentionNavBadge() {
-  const canRead = usePermissionStore((state) => state.hasPermission(Resource.EDI, Operation.Read));
-  const { data } = useQuery({
-    ...queries.edi.summary(),
-    refetchInterval: EDI_ATTENTION_REFETCH_INTERVAL,
-    enabled: canRead,
-  });
+  const { data } = useAttentionSummary();
 
-  const summary = data?.ediSummary;
-  if (!summary) return null;
-
-  const attentionCount =
-    countFor(summary.deliveryStatusCounts, "DeadLettered") +
-    countFor(summary.inboundFileStatusCounts, "Quarantined") +
-    summary.overdueAckCount;
+  const attentionCount = data?.ediAttention ?? 0;
   if (attentionCount <= 0) return null;
 
   return (

@@ -289,10 +289,7 @@ func (r *repository) UpdateDetectionSnapshot(
 		Where("id = ?", entity.ID).
 		Where("organization_id = ?", entity.OrganizationID).
 		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Where("status IN (?)", bun.In([]servicefailure.Status{
-			servicefailure.StatusOpen,
-			servicefailure.StatusReviewed,
-		})).
+		Where("status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
 		Set("scheduled_cutoff = ?", entity.ScheduledCutoff).
 		Set("actual_arrival = ?", entity.ActualArrival).
 		Set("grace_period_minutes = ?", entity.GracePeriodMinutes).
@@ -327,10 +324,7 @@ func (r *repository) FindUnresolvedByStop(
 		Where("sf.shipment_move_id = ?", req.ShipmentMoveID).
 		Where("sf.stop_id = ?", req.StopID).
 		Where("sf.type = ?", req.Type).
-		Where("sf.status IN (?)", bun.In([]servicefailure.Status{
-			servicefailure.StatusOpen,
-			servicefailure.StatusReviewed,
-		})).
+		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -351,10 +345,7 @@ func (r *repository) ListUnresolvedByShipment(
 		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
 		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
 		Where("sf.shipment_id = ?", req.ShipmentID).
-		Where("sf.status IN (?)", bun.In([]servicefailure.Status{
-			servicefailure.StatusOpen,
-			servicefailure.StatusReviewed,
-		})).
+		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
 		Relation("ReasonCode").
 		Order("sf.created_at DESC").
 		Scan(ctx)
@@ -375,13 +366,28 @@ func (r *repository) CountUnresolvedByShipment(
 		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
 		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
 		Where("sf.shipment_id = ?", req.ShipmentID).
-		Where("sf.status IN (?)", bun.In([]servicefailure.Status{
-			servicefailure.StatusOpen,
-			servicefailure.StatusReviewed,
-		})).
+		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
 		Count(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("count unresolved service failures: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r *repository) CountUnresolved(
+	ctx context.Context,
+	req *repositories.CountUnresolvedServiceFailuresRequest,
+) (int, error) {
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*servicefailure.ServiceFailure)(nil)).
+		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+		Count(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("count unresolved service failures for tenant: %w", err)
 	}
 
 	return count, nil

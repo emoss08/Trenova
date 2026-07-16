@@ -87,6 +87,14 @@ type APIKeyEdge struct {
 	Cursor string      `json:"cursor"`
 }
 
+type AttentionSummary struct {
+	BillingQueue             *int `json:"billingQueue,omitempty"`
+	PendingApprovals         *int `json:"pendingApprovals,omitempty"`
+	ReconciliationExceptions *int `json:"reconciliationExceptions,omitempty"`
+	ServiceFailures          *int `json:"serviceFailures,omitempty"`
+	EdiAttention             *int `json:"ediAttention,omitempty"`
+}
+
 type AuditEntryConnection struct {
 	Edges      []*AuditEntryEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`

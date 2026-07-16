@@ -30,6 +30,11 @@ type GetEDISummaryRequest struct {
 	FeedLimit     int
 }
 
+type GetEDIAttentionCountRequest struct {
+	TenantInfo    pagination.TenantInfo
+	OverdueAckAge int64
+}
+
 type EDISummary struct {
 	DeliveryStatusCounts        map[edi.MessageDeliveryStatus]int
 	AckStatusCounts             map[edi.MessageAcknowledgmentStatus]int
@@ -125,6 +130,44 @@ func (s *Service) GetEDISummary(
 		RecentDeadLettered:          deadLettered,
 		RecentQuarantined:           quarantined,
 	}, nil
+}
+
+func (s *Service) GetEDIAttentionCount(
+	ctx context.Context,
+	req *GetEDIAttentionCountRequest,
+) (int, error) {
+	overdueAge := req.OverdueAckAge
+	if overdueAge <= 0 {
+		overdueAge = defaultOverdueAckAgeSeconds
+	}
+	deliveryCounts, err := s.messageRepo.GetDeliveryStatusCounts(
+		ctx,
+		repositories.GetEDIMessageStatusCountsRequest{TenantInfo: req.TenantInfo},
+	)
+	if err != nil {
+		return 0, err
+	}
+	fileCounts, err := s.inboundFileRepo.GetInboundFileStatusCounts(
+		ctx,
+		repositories.GetEDIInboundFileStatusCountsRequest{TenantInfo: req.TenantInfo},
+	)
+	if err != nil {
+		return 0, err
+	}
+	overdueAcks, err := s.messageRepo.GetOverdueAckCount(
+		ctx,
+		repositories.GetEDIOverdueAckCountRequest{
+			TenantInfo:   req.TenantInfo,
+			PendingSince: timeutils.NowUnix() - overdueAge,
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return deliveryCounts[edi.MessageDeliveryStatusDeadLettered] +
+		fileCounts[edi.InboundFileStatusQuarantined] +
+		overdueAcks, nil
 }
 
 type GetEDIPartnerScorecardsRequest struct {

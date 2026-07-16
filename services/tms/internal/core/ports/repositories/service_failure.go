@@ -45,6 +45,10 @@ type ServiceFailuresByShipmentRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
 }
 
+type CountUnresolvedServiceFailuresRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
 func (r *ListServiceFailuresRequest) EnsureFilter() {
 	if r.Filter == nil {
 		r.Filter = &pagination.QueryOptions{}
@@ -111,6 +115,23 @@ func (r *ServiceFailureActiveStopRequest) Validate() *errortypes.MultiError {
 	return nil
 }
 
+func (r *CountUnresolvedServiceFailuresRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Count unresolved service failures request is required",
+		)
+		return multiErr
+	}
+	validateTenantInfo(multiErr, r.TenantInfo)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
 func (r *ServiceFailuresByShipmentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
@@ -165,4 +186,5 @@ type ServiceFailureRepository interface {
 		req *ServiceFailuresByShipmentRequest,
 	) ([]*servicefailure.ServiceFailure, error)
 	CountUnresolvedByShipment(ctx context.Context, req *ServiceFailuresByShipmentRequest) (int, error)
+	CountUnresolved(ctx context.Context, req *CountUnresolvedServiceFailuresRequest) (int, error)
 }

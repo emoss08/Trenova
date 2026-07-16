@@ -26,6 +26,7 @@ type AuditEntry {
   category: AuditCategory!
   sensitiveData: Boolean!
   critical: Boolean!
+  entityRef: String
   user: User
 }
 

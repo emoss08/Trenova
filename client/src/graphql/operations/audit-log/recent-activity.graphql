@@ -1,0 +1,26 @@
+query RecentActivity($first: Int!, $after: String) {
+  auditEntries(input: { first: $first, after: $after }) {
+    edges {
+      node {
+        id
+        resource
+        operation
+        resourceId
+        timestamp
+        comment
+        entityRef
+        user {
+          id
+          name
+          username
+          profilePicUrl
+          thumbnailUrl
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

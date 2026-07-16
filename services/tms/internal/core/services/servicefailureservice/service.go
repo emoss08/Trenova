@@ -15,14 +15,14 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	Repo           repositories.ServiceFailureRepository
-	ReasonCodeRepo repositories.ServiceFailureReasonCodeRepository
-	ShipmentRepo   repositories.ShipmentRepository
-	DispatchRepo   repositories.DispatchControlRepository
-	CommentService services.ShipmentCommentService
-	AuditService   services.AuditService
-	Realtime       services.RealtimeService
+	Logger          *zap.Logger
+	Repo            repositories.ServiceFailureRepository
+	ReasonCodeRepo  repositories.ServiceFailureReasonCodeRepository
+	ShipmentRepo    repositories.ShipmentRepository
+	DispatchRepo    repositories.DispatchControlRepository
+	CommentService  services.ShipmentCommentService
+	AuditService    services.AuditService
+	Realtime        services.RealtimeService
 	OrderDerivation services.OrderDerivationService `optional:"true"`
 }
 
@@ -107,4 +107,14 @@ func (s *service) GetByShipment(
 		return nil, multiErr
 	}
 	return s.repo.GetByShipment(ctx, req)
+}
+
+func (s *service) CountUnresolved(
+	ctx context.Context,
+	req *repositories.CountUnresolvedServiceFailuresRequest,
+) (int, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return 0, multiErr
+	}
+	return s.repo.CountUnresolved(ctx, req)
 }

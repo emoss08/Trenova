@@ -23,6 +23,19 @@ function formatSegmentLabel(segment: string): string {
     .trim();
 }
 
+export function isRouteActive(currentPath: string, itemPath?: string): boolean {
+  if (!itemPath) {
+    return false;
+  }
+  if (itemPath === "/") {
+    return currentPath === "/";
+  }
+
+  const current = currentPath.endsWith("/") ? currentPath.slice(0, -1) : currentPath;
+  const target = itemPath.endsWith("/") ? itemPath.slice(0, -1) : itemPath;
+  return current.startsWith(target);
+}
+
 export function generateBreadcrumbSegments(pathname: string) {
   const segments = pathname.replace(/\/$/, "").split("/").filter(Boolean);
 
@@ -33,7 +46,7 @@ export function generateBreadcrumbSegments(pathname: string) {
   });
 }
 
-function normalizePath(path: string): string | null {
+export function normalizePath(path: string): string | null {
   if (!path || path === "#") {
     return null;
   }

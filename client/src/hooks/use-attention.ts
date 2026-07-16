@@ -1,0 +1,47 @@
+import { RecentActivityDocument, type RecentActivityQuery } from "@/graphql/generated/graphql";
+import { requestGraphQL } from "@/lib/graphql";
+import { queries } from "@/lib/queries";
+import { usePermissionStore } from "@/stores/permission-store";
+import { Operation, Resource } from "@/types/permission";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+
+const ATTENTION_REFETCH_INTERVAL = 60_000;
+const RECENT_ACTIVITY_PAGE_SIZE = 5;
+const RECENT_ACTIVITY_MAX_PAGES = 6;
+
+export type RecentActivityEntry = RecentActivityQuery["auditEntries"]["edges"][number]["node"];
+
+export function useAttentionSummary() {
+  return useQuery({
+    ...queries.attention.summary(),
+    refetchInterval: ATTENTION_REFETCH_INTERVAL,
+    select: (data) => data.attentionSummary,
+  });
+}
+
+export function useRecentActivityInfinite() {
+  const canReadAuditLog = usePermissionStore((state) =>
+    state.hasPermission(Resource.AuditLog, Operation.Read),
+  );
+
+  return useInfiniteQuery({
+    queryKey: queries.attention.recentActivity.queryKey,
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      requestGraphQL({
+        document: RecentActivityDocument,
+        operationName: "RecentActivity",
+        variables: { first: RECENT_ACTIVITY_PAGE_SIZE, after: pageParam },
+      }),
+    getNextPageParam: (lastPage) => {
+      const { hasNextPage, endCursor } = lastPage.auditEntries.pageInfo;
+      return hasNextPage && endCursor ? endCursor : undefined;
+    },
+    maxPages: RECENT_ACTIVITY_MAX_PAGES,
+    refetchInterval: ATTENTION_REFETCH_INTERVAL,
+    refetchOnWindowFocus: false,
+    retry: false,
+    enabled: canReadAuditLog,
+    select: (data) => data.pages.flatMap((page) => page.auditEntries.edges.map((edge) => edge.node)),
+  });
+}

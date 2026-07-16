@@ -1,0 +1,9 @@
+query AttentionSummary {
+  attentionSummary {
+    billingQueue
+    pendingApprovals
+    reconciliationExceptions
+    serviceFailures
+    ediAttention
+  }
+}

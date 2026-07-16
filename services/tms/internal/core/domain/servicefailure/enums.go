@@ -56,6 +56,10 @@ const (
 	StatusVoided   Status = "Voided"
 )
 
+func UnresolvedStatuses() []Status {
+	return []Status{StatusOpen, StatusReviewed}
+}
+
 func (c ReasonCategory) IsValid() bool {
 	switch c {
 	case ReasonCategoryCarrier,

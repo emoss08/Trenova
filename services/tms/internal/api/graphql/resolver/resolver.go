@@ -34,9 +34,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
-	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
@@ -104,6 +104,7 @@ type Params struct {
 	ServiceFailureSvc            services.ServiceFailureService
 	BillingQueueService          services.BillingQueueService
 	InvoiceService               services.InvoiceService
+	InvoiceAdjustmentService     services.InvoiceAdjustmentService
 	IAMService                   services.IAMService
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service
@@ -161,6 +162,7 @@ type Resolver struct {
 	serviceFailureSvc            services.ServiceFailureService
 	billingQueueService          services.BillingQueueService
 	invoiceService               services.InvoiceService
+	invoiceAdjustmentService     services.InvoiceAdjustmentService
 	iamService                   services.IAMService
 	roleService                  *roleservice.Service
 	userService                  *userservice.Service
@@ -219,6 +221,7 @@ func New(p Params) *Resolver {
 		serviceFailureSvc:            p.ServiceFailureSvc,
 		billingQueueService:          p.BillingQueueService,
 		invoiceService:               p.InvoiceService,
+		invoiceAdjustmentService:     p.InvoiceAdjustmentService,
 		iamService:                   p.IAMService,
 		roleService:                  p.RoleService,
 		userService:                  p.UserService,
@@ -258,6 +261,26 @@ func (r *Resolver) requirePermission(
 	}
 
 	return authCtx, nil
+}
+
+func (r *Resolver) hasPermission(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	resource permission.Resource,
+	operation permission.Operation,
+) bool {
+	result, err := r.permissionEngine.Check(
+		ctx,
+		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
+	)
+	if err != nil {
+		r.l.Warn("permission check failed",
+			zap.String("resource", resource.String()),
+			zap.Error(err))
+		return false
+	}
+
+	return result.Allowed
 }
 
 func (r *Resolver) requireAuth(ctx context.Context) (*authctx.AuthContext, error) {

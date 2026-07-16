@@ -4,6 +4,7 @@ import { optionalStringSchema, timestampSchema, versionSchema } from "./helpers"
 export const sequenceTypes = [
   "pro_number",
   "consolidation",
+  "order",
   "invoice",
   "work_order",
   "journal_batch",

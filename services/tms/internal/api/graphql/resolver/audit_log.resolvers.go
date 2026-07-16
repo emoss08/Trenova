@@ -26,6 +26,15 @@ func (r *auditEntryResolver) Operation(ctx context.Context, obj *audit.Entry) (s
 	return string(obj.Operation), nil
 }
 
+// EntityRef is the resolver for the entityRef field.
+func (r *auditEntryResolver) EntityRef(ctx context.Context, obj *audit.Entry) (*string, error) {
+	ref := obj.EntityReference()
+	if ref == "" {
+		return nil, nil
+	}
+	return &ref, nil
+}
+
 // AuditEntries is the resolver for the auditEntries field.
 func (r *queryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)

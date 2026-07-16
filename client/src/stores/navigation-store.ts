@@ -2,70 +2,45 @@ import type { ModuleId } from "@/config/navigation.types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type PanelView = "module" | "favorites";
-
 interface NavigationState {
-  sidebarOpen: boolean;
-  mobileNavOpen: boolean;
   activeModuleId: ModuleId | null;
-  modulePanelCollapsed: boolean;
-  panelView: PanelView;
+  sidebarCollapsed: boolean;
+  activitySectionOpen: boolean;
 
-  toggleSidebar: () => void;
-  setSidebarOpen: (open: boolean) => void;
-  setMobileNavOpen: (open: boolean) => void;
   setActiveModuleId: (id: ModuleId | null) => void;
-  toggleModulePanel: () => void;
-  setModulePanelCollapsed: (collapsed: boolean) => void;
-  setPanelView: (view: PanelView) => void;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  setActivitySectionOpen: (open: boolean) => void;
 }
 
 export const useNavigationStore = create<NavigationState>()(
   persist(
     (set) => ({
-      sidebarOpen: true,
-      mobileNavOpen: false,
       activeModuleId: null,
-      modulePanelCollapsed: false,
-      panelView: "module" as PanelView,
-
-      toggleSidebar: () => {
-        set((state) => ({
-          sidebarOpen: !state.sidebarOpen,
-        }));
-      },
-
-      setSidebarOpen: (open: boolean) => {
-        set({ sidebarOpen: open });
-      },
-
-      setMobileNavOpen: (open: boolean) => {
-        set({ mobileNavOpen: open });
-      },
+      sidebarCollapsed: false,
+      activitySectionOpen: true,
 
       setActiveModuleId: (id: ModuleId | null) => {
         set({ activeModuleId: id });
       },
 
-      toggleModulePanel: () => {
-        set((state) => ({
-          modulePanelCollapsed: !state.modulePanelCollapsed,
-        }));
+      toggleSidebar: () => {
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }));
       },
 
-      setModulePanelCollapsed: (collapsed: boolean) => {
-        set({ modulePanelCollapsed: collapsed });
+      setSidebarCollapsed: (collapsed: boolean) => {
+        set({ sidebarCollapsed: collapsed });
       },
 
-      setPanelView: (view: PanelView) => {
-        set({ panelView: view });
+      setActivitySectionOpen: (open: boolean) => {
+        set({ activitySectionOpen: open });
       },
     }),
     {
       name: "navigation-storage",
       partialize: (state) => ({
-        sidebarOpen: state.sidebarOpen,
-        modulePanelCollapsed: state.modulePanelCollapsed,
+        sidebarCollapsed: state.sidebarCollapsed,
+        activitySectionOpen: state.activitySectionOpen,
       }),
     },
   ),

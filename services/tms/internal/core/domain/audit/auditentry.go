@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -195,4 +196,54 @@ func (e *Entry) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "sensitive_data", Type: domaintypes.FieldTypeBoolean},
 		},
 	}
+}
+
+var entityReferenceKeys = []string{
+	"proNumber",
+	"orderNumber",
+	"invoiceNumber",
+	"number",
+	"code",
+	"name",
+	"username",
+	"emailAddress",
+	"reference",
+	"title",
+	"label",
+}
+
+func (e *Entry) EntityReference() string {
+	if e == nil {
+		return ""
+	}
+
+	for _, state := range []map[string]any{e.CurrentState, e.PreviousState, e.Metadata} {
+		if ref := firstStringValue(state, entityReferenceKeys); ref != "" {
+			return ref
+		}
+	}
+
+	return ""
+}
+
+func firstStringValue(values map[string]any, keys []string) string {
+	if len(values) == 0 {
+		return ""
+	}
+
+	for _, key := range keys {
+		raw, ok := values[key]
+		if !ok {
+			continue
+		}
+		str, ok := raw.(string)
+		if !ok {
+			continue
+		}
+		if trimmed := strings.TrimSpace(str); trimmed != "" {
+			return trimmed
+		}
+	}
+
+	return ""
 }

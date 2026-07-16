@@ -117,6 +117,14 @@ enum AssignmentStatus {
   New
 }
 
+type AttentionSummary {
+  billingQueue: Int
+  ediAttention: Int
+  pendingApprovals: Int
+  reconciliationExceptions: Int
+  serviceFailures: Int
+}
+
 enum AuditCategory {
   System
   User
@@ -131,6 +139,7 @@ type AuditEntry {
   correlationId: String
   critical: Boolean!
   currentState: JSON
+  entityRef: String
   id: ID!
   ipAddress: String
   metadata: JSON
@@ -2123,6 +2132,7 @@ type Query {
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
+  attentionSummary: AttentionSummary!
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
   auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry

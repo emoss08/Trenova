@@ -1,5 +1,4 @@
 import Highlight from "@/components/highlight";
-import type { SidebarLink } from "@/components/sidebar-nav";
 import {
   CommandDialog,
   CommandGroup,
@@ -8,14 +7,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { adminLinks, navigationConfig } from "@/config/navigation.config";
+import { navigationConfig } from "@/config/navigation.config";
+import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { usePermissionStore } from "@/stores/permission-store";
-import { Operation } from "@/types/permission";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowRight, ArrowUp, CornerDownLeft, Plus, X } from "lucide-react";
@@ -34,21 +33,6 @@ import {
 import { SearchResultItem } from "./search-result-items";
 import { SearchEmpty, SearchError, SearchKeepTyping, SearchLoading } from "./search-states";
 
-function normalizeLinkPath(path: string): string {
-  if (!path || path === "#") {
-    return "";
-  }
-
-  const trimmed = path.trim();
-  if (!trimmed || trimmed === "#") {
-    return "";
-  }
-
-  const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  const normalized = withLeadingSlash.replace(/\/+$/, "");
-  return normalized || "/";
-}
-
 export function RouteCommandPalette() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,9 +40,7 @@ export function RouteCommandPalette() {
   const open = useCommandPaletteStore((state) => state.open);
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
   const toggleOpen = useCommandPaletteStore((state) => state.toggleOpen);
-  const manifest = usePermissionStore((state) => state.manifest);
   const hasPermission = usePermissionStore((state) => state.hasPermission);
-  const canAccessRoute = usePermissionStore((state) => state.canAccessRoute);
   const [searchValue, setSearchValue] = useState("");
   const [recordEntityFilter, setRecordEntityFilter] = useState<SearchableEntityType | null>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
@@ -66,30 +48,7 @@ export function RouteCommandPalette() {
   const [mentionIndex, setMentionIndex] = useState(0);
   const [previewId, setPreviewId] = useState<string | undefined>(undefined);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const accessibleAdminLinks = useMemo(
-    () =>
-      adminLinks.filter((link: SidebarLink) => {
-        if (link.disabled) {
-          return false;
-        }
-
-        if (!manifest) {
-          return false;
-        }
-
-        if (link.resource) {
-          return hasPermission(link.resource, link.requiredOperation ?? Operation.Read);
-        }
-
-        const normalizedPath = normalizeLinkPath(link.href);
-        if (!normalizedPath) {
-          return false;
-        }
-
-        return canAccessRoute(normalizedPath) || canAccessRoute(link.href);
-      }),
-    [canAccessRoute, hasPermission, manifest],
-  );
+  const accessibleAdminLinks = useAccessibleAdminLinks();
   const routeGroups = useMemo(
     () => buildRouteCommandGroups(filteredModules, accessibleAdminLinks),
     [accessibleAdminLinks, filteredModules],

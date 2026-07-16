@@ -38,7 +38,7 @@ export function Header() {
       )}
     >
       <div className="flex items-center gap-3">
-        <ModulePanelToggle />
+        <SidebarToggle />
         <HistoryNavigation />
         <Breadcrumb>
           <BreadcrumbList>
@@ -186,16 +186,16 @@ function NavActions() {
   );
 }
 
-function ModulePanelToggle() {
-  const toggleModulePanel = useNavigationStore((state) => state.toggleModulePanel);
+function SidebarToggle() {
+  const toggleSidebar = useNavigationStore((state) => state.toggleSidebar);
 
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon-xs"
-      onClick={toggleModulePanel}
-      aria-label="Toggle navigation panel"
+      onClick={toggleSidebar}
+      aria-label="Toggle sidebar"
     >
       <PanelLeftIcon className="size-3.5" />
     </Button>

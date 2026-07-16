@@ -979,6 +979,19 @@ export type ApiKeyTableQueryVariables = Exact<{
 
 export type ApiKeyTableQuery = { apiKeys: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ApiKeyTableRowFieldsFragment': ApiKeyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type AttentionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AttentionSummaryQuery = { attentionSummary: { billingQueue: number | null, pendingApprovals: number | null, reconciliationExceptions: number | null, serviceFailures: number | null, ediAttention: number | null } };
+
+export type RecentActivityQueryVariables = Exact<{
+  first: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type RecentActivityQuery = { auditEntries: { edges: Array<{ node: { id: string, resource: string, operation: string, resourceId: string, timestamp: number, comment: string | null, entityRef: string | null, user: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
 export type AuditLogTableRowFieldsFragment = { id: string, userId: string | null, businessUnitId: string, organizationId: string, timestamp: number, changes: unknown, previousState: unknown, currentState: unknown, metadata: unknown, resource: string, operation: string, resourceId: string, correlationId: string | null, userAgent: string | null, comment: string | null, ipAddress: string | null, category: AuditCategory, sensitiveData: boolean, critical: boolean, user: { id: string, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AuditLogTableRowFieldsFragment' };
 
 export type AuditLogTableQueryVariables = Exact<{
@@ -4432,6 +4445,45 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:eedf9586fa2250cef08f3db2d0bdd0e4626ef2ba3a1bfa718672099b06537d89"}) as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
+export const AttentionSummaryDocument = new TypedDocumentString(`
+    query AttentionSummary {
+  attentionSummary {
+    billingQueue
+    pendingApprovals
+    reconciliationExceptions
+    serviceFailures
+    ediAttention
+  }
+}
+    `, {"hash":"sha256:f60e116af6655582ac87c443bb9a03a7990af7fdd7671aa37452ea7bc48074b9"}) as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
+export const RecentActivityDocument = new TypedDocumentString(`
+    query RecentActivity($first: Int!, $after: String) {
+  auditEntries(input: { first: $first, after: $after }) {
+    edges {
+      node {
+        id
+        resource
+        operation
+        resourceId
+        timestamp
+        comment
+        entityRef
+        user {
+          id
+          name
+          username
+          profilePicUrl
+          thumbnailUrl
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+    `, {"hash":"sha256:3fe2bf53bf715a8f3c32bf9ed4a7f61e822b4d79f54f0564b6b647cf54b13407"}) as unknown as TypedDocumentString<RecentActivityQuery, RecentActivityQueryVariables>;
 export const AuditLogTableDocument = new TypedDocumentString(`
     query AuditLogTable($input: DataTableConnectionInput!) {
   auditEntries(input: $input) {

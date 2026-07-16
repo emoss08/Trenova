@@ -296,6 +296,10 @@ type ServiceFailureService interface {
 		ctx context.Context,
 		req *repositories.GetServiceFailureByShipmentRequest,
 	) (*servicefailure.ServiceFailure, error)
+	CountUnresolved(
+		ctx context.Context,
+		req *repositories.CountUnresolvedServiceFailuresRequest,
+	) (int, error)
 	CreateManual(
 		ctx context.Context,
 		req *CreateManualServiceFailureRequest,

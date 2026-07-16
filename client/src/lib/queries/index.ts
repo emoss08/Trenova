@@ -1,5 +1,6 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
+import { attention } from "./attention";
 import { accountingReport } from "./accounting-report";
 import { ar } from "./ar";
 import { bankReceipt } from "./bank-receipt";
@@ -82,6 +83,7 @@ export const queries = mergeQueryKeys(
   serviceFailureReasonCode,
   shipmentControl,
   sequenceConfig,
+  attention,
   audit,
   notification,
   tableChangeAlert,

@@ -499,3 +499,71 @@ func TestEntry_GetPostgresSearchConfig(t *testing.T) {
 	assert.Equal(t, "critical", config.SearchableFields[8].Name)
 	assert.Equal(t, "sensitive_data", config.SearchableFields[9].Name)
 }
+
+func TestEntry_EntityReference(t *testing.T) {
+	tests := []struct {
+		name  string
+		entry *Entry
+		want  string
+	}{
+		{
+			name:  "nil entry",
+			entry: nil,
+			want:  "",
+		},
+		{
+			name:  "empty states",
+			entry: &Entry{},
+			want:  "",
+		},
+		{
+			name: "current state pro number wins",
+			entry: &Entry{
+				CurrentState: map[string]any{"proNumber": "S-104829", "name": "Ignored"},
+			},
+			want: "S-104829",
+		},
+		{
+			name: "key priority within state",
+			entry: &Entry{
+				CurrentState: map[string]any{"name": "Archer Daniels", "orderNumber": "ORD-0042"},
+			},
+			want: "ORD-0042",
+		},
+		{
+			name: "falls back to previous state on delete",
+			entry: &Entry{
+				PreviousState: map[string]any{"invoiceNumber": "INV-2026-0847"},
+			},
+			want: "INV-2026-0847",
+		},
+		{
+			name: "falls back to metadata",
+			entry: &Entry{
+				Metadata: map[string]any{"code": "DRYVAN26"},
+			},
+			want: "DRYVAN26",
+		},
+		{
+			name: "skips non-string and blank values",
+			entry: &Entry{
+				CurrentState: map[string]any{"number": 42, "name": "   "},
+				Metadata:     map[string]any{"username": "maria.chen"},
+			},
+			want: "maria.chen",
+		},
+		{
+			name: "trims whitespace",
+			entry: &Entry{
+				CurrentState: map[string]any{"name": "  Walmart DC 6094  "},
+			},
+			want: "Walmart DC 6094",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.entry.EntityReference())
+		})
+	}
+}

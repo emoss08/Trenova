@@ -5,6 +5,7 @@ import {
   FileTextIcon,
   LayersIcon,
   MapPinIcon,
+  PackageIcon,
   ReceiptIcon,
   TruckIcon,
   WrenchIcon,
@@ -14,6 +15,7 @@ import {
 export const sequenceTitles: Record<SequenceType, string> = {
   pro_number: "Pro Number",
   consolidation: "Consolidation Number",
+  order: "Order Number",
   invoice: "Invoice Number",
   work_order: "Work Order Number",
   journal_batch: "Journal Batch Number",
@@ -25,6 +27,7 @@ export const sequenceTitles: Record<SequenceType, string> = {
 export const sequenceDescriptions: Record<SequenceType, string> = {
   pro_number: "Controls generated PRO numbers for shipment creation and tracking.",
   consolidation: "Controls consolidation number generation for grouped shipment operations.",
+  order: "Controls order number generation for commercial orders above shipments.",
   invoice: "Controls invoice identifier generation for billing documents.",
   work_order: "Controls work order identifier generation for operational workflows.",
   journal_batch: "Controls journal batch numbering for accounting posting groups.",
@@ -36,6 +39,7 @@ export const sequenceDescriptions: Record<SequenceType, string> = {
 export const sequenceIcons: Record<SequenceType, LucideIcon> = {
   pro_number: TruckIcon,
   consolidation: LayersIcon,
+  order: PackageIcon,
   work_order: WrenchIcon,
   invoice: ReceiptIcon,
   journal_batch: BookOpenIcon,
@@ -50,7 +54,7 @@ export type SidebarGroup = {
 };
 
 export const sidebarGroups: SidebarGroup[] = [
-  { label: "Operations", items: ["pro_number", "consolidation", "work_order"] },
+  { label: "Operations", items: ["pro_number", "consolidation", "order", "work_order"] },
   { label: "Billing", items: ["invoice"] },
   { label: "Accounting", items: ["journal_batch", "journal_entry", "manual_journal_request"] },
   { label: "Locations", items: ["location_code"] },
@@ -99,6 +103,7 @@ const defaultLocationCodeStrategy: LocationCodeStrategy = {
 const defaultPrefixes: Record<SequenceType, string> = {
   pro_number: "PRO",
   consolidation: "CON",
+  order: "ORD",
   invoice: "INV",
   work_order: "WO",
   journal_batch: "JB",
