@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,18 +20,21 @@ type FactoryParams struct {
 	TrailerByID      *TrailerByIDLoaderFactory
 	OrganizationByID *OrganizationByIDLoaderFactory
 	LocationByID     *LocationByIDLoaderFactory
+	OrderByID        *OrderByIDLoaderFactory
 }
 
 type Factory struct {
 	trailerByID      *TrailerByIDLoaderFactory
 	organizationByID *OrganizationByIDLoaderFactory
 	locationByID     *LocationByIDLoaderFactory
+	orderByID        *OrderByIDLoaderFactory
 }
 
 type Loaders struct {
 	TrailerByID      *dataloader.Loader[string, *trailer.Trailer]
 	OrganizationByID *dataloader.Loader[string, *tenant.Organization]
 	LocationByID     *dataloader.Loader[string, *location.Location]
+	OrderByID        *dataloader.Loader[string, *order.Order]
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -38,6 +42,7 @@ func NewFactory(p FactoryParams) *Factory {
 		trailerByID:      p.TrailerByID,
 		organizationByID: p.OrganizationByID,
 		locationByID:     p.LocationByID,
+		orderByID:        p.OrderByID,
 	}
 }
 
@@ -46,6 +51,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		TrailerByID:      f.trailerByID.NewForTenant(tenantInfo),
 		OrganizationByID: f.organizationByID.NewForTenant(tenantInfo),
 		LocationByID:     f.locationByID.NewForTenant(tenantInfo),
+		OrderByID:        f.orderByID.NewForTenant(tenantInfo),
 	}
 }
 

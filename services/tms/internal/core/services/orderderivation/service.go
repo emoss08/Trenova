@@ -17,6 +17,11 @@ import (
 
 const maxRecomputeAttempts = 4
 
+var (
+	_ services.ShipmentEventObserver  = (*Observer)(nil)
+	_ services.OrderDerivationService = (*Observer)(nil)
+)
+
 type Params struct {
 	fx.In
 
@@ -63,8 +68,18 @@ func (o *Observer) OnShipmentEvent(ctx context.Context, event *shipmentevent.Eve
 		BuID:  event.BusinessUnitID,
 	}
 
+	return o.RecomputeForShipment(ctx, tenantInfo, event.ShipmentID)
+}
+
+// RecomputeForShipment resolves the shipment's parent order and recomputes its
+// derived state. A shipment with no order is a no-op.
+func (o *Observer) RecomputeForShipment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) error {
 	shp, err := o.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         event.ShipmentID,
+		ID:         shipmentID,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -75,14 +90,25 @@ func (o *Observer) OnShipmentEvent(ctx context.Context, event *shipmentevent.Eve
 		return nil
 	}
 
-	return o.recomputeOrder(ctx, tenantInfo, shp.OrderID)
+	return o.RecomputeOrder(ctx, tenantInfo, shp.OrderID)
 }
 
-func (o *Observer) recomputeOrder(
+// RecomputeOrder recalculates the order's AR total and re-derives its status from the
+// current leg statuses, with bounded optimistic-conflict retries.
+func (o *Observer) RecomputeOrder(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) error {
+	if err := o.orderRepo.RecalculateTotal(ctx, tenantInfo, orderID); err != nil {
+		o.l.Error(
+			"failed to recalculate order total",
+			zap.String("orderId", orderID.String()),
+			zap.Error(err),
+		)
+		return err
+	}
+
 	var lastErr error
 	for attempt := 0; attempt < maxRecomputeAttempts; attempt++ {
 		ord, err := o.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
@@ -125,7 +151,7 @@ func (o *Observer) recomputeOrder(
 		return nil
 	}
 
-	o.l.Warn(
+	o.l.Error(
 		"exhausted attempts recomputing order status",
 		zap.String("orderId", orderID.String()),
 		zap.Error(lastErr),

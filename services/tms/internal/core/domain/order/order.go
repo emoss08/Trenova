@@ -3,6 +3,8 @@ package order
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -76,13 +78,41 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&o.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
-			validation.Length(3, 3).Error("Currency code must be a 3-character ISO code"),
+			validation.Match(currencyCodePattern).
+				Error("Currency code must be a 3-letter ISO 4217 code"),
+		),
+		validation.Field(&o.PONumber,
+			validation.Length(0, 100).Error("PO number must be at most 100 characters"),
+		),
+		validation.Field(&o.BOL,
+			validation.Length(0, 100).Error("BOL must be at most 100 characters"),
+		),
+		validation.Field(&o.QuotedAmount,
+			validation.By(nonNegativeNullDecimal("Quoted amount")),
+		),
+		validation.Field(&o.BaseAmount,
+			validation.By(nonNegativeNullDecimal("Base amount")),
 		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
+	}
+}
+
+var currencyCodePattern = regexp.MustCompile(`^[A-Z]{3}$`)
+
+func nonNegativeNullDecimal(label string) validation.RuleFunc {
+	return func(value any) error {
+		amount, ok := value.(decimal.NullDecimal)
+		if !ok || !amount.Valid {
+			return nil
+		}
+		if amount.Decimal.IsNegative() {
+			return fmt.Errorf("%s must not be negative", label)
+		}
+		return nil
 	}
 }
 

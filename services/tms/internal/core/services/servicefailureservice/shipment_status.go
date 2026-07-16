@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/zap"
@@ -23,10 +24,11 @@ type delayedShipmentMarker interface {
 }
 
 type delayedShipmentMarkerParams struct {
-	logger       *zap.Logger
-	shipmentRepo repositories.ShipmentRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	logger          *zap.Logger
+	shipmentRepo    repositories.ShipmentRepository
+	auditService    services.AuditService
+	realtime        services.RealtimeService
+	orderDerivation services.OrderDerivationService
 }
 
 type delayedShipmentMarkParams struct {
@@ -36,18 +38,20 @@ type delayedShipmentMarkParams struct {
 }
 
 type shipmentStatusMarker struct {
-	l            *zap.Logger
-	shipmentRepo repositories.ShipmentRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	l               *zap.Logger
+	shipmentRepo    repositories.ShipmentRepository
+	auditService    services.AuditService
+	realtime        services.RealtimeService
+	orderDerivation services.OrderDerivationService
 }
 
 func newDelayedShipmentMarker(params delayedShipmentMarkerParams) delayedShipmentMarker {
 	return &shipmentStatusMarker{
-		l:            params.logger,
-		shipmentRepo: params.shipmentRepo,
-		auditService: params.auditService,
-		realtime:     params.realtime,
+		l:               params.logger,
+		shipmentRepo:    params.shipmentRepo,
+		auditService:    params.auditService,
+		realtime:        params.realtime,
+		orderDerivation: params.orderDerivation,
 	}
 }
 
@@ -97,6 +101,23 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 	updated, err := m.shipmentRepo.UpdateDerivedState(ctx, &candidate)
 	if err != nil {
 		return nil, err
+	}
+
+	if m.orderDerivation != nil && !updated.OrderID.IsNil() {
+		if derivErr := m.orderDerivation.RecomputeOrder(
+			ctx,
+			pagination.TenantInfo{
+				OrgID: updated.OrganizationID,
+				BuID:  updated.BusinessUnitID,
+			},
+			updated.OrderID,
+		); derivErr != nil {
+			m.l.Warn(
+				"failed to recompute order after service-failure delay",
+				zap.Error(derivErr),
+				zap.String("orderId", updated.OrderID.String()),
+			)
+		}
 	}
 
 	auditActor := params.actor.AuditActorOrSystem()

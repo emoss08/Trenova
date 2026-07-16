@@ -23,6 +23,16 @@ type GetBillingQueueStatsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+// MarkPostedByOrderRequest scopes the posting sweep to the billing-queue items of the
+// legs actually carried on the posted invoice. ShipmentIDs empty falls back to every
+// non-terminal item of the order (legacy invoices without line attribution). Canceled
+// items are never swept.
+type MarkPostedByOrderRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	OrderID     pulid.ID              `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
+}
+
 type BillingQueueRepository interface {
 	List(
 		ctx context.Context,
@@ -48,8 +58,7 @@ type BillingQueueRepository interface {
 	) (bool, error)
 	MarkPostedByOrderID(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		orderID pulid.ID,
+		req *MarkPostedByOrderRequest,
 	) (int64, error)
 	GetStatusCounts(
 		ctx context.Context,

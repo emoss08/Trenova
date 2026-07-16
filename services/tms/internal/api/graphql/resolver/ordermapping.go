@@ -2,11 +2,13 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -20,8 +22,29 @@ func nullDecimalToString(d decimal.NullDecimal) *string {
 	return &s
 }
 
-// applyOrderInput copies the GraphQL input onto an order entity. Tenant identity and
-// the ID/version are set by the caller so the same helper serves create and update.
+// optionalNullDecimal preserves the null/valued distinction: an omitted or empty
+// input stays NULL instead of coercing to zero, so "no quote" and "quoted $0" remain
+// different states.
+func optionalNullDecimal(field string, value *string) (decimal.NullDecimal, error) {
+	if value == nil || strings.TrimSpace(*value) == "" {
+		return decimal.NullDecimal{}, nil
+	}
+
+	parsed, err := decimal.NewFromString(strings.TrimSpace(*value))
+	if err != nil {
+		return decimal.NullDecimal{}, errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"Amount must be a valid decimal",
+		)
+	}
+
+	return decimal.NewNullDecimal(parsed), nil
+}
+
+// applyOrderInput copies the GraphQL input onto an order entity. Tenant identity, the
+// ID, and the status lifecycle are owned by the caller/service — status is derived
+// and never client-writable.
 func applyOrderInput(entity *order.Order, input gqlmodel.OrderInput) error {
 	customerID, err := pulid.MustParse(input.CustomerID)
 	if err != nil {
@@ -35,12 +58,6 @@ func applyOrderInput(entity *order.Order, input gqlmodel.OrderInput) error {
 	}
 	entity.OwnerID = ownerID
 
-	if input.Status != nil {
-		entity.Status = *input.Status
-	} else if entity.Status == "" {
-		entity.Status = order.StatusDraft
-	}
-
 	entity.PONumber = stringValue(input.PoNumber)
 	entity.BOL = stringValue(input.Bol)
 
@@ -49,13 +66,13 @@ func applyOrderInput(entity *order.Order, input gqlmodel.OrderInput) error {
 		entity.CurrencyCode = "USD"
 	}
 
-	quoted, err := nullDecimalFromInput(input.QuotedAmount)
+	quoted, err := optionalNullDecimal("quotedAmount", input.QuotedAmount)
 	if err != nil {
 		return err
 	}
 	entity.QuotedAmount = quoted
 
-	base, err := nullDecimalFromInput(input.BaseAmount)
+	base, err := optionalNullDecimal("baseAmount", input.BaseAmount)
 	if err != nil {
 		return err
 	}

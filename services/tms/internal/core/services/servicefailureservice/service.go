@@ -23,6 +23,7 @@ type Params struct {
 	CommentService services.ShipmentCommentService
 	AuditService   services.AuditService
 	Realtime       services.RealtimeService
+	OrderDerivation services.OrderDerivationService `optional:"true"`
 }
 
 type EDIServiceSetter interface {
@@ -54,10 +55,11 @@ func New(p Params) *service {
 		realtime:       p.Realtime,
 	}
 	s.delayedMarker = newDelayedShipmentMarker(delayedShipmentMarkerParams{
-		logger:       s.l,
-		shipmentRepo: s.shipmentRepo,
-		auditService: s.auditService,
-		realtime:     s.realtime,
+		logger:          s.l,
+		shipmentRepo:    s.shipmentRepo,
+		auditService:    s.auditService,
+		realtime:        s.realtime,
+		orderDerivation: p.OrderDerivation,
 	})
 	return s
 }

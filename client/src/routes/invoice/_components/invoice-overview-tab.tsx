@@ -81,15 +81,28 @@ export function InvoiceOverviewTab({
             <div className="rounded-lg border bg-card p-3">
               <SectionLabel>References</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-                <PropertyCell label="Shipment">
-                  <Link
-                    to={`/shipment-management/shipments?item=${invoice.shipmentId}`}
-                    className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-                  >
-                    {invoice.shipmentProNumber || invoice.shipmentId.slice(0, 12)}
-                    <ExternalLinkIcon className="size-2.5" />
-                  </Link>
-                </PropertyCell>
+                {invoice.shipmentId ? (
+                  <PropertyCell label="Shipment">
+                    <Link
+                      to={`/shipment-management/shipments?item=${invoice.shipmentId}`}
+                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                    >
+                      {invoice.shipmentProNumber || invoice.shipmentId.slice(0, 12)}
+                      <ExternalLinkIcon className="size-2.5" />
+                    </Link>
+                  </PropertyCell>
+                ) : null}
+                {invoice.orderId ? (
+                  <PropertyCell label="Order">
+                    <Link
+                      to={`/shipment-management/orders?panelType=edit&panelEntityId=${invoice.orderId}`}
+                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                    >
+                      {invoice.orderNumber || invoice.orderId.slice(0, 12)}
+                      <ExternalLinkIcon className="size-2.5" />
+                    </Link>
+                  </PropertyCell>
+                ) : null}
                 <PropertyCell label="Billing Queue">
                   <Link
                     to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}

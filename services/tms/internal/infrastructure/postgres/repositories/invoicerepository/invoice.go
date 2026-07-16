@@ -209,7 +209,6 @@ func (r *repository) CountPostedReconciliationDiscrepancies(
 	return r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*invoice.Invoice)(nil)).
-		Join("JOIN shipments AS shp ON shp.id = inv.shipment_id AND shp.organization_id = inv.organization_id AND shp.business_unit_id = inv.business_unit_id").
 		Where("inv.organization_id = ?", req.OrgID).
 		Where("inv.business_unit_id = ?", req.BuID).
 		Where("inv.status = ?", invoice.StatusPosted).
@@ -218,10 +217,45 @@ func (r *repository) CountPostedReconciliationDiscrepancies(
 		Where("inv.posted_at <= ?", req.PeriodEndDate).
 		Where(
 			`ABS(
-				inv.total_amount - CASE
-					WHEN inv.bill_type = ? THEN COALESCE(shp.total_charge_amount, 0) * -1
-					ELSE COALESCE(shp.total_charge_amount, 0)
-				END
+				inv.total_amount - (
+					CASE WHEN inv.bill_type = ? THEN -1 ELSE 1 END * COALESCE(
+						(
+							SELECT SUM(leg.total_charge_amount)
+							FROM shipments leg
+							WHERE leg.organization_id = inv.organization_id
+								AND leg.business_unit_id = inv.business_unit_id
+								AND leg.id IN (
+									SELECT invl.shipment_id
+									FROM invoice_lines invl
+									WHERE invl.invoice_id = inv.id
+										AND invl.organization_id = inv.organization_id
+										AND invl.business_unit_id = inv.business_unit_id
+										AND invl.shipment_id IS NOT NULL
+								)
+						),
+						(
+							SELECT shp.total_charge_amount
+							FROM shipments shp
+							WHERE shp.id = inv.shipment_id
+								AND shp.organization_id = inv.organization_id
+								AND shp.business_unit_id = inv.business_unit_id
+						),
+						0
+					) + CASE
+						WHEN inv.order_id IS NOT NULL THEN COALESCE(
+							(
+								SELECT SUM(ordl.amount)
+								FROM invoice_lines ordl
+								WHERE ordl.invoice_id = inv.id
+									AND ordl.organization_id = inv.organization_id
+									AND ordl.business_unit_id = inv.business_unit_id
+									AND ordl.shipment_id IS NULL
+							),
+							0
+						)
+						ELSE 0
+					END
+				)
 			) > ?`,
 			billingqueue.BillTypeCreditMemo,
 			req.ToleranceAmount,

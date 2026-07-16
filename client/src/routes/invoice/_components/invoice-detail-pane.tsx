@@ -264,7 +264,7 @@ export default function InvoiceDetailPane({
             <div className="min-h-0 flex-1">
               {shipment ? (
                 <BillingQueueDocumentsTab
-                  shipmentId={invoice.shipmentId}
+                  shipmentId={invoice.shipmentId ?? ""}
                   selectedDocumentId={selectedDocumentId}
                   onDocumentSelect={onDocumentSelect}
                   isEditable={false}

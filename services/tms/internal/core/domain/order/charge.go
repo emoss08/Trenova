@@ -28,6 +28,8 @@ type OrderCharge struct {
 	OrderID        pulid.ID        `json:"orderId"        bun:"order_id,type:VARCHAR(100),notnull"`
 	Description    string          `json:"description"    bun:"description,type:VARCHAR(255),notnull"`
 	Amount         decimal.Decimal `json:"amount"         bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
+	InvoiceID      pulid.ID        `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),nullzero"`
+	InvoicedAt     int64           `json:"invoicedAt"     bun:"invoiced_at,type:BIGINT,nullzero"`
 	Version        int64           `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -45,7 +47,13 @@ func (c *OrderCharge) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Description is required"),
 			validation.Length(1, 255).Error("Description must be between 1 and 255 characters"),
 		),
-		validation.Field(&c.Amount, validation.Required.Error("Amount is required")),
+		validation.Field(&c.Amount, validation.By(func(value any) error {
+			amount, ok := value.(decimal.Decimal)
+			if !ok || amount.LessThanOrEqual(decimal.Zero) {
+				return errors.New("amount must be greater than zero")
+			}
+			return nil
+		})),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {

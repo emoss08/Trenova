@@ -37,6 +37,7 @@ type Params struct {
 	Coordinator     *shipmentstate.Coordinator
 	Commercial      *shipmentcommercial.Calculator
 	EventService    portservices.ShipmentEventService
+	OrderDerivation portservices.OrderDerivationService
 	ServiceFailures portservices.ServiceFailureEvaluator `optional:"true"`
 }
 
@@ -52,6 +53,7 @@ type service struct {
 	coordinator     *shipmentstate.Coordinator
 	commercial      *shipmentcommercial.Calculator
 	eventService    portservices.ShipmentEventService
+	orderDerivation portservices.OrderDerivationService
 	serviceFailures portservices.ServiceFailureEvaluator
 }
 
@@ -69,6 +71,7 @@ func New(p Params) portservices.ShipmentMoveService {
 		coordinator:     p.Coordinator,
 		commercial:      p.Commercial,
 		eventService:    p.EventService,
+		orderDerivation: p.OrderDerivation,
 		serviceFailures: p.ServiceFailures,
 	}
 }
@@ -467,8 +470,15 @@ func (s *service) refreshShipmentState(
 	if err = s.commercial.Recalculate(ctx, entity, control, pulid.Nil); err != nil {
 		return err
 	}
-	_, err = s.shipmentRepo.UpdateDerivedState(ctx, entity)
-	return err
+	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, entity); err != nil {
+		return err
+	}
+
+	if !entity.OrderID.IsNil() {
+		return s.orderDerivation.RecomputeOrder(ctx, tenantInfo, entity.OrderID)
+	}
+
+	return nil
 }
 
 func resolveDelayThresholdMinutes(control *tenant.ShipmentControl) int16 {

@@ -32,6 +32,20 @@ func (s Status) IsValid() bool {
 	return false
 }
 
+// AllowsMembershipChange reports whether the order's legs and charges may still be
+// modified. Billed orders must be adjusted through the invoice-adjustment flow,
+// Closed is terminal, and Canceled orders are read-only.
+func (s Status) AllowsMembershipChange() bool {
+	switch s {
+	case StatusBilled, StatusClosed, StatusCanceled:
+		return false
+	case StatusDraft, StatusConfirmed, StatusInProgress, StatusCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Derive computes an order's status from the statuses of its legs (shipments).
 //
 // It is a pure function so it can be unit-tested and re-run idempotently by the

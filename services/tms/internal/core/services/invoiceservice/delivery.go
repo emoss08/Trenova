@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
@@ -37,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
@@ -148,45 +151,87 @@ func (s *Service) CreateFromShipments(
 		return nil, err
 	}
 
-	queueItem, err := s.billingQueueRepo.Create(ctx, &billingqueue.BillingQueueItem{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		ShipmentID:     shp.ID,
-		Status:         billingqueue.StatusApproved,
-		BillType:       billingqueue.BillTypeInvoice,
-		Number:         number,
+	return s.createSingleShipmentInvoice(ctx, req.TenantInfo, shp, number, actor)
+}
+
+func (s *Service) createSingleShipmentInvoice(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shp *shipment.Shipment,
+	number string,
+	actor *servicesports.RequestActor,
+) (*invoice.Invoice, error) {
+	var created *invoice.Invoice
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		queueItem, txErr := s.billingQueueRepo.Create(txCtx, &billingqueue.BillingQueueItem{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			ShipmentID:     shp.ID,
+			OrderID:        shp.OrderID,
+			Status:         billingqueue.StatusApproved,
+			BillType:       billingqueue.BillTypeInvoice,
+			Number:         number,
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		result, txErr := s.CreateFromApprovedBillingQueueItem(
+			txCtx,
+			&servicesports.CreateInvoiceFromBillingQueueRequest{
+				BillingQueueItemID: queueItem.ID,
+				TenantInfo:         tenantInfo,
+			},
+			actor,
+		)
+		if txErr != nil {
+			return txErr
+		}
+
+		created = result.Invoice
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := s.CreateFromApprovedBillingQueueItem(
-		ctx,
-		&servicesports.CreateInvoiceFromBillingQueueRequest{
-			BillingQueueItemID: queueItem.ID,
-			TenantInfo:         req.TenantInfo,
-		},
-		actor,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return result.Invoice, nil
+	return created, nil
 }
 
 // collectBillableLegs gathers the shipments of an order that are ready to invoice,
 // loading each leg's full detail (charges) and guarding against double-billing and
-// mixed customers.
+// mixed customers. A non-empty `only` set restricts the invoice to those legs; every
+// requested id must be a leg of the order.
 func (s *Service) collectBillableLegs(
 	ctx context.Context,
 	ord *order.Order,
 	tenantInfo pagination.TenantInfo,
+	only []pulid.ID,
 ) ([]*shipment.Shipment, error) {
+	requested := make(map[pulid.ID]struct{}, len(only))
+	for _, id := range only {
+		requested[id] = struct{}{}
+	}
+	matched := 0
+
 	legs := make([]*shipment.Shipment, 0, len(ord.Shipments))
 	for _, leg := range ord.Shipments {
 		if leg == nil {
 			continue
+		}
+		if len(requested) > 0 {
+			if _, ok := requested[leg.ID]; !ok {
+				continue
+			}
+			matched++
+			if leg.Status != shipment.StatusReadyToInvoice &&
+				leg.Status != shipment.StatusCompleted {
+				return nil, errortypes.NewValidationError(
+					"shipmentIds",
+					errortypes.ErrInvalid,
+					"Every selected shipment must be completed or ready to invoice",
+				)
+			}
 		}
 		if leg.Status != shipment.StatusReadyToInvoice && leg.Status != shipment.StatusCompleted {
 			continue
@@ -222,6 +267,14 @@ func (s *Service) collectBillableLegs(
 			return nil, err
 		}
 		legs = append(legs, full)
+	}
+
+	if len(requested) > 0 && matched != len(requested) {
+		return nil, errortypes.NewValidationError(
+			"shipmentIds",
+			errortypes.ErrInvalid,
+			"Every selected shipment must be a leg of the order",
+		)
 	}
 
 	return legs, nil
@@ -262,8 +315,9 @@ func (s *Service) groupedInvoiceFromShipments(
 	}
 
 	return s.CreateFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
-		OrderID:    orderID,
-		TenantInfo: req.TenantInfo,
+		OrderID:     orderID,
+		ShipmentIDs: req.ShipmentIDs,
+		TenantInfo:  req.TenantInfo,
 	}, actor)
 }
 
@@ -298,27 +352,6 @@ func (s *Service) CreateFromOrder(
 		)
 	}
 
-	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
-		ID:              req.OrderID,
-		TenantInfo:      req.TenantInfo,
-		IncludeShipment: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	legs, err := s.collectBillableLegs(ctx, ord, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	if len(legs) == 0 {
-		return nil, errortypes.NewValidationError(
-			"orderId",
-			errortypes.ErrInvalid,
-			"Order has no legs that are completed or ready to invoice",
-		)
-	}
-
 	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -330,34 +363,52 @@ func (s *Service) CreateFromOrder(
 		return nil, err
 	}
 
-	var anchor *billingqueue.BillingQueueItem
-	for _, leg := range legs {
-		// Only the anchor item carries the invoice number; sibling items leave it null
-		// (the billing-queue number is globally unique). The whole group is correlated
-		// by OrderID instead.
-		itemNumber := ""
-		if anchor == nil {
-			itemNumber = number
-		}
-
-		item, itemErr := s.billingQueueRepo.Create(ctx, &billingqueue.BillingQueueItem{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
-			ShipmentID:     leg.ID,
-			OrderID:        ord.ID,
-			Status:         billingqueue.StatusApproved,
-			BillType:       billingqueue.BillTypeInvoice,
-			Number:         itemNumber,
-		})
-		if itemErr != nil {
-			return nil, itemErr
-		}
-		if anchor == nil {
-			anchor = item
-		}
+	var created *invoice.Invoice
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		created, txErr = s.createOrderInvoiceTx(txCtx, req, number, actor)
+		return txErr
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	return created, nil
+}
+
+func (s *Service) createOrderInvoiceTx(
+	txCtx context.Context,
+	req *servicesports.CreateInvoiceFromOrderRequest,
+	number string,
+	actor *servicesports.RequestActor,
+) (*invoice.Invoice, error) {
+	ord, txErr := s.orderRepo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		ID:              req.OrderID,
+		TenantInfo:      req.TenantInfo,
+		IncludeShipment: true,
+	})
+	if txErr != nil {
+		return nil, txErr
+	}
+
+	legs, txErr := s.collectBillableLegs(txCtx, ord, req.TenantInfo, req.ShipmentIDs)
+	if txErr != nil {
+		return nil, txErr
+	}
+	if len(legs) == 0 {
+		return nil, errortypes.NewValidationError(
+			"orderId",
+			errortypes.ErrInvalid,
+			"Order has no legs that are completed or ready to invoice",
+		)
+	}
+
+	anchor, txErr := s.createLegQueueItems(txCtx, req.TenantInfo, ord.ID, legs, number)
+	if txErr != nil {
+		return nil, txErr
+	}
+
+	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
 		ID:         ord.CustomerID,
 		TenantInfo: req.TenantInfo,
 		CustomerFilterOptions: repositories.CustomerFilterOptions{
@@ -365,28 +416,41 @@ func (s *Service) CreateFromOrder(
 			IncludeState:          true,
 		},
 	})
-	if err != nil {
-		return nil, err
+	if txErr != nil {
+		return nil, txErr
 	}
 
-	control, err := s.billingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
-	if err != nil && !errortypes.IsNotFoundError(err) {
-		return nil, err
+	control, txErr := s.billingRepo.GetByOrgID(txCtx, req.TenantInfo.OrgID)
+	if txErr != nil && !errortypes.IsNotFoundError(txErr) {
+		return nil, txErr
 	}
 
-	charges, err := s.orderRepo.ListCharges(ctx, req.TenantInfo, ord.ID)
-	if err != nil {
-		return nil, err
+	// Order charges are billed exactly once: only charges not yet carried on an
+	// invoice make it onto this one, and they are stamped inside the same
+	// transaction so a later pass over the remaining legs cannot re-bill them.
+	charges, txErr := s.orderRepo.ListUninvoicedCharges(txCtx, req.TenantInfo, ord.ID)
+	if txErr != nil {
+		return nil, txErr
 	}
 
 	entity := s.buildInvoiceEntityForOrder(anchor, ord, legs, charges, cus, control)
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+	if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	created, err := s.repo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
+	created, txErr := s.repo.Create(txCtx, entity)
+	if txErr != nil {
+		return nil, txErr
+	}
+
+	if txErr = s.markOrderChargesInvoiced(
+		txCtx,
+		req.TenantInfo,
+		ord.ID,
+		charges,
+		created,
+	); txErr != nil {
+		return nil, txErr
 	}
 
 	auditActor := actor.AuditActor()
@@ -398,9 +462,72 @@ func (s *Service) CreateFromOrder(
 		created,
 		"Grouped invoice created from order",
 	)
-	s.publishInvalidation(ctx, created, auditActor, "created", created)
+	s.publishInvalidation(txCtx, created, auditActor, "created", created)
 
 	return created, nil
+}
+
+// createLegQueueItems creates one approved billing-queue item per billable leg. Only
+// the anchor item carries the invoice number; sibling items leave it null (the
+// billing-queue number is tenant-unique) — the whole group is correlated by OrderID.
+func (s *Service) createLegQueueItems(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	orderID pulid.ID,
+	legs []*shipment.Shipment,
+	number string,
+) (*billingqueue.BillingQueueItem, error) {
+	var anchor *billingqueue.BillingQueueItem
+	for _, leg := range legs {
+		itemNumber := ""
+		if anchor == nil {
+			itemNumber = number
+		}
+
+		item, err := s.billingQueueRepo.Create(ctx, &billingqueue.BillingQueueItem{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			ShipmentID:     leg.ID,
+			OrderID:        orderID,
+			Status:         billingqueue.StatusApproved,
+			BillType:       billingqueue.BillTypeInvoice,
+			Number:         itemNumber,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if anchor == nil {
+			anchor = item
+		}
+	}
+
+	return anchor, nil
+}
+
+func (s *Service) markOrderChargesInvoiced(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	orderID pulid.ID,
+	charges []*order.OrderCharge,
+	created *invoice.Invoice,
+) error {
+	if len(charges) == 0 {
+		return nil
+	}
+
+	chargeIDs := make([]pulid.ID, 0, len(charges))
+	for _, charge := range charges {
+		chargeIDs = append(chargeIDs, charge.ID)
+	}
+
+	_, err := s.orderRepo.MarkChargesInvoiced(ctx, &repositories.MarkOrderChargesInvoicedRequest{
+		TenantInfo: tenantInfo,
+		OrderID:    orderID,
+		ChargeIDs:  chargeIDs,
+		InvoiceID:  created.ID,
+		InvoicedAt: created.InvoiceDate,
+	})
+	return err
 }
 
 func (s *Service) UpdateDraft(
@@ -1699,7 +1826,7 @@ func int64PtrString(value *int64) string {
 	if value == nil {
 		return ""
 	}
-	return fmt.Sprintf("%d", *value)
+	return strconv.FormatInt(*value, 10)
 }
 
 func uniqueStrings(input []string) []string {

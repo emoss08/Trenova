@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -24,6 +25,7 @@ type ActivitiesParams struct {
 
 	Repo         repositories.ShipmentRepository
 	AuditService services.AuditService
+	EventService services.ShipmentEventService
 	Realtime     services.RealtimeService
 	Logger       *zap.Logger
 }
@@ -31,6 +33,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	repo         repositories.ShipmentRepository
 	auditService services.AuditService
+	eventService services.ShipmentEventService
 	realtime     services.RealtimeService
 	logger       *zap.Logger
 }
@@ -39,6 +42,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		repo:         p.Repo,
 		auditService: p.AuditService,
+		eventService: p.EventService,
 		realtime:     p.Realtime,
 		logger:       p.Logger.Named("shipment-activities"),
 	}
@@ -84,6 +88,23 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 			auditservice.WithComment("Shipment duplicated"),
 		); auditErr != nil {
 			a.logger.Error("failed to log duplicated shipment audit action", zap.Error(auditErr))
+		}
+
+		if a.eventService != nil {
+			if eventErr := a.eventService.Record(ctx, shipmenteventservice.BuildShipmentCreated(
+				shipmenteventservice.TenantRef{
+					OrganizationID: entity.OrganizationID,
+					BusinessUnitID: entity.BusinessUnitID,
+				},
+				entity,
+				services.AuditActor{
+					UserID:        payload.RequestedBy,
+					PrincipalType: services.PrincipalTypeUser,
+					PrincipalID:   payload.RequestedBy,
+				},
+			)); eventErr != nil {
+				a.logger.Warn("failed to record duplicated shipment event", zap.Error(eventErr))
+			}
 		}
 	}
 

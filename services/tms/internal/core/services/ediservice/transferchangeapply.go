@@ -74,12 +74,34 @@ func (s *Service) applyApprovedTransferChange(
 		return err
 	}
 
+	if recomputeErr := s.recomputeOrderForUpdatedShipment(ctx, updated); recomputeErr != nil {
+		return recomputeErr
+	}
+
 	return s.shipmentEventRepo.Insert(ctx, buildApprovedTransferChangeEvent(
 		change,
 		applyCtx,
 		updated,
 		appliedAt,
 	))
+}
+
+func (s *Service) recomputeOrderForUpdatedShipment(
+	ctx context.Context,
+	updated *shipment.Shipment,
+) error {
+	if updated == nil || s.orderDerivation == nil {
+		return nil
+	}
+
+	return s.orderDerivation.RecomputeForShipment(
+		ctx,
+		pagination.TenantInfo{
+			OrgID: updated.OrganizationID,
+			BuID:  updated.BusinessUnitID,
+		},
+		updated.ID,
+	)
 }
 
 func (s *Service) applyApprovedLifecycleTransferChange(
@@ -124,6 +146,10 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 	updated, err := applier.ApplyPrepared(ctx, plan)
 	if err != nil {
 		return err
+	}
+
+	if recomputeErr := s.recomputeOrderForUpdatedShipment(ctx, updated); recomputeErr != nil {
+		return recomputeErr
 	}
 
 	return s.shipmentEventRepo.Insert(ctx, buildApprovedLifecycleTransferChangeEvent(

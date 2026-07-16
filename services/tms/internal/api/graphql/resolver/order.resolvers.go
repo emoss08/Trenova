@@ -7,6 +7,7 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -30,6 +32,7 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input gqlmodel.Order
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		EnteredByID:    authCtx.UserID,
+		Status:         order.StatusDraft,
 	}
 	if err = applyOrderInput(entity, input); err != nil {
 		return nil, err
@@ -50,6 +53,14 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, id string, input gql
 		return nil, err
 	}
 
+	if input.Version == nil {
+		return nil, errortypes.NewValidationError(
+			"version",
+			errortypes.ErrRequired,
+			"Version is required to update an order",
+		)
+	}
+
 	entity, err := r.orderService.Get(ctx, repositories.GetOrderByIDRequest{
 		ID:         orderID,
 		TenantInfo: tenantInfo(authCtx),
@@ -60,6 +71,7 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, id string, input gql
 	if err = applyOrderInput(entity, input); err != nil {
 		return nil, err
 	}
+	entity.Version = int64(*input.Version)
 
 	return r.orderService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
@@ -146,18 +158,52 @@ func (r *mutationResolver) AddOrderCharge(ctx context.Context, orderID string, d
 	)
 }
 
-// RemoveOrderCharge is the resolver for the removeOrderCharge field.
-func (r *mutationResolver) RemoveOrderCharge(ctx context.Context, orderID string, chargeID string) (*order.Order, error) {
+// UpdateOrderCharge is the resolver for the updateOrderCharge field.
+func (r *mutationResolver) UpdateOrderCharge(ctx context.Context, input gqlmodel.UpdateOrderChargeInput) (*order.Order, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceOrder, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	parsedOrderID, err := pulid.MustParse(orderID)
+	parsedOrderID, err := pulid.MustParse(input.OrderID)
 	if err != nil {
 		return nil, err
 	}
-	parsedChargeID, err := pulid.MustParse(chargeID)
+	parsedChargeID, err := pulid.MustParse(input.ChargeID)
+	if err != nil {
+		return nil, err
+	}
+	parsedAmount, err := decimal.NewFromString(input.Amount)
+	if err != nil {
+		return nil, errortypes.NewValidationError("amount", errortypes.ErrInvalid, "Amount must be a valid number")
+	}
+
+	return r.orderService.UpdateCharge(
+		ctx,
+		&orderservice.UpdateChargeRequest{
+			TenantInfo:  tenantInfo(authCtx),
+			OrderID:     parsedOrderID,
+			ChargeID:    parsedChargeID,
+			Description: input.Description,
+			Amount:      parsedAmount,
+			Version:     int64(input.Version),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+// RemoveOrderCharge is the resolver for the removeOrderCharge field.
+func (r *mutationResolver) RemoveOrderCharge(ctx context.Context, input gqlmodel.RemoveOrderChargeInput) (*order.Order, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrder, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedOrderID, err := pulid.MustParse(input.OrderID)
+	if err != nil {
+		return nil, err
+	}
+	parsedChargeID, err := pulid.MustParse(input.ChargeID)
 	if err != nil {
 		return nil, err
 	}
@@ -167,6 +213,54 @@ func (r *mutationResolver) RemoveOrderCharge(ctx context.Context, orderID string
 		tenantInfo(authCtx),
 		parsedOrderID,
 		parsedChargeID,
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+// CloseOrder is the resolver for the closeOrder field.
+func (r *mutationResolver) CloseOrder(ctx context.Context, id string) (*order.Order, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrder, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	orderID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.orderService.Close(
+		ctx,
+		tenantInfo(authCtx),
+		orderID,
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+// CancelOrder is the resolver for the cancelOrder field.
+func (r *mutationResolver) CancelOrder(ctx context.Context, id string, cancelReason string) (*order.Order, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrder, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	orderID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(cancelReason) == "" {
+		return nil, errortypes.NewValidationError(
+			"cancelReason",
+			errortypes.ErrRequired,
+			"A cancellation reason is required",
+		)
+	}
+
+	return r.orderService.Cancel(
+		ctx,
+		tenantInfo(authCtx),
+		orderID,
+		cancelReason,
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -206,7 +300,7 @@ func (r *orderResolver) Legs(ctx context.Context, obj *order.Order) ([]*gqlmodel
 }
 
 // Charges is the resolver for the charges field.
-func (r *orderResolver) Charges(_ context.Context, obj *order.Order) ([]*gqlmodel.OrderCharge, error) {
+func (r *orderResolver) Charges(ctx context.Context, obj *order.Order) ([]*gqlmodel.OrderCharge, error) {
 	charges := make([]*gqlmodel.OrderCharge, 0, len(obj.Charges))
 	for _, charge := range obj.Charges {
 		if charge == nil {
@@ -217,6 +311,8 @@ func (r *orderResolver) Charges(_ context.Context, obj *order.Order) ([]*gqlmode
 			OrderID:     charge.OrderID.String(),
 			Description: charge.Description,
 			Amount:      charge.Amount.String(),
+			InvoiceID:   idPtr(charge.InvoiceID),
+			Version:     int(charge.Version),
 			CreatedAt:   int(charge.CreatedAt),
 		})
 	}

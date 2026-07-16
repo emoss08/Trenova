@@ -15,6 +15,11 @@ fragment OrderTableRowFields on Order {
   version
   createdAt
   updatedAt
+  customer {
+    id
+    name
+    code
+  }
 }
 
 query OrderTable($input: DataTableConnectionInput!) {

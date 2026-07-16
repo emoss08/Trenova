@@ -1,24 +1,31 @@
 import {
   AddOrderChargeDocument,
   AttachOrderShipmentsDocument,
+  CancelOrderDocument,
+  CloseOrderDocument,
   CreateInvoiceFromOrderDocument,
   CreateOrderDocument,
   DetachOrderShipmentDocument,
   OrderDetailDocument,
   RemoveOrderChargeDocument,
+  UpdateOrderChargeDocument,
   UpdateOrderDocument,
   type AddOrderChargeMutation,
   type AttachOrderShipmentsMutation,
+  type CancelOrderMutation,
+  type CloseOrderMutation,
   type CreateInvoiceFromOrderMutation,
   type DetachOrderShipmentMutation,
   type OrderDetailQuery,
   type OrderInput,
   type RemoveOrderChargeMutation,
+  type UpdateOrderChargeMutation,
 } from "@/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import type { OrderFormValues } from "@/types/order";
 
 // The order's status is derived from its shipment legs, so it is never sent on write.
+// Version rides along for optimistic locking on updates.
 function toOrderInput(values: OrderFormValues): OrderInput {
   return {
     customerId: values.customerId,
@@ -28,6 +35,7 @@ function toOrderInput(values: OrderFormValues): OrderInput {
     currencyCode: values.currencyCode,
     quotedAmount: values.quotedAmount != null ? String(values.quotedAmount) : undefined,
     baseAmount: values.baseAmount != null ? String(values.baseAmount) : undefined,
+    version: values.version ?? undefined,
   };
 }
 
@@ -43,6 +51,7 @@ export async function createOrder(values: OrderFormValues): Promise<OrderFormVal
     id: data.createOrder.id,
     orderNumber: data.createOrder.orderNumber,
     status: data.createOrder.status,
+    version: data.createOrder.version,
   };
 }
 
@@ -58,6 +67,7 @@ export async function updateOrder(id: string, values: OrderFormValues): Promise<
     id: data.updateOrder.id,
     orderNumber: data.updateOrder.orderNumber,
     status: data.updateOrder.status,
+    version: data.updateOrder.version,
   };
 }
 
@@ -131,6 +141,22 @@ export async function addOrderCharge(
   return data.addOrderCharge;
 }
 
+export async function updateOrderCharge(input: {
+  orderId: string;
+  chargeId: string;
+  description: string;
+  amount: string;
+  version: number;
+}): Promise<UpdateOrderChargeMutation["updateOrderCharge"]> {
+  const data = await requestGraphQL({
+    document: UpdateOrderChargeDocument,
+    operationName: "UpdateOrderCharge",
+    variables: { input },
+  });
+
+  return data.updateOrderCharge;
+}
+
 export async function removeOrderCharge(
   orderId: string,
   chargeId: string,
@@ -138,8 +164,31 @@ export async function removeOrderCharge(
   const data = await requestGraphQL({
     document: RemoveOrderChargeDocument,
     operationName: "RemoveOrderCharge",
-    variables: { orderId, chargeId },
+    variables: { input: { orderId, chargeId } },
   });
 
   return data.removeOrderCharge;
+}
+
+export async function closeOrder(id: string): Promise<CloseOrderMutation["closeOrder"]> {
+  const data = await requestGraphQL({
+    document: CloseOrderDocument,
+    operationName: "CloseOrder",
+    variables: { id },
+  });
+
+  return data.closeOrder;
+}
+
+export async function cancelOrder(
+  id: string,
+  cancelReason: string,
+): Promise<CancelOrderMutation["cancelOrder"]> {
+  const data = await requestGraphQL({
+    document: CancelOrderDocument,
+    operationName: "CancelOrder",
+    variables: { id, cancelReason },
+  });
+
+  return data.cancelOrder;
 }

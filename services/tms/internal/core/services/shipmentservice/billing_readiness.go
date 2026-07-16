@@ -136,6 +136,14 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 		return nil, err
 	}
 
+	if err = s.recomputeOrdersForShipments(
+		ctx,
+		tenantInfo,
+		[]*shipment.Shipment{updatedEntity},
+	); err != nil {
+		s.l.Warn("failed to recompute order after auto-mark", zap.Error(err))
+	}
+
 	if err = s.logShipmentAction(
 		updatedEntity,
 		auditActor,
@@ -308,13 +316,16 @@ func (s *service) applyServiceFailureBillingContext(
 		return nil
 	}
 
-	unresolved, err := s.serviceFailureRepo.ListUnresolvedByShipment(ctx, &repositories.ServiceFailuresByShipmentRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	unresolved, err := s.serviceFailureRepo.ListUnresolvedByShipment(
+		ctx,
+		&repositories.ServiceFailuresByShipmentRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			ShipmentID: entity.ID,
 		},
-		ShipmentID: entity.ID,
-	})
+	)
 	if err != nil {
 		return err
 	}

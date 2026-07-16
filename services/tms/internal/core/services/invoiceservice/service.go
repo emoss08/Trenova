@@ -66,6 +66,7 @@ type Params struct {
 	Realtime           servicesports.RealtimeService
 	WorkflowStarter    servicesports.WorkflowStarter
 	SequenceGenerator  seqgen.Generator
+	OrderDerivation    servicesports.OrderDerivationService
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
 	BillingPolicy      *billingcontrolpolicyservice.Service
 }
@@ -95,6 +96,7 @@ type Service struct {
 	realtime           servicesports.RealtimeService
 	workflowStarter    servicesports.WorkflowStarter
 	sequenceGenerator  seqgen.Generator
+	orderDerivation    servicesports.OrderDerivationService
 	accountingPolicy   *accountingcontrolpolicyservice.Service
 	billingPolicy      *billingcontrolpolicyservice.Service
 }
@@ -106,6 +108,7 @@ type existingInvoiceLookupResult struct {
 
 type invoiceDependencies struct {
 	Shipment       *shipment.Shipment
+	Order          *order.Order
 	Customer       *customer.Customer
 	BillingControl *tenant.BillingControl
 }
@@ -143,6 +146,7 @@ func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable AP
 		realtime:           p.Realtime,
 		workflowStarter:    p.WorkflowStarter,
 		sequenceGenerator:  p.SequenceGenerator,
+		orderDerivation:    p.OrderDerivation,
 		accountingPolicy:   p.AccountingPolicy,
 		billingPolicy:      p.BillingPolicy,
 	}
@@ -206,9 +210,17 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 	entity := s.buildInvoiceEntity(
 		item,
 		dependencies.Shipment,
+		dependencies.Order,
 		dependencies.Customer,
 		dependencies.BillingControl,
 	)
+	if entity == nil {
+		return nil, errortypes.NewValidationError(
+			"billingQueueItemId",
+			errortypes.ErrInvalidOperation,
+			"Billing queue item has no shipment or adjustment context to bill from",
+		)
+	}
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -363,9 +375,18 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return updateErr
 		}
 
-		shp, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
+		legs, shipErr := s.markInvoicedLegs(txCtx, entity, now, req.TenantInfo)
 		if shipErr != nil {
 			return shipErr
+		}
+
+		if derivErr := s.recomputeOrdersForLegs(
+			txCtx,
+			req.TenantInfo,
+			entity.OrderID,
+			legs,
+		); derivErr != nil {
+			return derivErr
 		}
 
 		queueUpdate, updateErr := s.markBillingQueueItemPosted(txCtx, updated, req.TenantInfo)
@@ -383,7 +404,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 		s.publishInvalidation(txCtx, updated, auditActor, "updated", updated)
 		s.logBillingQueuePosted(queueUpdate, auditActor)
 		s.publishBillingQueueInvalidation(txCtx, queueUpdate, auditActor)
-		s.notifyReconciliationWarning(txCtx, updated, shp)
+		s.notifyReconciliationWarning(txCtx, updated, legs)
 
 		return nil
 	})
@@ -397,9 +418,9 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 func (s *Service) notifyReconciliationWarning(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	shp *shipment.Shipment,
+	legs []*shipment.Shipment,
 ) {
-	if s.accountingRepo == nil || s.notificationRepo == nil || entity == nil || shp == nil {
+	if s.accountingRepo == nil || s.notificationRepo == nil || entity == nil || len(legs) == 0 {
 		return
 	}
 
@@ -413,7 +434,7 @@ func (s *Service) notifyReconciliationWarning(
 		return
 	}
 
-	expectedTotal := signedAmount(entity.BillType, shp.TotalChargeAmount.Decimal)
+	expectedTotal := reconciliationExpectedTotal(entity, legs)
 	discrepancy := entity.TotalAmount.Sub(expectedTotal).Abs()
 	if !discrepancy.GreaterThan(control.ReconciliationToleranceAmount) {
 		return
@@ -433,75 +454,70 @@ func (s *Service) notifyReconciliationWarning(
 			"toleranceAmount":   control.ReconciliationToleranceAmount.String(),
 			"discrepancyAmount": discrepancy.String(),
 		},
-		RelatedEntities: map[string]any{
-			"invoiceId":  entity.ID.String(),
-			"shipmentId": entity.ShipmentID.String(),
-		},
-		Source: "invoiceservice.Post",
+		RelatedEntities: reconciliationRelatedEntities(entity),
+		Source:          "invoiceservice.Post",
 	}); err != nil {
 		s.l.Warn("failed to create reconciliation warning notification", zap.Error(err))
 	}
 }
 
+// recomputeOrdersForLegs re-derives every order touched by a posting: the invoice's
+// own order (grouped path) plus each leg's parent order (single-shipment path). The
+// dedupe matters because all grouped-invoice legs share one order.
+func (s *Service) recomputeOrdersForLegs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	invoiceOrderID pulid.ID,
+	legs []*shipment.Shipment,
+) error {
+	if s.orderDerivation == nil {
+		return nil
+	}
+
+	orderIDs := make(map[pulid.ID]struct{}, 1+len(legs))
+	if !invoiceOrderID.IsNil() {
+		orderIDs[invoiceOrderID] = struct{}{}
+	}
+	for _, leg := range legs {
+		if leg == nil || leg.OrderID.IsNil() {
+			continue
+		}
+		orderIDs[leg.OrderID] = struct{}{}
+	}
+
+	for orderID := range orderIDs {
+		if err := s.orderDerivation.RecomputeOrder(ctx, tenantInfo, orderID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // markInvoicedLegs flips every shipment billed by this invoice to Invoiced. For a
 // single-shipment invoice that is one leg; for a grouped (order) invoice it is the set
-// of legs carried on the invoice lines. It returns the first leg for downstream
+// of legs carried on the invoice lines. It returns the legs for downstream
 // reconciliation notification.
 func (s *Service) markInvoicedLegs(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	now int64,
 	tenantInfo pagination.TenantInfo,
-) (*shipment.Shipment, error) {
-	legIDs := invoiceLegShipmentIDs(entity)
-	if len(legIDs) == 0 {
-		return nil, nil
+) ([]*shipment.Shipment, error) {
+	legs, err := loadInvoiceLegs(ctx, s.shipmentRepo, entity, tenantInfo)
+	if err != nil {
+		return nil, err
 	}
 
-	var primary *shipment.Shipment
-	for _, legID := range legIDs {
-		shp, err := s.shipmentRepo.GetByID(ctx, basicShipmentByIDRequest(legID, tenantInfo))
-		if err != nil {
-			return nil, err
-		}
-
+	for _, shp := range legs {
 		shp.Status = shipment.StatusInvoiced
 		shp.BilledAt = &now
 		if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 			return nil, err
 		}
-
-		if primary == nil {
-			primary = shp
-		}
 	}
 
-	return primary, nil
-}
-
-// invoiceLegShipmentIDs returns the distinct shipments billed by an invoice, preferring
-// the per-line attribution (which covers grouped invoices) and falling back to the
-// header shipment id for legacy single-shipment invoices whose lines predate line-level
-// attribution.
-func invoiceLegShipmentIDs(entity *invoice.Invoice) []pulid.ID {
-	seen := make(map[pulid.ID]struct{}, len(entity.Lines))
-	ids := make([]pulid.ID, 0, len(entity.Lines))
-	for _, line := range entity.Lines {
-		if line == nil || line.ShipmentID.IsNil() {
-			continue
-		}
-		if _, ok := seen[line.ShipmentID]; ok {
-			continue
-		}
-		seen[line.ShipmentID] = struct{}{}
-		ids = append(ids, line.ShipmentID)
-	}
-
-	if len(ids) == 0 && !entity.ShipmentID.IsNil() {
-		ids = append(ids, entity.ShipmentID)
-	}
-
-	return ids
+	return legs, nil
 }
 
 func (s *Service) markBillingQueueItemPosted(
@@ -531,10 +547,18 @@ func (s *Service) markBillingQueueItemPosted(
 		return nil, err
 	}
 
-	// For a grouped invoice, settle every sibling leg's billing-queue item together so
-	// none linger in Approved after the order is billed.
+	// For a grouped invoice, settle the sibling billing-queue items of the legs this
+	// invoice actually carries so none linger in Approved after the order is billed —
+	// without touching items that belong to other (still draft) invoices of the order.
 	if !entity.OrderID.IsNil() {
-		if _, sweepErr := s.billingQueueRepo.MarkPostedByOrderID(ctx, tenantInfo, entity.OrderID); sweepErr != nil {
+		if _, sweepErr := s.billingQueueRepo.MarkPostedByOrderID(
+			ctx,
+			&repositories.MarkPostedByOrderRequest{
+				TenantInfo:  tenantInfo,
+				OrderID:     entity.OrderID,
+				ShipmentIDs: entity.LegShipmentIDs(),
+			},
+		); sweepErr != nil {
 			return nil, sweepErr
 		}
 	}
@@ -593,25 +617,59 @@ func (s *Service) getApprovedBillingQueueItem(
 	return item, nil
 }
 
+// resolveDependencyShipment resolves the leg (when the queue item carries one) and the
+// billing customer. Order-scoped adjustment items (credit memo / replacement for a
+// grouped invoice) have no single shipment; their customer comes from the source
+// invoice.
+func (s *Service) resolveDependencyShipment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	item *billingqueue.BillingQueueItem,
+) (*shipment.Shipment, pulid.ID, error) {
+	if !item.ShipmentID.IsNil() {
+		shp := item.Shipment
+		if shp == nil || shp.ID != item.ShipmentID || shp.CustomerID.IsNil() {
+			var err error
+			shp, err = s.shipmentRepo.GetByID(
+				ctx,
+				expandedShipmentByIDRequest(item.ShipmentID, tenantInfo),
+			)
+			if err != nil {
+				return nil, pulid.Nil, err
+			}
+		}
+		return shp, shp.CustomerID, nil
+	}
+
+	if item.SourceInvoiceID == nil || item.SourceInvoiceID.IsNil() {
+		return nil, pulid.Nil, errortypes.NewValidationError(
+			"billingQueueItemId",
+			errortypes.ErrInvalidOperation,
+			"Billing queue item has no shipment or source invoice to bill from",
+		)
+	}
+	src, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		ID:         *item.SourceInvoiceID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, pulid.Nil, err
+	}
+	return nil, src.CustomerID, nil
+}
+
 func (s *Service) getInvoiceDependencies(
 	ctx context.Context,
 	req *servicesports.CreateInvoiceFromBillingQueueRequest,
 	item *billingqueue.BillingQueueItem,
 ) (*invoiceDependencies, error) {
-	shp := item.Shipment
-	if shp == nil || shp.ID != item.ShipmentID || shp.CustomerID.IsNil() {
-		var err error
-		shp, err = s.shipmentRepo.GetByID(
-			ctx,
-			expandedShipmentByIDRequest(item.ShipmentID, req.TenantInfo),
-		)
-		if err != nil {
-			return nil, err
-		}
+	shp, customerID, err := s.resolveDependencyShipment(ctx, req.TenantInfo, item)
+	if err != nil {
+		return nil, err
 	}
 
 	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-		ID:         shp.CustomerID,
+		ID:         customerID,
 		TenantInfo: req.TenantInfo,
 		CustomerFilterOptions: repositories.CustomerFilterOptions{
 			IncludeBillingProfile: true,
@@ -627,8 +685,24 @@ func (s *Service) getInvoiceDependencies(
 		return nil, err
 	}
 
+	orderID := item.OrderID
+	if orderID.IsNil() && shp != nil {
+		orderID = shp.OrderID
+	}
+	var ord *order.Order
+	if !orderID.IsNil() {
+		ord, err = s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+			ID:         orderID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil && !errortypes.IsNotFoundError(err) {
+			return nil, err
+		}
+	}
+
 	return &invoiceDependencies{
 		Shipment:       shp,
+		Order:          ord,
 		Customer:       cus,
 		BillingControl: control,
 	}, nil
@@ -688,13 +762,22 @@ func (s *Service) EnqueueAutoPost(
 func (s *Service) buildInvoiceEntity(
 	item *billingqueue.BillingQueueItem,
 	shp *shipment.Shipment,
+	ord *order.Order,
 	cus *customer.Customer,
 	control *tenant.BillingControl,
 ) *invoice.Invoice {
 	if item.IsAdjustmentOrigin {
 		if entity := s.buildAdjustmentOriginInvoiceEntity(item, shp, cus, control); entity != nil {
+			if ord != nil {
+				entity.OrderID = ord.ID
+				entity.OrderNumber = ord.OrderNumber
+			}
 			return entity
 		}
+	}
+
+	if shp == nil {
+		return nil
 	}
 
 	invoiceDate := timeutils.NowUnix()
@@ -710,6 +793,8 @@ func (s *Service) buildInvoiceEntity(
 		BillingQueueItemID: item.ID,
 		ShipmentID:         shp.ID,
 		CustomerID:         cus.ID,
+		OrderID:            orderIDFromOrder(ord),
+		OrderNumber:        orderNumberFromOrder(ord),
 		Number:             item.Number,
 		BillType:           item.BillType,
 		Status:             invoice.StatusDraft,
@@ -741,6 +826,20 @@ func (s *Service) buildInvoiceEntity(
 	entity.SyncMinorAmounts()
 
 	return entity
+}
+
+func orderIDFromOrder(ord *order.Order) pulid.ID {
+	if ord == nil {
+		return pulid.Nil
+	}
+	return ord.ID
+}
+
+func orderNumberFromOrder(ord *order.Order) string {
+	if ord == nil {
+		return ""
+	}
+	return ord.OrderNumber
 }
 
 // buildInvoiceEntityForOrder builds a single grouped invoice covering every billable
@@ -866,6 +965,9 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	}
 	lines := ctx.ReplacementLines
 	if len(lines) == 0 {
+		if shp == nil {
+			return nil
+		}
 		lines = buildInvoiceLines(item.BillType, shp)
 	}
 
@@ -873,7 +975,6 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		OrganizationID:            item.OrganizationID,
 		BusinessUnitID:            item.BusinessUnitID,
 		BillingQueueItemID:        item.ID,
-		ShipmentID:                shp.ID,
 		CustomerID:                cus.ID,
 		Number:                    item.Number,
 		BillType:                  item.BillType,
@@ -882,9 +983,6 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		CurrencyCode:              billingCurrencyFromCustomer(cus),
 		InvoiceDate:               invoiceDate,
 		DueDate:                   invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
-		ShipmentProNumber:         shp.ProNumber,
-		ShipmentBOL:               shp.BOL,
-		ServiceDate:               serviceDateFromShipment(shp),
 		BillToName:                cus.Name,
 		BillToCode:                cus.Code,
 		BillToAddressLine1:        cus.AddressLine1,
@@ -898,6 +996,12 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		SupersedesInvoiceID:       ctx.SourceInvoiceID,
 		SourceInvoiceAdjustmentID: ctx.SourceAdjustmentID,
 		Lines:                     lines,
+	}
+	if shp != nil {
+		entity.ShipmentID = shp.ID
+		entity.ShipmentProNumber = shp.ProNumber
+		entity.ShipmentBOL = shp.BOL
+		entity.ServiceDate = serviceDateFromShipment(shp)
 	}
 	if cus.State != nil {
 		entity.BillToState = cus.State.Abbreviation

@@ -31,6 +31,8 @@ query OrderDetail($id: ID!) {
       id
       description
       amount
+      invoiceId
+      version
       createdAt
     }
   }

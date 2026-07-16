@@ -236,7 +236,7 @@ export function InvoiceAdjustmentSupportingDocumentsSection({
         }
         rules={{ required: supportingDocumentsRequired }}
         extraSearchParams={{
-          resourceId: shipmentId,
+          resourceId: shipmentId ?? "",
           resourceType: "shipment",
         }}
       />

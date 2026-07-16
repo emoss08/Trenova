@@ -106,7 +106,8 @@ type BillingQueueItem struct {
 	ID                        string                            `json:"id"`
 	OrganizationID            string                            `json:"organizationId"`
 	BusinessUnitID            string                            `json:"businessUnitId"`
-	ShipmentID                string                            `json:"shipmentId"`
+	ShipmentID                *string                           `json:"shipmentId,omitempty"`
+	OrderID                   *string                           `json:"orderId,omitempty"`
 	AssignedBillerID          *string                           `json:"assignedBillerId,omitempty"`
 	Number                    string                            `json:"number"`
 	Status                    billingqueue.Status               `json:"status"`
@@ -626,11 +627,13 @@ type NotificationEdge struct {
 }
 
 type OrderCharge struct {
-	ID          string `json:"id"`
-	OrderID     string `json:"orderId"`
-	Description string `json:"description"`
-	Amount      string `json:"amount"`
-	CreatedAt   int    `json:"createdAt"`
+	ID          string  `json:"id"`
+	OrderID     string  `json:"orderId"`
+	Description string  `json:"description"`
+	Amount      string  `json:"amount"`
+	InvoiceID   *string `json:"invoiceId,omitempty"`
+	Version     int     `json:"version"`
+	CreatedAt   int     `json:"createdAt"`
 }
 
 type OrderConnection struct {
@@ -645,14 +648,14 @@ type OrderEdge struct {
 }
 
 type OrderInput struct {
-	CustomerID   string        `json:"customerId"`
-	OwnerID      *string       `json:"ownerId,omitempty"`
-	Status       *order.Status `json:"status,omitempty"`
-	PoNumber     *string       `json:"poNumber,omitempty"`
-	Bol          *string       `json:"bol,omitempty"`
-	CurrencyCode *string       `json:"currencyCode,omitempty"`
-	QuotedAmount *string       `json:"quotedAmount,omitempty"`
-	BaseAmount   *string       `json:"baseAmount,omitempty"`
+	CustomerID   string  `json:"customerId"`
+	OwnerID      *string `json:"ownerId,omitempty"`
+	PoNumber     *string `json:"poNumber,omitempty"`
+	Bol          *string `json:"bol,omitempty"`
+	CurrencyCode *string `json:"currencyCode,omitempty"`
+	QuotedAmount *string `json:"quotedAmount,omitempty"`
+	BaseAmount   *string `json:"baseAmount,omitempty"`
+	Version      *int    `json:"version,omitempty"`
 }
 
 type OrderLeg struct {
@@ -698,6 +701,11 @@ type RateTableConnection struct {
 type RateTableEdge struct {
 	Node   *ratetable.RateTable `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+type RemoveOrderChargeInput struct {
+	OrderID  string `json:"orderId"`
+	ChargeID string `json:"chargeId"`
 }
 
 type RoleConnection struct {
@@ -798,6 +806,8 @@ type Shipment struct {
 	FormulaTemplateID      string                      `json:"formulaTemplateId"`
 	ConsolidationGroupID   *string                     `json:"consolidationGroupId,omitempty"`
 	OrderID                *string                     `json:"orderId,omitempty"`
+	OrderNumber            *string                     `json:"orderNumber,omitempty"`
+	OrderStatus            *order.Status               `json:"orderStatus,omitempty"`
 	Status                 ShipmentStatus              `json:"status"`
 	TenderStatus           *ShipmentTenderStatus       `json:"tenderStatus,omitempty"`
 	EntryMethod            *ShipmentEntryMethod        `json:"entryMethod,omitempty"`
@@ -1896,6 +1906,14 @@ type UpcomingWorkerPTOInput struct {
 	WorkerID    *string           `json:"workerId,omitempty"`
 	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
 	Timezone    *string           `json:"timezone,omitempty"`
+}
+
+type UpdateOrderChargeInput struct {
+	OrderID     string `json:"orderId"`
+	ChargeID    string `json:"chargeId"`
+	Description string `json:"description"`
+	Amount      string `json:"amount"`
+	Version     int    `json:"version"`
 }
 
 type UserConnection struct {

@@ -7,6 +7,7 @@ import type { Customer } from "@/types/customer";
 import type { RowAction } from "@/types/data-table";
 import type { Shipment, Stop } from "@/types/shipment";
 import { type ColumnDef } from "@tanstack/react-table";
+import { Link } from "react-router";
 import { ActionsCell } from "./command-center/cells/actions-cell";
 import { DriverCell } from "./command-center/cells/driver-cell";
 import { EtaCell } from "./command-center/cells/eta-cell";
@@ -117,6 +118,33 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
+      },
+    },
+    {
+      id: "order",
+      accessorKey: "orderNumber",
+      header: "Order",
+      cell: ({ row }) => {
+        const { orderId, orderNumber } = row.original;
+        if (!orderId) return "—";
+        return (
+          <Link
+            to={`/shipment-management/orders?panelType=edit&panelEntityId=${orderId}`}
+            className="truncate font-table text-[11.5px] tabular-nums hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {orderNumber || orderId.slice(0, 12)}
+          </Link>
+        );
+      },
+      size: 130,
+      minSize: 110,
+      maxSize: 180,
+      meta: {
+        label: "Order",
+        apiField: "orderId",
+        filterable: false,
+        sortable: false,
       },
     },
     {

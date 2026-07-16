@@ -201,6 +201,22 @@ function normalizeGraphQLError(error: GraphQLErrorResponse): NormalizedGraphQLEr
   };
 }
 
+// graphQLErrorMessage extracts the server's field-level or top-level error detail for
+// inline mutation toasts, falling back to a caller-provided message.
+export function graphQLErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof GraphQLRequestError) {
+    const detail = error.normalize().detail;
+    if (detail && detail !== "GraphQL request failed") {
+      return detail;
+    }
+    return fallback;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
+
 export async function requestGraphQL<
   TDocument extends TypedGraphQLDocument<unknown, never>,
 >(

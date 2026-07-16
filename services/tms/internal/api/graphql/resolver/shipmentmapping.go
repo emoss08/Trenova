@@ -1,11 +1,14 @@
 package resolver
 
 import (
+	"context"
 	"fmt"
 	"math"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -1004,4 +1007,27 @@ func pulidPtrFromOptionalString(value *string) (*pulid.ID, error) {
 		return nil, err
 	}
 	return &parsed, nil
+}
+
+func (r *shipmentResolver) loadShipmentOrder(
+	ctx context.Context,
+	obj *gqlmodel.Shipment,
+) (*order.Order, error) {
+	if obj == nil || obj.OrderID == nil || *obj.OrderID == "" {
+		return nil, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("Order loader is not configured")
+	}
+
+	parent, err := loadersForRequest.OrderByID.Load(ctx, *obj.OrderID)()
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return parent, nil
 }

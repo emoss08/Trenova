@@ -34,6 +34,7 @@ type Params struct {
 	TransferChangeRepo repositories.EDITransferChangeRepository
 	Realtime           services.RealtimeService
 	Coordinator        *shipmentstate.Coordinator
+	OrderDerivation    services.OrderDerivationService
 }
 
 type Observer struct {
@@ -44,6 +45,7 @@ type Observer struct {
 	shipmentLinkRepo   shipmentLinkRepository
 	transferChangeRepo transferChangeRepository
 	realtime           services.RealtimeService
+	orderDerivation    services.OrderDerivationService
 	lifecycleApplier   *internaledilifecycle.Applier
 }
 
@@ -105,6 +107,7 @@ func New(p Params) *Observer {
 		shipmentLinkRepo:   p.ShipmentLinkRepo,
 		transferChangeRepo: p.TransferChangeRepo,
 		realtime:           p.Realtime,
+		orderDerivation:    p.OrderDerivation,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,
@@ -178,6 +181,19 @@ func (o *Observer) handleLink(
 		result.updated, txErr = o.applyChange(txCtx, result)
 		if txErr != nil {
 			return txErr
+		}
+
+		if result.updated != nil && o.orderDerivation != nil {
+			if txErr = o.orderDerivation.RecomputeForShipment(
+				txCtx,
+				pagination.TenantInfo{
+					OrgID: result.updated.OrganizationID,
+					BuID:  result.updated.BusinessUnitID,
+				},
+				result.updated.ID,
+			); txErr != nil {
+				return txErr
+			}
 		}
 
 		result.mirroredEvent = buildMirroredEvent(event, result)

@@ -453,6 +453,10 @@ type GetShipmentsByIDsRequest struct {
 type ShipmentSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	CustomerID         pulid.ID                       `json:"customerId"`
+	// AttachableOnly hides legs that can never join an order (Canceled/Invoiced).
+	AttachableOnly bool `json:"attachableOnly"`
+	// ExcludeOrderID hides legs already attached to the given order.
+	ExcludeOrderID pulid.ID `json:"excludeOrderId"`
 }
 
 type ListRatedByFormulaTemplateRequest struct {

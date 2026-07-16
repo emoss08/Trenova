@@ -28,59 +28,62 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             ports.DBConnection
-	Repo           repositories.BillingQueueRepository
-	ShipmentRepo   repositories.ShipmentRepository
-	ControlRepo    repositories.ShipmentControlRepository
-	CommentRepo    repositories.ShipmentCommentRepository
-	CustomerRepo   repositories.CustomerRepository
-	UserRepo       repositories.UserRepository
-	AdjustmentRepo repositories.InvoiceAdjustmentRepository
-	InvoiceSvc     services.InvoiceService
-	Commercial     *shipmentcommercial.Calculator
-	Generator      seqgen.Generator
-	AuditService   services.AuditService
-	Realtime       services.RealtimeService
-	Validator      *Validator
+	Logger          *zap.Logger
+	DB              ports.DBConnection
+	Repo            repositories.BillingQueueRepository
+	ShipmentRepo    repositories.ShipmentRepository
+	ControlRepo     repositories.ShipmentControlRepository
+	CommentRepo     repositories.ShipmentCommentRepository
+	CustomerRepo    repositories.CustomerRepository
+	UserRepo        repositories.UserRepository
+	AdjustmentRepo  repositories.InvoiceAdjustmentRepository
+	InvoiceSvc      services.InvoiceService
+	Commercial      *shipmentcommercial.Calculator
+	Generator       seqgen.Generator
+	AuditService    services.AuditService
+	Realtime        services.RealtimeService
+	Validator       *Validator
+	OrderDerivation services.OrderDerivationService
 }
 
 type service struct {
-	l              *zap.Logger
-	db             ports.DBConnection
-	repo           repositories.BillingQueueRepository
-	shipmentRepo   repositories.ShipmentRepository
-	controlRepo    repositories.ShipmentControlRepository
-	commentRepo    repositories.ShipmentCommentRepository
-	customerRepo   repositories.CustomerRepository
-	userRepo       repositories.UserRepository
-	adjustmentRepo repositories.InvoiceAdjustmentRepository
-	invoiceSvc     services.InvoiceService
-	commercial     *shipmentcommercial.Calculator
-	generator      seqgen.Generator
-	auditService   services.AuditService
-	realtime       services.RealtimeService
-	validator      *Validator
+	l               *zap.Logger
+	db              ports.DBConnection
+	repo            repositories.BillingQueueRepository
+	shipmentRepo    repositories.ShipmentRepository
+	controlRepo     repositories.ShipmentControlRepository
+	commentRepo     repositories.ShipmentCommentRepository
+	customerRepo    repositories.CustomerRepository
+	userRepo        repositories.UserRepository
+	adjustmentRepo  repositories.InvoiceAdjustmentRepository
+	invoiceSvc      services.InvoiceService
+	commercial      *shipmentcommercial.Calculator
+	generator       seqgen.Generator
+	auditService    services.AuditService
+	realtime        services.RealtimeService
+	validator       *Validator
+	orderDerivation services.OrderDerivationService
 }
 
 //nolint:gocritic // dependency injection
 func New(p Params) services.BillingQueueService {
 	return &service{
-		l:              p.Logger.Named("service.billing-queue"),
-		db:             p.DB,
-		repo:           p.Repo,
-		shipmentRepo:   p.ShipmentRepo,
-		controlRepo:    p.ControlRepo,
-		commentRepo:    p.CommentRepo,
-		customerRepo:   p.CustomerRepo,
-		userRepo:       p.UserRepo,
-		adjustmentRepo: p.AdjustmentRepo,
-		invoiceSvc:     p.InvoiceSvc,
-		commercial:     p.Commercial,
-		generator:      p.Generator,
-		auditService:   p.AuditService,
-		realtime:       p.Realtime,
-		validator:      p.Validator,
+		l:               p.Logger.Named("service.billing-queue"),
+		db:              p.DB,
+		repo:            p.Repo,
+		shipmentRepo:    p.ShipmentRepo,
+		controlRepo:     p.ControlRepo,
+		commentRepo:     p.CommentRepo,
+		customerRepo:    p.CustomerRepo,
+		userRepo:        p.UserRepo,
+		adjustmentRepo:  p.AdjustmentRepo,
+		invoiceSvc:      p.InvoiceSvc,
+		commercial:      p.Commercial,
+		generator:       p.Generator,
+		auditService:    p.AuditService,
+		realtime:        p.Realtime,
+		validator:       p.Validator,
+		orderDerivation: p.OrderDerivation,
 	}
 }
 
@@ -628,6 +631,20 @@ func (s *service) createOpsComment(
 	}
 }
 
+// recomputeParentOrder rolls an edited leg's charge totals up to its commercial
+// order (status + total) — billing-queue charge edits change total_charge_amount
+// outside the shipment service, so the derivation port must be invoked directly.
+func (s *service) recomputeParentOrder(ctx context.Context, shp *shipment.Shipment) error {
+	if s.orderDerivation == nil || shp == nil || shp.OrderID.IsNil() {
+		return nil
+	}
+
+	return s.orderDerivation.RecomputeOrder(ctx, pagination.TenantInfo{
+		OrgID: shp.OrganizationID,
+		BuID:  shp.BusinessUnitID,
+	}, shp.OrderID)
+}
+
 func (s *service) UpdateCharges(
 	ctx context.Context,
 	req *services.UpdateChargesRequest,
@@ -706,6 +723,10 @@ func (s *service) UpdateCharges(
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
 
 	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
+		return nil, err
+	}
+
+	if err = s.recomputeParentOrder(ctx, shp); err != nil {
 		return nil, err
 	}
 

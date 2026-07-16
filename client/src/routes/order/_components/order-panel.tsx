@@ -6,7 +6,7 @@ import type { DataTablePanelProps } from "@/types/data-table";
 import { createOrder, updateOrder } from "@/lib/graphql/order";
 import { orderSchema, type Order } from "@/types/order";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { HistoryIcon } from "lucide-react";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
@@ -37,6 +37,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
 }
 
 export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Order>) {
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(orderSchema),
     defaultValues: {
@@ -64,7 +65,11 @@ export function OrderPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         title="Order"
         fieldKey="orderNumber"
         formComponent={<OrderForm mode="edit" />}
-        mutationFn={(values, currentRow) => updateOrder(currentRow.id!, values)}
+        mutationFn={async (values, currentRow) => {
+          const updated = await updateOrder(currentRow.id!, values);
+          void queryClient.invalidateQueries({ queryKey: ["order-detail"] });
+          return updated;
+        }}
         descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
         tabs={[
           {

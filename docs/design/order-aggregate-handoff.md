@@ -104,6 +104,83 @@ carries the invoice number, siblings NULL; posting sweeps siblings via
   Enum values: `ALTER TYPE "..._enum" ADD VALUE IF NOT EXISTS '...'`. PULIDs in SQL
   backfills: `CONCAT('prefix_', replace(gen_random_uuid()::text,'-',''))`.
 
+## 4.5. Hardening pass (2026-07-15)
+
+A full-code review found ~45 defects; all were fixed in one pass. What changed, so
+you don't re-introduce the old shapes:
+
+**Derived state is now driven by a service port, not just events.**
+`services.OrderDerivationService` (`RecomputeOrder`/`RecomputeForShipment`, impl in
+`orderderivation`) recomputes **status and total** with bounded optimistic retries.
+It is invoked from every leg-state writer: the shipment-event observer (user
+updates), `shipmentmoveservice.refreshShipmentState` (move lifecycle),
+`invoiceservice.Post` (→ order derives to `Billed` in the posting tx),
+`internaledistatussync`/`ediservice` transfer-change apply, bulk
+`AutoCancelShipments`/`DelayShipments`, the service-failure delay marker,
+`shipmentservice.Update` (re-rates roll up),
+`shipmentservice.AutoMarkReadyToInvoiceIfEligible`, and
+`billingqueueservice.UpdateCharges` (billing-queue charge edits change
+`total_charge_amount`). If you add a new writer of `shipment.status` or
+`total_charge_amount`, you MUST call the port. The only intentional non-callers are
+the `billingqueueservice` writers that touch `BillingTransferStatus` alone.
+`RecalculateTotal` excludes Canceled legs, bumps `version`, and its subqueries are
+parenthesized (`(?) + (?)` — bare `? + ?` renders invalid SQL). Migration
+`20260721000300` repaired all backfilled orders' status/total.
+
+**Membership is guarded and transactional.** Attach/detach/charge ops run in one
+`WithTx` (order repo is `DBForContext` throughout). Guards: no membership/charge
+changes on Billed/Closed/Canceled orders (`Status.AllowsMembershipChange()`);
+attach validates customer match + leg status via `GetShipmentAttachRefs`, moves legs
+between orders explicitly (source orders recomputed, empty auto-orders deleted via
+`DeleteIfEmpty`); detach re-parents the leg onto a fresh single-leg order (never
+NULL), refuses Invoiced legs and the only leg. `shipment.order_id` is immutable
+through shipment Update (restored from original; customer changes propagate to
+single-leg orders, are rejected on multi-leg); create-with-orderId is validated.
+`BulkDuplicate` mints auto-orders + emits created events.
+
+**Order update is locked down.** `OrderInput` has `version` (required on update) and
+no `status`; service pins status/total/orderNumber to the persisted row and blocks
+customer changes while legs exist; repo update uses an explicit column list (cleared
+PO/BOL/owner persist as NULL; omitted quote stays NULL, not 0). `closeOrder` (from
+Billed only — the sole `StatusClosed` writer) and `cancelOrder` (cancels remaining
+legs; blocked when Billed/Closed or any leg invoiced) exist as mutations with panel
+actions.
+
+**Grouped invoicing money fixes.** Posting works with reconciliation enabled
+(validator + warning + discrepancy metric are leg-aware via
+`Invoice.LegShipmentIDs()`); `CreateFromOrder` is transactional; order charges carry
+`invoice_id`/`invoiced_at` and are billed exactly once (first pass), enforced in-tx;
+partial-order billing is explicit (`CreateInvoiceFromOrderRequest.ShipmentIDs`
+subset honored; selected-leg validation); the single-shipment path stamps
+`OrderID`/`OrderNumber`; `MarkPostedByOrderID` sweeps only the posted invoice's
+legs' BQIs (never Canceled ones); a partial unique index
+(`uq_billing_queue_items_active_shipment_bill_type`, status NOT IN Posted/Canceled)
+backstops concurrent double-invoicing; BQI `number` uniqueness is tenant-scoped.
+Credit memos / replacements work for grouped invoices: `BillingQueueItem.ShipmentID`
+is nullable (shipment-or-order check), adjustment BQIs/credit memos propagate
+`OrderID`, `computeRerate` re-rates every leg and carries order-level lines forward,
+document checks accept any invoice leg.
+
+**Client.** `orders` is in the realtime invalidation map; membership/charge/invoice
+mutations invalidate order-list + order-detail + shipment-list (+ invoice keys);
+add-leg is multi-select with `attachableOnly`/`excludeOrderId` picker filters (and
+disabled until the customer loads); the invoice gate excludes canceled legs; inline
+mutations surface server error detail (`graphQLErrorMessage`) and destructive ops
+confirm; charges support inline edit (`updateOrderCharge`, versioned) and show an
+Invoiced badge; the panel has an AR summary (status/quoted/total/variance) with
+Close/Cancel actions; order table gained Customer/BOL/formatted-total columns;
+shipment table has an Order column (`Shipment.orderNumber`/`orderStatus` GraphQL
+fields backed by an `OrderByID` dataloader) and legs link back to shipments.
+
+Integration coverage (`grouped_invoice_integration_test.go`, run with
+`-tags integration`): grouped create+post with reconciliation **WarnOnly**, sibling
+BQI sweep, order→Billed derivation, double-create rejection, partial-order billing
+with charge-billed-once, and single-leg order correlation.
+
+Migrations added: `20260721000000` (order-charge invoicing columns), `...000100`
+(BQI active-pipeline unique index), `...000200` (BQI nullable shipment),
+`...000300` (order derived-state repair), `...000400` (tenant-scoped BQI number).
+
 ## 5. Deliberate deviation from the design primer
 
 `Order.TotalAmount = Σ(leg total_charge_amount) + Σ(order_charges.amount)` — i.e. what the

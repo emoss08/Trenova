@@ -94,6 +94,7 @@ func TestBulkDuplicate_CreatesShipmentMoveAndStopCopies(t *testing.T) {
 	mock.ExpectQuery(`SELECT .*code.*FROM locations`).
 		WillReturnRows(sqlmock.NewRows([]string{"code"}).AddRow("LOC"))
 	mock.ExpectBegin()
+	mock.ExpectExec(`INSERT INTO "orders"`).WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectExec(`INSERT INTO "shipments"`).WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectExec(`INSERT INTO "shipment_moves"`).WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectExec(`INSERT INTO "stops"`).WillReturnResult(sqlmock.NewResult(0, 4))
@@ -107,6 +108,10 @@ func TestBulkDuplicate_CreatesShipmentMoveAndStopCopies(t *testing.T) {
 	require.Len(t, entities, 2)
 	assert.Equal(t, "PRO-1", entities[0].ProNumber)
 	assert.Equal(t, shipment.StatusNew, entities[0].Status)
+	assert.False(t, entities[0].OrderID.IsNil(), "each duplicate gets its own auto-order")
+	assert.False(t, entities[1].OrderID.IsNil(), "each duplicate gets its own auto-order")
+	assert.NotEqual(t, entities[0].OrderID, entities[1].OrderID,
+		"duplicates must not share an order")
 	assert.Len(t, entities[0].Moves, 1)
 	assert.Len(t, entities[0].Moves[0].Stops, 2)
 	assert.Len(t, entities[0].AdditionalCharges, 1)

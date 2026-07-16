@@ -391,6 +391,8 @@ func (r *Resolver) resolveOrderSelectOptions(
 		ctx,
 		&repositories.OrderSelectOptionsRequest{
 			SelectQueryRequest: req.selectQuery,
+			AttachableOnly:     selectOptionBoolFilter(req.filters, "attachableOnly"),
+			CustomerID:         selectOptionCustomerFilter(req.filters),
 		},
 	)
 	if err != nil {
@@ -453,6 +455,8 @@ func (r *Resolver) resolveShipmentSelectOptions(
 		&repositories.ShipmentSelectOptionsRequest{
 			SelectQueryRequest: req.selectQuery,
 			CustomerID:         selectOptionCustomerFilter(req.filters),
+			AttachableOnly:     selectOptionBoolFilter(req.filters, "attachableOnly"),
+			ExcludeOrderID:     selectOptionIDFilter(req.filters, "excludeOrderId"),
 		},
 	)
 	if err != nil {
@@ -469,7 +473,11 @@ func (r *Resolver) resolveShipmentSelectOptions(
 // selectOptionCustomerFilter extracts an optional customerId scope from select-option
 // filters (used to restrict the shipment picker to an order's customer).
 func selectOptionCustomerFilter(filters map[string]any) pulid.ID {
-	value, ok := filters["customerId"]
+	return selectOptionIDFilter(filters, "customerId")
+}
+
+func selectOptionIDFilter(filters map[string]any, key string) pulid.ID {
+	value, ok := filters[key]
 	if !ok {
 		return pulid.Nil
 	}
@@ -482,6 +490,21 @@ func selectOptionCustomerFilter(filters map[string]any) pulid.ID {
 		return pulid.Nil
 	}
 	return id
+}
+
+func selectOptionBoolFilter(filters map[string]any, key string) bool {
+	value, ok := filters[key]
+	if !ok {
+		return false
+	}
+	switch v := value.(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true"
+	default:
+		return false
+	}
 }
 
 func (r *Resolver) resolveEDITransferSelectOptions(

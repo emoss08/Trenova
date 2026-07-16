@@ -22,6 +22,12 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/emoss08/trenova/shared/pulid.ID
+  Shipment:
+    fields:
+      orderNumber:
+        resolver: true
+      orderStatus:
+        resolver: true
   JSON:
     model:
       - github.com/99designs/gqlgen/graphql.Map

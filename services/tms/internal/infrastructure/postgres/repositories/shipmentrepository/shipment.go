@@ -231,6 +231,18 @@ func (r *repository) SelectOptions(
 				if !req.CustomerID.IsNil() {
 					q = q.Where(sp.CustomerID.Eq(), req.CustomerID)
 				}
+				if req.AttachableOnly {
+					q = q.Where(sp.Status.Ne(), shipment.StatusCanceled).
+						Where(sp.Status.Ne(), shipment.StatusInvoiced)
+				}
+				if !req.ExcludeOrderID.IsNil() {
+					q = q.Where(
+						"(? IS NULL OR ? != ?)",
+						bun.Ident(sp.OrderID.Qualified()),
+						bun.Ident(sp.OrderID.Qualified()),
+						req.ExcludeOrderID,
+					)
+				}
 				return q.Order(sp.CreatedAt.OrderDesc())
 			},
 		},
@@ -824,7 +836,52 @@ func (r *repository) BulkDuplicate(
 		req.TenantInfo.UserID,
 	)
 
+	// Every duplicated shipment keeps the "everything has a commercial parent"
+	// invariant: each one gets its own single-leg auto-order, numbered from the same
+	// pre-tx batch pattern as pro numbers.
+	orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
+		Type:             tenant.SequenceTypeOrder,
+		OrgID:            req.TenantInfo.OrgID,
+		BuID:             req.TenantInfo.BuID,
+		Count:            len(graph.shipments),
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+	if err != nil {
+		return nil, err
+	}
+	autoOrders := make([]*order.Order, 0, len(graph.shipments))
+	for idx, duplicated := range graph.shipments {
+		if duplicated == nil || idx >= len(orderNumbers) {
+			continue
+		}
+		autoOrder := &order.Order{
+			ID:             pulid.MustNew("ord_"),
+			OrganizationID: duplicated.OrganizationID,
+			BusinessUnitID: duplicated.BusinessUnitID,
+			CustomerID:     duplicated.CustomerID,
+			OwnerID:        duplicated.OwnerID,
+			EnteredByID:    duplicated.EnteredByID,
+			Status:         order.StatusConfirmed,
+			OrderNumber:    orderNumbers[idx],
+			CurrencyCode:   "USD",
+			TotalAmount:    duplicated.TotalChargeAmount,
+		}
+		duplicated.OrderID = autoOrder.ID
+		autoOrders = append(autoOrders, autoOrder)
+	}
+
 	err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		if len(autoOrders) > 0 {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&autoOrders).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
+				return insertErr
+			}
+		}
+
 		if len(graph.shipments) > 0 {
 			if _, insertErr := tx.
 				NewInsert().

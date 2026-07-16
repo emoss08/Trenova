@@ -229,20 +229,20 @@ func (v *Validator) validatePostingReconciliation(
 		return
 	}
 
-	shp, err := v.shipmentRepo.GetByID(
-		ctx,
-		basicShipmentByIDRequest(entity.ShipmentID, tenantInfo),
-	)
+	legs, err := loadInvoiceLegs(ctx, v.shipmentRepo, entity, tenantInfo)
 	if err != nil {
 		multiErr.Add(
 			"shipmentId",
 			errortypes.ErrSystemError,
-			"Failed to load shipment for reconciliation",
+			"Failed to load invoice legs for reconciliation",
 		)
 		return
 	}
+	if len(legs) == 0 {
+		return
+	}
 
-	expectedTotal := signedAmount(entity.BillType, shp.TotalChargeAmount.Decimal)
+	expectedTotal := reconciliationExpectedTotal(entity, legs)
 	discrepancy := entity.TotalAmount.Sub(expectedTotal).Abs()
 	if !discrepancy.GreaterThan(control.ReconciliationToleranceAmount) {
 		return
@@ -260,6 +260,7 @@ func (v *Validator) validatePostingReconciliation(
 	v.l.Warn("invoice reconciliation discrepancy exceeded tolerance during posting",
 		zap.String("invoiceId", entity.ID.String()),
 		zap.String("shipmentId", entity.ShipmentID.String()),
+		zap.String("orderId", entity.OrderID.String()),
 		zap.String("invoiceTotal", entity.TotalAmount.String()),
 		zap.String("expectedTotal", expectedTotal.String()),
 		zap.String("toleranceAmount", control.ReconciliationToleranceAmount.String()),

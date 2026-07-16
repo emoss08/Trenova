@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +38,8 @@ var (
 )
 
 type Invoice struct {
-	bun.BaseModel `bun:"table:invoices,alias:inv" json:"-"`
+	bun.BaseModel             `bun:"table:invoices,alias:inv" json:"-"`
+	pagination.CursorValueSet `json:"-"                       bun:",embed"`
 
 	ID                        pulid.ID              `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID            pulid.ID              `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -359,6 +361,31 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 
 		line.Validate(multiErr, idx)
 	}
+}
+
+// LegShipmentIDs returns the distinct shipments billed by the invoice, preferring the
+// per-line attribution (which covers grouped invoices) and falling back to the header
+// shipment id for legacy single-shipment invoices whose lines predate line-level
+// attribution.
+func (i *Invoice) LegShipmentIDs() []pulid.ID {
+	seen := make(map[pulid.ID]struct{}, len(i.Lines))
+	ids := make([]pulid.ID, 0, len(i.Lines))
+	for _, line := range i.Lines {
+		if line == nil || line.ShipmentID.IsNil() {
+			continue
+		}
+		if _, ok := seen[line.ShipmentID]; ok {
+			continue
+		}
+		seen[line.ShipmentID] = struct{}{}
+		ids = append(ids, line.ShipmentID)
+	}
+
+	if len(ids) == 0 && !i.ShipmentID.IsNil() {
+		ids = append(ids, i.ShipmentID)
+	}
+
+	return ids
 }
 
 func (i *Invoice) OpenBalanceAmount() decimal.Decimal {

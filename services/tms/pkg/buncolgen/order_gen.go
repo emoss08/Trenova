@@ -312,6 +312,8 @@ var OrderChargeColumns = struct {
 	OrderID        Column // "order_id" → qualified: "ordchg.order_id"
 	Description    Column // "description" → qualified: "ordchg.description"
 	Amount         Column // "amount" → qualified: "ordchg.amount"
+	InvoiceID      Column // "invoice_id" → qualified: "ordchg.invoice_id"
+	InvoicedAt     Column // "invoiced_at" → qualified: "ordchg.invoiced_at"
 	Version        Column // "version" → qualified: "ordchg.version"
 	CreatedAt      Column // "created_at" → qualified: "ordchg.created_at"
 	UpdatedAt      Column // "updated_at" → qualified: "ordchg.updated_at"
@@ -322,6 +324,8 @@ var OrderChargeColumns = struct {
 	OrderID:        NewColumn("order_id", "ordchg"),
 	Description:    NewColumn("description", "ordchg"),
 	Amount:         NewColumn("amount", "ordchg"),
+	InvoiceID:      NewColumn("invoice_id", "ordchg"),
+	InvoicedAt:     NewColumn("invoiced_at", "ordchg"),
 	Version:        NewColumn("version", "ordchg"),
 	CreatedAt:      NewColumn("created_at", "ordchg"),
 	UpdatedAt:      NewColumn("updated_at", "ordchg"),
@@ -338,6 +342,8 @@ var OrderChargeFieldMap = map[string]string{
 	"orderId":        "order_id",
 	"description":    "description",
 	"amount":         "amount",
+	"invoiceId":      "invoice_id",
+	"invoicedAt":     "invoiced_at",
 	"version":        "version",
 	"createdAt":      "created_at",
 	"updatedAt":      "updated_at",
@@ -352,6 +358,8 @@ var OrderChargeInsertableColumns = []string{
 	"order_id",
 	"description",
 	"amount",
+	"invoice_id",
+	"invoiced_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -428,6 +436,8 @@ var OrderChargeFilter = struct {
 	OrderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderId" → DB: "order_id"
 	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	Amount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	InvoicedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoicedAt" → DB: "invoiced_at"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -449,6 +459,12 @@ var OrderChargeFilter = struct {
 	},
 	Amount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("amount", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	InvoicedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoicedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

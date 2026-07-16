@@ -432,7 +432,7 @@ export type OrderInput = {
   ownerId?: string | number | null | undefined;
   poNumber?: string | null | undefined;
   quotedAmount?: string | null | undefined;
-  status?: OrderStatus | null | undefined;
+  version?: number | null | undefined;
 };
 
 export type OrderStatus =
@@ -490,6 +490,11 @@ export type RateUnit =
   | 'Hour'
   | 'Mile'
   | 'Stop';
+
+export type RemoveOrderChargeInput = {
+  chargeId: string | number;
+  orderId: string | number;
+};
 
 export type SegregationType =
   | 'Barrier'
@@ -902,6 +907,14 @@ export type UpcomingWorkerPtoInput = {
   workerId?: string | number | null | undefined;
 };
 
+export type UpdateOrderChargeInput = {
+  amount: string;
+  chargeId: string | number;
+  description: string;
+  orderId: string | number;
+  version: number;
+};
+
 export type WorkerGender =
   | 'Female'
   | 'Male';
@@ -975,7 +988,7 @@ export type AuditLogTableQueryVariables = Exact<{
 
 export type AuditLogTableQuery = { auditEntries: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type BillingQueueActionFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'BillingQueueActionFieldsFragment' };
+export type BillingQueueActionFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string | null, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'BillingQueueActionFieldsFragment' };
 
 export type UpdateBillingQueueStatusMutationVariables = Exact<{
   id: string | number;
@@ -1395,7 +1408,9 @@ export type OrderDetailQueryVariables = Exact<{
 }>;
 
 
-export type OrderDetailQuery = { order: { id: string, orderNumber: string, status: OrderStatus, customerId: string, ownerId: string | null, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, legs: Array<{ id: string, proNumber: string, status: ShipmentStatus, bol: string | null, freightChargeAmount: string, totalChargeAmount: string }>, charges: Array<{ id: string, description: string, amount: string, createdAt: number }> } | null };
+export type OrderDetailQuery = { order: { id: string, orderNumber: string, status: OrderStatus, customerId: string, ownerId: string | null, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, legs: Array<{ id: string, proNumber: string, status: ShipmentStatus, bol: string | null, freightChargeAmount: string, totalChargeAmount: string }>, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, version: number, createdAt: number }> } | null };
+
+export type OrderMutationResultFragment = { id: string, orderNumber: string, status: OrderStatus, totalAmount: string | null, version: number } & { ' $fragmentName'?: 'OrderMutationResultFragment' };
 
 export type AttachOrderShipmentsMutationVariables = Exact<{
   orderId: string | number;
@@ -1403,7 +1418,7 @@ export type AttachOrderShipmentsMutationVariables = Exact<{
 }>;
 
 
-export type AttachOrderShipmentsMutation = { attachOrderShipments: { id: string, status: OrderStatus } };
+export type AttachOrderShipmentsMutation = { attachOrderShipments: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
 
 export type DetachOrderShipmentMutationVariables = Exact<{
   orderId: string | number;
@@ -1411,7 +1426,7 @@ export type DetachOrderShipmentMutationVariables = Exact<{
 }>;
 
 
-export type DetachOrderShipmentMutation = { detachOrderShipment: { id: string, status: OrderStatus } };
+export type DetachOrderShipmentMutation = { detachOrderShipment: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
 
 export type CreateInvoiceFromOrderMutationVariables = Exact<{
   orderId: string | number;
@@ -1425,7 +1440,7 @@ export type CreateOrderMutationVariables = Exact<{
 }>;
 
 
-export type CreateOrderMutation = { createOrder: { id: string, orderNumber: string, status: OrderStatus } };
+export type CreateOrderMutation = { createOrder: { id: string, orderNumber: string, status: OrderStatus, version: number } };
 
 export type UpdateOrderMutationVariables = Exact<{
   id: string | number;
@@ -1433,7 +1448,7 @@ export type UpdateOrderMutationVariables = Exact<{
 }>;
 
 
-export type UpdateOrderMutation = { updateOrder: { id: string, orderNumber: string, status: OrderStatus } };
+export type UpdateOrderMutation = { updateOrder: { id: string, orderNumber: string, status: OrderStatus, version: number } };
 
 export type AddOrderChargeMutationVariables = Exact<{
   orderId: string | number;
@@ -1442,17 +1457,38 @@ export type AddOrderChargeMutationVariables = Exact<{
 }>;
 
 
-export type AddOrderChargeMutation = { addOrderCharge: { id: string, totalAmount: string | null } };
+export type AddOrderChargeMutation = { addOrderCharge: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
 
-export type RemoveOrderChargeMutationVariables = Exact<{
-  orderId: string | number;
-  chargeId: string | number;
+export type UpdateOrderChargeMutationVariables = Exact<{
+  input: UpdateOrderChargeInput;
 }>;
 
 
-export type RemoveOrderChargeMutation = { removeOrderCharge: { id: string, totalAmount: string | null } };
+export type UpdateOrderChargeMutation = { updateOrderCharge: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
 
-export type OrderTableRowFieldsFragment = { id: string, ownerId: string | null, businessUnitId: string, organizationId: string, customerId: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'OrderTableRowFieldsFragment' };
+export type RemoveOrderChargeMutationVariables = Exact<{
+  input: RemoveOrderChargeInput;
+}>;
+
+
+export type RemoveOrderChargeMutation = { removeOrderCharge: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
+
+export type CloseOrderMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CloseOrderMutation = { closeOrder: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
+
+export type CancelOrderMutationVariables = Exact<{
+  id: string | number;
+  cancelReason: string;
+}>;
+
+
+export type CancelOrderMutation = { cancelOrder: { ' $fragmentRefs'?: { 'OrderMutationResultFragment': OrderMutationResultFragment } } };
+
+export type OrderTableRowFieldsFragment = { id: string, ownerId: string | null, businessUnitId: string, organizationId: string, customerId: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'OrderTableRowFieldsFragment' };
 
 export type OrderTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -1576,7 +1612,7 @@ export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitI
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, version: number, createdAt: number, updatedAt: number, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, version: number, createdAt: number, updatedAt: number, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -1738,7 +1774,7 @@ export type TransferShipmentToBillingMutationVariables = Exact<{
 }>;
 
 
-export type TransferShipmentToBillingMutation = { transferShipmentToBilling: { id: string, organizationId: string, businessUnitId: string, shipmentId: string, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number } };
+export type TransferShipmentToBillingMutation = { transferShipmentToBilling: { id: string, organizationId: string, businessUnitId: string, shipmentId: string | null, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number } };
 
 export type BulkTransferShipmentsToBillingMutationVariables = Exact<{
   input: ShipmentBulkTransferToBillingInput;
@@ -3046,6 +3082,15 @@ export const NotificationFieldsFragmentDoc = new TypedDocumentString(`
   createdAt
 }
     `, {"fragmentName":"NotificationFields"}) as unknown as TypedDocumentString<NotificationFieldsFragment, unknown>;
+export const OrderMutationResultFragmentDoc = new TypedDocumentString(`
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}
+    `, {"fragmentName":"OrderMutationResult"}) as unknown as TypedDocumentString<OrderMutationResultFragment, unknown>;
 export const OrderTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment OrderTableRowFields on Order {
   id
@@ -3064,6 +3109,11 @@ export const OrderTableRowFieldsFragmentDoc = new TypedDocumentString(`
   version
   createdAt
   updatedAt
+  customer {
+    id
+    name
+    code
+  }
 }
     `, {"fragmentName":"OrderTableRowFields"}) as unknown as TypedDocumentString<OrderTableRowFieldsFragment, unknown>;
 export const OrganizationSettingsStateFieldsFragmentDoc = new TypedDocumentString(`
@@ -3576,6 +3626,9 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -6105,27 +6158,39 @@ export const OrderDetailDocument = new TypedDocumentString(`
       id
       description
       amount
+      invoiceId
+      version
       createdAt
     }
   }
 }
-    `, {"hash":"sha256:ee4a6f12cb9122f7296b7dcbb96a56fb348b5ec771b91e11e27263a6785f2692"}) as unknown as TypedDocumentString<OrderDetailQuery, OrderDetailQueryVariables>;
+    `, {"hash":"sha256:7f3565d2e4b7025b6b94522b2f084b22e66738f934977fcf89f7921873655f7b"}) as unknown as TypedDocumentString<OrderDetailQuery, OrderDetailQueryVariables>;
 export const AttachOrderShipmentsDocument = new TypedDocumentString(`
     mutation AttachOrderShipments($orderId: ID!, $shipmentIds: [ID!]!) {
   attachOrderShipments(orderId: $orderId, shipmentIds: $shipmentIds) {
-    id
-    status
+    ...OrderMutationResult
   }
 }
-    `, {"hash":"sha256:2ff86ba24ab6e0c3eb920e91d67585ad10a0e926638dd32f6800a91d8183ecfd"}) as unknown as TypedDocumentString<AttachOrderShipmentsMutation, AttachOrderShipmentsMutationVariables>;
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:c5dd0f391421cd1c7def4a849abaf9630283cc0b9b5c4ad83164f677b79273a9"}) as unknown as TypedDocumentString<AttachOrderShipmentsMutation, AttachOrderShipmentsMutationVariables>;
 export const DetachOrderShipmentDocument = new TypedDocumentString(`
     mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {
   detachOrderShipment(orderId: $orderId, shipmentId: $shipmentId) {
-    id
-    status
+    ...OrderMutationResult
   }
 }
-    `, {"hash":"sha256:fbec2b74f150d46045f34e1bccf77b3cbbe49d8cf7baed40e09d734ad398646f"}) as unknown as TypedDocumentString<DetachOrderShipmentMutation, DetachOrderShipmentMutationVariables>;
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:5a7b3fa35274ee455c2c6c8eb92842cbf663284cf5639cbc0c4dea9d7350984c"}) as unknown as TypedDocumentString<DetachOrderShipmentMutation, DetachOrderShipmentMutationVariables>;
 export const CreateInvoiceFromOrderDocument = new TypedDocumentString(`
     mutation CreateInvoiceFromOrder($orderId: ID!) {
   createInvoiceFromOrder(orderId: $orderId) {
@@ -6140,34 +6205,85 @@ export const CreateOrderDocument = new TypedDocumentString(`
     id
     orderNumber
     status
+    version
   }
 }
-    `, {"hash":"sha256:c48534ff5f2acc8688e709f14beb12c393e438536194c93bd72c91dbe20ba565"}) as unknown as TypedDocumentString<CreateOrderMutation, CreateOrderMutationVariables>;
+    `, {"hash":"sha256:7fb5e40596d163d5d39851904b98476de863ef34c103de223cdcdef3ee097041"}) as unknown as TypedDocumentString<CreateOrderMutation, CreateOrderMutationVariables>;
 export const UpdateOrderDocument = new TypedDocumentString(`
     mutation UpdateOrder($id: ID!, $input: OrderInput!) {
   updateOrder(id: $id, input: $input) {
     id
     orderNumber
     status
+    version
   }
 }
-    `, {"hash":"sha256:69ed9c345d3fde3537e01d2be49cf02a622eccdbe7c42999314e6d097e23f2a9"}) as unknown as TypedDocumentString<UpdateOrderMutation, UpdateOrderMutationVariables>;
+    `, {"hash":"sha256:96308fccacc82642fbb51c915e2fa69d53fa1d7a4a5eb982d352dc4c0cdeb409"}) as unknown as TypedDocumentString<UpdateOrderMutation, UpdateOrderMutationVariables>;
 export const AddOrderChargeDocument = new TypedDocumentString(`
     mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: String!) {
   addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {
-    id
-    totalAmount
+    ...OrderMutationResult
   }
 }
-    `, {"hash":"sha256:a2a68d44904a52d9aad6865dccfdf7d503f3e403144d6cef3a1ffc20bea90bdf"}) as unknown as TypedDocumentString<AddOrderChargeMutation, AddOrderChargeMutationVariables>;
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:2bf0e46b3ec50bc6c069b77db37155f0b4723c576a4ab0ae238e3d41eb2fa31d"}) as unknown as TypedDocumentString<AddOrderChargeMutation, AddOrderChargeMutationVariables>;
+export const UpdateOrderChargeDocument = new TypedDocumentString(`
+    mutation UpdateOrderCharge($input: UpdateOrderChargeInput!) {
+  updateOrderCharge(input: $input) {
+    ...OrderMutationResult
+  }
+}
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:a92d821b04622cdf8267c6351a990835ddc95b0b98660680cab62b31dd72e495"}) as unknown as TypedDocumentString<UpdateOrderChargeMutation, UpdateOrderChargeMutationVariables>;
 export const RemoveOrderChargeDocument = new TypedDocumentString(`
-    mutation RemoveOrderCharge($orderId: ID!, $chargeId: ID!) {
-  removeOrderCharge(orderId: $orderId, chargeId: $chargeId) {
-    id
-    totalAmount
+    mutation RemoveOrderCharge($input: RemoveOrderChargeInput!) {
+  removeOrderCharge(input: $input) {
+    ...OrderMutationResult
   }
 }
-    `, {"hash":"sha256:03f6923fb9554863167c01279b3f1605db40fd2c0c0a030b934ac49959b364c0"}) as unknown as TypedDocumentString<RemoveOrderChargeMutation, RemoveOrderChargeMutationVariables>;
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:a75bec74d0ee9039320bcfcc64440bf120258d7bed35a4fce23b2e0aeb9f4779"}) as unknown as TypedDocumentString<RemoveOrderChargeMutation, RemoveOrderChargeMutationVariables>;
+export const CloseOrderDocument = new TypedDocumentString(`
+    mutation CloseOrder($id: ID!) {
+  closeOrder(id: $id) {
+    ...OrderMutationResult
+  }
+}
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:29e28b70b87c2b56b742887aa61c4e902824411344b2406cb079fb5b235cb013"}) as unknown as TypedDocumentString<CloseOrderMutation, CloseOrderMutationVariables>;
+export const CancelOrderDocument = new TypedDocumentString(`
+    mutation CancelOrder($id: ID!, $cancelReason: String!) {
+  cancelOrder(id: $id, cancelReason: $cancelReason) {
+    ...OrderMutationResult
+  }
+}
+    fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}`, {"hash":"sha256:c2d8a6c844a02e81f0c6a42222ab9146f32e20dc17c14aa067b711e85838ea18"}) as unknown as TypedDocumentString<CancelOrderMutation, CancelOrderMutationVariables>;
 export const OrderTableDocument = new TypedDocumentString(`
     query OrderTable($input: DataTableConnectionInput!) {
   orders(input: $input) {
@@ -6203,7 +6319,12 @@ fragment OrderTableRowFields on Order {
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:213013aa6dff6a91519d84bc1f7e26294ced739bff9e9b76095fe7b4489115f2"}) as unknown as TypedDocumentString<OrderTableQuery, OrderTableQueryVariables>;
+  customer {
+    id
+    name
+    code
+  }
+}`, {"hash":"sha256:9e24ddaf07fd5362ac2d88844a75f0cc07107bfcdb5e00cd1ebc3c30c218aa0f"}) as unknown as TypedDocumentString<OrderTableQuery, OrderTableQueryVariables>;
 export const OrganizationSettingsDocument = new TypedDocumentString(`
     query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
   organization(id: $id, includeState: $includeState, includeBu: $includeBu) {
@@ -6761,6 +6882,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -6855,7 +6979,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:95f8e53ae2816b14e7c4fb307fd02b8ba82357953d310a7b83ec3947bad8bde3"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:f5cd9ca38789950ae0acecb4d1437f831a9ecc0ffbe1f0128329e8768fce0c5c"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -7065,6 +7189,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -7155,7 +7282,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:8fd18cd75314843b9ab8ada94e2992cbb6b7e9ab1420c96b5feaf6b710923600"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:7140985f0760018f1faf7704de63168439a5c54d413497ca66def9eb10d863ae"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -7524,6 +7651,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -7618,7 +7748,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:2444b94af686f25b5f4c0e711a404bf37b6fda4a6e79c8ae8c9fde41556e8cde"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:259f6742486bf7a2f4cfd44a00c303d0ebcde9f379f8bc944e27331dedc78db0"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -7836,6 +7966,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -7930,7 +8063,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:5b58333b03b7f71860e8b2937d8d9e6351a646acbdae1cd21d6f3b412147bd71"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:de42ed156eb13c6b6cc8d1b3bc0ecf85dca6836909b7a91129fff1fe4747a010"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -8148,6 +8281,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -8242,7 +8378,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:936cf2b8b9e243552437f15eeddce566d5954d15210b8c9622e99ee7daf88750"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:2e34058deb77b3c563f1e11666c062c1c7e6e76b1d93bb238d368841d0f92ace"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
     query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
   shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
@@ -8670,6 +8806,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -8760,7 +8899,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:507b976fa0fc048c3e3a7b338a7dd9134aee57bc42ef672dd30873b08ea0785f"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:f93be74cadf7023b6128fefa39182823c0ca1fe0182fb5fa6ff1ada9fb6143d8"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -8970,6 +9109,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -9060,7 +9202,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:6fac83d0db55bae4379f30758345d575b9ee2a8438d77f9a94b1a7f4eae1be0b"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:7fe07e15add8878c4054607895a727b9d1a203744fa1aad8130a3143e33014bf"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -9270,6 +9412,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -9360,7 +9505,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:d26e3018e89d22dcb99b480832c98dfc6c7cf80b14f07faba26e6dea298298fa"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:5a11fe2606f52b3ce83d31f1fee592ff6de431bd22a97ab827abaa7787acef11"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -9570,6 +9715,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -9660,7 +9808,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:dbcde3fd3c3bf180ec19dd958f76eb0fa880a56d145275a4b0f90c8395947d73"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:9da085bfa759ea5472ecaf9920de9b68f66c5ce60de7bfbe64372d5b0f3d89fd"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -9881,6 +10029,9 @@ fragment ShipmentFields on Shipment {
   canceledById
   formulaTemplateId
   consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
   status
   tenderStatus
   entryMethod
@@ -9971,7 +10122,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:7e9a7c316473285f7e31c734935c7d7d068c588af7adb2ce6bfece8232dab0c0"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:96d83971d324ca9c7703920a5ec1c799ae2ea7c82397a5146ffdefc1cbd14b81"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {

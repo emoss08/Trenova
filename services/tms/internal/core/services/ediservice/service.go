@@ -76,6 +76,7 @@ type Params struct {
 	DB                  coreports.DBConnection
 	Coordinator         *shipmentstate.Coordinator
 	Transport           services.EDITransportDispatcher
+	OrderDerivation     services.OrderDerivationService
 	Metrics             *metrics.Registry `optional:"true"`
 }
 
@@ -115,6 +116,7 @@ type Service struct {
 	db                  coreports.DBConnection
 	coordinator         *shipmentstate.Coordinator
 	transport           services.EDITransportDispatcher
+	orderDerivation     services.OrderDerivationService
 	lifecycleApplier    *internaledilifecycle.Applier
 	metrics             *metrics.EDI
 }
@@ -161,6 +163,7 @@ func New(p Params) *Service {
 		db:                  p.DB,
 		coordinator:         p.Coordinator,
 		transport:           p.Transport,
+		orderDerivation:     p.OrderDerivation,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,

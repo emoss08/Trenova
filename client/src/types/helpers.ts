@@ -2,8 +2,13 @@ import { z } from "zod";
 
 export const decimalStringSchema = z
   .union([
-    z.string().transform((val) => (val === "" ? null : parseFloat(val))),
-    z.number(),
+    z
+      .string()
+      .transform((val) => (val.trim() === "" ? null : Number(val)))
+      .refine((val) => val === null || Number.isFinite(val), {
+        error: "Must be a valid number",
+      }),
+    z.number().refine((val) => Number.isFinite(val), { error: "Must be a valid number" }),
     z.null(),
   ])
   .nullish();

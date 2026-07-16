@@ -1512,6 +1512,11 @@ func (s *Service) buildDocumentReferences(
 		)
 	}
 
+	allowedShipmentIDs := make(map[string]struct{})
+	for _, legID := range sourceInvoice.LegShipmentIDs() {
+		allowedShipmentIDs[legID.String()] = struct{}{}
+	}
+
 	now := timeutils.NowUnix()
 	refs := make([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, 0, len(docs))
 	for _, doc := range docs {
@@ -1522,12 +1527,12 @@ func (s *Service) buildDocumentReferences(
 				"Archived supporting documents cannot be used for adjustments",
 			)
 		}
-		if !strings.EqualFold(doc.ResourceType, "shipment") ||
-			doc.ResourceID != sourceInvoice.ShipmentID.String() {
+		if _, allowed := allowedShipmentIDs[doc.ResourceID]; !allowed ||
+			!strings.EqualFold(doc.ResourceType, "shipment") {
 			return nil, errortypes.NewValidationError(
 				fieldName,
 				errortypes.ErrInvalidOperation,
-				"Supporting evidence must reference documents from the source shipment",
+				"Supporting evidence must reference documents from the invoice's shipments",
 			)
 		}
 
@@ -1759,20 +1764,22 @@ func (s *Service) applyReplacementReviewPolicy(
 	}
 }
 
+// computeRerate rebuilds replacement lines from the current rating of every leg billed
+// by the invoice — one leg for a single-shipment invoice, the line-attributed set for a
+// grouped (order) invoice. Order-level lines (no leg attribution) are carried forward
+// at their billed amount; rerating only re-prices legs.
 func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 ) ([]*invoice.InoviceLine, decimal.Decimal, decimal.Decimal, error) {
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         entity.ShipmentID,
-		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, decimal.Zero, decimal.Zero, err
+	legIDs := entity.LegShipmentIDs()
+	if len(legIDs) == 0 {
+		return nil, decimal.Zero, decimal.Zero, errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Invoice has no shipment legs to rerate",
+		)
 	}
 
 	control, err := s.shipmentCtrlRepo.Get(ctx, repositories.GetShipmentControlRequest{
@@ -1781,12 +1788,49 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	if err != nil {
 		return nil, decimal.Zero, decimal.Zero, err
 	}
-	if err = s.commercial.Recalculate(ctx, shp, control, tenantInfo.UserID); err != nil {
-		return nil, decimal.Zero, decimal.Zero, err
+
+	lines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
+	total := decimal.Zero
+	nextLineNumber := 1
+	for _, legID := range legIDs {
+		shp, legErr := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+			ID:         legID,
+			TenantInfo: tenantInfo,
+			ShipmentOptions: repositories.ShipmentOptions{
+				ExpandShipmentDetails: true,
+			},
+		})
+		if legErr != nil {
+			return nil, decimal.Zero, decimal.Zero, legErr
+		}
+		if legErr = s.commercial.Recalculate(ctx, shp, control, tenantInfo.UserID); legErr != nil {
+			return nil, decimal.Zero, decimal.Zero, legErr
+		}
+
+		legLines := buildReplacementLinesForLeg(shp, nextLineNumber)
+		lines = append(lines, legLines...)
+		nextLineNumber += len(legLines)
+		total = total.Add(shp.TotalChargeAmount.Decimal)
 	}
 
-	lines := buildReplacementLinesFromShipment(shp)
-	total := shp.TotalChargeAmount.Decimal
+	if !entity.OrderID.IsNil() {
+		for _, line := range entity.Lines {
+			if line == nil || !line.ShipmentID.IsNil() {
+				continue
+			}
+			lines = append(lines, &invoice.InoviceLine{
+				LineNumber:  nextLineNumber,
+				Type:        line.Type,
+				Description: line.Description,
+				Quantity:    line.Quantity,
+				UnitPrice:   line.UnitPrice,
+				Amount:      line.Amount,
+			})
+			nextLineNumber++
+			total = total.Add(line.Amount)
+		}
+	}
+
 	variance := decimal.Zero
 	if entity.TotalAmount.GreaterThan(decimal.Zero) && !total.Equal(entity.TotalAmount) {
 		variance = total.Sub(entity.TotalAmount).
@@ -2099,6 +2143,7 @@ func (s *Service) createCreditMemoQueueItem(
 		OrganizationID:            adjustment.OrganizationID,
 		BusinessUnitID:            adjustment.BusinessUnitID,
 		ShipmentID:                sourceInvoice.ShipmentID,
+		OrderID:                   sourceInvoice.OrderID,
 		Number:                    number,
 		Status:                    billingqueue.StatusPosted,
 		BillType:                  billingqueue.BillTypeCreditMemo,
@@ -2141,6 +2186,8 @@ func (s *Service) createCreditMemoInvoice(
 		BusinessUnitID:            sourceInvoice.BusinessUnitID,
 		BillingQueueItemID:        item.ID,
 		ShipmentID:                sourceInvoice.ShipmentID,
+		OrderID:                   sourceInvoice.OrderID,
+		OrderNumber:               sourceInvoice.OrderNumber,
 		CustomerID:                sourceInvoice.CustomerID,
 		Number:                    item.Number,
 		BillType:                  billingqueue.BillTypeCreditMemo,
@@ -2199,6 +2246,7 @@ func (s *Service) createReplacementQueueItem(
 		OrganizationID:            adjustment.OrganizationID,
 		BusinessUnitID:            adjustment.BusinessUnitID,
 		ShipmentID:                sourceInvoice.ShipmentID,
+		OrderID:                   sourceInvoice.OrderID,
 		Number:                    number,
 		Status:                    replacementQueueStatus(preview.RequiresReplacementInvoiceReview),
 		BillType:                  billingqueue.BillTypeInvoice,
@@ -2391,18 +2439,24 @@ func sumInvoiceLines(
 	return total
 }
 
-func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.InoviceLine {
+func buildReplacementLinesForLeg(
+	shp *shipment.Shipment,
+	startLineNumber int,
+) []*invoice.InoviceLine {
 	lines := make([]*invoice.InoviceLine, 0, 1+len(shp.AdditionalCharges))
 	freight := shp.FreightChargeAmount.Decimal
 	lines = append(lines, &invoice.InoviceLine{
-		LineNumber:  1,
-		Type:        invoice.InvoiceLineTypeFreight,
-		Description: "Freight charge",
-		Quantity:    decimal.NewFromInt(1),
-		UnitPrice:   freight,
-		Amount:      freight,
+		LineNumber:        startLineNumber,
+		ShipmentID:        shp.ID,
+		ShipmentProNumber: shp.ProNumber,
+		ShipmentBOL:       shp.BOL,
+		Type:              invoice.InvoiceLineTypeFreight,
+		Description:       "Freight charge",
+		Quantity:          decimal.NewFromInt(1),
+		UnitPrice:         freight,
+		Amount:            freight,
 	})
-	for idx, charge := range shp.AdditionalCharges {
+	for _, charge := range shp.AdditionalCharges {
 		if charge == nil {
 			continue
 		}
@@ -2424,12 +2478,15 @@ func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.Inovic
 			description = charge.AccessorialCharge.Description
 		}
 		lines = append(lines, &invoice.InoviceLine{
-			LineNumber:  idx + 2,
-			Type:        invoice.InvoiceLineTypeAccessorial,
-			Description: description,
-			Quantity:    qty,
-			UnitPrice:   unitPrice,
-			Amount:      amount,
+			LineNumber:        startLineNumber + len(lines),
+			ShipmentID:        shp.ID,
+			ShipmentProNumber: shp.ProNumber,
+			ShipmentBOL:       shp.BOL,
+			Type:              invoice.InvoiceLineTypeAccessorial,
+			Description:       description,
+			Quantity:          qty,
+			UnitPrice:         unitPrice,
+			Amount:            amount,
 		})
 	}
 	return lines

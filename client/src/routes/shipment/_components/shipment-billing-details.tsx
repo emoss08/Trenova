@@ -269,7 +269,11 @@ export default function ShipmentBillingDetails() {
             name="orderId"
             label="Order"
             placeholder="Select Order"
-            description="Optionally group this shipment under a commercial order."
+            description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
+            disabled={!customerId}
+            extraSearchParams={
+              customerId ? { customerId, attachableOnly: "true" } : undefined
+            }
           />
         </FormControl>
         <FormControl>

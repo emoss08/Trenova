@@ -185,7 +185,7 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 
 	svc := &Service{l: zap.NewNop()}
 
-	entity := svc.buildInvoiceEntity(item, shp, cus, control)
+	entity := svc.buildInvoiceEntity(item, shp, nil, cus, control)
 
 	require.NotNil(t, entity)
 	assert.Equal(t, item.Number, entity.Number)
@@ -243,6 +243,7 @@ func TestBuildInvoiceEntityDerivesAccessorialTotalsFromLines(t *testing.T) {
 	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(
 		item,
 		shp,
+		nil,
 		cus,
 		&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30},
 	)

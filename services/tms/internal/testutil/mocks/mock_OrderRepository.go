@@ -336,29 +336,40 @@ func (_mock *MockOrderRepository) AttachShipments(ctx context.Context, tenantInf
 	return r0, r1
 }
 
-func (_mock *MockOrderRepository) DetachShipment(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentID pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID, shipmentID)
-
+func (_mock *MockOrderRepository) DetachShipment(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentID pulid.ID, newOrderID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID, shipmentID, newOrderID)
 	if len(ret) == 0 {
 		panic("no return value specified for DetachShipment")
 	}
+	return ret.Get(0).(int64), ret.Error(1)
+}
 
-	var r0 int64
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) (int64, error)); ok {
-		return returnFunc(ctx, tenantInfo, orderID, shipmentID)
+func (_mock *MockOrderRepository) GetShipmentAttachRefs(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentIDs []pulid.ID) ([]repositories.ShipmentAttachRef, error) {
+	ret := _mock.Called(ctx, tenantInfo, shipmentIDs)
+	if len(ret) == 0 {
+		panic("no return value specified for GetShipmentAttachRefs")
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) int64); ok {
-		r0 = returnFunc(ctx, tenantInfo, orderID, shipmentID)
-	} else {
-		r0 = ret.Get(0).(int64)
+	var r0 []repositories.ShipmentAttachRef
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]repositories.ShipmentAttachRef)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) error); ok {
-		r1 = returnFunc(ctx, tenantInfo, orderID, shipmentID)
-	} else {
-		r1 = ret.Error(1)
+	return r0, ret.Error(1)
+}
+
+func (_mock *MockOrderRepository) UpdateCharge(ctx context.Context, entity *order.OrderCharge) (int64, error) {
+	ret := _mock.Called(ctx, entity)
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateCharge")
 	}
-	return r0, r1
+	return ret.Get(0).(int64), ret.Error(1)
+}
+
+func (_mock *MockOrderRepository) DeleteIfEmpty(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteIfEmpty")
+	}
+	return ret.Get(0).(int64), ret.Error(1)
 }
 
 func (_mock *MockOrderRepository) GetShipmentStatuses(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]shipment.Status, error) {
@@ -774,14 +785,6 @@ func (_c *MockOrderRepository_UpdateStatus_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
-func (_mock *MockOrderRepository) CountShipmentsWithDifferentCustomer(ctx context.Context, tenantInfo pagination.TenantInfo, customerID pulid.ID, shipmentIDs []pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, tenantInfo, customerID, shipmentIDs)
-	if len(ret) == 0 {
-		panic("no return value specified for CountShipmentsWithDifferentCustomer")
-	}
-	return ret.Get(0).(int64), ret.Error(1)
-}
-
 func (_mock *MockOrderRepository) AddCharge(ctx context.Context, entity *order.OrderCharge) (*order.OrderCharge, error) {
 	ret := _mock.Called(ctx, entity)
 	if len(ret) == 0 {
@@ -794,8 +797,8 @@ func (_mock *MockOrderRepository) AddCharge(ctx context.Context, entity *order.O
 	return r0, ret.Error(1)
 }
 
-func (_mock *MockOrderRepository) RemoveCharge(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, chargeID pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID, chargeID)
+func (_mock *MockOrderRepository) RemoveCharge(ctx context.Context, req *repositories.RemoveOrderChargeRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveCharge")
 	}
@@ -812,6 +815,26 @@ func (_mock *MockOrderRepository) ListCharges(ctx context.Context, tenantInfo pa
 		r0 = ret.Get(0).([]*order.OrderCharge)
 	}
 	return r0, ret.Error(1)
+}
+
+func (_mock *MockOrderRepository) ListUninvoicedCharges(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+	if len(ret) == 0 {
+		panic("no return value specified for ListUninvoicedCharges")
+	}
+	var r0 []*order.OrderCharge
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]*order.OrderCharge)
+	}
+	return r0, ret.Error(1)
+}
+
+func (_mock *MockOrderRepository) MarkChargesInvoiced(ctx context.Context, req *repositories.MarkOrderChargesInvoicedRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+	if len(ret) == 0 {
+		panic("no return value specified for MarkChargesInvoiced")
+	}
+	return ret.Get(0).(int64), ret.Error(1)
 }
 
 func (_mock *MockOrderRepository) RecalculateTotal(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) error {

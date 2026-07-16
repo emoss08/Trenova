@@ -2,6 +2,7 @@ package orderrepository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -17,6 +18,11 @@ import (
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrOrderChargeRequestNil   = errors.New("request cannot be nil")
+	ErrOrderChargeRequestEmpty = errors.New("request cannot be empty")
 )
 
 type Params struct {
@@ -66,7 +72,7 @@ func (r *repository) List(
 	)
 
 	entities := make([]*order.Order, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
+	total, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -173,7 +179,11 @@ func (r *repository) Create(
 		zap.String("orderNumber", entity.OrderNumber),
 	)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		log.Error("failed to create order", zap.Error(err))
 		return nil, err
 	}
@@ -207,12 +217,26 @@ func (r *repository) Update(
 	entity.Version++
 	cols := buncolgen.OrderColumns
 
-	results, err := r.db.DB().
+	// Explicit column list: cleared optional fields (PO, BOL, owner, quote amounts)
+	// must persist as NULL rather than being dropped from the SET clause, and the
+	// derived columns (status, total_amount) plus the immutable order_number are
+	// never written through the generic update.
+	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
+		Column(
+			cols.CustomerID.Name,
+			cols.OwnerID.Name,
+			cols.PONumber.Name,
+			cols.BOL.Name,
+			cols.CurrencyCode.Name,
+			cols.QuotedAmount.Name,
+			cols.BaseAmount.Name,
+			cols.Version.Name,
+			cols.UpdatedAt.Name,
+		).
 		WherePK().
 		Where(cols.Version.Eq(), ov).
-		OmitZero().
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -245,13 +269,14 @@ func (r *repository) UpdateStatus(
 	}
 	cols := buncolgen.OrderColumns
 
-	results, err := r.db.DB().
+	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
 		Where(cols.Version.Eq(), req.Version).
 		Set(cols.Status.Set(), req.Status).
 		Set(cols.Version.Set(), req.Version+1).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -274,7 +299,7 @@ func (r *repository) GetShipmentStatuses(
 	statuses := make([]shipment.Status, 0)
 
 	cols := buncolgen.ShipmentColumns
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*shipment.Shipment)(nil)).
 		Column("status").
@@ -307,7 +332,9 @@ func (r *repository) AttachShipments(
 		Set("order_id = ?", orderID).
 		WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.ShipmentScopeTenantUpdate(sq, tenantInfo).
-				Where(cols.ID.In(), bun.List(shipmentIDs))
+				Where(cols.ID.In(), bun.List(shipmentIDs)).
+				Where(cols.Status.Ne(), shipment.StatusCanceled).
+				Where(cols.Status.Ne(), shipment.StatusInvoiced)
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -328,15 +355,17 @@ func (r *repository) DetachShipment(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 	shipmentID pulid.ID,
+	newOrderID pulid.ID,
 ) (int64, error) {
 	cols := buncolgen.ShipmentColumns
 	result, err := r.db.DBForContext(ctx).NewUpdate().
 		Model((*shipment.Shipment)(nil)).
-		Set("order_id = NULL").
+		Set("order_id = ?", newOrderID).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.ShipmentScopeTenantUpdate(uq, tenantInfo).
 				Where(cols.ID.Eq(), shipmentID).
-				Where(cols.OrderID.Eq(), orderID)
+				Where(cols.OrderID.Eq(), orderID).
+				Where(cols.Status.Ne(), shipment.StatusInvoiced)
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -352,38 +381,67 @@ func (r *repository) DetachShipment(
 	return affected, nil
 }
 
-func (r *repository) CountShipmentsWithDifferentCustomer(
+func (r *repository) GetShipmentAttachRefs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	customerID pulid.ID,
 	shipmentIDs []pulid.ID,
-) (int64, error) {
+) ([]repositories.ShipmentAttachRef, error) {
 	if len(shipmentIDs) == 0 {
-		return 0, nil
+		return nil, nil
 	}
 
+	refs := make([]repositories.ShipmentAttachRef, 0, len(shipmentIDs))
 	cols := buncolgen.ShipmentColumns
-	count, err := r.db.DB().NewSelect().
+	err := r.db.DBForContext(ctx).NewSelect().
 		Model((*shipment.Shipment)(nil)).
+		Column("id", "order_id", "customer_id", "status").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
-				Where(cols.ID.In(), bun.List(shipmentIDs)).
-				Where(cols.CustomerID.Ne(), customerID)
+				Where(cols.ID.In(), bun.List(shipmentIDs))
 		}).
-		Count(ctx)
+		Scan(ctx, &refs)
 	if err != nil {
-		r.l.Error("failed to count shipments with different customer", zap.Error(err))
+		r.l.Error("failed to load shipment attach refs", zap.Error(err))
+		return nil, err
+	}
+
+	return refs, nil
+}
+
+func (r *repository) DeleteIfEmpty(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	orderID pulid.ID,
+) (int64, error) {
+	cols := buncolgen.OrderColumns
+	result, err := r.db.DBForContext(ctx).NewDelete().
+		Model((*order.Order)(nil)).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.OrderScopeTenantDelete(dq, tenantInfo).
+				Where(cols.ID.Eq(), orderID)
+		}).
+		Where("NOT EXISTS (SELECT 1 FROM shipments s WHERE s.order_id = ord.id AND s.organization_id = ord.organization_id AND s.business_unit_id = ord.business_unit_id)").
+		Where("NOT EXISTS (SELECT 1 FROM order_charges oc WHERE oc.order_id = ord.id AND oc.organization_id = ord.organization_id AND oc.business_unit_id = ord.business_unit_id)").
+		Where("NOT EXISTS (SELECT 1 FROM invoices inv WHERE inv.order_id = ord.id AND inv.organization_id = ord.organization_id AND inv.business_unit_id = ord.business_unit_id)").
+		Where("NOT EXISTS (SELECT 1 FROM billing_queue_items bqi WHERE bqi.order_id = ord.id AND bqi.organization_id = ord.organization_id AND bqi.business_unit_id = ord.business_unit_id)").
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to delete empty order", zap.Error(err))
 		return 0, err
 	}
 
-	return int64(count), nil
+	return result.RowsAffected()
 }
 
 func (r *repository) AddCharge(
 	ctx context.Context,
 	entity *order.OrderCharge,
 ) (*order.OrderCharge, error) {
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		r.l.Error("failed to add order charge", zap.Error(err))
 		return nil, err
 	}
@@ -393,21 +451,53 @@ func (r *repository) AddCharge(
 
 func (r *repository) RemoveCharge(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	orderID pulid.ID,
-	chargeID pulid.ID,
+	req *repositories.RemoveOrderChargeRequest,
 ) (int64, error) {
+	if req == nil {
+		return 0, ErrOrderChargeRequestNil
+	}
+
 	cols := buncolgen.OrderChargeColumns
-	result, err := r.db.DB().NewDelete().
+	result, err := r.db.DBForContext(ctx).NewDelete().
 		Model((*order.OrderCharge)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.OrderChargeScopeTenantDelete(dq, tenantInfo).
-				Where(cols.ID.Eq(), chargeID).
-				Where(cols.OrderID.Eq(), orderID)
+			return buncolgen.OrderChargeScopeTenantDelete(dq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ChargeID).
+				Where(cols.OrderID.Eq(), req.OrderID)
 		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error("failed to remove order charge", zap.Error(err))
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+func (r *repository) UpdateCharge(
+	ctx context.Context,
+	entity *order.OrderCharge,
+) (int64, error) {
+	ov := entity.Version
+	entity.Version++
+	cols := buncolgen.OrderChargeColumns
+
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model(entity).
+		Column(
+			cols.Description.Name,
+			cols.Amount.Name,
+			cols.Version.Name,
+			cols.UpdatedAt.Name,
+		).
+		WherePK().
+		Where(cols.Version.Eq(), ov).
+		Where(cols.OrderID.Eq(), entity.OrderID).
+		Where(cols.InvoiceID.IsNull()).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update order charge", zap.Error(err))
 		return 0, err
 	}
 
@@ -422,7 +512,7 @@ func (r *repository) ListCharges(
 	charges := make([]*order.OrderCharge, 0)
 
 	cols := buncolgen.OrderChargeColumns
-	err := r.db.DB().NewSelect().
+	err := r.db.DBForContext(ctx).NewSelect().
 		Model(&charges).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
@@ -438,6 +528,64 @@ func (r *repository) ListCharges(
 	return charges, nil
 }
 
+func (r *repository) ListUninvoicedCharges(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	orderID pulid.ID,
+) ([]*order.OrderCharge, error) {
+	charges := make([]*order.OrderCharge, 0)
+
+	cols := buncolgen.OrderChargeColumns
+	err := r.db.DBForContext(ctx).NewSelect().
+		Model(&charges).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
+				Where(cols.OrderID.Eq(), orderID).
+				Where(cols.InvoiceID.IsNull())
+		}).
+		Order(cols.CreatedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list uninvoiced order charges", zap.Error(err))
+		return nil, err
+	}
+
+	return charges, nil
+}
+
+func (r *repository) MarkChargesInvoiced(
+	ctx context.Context,
+	req *repositories.MarkOrderChargesInvoicedRequest,
+) (int64, error) {
+	if req == nil {
+		return 0, ErrOrderChargeRequestEmpty
+	}
+
+	if len(req.ChargeIDs) == 0 {
+		return 0, nil
+	}
+
+	cols := buncolgen.OrderChargeColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*order.OrderCharge)(nil)).
+		Set(cols.InvoiceID.Set(), req.InvoiceID).
+		Set(cols.InvoicedAt.Set(), req.InvoicedAt).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.OrderID.Eq(), req.OrderID).
+				Where(cols.ID.In(), bun.List(req.ChargeIDs)).
+				Where(cols.InvoiceID.IsNull())
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to mark order charges invoiced", zap.Error(err))
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
 func (r *repository) RecalculateTotal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -446,13 +594,14 @@ func (r *repository) RecalculateTotal(
 	cols := buncolgen.OrderColumns
 	sc := buncolgen.ShipmentColumns
 	cc := buncolgen.OrderChargeColumns
-	db := r.db.DB()
+	db := r.db.DBForContext(ctx)
 
 	legTotal := db.NewSelect().
 		Model((*shipment.Shipment)(nil)).
 		ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(sc.TotalChargeAmount.Name)).
 		Apply(buncolgen.ShipmentApplyTenant(tenantInfo)).
-		Where(sc.OrderID.Eq(), orderID)
+		Where(sc.OrderID.Eq(), orderID).
+		Where(sc.Status.Ne(), shipment.StatusCanceled)
 
 	chargeTotal := db.NewSelect().
 		Model((*order.OrderCharge)(nil)).
@@ -462,7 +611,8 @@ func (r *repository) RecalculateTotal(
 
 	_, err := db.NewUpdate().
 		Model((*order.Order)(nil)).
-		Set(cols.TotalAmount.SetExpr("? + ?"), legTotal, chargeTotal).
+		Set(cols.TotalAmount.SetExpr("(?) + (?)"), legTotal, chargeTotal).
+		Set(cols.Version.Inc(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.OrderScopeTenantUpdate(uq, tenantInfo).
@@ -488,7 +638,7 @@ func (r *repository) GetByID(
 
 	entity := new(order.Order)
 	cols := buncolgen.OrderColumns
-	q := r.db.DB().
+	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -519,7 +669,7 @@ func (r *repository) GetByIDs(
 
 	entities := make([]*order.Order, 0, len(req.OrderIDs))
 	cols := buncolgen.OrderColumns
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -543,7 +693,7 @@ func (r *repository) SelectOptions(
 
 	return dbhelper.SelectOptions[*order.Order](
 		ctx,
-		r.db.DB(),
+		r.db.DBForContext(ctx),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
 			ColumnRefs: []buncolgen.Column{
@@ -555,6 +705,17 @@ func (r *repository) SelectOptions(
 			BuColumnRef:      &cols.BusinessUnitID,
 			EntityName:       "Order",
 			SearchColumnRefs: []buncolgen.Column{cols.OrderNumber, cols.PONumber, cols.BOL},
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				if req.AttachableOnly {
+					q = q.Where(cols.Status.Ne(), order.StatusBilled).
+						Where(cols.Status.Ne(), order.StatusClosed).
+						Where(cols.Status.Ne(), order.StatusCanceled)
+				}
+				if !req.CustomerID.IsNil() {
+					q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
+				}
+				return q
+			},
 		},
 	)
 }

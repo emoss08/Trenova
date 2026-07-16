@@ -207,6 +207,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.As(new(services.ShipmentEventObserver)),
 		fx.ResultTags(`group:"shipment_event_observers"`),
 	),
+	fx.Annotate(
+		orderderivation.New,
+		fx.As(new(services.OrderDerivationService)),
+	),
 	shipmentholdservice.New,
 	fx.Annotate(
 		servicefailureservice.New,

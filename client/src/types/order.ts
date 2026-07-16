@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { decimalStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import {
+  decimalStringSchema,
+  optionalStringSchema,
+  tenantInfoSchema,
+  versionSchema,
+} from "./helpers";
 
 export const orderStatusSchema = z.enum([
   "Draft",
@@ -25,6 +30,14 @@ export const orderSchema = z.object({
   quotedAmount: decimalStringSchema,
   baseAmount: decimalStringSchema,
   totalAmount: decimalStringSchema,
+  version: versionSchema,
+  customer: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      code: z.string(),
+    })
+    .nullish(),
 });
 
 export type Order = z.infer<typeof orderSchema>;

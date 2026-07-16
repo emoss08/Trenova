@@ -28,7 +28,17 @@ type OrderCharge {
   orderId: ID!
   description: String!
   amount: String!
+  invoiceId: ID
+  version: Int!
   createdAt: Int!
+}
+
+input UpdateOrderChargeInput {
+  orderId: ID!
+  chargeId: ID!
+  description: String!
+  amount: String!
+  version: Int!
 }
 
 type OrderLeg {
@@ -69,12 +79,17 @@ extend type Query {
 input OrderInput {
   customerId: ID!
   ownerId: ID
-  status: OrderStatus
   poNumber: String
   bol: String
   currencyCode: String
   quotedAmount: String
   baseAmount: String
+  version: Int
+}
+
+input RemoveOrderChargeInput {
+  orderId: ID!
+  chargeId: ID!
 }
 
 extend type Mutation {
@@ -83,5 +98,8 @@ extend type Mutation {
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
   addOrderCharge(orderId: ID!, description: String!, amount: String!): Order!
-  removeOrderCharge(orderId: ID!, chargeId: ID!): Order!
+  updateOrderCharge(input: UpdateOrderChargeInput!): Order!
+  removeOrderCharge(input: RemoveOrderChargeInput!): Order!
+  closeOrder(id: ID!): Order!
+  cancelOrder(id: ID!, cancelReason: String!): Order!
 }

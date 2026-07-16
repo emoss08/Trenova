@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (s *Service) createInvoiceJournalPosting( //nolint:cyclop // legacy workflow
+func (s *Service) createInvoiceJournalPosting(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	actor *servicesports.RequestActor,

@@ -29,7 +29,7 @@ type BillingQueueItem struct {
 	ID                        pulid.ID             `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID            pulid.ID             `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID            pulid.ID             `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),notnull"`
+	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
 	OrderID                   pulid.ID             `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
 	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
 	Number                    string               `json:"number"                    bun:"number,type:VARCHAR(100),nullzero"`
@@ -65,10 +65,6 @@ func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		b,
 		validation.Field(
-			&b.ShipmentID,
-			validation.Required.Error("Shipment ID is required"),
-		),
-		validation.Field(
 			&b.OrganizationID,
 			validation.Required.Error("Organization ID is required"),
 		),
@@ -81,6 +77,14 @@ func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
+	}
+
+	if b.ShipmentID.IsNil() && b.OrderID.IsNil() {
+		multiErr.Add(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"A billing queue item must be attached to a shipment or an order",
+		)
 	}
 }
 

@@ -44,6 +44,7 @@ type Params struct {
 
 	Logger              *zap.Logger
 	Repo                repositories.ShipmentRepository
+	OrderRepo           repositories.OrderRepository
 	CacheRepo           repositories.ShipmentCacheRepository
 	AssignmentRepo      repositories.AssignmentRepository
 	UserRepo            repositories.UserRepository
@@ -68,12 +69,14 @@ type Params struct {
 	WorkflowStarter     services.WorkflowStarter
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
+	OrderDerivation     services.OrderDerivationService
 	DistanceCalculation services.DistanceCalculationService `optional:"true"`
 }
 
 type service struct {
 	l                   *zap.Logger
 	repo                repositories.ShipmentRepository
+	orderRepo           repositories.OrderRepository
 	cacheRepo           repositories.ShipmentCacheRepository
 	assignmentRepo      repositories.AssignmentRepository
 	userRepo            repositories.UserRepository
@@ -98,6 +101,7 @@ type service struct {
 	workflowStarter     services.WorkflowStarter
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
+	orderDerivation     services.OrderDerivationService
 	distanceCalculation services.DistanceCalculationService
 	mutationObservers   []services.ShipmentMutationObserver
 }
@@ -106,6 +110,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 	return &service{
 		l:                   p.Logger.Named("service.shipment"),
 		repo:                p.Repo,
+		orderRepo:           p.OrderRepo,
 		cacheRepo:           p.CacheRepo,
 		assignmentRepo:      p.AssignmentRepo,
 		userRepo:            p.UserRepo,
@@ -130,6 +135,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		workflowStarter:     p.WorkflowStarter,
 		coordinator:         p.Coordinator,
 		commercial:          p.Commercial,
+		orderDerivation:     p.OrderDerivation,
 		distanceCalculation: p.DistanceCalculation,
 	}
 }
@@ -273,6 +279,10 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	if err = s.validateExplicitOrder(ctx, entity); err != nil {
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -369,6 +379,9 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	entity.ApplyEntryMethodDefault(original)
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreAdditionalChargeSystemGeneration(original, entity)
+	if err = s.syncOrderMembershipForUpdate(ctx, original, entity); err != nil {
+		return nil, err
+	}
 
 	if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
 		original,
@@ -439,6 +452,16 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	s.emitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
+	if err = s.recomputeOrdersForShipments(
+		ctx,
+		pagination.TenantInfo{
+			OrgID: updatedEntity.OrganizationID,
+			BuID:  updatedEntity.BusinessUnitID,
+		},
+		[]*shipment.Shipment{updatedEntity},
+	); err != nil {
+		log.Warn("failed to recompute order after shipment update", zap.Error(err))
+	}
 	s.evaluateServiceFailuresAfterShipmentUpdate(ctx, updatedEntity, actor)
 
 	if updatedEntity.Status == shipment.StatusCompleted &&
@@ -664,6 +687,10 @@ func (s *service) DelayShipments(
 		return delayedShipments, nil
 	}
 
+	if err = s.recomputeOrdersForShipments(ctx, req.TenantInfo, delayedShipments); err != nil {
+		return nil, err
+	}
+
 	var auditActor services.AuditActor
 	if actor != nil {
 		auditActor = actor.AuditActor()
@@ -741,6 +768,10 @@ func (s *service) AutoCancelShipments(
 		return canceledShipments, nil
 	}
 
+	if err = s.recomputeOrdersForShipments(ctx, req.TenantInfo, canceledShipments); err != nil {
+		return nil, err
+	}
+
 	var auditActor services.AuditActor
 	if actor != nil {
 		auditActor = actor.AuditActor()
@@ -753,6 +784,131 @@ func (s *service) AutoCancelShipments(
 	}
 
 	return canceledShipments, nil
+}
+
+// validateExplicitOrder guards shipment creation that names an order directly:
+// the order must exist, share the shipment's customer (invariant #4), and still
+// accept new legs. Attach-after-create goes through orderservice.AttachShipments,
+// which enforces the same rules.
+func (s *service) validateExplicitOrder(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) error {
+	if entity.OrderID.IsNil() || s.orderRepo == nil {
+		return nil
+	}
+
+	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ID: entity.OrderID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return errortypes.NewValidationError(
+				"orderId",
+				errortypes.ErrInvalid,
+				"Order not found",
+			)
+		}
+		return err
+	}
+
+	if ord.CustomerID != entity.CustomerID {
+		return errortypes.NewValidationError(
+			"orderId",
+			errortypes.ErrInvalid,
+			"The shipment's customer must match the order's customer",
+		)
+	}
+	if !ord.Status.AllowsMembershipChange() {
+		return errortypes.NewValidationError(
+			"orderId",
+			errortypes.ErrInvalid,
+			fmt.Sprintf("New legs cannot be added to a %s order", ord.Status),
+		)
+	}
+
+	return nil
+}
+
+// syncOrderMembershipForUpdate keeps order membership out of the shipment update
+// path: order_id always restores from the persisted row (attach/detach are the only
+// membership mutations), and a customer change either follows through to a
+// single-leg order or is rejected while the shipment is one leg of many.
+func (s *service) syncOrderMembershipForUpdate(
+	ctx context.Context,
+	original *shipment.Shipment,
+	entity *shipment.Shipment,
+) error {
+	entity.OrderID = original.OrderID
+
+	if entity.CustomerID == original.CustomerID || original.OrderID.IsNil() ||
+		s.orderRepo == nil {
+		return nil
+	}
+
+	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ID: original.OrderID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		IncludeShipment: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(ord.Shipments) > 1 {
+		return errortypes.NewValidationError(
+			"customerId",
+			errortypes.ErrInvalid,
+			"The customer cannot be changed while the shipment is a leg of a multi-leg order; detach it first",
+		)
+	}
+	if !ord.Status.AllowsMembershipChange() {
+		return errortypes.NewValidationError(
+			"customerId",
+			errortypes.ErrInvalid,
+			fmt.Sprintf("The customer of a leg of a %s order cannot be changed", ord.Status),
+		)
+	}
+
+	ord.CustomerID = entity.CustomerID
+	if _, err = s.orderRepo.Update(ctx, ord); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) recomputeOrdersForShipments(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipments []*shipment.Shipment,
+) error {
+	if s.orderDerivation == nil {
+		return nil
+	}
+
+	orderIDs := make(map[pulid.ID]struct{}, len(shipments))
+	for _, entity := range shipments {
+		if entity == nil || entity.OrderID.IsNil() {
+			continue
+		}
+		orderIDs[entity.OrderID] = struct{}{}
+	}
+
+	for orderID := range orderIDs {
+		if err := s.orderDerivation.RecomputeOrder(ctx, tenantInfo, orderID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *service) CheckForDuplicateBOLs(

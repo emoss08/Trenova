@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -37,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/uptrace/bun"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -98,20 +100,22 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		Where("business_unit_id = ?", org.BusinessUnitID).
 		Limit(1).Scan(ctx, &user))
 
-	// Two seeded shipments become the legs of a new order.
+	// Two seeded shipments become the legs of the grouped order; two more feed the
+	// partial-billing scenario at the end.
 	var legRows []seededInvoiceShipment
 	require.NoError(t, db.NewSelect().
 		Table("shipments").Column("id", "customer_id", "pro_number", "bol").
 		Where("organization_id = ?", org.ID).
 		Where("business_unit_id = ?", org.BusinessUnitID).
-		Limit(2).Scan(ctx, &legRows))
-	require.Len(t, legRows, 2, "need two seeded shipments")
+		Order("created_at ASC").
+		Limit(4).Scan(ctx, &legRows))
+	require.Len(t, legRows, 4, "need four seeded shipments")
 	customerID := legRows[0].CustomerID
 
 	// Accounting scaffolding so Post can create a journal posting.
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.ReconciliationMode = tenant.ReconciliationModeDisabled
+	control.ReconciliationMode = tenant.ReconciliationModeWarnOnly
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.AutoPostSourceEvents = []tenant.JournalSourceEventType{
 		tenant.JournalSourceEventInvoicePosted,
@@ -176,13 +180,15 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		legRows[0].ID: decimal.NewFromInt(100),
 		legRows[1].ID: decimal.NewFromInt(250),
 	}
-	for _, leg := range legRows {
+	for _, leg := range legRows[:2] {
 		_, err = db.NewUpdate().
 			Table("shipments").
 			Set("order_id = ?", ord.ID).
 			Set("customer_id = ?", customerID).
 			Set("status = ?", shipment.StatusReadyToInvoice).
 			Set("freight_charge_amount = ?", freights[leg.ID]).
+			Set("total_charge_amount = ?", freights[leg.ID]).
+			Set("other_charge_amount = 0").
 			Where("id = ?", leg.ID).
 			Exec(ctx)
 		require.NoError(t, err)
@@ -190,9 +196,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 
 	// The service loads each leg's full detail through the shipment repository; return a
 	// shipment carrying the freight amount used to build the invoice line.
-	for _, leg := range legRows {
-		legID := leg.ID
-		proNumber := leg.ProNumber
+	mockLeg := func(legID pulid.ID, proNumber string, orderID pulid.ID, freight decimal.Decimal) {
 		shipmentRepo.EXPECT().
 			GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
 				return req != nil && req.ID == legID
@@ -202,11 +206,15 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 				OrganizationID:      org.ID,
 				BusinessUnitID:      org.BusinessUnitID,
 				CustomerID:          customerID,
+				OrderID:             orderID,
 				Status:              shipment.StatusReadyToInvoice,
 				ProNumber:           proNumber,
-				FreightChargeAmount: decimal.NewNullDecimal(freights[legID]),
-				TotalChargeAmount:   decimal.NewNullDecimal(freights[legID]),
+				FreightChargeAmount: decimal.NewNullDecimal(freight),
+				TotalChargeAmount:   decimal.NewNullDecimal(freight),
 			}, nil)
+	}
+	for _, leg := range legRows[:2] {
+		mockLeg(leg.ID, leg.ProNumber, ord.ID, freights[leg.ID])
 	}
 
 	// Post marks every billed leg Invoiced.
@@ -215,9 +223,14 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
 			return entity != nil && entity.Status == shipment.StatusInvoiced && entity.BilledAt != nil
 		})).
-		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
+		RunAndReturn(func(runCtx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			invoicedLegs[entity.ID] = true
-			return entity, nil
+			_, dbErr := db.NewUpdate().
+				Table("shipments").
+				Set("status = ?", shipment.StatusInvoiced).
+				Where("id = ?", entity.ID).
+				Exec(runCtx)
+			return entity, dbErr
 		})
 
 	customerRepo.EXPECT().
@@ -253,6 +266,12 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		auditService:      &mocks.NoopAuditService{},
 		realtime:          &mocks.NoopRealtimeService{},
 		sequenceGenerator: generator,
+		orderDerivation: orderderivation.New(orderderivation.Params{
+			Logger:       logger,
+			ShipmentRepo: shipmentRepo,
+			OrderRepo:    orderRepo,
+			Realtime:     &mocks.NoopRealtimeService{},
+		}),
 	}
 
 	tenantInfo := pagination.TenantInfo{
@@ -330,4 +349,151 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	// Every leg was marked Invoiced.
 	assert.True(t, invoicedLegs[legRows[0].ID], "leg 0 should be invoiced")
 	assert.True(t, invoicedLegs[legRows[1].ID], "leg 1 should be invoiced")
+
+	// Posting derived the order to Billed (all legs Invoiced) and the total held.
+	billedOrder, err := orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ID:         ord.ID,
+		TenantInfo: tenantInfo,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, order.StatusBilled, billedOrder.Status, "order should derive to Billed")
+	assert.True(t, decimal.NewFromInt(425).Equal(billedOrder.TotalAmount.Decimal),
+		"order total should match the invoice, got %s", billedOrder.TotalAmount.Decimal)
+
+	// A second CreateFromOrder for the already-invoiced order must be rejected, not
+	// silently duplicated.
+	_, err = svc.CreateFromOrder(ctx, &serviceports.CreateInvoiceFromOrderRequest{
+		OrderID:    ord.ID,
+		TenantInfo: tenantInfo,
+	}, actor)
+	require.Error(t, err, "double CreateFromOrder must conflict")
+
+	runPartialOrderScenario(
+		t, ctx, db, svc, orderRepo,
+		partialScenarioParams{
+			tenantInfo: tenantInfo,
+			actor:      actor,
+			org:        org,
+			customerID: customerID,
+			readyLeg:   legRows[2],
+			lateLeg:    legRows[3],
+			mockLeg:    mockLeg,
+		},
+	)
+}
+
+type partialScenarioParams struct {
+	tenantInfo pagination.TenantInfo
+	actor      *serviceports.RequestActor
+	org        seededInvoiceOrg
+	customerID pulid.ID
+	readyLeg   seededInvoiceShipment
+	lateLeg    seededInvoiceShipment
+	mockLeg    func(pulid.ID, string, pulid.ID, decimal.Decimal)
+}
+
+// runPartialOrderScenario covers partial-order billing: only ready legs are invoiced,
+// order-level charges are billed exactly once (first pass), and the follow-up
+// single-leg invoice still carries the order correlation.
+func runPartialOrderScenario(
+	t *testing.T,
+	ctx context.Context,
+	db bun.IDB,
+	svc *Service,
+	orderRepo repositories.OrderRepository,
+	p partialScenarioParams,
+) {
+	t.Helper()
+
+	ord, err := orderRepo.Create(ctx, &order.Order{
+		OrganizationID: p.org.ID,
+		BusinessUnitID: p.org.BusinessUnitID,
+		CustomerID:     p.customerID,
+		Status:         order.StatusInProgress,
+		OrderNumber:    "O-TEST-0002",
+		CurrencyCode:   "USD",
+	})
+	require.NoError(t, err)
+
+	_, err = orderRepo.AddCharge(ctx, &order.OrderCharge{
+		OrganizationID: p.org.ID,
+		BusinessUnitID: p.org.BusinessUnitID,
+		OrderID:        ord.ID,
+		Description:    "Border handling",
+		Amount:         decimal.NewFromInt(50),
+	})
+	require.NoError(t, err)
+
+	legStates := map[pulid.ID]shipment.Status{
+		p.readyLeg.ID: shipment.StatusReadyToInvoice,
+		p.lateLeg.ID:  shipment.StatusInTransit,
+	}
+	legFreights := map[pulid.ID]decimal.Decimal{
+		p.readyLeg.ID: decimal.NewFromInt(100),
+		p.lateLeg.ID:  decimal.NewFromInt(200),
+	}
+	for legID, status := range legStates {
+		_, err = db.NewUpdate().
+			Table("shipments").
+			Set("order_id = ?", ord.ID).
+			Set("customer_id = ?", p.customerID).
+			Set("status = ?", status).
+			Set("freight_charge_amount = ?", legFreights[legID]).
+			Set("total_charge_amount = ?", legFreights[legID]).
+			Set("other_charge_amount = 0").
+			Where("id = ?", legID).
+			Exec(ctx)
+		require.NoError(t, err)
+	}
+	p.mockLeg(p.readyLeg.ID, p.readyLeg.ProNumber, ord.ID, legFreights[p.readyLeg.ID])
+	p.mockLeg(p.lateLeg.ID, p.lateLeg.ProNumber, ord.ID, legFreights[p.lateLeg.ID])
+
+	// First pass: only the ready leg is billable, and the order charge rides along.
+	first, err := svc.CreateFromOrder(ctx, &serviceports.CreateInvoiceFromOrderRequest{
+		OrderID:    ord.ID,
+		TenantInfo: p.tenantInfo,
+	}, p.actor)
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromInt(150).Equal(first.TotalAmount),
+		"first pass should bill the ready leg plus the order charge, got %s", first.TotalAmount)
+
+	// The charge was stamped to the first invoice inside the same transaction.
+	var stampedInvoiceID pulid.ID
+	require.NoError(t, db.NewSelect().
+		Table("order_charges").
+		Column("invoice_id").
+		Where("order_id = ?", ord.ID).
+		Scan(ctx, &stampedInvoiceID))
+	assert.Equal(t, first.ID, stampedInvoiceID, "order charge should be stamped to the first invoice")
+
+	// The late leg delivers; the ready leg was settled by billing (simulated here since
+	// the first invoice is left in Draft).
+	_, err = db.NewUpdate().
+		Table("shipments").
+		Set("status = ?", shipment.StatusInvoiced).
+		Where("id = ?", p.readyLeg.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.NewUpdate().
+		Table("shipments").
+		Set("status = ?", shipment.StatusReadyToInvoice).
+		Where("id = ?", p.lateLeg.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	// Second pass through the single-shipment entry point: the invoice carries the
+	// order correlation (G9) and must NOT re-bill the order charge.
+	second, err := svc.CreateFromShipments(ctx, &serviceports.CreateInvoiceFromShipmentsRequest{
+		ShipmentIDs: []pulid.ID{p.lateLeg.ID},
+		TenantInfo:  p.tenantInfo,
+	}, p.actor)
+	require.NoError(t, err)
+	assert.Equal(t, ord.ID, second.OrderID, "single-leg invoice should keep the order correlation")
+	assert.Equal(t, "O-TEST-0002", second.OrderNumber)
+	assert.True(t, decimal.NewFromInt(200).Equal(second.TotalAmount),
+		"second pass must bill only the leg — no duplicated order charge, got %s", second.TotalAmount)
+	for _, line := range second.Lines {
+		assert.False(t, line.ShipmentID.IsNil(),
+			"second invoice must not carry order-charge lines")
+	}
 }

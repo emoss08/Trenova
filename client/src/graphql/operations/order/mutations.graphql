@@ -1,14 +1,20 @@
+fragment OrderMutationResult on Order {
+  id
+  orderNumber
+  status
+  totalAmount
+  version
+}
+
 mutation AttachOrderShipments($orderId: ID!, $shipmentIds: [ID!]!) {
   attachOrderShipments(orderId: $orderId, shipmentIds: $shipmentIds) {
-    id
-    status
+    ...OrderMutationResult
   }
 }
 
 mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {
   detachOrderShipment(orderId: $orderId, shipmentId: $shipmentId) {
-    id
-    status
+    ...OrderMutationResult
   }
 }
 
@@ -24,6 +30,7 @@ mutation CreateOrder($input: OrderInput!) {
     id
     orderNumber
     status
+    version
   }
 }
 
@@ -32,19 +39,36 @@ mutation UpdateOrder($id: ID!, $input: OrderInput!) {
     id
     orderNumber
     status
+    version
   }
 }
 
 mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: String!) {
   addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {
-    id
-    totalAmount
+    ...OrderMutationResult
   }
 }
 
-mutation RemoveOrderCharge($orderId: ID!, $chargeId: ID!) {
-  removeOrderCharge(orderId: $orderId, chargeId: $chargeId) {
-    id
-    totalAmount
+mutation UpdateOrderCharge($input: UpdateOrderChargeInput!) {
+  updateOrderCharge(input: $input) {
+    ...OrderMutationResult
+  }
+}
+
+mutation RemoveOrderCharge($input: RemoveOrderChargeInput!) {
+  removeOrderCharge(input: $input) {
+    ...OrderMutationResult
+  }
+}
+
+mutation CloseOrder($id: ID!) {
+  closeOrder(id: $id) {
+    ...OrderMutationResult
+  }
+}
+
+mutation CancelOrder($id: ID!, $cancelReason: String!) {
+  cancelOrder(id: $id, cancelReason: $cancelReason) {
+    ...OrderMutationResult
   }
 }

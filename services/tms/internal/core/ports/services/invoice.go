@@ -31,8 +31,11 @@ type CreateInvoiceFromShipmentsRequest struct {
 }
 
 type CreateInvoiceFromOrderRequest struct {
-	OrderID    pulid.ID
-	TenantInfo pagination.TenantInfo
+	OrderID pulid.ID
+	// ShipmentIDs optionally restricts the grouped invoice to an explicit subset of the
+	// order's billable legs. Empty means every billable leg.
+	ShipmentIDs []pulid.ID
+	TenantInfo  pagination.TenantInfo
 }
 
 type UpdateInvoiceDraftRequest struct {

@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -141,7 +142,10 @@ func renderInvoicePDF(
 	return buf.Bytes(), nil
 }
 
-func buildInvoicePDFData(entity *invoice.Invoice, deliveryProfile *invoiceDeliveryProfile) invoicePDFData {
+func buildInvoicePDFData(
+	entity *invoice.Invoice,
+	deliveryProfile *invoiceDeliveryProfile,
+) invoicePDFData {
 	return buildInvoicePDFDataWithLogo(context.Background(), entity, deliveryProfile, nil)
 }
 
@@ -373,14 +377,26 @@ func drawInvoicePDFHeader(pdf *gofpdf.Fpdf, data invoicePDFData) {
 func drawInvoicePDFAddressSections(pdf *gofpdf.Fpdf, data invoicePDFData) {
 	y := pdf.GetY()
 	drawAddressBox(pdf, invoicePDFBox{X: 10, Y: y, Width: 96, Title: "BILL TO"}, data.BillTo)
-	drawAddressBox(pdf, invoicePDFBox{X: 110, Y: y, Width: 96, Title: "REMIT PAYMENT TO"}, data.RemitTo)
+	drawAddressBox(
+		pdf,
+		invoicePDFBox{X: 110, Y: y, Width: 96, Title: "REMIT PAYMENT TO"},
+		data.RemitTo,
+	)
 	pdf.SetY(y + 32)
 }
 
 func drawInvoicePDFShipmentSections(pdf *gofpdf.Fpdf, data invoicePDFData) {
 	y := pdf.GetY()
-	drawLabeledAddressBox(pdf, invoicePDFBox{X: 10, Y: y, Width: 96, Title: "SHIPPER"}, data.Shipper)
-	drawLabeledAddressBox(pdf, invoicePDFBox{X: 110, Y: y, Width: 96, Title: "CONSIGNEE"}, data.Consignee)
+	drawLabeledAddressBox(
+		pdf,
+		invoicePDFBox{X: 10, Y: y, Width: 96, Title: "SHIPPER"},
+		data.Shipper,
+	)
+	drawLabeledAddressBox(
+		pdf,
+		invoicePDFBox{X: 110, Y: y, Width: 96, Title: "CONSIGNEE"},
+		data.Consignee,
+	)
 	pdf.SetY(y + 33)
 	drawShipmentCommodityTable(pdf, data.CommodityRows)
 }
@@ -460,9 +476,19 @@ func drawInvoicePDFLogo(pdf *gofpdf.Fpdf, data invoicePDFData) {
 			bytes.NewReader(data.Logo.Data),
 		)
 		if info != nil {
-			pdf.ImageOptions("organization-logo", invoicePDFLogoX, invoicePDFLogoY, width, height, false, gofpdf.ImageOptions{
-				ImageType: data.Logo.ImageType,
-			}, 0, "")
+			pdf.ImageOptions(
+				"organization-logo",
+				invoicePDFLogoX,
+				invoicePDFLogoY,
+				width,
+				height,
+				false,
+				gofpdf.ImageOptions{
+					ImageType: data.Logo.ImageType,
+				},
+				0,
+				"",
+			)
 			addressY = invoicePDFLogoY + height + invoicePDFOrgAddressGap
 			drawnLogo = true
 		}
@@ -560,7 +586,17 @@ func drawInvoiceMetadataBox(pdf *gofpdf.Fpdf, box invoicePDFBox, data invoicePDF
 
 	pdf.SetFont("Helvetica", "B", 8.0)
 	pdf.SetXY(box.X, dateValueY+0.6)
-	pdf.CellFormat(splitWidth, 4.3, invoicePDFMetadataDate(data.InvoiceDate), "", 0, "C", false, 0, "")
+	pdf.CellFormat(
+		splitWidth,
+		4.3,
+		invoicePDFMetadataDate(data.InvoiceDate),
+		"",
+		0,
+		"C",
+		false,
+		0,
+		"",
+	)
 	pdf.CellFormat(splitWidth, 4.3, "1 of 1", "", 0, "C", false, 0, "")
 
 	pdf.SetFont("Helvetica", "B", 6.8)
@@ -665,7 +701,12 @@ func drawRotatedLabel(
 	pdf.TransformEnd()
 }
 
-func drawPlainAddressLines(pdf *gofpdf.Fpdf, width float64, block invoicePDFAddressBlock, lineCount int) {
+func drawPlainAddressLines(
+	pdf *gofpdf.Fpdf,
+	width float64,
+	block invoicePDFAddressBlock,
+	lineCount int,
+) {
 	lines := append([]string{}, block.Name)
 	lines = append(lines, block.Lines...)
 	lines = stringutils.FilterEmpty(lines)
@@ -704,7 +745,17 @@ func drawAddressDetails(
 		labelCellWidth := pdf.GetStringWidth(label) + 1.5
 		pdf.CellFormat(labelCellWidth, 4.4, label, "", 0, "", false, 0, "")
 		pdf.SetFont("Helvetica", "", 8.2)
-		pdf.CellFormat(box.Width-labelWidth-detailOffset-labelCellWidth-3, 4.4, row.Value, "", 1, "", false, 0, "")
+		pdf.CellFormat(
+			box.Width-labelWidth-detailOffset-labelCellWidth-3,
+			4.4,
+			row.Value,
+			"",
+			1,
+			"",
+			false,
+			0,
+			"",
+		)
 		detailY += 4.6
 	}
 }
@@ -713,7 +764,17 @@ func drawSectionBar(pdf *gofpdf.Fpdf, title string) {
 	pdf.SetFillColor(0, 0, 0)
 	pdf.SetTextColor(255, 255, 255)
 	pdf.SetFont("Helvetica", "B", 8.2)
-	pdf.CellFormat(invoicePDFContentWidth, invoicePDFSectionBarHeight, title, "1", 1, "", true, 0, "")
+	pdf.CellFormat(
+		invoicePDFContentWidth,
+		invoicePDFSectionBarHeight,
+		title,
+		"1",
+		1,
+		"",
+		true,
+		0,
+		"",
+	)
 	pdf.SetTextColor(0, 0, 0)
 }
 
@@ -726,7 +787,17 @@ func drawShipmentCommodityTable(pdf *gofpdf.Fpdf, rows []invoicePDFCommodityRow)
 	pdf.SetFont("Helvetica", "B", 7.8)
 	pdf.CellFormat(22, 5.4, "QUANTITY", "1", 0, "C", false, 0, "")
 	pdf.CellFormat(14, 5.4, "TYPE", "1", 0, "C", false, 0, "")
-	pdf.CellFormat(98, 5.4, "DESCRIPTION OF ARTICLES, SPECIAL MARKS AND EXCEPTIONS", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(
+		98,
+		5.4,
+		"DESCRIPTION OF ARTICLES, SPECIAL MARKS AND EXCEPTIONS",
+		"1",
+		0,
+		"C",
+		false,
+		0,
+		"",
+	)
 	pdf.CellFormat(30, 5.4, "WEIGHT (LBS)", "1", 0, "C", false, 0, "")
 	pdf.CellFormat(18, 5.4, "NMFC #", "1", 0, "C", false, 0, "")
 	pdf.CellFormat(14, 5.4, "CLASS", "1", 1, "C", false, 0, "")
@@ -845,7 +916,17 @@ func drawInvoicePDFTermsAndConditions(pdf *gofpdf.Fpdf, y float64, lines []strin
 	pdf.SetXY(leftLineX, lineY+2.6)
 	pdf.CellFormat(122, 3.5, "SIGNATURE / NAME (PRINT)", "", 0, "", false, 0, "")
 	pdf.SetXY(rightLineX, lineY+2.6)
-	pdf.CellFormat(invoicePDFContentX+invoicePDFContentWidth-rightLineX-9, 3.5, "DATE", "", 0, "", false, 0, "")
+	pdf.CellFormat(
+		invoicePDFContentX+invoicePDFContentWidth-rightLineX-9,
+		3.5,
+		"DATE",
+		"",
+		0,
+		"",
+		false,
+		0,
+		"",
+	)
 
 	return bodyY + bodyHeight
 }
@@ -899,29 +980,46 @@ func billToPDFAddressBlock(entity *invoice.Invoice, cus *customer.Customer) invo
 		name = cus.Name
 	}
 	lines := []string{
-		stringutils.FirstNonEmpty(entity.BillToAddressLine1, customerString(cus, func(c *customer.Customer) string {
-			return c.AddressLine1
-		})),
-		stringutils.FirstNonEmpty(entity.BillToAddressLine2, customerString(cus, func(c *customer.Customer) string {
-			return c.AddressLine2
-		})),
+		stringutils.FirstNonEmpty(
+			entity.BillToAddressLine1,
+			customerString(cus, func(c *customer.Customer) string {
+				return c.AddressLine1
+			}),
+		),
+		stringutils.FirstNonEmpty(
+			entity.BillToAddressLine2,
+			customerString(cus, func(c *customer.Customer) string {
+				return c.AddressLine2
+			}),
+		),
 		cityStatePostal(
-			stringutils.FirstNonEmpty(entity.BillToCity, customerString(cus, func(c *customer.Customer) string {
-				return c.City
-			})),
+			stringutils.FirstNonEmpty(
+				entity.BillToCity,
+				customerString(cus, func(c *customer.Customer) string {
+					return c.City
+				}),
+			),
 			stringutils.FirstNonEmpty(entity.BillToState, customerState(cus)),
-			stringutils.FirstNonEmpty(entity.BillToPostalCode, customerString(cus, func(c *customer.Customer) string {
-				return c.PostalCode
-			})),
+			stringutils.FirstNonEmpty(
+				entity.BillToPostalCode,
+				customerString(cus, func(c *customer.Customer) string {
+					return c.PostalCode
+				}),
+			),
 		),
 		stringutils.FirstNonEmpty(entity.BillToCountry, customerCountry(cus)),
 	}
 	return invoicePDFAddressBlock{Name: name, Lines: stringutils.FilterEmpty(lines)}
 }
 
-func remitPDFAddressBlock(org *tenant.Organization, remittanceInstructions string) invoicePDFAddressBlock {
+func remitPDFAddressBlock(
+	org *tenant.Organization,
+	remittanceInstructions string,
+) invoicePDFAddressBlock {
 	block := organizationPDFAddressBlock(org)
-	block.Lines = append(block.Lines, stringutils.FilterEmpty(strings.Split(remittanceInstructions, "\n"))...)
+	block.Lines = append(
+		block.Lines,
+		stringutils.FilterEmpty(strings.Split(remittanceInstructions, "\n"))...)
 	block.Lines = stringutils.FilterEmpty(block.Lines)
 	return block
 }
@@ -1104,7 +1202,7 @@ func chargePDFRows(entity *invoice.Invoice) []invoicePDFChargeRow {
 			continue
 		}
 		rows = append(rows, invoicePDFChargeRow{
-			Line:        fmt.Sprintf("%d", line.LineNumber),
+			Line:        strconv.Itoa(line.LineNumber),
 			Description: line.Description,
 			Quantity:    line.Quantity.StringFixed(2),
 			UnitPrice:   moneyString(entity.CurrencyCode, line.UnitPrice.StringFixed(2)),
@@ -1145,7 +1243,9 @@ func wrappedPDFLines(pdf *gofpdf.Fpdf, lines []string, width float64) []string {
 
 func cityStatePostal(city string, state string, postalCode string) string {
 	left := strings.TrimSpace(city)
-	statePostal := strings.TrimSpace(strings.Join(stringutils.FilterEmpty([]string{state, postalCode}), " "))
+	statePostal := strings.TrimSpace(
+		strings.Join(stringutils.FilterEmpty([]string{state, postalCode}), " "),
+	)
 	if left == "" {
 		return statePostal
 	}

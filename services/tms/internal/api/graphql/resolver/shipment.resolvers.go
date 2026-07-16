@@ -9,8 +9,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -783,3 +785,26 @@ func (r *queryResolver) ShipmentPreviousRates(ctx context.Context, input gqlmode
 
 	return previousRatesToModel(result), nil
 }
+
+// OrderNumber is the resolver for the orderNumber field.
+func (r *shipmentResolver) OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error) {
+	parent, err := r.loadShipmentOrder(ctx, obj)
+	if err != nil || parent == nil {
+		return nil, err
+	}
+	return &parent.OrderNumber, nil
+}
+
+// OrderStatus is the resolver for the orderStatus field.
+func (r *shipmentResolver) OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error) {
+	parent, err := r.loadShipmentOrder(ctx, obj)
+	if err != nil || parent == nil {
+		return nil, err
+	}
+	return &parent.Status, nil
+}
+
+// Shipment returns generated.ShipmentResolver implementation.
+func (r *Resolver) Shipment() generated.ShipmentResolver { return &shipmentResolver{r} }
+
+type shipmentResolver struct{ *Resolver }

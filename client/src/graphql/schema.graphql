@@ -202,6 +202,7 @@ type BillingQueueItem {
   id: ID!
   isAdjustmentOrigin: Boolean!
   number: String!
+  orderId: ID
   organizationId: ID!
   rebillStrategy: String
   requiresReplacementReview: Boolean!
@@ -210,7 +211,7 @@ type BillingQueueItem {
   reviewNotes: String!
   reviewStartedAt: Int
   shipment: Shipment
-  shipmentId: ID!
+  shipmentId: ID
   sourceCreditMemoInvoiceId: ID
   sourceInvoiceAdjustmentId: ID
   sourceInvoiceId: ID
@@ -1852,9 +1853,11 @@ type Mutation {
   calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
   calculateShipmentLoadingOptimization(input: ShipmentLoadingOptimizationInput!): ShipmentLoadingOptimizationResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
+  cancelOrder(cancelReason: String!, id: ID!): Order!
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  closeOrder(id: ID!): Order!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createInvoiceFromOrder(orderId: ID!): Invoice!
@@ -1881,7 +1884,7 @@ type Mutation {
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
-  removeOrderCharge(chargeId: ID!, orderId: ID!): Order!
+  removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
@@ -1890,6 +1893,7 @@ type Mutation {
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateOrder(id: ID!, input: OrderInput!): Order!
+  updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
@@ -1986,7 +1990,9 @@ type OrderCharge {
   createdAt: Int!
   description: String!
   id: ID!
+  invoiceId: ID
   orderId: ID!
+  version: Int!
 }
 
 type OrderConnection {
@@ -2008,7 +2014,7 @@ input OrderInput {
   ownerId: ID
   poNumber: String
   quotedAmount: String
-  status: OrderStatus
+  version: Int
 }
 
 type OrderLeg {
@@ -2259,6 +2265,11 @@ enum RateUnit {
   Hour
   Mile
   Stop
+}
+
+input RemoveOrderChargeInput {
+  chargeId: ID!
+  orderId: ID!
 }
 
 type Role {
@@ -2540,6 +2551,8 @@ type Shipment {
   markedReadyToBillAt: Int
   moves: [ShipmentMove!]!
   orderId: ID
+  orderNumber: String
+  orderStatus: OrderStatus
   organizationId: ID!
   otherChargeAmount: String!
   owner: User
@@ -3929,6 +3942,14 @@ input UpcomingWorkerPTOInput {
   timezone: String
   type: PTOType
   workerId: ID
+}
+
+input UpdateOrderChargeInput {
+  amount: String!
+  chargeId: ID!
+  description: String!
+  orderId: ID!
+  version: Int!
 }
 
 type UsState {

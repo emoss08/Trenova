@@ -4,10 +4,13 @@ import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { currencyChoices, orderStatusChoices } from "@/lib/choices";
+import { fetchOrderDetail } from "@/lib/graphql/order";
 import type { Order } from "@/types/order";
+import { useQuery } from "@tanstack/react-query";
 import { useFormContext, useWatch } from "react-hook-form";
 import { OrderChargesSection } from "./order-charges-section";
 import { OrderLegsSection } from "./order-legs-section";
+import { OrderSummarySection } from "./order-summary-section";
 
 type OrderFormProps = {
   mode: "create" | "edit";
@@ -16,6 +19,15 @@ type OrderFormProps = {
 export function OrderForm({ mode }: OrderFormProps) {
   const { control } = useFormContext<Order>();
   const currencyCode = useWatch({ control, name: "currencyCode" }) || "USD";
+  const orderId = useWatch({ control, name: "id" });
+
+  const { data: order } = useQuery({
+    queryKey: ["order-detail", orderId],
+    queryFn: () => fetchOrderDetail(orderId!),
+    enabled: mode === "edit" && !!orderId,
+  });
+
+  const hasLegs = (order?.legs.length ?? 0) > 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,7 +67,12 @@ export function OrderForm({ mode }: OrderFormProps) {
               name="customerId"
               label="Customer"
               placeholder="Select a customer"
-              description="The customer this order is billed to. Every shipment leg must share this customer."
+              description={
+                hasLegs
+                  ? "The customer cannot be changed while the order has legs; detach them first."
+                  : "The customer this order is billed to. Every shipment leg must share this customer."
+              }
+              disabled={hasLegs}
             />
           </FormControl>
           <FormControl>
@@ -132,6 +149,7 @@ export function OrderForm({ mode }: OrderFormProps) {
         </FormGroup>
       </FormSection>
 
+      {mode === "edit" && <OrderSummarySection />}
       {mode === "edit" && <OrderLegsSection />}
       {mode === "edit" && <OrderChargesSection />}
     </div>

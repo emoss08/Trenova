@@ -178,23 +178,28 @@ func (r *repository) Update(
 // together, not just the anchor. Returns the number of rows updated.
 func (r *repository) MarkPostedByOrderID(
 	ctx context.Context,
-	ti pagination.TenantInfo,
-	orderID pulid.ID,
+	req *repositories.MarkPostedByOrderRequest,
 ) (int64, error) {
-	if orderID.IsNil() {
+	if req.OrderID.IsNil() {
 		return 0, nil
 	}
 
 	bqi := buncolgen.BillingQueueItemColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
+	q := r.db.DBForContext(ctx).NewUpdate().
 		Model((*billingqueue.BillingQueueItem)(nil)).
-		Where(bqi.OrderID.Eq(), orderID).
-		Where(bqi.OrganizationID.Eq(), ti.OrgID).
-		Where(bqi.BusinessUnitID.Eq(), ti.BuID).
+		Where(bqi.OrderID.Eq(), req.OrderID).
+		Where(bqi.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(bqi.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		Where(bqi.Status.Ne(), billingqueue.StatusPosted).
+		Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
 		Set(bqi.Status.Set(), billingqueue.StatusPosted).
-		Set(bqi.Version.Inc(1)).
-		Exec(ctx)
+		Set(bqi.Version.Inc(1))
+
+	if len(req.ShipmentIDs) > 0 {
+		q = q.Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs))
+	}
+
+	result, err := q.Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("mark billing queue items posted by order: %w", err)
 	}
@@ -220,6 +225,7 @@ func (r *repository) ExistsByShipmentAndType(
 		Model((*billingqueue.BillingQueueItem)(nil)).
 		Where(bqi.ShipmentID.Eq(), shipmentID).
 		Where(bqi.BillType.Eq(), billType).
+		Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
 		Apply(buncolgen.BillingQueueItemApplyTenant(ti)).
 		Exists(ctx)
 }
