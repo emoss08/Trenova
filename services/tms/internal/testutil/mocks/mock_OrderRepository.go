@@ -43,6 +43,152 @@ func (_m *MockOrderRepository) EXPECT() *MockOrderRepository_Expecter {
 	return &MockOrderRepository_Expecter{mock: &_m.Mock}
 }
 
+// AddCharge provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) AddCharge(ctx context.Context, entity *order.OrderCharge) (*order.OrderCharge, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddCharge")
+	}
+
+	var r0 *order.OrderCharge
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *order.OrderCharge) (*order.OrderCharge, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *order.OrderCharge) *order.OrderCharge); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*order.OrderCharge)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *order.OrderCharge) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_AddCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddCharge'
+type MockOrderRepository_AddCharge_Call struct {
+	*mock.Call
+}
+
+// AddCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *order.OrderCharge
+func (_e *MockOrderRepository_Expecter) AddCharge(ctx any, entity any) *MockOrderRepository_AddCharge_Call {
+	return &MockOrderRepository_AddCharge_Call{Call: _e.mock.On("AddCharge", ctx, entity)}
+}
+
+func (_c *MockOrderRepository_AddCharge_Call) Run(run func(ctx context.Context, entity *order.OrderCharge)) *MockOrderRepository_AddCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *order.OrderCharge
+		if args[1] != nil {
+			arg1 = args[1].(*order.OrderCharge)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_AddCharge_Call) Return(orderCharge *order.OrderCharge, err error) *MockOrderRepository_AddCharge_Call {
+	_c.Call.Return(orderCharge, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_AddCharge_Call) RunAndReturn(run func(ctx context.Context, entity *order.OrderCharge) (*order.OrderCharge, error)) *MockOrderRepository_AddCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AttachShipments provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) AttachShipments(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentIDs []pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID, shipmentIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AttachShipments")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, []pulid.ID) (int64, error)); ok {
+		return returnFunc(ctx, tenantInfo, orderID, shipmentIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, []pulid.ID) int64); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID, shipmentIDs)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, []pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, orderID, shipmentIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_AttachShipments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AttachShipments'
+type MockOrderRepository_AttachShipments_Call struct {
+	*mock.Call
+}
+
+// AttachShipments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+//   - shipmentIDs []pulid.ID
+func (_e *MockOrderRepository_Expecter) AttachShipments(ctx any, tenantInfo any, orderID any, shipmentIDs any) *MockOrderRepository_AttachShipments_Call {
+	return &MockOrderRepository_AttachShipments_Call{Call: _e.mock.On("AttachShipments", ctx, tenantInfo, orderID, shipmentIDs)}
+}
+
+func (_c *MockOrderRepository_AttachShipments_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentIDs []pulid.ID)) *MockOrderRepository_AttachShipments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		var arg3 []pulid.ID
+		if args[3] != nil {
+			arg3 = args[3].([]pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_AttachShipments_Call) Return(n int64, err error) *MockOrderRepository_AttachShipments_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_AttachShipments_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentIDs []pulid.ID) (int64, error)) *MockOrderRepository_AttachShipments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) Create(ctx context.Context, entity *order.Order) (*order.Order, error) {
 	ret := _mock.Called(ctx, entity)
@@ -170,6 +316,162 @@ func (_c *MockOrderRepository_CreateInTx_Call) Return(err error) *MockOrderRepos
 }
 
 func (_c *MockOrderRepository_CreateInTx_Call) RunAndReturn(run func(ctx context.Context, tx bun.IDB, entity *order.Order) error) *MockOrderRepository_CreateInTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteIfEmpty provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) DeleteIfEmpty(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteIfEmpty")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) (int64, error)); ok {
+		return returnFunc(ctx, tenantInfo, orderID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) int64); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_DeleteIfEmpty_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteIfEmpty'
+type MockOrderRepository_DeleteIfEmpty_Call struct {
+	*mock.Call
+}
+
+// DeleteIfEmpty is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+func (_e *MockOrderRepository_Expecter) DeleteIfEmpty(ctx any, tenantInfo any, orderID any) *MockOrderRepository_DeleteIfEmpty_Call {
+	return &MockOrderRepository_DeleteIfEmpty_Call{Call: _e.mock.On("DeleteIfEmpty", ctx, tenantInfo, orderID)}
+}
+
+func (_c *MockOrderRepository_DeleteIfEmpty_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID)) *MockOrderRepository_DeleteIfEmpty_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_DeleteIfEmpty_Call) Return(n int64, err error) *MockOrderRepository_DeleteIfEmpty_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_DeleteIfEmpty_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error)) *MockOrderRepository_DeleteIfEmpty_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DetachShipment provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) DetachShipment(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentID pulid.ID, newOrderID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID, shipmentID, newOrderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DetachShipment")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, pulid.ID) (int64, error)); ok {
+		return returnFunc(ctx, tenantInfo, orderID, shipmentID, newOrderID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, pulid.ID) int64); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID, shipmentID, newOrderID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, orderID, shipmentID, newOrderID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_DetachShipment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DetachShipment'
+type MockOrderRepository_DetachShipment_Call struct {
+	*mock.Call
+}
+
+// DetachShipment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+//   - shipmentID pulid.ID
+//   - newOrderID pulid.ID
+func (_e *MockOrderRepository_Expecter) DetachShipment(ctx any, tenantInfo any, orderID any, shipmentID any, newOrderID any) *MockOrderRepository_DetachShipment_Call {
+	return &MockOrderRepository_DetachShipment_Call{Call: _e.mock.On("DetachShipment", ctx, tenantInfo, orderID, shipmentID, newOrderID)}
+}
+
+func (_c *MockOrderRepository_DetachShipment_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentID pulid.ID, newOrderID pulid.ID)) *MockOrderRepository_DetachShipment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		var arg3 pulid.ID
+		if args[3] != nil {
+			arg3 = args[3].(pulid.ID)
+		}
+		var arg4 pulid.ID
+		if args[4] != nil {
+			arg4 = args[4].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_DetachShipment_Call) Return(n int64, err error) *MockOrderRepository_DetachShipment_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_DetachShipment_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentID pulid.ID, newOrderID pulid.ID) (int64, error)) *MockOrderRepository_DetachShipment_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -310,68 +612,81 @@ func (_c *MockOrderRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
-// GetShipmentStatuses provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) AttachShipments(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentIDs []pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID, shipmentIDs)
+// GetShipmentAttachRefs provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) GetShipmentAttachRefs(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentIDs []pulid.ID) ([]repositories.ShipmentAttachRef, error) {
+	ret := _mock.Called(ctx, tenantInfo, shipmentIDs)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AttachShipments")
+		panic("no return value specified for GetShipmentAttachRefs")
 	}
 
-	var r0 int64
+	var r0 []repositories.ShipmentAttachRef
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, []pulid.ID) (int64, error)); ok {
-		return returnFunc(ctx, tenantInfo, orderID, shipmentIDs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, []pulid.ID) ([]repositories.ShipmentAttachRef, error)); ok {
+		return returnFunc(ctx, tenantInfo, shipmentIDs)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, []pulid.ID) int64); ok {
-		r0 = returnFunc(ctx, tenantInfo, orderID, shipmentIDs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, []pulid.ID) []repositories.ShipmentAttachRef); ok {
+		r0 = returnFunc(ctx, tenantInfo, shipmentIDs)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]repositories.ShipmentAttachRef)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, []pulid.ID) error); ok {
-		r1 = returnFunc(ctx, tenantInfo, orderID, shipmentIDs)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, []pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, shipmentIDs)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-func (_mock *MockOrderRepository) DetachShipment(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID, shipmentID pulid.ID, newOrderID pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID, shipmentID, newOrderID)
-	if len(ret) == 0 {
-		panic("no return value specified for DetachShipment")
-	}
-	return ret.Get(0).(int64), ret.Error(1)
+// MockOrderRepository_GetShipmentAttachRefs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetShipmentAttachRefs'
+type MockOrderRepository_GetShipmentAttachRefs_Call struct {
+	*mock.Call
 }
 
-func (_mock *MockOrderRepository) GetShipmentAttachRefs(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentIDs []pulid.ID) ([]repositories.ShipmentAttachRef, error) {
-	ret := _mock.Called(ctx, tenantInfo, shipmentIDs)
-	if len(ret) == 0 {
-		panic("no return value specified for GetShipmentAttachRefs")
-	}
-	var r0 []repositories.ShipmentAttachRef
-	if ret.Get(0) != nil {
-		r0 = ret.Get(0).([]repositories.ShipmentAttachRef)
-	}
-	return r0, ret.Error(1)
+// GetShipmentAttachRefs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - shipmentIDs []pulid.ID
+func (_e *MockOrderRepository_Expecter) GetShipmentAttachRefs(ctx any, tenantInfo any, shipmentIDs any) *MockOrderRepository_GetShipmentAttachRefs_Call {
+	return &MockOrderRepository_GetShipmentAttachRefs_Call{Call: _e.mock.On("GetShipmentAttachRefs", ctx, tenantInfo, shipmentIDs)}
 }
 
-func (_mock *MockOrderRepository) UpdateCharge(ctx context.Context, entity *order.OrderCharge) (int64, error) {
-	ret := _mock.Called(ctx, entity)
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateCharge")
-	}
-	return ret.Get(0).(int64), ret.Error(1)
+func (_c *MockOrderRepository_GetShipmentAttachRefs_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentIDs []pulid.ID)) *MockOrderRepository_GetShipmentAttachRefs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 []pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].([]pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
 }
 
-func (_mock *MockOrderRepository) DeleteIfEmpty(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID)
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteIfEmpty")
-	}
-	return ret.Get(0).(int64), ret.Error(1)
+func (_c *MockOrderRepository_GetShipmentAttachRefs_Call) Return(shipmentAttachRefs []repositories.ShipmentAttachRef, err error) *MockOrderRepository_GetShipmentAttachRefs_Call {
+	_c.Call.Return(shipmentAttachRefs, err)
+	return _c
 }
 
+func (_c *MockOrderRepository_GetShipmentAttachRefs_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentIDs []pulid.ID) ([]repositories.ShipmentAttachRef, error)) *MockOrderRepository_GetShipmentAttachRefs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetShipmentStatuses provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) GetShipmentStatuses(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]shipment.Status, error) {
 	ret := _mock.Called(ctx, tenantInfo, orderID)
 
@@ -513,6 +828,80 @@ func (_c *MockOrderRepository_List_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// ListCharges provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) ListCharges(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListCharges")
+	}
+
+	var r0 []*order.OrderCharge
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) ([]*order.OrderCharge, error)); ok {
+		return returnFunc(ctx, tenantInfo, orderID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) []*order.OrderCharge); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*order.OrderCharge)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_ListCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCharges'
+type MockOrderRepository_ListCharges_Call struct {
+	*mock.Call
+}
+
+// ListCharges is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+func (_e *MockOrderRepository_Expecter) ListCharges(ctx any, tenantInfo any, orderID any) *MockOrderRepository_ListCharges_Call {
+	return &MockOrderRepository_ListCharges_Call{Call: _e.mock.On("ListCharges", ctx, tenantInfo, orderID)}
+}
+
+func (_c *MockOrderRepository_ListCharges_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID)) *MockOrderRepository_ListCharges_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_ListCharges_Call) Return(orderCharges []*order.OrderCharge, err error) *MockOrderRepository_ListCharges_Call {
+	_c.Call.Return(orderCharges, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_ListCharges_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error)) *MockOrderRepository_ListCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListConnection provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) ListConnection(ctx context.Context, req *repositories.ListOrdersConnectionRequest) (*pagination.CursorListResult[*order.Order], error) {
 	ret := _mock.Called(ctx, req)
@@ -577,6 +966,275 @@ func (_c *MockOrderRepository_ListConnection_Call) Return(cursorListResult *pagi
 }
 
 func (_c *MockOrderRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListOrdersConnectionRequest) (*pagination.CursorListResult[*order.Order], error)) *MockOrderRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListUninvoicedCharges provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) ListUninvoicedCharges(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error) {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUninvoicedCharges")
+	}
+
+	var r0 []*order.OrderCharge
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) ([]*order.OrderCharge, error)); ok {
+		return returnFunc(ctx, tenantInfo, orderID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) []*order.OrderCharge); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*order.OrderCharge)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_ListUninvoicedCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUninvoicedCharges'
+type MockOrderRepository_ListUninvoicedCharges_Call struct {
+	*mock.Call
+}
+
+// ListUninvoicedCharges is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+func (_e *MockOrderRepository_Expecter) ListUninvoicedCharges(ctx any, tenantInfo any, orderID any) *MockOrderRepository_ListUninvoicedCharges_Call {
+	return &MockOrderRepository_ListUninvoicedCharges_Call{Call: _e.mock.On("ListUninvoicedCharges", ctx, tenantInfo, orderID)}
+}
+
+func (_c *MockOrderRepository_ListUninvoicedCharges_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID)) *MockOrderRepository_ListUninvoicedCharges_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_ListUninvoicedCharges_Call) Return(orderCharges []*order.OrderCharge, err error) *MockOrderRepository_ListUninvoicedCharges_Call {
+	_c.Call.Return(orderCharges, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_ListUninvoicedCharges_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error)) *MockOrderRepository_ListUninvoicedCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkChargesInvoiced provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) MarkChargesInvoiced(ctx context.Context, req *repositories.MarkOrderChargesInvoicedRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkChargesInvoiced")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkOrderChargesInvoicedRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkOrderChargesInvoicedRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.MarkOrderChargesInvoicedRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_MarkChargesInvoiced_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkChargesInvoiced'
+type MockOrderRepository_MarkChargesInvoiced_Call struct {
+	*mock.Call
+}
+
+// MarkChargesInvoiced is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.MarkOrderChargesInvoicedRequest
+func (_e *MockOrderRepository_Expecter) MarkChargesInvoiced(ctx any, req any) *MockOrderRepository_MarkChargesInvoiced_Call {
+	return &MockOrderRepository_MarkChargesInvoiced_Call{Call: _e.mock.On("MarkChargesInvoiced", ctx, req)}
+}
+
+func (_c *MockOrderRepository_MarkChargesInvoiced_Call) Run(run func(ctx context.Context, req *repositories.MarkOrderChargesInvoicedRequest)) *MockOrderRepository_MarkChargesInvoiced_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.MarkOrderChargesInvoicedRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.MarkOrderChargesInvoicedRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_MarkChargesInvoiced_Call) Return(n int64, err error) *MockOrderRepository_MarkChargesInvoiced_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_MarkChargesInvoiced_Call) RunAndReturn(run func(ctx context.Context, req *repositories.MarkOrderChargesInvoicedRequest) (int64, error)) *MockOrderRepository_MarkChargesInvoiced_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RecalculateTotal provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) RecalculateTotal(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) error {
+	ret := _mock.Called(ctx, tenantInfo, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecalculateTotal")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r0 = returnFunc(ctx, tenantInfo, orderID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockOrderRepository_RecalculateTotal_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecalculateTotal'
+type MockOrderRepository_RecalculateTotal_Call struct {
+	*mock.Call
+}
+
+// RecalculateTotal is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - orderID pulid.ID
+func (_e *MockOrderRepository_Expecter) RecalculateTotal(ctx any, tenantInfo any, orderID any) *MockOrderRepository_RecalculateTotal_Call {
+	return &MockOrderRepository_RecalculateTotal_Call{Call: _e.mock.On("RecalculateTotal", ctx, tenantInfo, orderID)}
+}
+
+func (_c *MockOrderRepository_RecalculateTotal_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID)) *MockOrderRepository_RecalculateTotal_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_RecalculateTotal_Call) Return(err error) *MockOrderRepository_RecalculateTotal_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockOrderRepository_RecalculateTotal_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) error) *MockOrderRepository_RecalculateTotal_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveCharge provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) RemoveCharge(ctx context.Context, req *repositories.RemoveOrderChargeRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveCharge")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RemoveOrderChargeRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RemoveOrderChargeRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.RemoveOrderChargeRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_RemoveCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveCharge'
+type MockOrderRepository_RemoveCharge_Call struct {
+	*mock.Call
+}
+
+// RemoveCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.RemoveOrderChargeRequest
+func (_e *MockOrderRepository_Expecter) RemoveCharge(ctx any, req any) *MockOrderRepository_RemoveCharge_Call {
+	return &MockOrderRepository_RemoveCharge_Call{Call: _e.mock.On("RemoveCharge", ctx, req)}
+}
+
+func (_c *MockOrderRepository_RemoveCharge_Call) Run(run func(ctx context.Context, req *repositories.RemoveOrderChargeRequest)) *MockOrderRepository_RemoveCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.RemoveOrderChargeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.RemoveOrderChargeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_RemoveCharge_Call) Return(n int64, err error) *MockOrderRepository_RemoveCharge_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_RemoveCharge_Call) RunAndReturn(run func(ctx context.Context, req *repositories.RemoveOrderChargeRequest) (int64, error)) *MockOrderRepository_RemoveCharge_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -717,6 +1375,72 @@ func (_c *MockOrderRepository_Update_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// UpdateCharge provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) UpdateCharge(ctx context.Context, entity *order.OrderCharge) (int64, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateCharge")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *order.OrderCharge) (int64, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *order.OrderCharge) int64); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *order.OrderCharge) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_UpdateCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateCharge'
+type MockOrderRepository_UpdateCharge_Call struct {
+	*mock.Call
+}
+
+// UpdateCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *order.OrderCharge
+func (_e *MockOrderRepository_Expecter) UpdateCharge(ctx any, entity any) *MockOrderRepository_UpdateCharge_Call {
+	return &MockOrderRepository_UpdateCharge_Call{Call: _e.mock.On("UpdateCharge", ctx, entity)}
+}
+
+func (_c *MockOrderRepository_UpdateCharge_Call) Run(run func(ctx context.Context, entity *order.OrderCharge)) *MockOrderRepository_UpdateCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *order.OrderCharge
+		if args[1] != nil {
+			arg1 = args[1].(*order.OrderCharge)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_UpdateCharge_Call) Return(n int64, err error) *MockOrderRepository_UpdateCharge_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_UpdateCharge_Call) RunAndReturn(run func(ctx context.Context, entity *order.OrderCharge) (int64, error)) *MockOrderRepository_UpdateCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateStatus provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) UpdateStatus(ctx context.Context, req *repositories.UpdateOrderStatusRequest) (*order.Order, error) {
 	ret := _mock.Called(ctx, req)
@@ -783,64 +1507,4 @@ func (_c *MockOrderRepository_UpdateStatus_Call) Return(order1 *order.Order, err
 func (_c *MockOrderRepository_UpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateOrderStatusRequest) (*order.Order, error)) *MockOrderRepository_UpdateStatus_Call {
 	_c.Call.Return(run)
 	return _c
-}
-
-func (_mock *MockOrderRepository) AddCharge(ctx context.Context, entity *order.OrderCharge) (*order.OrderCharge, error) {
-	ret := _mock.Called(ctx, entity)
-	if len(ret) == 0 {
-		panic("no return value specified for AddCharge")
-	}
-	var r0 *order.OrderCharge
-	if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*order.OrderCharge)
-	}
-	return r0, ret.Error(1)
-}
-
-func (_mock *MockOrderRepository) RemoveCharge(ctx context.Context, req *repositories.RemoveOrderChargeRequest) (int64, error) {
-	ret := _mock.Called(ctx, req)
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveCharge")
-	}
-	return ret.Get(0).(int64), ret.Error(1)
-}
-
-func (_mock *MockOrderRepository) ListCharges(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID)
-	if len(ret) == 0 {
-		panic("no return value specified for ListCharges")
-	}
-	var r0 []*order.OrderCharge
-	if ret.Get(0) != nil {
-		r0 = ret.Get(0).([]*order.OrderCharge)
-	}
-	return r0, ret.Error(1)
-}
-
-func (_mock *MockOrderRepository) ListUninvoicedCharges(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error) {
-	ret := _mock.Called(ctx, tenantInfo, orderID)
-	if len(ret) == 0 {
-		panic("no return value specified for ListUninvoicedCharges")
-	}
-	var r0 []*order.OrderCharge
-	if ret.Get(0) != nil {
-		r0 = ret.Get(0).([]*order.OrderCharge)
-	}
-	return r0, ret.Error(1)
-}
-
-func (_mock *MockOrderRepository) MarkChargesInvoiced(ctx context.Context, req *repositories.MarkOrderChargesInvoicedRequest) (int64, error) {
-	ret := _mock.Called(ctx, req)
-	if len(ret) == 0 {
-		panic("no return value specified for MarkChargesInvoiced")
-	}
-	return ret.Get(0).(int64), ret.Error(1)
-}
-
-func (_mock *MockOrderRepository) RecalculateTotal(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) error {
-	ret := _mock.Called(ctx, tenantInfo, orderID)
-	if len(ret) == 0 {
-		panic("no return value specified for RecalculateTotal")
-	}
-	return ret.Error(0)
 }

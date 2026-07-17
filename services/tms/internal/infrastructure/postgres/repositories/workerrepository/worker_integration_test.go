@@ -169,7 +169,7 @@ func TestListFiltersWorkersByTenant(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, result.Total, 2)
+	assert.GreaterOrEqual(t, len(result.Items), 2)
 }
 
 func TestGetWorkerSyncReadinessCounts(t *testing.T) {

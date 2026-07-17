@@ -1,0 +1,265 @@
+# Report catalog curation manifest.
+#
+# Opt-in at the entity level, opt-out at the field level. Everything about SQL
+# identity (tables, aliases, columns, types, join pairs) is parsed from the
+# domain bun tags by reportcataloggen — this file only selects which entities
+# and edges are reportable and supplies display metadata.
+#
+# Regenerate with: task generate-reportcatalog
+
+entities:
+  shipment:
+    struct: shipment.Shipment
+    resource: shipment
+    label: Shipment
+    pluralLabel: Shipments
+    description: Freight shipments and their lifecycle state
+    category: Operations
+    ownershipColumn: owner_id
+    fields:
+      proNumber: { label: "PRO Number" }
+      bol: { label: "BOL" }
+      totalChargeAmount: { label: "Total Charge", format: money }
+      freightChargeAmount: { label: "Freight Charge", format: money }
+      otherChargeAmount: { label: "Other Charges", format: money }
+      baseRate: { label: "Base Rate", format: money }
+    edges:
+      customer: { label: Customer }
+      shipmentType: { label: "Shipment Type" }
+      serviceType: { label: "Service Type" }
+      tractorType: { label: "Tractor Equipment Type" }
+      trailerType: { label: "Trailer Equipment Type" }
+      moves: { label: Moves }
+      commodities: { label: Commodities }
+
+  shipment_move:
+    struct: shipment.ShipmentMove
+    resource: shipment_move
+    label: Shipment Move
+    pluralLabel: Shipment Moves
+    description: Movement legs within a shipment
+    category: Operations
+    edges:
+      shipment: { label: Shipment }
+      assignment: { label: Assignment }
+      stops: { label: Stops }
+
+  stop:
+    struct: shipment.Stop
+    resource: shipment_stop
+    label: Stop
+    pluralLabel: Stops
+    description: Pickup and delivery stops on a move
+    category: Operations
+    fields:
+      scheduledWindowStart: { label: "Scheduled Window Start", type: epoch }
+      scheduledWindowEnd: { label: "Scheduled Window End", type: epoch }
+      actualArrival: { label: "Actual Arrival", type: epoch }
+      actualDeparture: { label: "Actual Departure", type: epoch }
+    edges:
+      location: { label: Location }
+
+  assignment:
+    struct: shipment.Assignment
+    resource: shipment_move
+    label: Assignment
+    pluralLabel: Assignments
+    description: Equipment and driver assignments for a move
+    category: Operations
+    edges:
+      tractor: { label: Tractor }
+      trailer: { label: Trailer }
+      primaryWorker: { label: "Primary Worker" }
+      secondaryWorker: { label: "Secondary Worker" }
+
+  shipment_commodity:
+    struct: shipment.ShipmentCommodity
+    resource: shipment
+    label: Shipment Commodity
+    pluralLabel: Shipment Commodities
+    description: Commodity line items on a shipment
+    category: Operations
+    edges:
+      shipment: { label: Shipment }
+      commodity: { label: Commodity }
+
+  order:
+    struct: order.Order
+    resource: order
+    label: Order
+    pluralLabel: Orders
+    description: Commercial orders grouping one or more shipments
+    category: Operations
+    ownershipColumn: owner_id
+    fields:
+      quotedAmount: { label: "Quoted Amount", format: money }
+      baseAmount: { label: "Base Amount", format: money }
+      totalAmount: { label: "Total Amount", format: money }
+    edges:
+      customer: { label: Customer }
+      shipments: { label: Shipments }
+
+  customer:
+    struct: customer.Customer
+    resource: customer
+    label: Customer
+    pluralLabel: Customers
+    description: Customers who tender freight
+    category: Parties
+
+  worker:
+    struct: worker.Worker
+    resource: worker
+    label: Worker
+    pluralLabel: Workers
+    description: Drivers and operational workers
+    category: Parties
+    edges:
+      fleetCode: { label: "Fleet Code" }
+      profile: { label: Profile }
+
+  worker_profile:
+    struct: worker.WorkerProfile
+    resource: worker
+    label: Worker Profile
+    pluralLabel: Worker Profiles
+    description: Licensing, compliance, and qualification details for a worker
+    category: Parties
+    fields:
+      dob: { label: "Date of Birth", type: epoch }
+      lastComplianceCheck: { label: "Last Compliance Check", type: epoch }
+      licenseNumber: { label: "License Number" }
+      cdlClass: { label: "CDL Class" }
+      hazmatExpiry: { label: "Hazmat Expiry" }
+      licenseExpiry: { label: "License Expiry" }
+      medicalCardExpiry: { label: "Medical Card Expiry" }
+      twicExpiry: { label: "TWIC Expiry" }
+
+  tractor:
+    struct: tractor.Tractor
+    resource: tractor
+    label: Tractor
+    pluralLabel: Tractors
+    description: Power units
+    category: Equipment
+    edges:
+      equipmentType: { label: "Equipment Type" }
+      equipmentManufacturer: { label: Manufacturer }
+      fleetCode: { label: "Fleet Code" }
+      primaryWorker: { label: "Primary Worker" }
+      secondaryWorker: { label: "Secondary Worker" }
+
+  trailer:
+    struct: trailer.Trailer
+    resource: trailer
+    label: Trailer
+    pluralLabel: Trailers
+    description: Trailers and towed equipment
+    category: Equipment
+    edges:
+      equipmentType: { label: "Equipment Type" }
+      equipmentManufacturer: { label: Manufacturer }
+      fleetCode: { label: "Fleet Code" }
+
+  invoice:
+    struct: invoice.Invoice
+    resource: invoice
+    label: Invoice
+    pluralLabel: Invoices
+    description: Customer invoices
+    category: Billing
+    fields:
+      totalAmount: { label: "Total Amount", format: money }
+      subtotalAmount: { label: "Subtotal", format: money }
+    edges:
+      customer: { label: Customer }
+      shipment: { label: Shipment }
+      order: { label: Order }
+      lines: { label: "Invoice Lines" }
+
+  invoice_line:
+    struct: invoice.InoviceLine
+    resource: invoice
+    label: Invoice Line
+    pluralLabel: Invoice Lines
+    description: Line items on an invoice
+    category: Billing
+    fields:
+      amount: { label: Amount, format: money }
+      unitPrice: { label: "Unit Price", format: money }
+
+  location:
+    struct: location.Location
+    resource: location
+    label: Location
+    pluralLabel: Locations
+    description: Physical pickup, delivery, and facility locations
+    category: Parties
+    edges:
+      locationCategory: { label: Category }
+
+  location_category:
+    struct: locationcategory.LocationCategory
+    resource: location_category
+    label: Location Category
+    pluralLabel: Location Categories
+    description: Classification of locations
+    category: Parties
+
+  commodity:
+    struct: commodity.Commodity
+    resource: commodity
+    label: Commodity
+    pluralLabel: Commodities
+    description: Freight commodities
+    category: Freight
+    edges:
+      hazardousMaterial: { label: "Hazardous Material" }
+
+  hazardous_material:
+    struct: hazardousmaterial.HazardousMaterial
+    resource: hazardous_material
+    label: Hazardous Material
+    pluralLabel: Hazardous Materials
+    description: Hazmat reference data
+    category: Freight
+
+  equipment_type:
+    struct: equipmenttype.EquipmentType
+    resource: equipment_type
+    label: Equipment Type
+    pluralLabel: Equipment Types
+    description: Equipment classification
+    category: Equipment
+
+  equipment_manufacturer:
+    struct: equipmentmanufacturer.EquipmentManufacturer
+    resource: equipment_manufacturer
+    label: Equipment Manufacturer
+    pluralLabel: Equipment Manufacturers
+    description: Equipment manufacturers
+    category: Equipment
+
+  fleet_code:
+    struct: fleetcode.FleetCode
+    resource: fleet_code
+    label: Fleet Code
+    pluralLabel: Fleet Codes
+    description: Fleet groupings
+    category: Equipment
+
+  shipment_type:
+    struct: shipmenttype.ShipmentType
+    resource: shipment_type
+    label: Shipment Type
+    pluralLabel: Shipment Types
+    description: Shipment classification
+    category: Configuration
+
+  service_type:
+    struct: servicetype.ServiceType
+    resource: service_type
+    label: Service Type
+    pluralLabel: Service Types
+    description: Service level classification
+    category: Configuration

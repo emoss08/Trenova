@@ -38,6 +38,50 @@ func (_m *MockWorkflowStarter) EXPECT() *MockWorkflowStarter_Expecter {
 	return &MockWorkflowStarter_Expecter{mock: &_m.Mock}
 }
 
+// CancelWorkflow provides a mock function for the type MockWorkflowStarter
+func (_mock *MockWorkflowStarter) CancelWorkflow(ctx context.Context, workflowID string, runID string) error {
+	ret := _mock.Called(ctx, workflowID, runID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CancelWorkflow")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, workflowID, runID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkflowStarter_CancelWorkflow_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelWorkflow'
+type MockWorkflowStarter_CancelWorkflow_Call struct {
+	*mock.Call
+}
+
+// CancelWorkflow is a helper method to define mock.On call
+func (_e *MockWorkflowStarter_Expecter) CancelWorkflow(ctx interface{}, workflowID interface{}, runID interface{}) *MockWorkflowStarter_CancelWorkflow_Call {
+	return &MockWorkflowStarter_CancelWorkflow_Call{Call: _e.mock.On("CancelWorkflow", ctx, workflowID, runID)}
+}
+
+func (_c *MockWorkflowStarter_CancelWorkflow_Call) Run(run func(ctx context.Context, workflowID string, runID string)) *MockWorkflowStarter_CancelWorkflow_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockWorkflowStarter_CancelWorkflow_Call) Return(err error) *MockWorkflowStarter_CancelWorkflow_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkflowStarter_CancelWorkflow_Call) RunAndReturn(run func(ctx context.Context, workflowID string, runID string) error) *MockWorkflowStarter_CancelWorkflow_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Enabled provides a mock function for the type MockWorkflowStarter
 func (_mock *MockWorkflowStarter) Enabled() bool {
 	ret := _mock.Called()

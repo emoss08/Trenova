@@ -1,0 +1,61 @@
+fragment ReportRunFields on ReportRun {
+  id
+  definitionId
+  revisionId
+  cannedKey
+  cannedVersion
+  requestedById
+  trigger
+  params
+  format
+  status
+  rowCount
+  byteSize
+  durationMs
+  truncated
+  error {
+    code
+    message
+    detail
+  }
+  artifactExpiresAt
+  cacheHit
+  queuedAt
+  startedAt
+  completedAt
+  version
+  createdAt
+}
+
+query ReportRunsTable($input: DataTableConnectionInput!, $filter: ReportRunsFilterInput) {
+  reportRuns(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...ReportRunFields
+      }
+      cursor
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query ReportRunById($id: ID!) {
+  reportRun(id: $id) {
+    ...ReportRunFields
+  }
+}
+
+mutation RunReport($input: RunReportInput!) {
+  runReport(input: $input) {
+    ...ReportRunFields
+  }
+}
+
+mutation CancelReportRun($id: ID!) {
+  cancelReportRun(id: $id) {
+    ...ReportRunFields
+  }
+}

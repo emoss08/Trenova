@@ -284,6 +284,10 @@ type fakeWorkflowStarter struct {
 	calls   []workflowCall
 }
 
+func (f *fakeWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
+	return nil
+}
+
 type workflowCall struct {
 	options  client.StartWorkflowOptions
 	workflow any

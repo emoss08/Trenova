@@ -33,21 +33,52 @@ type ConnectionParams struct {
 }
 
 type Connection struct {
-	db      *bun.DB
-	cfg     *config.Config
-	logger  *observability.ContextLogger
-	metrics *metrics.Registry
+	db       *bun.DB
+	cfg      *config.Config
+	logger   *observability.ContextLogger
+	metrics  *metrics.Registry
+	settings connectionSettings
+}
+
+type connectionSettings struct {
+	component       string
+	maxOpenConns    int
+	maxIdleConns    int
+	connMaxLifetime time.Duration
+	connMaxIdleTime time.Duration
+	connParams      map[string]any
+	registerStats   bool
 }
 
 type txContextKey struct{}
 
 func NewConnection(p ConnectionParams) (*Connection, error) {
-	logger := observability.NewContextLogger(p.Logger.With(zap.String("component", "postgres")))
+	return newConnection(p, oltpSettings(p.Config))
+}
+
+type ReportingConnection struct {
+	*Connection
+}
+
+func NewReportingConnection(p ConnectionParams) (*ReportingConnection, error) {
+	conn, err := newConnection(p, reportingSettings(p.Config))
+	if err != nil {
+		return nil, err
+	}
+
+	return &ReportingConnection{Connection: conn}, nil
+}
+
+func newConnection(p ConnectionParams, settings connectionSettings) (*Connection, error) {
+	logger := observability.NewContextLogger(
+		p.Logger.With(zap.String("component", settings.component)),
+	)
 
 	conn := &Connection{
-		cfg:     p.Config,
-		logger:  logger,
-		metrics: p.Metrics,
+		cfg:      p.Config,
+		logger:   logger,
+		metrics:  p.Metrics,
+		settings: settings,
 	}
 
 	p.Lifecycle.Append(fx.Hook{
@@ -60,6 +91,41 @@ func NewConnection(p ConnectionParams) (*Connection, error) {
 	})
 
 	return conn, nil
+}
+
+func oltpSettings(cfg *config.Config) connectionSettings {
+	return connectionSettings{
+		component:       "postgres",
+		maxOpenConns:    cfg.Database.MaxOpenConns,
+		maxIdleConns:    cfg.Database.MaxIdleConns,
+		connMaxLifetime: cfg.Database.ConnMaxLifetime,
+		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
+		connParams: map[string]any{
+			"statement_timeout":                   fmt.Sprintf("%dms", max(cfg.Database.GetStatementTimeout().Milliseconds(), 1)),
+			"lock_timeout":                        fmt.Sprintf("%dms", max(cfg.Database.GetLockTimeout().Milliseconds(), 1)),
+			"idle_in_transaction_session_timeout": fmt.Sprintf("%dms", max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)),
+		},
+		registerStats: true,
+	}
+}
+
+func reportingSettings(cfg *config.Config) connectionSettings {
+	reporting := cfg.GetReportingConfig()
+
+	return connectionSettings{
+		component:       "postgres-reporting",
+		maxOpenConns:    reporting.GetPoolMaxOpenConns(),
+		maxIdleConns:    reporting.GetPoolMaxIdleConns(),
+		connMaxLifetime: cfg.Database.ConnMaxLifetime,
+		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
+		connParams: map[string]any{
+			"statement_timeout":                   fmt.Sprintf("%dms", max(reporting.GetStatementTimeout().Milliseconds(), 1)),
+			"lock_timeout":                        fmt.Sprintf("%dms", max(cfg.Database.GetLockTimeout().Milliseconds(), 1)),
+			"idle_in_transaction_session_timeout": fmt.Sprintf("%dms", max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)),
+			"default_transaction_read_only":       "on",
+		},
+		registerStats: false,
+	}
 }
 
 func (c *Connection) connect(ctx context.Context) error {
@@ -75,24 +141,24 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(
 		pgdriver.WithDSN(dsn),
-		pgdriver.WithConnParams(c.databaseConnParams()),
+		pgdriver.WithConnParams(c.settings.connParams),
 	))
 
-	if c.cfg.Database.MaxOpenConns > 0 {
-		sqldb.SetMaxOpenConns(c.cfg.Database.MaxOpenConns)
+	if c.settings.maxOpenConns > 0 {
+		sqldb.SetMaxOpenConns(c.settings.maxOpenConns)
 	}
-	if c.cfg.Database.MaxIdleConns > 0 {
-		sqldb.SetMaxIdleConns(c.cfg.Database.MaxIdleConns)
+	if c.settings.maxIdleConns > 0 {
+		sqldb.SetMaxIdleConns(c.settings.maxIdleConns)
 	}
-	if c.cfg.Database.ConnMaxLifetime > 0 {
-		sqldb.SetConnMaxLifetime(c.cfg.Database.ConnMaxLifetime)
+	if c.settings.connMaxLifetime > 0 {
+		sqldb.SetConnMaxLifetime(c.settings.connMaxLifetime)
 	}
-	if c.cfg.Database.ConnMaxIdleTime > 0 {
-		sqldb.SetConnMaxIdleTime(c.cfg.Database.ConnMaxIdleTime)
+	if c.settings.connMaxIdleTime > 0 {
+		sqldb.SetConnMaxIdleTime(c.settings.connMaxIdleTime)
 	}
 
 	c.db = bun.NewDB(sqldb, pgdialect.New())
-	if c.metrics != nil && c.metrics.Database != nil {
+	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
 		c.metrics.Database.RegisterSQLStats(c.db.Stats)
 	}
 
@@ -107,19 +173,11 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	c.logger.Info(ctx, "PostgreSQL connection established",
 		zap.String("database", c.cfg.Database.Name),
-		zap.Int("max_open_conns", c.cfg.Database.MaxOpenConns),
-		zap.Int("max_idle_conns", c.cfg.Database.MaxIdleConns),
+		zap.Int("max_open_conns", c.settings.maxOpenConns),
+		zap.Int("max_idle_conns", c.settings.maxIdleConns),
 	)
 
 	return nil
-}
-
-func (c *Connection) databaseConnParams() map[string]any {
-	return map[string]any{
-		"statement_timeout":                   fmt.Sprintf("%dms", max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1)),
-		"lock_timeout":                        fmt.Sprintf("%dms", max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1)),
-		"idle_in_transaction_session_timeout": fmt.Sprintf("%dms", max(c.cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)),
-	}
 }
 
 func (c *Connection) setupHooks() {

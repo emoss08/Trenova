@@ -1,0 +1,200 @@
+{
+  "title": "Trenova — Reporting Engine",
+  "uid": "trenova-reporting",
+  "tags": ["trenova", "reporting"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data Source"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Run Completions by Status",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(trenova_reporting_runs_total[5m])) * 60",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "opm", "custom": { "drawStyle": "line", "fillOpacity": 12 } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "failed" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "succeeded" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Failure Ratio (1h)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(trenova_reporting_runs_total{status=\"failed\"}[1h])) / clamp_min(sum(increase(trenova_reporting_runs_total[1h])), 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.05 },
+              { "color": "red", "value": 0.2 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Cache Hit Ratio (1h)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(trenova_reporting_cache_lookups_total{outcome=\"hit\"}[1h])) / clamp_min(sum(increase(trenova_reporting_cache_lookups_total{outcome=~\"hit|miss\"}[1h])), 1)"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Run Duration Quantiles by Format",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le, format) (rate(trenova_reporting_run_duration_seconds_bucket[15m])))",
+          "legendFormat": "p50 {{format}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, format) (rate(trenova_reporting_run_duration_seconds_bucket[15m])))",
+          "legendFormat": "p95 {{format}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Rows / Bytes per Run (p95)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(trenova_reporting_run_rows_bucket[30m])))",
+          "legendFormat": "rows p95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(trenova_reporting_run_bytes_bucket[30m])))",
+          "legendFormat": "bytes p95"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Enqueue Rejections by Reason",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (reason) (increase(trenova_reporting_enqueue_rejections_total[15m]))",
+          "legendFormat": "{{reason}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Compile Errors by Stage",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (stage) (increase(trenova_reporting_compile_errors_total[15m]))",
+          "legendFormat": "{{stage}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Preview Latency (p95) and Outcomes",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(trenova_reporting_preview_duration_seconds_bucket[10m])))",
+          "legendFormat": "p95 latency"
+        },
+        {
+          "expr": "sum by (outcome) (rate(trenova_reporting_preview_total[10m])) * 60",
+          "legendFormat": "{{outcome}} /min"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Housekeeping — Artifacts Cleaned & Zombie Runs",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "expr": "increase(trenova_reporting_artifacts_cleaned_total[1h])",
+          "legendFormat": "artifacts cleaned (1h)"
+        },
+        {
+          "expr": "increase(trenova_reporting_zombie_runs_reconciled_total[1h])",
+          "legendFormat": "zombie runs reconciled (1h)"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Run Volume by Trigger",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "sum by (trigger) (increase(trenova_reporting_runs_total[1h]))",
+          "legendFormat": "{{trigger}}"
+        }
+      ]
+    }
+  ]
+}

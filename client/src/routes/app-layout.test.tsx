@@ -85,7 +85,7 @@ describe("AppLayout role activation", () => {
     expect(screen.queryByText("Org admin")).not.toBeInTheDocument();
 
     await user.click(screen.getByText("Dispatcher"));
-    await user.click(screen.getByRole("button", { name: /activate roles/i }));
+    await user.click(screen.getByRole("button", { name: /activate 1 role/i }));
 
     await waitFor(() => expect(mocks.activateSessionRoles).toHaveBeenCalledWith(["rol_dispatch"]));
     expect(mocks.fetchManifest).toHaveBeenCalledTimes(1);

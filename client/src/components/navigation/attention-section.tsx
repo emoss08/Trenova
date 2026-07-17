@@ -3,6 +3,7 @@ import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AttentionSummaryQuery } from "@/graphql/generated/graphql";
 import { useAttentionSummary } from "@/hooks/use-attention";
+import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { isRouteActive } from "@/lib/route-utils";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router";
@@ -56,6 +57,8 @@ const ATTENTION_ROWS: AttentionRowConfig[] = [
   },
 ];
 
+const ATTENTION_ROWS_BY_KEY = new Map(ATTENTION_ROWS.map((row) => [row.key as string, row]));
+
 const TONE_DOT_CLASSES: Record<AttentionTone, string> = {
   default: "bg-info",
   warning: "bg-warning",
@@ -102,8 +105,11 @@ function AttentionRow({
 export function AttentionSection() {
   const { pathname } = useLocation();
   const { data: summary, isLoading } = useAttentionSummary();
+  const { data: preferences } = useSidebarPreferences();
 
-  const rows = ATTENTION_ROWS.filter((row) => summary?.[row.key] != null);
+  const rows = (preferences?.attentionMetrics ?? [])
+    .map((key) => ATTENTION_ROWS_BY_KEY.get(key))
+    .filter((row): row is AttentionRowConfig => row != null && summary?.[row.key] != null);
 
   if (!isLoading && rows.length === 0) {
     return null;

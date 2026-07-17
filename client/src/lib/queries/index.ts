@@ -29,12 +29,14 @@ import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
 import { location } from "./location";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
+import { reports } from "./reports";
 import { platformBilling } from "./platform-billing";
 import { sequenceConfig } from "./sequence-config";
 import { serviceFailure } from "./service-failure";
 import { serviceFailureReasonCode } from "./service-failure-reason-code";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
+import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "./notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
@@ -44,7 +46,7 @@ import { weatherRadar } from "./weather-radar";
 import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 
-export const queries = mergeQueryKeys(
+const financialQueries = mergeQueryKeys(
   accountingControl,
   accountingReport,
   ar,
@@ -56,6 +58,16 @@ export const queries = mergeQueryKeys(
   manualJournal,
   billingControl,
   billingQueue,
+  invoice,
+  invoiceAdjustment,
+  invoiceAdjustmentControl,
+  customer,
+  formulaTemplate,
+  sequenceConfig,
+  exchangeRate,
+);
+
+const operationsQueries = mergeQueryKeys(
   dataEntryControl,
   distanceControl,
   dispatchControl,
@@ -63,31 +75,35 @@ export const queries = mergeQueryKeys(
   email,
   documentControl,
   documentParsingRule,
-  userOrganization,
-  pageFavoite,
-  platformBilling,
-  tableConfiguration,
-  user,
-  worker,
-  organization,
-  integration,
-  invoice,
-  invoiceAdjustment,
-  invoiceAdjustmentControl,
   location,
-  customer,
   shipment,
-  formulaTemplate,
   googleMaps,
   serviceFailure,
   serviceFailureReasonCode,
   shipmentControl,
-  sequenceConfig,
+  weatherAlert,
+  weatherRadar,
+);
+
+const workspaceQueries = mergeQueryKeys(
+  userOrganization,
+  pageFavoite,
+  platformBilling,
+  tableConfiguration,
+  sidebarPreferences,
+  user,
+  worker,
+  organization,
+  integration,
   attention,
   audit,
   notification,
   tableChangeAlert,
-  weatherAlert,
-  weatherRadar,
-  exchangeRate,
+  reports,
 );
+
+export const queries = {
+  ...financialQueries,
+  ...operationsQueries,
+  ...workspaceQueries,
+};

@@ -85,6 +85,10 @@ func (noopWorkflowStarter) StartWorkflow(
 	return nil, serviceports.ErrWorkflowStarterDisabled
 }
 
+func (noopWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
+	return nil
+}
+
 func (noopWorkflowStarter) Enabled() bool {
 	return false
 }

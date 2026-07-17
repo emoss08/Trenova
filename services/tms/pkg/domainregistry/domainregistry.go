@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -89,6 +90,10 @@ func RegisterEntities() []any {
 		&shipmentimportchat.Turn{},
 		&customer.CustomerBillingProfileDocumentType{},
 		&bankreceipt.BankReceipt{},
+		&report.ReportDefinition{},
+		&report.ReportDefinitionRevision{},
+		&report.ReportRun{},
+		&report.ReportSchedule{},
 	}
 }
 

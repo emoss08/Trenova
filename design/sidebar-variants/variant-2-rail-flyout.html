@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Variant 2 — Labeled Rail + Rich Panel · Trenova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/base.css" />
+<style>
+  .rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 64px;
+    flex-shrink: 0;
+    padding: 10px 7px 12px;
+    gap: 2px;
+    position: relative;
+  }
+  .rail-org { margin-bottom: 10px; }
+  .rail-org .org-logo { width: 30px; height: 30px; font-size: 11px; }
+  .rail-sep {
+    width: 26px;
+    height: 1px;
+    background: var(--border);
+    margin: 5px 0;
+    flex-shrink: 0;
+  }
+  .rail-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 50px;
+    height: 46px;
+    border-radius: 9px;
+    color: var(--muted-foreground);
+    position: relative;
+    transition: background 180ms ease, color 180ms ease;
+  }
+  .rail-btn:hover { background: var(--hover); color: var(--foreground); }
+  .rail-btn:hover .tn-icon { transform: translateY(-1px) scale(1.1); }
+  .rail-btn:active .tn-icon { transform: scale(0.94); }
+  .rail-btn.active {
+    background: linear-gradient(180deg, var(--brand-soft), color-mix(in oklab, var(--brand) 6%, transparent));
+    color: var(--foreground);
+    box-shadow: inset 0 1px 0 var(--edge-light), 0 0 14px -4px color-mix(in oklab, var(--brand) 55%, transparent);
+  }
+  .rail-btn.active .tn-icon { color: var(--brand-text); }
+  .rail-btn .tn-icon {
+    width: 17px;
+    height: 17px;
+    transition: transform 250ms var(--ease-spring), color 180ms ease;
+  }
+  .rail-btn .rl { font-size: 8.5px; font-weight: 500; letter-spacing: 0.01em; }
+  .rail-btn .rb-badge {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--destructive);
+    --ping-color: var(--destructive);
+    color: white;
+    font-family: var(--font-table);
+    font-size: 9px;
+    line-height: 14px;
+    text-align: center;
+    animation: ping 3s ease-out infinite;
+  }
+  .rail-spacer { flex: 1; }
+  .rail-ind {
+    position: absolute;
+    left: 0;
+    width: 2.5px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand);
+    box-shadow: 0 0 10px color-mix(in oklab, var(--brand) 75%, transparent);
+    transition: transform 380ms var(--ease-spring), height 200ms var(--ease-out);
+    top: 0;
+    height: 46px;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    width: 238px;
+    flex-shrink: 0;
+    background: var(--background);
+    border-right: 1px solid var(--border);
+    transition: width 260ms var(--ease-out), opacity 200ms ease;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .panel.collapsed { width: 0; opacity: 0; border-right-width: 0; }
+  .panel-head { padding: 13px 13px 9px; }
+  .panel-head .ph-top { display: flex; align-items: center; gap: 9px; }
+  .panel-head .ph-ic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--brand-soft);
+    color: var(--brand-text);
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 var(--edge-light);
+  }
+  .panel-head .ph-ic .tn-icon { width: 14px; height: 14px; }
+  .panel-head h2 { font-size: 13px; font-weight: 600; flex: 1; letter-spacing: -0.01em; }
+  .panel-head .ph-desc {
+    font-size: 11px;
+    color: var(--faint-foreground);
+    margin-top: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .panel-qa { padding: 2px 12px 12px; border-bottom: 1px solid var(--border); }
+  .panel-qa .btn { width: 100%; justify-content: center; }
+  .panel-nav { flex: 1; padding: 9px 10px; }
+  .grp-head {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 25px;
+    padding: 0 9px;
+    margin-top: 7px;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--faint-foreground);
+    transition: color 150ms ease;
+  }
+  .grp-head:hover { color: var(--foreground); }
+  .grp-head .chev { width: 12px; height: 12px; margin-left: auto; }
+  .panel-live {
+    border-top: 1px solid var(--border);
+    padding: 10px 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .panel-live .live-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+  }
+  .panel-live .live-head .sec-label { margin: 0; padding: 0; }
+
+  .flyout {
+    position: fixed;
+    left: 68px;
+    z-index: 60;
+    width: 224px;
+    padding: 8px;
+  }
+  .flyout .fo-title {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 8px 7px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flyout .fo-title .tn-icon { color: var(--brand-text); width: 14px; height: 14px; }
+  .flyout .ni { height: 25px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail sidebar-surface" id="rail"></aside>
+  <aside class="panel" id="panel"></aside>
+  <div class="main">
+    <div id="hdr"></div>
+    <main class="page" id="page"></main>
+  </div>
+</div>
+<div class="menu flyout" id="flyout"></div>
+
+<script src="assets/base.js"></script>
+<script>
+  let activeMod = "billing";
+  let collapsed = false;
+  const railBadges = { billing: 18, shipment: 3, edi: 5 };
+
+  const rail = document.getElementById("rail");
+  const railInd = document.createElement("div");
+  railInd.className = "rail-ind";
+
+  function renderRail() {
+    let html =
+      '<div class="rail-org"><span class="org-logo" title="Trenova Logistics">TR</span></div>';
+    html +=
+      '<button type="button" class="rail-btn" data-mod="home">' +
+      TN.icon("home") + '<span class="rl">Home</span></button>';
+    for (const group of TN.NAV.groups) {
+      html += '<div class="rail-sep"></div>';
+      html += group.modules
+        .map((m) => {
+          const mod = TN.NAV.modules[m];
+          const badge = railBadges[m] ? '<span class="rb-badge">' + railBadges[m] + "</span>" : "";
+          return (
+            '<button type="button" class="rail-btn' + (m === activeMod ? " active" : "") +
+            '" data-mod="' + m + '">' + badge + TN.icon(mod.icon) +
+            '<span class="rl">' + mod.short + "</span></button>"
+          );
+        })
+        .join("");
+    }
+    html += '<div class="rail-spacer"></div>';
+    html +=
+      '<button type="button" class="rail-btn" data-action="search">' +
+      TN.icon("search") + '<span class="rl">Search</span></button>' +
+      '<button type="button" class="rail-btn" data-action="favs">' +
+      TN.icon("star") + '<span class="rl">Pinned</span></button>' +
+      '<div class="rail-sep"></div>' +
+      '<button type="button" class="avatar" style="width:30px;height:30px;font-size:11px" title="Eric Moss">EM</button>';
+    rail.innerHTML = html;
+    rail.appendChild(railInd);
+    TN.stagger(rail, ".rail-btn, .rail-org, .avatar");
+    requestAnimationFrame(moveRailInd);
+  }
+
+  function moveRailInd() {
+    const active = rail.querySelector(".rail-btn.active");
+    if (!active) return;
+    railInd.style.transform = "translateY(" + active.offsetTop + "px)";
+    railInd.style.height = active.offsetHeight + "px";
+  }
+
+  function panelNavHtml(mod) {
+    return mod.items
+      .map((item) => {
+        if (item.group) {
+          const kids = item.items
+            .map((l) => '<button type="button" class="ni"><span class="label">' + l + "</span></button>")
+            .join("");
+          return (
+            '<div><button type="button" class="grp-head" aria-expanded="false"><span>' +
+            item.group + "</span>" + TN.icon("chevronRight", "chev") +
+            '</button><div class="acc"><div class="acc-inner"><div style="display:flex;flex-direction:column;gap:1px">' +
+            kids + "</div></div></div></div>"
+          );
+        }
+        return (
+          '<button type="button" class="ni' + (item.active ? " active" : "") + '">' +
+          '<span class="label">' + item.label + "</span>" + TN.badge(item) + "</button>"
+        );
+      })
+      .join("");
+  }
+
+  function renderPanel() {
+    const mod = TN.NAV.modules[activeMod];
+    const panel = document.getElementById("panel");
+    panel.innerHTML =
+      '<div class="panel-head"><div class="ph-top"><span class="ph-ic">' + TN.icon(mod.icon) +
+      "</span><h2>" + mod.label +
+      '</h2><button type="button" class="icon-btn" id="collapse" title="Collapse panel (⌘B)">' +
+      TN.icon("panelLeft") + "</button></div>" +
+      '<div class="ph-desc">' + mod.desc + "</div></div>" +
+      (mod.quickAction
+        ? '<div class="panel-qa"><button type="button" class="btn primary">' +
+          TN.icon("plus") + mod.quickAction + "</button></div>"
+        : "") +
+      '<nav class="panel-nav tn-scroll" id="panel-nav">' + panelNavHtml(mod) + "</nav>" +
+      '<div class="panel-live">' +
+      '<div class="live-head"><span class="sec-label">Live Activity</span>' + TN.presenceRow("4 online") + "</div>" +
+      '<div id="feed"></div></div>';
+
+    const navEl = panel.querySelector("#panel-nav");
+    TN.stagger(panel, ".panel-head, .panel-qa, #panel-nav > *, .panel-live");
+    const moveInd = TN.attachIndicator(navEl);
+    setTimeout(moveInd, 650);
+
+    panel.querySelector("#collapse").addEventListener("click", () => {
+      collapsed = !collapsed;
+      panel.classList.toggle("collapsed", collapsed);
+    });
+    navEl.addEventListener("click", (e) => {
+      const head = e.target.closest(".grp-head");
+      if (head) {
+        const open = head.getAttribute("aria-expanded") === "true";
+        head.setAttribute("aria-expanded", String(!open));
+        head.parentElement.querySelector(".acc").classList.toggle("open", !open);
+        setTimeout(moveInd, 340);
+        return;
+      }
+      const ni = e.target.closest(".ni");
+      if (ni) {
+        navEl.querySelectorAll(".ni.active").forEach((a) => a.classList.remove("active"));
+        ni.classList.add("active");
+        moveInd();
+      }
+    });
+    TN.mountActivity(panel.querySelector("#feed"), 3);
+  }
+
+  /* Flyout preview on rail hover */
+  const flyout = document.getElementById("flyout");
+  let flyTimer = null;
+  function showFlyout(btn, modId) {
+    const mod = TN.NAV.modules[modId];
+    if (!mod || mod.items.length === 0) return;
+    const items = mod.items
+      .flatMap((i) => (i.group ? [] : [i]))
+      .map(
+        (i) =>
+          '<button type="button" class="ni"><span class="label">' + i.label + "</span>" +
+          TN.badge(i) + "</button>",
+      )
+      .join("");
+    flyout.innerHTML =
+      '<div class="fo-title">' + TN.icon(mod.icon) + mod.label + "</div>" + items;
+    TN.stagger(flyout, ".ni");
+    const r = btn.getBoundingClientRect();
+    flyout.style.top = Math.min(r.top, window.innerHeight - 340) + "px";
+    flyout.classList.add("show");
+  }
+  function hideFlyout() { flyout.classList.remove("show"); }
+  flyout.addEventListener("mouseenter", () => clearTimeout(flyTimer));
+  flyout.addEventListener("mouseleave", () => { flyTimer = setTimeout(hideFlyout, 160); });
+
+  rail.addEventListener("mouseover", (e) => {
+    const btn = e.target.closest(".rail-btn");
+    clearTimeout(flyTimer);
+    if (!btn || !btn.dataset.mod || btn.dataset.mod === activeMod) {
+      flyTimer = setTimeout(hideFlyout, 160);
+      return;
+    }
+    flyTimer = setTimeout(() => showFlyout(btn, btn.dataset.mod), 240);
+  });
+  rail.addEventListener("mouseleave", () => { flyTimer = setTimeout(hideFlyout, 160); });
+  rail.addEventListener("click", (e) => {
+    const btn = e.target.closest(".rail-btn");
+    if (!btn || !btn.dataset.mod) return;
+    hideFlyout();
+    if (btn.dataset.mod === "home") return;
+    activeMod = btn.dataset.mod;
+    collapsed = false;
+    document.getElementById("panel").classList.remove("collapsed");
+    rail.querySelectorAll(".rail-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.mod === activeMod);
+    });
+    moveRailInd();
+    renderPanel();
+  });
+
+  renderRail();
+  renderPanel();
+  document.getElementById("hdr").outerHTML = TN.header(["Billing", "Billing Queue"]);
+  document.getElementById("page").innerHTML = TN.pageMock();
+  TN.mountPill("2 · Rail + Rich Panel");
+</script>
+</body>
+</html>

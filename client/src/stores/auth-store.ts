@@ -56,7 +56,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const freshUser = await apiService.userService.currentUser();
           set({ user: freshUser, isAuthenticated: true });
-          usePermissionStore.getState().checkForUpdates().catch(console.error);
+          usePermissionStore
+            .getState()
+            .checkForUpdates(freshUser.currentOrganizationId)
+            .catch(console.error);
           return true;
         } catch (error) {
           if (error instanceof ApiRequestError && error.status === 401) {

@@ -1,0 +1,96 @@
+# Prometheus alert rules for the Trenova reporting engine.
+# Metric source: services/tms/internal/infrastructure/observability/metrics/report.go
+# Load via rule_files in prometheus.yml.
+
+groups:
+  - name: trenova-reporting
+    rules:
+      - alert: ReportRunFailureRatioHigh
+        expr: |
+          sum(increase(trenova_reporting_runs_total{status="failed"}[15m]))
+            / clamp_min(sum(increase(trenova_reporting_runs_total[15m])), 1) > 0.2
+          and sum(increase(trenova_reporting_runs_total[15m])) >= 5
+        for: 10m
+        labels:
+          severity: critical
+          service: reporting
+        annotations:
+          summary: "Report run failure ratio above 20%"
+          description: >-
+            More than 20% of report runs failed over the last 15 minutes
+            (with at least 5 completions). Check the report worker logs and
+            recent run errors on the runs UI.
+
+      - alert: ReportEnqueueSaturation
+        expr: sum(increase(trenova_reporting_enqueue_rejections_total[10m])) > 20
+        for: 10m
+        labels:
+          severity: warning
+          service: reporting
+        annotations:
+          summary: "Report enqueue gate rejecting requests"
+          description: >-
+            Per-org concurrency/queue-depth limits rejected more than 20
+            enqueue attempts in 10 minutes. Either a tenant is hammering the
+            API or the report worker is not draining the queue — check worker
+            health and Temporal task-queue backlog for report-queue.
+
+      - alert: ReportRunDurationDegraded
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(trenova_reporting_run_duration_seconds_bucket[30m]))) > 1200
+        for: 15m
+        labels:
+          severity: warning
+          service: reporting
+        annotations:
+          summary: "Report run p95 duration above 20 minutes"
+          description: >-
+            The p95 report run duration exceeded 20 minutes over the last 30
+            minutes. Check the reporting Postgres pool, EXPLAIN-gate limits,
+            and whether a tenant's definitions need complexity caps revisited.
+
+      - alert: ReportPreviewLatencyHigh
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(trenova_reporting_preview_duration_seconds_bucket[10m]))) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: reporting
+        annotations:
+          summary: "Builder preview p95 latency above 5s"
+          description: >-
+            Previews run synchronously in the API process with a 10s statement
+            timeout — sustained p95 above 5s means the reporting pool is
+            contended or preview queries are approaching the timeout.
+
+      - alert: ReportZombieRunsRecurring
+        expr: sum(increase(trenova_reporting_zombie_runs_reconciled_total[6h])) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: reporting
+        annotations:
+          summary: "Zombie report runs keep appearing"
+          description: >-
+            The reconciliation schedule marked more than 3 abandoned runs as
+            failed in 6 hours. Runs are dying without reaching FinalizeRun —
+            check for report worker crashes or OOM kills (PDF/Chromium is the
+            usual suspect).
+
+      - alert: ReportArtifactCleanupStalled
+        expr: |
+          sum(increase(trenova_reporting_artifacts_cleaned_total[24h])) == 0
+          and sum(increase(trenova_reporting_runs_total{status="succeeded"}[24h])) > 0
+        for: 1h
+        labels:
+          severity: warning
+          service: reporting
+        annotations:
+          summary: "Expired report artifacts are not being cleaned"
+          description: >-
+            Reports succeeded in the last 24h but the cleanup schedule deleted
+            nothing. Verify the CleanupExpiredReportRuns Temporal schedule is
+            running and MinIO is reachable from the worker — stalled cleanup
+            grows storage unbounded.

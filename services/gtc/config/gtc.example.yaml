@@ -21,3 +21,45 @@ projections:
     destination:
       kind: redis_stream
       stream: 'cdc:customers'
+
+  # --- Reporting result-cache invalidation ------------------------------------
+  # The TMS reporting engine caches finished report artifacts keyed by a
+  # per-org, per-table data-version vector. Every reportable base table gets a
+  # redis_stream projection into the shared "reporting:cdc" stream; the TMS
+  # worker consumes it and advances the counters, invalidating stale cache
+  # entries. Registering a new reportable table is config-only: copy one of
+  # the entries below.
+  - name: reporting-shipments
+    source_table: public.shipments
+    primary_keys: [id]
+    destination:
+      kind: redis_stream
+      stream: 'reporting:cdc'
+
+  - name: reporting-orders
+    source_table: public.orders
+    primary_keys: [id]
+    destination:
+      kind: redis_stream
+      stream: 'reporting:cdc'
+
+  - name: reporting-customers
+    source_table: public.customers
+    primary_keys: [id]
+    destination:
+      kind: redis_stream
+      stream: 'reporting:cdc'
+
+  - name: reporting-workers
+    source_table: public.workers
+    primary_keys: [id]
+    destination:
+      kind: redis_stream
+      stream: 'reporting:cdc'
+
+  - name: reporting-invoices
+    source_table: public.invoices
+    primary_keys: [id]
+    destination:
+      kind: redis_stream
+      stream: 'reporting:cdc'

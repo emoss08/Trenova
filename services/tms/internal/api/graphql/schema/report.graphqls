@@ -1,0 +1,347 @@
+# --- Reporting catalog -------------------------------------------------------
+
+type ReportCatalogEnumValue {
+  value: String!
+  label: String!
+}
+
+type ReportCatalogField {
+  key: String!
+  label: String!
+  description: String
+  type: String!
+  format: String
+  nullable: Boolean!
+  enumValues: [ReportCatalogEnumValue!]!
+  aggregations: [String!]!
+  filterable: Boolean!
+  groupable: Boolean!
+  accessible: Boolean!
+  sensitivity: String!
+}
+
+type ReportCatalogEdge {
+  name: String!
+  label: String!
+  target: String!
+  cardinality: String!
+  traversable: Boolean!
+}
+
+type ReportCatalogEntity {
+  key: String!
+  resource: String!
+  label: String!
+  pluralLabel: String!
+  description: String
+  category: String!
+  ownScopeSupported: Boolean!
+  fields: [ReportCatalogField!]!
+  edges: [ReportCatalogEdge!]!
+}
+
+type ReportCatalog {
+  version: String!
+  entities: [ReportCatalogEntity!]!
+}
+
+# --- Canned reports ----------------------------------------------------------
+
+type CannedReport {
+  key: String!
+  version: String!
+  name: String!
+  description: String!
+  category: String!
+  tags: [String!]!
+  defaultFormat: String!
+  definition: JSON!
+}
+
+# --- Report definitions ------------------------------------------------------
+
+type ReportDefinition {
+  id: ID!
+  name: String!
+  description: String!
+  category: String!
+  tags: [String!]!
+  kind: String!
+  cannedKey: String
+  cannedVersion: String
+  ownerId: ID!
+  visibility: String!
+  status: String!
+  diagnostics: [String!]!
+  catalogVersion: String!
+  definition: JSON!
+  defaultFormat: String!
+  currentRevision: Int!
+  lastRunAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ReportDefinitionEdge {
+  node: ReportDefinition!
+  cursor: String!
+}
+
+type ReportDefinitionConnection {
+  edges: [ReportDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ReportDefinitionRevision {
+  id: ID!
+  definitionId: ID!
+  revisionNumber: Int!
+  catalogVersion: String!
+  definition: JSON!
+  createdById: ID!
+  createdAt: Int!
+}
+
+# --- Report runs -------------------------------------------------------------
+
+type ReportRunError {
+  code: String!
+  message: String!
+  detail: String
+}
+
+type ReportRun {
+  id: ID!
+  definitionId: ID
+  revisionId: ID
+  cannedKey: String
+  cannedVersion: String
+  requestedById: ID!
+  trigger: String!
+  params: JSON
+  format: String!
+  status: String!
+  rowCount: Int!
+  byteSize: Int!
+  durationMs: Int!
+  truncated: Boolean!
+  error: ReportRunError
+  artifactExpiresAt: Int
+  cacheHit: Boolean!
+  queuedAt: Int
+  startedAt: Int
+  completedAt: Int
+  version: Int!
+  createdAt: Int!
+}
+
+type ReportRunEdge {
+  node: ReportRun!
+  cursor: String!
+}
+
+type ReportRunConnection {
+  edges: [ReportRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+# --- Report schedules --------------------------------------------------------
+
+type ReportSchedule {
+  id: ID!
+  definitionId: ID!
+  cronExpression: String!
+  timezone: String!
+  formats: [String!]!
+  emailRecipients: [String!]!
+  enabled: Boolean!
+  runAsId: ID!
+  lastRunId: ID
+  nextRunAt: Int
+  consecutiveFailures: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+# --- Preview -----------------------------------------------------------------
+
+type ReportPreviewColumn {
+  id: String!
+  label: String!
+  type: String!
+  format: String
+}
+
+type ReportPreview {
+  columns: [ReportPreviewColumn!]!
+  rows: Any!
+  truncated: Boolean!
+}
+
+# --- IR inputs ---------------------------------------------------------------
+
+input ReportFieldRefInput {
+  path: [String!]
+  field: String!
+}
+
+input ReportComputedInput {
+  op: String!
+  leftId: String!
+  rightId: String!
+  format: String
+}
+
+input ReportColumnInput {
+  id: String!
+  ref: ReportFieldRefInput
+  kind: String!
+  agg: String
+  bucket: String
+  label: String
+  computed: ReportComputedInput
+}
+
+input ReportFilterInput {
+  ref: ReportFieldRefInput!
+  operator: String!
+  value: Any
+  param: String
+  agg: String
+}
+
+input ReportFilterGroupInput {
+  op: String!
+  filters: [ReportFilterInput!]
+  groups: [ReportFilterGroupInput!]
+}
+
+input ReportSortInput {
+  columnId: String!
+  direction: String!
+}
+
+input ReportPivotInput {
+  ref: ReportFieldRefInput!
+  values: [String!]!
+  measureIds: [String!]!
+  includeOther: Boolean
+}
+
+input ReportParameterDefInput {
+  name: String!
+  label: String
+  type: String!
+  required: Boolean
+  default: Any
+  multi: Boolean
+  allowedValues: [String!]
+  refEntity: String
+}
+
+input ReportIRInput {
+  entity: String!
+  columns: [ReportColumnInput!]!
+  filters: ReportFilterGroupInput
+  having: ReportFilterGroupInput
+  sort: [ReportSortInput!]
+  limit: Int
+  pivot: ReportPivotInput
+  parameters: [ReportParameterDefInput!]
+}
+
+input SaveReportDefinitionInput {
+  name: String!
+  description: String
+  category: String
+  tags: [String!]
+  visibility: String
+  status: String
+  defaultFormat: String
+  definition: ReportIRInput!
+}
+
+input UpdateReportDefinitionInput {
+  id: ID!
+  version: Int!
+  name: String!
+  description: String
+  category: String
+  tags: [String!]
+  visibility: String
+  status: String
+  defaultFormat: String
+  definition: ReportIRInput!
+}
+
+input RunReportInput {
+  definitionId: ID
+  cannedKey: String
+  format: String!
+  params: JSON
+}
+
+input ForkCannedReportInput {
+  cannedKey: String!
+  name: String
+}
+
+input ReportRunsFilterInput {
+  definitionId: ID
+  mineOnly: Boolean
+  statuses: [String!]
+}
+
+input CreateReportScheduleInput {
+  definitionId: ID!
+  cronExpression: String!
+  timezone: String
+  formats: [String!]!
+  emailRecipients: [String!]
+  enabled: Boolean!
+}
+
+input UpdateReportScheduleInput {
+  id: ID!
+  version: Int!
+  definitionId: ID!
+  cronExpression: String!
+  timezone: String
+  formats: [String!]!
+  emailRecipients: [String!]
+  enabled: Boolean!
+}
+
+# --- Operations --------------------------------------------------------------
+
+extend type Query {
+  reportCatalog: ReportCatalog!
+  cannedReports: [CannedReport!]!
+  reportDefinition(id: ID!): ReportDefinition!
+  reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
+  reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
+  reportRun(id: ID!): ReportRun!
+  reportRuns(
+    input: DataTableConnectionInput!
+    filter: ReportRunsFilterInput
+  ): ReportRunConnection!
+  previewReport(definition: ReportIRInput!, params: JSON): ReportPreview!
+  reportSchedules(definitionId: ID): [ReportSchedule!]!
+}
+
+extend type Mutation {
+  createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
+  updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
+  deleteReportDefinition(id: ID!): Boolean!
+  forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
+  resetCannedFork(id: ID!): ReportDefinition!
+  runReport(input: RunReportInput!): ReportRun!
+  cancelReportRun(id: ID!): ReportRun!
+  createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
+  updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
+  deleteReportSchedule(id: ID!): Boolean!
+}

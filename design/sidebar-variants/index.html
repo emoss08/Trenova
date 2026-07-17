@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trenova · Sidebar Navigation Explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/base.css" />
+<style>
+  body { overflow: auto; }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20% -10% auto;
+    height: 55vh;
+    background: radial-gradient(55% 90% at 50% 0%, color-mix(in oklab, var(--brand) 14%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 80px; position: relative; }
+  .masthead { margin-bottom: 40px; }
+  .masthead .kicker {
+    font-family: var(--font-table);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--brand-text);
+    margin-bottom: 12px;
+  }
+  .masthead h1 {
+    font-size: 30px;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    background: linear-gradient(180deg, var(--foreground), color-mix(in oklab, var(--foreground) 60%, transparent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .masthead p { color: var(--muted-foreground); margin-top: 10px; max-width: 640px; font-size: 13.5px; line-height: 1.6; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--surface) 65%, transparent);
+    box-shadow: inset 0 1px 0 var(--edge-light);
+    overflow: hidden;
+    transition: border-color 200ms ease, transform 250ms var(--ease-out), box-shadow 250ms ease;
+  }
+  .card:hover {
+    border-color: color-mix(in oklab, var(--brand) 40%, var(--border));
+    transform: translateY(-3px);
+    box-shadow: inset 0 1px 0 var(--edge-light), 0 12px 32px -12px color-mix(in oklab, var(--brand) 35%, oklch(0 0 0 / 0.3));
+  }
+  .thumb {
+    height: 140px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 14px;
+    gap: 6px;
+    background: linear-gradient(180deg, var(--hover), transparent);
+  }
+  .thumb .t-rail, .thumb .t-panel, .thumb .t-main, .thumb .t-seg {
+    border-radius: 4px;
+    background: var(--hover-strong);
+  }
+  .thumb .t-rail { width: 13px; }
+  .thumb .t-panel { width: 44px; }
+  .thumb .t-panel.wide { width: 64px; }
+  .thumb .t-main { flex: 1; background: var(--hover); }
+  .thumb .t-accent {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--brand) 55%, transparent), color-mix(in oklab, var(--brand) 25%, transparent)) !important;
+    box-shadow: 0 0 14px -2px color-mix(in oklab, var(--brand) 45%, transparent);
+  }
+  .card:hover .t-accent { box-shadow: 0 0 20px 0 color-mix(in oklab, var(--brand) 55%, transparent); }
+
+  .card-body { padding: 15px 17px 17px; display: flex; flex-direction: column; flex: 1; }
+  .card-body .num {
+    font-family: var(--font-table);
+    font-size: 10px;
+    color: var(--brand-text);
+    letter-spacing: 0.1em;
+  }
+  .card-body h2 { font-size: 15px; font-weight: 600; margin: 4px 0 7px; letter-spacing: -0.01em; }
+  .card-body p { font-size: 12.5px; color: var(--muted-foreground); line-height: 1.55; flex: 1; }
+  .traits { display: flex; flex-wrap: wrap; gap: 5px; margin: 13px 0 0; }
+  .trait {
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted-foreground);
+    background: var(--hover);
+  }
+
+  .note {
+    margin-top: 36px;
+    padding: 15px 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--surface) 55%, transparent);
+    box-shadow: inset 0 1px 0 var(--edge-light);
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+    line-height: 1.65;
+  }
+  .note strong { color: var(--foreground); font-weight: 600; }
+  .note kbd {
+    font-family: var(--font-table);
+    font-size: 11px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+    background: var(--hover);
+  }
+
+  .theme-toggle {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--popover);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-menu);
+    color: var(--muted-foreground);
+    transition: color 150ms ease, transform 200ms var(--ease-spring);
+  }
+  .theme-toggle:hover { color: var(--foreground); transform: rotate(15deg) scale(1.08); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div class="kicker stagger-in" style="--i:0">Trenova TMS · Navigation Explorations · Rev 2</div>
+    <h1 class="stagger-in" style="--i:1">Three directions for the sidebar</h1>
+    <p class="stagger-in" style="--i:2">
+      Rebuilt to a higher bar: layered surfaces, glass menus, a sliding active indicator, staggered
+      load choreography, live presence and activity. Same real module structure from
+      <span style="font-family:var(--font-table);font-size:12px">navigation.config.ts</span> and the
+      same Billing Queue page in every mockup, so structure is the only variable.
+    </p>
+  </div>
+
+  <div class="grid">
+    <a class="card stagger-in" style="--i:3" href="variant-1-unified.html">
+      <div class="thumb">
+        <div class="t-panel wide t-accent"></div>
+        <div class="t-main"></div>
+      </div>
+      <div class="card-body">
+        <span class="num">VARIANT 01</span>
+        <h2>Unified Sidebar</h2>
+        <p>
+          One sidebar, everything labeled. Modules grouped under Operations / Financial /
+          Administration with spring-eased inline expansion, a glowing indicator that glides
+          between items, favorites up top, presence in the footer.
+        </p>
+        <div class="traits"><span class="trait">One panel</span><span class="trait">Sliding indicator</span><span class="trait">Org switcher menu</span></div>
+      </div>
+    </a>
+
+    <a class="card stagger-in" style="--i:4" href="variant-2-rail-flyout.html">
+      <div class="thumb">
+        <div class="t-rail t-accent"></div>
+        <div class="t-panel"></div>
+        <div class="t-main"></div>
+      </div>
+      <div class="card-body">
+        <span class="num">VARIANT 02</span>
+        <h2>Labeled Rail + Rich Panel</h2>
+        <p>
+          Your current structure, elevated. Labeled rail with a sliding notch and pulsing alert
+          badges; glass flyout previews on hover; the panel gains a gradient quick action, live
+          counts, and a real-time activity feed at the bottom.
+        </p>
+        <div class="traits"><span class="trait">Closest to current</span><span class="trait">Glass flyouts</span><span class="trait">Live activity</span></div>
+      </div>
+    </a>
+
+    <a class="card stagger-in" style="--i:5" href="variant-3-command-center.html">
+      <div class="thumb">
+        <div class="t-panel wide" style="display:flex;flex-direction:column;gap:5px;padding:5px">
+          <div class="t-seg t-accent" style="height:20px"></div>
+          <div class="t-seg" style="height:30px"></div>
+          <div class="t-seg" style="flex:1"></div>
+        </div>
+        <div class="t-main"></div>
+      </div>
+      <div class="card-body">
+        <span class="num">VARIANT 03</span>
+        <h2>Command Center</h2>
+        <p>
+          The sidebar leads with work: who's on duty, a cross-module "Needs Attention" inbox with
+          pulsing status dots and counts that tick up live, quick actions with a brand glow, and a
+          streaming activity feed. Browsing is still there, below the pulse.
+        </p>
+        <div class="traits"><span class="trait">Work-first</span><span class="trait">Live counts</span><span class="trait">Activity stream</span></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="note stagger-in" style="--i:6">
+    <strong>Serve this folder:</strong> <kbd>python3 -m http.server 8090 -d design/sidebar-variants</kbd>
+    then open <kbd>http://localhost:8090</kbd>. Dark mode is the default; every page has a theme
+    toggle in the bottom-right pill. Watch for: the load-in choreography, the indicator gliding when
+    you click items, accordion easing, hover flyouts (variant 2), and the live feed inserting new
+    events every few seconds (variants 2 &amp; 3). Counts and activity are simulated.
+  </div>
+</div>
+
+<button type="button" class="theme-toggle" data-theme-icon onclick="TN.toggleTheme()" title="Toggle theme"></button>
+<script src="assets/base.js"></script>
+<script>
+  document.querySelector("[data-theme-icon]").innerHTML =
+    TN.icon(document.documentElement.dataset.theme === "dark" ? "sun" : "moon");
+</script>
+</body>
+</html>

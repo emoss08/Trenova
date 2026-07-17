@@ -1,20 +1,14 @@
-import { SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import { buildCommandHref } from "@/components/command-palette/route-command-data";
+import { SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionCommand } from "@/config/navigation.types";
+import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
+import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { usePermissionStore } from "@/stores/permission-store";
 import { Operation } from "@/types/permission";
 import type { LucideIcon } from "lucide-react";
-import { Building2Icon, MapPinIcon, TruckIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
-
-const SIDEBAR_QUICK_ACTIONS: Record<string, LucideIcon> = {
-  "create-shipment": TruckIcon,
-  "create-worker": UsersIcon,
-  "create-location": MapPinIcon,
-  "create-customer": Building2Icon,
-};
 
 interface SidebarQuickAction {
   definition: QuickActionCommand;
@@ -24,13 +18,17 @@ interface SidebarQuickAction {
 
 export function QuickActionsSection() {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
+  const { data: preferences } = useSidebarPreferences();
+  const quickActionIds = preferences?.quickActionIds;
 
   const actions = useMemo<SidebarQuickAction[]>(() => {
     const definitions = navigationConfig.quickActions ?? [];
-    return definitions
-      .filter((definition) => {
-        const icon = SIDEBAR_QUICK_ACTIONS[definition.id];
-        if (!icon) {
+    const definitionsById = new Map(definitions.map((definition) => [definition.id, definition]));
+
+    return (quickActionIds ?? [])
+      .map((id) => definitionsById.get(id))
+      .filter((definition): definition is QuickActionCommand => {
+        if (!definition || !QUICK_ACTION_ICONS[definition.id]) {
           return false;
         }
         if (!definition.resource) {
@@ -40,10 +38,10 @@ export function QuickActionsSection() {
       })
       .map((definition) => ({
         definition,
-        icon: SIDEBAR_QUICK_ACTIONS[definition.id],
+        icon: QUICK_ACTION_ICONS[definition.id],
         href: buildCommandHref(definition.path, definition.query),
       }));
-  }, [hasPermission]);
+  }, [hasPermission, quickActionIds]);
 
   if (actions.length === 0) {
     return null;

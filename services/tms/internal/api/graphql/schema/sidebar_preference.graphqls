@@ -1,0 +1,69 @@
+type SidebarSectionPreference {
+  key: String!
+  hidden: Boolean!
+}
+
+type SidebarActivityPreference {
+  pageSize: Int!
+  defaultOpen: Boolean!
+}
+
+type SidebarPreferences {
+  schemaVersion: Int!
+  version: Int!
+  sections: [SidebarSectionPreference!]!
+  attentionMetrics: [String!]!
+  quickActionIds: [String!]!
+  activity: SidebarActivityPreference!
+}
+
+type SidebarSectionOption {
+  key: String!
+  label: String!
+  hideable: Boolean!
+}
+
+type SidebarAttentionMetricOption {
+  key: String!
+  label: String!
+}
+
+type SidebarQuickActionOption {
+  id: String!
+  label: String!
+}
+
+type SidebarCustomizationOptions {
+  sections: [SidebarSectionOption!]!
+  attentionMetrics: [SidebarAttentionMetricOption!]!
+  quickActions: [SidebarQuickActionOption!]!
+  maxQuickActions: Int!
+  activityPageSizes: [Int!]!
+}
+
+input SidebarSectionPreferenceInput {
+  key: String!
+  hidden: Boolean!
+}
+
+input SidebarActivityPreferenceInput {
+  pageSize: Int!
+  defaultOpen: Boolean!
+}
+
+input SidebarPreferencesInput {
+  version: Int!
+  sections: [SidebarSectionPreferenceInput!]!
+  attentionMetrics: [String!]!
+  quickActionIds: [String!]!
+  activity: SidebarActivityPreferenceInput!
+}
+
+extend type Query {
+  sidebarPreferences: SidebarPreferences!
+  sidebarCustomizationOptions: SidebarCustomizationOptions!
+}
+
+extend type Mutation {
+  updateSidebarPreferences(input: SidebarPreferencesInput!): SidebarPreferences!
+}

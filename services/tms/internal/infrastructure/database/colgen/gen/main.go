@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 	"text/template"
+
+	"github.com/emoss08/trenova/internal/infrastructure/database/structparse"
 )
 
 var (
@@ -60,7 +62,7 @@ func main() {
 		}
 
 		pkgDir := filepath.Join(*domainDir, entry.Name())
-		result, parseErr := ParsePackage(pkgDir)
+		result, parseErr := structparse.ParsePackage(pkgDir)
 		if parseErr != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", entry.Name(), parseErr)
 			os.Exit(1)
@@ -94,7 +96,11 @@ func main() {
 	fmt.Printf("Generated column constants for %d models\n", totalModels)
 }
 
-func generateColumnsFile(tmpl *template.Template, models []ModelInfo, pkgName string) error {
+func generateColumnsFile(
+	tmpl *template.Template,
+	models []structparse.Model,
+	pkgName string,
+) error {
 	data := columnsTemplateData{
 		Models: models,
 	}
@@ -113,7 +119,7 @@ func generateColumnsFile(tmpl *template.Template, models []ModelInfo, pkgName st
 	return os.WriteFile(outputPath, formatted, 0o644)
 }
 
-func generateBridgeFile(tmpl *template.Template, models []ModelInfo, pkgDir string) error {
+func generateBridgeFile(tmpl *template.Template, models []structparse.Model, pkgDir string) error {
 	data := bridgeTemplateData{
 		PackageName: models[0].PackageName,
 		Models:      models,

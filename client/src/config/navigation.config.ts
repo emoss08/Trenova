@@ -288,24 +288,6 @@ const ediModule: NavModule = {
       badge: "edi-attention",
     },
     {
-      id: "edi-partners",
-      label: "Partners",
-      path: "/edi/partners",
-      resource: Resource.EDI,
-    },
-    {
-      id: "edi-communication-profiles",
-      label: "Communication Profiles",
-      path: "/edi/communication-profiles",
-      resource: Resource.EDI,
-    },
-    {
-      id: "edi-mapping-profiles",
-      label: "Mapping Profiles",
-      path: "/edi/mapping-profiles",
-      resource: Resource.EDI,
-    },
-    {
       id: "edi-designer",
       label: "Template Designer",
       path: "/edi/designer",
@@ -340,6 +322,31 @@ const ediModule: NavModule = {
       label: "Test Cases",
       path: "/edi/test-cases",
       resource: Resource.EDI,
+    },
+    {
+      id: "edi-config-group",
+      label: "Configuration Files",
+      defaultOpen: false,
+      items: [
+        {
+          id: "edi-partners",
+          label: "Partners",
+          path: "/edi/partners",
+          resource: Resource.EDI,
+        },
+        {
+          id: "edi-communication-profiles",
+          label: "Communication Profiles",
+          path: "/edi/communication-profiles",
+          resource: Resource.EDI,
+        },
+        {
+          id: "edi-mapping-profiles",
+          label: "Mapping Profiles",
+          path: "/edi/mapping-profiles",
+          resource: Resource.EDI,
+        },
+      ],
     },
   ],
 };
@@ -476,9 +483,16 @@ const reportsModule: NavModule = {
   basePath: "/reports",
   navigation: [
     {
-      id: "reports-dashboard",
-      label: "Reports Dashboard",
+      id: "reports-library",
+      label: "Report Library",
       path: "/reports",
+      resource: Resource.Report,
+    },
+    {
+      id: "reports-run-history",
+      label: "Run History",
+      path: "/reports/runs",
+      resource: Resource.Report,
     },
   ],
 };

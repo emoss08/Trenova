@@ -21,6 +21,22 @@ type WorkerRegistry interface {
 	GetWorkerOptions() worker.Options
 }
 
+type QueueFilter struct {
+	Queues []string
+}
+
+func (f *QueueFilter) Allows(taskQueue string) bool {
+	if f == nil || len(f.Queues) == 0 {
+		return true
+	}
+	for _, q := range f.Queues {
+		if q == taskQueue {
+			return true
+		}
+	}
+	return false
+}
+
 type WorkerConfig struct {
 	MaxConcurrentActivityExecutionSize     int
 	MaxConcurrentWorkflowTaskExecutionSize int

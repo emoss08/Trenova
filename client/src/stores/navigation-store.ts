@@ -5,12 +5,10 @@ import { persist } from "zustand/middleware";
 interface NavigationState {
   activeModuleId: ModuleId | null;
   sidebarCollapsed: boolean;
-  activitySectionOpen: boolean;
 
   setActiveModuleId: (id: ModuleId | null) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
-  setActivitySectionOpen: (open: boolean) => void;
 }
 
 export const useNavigationStore = create<NavigationState>()(
@@ -18,7 +16,6 @@ export const useNavigationStore = create<NavigationState>()(
     (set) => ({
       activeModuleId: null,
       sidebarCollapsed: false,
-      activitySectionOpen: true,
 
       setActiveModuleId: (id: ModuleId | null) => {
         set({ activeModuleId: id });
@@ -31,16 +28,11 @@ export const useNavigationStore = create<NavigationState>()(
       setSidebarCollapsed: (collapsed: boolean) => {
         set({ sidebarCollapsed: collapsed });
       },
-
-      setActivitySectionOpen: (open: boolean) => {
-        set({ activitySectionOpen: open });
-      },
     }),
     {
       name: "navigation-storage",
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
-        activitySectionOpen: state.activitySectionOpen,
       }),
     },
   ),

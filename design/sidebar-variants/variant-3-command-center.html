@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Variant 3 — Command Center · Trenova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/base.css" />
+<style>
+  .sb {
+    display: flex;
+    flex-direction: column;
+    width: 268px;
+    flex-shrink: 0;
+  }
+  .sb-top {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 13px 8px;
+  }
+  .sb-top .name { font-size: 12.5px; font-weight: 600; flex: 1; }
+  .sb-top > .tn-icon { width: 13px; height: 13px; color: var(--faint-foreground); }
+  .sb-search { padding: 0 12px 6px; }
+  .sb-search .search-pill { width: 100%; min-width: 0; }
+  .sb-body { flex: 1; padding: 0 10px 12px; }
+
+  .duty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 9px;
+    margin: 8px 2px 2px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: color-mix(in oklab, var(--surface) 60%, transparent);
+    box-shadow: inset 0 1px 0 var(--edge-light);
+  }
+
+  .work-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 6px 9px;
+    border-radius: 8px;
+    text-align: left;
+    position: relative;
+    transition: background 150ms ease, transform 200ms var(--ease-out);
+  }
+  .work-row:hover { background: var(--hover); transform: translateX(2px); }
+  .work-row .wl { flex: 1; min-width: 0; }
+  .work-row .wt {
+    display: block;
+    font-size: 12.5px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .work-row .wm {
+    display: block;
+    font-size: 10px;
+    color: var(--faint-foreground);
+    line-height: 1.25;
+  }
+
+  .qa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 2px;
+  }
+  .qa-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 29px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: color-mix(in oklab, var(--foreground) 82%, transparent);
+    background: color-mix(in oklab, var(--surface) 55%, transparent);
+    box-shadow: inset 0 1px 0 var(--edge-light);
+    white-space: nowrap;
+    transition: background 150ms ease, border-color 150ms ease, box-shadow 200ms ease, transform 120ms ease;
+  }
+  .qa-btn:hover {
+    background: var(--hover-strong);
+    border-color: color-mix(in oklab, var(--brand) 35%, var(--border));
+    box-shadow: inset 0 1px 0 var(--edge-light), 0 0 12px -4px color-mix(in oklab, var(--brand) 45%, transparent);
+  }
+  .qa-btn:active { transform: scale(0.97); }
+  .qa-btn .tn-icon { width: 12px; height: 12px; color: var(--muted-foreground); transition: color 150ms ease; }
+  .qa-btn:hover .tn-icon { color: var(--brand-text); }
+
+  .mod-kids {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 1px 0 3px 16px;
+    padding-left: 9px;
+    border-left: 1px solid var(--border);
+  }
+  .mod-kids .ni { height: 25px; font-size: 12px; }
+  .g-lab {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--faint-foreground);
+    padding: 7px 9px 2px;
+  }
+
+  .sb-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .sb-foot .who { flex: 1; font-size: 12px; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sb sidebar-surface">
+    <div class="sb-top stagger-in" style="--i:0">
+      <span class="org-logo">TR</span>
+      <span class="name">Trenova Logistics</span>
+      <span data-ic="chevronsUpDown"></span>
+    </div>
+    <div class="sb-search stagger-in" style="--i:1">
+      <button type="button" class="search-pill" data-search></button>
+    </div>
+    <div class="sb-body tn-scroll" id="body"></div>
+    <div class="sb-foot">
+      <span class="avatar">EM</span>
+      <span class="who">Eric Moss</span>
+      <button type="button" class="icon-btn" data-ic="bell" title="Notifications"></button>
+      <button type="button" class="icon-btn" data-ic="settings" title="Settings"></button>
+    </div>
+  </aside>
+  <div class="main">
+    <div id="hdr"></div>
+    <main class="page" id="page"></main>
+  </div>
+</div>
+
+<script src="assets/base.js"></script>
+<script>
+  document.querySelectorAll("[data-ic]").forEach((el) => { el.innerHTML = TN.icon(el.dataset.ic); });
+  document.querySelector("[data-search]").innerHTML =
+    TN.icon("search") + "<span>Search or jump to…</span><kbd>⌘K</kbd>";
+
+  const body = document.getElementById("body");
+  let html = "";
+
+  html += '<div class="duty">' + TN.presenceRow("4 dispatchers on duty") + "</div>";
+
+  html += '<div class="sec-label">Needs Attention</div>';
+  html += TN.NAV.attention
+    .map(
+      (a) =>
+        '<button type="button" class="work-row">' +
+        '<span class="dot' + (a.tone ? " " + a.tone : "") + '"></span>' +
+        '<span class="wl"><span class="wt">' + a.label + '</span><span class="wm">' +
+        a.module + "</span></span>" + TN.badge(a) + "</button>",
+    )
+    .join("");
+
+  html += '<div class="sec-label">Quick Actions</div>';
+  html +=
+    '<div class="qa-grid">' +
+    [["truck", "New Shipment"], ["receipt", "New Invoice"], ["users", "New Worker"], ["mapPin", "New Location"]]
+      .map((q) => '<button type="button" class="qa-btn">' + TN.icon(q[0]) + q[1] + "</button>")
+      .join("") +
+    "</div>";
+
+  html += '<div class="sec-label">Live Activity</div>';
+  html += '<div id="feed" style="padding:0 1px"></div>';
+
+  html += '<div class="sec-label">Browse</div>';
+  html += '<button type="button" class="ni">' + TN.icon("home") + '<span class="label">Home</span></button>';
+  for (const group of TN.NAV.groups) {
+    html += group.modules
+      .map((m) => {
+        const mod = TN.NAV.modules[m];
+        const hasKids = mod.items.length > 0;
+        const expanded = m === "billing";
+        let kids = "";
+        if (hasKids) {
+          kids = mod.items
+            .map((item) => {
+              if (item.group) {
+                return (
+                  '<div class="g-lab">' + item.group + "</div>" +
+                  item.items
+                    .map((l) => '<button type="button" class="ni"><span class="label">' + l + "</span></button>")
+                    .join("")
+                );
+              }
+              return (
+                '<button type="button" class="ni' + (item.active ? " active" : "") + '">' +
+                '<span class="label">' + item.label + "</span>" + TN.badge(item) + "</button>"
+              );
+            })
+            .join("");
+        }
+        return (
+          '<div class="mod"><button type="button" class="ni mod-row" aria-expanded="' + expanded + '">' +
+          TN.icon(mod.icon) + '<span class="label">' + mod.short + "</span>" +
+          (hasKids ? TN.icon("chevronRight", "chev") : "") + "</button>" +
+          (hasKids
+            ? '<div class="acc' + (expanded ? " open" : "") + '"><div class="acc-inner"><div class="mod-kids">' +
+              kids + "</div></div></div>"
+            : "") +
+          "</div>"
+        );
+      })
+      .join("");
+  }
+  body.innerHTML = html;
+
+  const moveInd = TN.attachIndicator(body);
+  TN.stagger(body, ":scope > .duty, :scope > .sec-label, :scope > .work-row, :scope > .qa-grid, :scope > #feed, :scope > .ni, :scope > .mod");
+  setTimeout(moveInd, 800);
+
+  body.addEventListener("click", (e) => {
+    const modRow = e.target.closest(".mod-row");
+    if (modRow) {
+      const open = modRow.getAttribute("aria-expanded") === "true";
+      modRow.setAttribute("aria-expanded", String(!open));
+      const acc = modRow.parentElement.querySelector(":scope > .acc");
+      if (acc) acc.classList.toggle("open", !open);
+      setTimeout(moveInd, 340);
+      return;
+    }
+    const ni = e.target.closest(".ni");
+    if (ni) {
+      body.querySelectorAll(".ni.active").forEach((n) => n.classList.remove("active"));
+      ni.classList.add("active");
+      moveInd();
+    }
+  });
+  body.addEventListener("transitionend", (e) => {
+    if (e.target.classList && e.target.classList.contains("acc")) moveInd();
+  });
+
+  TN.mountActivity(document.getElementById("feed"), 3);
+
+  /* Simulated live counts: a queue count ticks up with a pop */
+  if (!TN.reducedMotion) {
+    setInterval(() => {
+      const counts = body.querySelectorAll(".work-row .count");
+      const el = counts[Math.floor(Math.random() * counts.length)];
+      if (!el) return;
+      el.textContent = String(parseInt(el.textContent, 10) + 1);
+      el.classList.remove("pop");
+      void el.offsetWidth;
+      el.classList.add("pop");
+    }, 9000);
+  }
+
+  document.getElementById("hdr").outerHTML = TN.header(["Billing", "Billing Queue"]);
+  document.getElementById("page").innerHTML = TN.pageMock();
+  TN.mountPill("3 · Command Center");
+</script>
+</body>
+</html>

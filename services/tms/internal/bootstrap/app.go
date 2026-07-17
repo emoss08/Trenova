@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
@@ -29,6 +30,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
+	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	"go.uber.org/fx"
 )
 
@@ -69,6 +73,10 @@ func Options() fx.Option {
 		weatheralertjobs.Module,
 		fiscaljobs.Module,
 		invoiceadjustmentjobs.Module,
+		reportjobs.Module,
+		reportingrender.Module,
+		reportingresultcache.Module,
+		fx.Provide(reportingexecutor.New),
 		analyticsservice.Module,
 	)
 }

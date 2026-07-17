@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const dataRetentionSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().nullish(),
   organizationId: z.string(),
   businessUnitId: z.string(),
   auditRetentionPeriod: z.number(),

@@ -1,0 +1,12 @@
+query PreviewReport($definition: ReportIRInput!, $params: JSON) {
+  previewReport(definition: $definition, params: $params) {
+    columns {
+      id
+      label
+      type
+      format
+    }
+    rows
+    truncated
+  }
+}

@@ -540,6 +540,7 @@ type TemporalWorkerConfig struct {
 	MaxActivityPollers      int           `mapstructure:"maxActivityPollers"      validate:"min=0,max=100"`
 	MaxWorkflowPollers      int           `mapstructure:"maxWorkflowPollers"      validate:"min=0,max=100"`
 	WorkerStopTimeout       time.Duration `mapstructure:"workerStopTimeout"`
+	Queues                  []string      `mapstructure:"queues"`
 }
 
 func (c *TemporalWorkerConfig) GetMaxConcurrentActivities() int {
@@ -710,6 +711,186 @@ func (c *CacheConfig) GetRedisAddr() string {
 	return net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
 }
 
+type ReportingConfig struct {
+	PoolMaxOpenConns        int           `mapstructure:"poolMaxOpenConns"        validate:"min=0,max=64"`
+	PoolMaxIdleConns        int           `mapstructure:"poolMaxIdleConns"        validate:"min=0,max=64"`
+	StatementTimeout        time.Duration `mapstructure:"statementTimeout"`
+	PreviewStatementTimeout time.Duration `mapstructure:"previewStatementTimeout"`
+	MaxRunDuration          time.Duration `mapstructure:"maxRunDuration"`
+	MaxRows                 int64         `mapstructure:"maxRows"                 validate:"min=0"`
+	MaxArtifactBytes        int64         `mapstructure:"maxArtifactBytes"        validate:"min=0"`
+	PreviewRowLimit         int           `mapstructure:"previewRowLimit"         validate:"min=0,max=1000"`
+	PDFMaxRows              int64         `mapstructure:"pdfMaxRows"              validate:"min=0"`
+	MaxToOneJoins           int           `mapstructure:"maxToOneJoins"           validate:"min=0,max=16"`
+	MaxToManySubqueries     int           `mapstructure:"maxToManySubqueries"     validate:"min=0,max=8"`
+	MaxDimensions           int           `mapstructure:"maxDimensions"           validate:"min=0,max=16"`
+	MaxPivotColumns         int           `mapstructure:"maxPivotColumns"         validate:"min=0,max=200"`
+	MaxPathDepth            int           `mapstructure:"maxPathDepth"            validate:"min=0,max=6"`
+	MaxDefinitionLimit      int           `mapstructure:"maxDefinitionLimit"      validate:"min=0"`
+	MaxConcurrentRunsPerOrg int           `mapstructure:"maxConcurrentRunsPerOrg" validate:"min=0,max=32"`
+	MaxQueuedRunsPerOrg     int           `mapstructure:"maxQueuedRunsPerOrg"     validate:"min=0,max=256"`
+	ArtifactRetention       time.Duration `mapstructure:"artifactRetention"`
+	ResultCacheTTL          time.Duration `mapstructure:"resultCacheTtl"`
+	ArtifactPrefix          string        `mapstructure:"artifactPrefix"`
+	CSVIncludeBOM           bool          `mapstructure:"csvIncludeBom"`
+	ExplainCostLimit        float64       `mapstructure:"explainCostLimit"        validate:"min=0"`
+	ExplainRowLimit         float64       `mapstructure:"explainRowLimit"         validate:"min=0"`
+}
+
+func (c *ReportingConfig) GetPoolMaxOpenConns() int {
+	if c.PoolMaxOpenConns == 0 {
+		return 4
+	}
+	return c.PoolMaxOpenConns
+}
+
+func (c *ReportingConfig) GetPoolMaxIdleConns() int {
+	if c.PoolMaxIdleConns == 0 {
+		return 2
+	}
+	return c.PoolMaxIdleConns
+}
+
+func (c *ReportingConfig) GetStatementTimeout() time.Duration {
+	if c.StatementTimeout == 0 {
+		return 5 * time.Minute
+	}
+	return c.StatementTimeout
+}
+
+func (c *ReportingConfig) GetPreviewStatementTimeout() time.Duration {
+	if c.PreviewStatementTimeout == 0 {
+		return 10 * time.Second
+	}
+	return c.PreviewStatementTimeout
+}
+
+func (c *ReportingConfig) GetMaxRunDuration() time.Duration {
+	if c.MaxRunDuration == 0 {
+		return 30 * time.Minute
+	}
+	return c.MaxRunDuration
+}
+
+func (c *ReportingConfig) GetMaxRows() int64 {
+	if c.MaxRows == 0 {
+		return 5_000_000
+	}
+	return c.MaxRows
+}
+
+func (c *ReportingConfig) GetMaxArtifactBytes() int64 {
+	if c.MaxArtifactBytes == 0 {
+		return 1 << 30
+	}
+	return c.MaxArtifactBytes
+}
+
+func (c *ReportingConfig) GetPreviewRowLimit() int {
+	if c.PreviewRowLimit == 0 {
+		return 100
+	}
+	return c.PreviewRowLimit
+}
+
+func (c *ReportingConfig) GetPDFMaxRows() int64 {
+	if c.PDFMaxRows == 0 {
+		return 5000
+	}
+	return c.PDFMaxRows
+}
+
+func (c *ReportingConfig) GetMaxToOneJoins() int {
+	if c.MaxToOneJoins == 0 {
+		return 6
+	}
+	return c.MaxToOneJoins
+}
+
+func (c *ReportingConfig) GetMaxToManySubqueries() int {
+	if c.MaxToManySubqueries == 0 {
+		return 3
+	}
+	return c.MaxToManySubqueries
+}
+
+func (c *ReportingConfig) GetMaxDimensions() int {
+	if c.MaxDimensions == 0 {
+		return 6
+	}
+	return c.MaxDimensions
+}
+
+func (c *ReportingConfig) GetMaxPivotColumns() int {
+	if c.MaxPivotColumns == 0 {
+		return 50
+	}
+	return c.MaxPivotColumns
+}
+
+func (c *ReportingConfig) GetMaxPathDepth() int {
+	if c.MaxPathDepth == 0 {
+		return 3
+	}
+	return c.MaxPathDepth
+}
+
+func (c *ReportingConfig) GetMaxDefinitionLimit() int {
+	if c.MaxDefinitionLimit == 0 {
+		return 100_000
+	}
+	return c.MaxDefinitionLimit
+}
+
+func (c *ReportingConfig) GetMaxConcurrentRunsPerOrg() int {
+	if c.MaxConcurrentRunsPerOrg == 0 {
+		return 2
+	}
+	return c.MaxConcurrentRunsPerOrg
+}
+
+func (c *ReportingConfig) GetMaxQueuedRunsPerOrg() int {
+	if c.MaxQueuedRunsPerOrg == 0 {
+		return 10
+	}
+	return c.MaxQueuedRunsPerOrg
+}
+
+func (c *ReportingConfig) GetArtifactRetention() time.Duration {
+	if c.ArtifactRetention == 0 {
+		return 7 * 24 * time.Hour
+	}
+	return c.ArtifactRetention
+}
+
+func (c *ReportingConfig) GetResultCacheTTL() time.Duration {
+	if c.ResultCacheTTL == 0 {
+		return 15 * time.Minute
+	}
+	return c.ResultCacheTTL
+}
+
+func (c *ReportingConfig) GetArtifactPrefix() string {
+	if c.ArtifactPrefix == "" {
+		return "reports"
+	}
+	return c.ArtifactPrefix
+}
+
+func (c *ReportingConfig) GetExplainCostLimit() float64 {
+	if c.ExplainCostLimit == 0 {
+		return 5_000_000
+	}
+	return c.ExplainCostLimit
+}
+
+func (c *ReportingConfig) GetExplainRowLimit() float64 {
+	if c.ExplainRowLimit == 0 {
+		return 10_000_000
+	}
+	return c.ExplainRowLimit
+}
+
 type AppConfig struct {
 	Name               string `mapstructure:"name"               validate:"required,min=1,max=100"`
 	Env                string `mapstructure:"env"                validate:"required,oneof=development staging production test"`
@@ -838,6 +1019,7 @@ type Config struct {
 	Update               UpdateConfig               `mapstructure:"update"`
 	Twilio               TwilioConfig               `mapstructure:"twilio"`
 	Platform             PlatformConfig             `mapstructure:"platform"`
+	Reporting            ReportingConfig            `mapstructure:"reporting"`
 }
 
 func (c *Config) GetCacheConfig() *CacheConfig { return &c.Cache }
@@ -861,6 +1043,8 @@ func (c *Config) GetAblyConfig() *AblyConfig { return &c.Ably }
 func (c *Config) GetSystemConfig() *SystemConfig { return &c.System }
 
 func (c *Config) GetPlatformConfig() *PlatformConfig { return &c.Platform }
+
+func (c *Config) GetReportingConfig() *ReportingConfig { return &c.Reporting }
 
 func (c *Config) GetDSN(password string) string {
 	escapedPassword := url.QueryEscape(password)

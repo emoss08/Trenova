@@ -6,7 +6,7 @@ import { Operation, Resource } from "@/types/permission";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 const ATTENTION_REFETCH_INTERVAL = 60_000;
-const RECENT_ACTIVITY_PAGE_SIZE = 5;
+const RECENT_ACTIVITY_DEFAULT_PAGE_SIZE = 5;
 const RECENT_ACTIVITY_MAX_PAGES = 6;
 
 export type RecentActivityEntry = RecentActivityQuery["auditEntries"]["edges"][number]["node"];
@@ -19,19 +19,19 @@ export function useAttentionSummary() {
   });
 }
 
-export function useRecentActivityInfinite() {
+export function useRecentActivityInfinite(pageSize = RECENT_ACTIVITY_DEFAULT_PAGE_SIZE) {
   const canReadAuditLog = usePermissionStore((state) =>
     state.hasPermission(Resource.AuditLog, Operation.Read),
   );
 
   return useInfiniteQuery({
-    queryKey: queries.attention.recentActivity.queryKey,
+    queryKey: [...queries.attention.recentActivity.queryKey, pageSize],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) =>
       requestGraphQL({
         document: RecentActivityDocument,
         operationName: "RecentActivity",
-        variables: { first: RECENT_ACTIVITY_PAGE_SIZE, after: pageParam },
+        variables: { first: pageSize, after: pageParam },
       }),
     getNextPageParam: (lastPage) => {
       const { hasNextPage, endCursor } = lastPage.auditEntries.pageInfo;

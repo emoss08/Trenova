@@ -102,6 +102,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicetyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sidebarpreferencerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenteventrepository"
@@ -141,6 +143,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	ratetablerepository.New,
 	tableconfigurationrepository.New,
 	pagefavoriterepository.New,
+	reportrepository.NewDefinitionRepository,
+	reportrepository.NewRunRepository,
+	reportrepository.NewScheduleRepository,
+	sidebarpreferencerepository.New,
 	billingqueuefilterpresetrepository.New,
 	equipmentmanufacturerrepository.New,
 	equipmenttyperepository.New,

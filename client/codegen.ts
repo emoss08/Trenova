@@ -11,6 +11,7 @@ const config: CodegenConfig = {
       preset: "client",
       presetConfig: {
         persistedDocuments: true,
+        fragmentMasking: { unmaskFunctionName: "getFragmentData" },
       },
       config: {
         documentMode: "string",

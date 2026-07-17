@@ -1,0 +1,38 @@
+query ReportCatalog {
+  reportCatalog {
+    version
+    entities {
+      key
+      resource
+      label
+      pluralLabel
+      description
+      category
+      ownScopeSupported
+      fields {
+        key
+        label
+        description
+        type
+        format
+        nullable
+        enumValues {
+          value
+          label
+        }
+        aggregations
+        filterable
+        groupable
+        accessible
+        sensitivity
+      }
+      edges {
+        name
+        label
+        target
+        cardinality
+        traversable
+      }
+    }
+  }
+}

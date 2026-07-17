@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
@@ -26,13 +27,16 @@ Examples:
   trenova worker run          # Run the worker service`,
 }
 
+var workerQueues []string
+
 var workerRunCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the worker service",
 	Long: `Run the worker service.
 
 Examples:
-  trenova worker run          # Run the worker service`,
+  trenova worker run                        # Run all task queues
+  trenova worker run --queues=report-queue  # Run only the listed task queues`,
 	RunE: runWorker,
 }
 
@@ -58,15 +62,26 @@ func startWorker(lc fx.Lifecycle, params WorkerParams) {
 }
 
 func runWorker(_ *cobra.Command, _ []string) error {
-	app := bootstrap.NewApp(
+	opts := []fx.Option{
 		bootstrap.WorkerOptions(),
 		fx.Invoke(startWorker),
-	)
+	}
+	if len(workerQueues) > 0 {
+		opts = append(opts, fx.Supply(&registry.QueueFilter{Queues: workerQueues}))
+	}
+
+	app := bootstrap.NewApp(opts...)
 
 	app.Run()
 	return nil
 }
 
 func init() {
+	workerRunCmd.Flags().StringSliceVar(
+		&workerQueues,
+		"queues",
+		nil,
+		"task queues to run (default: all); overrides temporal.worker.queues config",
+	)
 	WorkerCmd.AddCommand(workerRunCmd)
 }

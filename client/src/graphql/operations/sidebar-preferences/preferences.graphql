@@ -1,0 +1,36 @@
+query SidebarPreferences {
+  sidebarPreferences {
+    schemaVersion
+    version
+    sections {
+      key
+      hidden
+    }
+    attentionMetrics
+    quickActionIds
+    activity {
+      pageSize
+      defaultOpen
+    }
+  }
+}
+
+query SidebarCustomizationOptions {
+  sidebarCustomizationOptions {
+    sections {
+      key
+      label
+      hideable
+    }
+    attentionMetrics {
+      key
+      label
+    }
+    quickActions {
+      id
+      label
+    }
+    maxQuickActions
+    activityPageSizes
+  }
+}

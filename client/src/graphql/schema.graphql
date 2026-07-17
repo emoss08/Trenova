@@ -283,6 +283,17 @@ enum CDLClass {
   C
 }
 
+type CannedReport {
+  category: String!
+  defaultFormat: String!
+  definition: JSON!
+  description: String!
+  key: String!
+  name: String!
+  tags: [String!]!
+  version: String!
+}
+
 type Commodity {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -328,6 +339,15 @@ enum ConfigurationVisibility {
   Private
   Public
   Shared
+}
+
+input CreateReportScheduleInput {
+  cronExpression: String!
+  definitionId: ID!
+  emailRecipients: [String!]
+  enabled: Boolean!
+  formats: [String!]!
+  timezone: String
 }
 
 type CustomFieldDefinition {
@@ -1313,6 +1333,11 @@ type FleetCodeEdge {
   node: FleetCode!
 }
 
+input ForkCannedReportInput {
+  cannedKey: String!
+  name: String
+}
+
 type FormulaTemplate {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -1863,6 +1888,7 @@ type Mutation {
   calculateShipmentLoadingOptimization(input: ShipmentLoadingOptimizationInput!): ShipmentLoadingOptimizationResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
   cancelOrder(cancelReason: String!, id: ID!): Order!
+  cancelReportRun(id: ID!): ReportRun!
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
@@ -1872,15 +1898,20 @@ type Mutation {
   createInvoiceFromOrder(orderId: ID!): Invoice!
   createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
   createOrder(input: OrderInput!): Order!
+  createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
+  createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
+  deleteReportDefinition(id: ID!): Boolean!
+  deleteReportSchedule(id: ID!): Boolean!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
+  forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
   markAllNotificationsRead: Boolean!
@@ -1894,6 +1925,8 @@ type Mutation {
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
+  resetCannedFork(id: ID!): ReportDefinition!
+  runReport(input: RunReportInput!): ReportRun!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
@@ -1904,8 +1937,11 @@ type Mutation {
   updateOrder(id: ID!, input: OrderInput!): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
+  updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
+  updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
+  updateSidebarPreferences(input: SidebarPreferencesInput!): SidebarPreferences!
   updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
@@ -2136,6 +2172,7 @@ type Query {
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
   auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
+  cannedReports: [CannedReport!]!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
   customFieldDefinition(id: ID!): CustomFieldDefinition
@@ -2196,8 +2233,16 @@ type Query {
   order(id: ID!): Order
   orders(input: DataTableConnectionInput!): OrderConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
+  previewReport(definition: ReportIRInput!, params: JSON): ReportPreview!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
+  reportCatalog: ReportCatalog!
+  reportDefinition(id: ID!): ReportDefinition!
+  reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
+  reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
+  reportRun(id: ID!): ReportRun!
+  reportRuns(filter: ReportRunsFilterInput, input: DataTableConnectionInput!): ReportRunConnection!
+  reportSchedules(definitionId: ID): [ReportSchedule!]!
   role(id: ID!): Role
   roles(input: DataTableConnectionInput!): RoleConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
@@ -2219,6 +2264,8 @@ type Query {
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipments(input: ShipmentsInput!): ShipmentConnection!
+  sidebarCustomizationOptions: SidebarCustomizationOptions!
+  sidebarPreferences: SidebarPreferences!
   storedMileage(id: ID!): StoredMileage
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
   tableConfiguration(id: ID!): TableConfiguration
@@ -2282,6 +2329,243 @@ input RemoveOrderChargeInput {
   orderId: ID!
 }
 
+type ReportCatalog {
+  entities: [ReportCatalogEntity!]!
+  version: String!
+}
+
+type ReportCatalogEdge {
+  cardinality: String!
+  label: String!
+  name: String!
+  target: String!
+  traversable: Boolean!
+}
+
+type ReportCatalogEntity {
+  category: String!
+  description: String
+  edges: [ReportCatalogEdge!]!
+  fields: [ReportCatalogField!]!
+  key: String!
+  label: String!
+  ownScopeSupported: Boolean!
+  pluralLabel: String!
+  resource: String!
+}
+
+type ReportCatalogEnumValue {
+  label: String!
+  value: String!
+}
+
+type ReportCatalogField {
+  accessible: Boolean!
+  aggregations: [String!]!
+  description: String
+  enumValues: [ReportCatalogEnumValue!]!
+  filterable: Boolean!
+  format: String
+  groupable: Boolean!
+  key: String!
+  label: String!
+  nullable: Boolean!
+  sensitivity: String!
+  type: String!
+}
+
+input ReportColumnInput {
+  agg: String
+  bucket: String
+  computed: ReportComputedInput
+  id: String!
+  kind: String!
+  label: String
+  ref: ReportFieldRefInput
+}
+
+input ReportComputedInput {
+  format: String
+  leftId: String!
+  op: String!
+  rightId: String!
+}
+
+type ReportDefinition {
+  cannedKey: String
+  cannedVersion: String
+  catalogVersion: String!
+  category: String!
+  createdAt: Int!
+  currentRevision: Int!
+  defaultFormat: String!
+  definition: JSON!
+  description: String!
+  diagnostics: [String!]!
+  id: ID!
+  kind: String!
+  lastRunAt: Int
+  name: String!
+  ownerId: ID!
+  status: String!
+  tags: [String!]!
+  updatedAt: Int!
+  version: Int!
+  visibility: String!
+}
+
+type ReportDefinitionConnection {
+  edges: [ReportDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ReportDefinitionEdge {
+  cursor: String!
+  node: ReportDefinition!
+}
+
+type ReportDefinitionRevision {
+  catalogVersion: String!
+  createdAt: Int!
+  createdById: ID!
+  definition: JSON!
+  definitionId: ID!
+  id: ID!
+  revisionNumber: Int!
+}
+
+input ReportFieldRefInput {
+  field: String!
+  path: [String!]
+}
+
+input ReportFilterGroupInput {
+  filters: [ReportFilterInput!]
+  groups: [ReportFilterGroupInput!]
+  op: String!
+}
+
+input ReportFilterInput {
+  agg: String
+  operator: String!
+  param: String
+  ref: ReportFieldRefInput!
+  value: Any
+}
+
+input ReportIRInput {
+  columns: [ReportColumnInput!]!
+  entity: String!
+  filters: ReportFilterGroupInput
+  having: ReportFilterGroupInput
+  limit: Int
+  parameters: [ReportParameterDefInput!]
+  pivot: ReportPivotInput
+  sort: [ReportSortInput!]
+}
+
+input ReportParameterDefInput {
+  allowedValues: [String!]
+  default: Any
+  label: String
+  multi: Boolean
+  name: String!
+  refEntity: String
+  required: Boolean
+  type: String!
+}
+
+input ReportPivotInput {
+  includeOther: Boolean
+  measureIds: [String!]!
+  ref: ReportFieldRefInput!
+  values: [String!]!
+}
+
+type ReportPreview {
+  columns: [ReportPreviewColumn!]!
+  rows: Any!
+  truncated: Boolean!
+}
+
+type ReportPreviewColumn {
+  format: String
+  id: String!
+  label: String!
+  type: String!
+}
+
+type ReportRun {
+  artifactExpiresAt: Int
+  byteSize: Int!
+  cacheHit: Boolean!
+  cannedKey: String
+  cannedVersion: String
+  completedAt: Int
+  createdAt: Int!
+  definitionId: ID
+  durationMs: Int!
+  error: ReportRunError
+  format: String!
+  id: ID!
+  params: JSON
+  queuedAt: Int
+  requestedById: ID!
+  revisionId: ID
+  rowCount: Int!
+  startedAt: Int
+  status: String!
+  trigger: String!
+  truncated: Boolean!
+  version: Int!
+}
+
+type ReportRunConnection {
+  edges: [ReportRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ReportRunEdge {
+  cursor: String!
+  node: ReportRun!
+}
+
+type ReportRunError {
+  code: String!
+  detail: String
+  message: String!
+}
+
+input ReportRunsFilterInput {
+  definitionId: ID
+  mineOnly: Boolean
+  statuses: [String!]
+}
+
+type ReportSchedule {
+  consecutiveFailures: Int!
+  createdAt: Int!
+  cronExpression: String!
+  definitionId: ID!
+  emailRecipients: [String!]!
+  enabled: Boolean!
+  formats: [String!]!
+  id: ID!
+  lastRunId: ID
+  nextRunAt: Int
+  runAsId: ID!
+  timezone: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+input ReportSortInput {
+  columnId: String!
+  direction: String!
+}
+
 type Role {
   businessUnitId: ID!
   coreResponsibility: String
@@ -2308,6 +2592,13 @@ type RoleEdge {
   node: Role!
 }
 
+input RunReportInput {
+  cannedKey: String
+  definitionId: ID
+  format: String!
+  params: JSON
+}
+
 type SCIMGroupRoleMapping {
   businessUnitId: ID!
   createdAt: Int!
@@ -2331,6 +2622,17 @@ type SCIMGroupRoleMappingConnection {
 type SCIMGroupRoleMappingEdge {
   cursor: String!
   node: SCIMGroupRoleMapping!
+}
+
+input SaveReportDefinitionInput {
+  category: String
+  defaultFormat: String
+  definition: ReportIRInput!
+  description: String
+  name: String!
+  status: String
+  tags: [String!]
+  visibility: String
 }
 
 enum SegregationType {
@@ -3608,6 +3910,67 @@ input ShipmentsInput {
   status: String
 }
 
+type SidebarActivityPreference {
+  defaultOpen: Boolean!
+  pageSize: Int!
+}
+
+input SidebarActivityPreferenceInput {
+  defaultOpen: Boolean!
+  pageSize: Int!
+}
+
+type SidebarAttentionMetricOption {
+  key: String!
+  label: String!
+}
+
+type SidebarCustomizationOptions {
+  activityPageSizes: [Int!]!
+  attentionMetrics: [SidebarAttentionMetricOption!]!
+  maxQuickActions: Int!
+  quickActions: [SidebarQuickActionOption!]!
+  sections: [SidebarSectionOption!]!
+}
+
+type SidebarPreferences {
+  activity: SidebarActivityPreference!
+  attentionMetrics: [String!]!
+  quickActionIds: [String!]!
+  schemaVersion: Int!
+  sections: [SidebarSectionPreference!]!
+  version: Int!
+}
+
+input SidebarPreferencesInput {
+  activity: SidebarActivityPreferenceInput!
+  attentionMetrics: [String!]!
+  quickActionIds: [String!]!
+  sections: [SidebarSectionPreferenceInput!]!
+  version: Int!
+}
+
+type SidebarQuickActionOption {
+  id: String!
+  label: String!
+}
+
+type SidebarSectionOption {
+  hideable: Boolean!
+  key: String!
+  label: String!
+}
+
+type SidebarSectionPreference {
+  hidden: Boolean!
+  key: String!
+}
+
+input SidebarSectionPreferenceInput {
+  hidden: Boolean!
+  key: String!
+}
+
 input SortFieldInput {
   direction: String!
   field: String!
@@ -3959,6 +4322,30 @@ input UpdateOrderChargeInput {
   chargeId: ID!
   description: String!
   orderId: ID!
+  version: Int!
+}
+
+input UpdateReportDefinitionInput {
+  category: String
+  defaultFormat: String
+  definition: ReportIRInput!
+  description: String
+  id: ID!
+  name: String!
+  status: String
+  tags: [String!]
+  version: Int!
+  visibility: String
+}
+
+input UpdateReportScheduleInput {
+  cronExpression: String!
+  definitionId: ID!
+  emailRecipients: [String!]
+  enabled: Boolean!
+  formats: [String!]!
+  id: ID!
+  timezone: String
   version: Int!
 }
 

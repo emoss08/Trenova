@@ -556,6 +556,50 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/reports",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportsPage } = await import("@/routes/reports/page");
+              return { Component: ReportsPage };
+            },
+          },
+          {
+            path: "/reports/runs",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportRunsPage } = await import("@/routes/reports/runs/page");
+              return { Component: ReportRunsPage };
+            },
+          },
+          {
+            path: "/reports/builder",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Create),
+            ),
+            async lazy() {
+              const { ReportBuilderPage } = await import("@/routes/reports/builder/page");
+              return { Component: ReportBuilderPage };
+            },
+          },
+          {
+            path: "/reports/builder/:definitionId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportBuilderPage } = await import("@/routes/reports/builder/page");
+              return { Component: ReportBuilderPage };
+            },
+          },
+          {
             path: "/dispatch/locations",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Location)),
             async lazy() {

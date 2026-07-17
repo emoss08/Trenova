@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Variant 1 — Unified Sidebar · Trenova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/base.css" />
+<style>
+  .sb {
+    display: flex;
+    flex-direction: column;
+    width: 256px;
+    flex-shrink: 0;
+  }
+  .sb-org {
+    padding: 10px 10px 4px;
+    position: relative;
+  }
+  .sb-org > button {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 5px 7px;
+    border-radius: 8px;
+    transition: background 150ms ease;
+  }
+  .sb-org > button:hover { background: var(--hover); }
+  .sb-org .name { font-size: 12.5px; font-weight: 600; flex: 1; text-align: left; }
+  .sb-org .plan {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--faint-foreground);
+    margin-top: -1px;
+  }
+  .sb-org > button > .tn-icon { width: 13px; height: 13px; color: var(--faint-foreground); }
+  .org-menu { top: calc(100% - 2px); left: 10px; right: 10px; }
+  .org-menu .mi {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 7px;
+    text-align: left;
+    transition: background 120ms ease;
+  }
+  .org-menu .mi:hover { background: var(--hover-strong); }
+  .org-menu .mi .m-name { flex: 1; font-size: 12.5px; font-weight: 500; }
+  .org-menu .mi .m-sub { display: block; font-size: 10px; font-weight: 400; color: var(--faint-foreground); }
+  .org-menu .mi .tn-icon.check { width: 14px; height: 14px; color: var(--brand-text); }
+  .org-menu .m-sep { height: 1px; background: var(--border); margin: 5px 6px; }
+
+  .sb-search { padding: 4px 10px 2px; }
+  .sb-search .search-pill { width: 100%; min-width: 0; }
+  .sb-nav { flex: 1; padding: 0 10px 12px; }
+
+  .mod-kids {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 1px 0 3px 16px;
+    padding-left: 9px;
+    border-left: 1px solid var(--border);
+  }
+  .sub-kids {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-left: 8px;
+    padding-left: 8px;
+    border-left: 1px solid var(--border);
+  }
+  .ni .star-ic { width: 12.5px; height: 12.5px; color: var(--warning); fill: var(--warning); }
+  .fav-mod { font-size: 10px; color: var(--faint-foreground); }
+
+  .sb-foot {
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sb-foot .user-row { display: flex; align-items: center; gap: 8px; }
+  .sb-foot .who { flex: 1; min-width: 0; line-height: 1.25; }
+  .sb-foot .who .n { font-size: 12px; font-weight: 500; }
+  .sb-foot .who .e {
+    display: block;
+    font-size: 10px;
+    color: var(--faint-foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sb sidebar-surface">
+    <div class="sb-org stagger-in" style="--i:0">
+      <button type="button" id="org-btn" aria-expanded="false">
+        <span class="org-logo">TR</span>
+        <span class="name">Trenova Logistics<span class="plan">Enterprise · 3 orgs</span></span>
+        <span data-ic="chevronsUpDown"></span>
+      </button>
+      <div class="menu org-menu" id="org-menu"></div>
+    </div>
+    <div class="sb-search stagger-in" style="--i:1">
+      <button type="button" class="search-pill" data-search></button>
+    </div>
+    <nav class="sb-nav tn-scroll" id="nav"></nav>
+    <div class="sb-foot">
+      <div id="presence"></div>
+      <div class="user-row">
+        <span class="avatar">EM</span>
+        <span class="who"><span class="n">Eric Moss</span><span class="e">eric@trenova.app</span></span>
+        <button type="button" class="icon-btn" data-ic="settings" title="Settings"></button>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div id="hdr"></div>
+    <main class="page" id="page"></main>
+  </div>
+</div>
+
+<script src="assets/base.js"></script>
+<script>
+  document.querySelectorAll("[data-ic]").forEach((el) => { el.innerHTML = TN.icon(el.dataset.ic); });
+  document.querySelector("[data-search]").innerHTML =
+    TN.icon("search") + "<span>Search</span><kbd>⌘K</kbd>";
+
+  /* Org switcher menu */
+  const orgBtn = document.getElementById("org-btn");
+  const orgMenu = document.getElementById("org-menu");
+  orgMenu.innerHTML =
+    '<button type="button" class="mi"><span class="org-logo">TR</span><span class="m-name">Trenova Logistics<span class="m-sub">Default</span></span>' +
+    TN.icon("check", "check") + "</button>" +
+    '<button type="button" class="mi"><span class="org-logo" style="background:linear-gradient(135deg,oklch(0.68 0.15 180),oklch(0.5 0.14 210))">NW</span><span class="m-name">Northwind Carriers<span class="m-sub">Member</span></span></button>' +
+    '<div class="m-sep"></div>' +
+    '<button type="button" class="mi"><span class="org-logo" style="background:linear-gradient(135deg,oklch(0.7 0.15 60),oklch(0.55 0.16 30))">AF</span><span class="m-name">Apex Freight Co.<span class="m-sub">Member</span></span></button>';
+  orgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = orgMenu.classList.toggle("show");
+    orgBtn.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".sb-org")) orgMenu.classList.remove("show");
+  });
+
+  /* Nav */
+  function itemRow(item) {
+    return (
+      '<button type="button" class="ni' + (item.active ? " active" : "") + '">' +
+      '<span class="label">' + item.label + "</span>" + TN.badge(item) + "</button>"
+    );
+  }
+
+  function moduleBlock(modId, expanded) {
+    const mod = TN.NAV.modules[modId];
+    const hasKids = mod.items.length > 0;
+    let kids = "";
+    if (hasKids) {
+      kids = mod.items
+        .map((item) => {
+          if (item.group) {
+            const subItems = item.items
+              .map((l) => '<button type="button" class="ni"><span class="label">' + l + "</span></button>")
+              .join("");
+            return (
+              '<div><button type="button" class="ni sub-head" aria-expanded="false">' +
+              '<span class="label">' + item.group + "</span>" + TN.icon("chevronRight", "chev") +
+              '</button><div class="acc"><div class="acc-inner"><div class="sub-kids">' +
+              subItems + "</div></div></div></div>"
+            );
+          }
+          return itemRow(item);
+        })
+        .join("");
+    }
+    return (
+      '<div class="mod">' +
+      '<button type="button" class="ni mod-row" aria-expanded="' + expanded + '" data-mod="' + modId + '">' +
+      TN.icon(mod.icon) + '<span class="label">' + mod.short + "</span>" +
+      (hasKids ? TN.icon("chevronRight", "chev") : "") + "</button>" +
+      (hasKids
+        ? '<div class="acc' + (expanded ? " open" : "") + '"><div class="acc-inner"><div class="mod-kids">' +
+          kids + "</div></div></div>"
+        : "") +
+      "</div>"
+    );
+  }
+
+  const nav = document.getElementById("nav");
+  let html =
+    '<button type="button" class="ni" style="margin-top:8px">' +
+    TN.icon("home") + '<span class="label">Home</span></button>';
+  html += '<div class="sec-label" style="margin-top:12px">Favorites</div>';
+  html += TN.NAV.favorites
+    .map(
+      (f) =>
+        '<button type="button" class="ni">' + TN.icon("star", "star-ic") +
+        '<span class="label">' + f.label + '</span><span class="fav-mod">' + f.module + "</span></button>",
+    )
+    .join("");
+  for (const group of TN.NAV.groups) {
+    html += '<div class="sec-label">' + group.label + "</div>";
+    html += group.modules.map((m) => moduleBlock(m, m === "billing")).join("");
+  }
+  nav.innerHTML = html;
+
+  const moveInd = TN.attachIndicator(nav);
+  TN.stagger(nav, ":scope > .ni, :scope > .sec-label, :scope > .mod");
+
+  nav.addEventListener("click", (e) => {
+    const head = e.target.closest(".mod-row, .sub-head");
+    if (head) {
+      const open = head.getAttribute("aria-expanded") === "true";
+      head.setAttribute("aria-expanded", String(!open));
+      const acc = head.parentElement.querySelector(":scope > .acc");
+      if (acc) acc.classList.toggle("open", !open);
+      setTimeout(moveInd, 340);
+      return;
+    }
+    const ni = e.target.closest(".ni");
+    if (ni) {
+      nav.querySelectorAll(".ni.active").forEach((n) => n.classList.remove("active"));
+      ni.classList.add("active");
+      moveInd();
+    }
+  });
+  nav.addEventListener("transitionend", (e) => {
+    if (e.target.classList && e.target.classList.contains("acc")) moveInd();
+  });
+  setTimeout(moveInd, 700);
+
+  document.getElementById("presence").outerHTML = TN.presenceRow();
+  document.getElementById("hdr").outerHTML = TN.header(["Billing", "Billing Queue"]);
+  document.getElementById("page").innerHTML = TN.pageMock();
+  TN.mountPill("1 · Unified Sidebar");
+</script>
+</body>
+</html>

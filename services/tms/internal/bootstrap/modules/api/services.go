@@ -97,6 +97,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
+	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
+	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
@@ -125,6 +128,12 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	authservice.New,
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
+	sidebarpreferenceservice.New,
+	fx.Annotate(
+		reportingcompiler.New,
+		fx.As(new(services.ReportCompiler)),
+	),
+	reportingservice.New,
 	equipmentmanufacturerservice.New,
 	equipmenttypeservice.New,
 	fleetcodeservice.New,

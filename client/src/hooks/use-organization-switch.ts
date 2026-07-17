@@ -1,10 +1,8 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
-import type {
-  SwitchOrganizationRequest,
-  SwitchOrganizationResponse,
-} from "@/types/organization";
+import { usePermissionStore } from "@/stores/permission-store";
+import type { SwitchOrganizationRequest, SwitchOrganizationResponse } from "@/types/organization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -18,7 +16,15 @@ export function useSwitchOrganization() {
     mutationFn: (data: SwitchOrganizationRequest) =>
       apiService.userService.switchOrganization(data),
     resourceName: "Organization",
-    onSuccess: (user) => {
+    onSuccess: async (user) => {
+      const { clearPermissions, fetchManifest } = usePermissionStore.getState();
+      try {
+        await fetchManifest();
+      } catch (error) {
+        clearPermissions();
+        console.error("Failed to refresh permissions after organization switch:", error);
+      }
+
       setUser(user);
 
       queryClient.clear();

@@ -47,6 +47,10 @@ func (f *fakeShipmentTemporalClient) StartWorkflow(
 
 func (*fakeShipmentTemporalClient) Enabled() bool { return true }
 
+func (*fakeShipmentTemporalClient) CancelWorkflow(context.Context, string, string) error {
+	return nil
+}
+
 func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 	t.Parallel()
 
@@ -165,3 +169,7 @@ func (disabledWorkflowStarter) StartWorkflow(
 }
 
 func (disabledWorkflowStarter) Enabled() bool { return false }
+
+func (disabledWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
+	return services.ErrWorkflowStarterDisabled
+}

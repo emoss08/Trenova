@@ -5,15 +5,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRecentActivityInfinite, type RecentActivityEntry } from "@/hooks/use-attention";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { cn } from "@/lib/utils";
 import {
   operationLabel,
   resourceLabel,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
-import { useNavigationStore } from "@/stores/navigation-store";
 import { format, formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ChevronRightIcon, Loader2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const PAST_TENSE_OPERATIONS: Record<string, string> = {
   create: "created",
@@ -124,8 +124,9 @@ function OnlineIndicator() {
 }
 
 export function ActivitySection() {
-  const open = useNavigationStore((state) => state.activitySectionOpen);
-  const setOpen = useNavigationStore((state) => state.setActivitySectionOpen);
+  const { data: preferences } = useSidebarPreferences();
+  const [openOverride, setOpenOverride] = useState<boolean | null>(null);
+  const open = openOverride ?? preferences?.activity.defaultOpen ?? true;
   const {
     data: entries,
     isLoading,
@@ -133,7 +134,7 @@ export function ActivitySection() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useRecentActivityInfinite();
+  } = useRecentActivityInfinite(preferences?.activity.pageSize);
   const observerTarget = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -163,7 +164,7 @@ export function ActivitySection() {
   }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={open} onOpenChange={setOpenOverride}>
       <div className="flex flex-col gap-0.5">
         <div className="flex h-6 items-center justify-between pr-2">
           <CollapsibleTrigger

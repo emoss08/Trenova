@@ -183,6 +183,22 @@ tasks:
     cmds:
       - go generate ./internal/infrastructure/database/colgen/...
 
+  generate-reportcatalog:
+    desc: Generate the reporting field catalog from domain entities and reportcatalog.yml
+    cmds:
+      - go generate ./internal/infrastructure/database/reportcatalog/...
+
+  generate-reportcatalog-check:
+    desc: Verify the generated report catalog is up to date
+    cmds:
+      - |
+        go generate ./internal/infrastructure/database/reportcatalog/...
+        if ! git diff --quiet -- pkg/reportcatalog/catalog_gen.go; then
+          echo "Report catalog is out of date — run 'task generate-reportcatalog' and commit"
+          git diff --stat -- pkg/reportcatalog/catalog_gen.go
+          exit 1
+        fi
+
   generate-seeds:
     desc: Regenerate seed IDs from seed files
     cmds:

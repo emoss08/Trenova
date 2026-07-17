@@ -1,0 +1,38 @@
+fragment ReportScheduleFields on ReportSchedule {
+  id
+  definitionId
+  cronExpression
+  timezone
+  formats
+  emailRecipients
+  enabled
+  runAsId
+  lastRunId
+  nextRunAt
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+}
+
+query ReportSchedules($definitionId: ID) {
+  reportSchedules(definitionId: $definitionId) {
+    ...ReportScheduleFields
+  }
+}
+
+mutation CreateReportSchedule($input: CreateReportScheduleInput!) {
+  createReportSchedule(input: $input) {
+    ...ReportScheduleFields
+  }
+}
+
+mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {
+  updateReportSchedule(input: $input) {
+    ...ReportScheduleFields
+  }
+}
+
+mutation DeleteReportSchedule($id: ID!) {
+  deleteReportSchedule(id: $id)
+}

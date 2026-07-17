@@ -38,6 +38,14 @@ func (s *Service) StartWorkflow(
 	return s.client.ExecuteWorkflow(ctx, options, workflow, args...)
 }
 
+func (s *Service) CancelWorkflow(ctx context.Context, workflowID, runID string) error {
+	if s.client == nil {
+		return serviceports.ErrWorkflowStarterDisabled
+	}
+
+	return s.client.CancelWorkflow(ctx, workflowID, runID)
+}
+
 func (s *Service) Enabled() bool {
 	return s.client != nil
 }

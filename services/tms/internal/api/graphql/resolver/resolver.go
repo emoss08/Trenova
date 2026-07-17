@@ -36,9 +36,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
+	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
@@ -111,6 +113,8 @@ type Params struct {
 	APIKeyService                *apikeyservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
 	TableConfigurationService    *tableconfigurationservice.Service
+	SidebarPreferenceService     *sidebarpreferenceservice.Service
+	ReportingService             *reportingservice.Service
 	NotificationService          *notificationservice.Service
 	PermissionEngine             services.PermissionEngine
 }
@@ -169,7 +173,9 @@ type Resolver struct {
 	apiKeyService                *apikeyservice.Service
 	tableChangeAlertService      *tablechangealertservice.Service
 	tableConfigurationService    *tableconfigurationservice.Service
+	sidebarPreferenceService     *sidebarpreferenceservice.Service
 	notificationService          *notificationservice.Service
+	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
 
@@ -228,7 +234,9 @@ func New(p Params) *Resolver {
 		apiKeyService:                p.APIKeyService,
 		tableChangeAlertService:      p.TableChangeAlertService,
 		tableConfigurationService:    p.TableConfigurationService,
+		sidebarPreferenceService:     p.SidebarPreferenceService,
 		notificationService:          p.NotificationService,
+		reportingService:             p.ReportingService,
 		permissionEngine:             p.PermissionEngine,
 	}
 }

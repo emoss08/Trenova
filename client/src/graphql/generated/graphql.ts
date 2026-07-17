@@ -86,6 +86,15 @@ export type ConfigurationVisibility =
   | 'Public'
   | 'Shared';
 
+export type CreateReportScheduleInput = {
+  cronExpression: string;
+  definitionId: string | number;
+  emailRecipients?: Array<string> | null | undefined;
+  enabled: boolean;
+  formats: Array<string>;
+  timezone?: string | null | undefined;
+};
+
 export type DataTableConnectionInput = {
   after?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
@@ -286,6 +295,11 @@ export type FiscalYearStatus =
   | 'Draft'
   | 'Open'
   | 'PermanentlyClosed';
+
+export type ForkCannedReportInput = {
+  cannedKey: string;
+  name?: string | null | undefined;
+};
 
 export type FormulaTemplateStatus =
   | 'Active'
@@ -494,6 +508,100 @@ export type RateUnit =
 export type RemoveOrderChargeInput = {
   chargeId: string | number;
   orderId: string | number;
+};
+
+export type ReportColumnInput = {
+  agg?: string | null | undefined;
+  bucket?: string | null | undefined;
+  computed?: ReportComputedInput | null | undefined;
+  id: string;
+  kind: string;
+  label?: string | null | undefined;
+  ref?: ReportFieldRefInput | null | undefined;
+};
+
+export type ReportComputedInput = {
+  format?: string | null | undefined;
+  leftId: string;
+  op: string;
+  rightId: string;
+};
+
+export type ReportFieldRefInput = {
+  field: string;
+  path?: Array<string> | null | undefined;
+};
+
+export type ReportFilterGroupInput = {
+  filters?: Array<ReportFilterInput> | null | undefined;
+  groups?: Array<ReportFilterGroupInput> | null | undefined;
+  op: string;
+};
+
+export type ReportFilterInput = {
+  agg?: string | null | undefined;
+  operator: string;
+  param?: string | null | undefined;
+  ref: ReportFieldRefInput;
+  value?: unknown;
+};
+
+export type ReportIrInput = {
+  columns: Array<ReportColumnInput>;
+  entity: string;
+  filters?: ReportFilterGroupInput | null | undefined;
+  having?: ReportFilterGroupInput | null | undefined;
+  limit?: number | null | undefined;
+  parameters?: Array<ReportParameterDefInput> | null | undefined;
+  pivot?: ReportPivotInput | null | undefined;
+  sort?: Array<ReportSortInput> | null | undefined;
+};
+
+export type ReportParameterDefInput = {
+  allowedValues?: Array<string> | null | undefined;
+  default?: unknown;
+  label?: string | null | undefined;
+  multi?: boolean | null | undefined;
+  name: string;
+  refEntity?: string | null | undefined;
+  required?: boolean | null | undefined;
+  type: string;
+};
+
+export type ReportPivotInput = {
+  includeOther?: boolean | null | undefined;
+  measureIds: Array<string>;
+  ref: ReportFieldRefInput;
+  values: Array<string>;
+};
+
+export type ReportRunsFilterInput = {
+  definitionId?: string | number | null | undefined;
+  mineOnly?: boolean | null | undefined;
+  statuses?: Array<string> | null | undefined;
+};
+
+export type ReportSortInput = {
+  columnId: string;
+  direction: string;
+};
+
+export type RunReportInput = {
+  cannedKey?: string | null | undefined;
+  definitionId?: string | number | null | undefined;
+  format: string;
+  params?: unknown;
+};
+
+export type SaveReportDefinitionInput = {
+  category?: string | null | undefined;
+  defaultFormat?: string | null | undefined;
+  definition: ReportIrInput;
+  description?: string | null | undefined;
+  name: string;
+  status?: string | null | undefined;
+  tags?: Array<string> | null | undefined;
+  visibility?: string | null | undefined;
 };
 
 export type SegregationType =
@@ -865,6 +973,24 @@ export type ShipmentsInput = {
   status?: string | null | undefined;
 };
 
+export type SidebarActivityPreferenceInput = {
+  defaultOpen: boolean;
+  pageSize: number;
+};
+
+export type SidebarPreferencesInput = {
+  activity: SidebarActivityPreferenceInput;
+  attentionMetrics: Array<string>;
+  quickActionIds: Array<string>;
+  sections: Array<SidebarSectionPreferenceInput>;
+  version: number;
+};
+
+export type SidebarSectionPreferenceInput = {
+  hidden: boolean;
+  key: string;
+};
+
 export type SortFieldInput = {
   direction: string;
   field: string;
@@ -912,6 +1038,30 @@ export type UpdateOrderChargeInput = {
   chargeId: string | number;
   description: string;
   orderId: string | number;
+  version: number;
+};
+
+export type UpdateReportDefinitionInput = {
+  category?: string | null | undefined;
+  defaultFormat?: string | null | undefined;
+  definition: ReportIrInput;
+  description?: string | null | undefined;
+  id: string | number;
+  name: string;
+  status?: string | null | undefined;
+  tags?: Array<string> | null | undefined;
+  version: number;
+  visibility?: string | null | undefined;
+};
+
+export type UpdateReportScheduleInput = {
+  cronExpression: string;
+  definitionId: string | number;
+  emailRecipients?: Array<string> | null | undefined;
+  enabled: boolean;
+  formats: Array<string>;
+  id: string | number;
+  timezone?: string | null | undefined;
   version: number;
 };
 
@@ -1540,6 +1690,144 @@ export type RateTableTableQueryVariables = Exact<{
 
 export type RateTableTableQuery = { rateTables: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateTableTableRowFieldsFragment': RateTableTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CannedReportsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CannedReportsQuery = { cannedReports: Array<{ key: string, version: string, name: string, description: string, category: string, tags: Array<string>, defaultFormat: string, definition: unknown }> };
+
+export type ReportCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, accessible: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }> }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean }> }> } };
+
+export type ReportDefinitionFieldsFragment = { id: string, name: string, description: string, category: string, tags: Array<string>, kind: string, cannedKey: string | null, cannedVersion: string | null, ownerId: string, visibility: string, status: string, diagnostics: Array<string>, catalogVersion: string, definition: unknown, defaultFormat: string, currentRevision: number, lastRunAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportDefinitionFieldsFragment' };
+
+export type ReportDefinitionsTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type ReportDefinitionsTableQuery = { reportDefinitions: { totalCount: number, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ReportDefinitionByIdQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReportDefinitionByIdQuery = { reportDefinition: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
+
+export type ReportDefinitionRevisionsQueryVariables = Exact<{
+  definitionId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type ReportDefinitionRevisionsQuery = { reportDefinitionRevisions: Array<{ id: string, definitionId: string, revisionNumber: number, catalogVersion: string, definition: unknown, createdById: string, createdAt: number }> };
+
+export type CreateReportDefinitionMutationVariables = Exact<{
+  input: SaveReportDefinitionInput;
+}>;
+
+
+export type CreateReportDefinitionMutation = { createReportDefinition: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
+
+export type UpdateReportDefinitionMutationVariables = Exact<{
+  input: UpdateReportDefinitionInput;
+}>;
+
+
+export type UpdateReportDefinitionMutation = { updateReportDefinition: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
+
+export type DeleteReportDefinitionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteReportDefinitionMutation = { deleteReportDefinition: boolean };
+
+export type ForkCannedReportMutationVariables = Exact<{
+  input: ForkCannedReportInput;
+}>;
+
+
+export type ForkCannedReportMutation = { forkCannedReport: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
+
+export type ResetCannedForkMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ResetCannedForkMutation = { resetCannedFork: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
+
+export type PreviewReportQueryVariables = Exact<{
+  definition: ReportIrInput;
+  params?: unknown;
+}>;
+
+
+export type PreviewReportQuery = { previewReport: { rows: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null }> } };
+
+export type ReportRunFieldsFragment = { id: string, definitionId: string | null, revisionId: string | null, cannedKey: string | null, cannedVersion: string | null, requestedById: string, trigger: string, params: unknown, format: string, status: string, rowCount: number, byteSize: number, durationMs: number, truncated: boolean, artifactExpiresAt: number | null, cacheHit: boolean, queuedAt: number | null, startedAt: number | null, completedAt: number | null, version: number, createdAt: number, error: { code: string, message: string, detail: string | null } | null } & { ' $fragmentName'?: 'ReportRunFieldsFragment' };
+
+export type ReportRunsTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: ReportRunsFilterInput | null | undefined;
+}>;
+
+
+export type ReportRunsTableQuery = { reportRuns: { totalCount: number, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ReportRunByIdQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReportRunByIdQuery = { reportRun: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } };
+
+export type RunReportMutationVariables = Exact<{
+  input: RunReportInput;
+}>;
+
+
+export type RunReportMutation = { runReport: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } };
+
+export type CancelReportRunMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelReportRunMutation = { cancelReportRun: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } };
+
+export type ReportScheduleFieldsFragment = { id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, runAsId: string, lastRunId: string | null, nextRunAt: number | null, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportScheduleFieldsFragment' };
+
+export type ReportSchedulesQueryVariables = Exact<{
+  definitionId?: string | number | null | undefined;
+}>;
+
+
+export type ReportSchedulesQuery = { reportSchedules: Array<{ ' $fragmentRefs'?: { 'ReportScheduleFieldsFragment': ReportScheduleFieldsFragment } }> };
+
+export type CreateReportScheduleMutationVariables = Exact<{
+  input: CreateReportScheduleInput;
+}>;
+
+
+export type CreateReportScheduleMutation = { createReportSchedule: { ' $fragmentRefs'?: { 'ReportScheduleFieldsFragment': ReportScheduleFieldsFragment } } };
+
+export type UpdateReportScheduleMutationVariables = Exact<{
+  input: UpdateReportScheduleInput;
+}>;
+
+
+export type UpdateReportScheduleMutation = { updateReportSchedule: { ' $fragmentRefs'?: { 'ReportScheduleFieldsFragment': ReportScheduleFieldsFragment } } };
+
+export type DeleteReportScheduleMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteReportScheduleMutation = { deleteReportSchedule: boolean };
+
 export type RoleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, coreResponsibility: string | null, parentRoleIds: Array<string> | null, maxSensitivity: string, isSystem: boolean, createdBy: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RoleTableRowFieldsFragment' };
 
 export type RoleTableQueryVariables = Exact<{
@@ -1862,6 +2150,23 @@ export type DeleteShipmentCommentMutationVariables = Exact<{
 
 
 export type DeleteShipmentCommentMutation = { deleteShipmentComment: boolean };
+
+export type UpdateSidebarPreferencesMutationVariables = Exact<{
+  input: SidebarPreferencesInput;
+}>;
+
+
+export type UpdateSidebarPreferencesMutation = { updateSidebarPreferences: { schemaVersion: number, version: number, attentionMetrics: Array<string>, quickActionIds: Array<string>, sections: Array<{ key: string, hidden: boolean }>, activity: { pageSize: number, defaultOpen: boolean } } };
+
+export type SidebarPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SidebarPreferencesQuery = { sidebarPreferences: { schemaVersion: number, version: number, attentionMetrics: Array<string>, quickActionIds: Array<string>, sections: Array<{ key: string, hidden: boolean }>, activity: { pageSize: number, defaultOpen: boolean } } };
+
+export type SidebarCustomizationOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SidebarCustomizationOptionsQuery = { sidebarCustomizationOptions: { maxQuickActions: number, activityPageSizes: Array<number>, sections: Array<{ key: string, label: string, hideable: boolean }>, attentionMetrics: Array<{ key: string, label: string }>, quickActions: Array<{ id: string, label: string }> } };
 
 export type StoredMileageStopKeyFieldsFragment = { method: string, key: string, city: string, state: string, postalCode: string, placeId: string, coordinates: Array<number> | null } & { ' $fragmentName'?: 'StoredMileageStopKeyFieldsFragment' };
 
@@ -3180,6 +3485,78 @@ export const RateTableTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"RateTableTableRowFields"}) as unknown as TypedDocumentString<RateTableTableRowFieldsFragment, unknown>;
+export const ReportDefinitionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ReportDefinitionFields"}) as unknown as TypedDocumentString<ReportDefinitionFieldsFragment, unknown>;
+export const ReportRunFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportRunFields on ReportRun {
+  id
+  definitionId
+  revisionId
+  cannedKey
+  cannedVersion
+  requestedById
+  trigger
+  params
+  format
+  status
+  rowCount
+  byteSize
+  durationMs
+  truncated
+  error {
+    code
+    message
+    detail
+  }
+  artifactExpiresAt
+  cacheHit
+  queuedAt
+  startedAt
+  completedAt
+  version
+  createdAt
+}
+    `, {"fragmentName":"ReportRunFields"}) as unknown as TypedDocumentString<ReportRunFieldsFragment, unknown>;
+export const ReportScheduleFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportScheduleFields on ReportSchedule {
+  id
+  definitionId
+  cronExpression
+  timezone
+  formats
+  emailRecipients
+  enabled
+  runAsId
+  lastRunId
+  nextRunAt
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ReportScheduleFields"}) as unknown as TypedDocumentString<ReportScheduleFieldsFragment, unknown>;
 export const RoleTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment RoleTableRowFields on Role {
   id
@@ -6476,6 +6853,493 @@ fragment RateTableTableRowFields on RateTable {
   createdAt
   updatedAt
 }`, {"hash":"sha256:809e150e9d42fd0b2fecd3ced6e252820043552da234d6c6c72295e9303ffeee"}) as unknown as TypedDocumentString<RateTableTableQuery, RateTableTableQueryVariables>;
+export const CannedReportsDocument = new TypedDocumentString(`
+    query CannedReports {
+  cannedReports {
+    key
+    version
+    name
+    description
+    category
+    tags
+    defaultFormat
+    definition
+  }
+}
+    `, {"hash":"sha256:597b62a2e0291d15c7fc013e195a15594efb4e35e2b82183a24c791037994b27"}) as unknown as TypedDocumentString<CannedReportsQuery, CannedReportsQueryVariables>;
+export const ReportCatalogDocument = new TypedDocumentString(`
+    query ReportCatalog {
+  reportCatalog {
+    version
+    entities {
+      key
+      resource
+      label
+      pluralLabel
+      description
+      category
+      ownScopeSupported
+      fields {
+        key
+        label
+        description
+        type
+        format
+        nullable
+        enumValues {
+          value
+          label
+        }
+        aggregations
+        filterable
+        groupable
+        accessible
+        sensitivity
+      }
+      edges {
+        name
+        label
+        target
+        cardinality
+        traversable
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:79e369a4fec3bb0d7d5c6975d5782adb517ddeb55868c86d31e6f644f12d2d39"}) as unknown as TypedDocumentString<ReportCatalogQuery, ReportCatalogQueryVariables>;
+export const ReportDefinitionsTableDocument = new TypedDocumentString(`
+    query ReportDefinitionsTable($input: DataTableConnectionInput!) {
+  reportDefinitions(input: $input) {
+    edges {
+      node {
+        ...ReportDefinitionFields
+      }
+      cursor
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:039c706284eb551f39048dcd134dcdc18d5c9cd8cef3875e0d17d3a0a6b35a10"}) as unknown as TypedDocumentString<ReportDefinitionsTableQuery, ReportDefinitionsTableQueryVariables>;
+export const ReportDefinitionByIdDocument = new TypedDocumentString(`
+    query ReportDefinitionById($id: ID!) {
+  reportDefinition(id: $id) {
+    ...ReportDefinitionFields
+  }
+}
+    fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d55a36bcce0a8dba2f6772c0b29874ac0f7dfa18fb4f683fb8b9602fd744aea3"}) as unknown as TypedDocumentString<ReportDefinitionByIdQuery, ReportDefinitionByIdQueryVariables>;
+export const ReportDefinitionRevisionsDocument = new TypedDocumentString(`
+    query ReportDefinitionRevisions($definitionId: ID!, $limit: Int) {
+  reportDefinitionRevisions(definitionId: $definitionId, limit: $limit) {
+    id
+    definitionId
+    revisionNumber
+    catalogVersion
+    definition
+    createdById
+    createdAt
+  }
+}
+    `, {"hash":"sha256:c2b09eb2de67685ef05b52a0b72e1dab1b2c0ab84c390073889a632d0192bb19"}) as unknown as TypedDocumentString<ReportDefinitionRevisionsQuery, ReportDefinitionRevisionsQueryVariables>;
+export const CreateReportDefinitionDocument = new TypedDocumentString(`
+    mutation CreateReportDefinition($input: SaveReportDefinitionInput!) {
+  createReportDefinition(input: $input) {
+    ...ReportDefinitionFields
+  }
+}
+    fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:02ff484673e0f31b72ae3222ce77fda8359c7deb67192b6642cd04a6a2113500"}) as unknown as TypedDocumentString<CreateReportDefinitionMutation, CreateReportDefinitionMutationVariables>;
+export const UpdateReportDefinitionDocument = new TypedDocumentString(`
+    mutation UpdateReportDefinition($input: UpdateReportDefinitionInput!) {
+  updateReportDefinition(input: $input) {
+    ...ReportDefinitionFields
+  }
+}
+    fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:8f03c81fa49d77ea4742568b2d61ed904b5c2ce14b46a73836390d3333c6b97b"}) as unknown as TypedDocumentString<UpdateReportDefinitionMutation, UpdateReportDefinitionMutationVariables>;
+export const DeleteReportDefinitionDocument = new TypedDocumentString(`
+    mutation DeleteReportDefinition($id: ID!) {
+  deleteReportDefinition(id: $id)
+}
+    `, {"hash":"sha256:94b019b0a0a6bf268d050bd41d841b986997ed0566ca7673306374af6391871a"}) as unknown as TypedDocumentString<DeleteReportDefinitionMutation, DeleteReportDefinitionMutationVariables>;
+export const ForkCannedReportDocument = new TypedDocumentString(`
+    mutation ForkCannedReport($input: ForkCannedReportInput!) {
+  forkCannedReport(input: $input) {
+    ...ReportDefinitionFields
+  }
+}
+    fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:470c88501e4ff64893585861abe0b143a3ca126c3b2937fe59346dcc3f76864b"}) as unknown as TypedDocumentString<ForkCannedReportMutation, ForkCannedReportMutationVariables>;
+export const ResetCannedForkDocument = new TypedDocumentString(`
+    mutation ResetCannedFork($id: ID!) {
+  resetCannedFork(id: $id) {
+    ...ReportDefinitionFields
+  }
+}
+    fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:fdfc8cd8949b329a08fe31e350c065b5be2e732678ee7494e897c729e99ff96c"}) as unknown as TypedDocumentString<ResetCannedForkMutation, ResetCannedForkMutationVariables>;
+export const PreviewReportDocument = new TypedDocumentString(`
+    query PreviewReport($definition: ReportIRInput!, $params: JSON) {
+  previewReport(definition: $definition, params: $params) {
+    columns {
+      id
+      label
+      type
+      format
+    }
+    rows
+    truncated
+  }
+}
+    `, {"hash":"sha256:f1fe8109e84210a4d913215ba8b2bb2ad176112eef55cc94f38230d86c3c6582"}) as unknown as TypedDocumentString<PreviewReportQuery, PreviewReportQueryVariables>;
+export const ReportRunsTableDocument = new TypedDocumentString(`
+    query ReportRunsTable($input: DataTableConnectionInput!, $filter: ReportRunsFilterInput) {
+  reportRuns(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...ReportRunFields
+      }
+      cursor
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ReportRunFields on ReportRun {
+  id
+  definitionId
+  revisionId
+  cannedKey
+  cannedVersion
+  requestedById
+  trigger
+  params
+  format
+  status
+  rowCount
+  byteSize
+  durationMs
+  truncated
+  error {
+    code
+    message
+    detail
+  }
+  artifactExpiresAt
+  cacheHit
+  queuedAt
+  startedAt
+  completedAt
+  version
+  createdAt
+}`, {"hash":"sha256:bcffde0e18264194687cba74abd8e8337428b2ae05d262ae1570c34e73205f69"}) as unknown as TypedDocumentString<ReportRunsTableQuery, ReportRunsTableQueryVariables>;
+export const ReportRunByIdDocument = new TypedDocumentString(`
+    query ReportRunById($id: ID!) {
+  reportRun(id: $id) {
+    ...ReportRunFields
+  }
+}
+    fragment ReportRunFields on ReportRun {
+  id
+  definitionId
+  revisionId
+  cannedKey
+  cannedVersion
+  requestedById
+  trigger
+  params
+  format
+  status
+  rowCount
+  byteSize
+  durationMs
+  truncated
+  error {
+    code
+    message
+    detail
+  }
+  artifactExpiresAt
+  cacheHit
+  queuedAt
+  startedAt
+  completedAt
+  version
+  createdAt
+}`, {"hash":"sha256:c99441d285d5a070ea5e519af3f18c58675a28f05533ae71510bf225280ee6a9"}) as unknown as TypedDocumentString<ReportRunByIdQuery, ReportRunByIdQueryVariables>;
+export const RunReportDocument = new TypedDocumentString(`
+    mutation RunReport($input: RunReportInput!) {
+  runReport(input: $input) {
+    ...ReportRunFields
+  }
+}
+    fragment ReportRunFields on ReportRun {
+  id
+  definitionId
+  revisionId
+  cannedKey
+  cannedVersion
+  requestedById
+  trigger
+  params
+  format
+  status
+  rowCount
+  byteSize
+  durationMs
+  truncated
+  error {
+    code
+    message
+    detail
+  }
+  artifactExpiresAt
+  cacheHit
+  queuedAt
+  startedAt
+  completedAt
+  version
+  createdAt
+}`, {"hash":"sha256:e4af42e2da79707541fc29f6455a42c80767116bdd1bee08dfc63146f32325fb"}) as unknown as TypedDocumentString<RunReportMutation, RunReportMutationVariables>;
+export const CancelReportRunDocument = new TypedDocumentString(`
+    mutation CancelReportRun($id: ID!) {
+  cancelReportRun(id: $id) {
+    ...ReportRunFields
+  }
+}
+    fragment ReportRunFields on ReportRun {
+  id
+  definitionId
+  revisionId
+  cannedKey
+  cannedVersion
+  requestedById
+  trigger
+  params
+  format
+  status
+  rowCount
+  byteSize
+  durationMs
+  truncated
+  error {
+    code
+    message
+    detail
+  }
+  artifactExpiresAt
+  cacheHit
+  queuedAt
+  startedAt
+  completedAt
+  version
+  createdAt
+}`, {"hash":"sha256:37a51fbc29f91bea2054db71bd1221a29bc4c38c1a8c0d7dde22c4f97fd7e9e4"}) as unknown as TypedDocumentString<CancelReportRunMutation, CancelReportRunMutationVariables>;
+export const ReportSchedulesDocument = new TypedDocumentString(`
+    query ReportSchedules($definitionId: ID) {
+  reportSchedules(definitionId: $definitionId) {
+    ...ReportScheduleFields
+  }
+}
+    fragment ReportScheduleFields on ReportSchedule {
+  id
+  definitionId
+  cronExpression
+  timezone
+  formats
+  emailRecipients
+  enabled
+  runAsId
+  lastRunId
+  nextRunAt
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d603651f2823a98bc47b3558cef67d298ac01b9fbffaae9cd39d5fac90026c15"}) as unknown as TypedDocumentString<ReportSchedulesQuery, ReportSchedulesQueryVariables>;
+export const CreateReportScheduleDocument = new TypedDocumentString(`
+    mutation CreateReportSchedule($input: CreateReportScheduleInput!) {
+  createReportSchedule(input: $input) {
+    ...ReportScheduleFields
+  }
+}
+    fragment ReportScheduleFields on ReportSchedule {
+  id
+  definitionId
+  cronExpression
+  timezone
+  formats
+  emailRecipients
+  enabled
+  runAsId
+  lastRunId
+  nextRunAt
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:3f22766bf3dd7f7bfb6d0fa2fe2741c79d3f2114fd880701be48361673086b50"}) as unknown as TypedDocumentString<CreateReportScheduleMutation, CreateReportScheduleMutationVariables>;
+export const UpdateReportScheduleDocument = new TypedDocumentString(`
+    mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {
+  updateReportSchedule(input: $input) {
+    ...ReportScheduleFields
+  }
+}
+    fragment ReportScheduleFields on ReportSchedule {
+  id
+  definitionId
+  cronExpression
+  timezone
+  formats
+  emailRecipients
+  enabled
+  runAsId
+  lastRunId
+  nextRunAt
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:b13c9bb014da42b426bd265027748f001ba98737acf2bf757e5bf17f933e64d4"}) as unknown as TypedDocumentString<UpdateReportScheduleMutation, UpdateReportScheduleMutationVariables>;
+export const DeleteReportScheduleDocument = new TypedDocumentString(`
+    mutation DeleteReportSchedule($id: ID!) {
+  deleteReportSchedule(id: $id)
+}
+    `, {"hash":"sha256:dfe8e966e00cda20ec071774d07a7c9d7f28d22648db9faa0ece2d7e233c2bf6"}) as unknown as TypedDocumentString<DeleteReportScheduleMutation, DeleteReportScheduleMutationVariables>;
 export const RoleTableDocument = new TypedDocumentString(`
     query RoleTable($input: DataTableConnectionInput!) {
   roles(input: $input) {
@@ -10472,6 +11336,63 @@ export const DeleteShipmentCommentDocument = new TypedDocumentString(`
   deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
 }
     `, {"hash":"sha256:a20dcdea6225911dd4742c1e415a5f1e2b04d0111fbaf5ecbda1e8136b3dfa14"}) as unknown as TypedDocumentString<DeleteShipmentCommentMutation, DeleteShipmentCommentMutationVariables>;
+export const UpdateSidebarPreferencesDocument = new TypedDocumentString(`
+    mutation UpdateSidebarPreferences($input: SidebarPreferencesInput!) {
+  updateSidebarPreferences(input: $input) {
+    schemaVersion
+    version
+    sections {
+      key
+      hidden
+    }
+    attentionMetrics
+    quickActionIds
+    activity {
+      pageSize
+      defaultOpen
+    }
+  }
+}
+    `, {"hash":"sha256:977fedf72d0dd1e084eb48b093203298a4b2d9513240e0149488448e349d8128"}) as unknown as TypedDocumentString<UpdateSidebarPreferencesMutation, UpdateSidebarPreferencesMutationVariables>;
+export const SidebarPreferencesDocument = new TypedDocumentString(`
+    query SidebarPreferences {
+  sidebarPreferences {
+    schemaVersion
+    version
+    sections {
+      key
+      hidden
+    }
+    attentionMetrics
+    quickActionIds
+    activity {
+      pageSize
+      defaultOpen
+    }
+  }
+}
+    `, {"hash":"sha256:a136ac10eb71000bcfef94663b0a9df6cba4161eb0ec120f890e3e3a06a23bdc"}) as unknown as TypedDocumentString<SidebarPreferencesQuery, SidebarPreferencesQueryVariables>;
+export const SidebarCustomizationOptionsDocument = new TypedDocumentString(`
+    query SidebarCustomizationOptions {
+  sidebarCustomizationOptions {
+    sections {
+      key
+      label
+      hideable
+    }
+    attentionMetrics {
+      key
+      label
+    }
+    quickActions {
+      id
+      label
+    }
+    maxQuickActions
+    activityPageSizes
+  }
+}
+    `, {"hash":"sha256:79b6c8e2b9458d391abe3a98706dc989e567930eaf28453bd9635cf1766b276d"}) as unknown as TypedDocumentString<SidebarCustomizationOptionsQuery, SidebarCustomizationOptionsQueryVariables>;
 export const StoredMileageTableDocument = new TypedDocumentString(`
     query StoredMileageTable($input: DataTableConnectionInput!) {
   storedMileages(input: $input) {

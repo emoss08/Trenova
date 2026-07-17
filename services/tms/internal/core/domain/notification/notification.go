@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -16,6 +17,8 @@ var (
 
 type Notification struct {
 	bun.BaseModel `bun:"table:notifications,alias:notif" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID              pulid.ID       `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID  pulid.ID       `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull"`

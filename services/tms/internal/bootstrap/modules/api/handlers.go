@@ -60,19 +60,20 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurereasoncodehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
@@ -119,6 +120,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	docshandler.New,
 	databasesessionhandler.New,
 	documenthandler.New,
+	reporthandler.New,
 	documentoperationshandler.New,
 	documentpacketrulehandler.New,
 	accessorialchargehandler.New,

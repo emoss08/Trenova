@@ -10,4 +10,7 @@ func asDBConnection(conn *postgres.Connection) ports.DBConnection {
 	return conn
 }
 
-var DatabaseModule = fx.Module("database", fx.Provide(postgres.NewConnection, asDBConnection))
+var DatabaseModule = fx.Module(
+	"database",
+	fx.Provide(postgres.NewConnection, postgres.NewReportingConnection, asDBConnection),
+)

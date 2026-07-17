@@ -13,9 +13,9 @@ type ListDocumentPacketRulesRequest struct {
 }
 
 type ListDocumentPacketRuleConnectionRequest struct {
-	Filter                  *pagination.QueryOptions `json:"filter"`
-	Cursor                  pagination.CursorInfo    `json:"-"`
-	DocumentPacketRuleColumns []string               `json:"-"`
+	Filter                    *pagination.QueryOptions `json:"filter"`
+	Cursor                    pagination.CursorInfo    `json:"-"`
+	DocumentPacketRuleColumns []string                 `json:"-"`
 }
 
 type GetDocumentPacketRuleByIDRequest struct {

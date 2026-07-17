@@ -1,0 +1,12 @@
+query CannedReports {
+  cannedReports {
+    key
+    version
+    name
+    description
+    category
+    tags
+    defaultFormat
+    definition
+  }
+}

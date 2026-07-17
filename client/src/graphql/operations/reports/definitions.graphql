@@ -1,0 +1,83 @@
+fragment ReportDefinitionFields on ReportDefinition {
+  id
+  name
+  description
+  category
+  tags
+  kind
+  cannedKey
+  cannedVersion
+  ownerId
+  visibility
+  status
+  diagnostics
+  catalogVersion
+  definition
+  defaultFormat
+  currentRevision
+  lastRunAt
+  version
+  createdAt
+  updatedAt
+}
+
+query ReportDefinitionsTable($input: DataTableConnectionInput!) {
+  reportDefinitions(input: $input) {
+    edges {
+      node {
+        ...ReportDefinitionFields
+      }
+      cursor
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query ReportDefinitionById($id: ID!) {
+  reportDefinition(id: $id) {
+    ...ReportDefinitionFields
+  }
+}
+
+query ReportDefinitionRevisions($definitionId: ID!, $limit: Int) {
+  reportDefinitionRevisions(definitionId: $definitionId, limit: $limit) {
+    id
+    definitionId
+    revisionNumber
+    catalogVersion
+    definition
+    createdById
+    createdAt
+  }
+}
+
+mutation CreateReportDefinition($input: SaveReportDefinitionInput!) {
+  createReportDefinition(input: $input) {
+    ...ReportDefinitionFields
+  }
+}
+
+mutation UpdateReportDefinition($input: UpdateReportDefinitionInput!) {
+  updateReportDefinition(input: $input) {
+    ...ReportDefinitionFields
+  }
+}
+
+mutation DeleteReportDefinition($id: ID!) {
+  deleteReportDefinition(id: $id)
+}
+
+mutation ForkCannedReport($input: ForkCannedReportInput!) {
+  forkCannedReport(input: $input) {
+    ...ReportDefinitionFields
+  }
+}
+
+mutation ResetCannedFork($id: ID!) {
+  resetCannedFork(id: $id) {
+    ...ReportDefinitionFields
+  }
+}

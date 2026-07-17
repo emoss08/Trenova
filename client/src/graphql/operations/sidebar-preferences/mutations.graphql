@@ -1,0 +1,16 @@
+mutation UpdateSidebarPreferences($input: SidebarPreferencesInput!) {
+  updateSidebarPreferences(input: $input) {
+    schemaVersion
+    version
+    sections {
+      key
+      hidden
+    }
+    attentionMetrics
+    quickActionIds
+    activity {
+      pageSize
+      defaultOpen
+    }
+  }
+}

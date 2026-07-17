@@ -1,11 +1,5 @@
-import {
-  getPermissionManifest,
-  getPermissionVersion,
-} from "@/lib/permission-api";
-import type {
-  OperationType,
-  PermissionManifest,
-} from "@/types/permission";
+import { getPermissionManifest, getPermissionVersion } from "@/lib/permission-api";
+import type { OperationType, PermissionManifest } from "@/types/permission";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -15,19 +9,10 @@ interface PermissionState {
   lastFetched: number | null;
 
   fetchManifest: () => Promise<void>;
-  checkForUpdates: () => Promise<boolean>;
-  hasPermission: (
-    resource: string,
-    operation: OperationType,
-  ) => boolean;
-  hasAnyPermission: (
-    resource: string,
-    operations: OperationType[],
-  ) => boolean;
-  hasAllPermissions: (
-    resource: string,
-    operations: OperationType[],
-  ) => boolean;
+  checkForUpdates: (expectedOrgId?: string) => Promise<boolean>;
+  hasPermission: (resource: string, operation: OperationType) => boolean;
+  hasAnyPermission: (resource: string, operations: OperationType[]) => boolean;
+  hasAllPermissions: (resource: string, operations: OperationType[]) => boolean;
   canAccessRoute: (route: string) => boolean;
   clearPermissions: () => void;
 }
@@ -56,10 +41,15 @@ export const usePermissionStore = create<PermissionState>()(
         }
       },
 
-      checkForUpdates: async () => {
+      checkForUpdates: async (expectedOrgId?: string) => {
         const { manifest, lastFetched } = get();
 
         if (!manifest || !lastFetched) {
+          await get().fetchManifest();
+          return true;
+        }
+
+        if (expectedOrgId && manifest.organizationId !== expectedOrgId) {
           await get().fetchManifest();
           return true;
         }
@@ -81,10 +71,7 @@ export const usePermissionStore = create<PermissionState>()(
         }
       },
 
-      hasPermission: (
-        resource: string,
-        operation: OperationType,
-      ): boolean => {
+      hasPermission: (resource: string, operation: OperationType): boolean => {
         const { manifest } = get();
 
         if (!manifest) {
@@ -99,18 +86,12 @@ export const usePermissionStore = create<PermissionState>()(
         return (resourcePerms & operation) !== 0;
       },
 
-      hasAnyPermission: (
-        resource: string,
-        operations: OperationType[],
-      ): boolean => {
+      hasAnyPermission: (resource: string, operations: OperationType[]): boolean => {
         const { hasPermission } = get();
         return operations.some((op) => hasPermission(resource, op));
       },
 
-      hasAllPermissions: (
-        resource: string,
-        operations: OperationType[],
-      ): boolean => {
+      hasAllPermissions: (resource: string, operations: OperationType[]): boolean => {
         const { hasPermission } = get();
         return operations.every((op) => hasPermission(resource, op));
       },

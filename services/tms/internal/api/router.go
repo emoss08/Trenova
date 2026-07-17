@@ -63,19 +63,20 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurereasoncodehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
@@ -146,6 +147,7 @@ type RouterParams struct {
 	CustomFieldHandler              *customfieldhandler.Handler
 	DatabaseSessionHandler          *databasesessionhandler.Handler
 	DocumentHandler                 *documenthandler.Handler
+	ReportHandler                   *reporthandler.Handler
 	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
 	VersionHandler                  *versionhandler.Handler
@@ -254,6 +256,7 @@ type Router struct {
 	customFieldHandler              *customfieldhandler.Handler
 	databaseSessionHandler          *databasesessionhandler.Handler
 	documentHandler                 *documenthandler.Handler
+	reportHandler                   *reporthandler.Handler
 	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
 	versionHandler                  *versionhandler.Handler
@@ -355,6 +358,7 @@ func NewRouter(p RouterParams) *Router {
 		customFieldHandler:              p.CustomFieldHandler,
 		databaseSessionHandler:          p.DatabaseSessionHandler,
 		documentHandler:                 p.DocumentHandler,
+		reportHandler:                   p.ReportHandler,
 		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
 		versionHandler:                  p.VersionHandler,
@@ -514,6 +518,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.customFieldHandler.RegisterRoutes(protected)
 	r.databaseSessionHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
+	r.reportHandler.RegisterRoutes(protected)
 	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)

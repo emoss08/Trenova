@@ -18,12 +18,13 @@ import (
 type WorkerManagerParams struct {
 	fx.In
 
-	Client     client.Client
-	Logger     *zap.Logger
-	LC         fx.Lifecycle
-	Config     *config.Config
-	Metrics    *metrics.Registry         `optional:"true"`
-	Registries []registry.WorkerRegistry `group:"worker_registries"`
+	Client      client.Client
+	Logger      *zap.Logger
+	LC          fx.Lifecycle
+	Config      *config.Config
+	Metrics     *metrics.Registry         `optional:"true"`
+	Registries  []registry.WorkerRegistry `group:"worker_registries"`
+	QueueFilter *registry.QueueFilter     `optional:"true"`
 }
 
 func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
@@ -39,7 +40,19 @@ func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 		MetricsHandler: temporalMetrics,
 	}))
 
+	queueFilter := p.QueueFilter
+	if queueFilter == nil && len(p.Config.Temporal.Worker.Queues) > 0 {
+		queueFilter = &registry.QueueFilter{Queues: p.Config.Temporal.Worker.Queues}
+	}
+
 	for _, reg := range p.Registries {
+		if !queueFilter.Allows(reg.GetTaskQueue()) {
+			p.Logger.Info("skipping worker registry: task queue not in allowlist",
+				zap.String("name", reg.GetName()),
+				zap.String("taskQueue", reg.GetTaskQueue()),
+			)
+			continue
+		}
 		if err := manager.Register(reg); err != nil {
 			return nil, fmt.Errorf("register worker %s: %w", reg.GetName(), err)
 		}

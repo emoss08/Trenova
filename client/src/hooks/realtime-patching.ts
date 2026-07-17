@@ -11,6 +11,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
   shipmentEvents: ["shipment-events"],
+  "report-run": ["report-run-list"],
 };
 
 export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
