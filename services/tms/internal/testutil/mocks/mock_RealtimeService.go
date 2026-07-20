@@ -38,24 +38,24 @@ func (_m *MockRealtimeService) EXPECT() *MockRealtimeService_Expecter {
 	return &MockRealtimeService_Expecter{mock: &_m.Mock}
 }
 
-// CreateTokenRequest provides a mock function for the type MockRealtimeService
-func (_mock *MockRealtimeService) CreateTokenRequest(req *services.CreateRealtimeTokenRequest) (*services.RealtimeTokenRequest, error) {
+// CreateToken provides a mock function for the type MockRealtimeService
+func (_mock *MockRealtimeService) CreateToken(req *services.CreateRealtimeTokenRequest) (*services.RealtimeToken, error) {
 	ret := _mock.Called(req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateTokenRequest")
+		panic("no return value specified for CreateToken")
 	}
 
-	var r0 *services.RealtimeTokenRequest
+	var r0 *services.RealtimeToken
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*services.CreateRealtimeTokenRequest) (*services.RealtimeTokenRequest, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(*services.CreateRealtimeTokenRequest) (*services.RealtimeToken, error)); ok {
 		return returnFunc(req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*services.CreateRealtimeTokenRequest) *services.RealtimeTokenRequest); ok {
+	if returnFunc, ok := ret.Get(0).(func(*services.CreateRealtimeTokenRequest) *services.RealtimeToken); ok {
 		r0 = returnFunc(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*services.RealtimeTokenRequest)
+			r0 = ret.Get(0).(*services.RealtimeToken)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(*services.CreateRealtimeTokenRequest) error); ok {
@@ -66,18 +66,18 @@ func (_mock *MockRealtimeService) CreateTokenRequest(req *services.CreateRealtim
 	return r0, r1
 }
 
-// MockRealtimeService_CreateTokenRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateTokenRequest'
-type MockRealtimeService_CreateTokenRequest_Call struct {
+// MockRealtimeService_CreateToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateToken'
+type MockRealtimeService_CreateToken_Call struct {
 	*mock.Call
 }
 
-// CreateTokenRequest is a helper method to define mock.On call
+// CreateToken is a helper method to define mock.On call
 //   - req *services.CreateRealtimeTokenRequest
-func (_e *MockRealtimeService_Expecter) CreateTokenRequest(req any) *MockRealtimeService_CreateTokenRequest_Call {
-	return &MockRealtimeService_CreateTokenRequest_Call{Call: _e.mock.On("CreateTokenRequest", req)}
+func (_e *MockRealtimeService_Expecter) CreateToken(req any) *MockRealtimeService_CreateToken_Call {
+	return &MockRealtimeService_CreateToken_Call{Call: _e.mock.On("CreateToken", req)}
 }
 
-func (_c *MockRealtimeService_CreateTokenRequest_Call) Run(run func(req *services.CreateRealtimeTokenRequest)) *MockRealtimeService_CreateTokenRequest_Call {
+func (_c *MockRealtimeService_CreateToken_Call) Run(run func(req *services.CreateRealtimeTokenRequest)) *MockRealtimeService_CreateToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 *services.CreateRealtimeTokenRequest
 		if args[0] != nil {
@@ -90,12 +90,12 @@ func (_c *MockRealtimeService_CreateTokenRequest_Call) Run(run func(req *service
 	return _c
 }
 
-func (_c *MockRealtimeService_CreateTokenRequest_Call) Return(realtimeTokenRequest *services.RealtimeTokenRequest, err error) *MockRealtimeService_CreateTokenRequest_Call {
-	_c.Call.Return(realtimeTokenRequest, err)
+func (_c *MockRealtimeService_CreateToken_Call) Return(realtimeToken *services.RealtimeToken, err error) *MockRealtimeService_CreateToken_Call {
+	_c.Call.Return(realtimeToken, err)
 	return _c
 }
 
-func (_c *MockRealtimeService_CreateTokenRequest_Call) RunAndReturn(run func(req *services.CreateRealtimeTokenRequest) (*services.RealtimeTokenRequest, error)) *MockRealtimeService_CreateTokenRequest_Call {
+func (_c *MockRealtimeService_CreateToken_Call) RunAndReturn(run func(req *services.CreateRealtimeTokenRequest) (*services.RealtimeToken, error)) *MockRealtimeService_CreateToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

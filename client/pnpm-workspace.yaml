@@ -32,7 +32,7 @@ minimumReleaseAgeExclude:
   - "@vitest/utils@4.1.10"
   - vitest@4.1.10
   - '@cloudflare/vite-plugin@1.44.0'
-  - ably@2.24.0
+  - '@foony/realtime@0.14.0'
   - deslop-js@0.7.3
   - lucide-react@1.24.0
   - miniflare@4.20260708.1

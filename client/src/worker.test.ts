@@ -340,7 +340,6 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:9000");
   expect(headers.get("Content-Security-Policy")).toContain("https://tilecache.rainviewer.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://tile.openweathermap.org");
-  expect(headers.get("Content-Security-Policy")).toContain("https://*.ably.net");
-  expect(headers.get("Content-Security-Policy")).toContain("wss://*.ably.net");
-  expect(headers.get("Content-Security-Policy")).toContain("wss://*.ably-realtime.com");
+  expect(headers.get("Content-Security-Policy")).toContain("https://realtime.foony.io");
+  expect(headers.get("Content-Security-Policy")).toContain("wss://realtime.foony.io");
 }

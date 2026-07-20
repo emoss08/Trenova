@@ -34,12 +34,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/token-request/", h.getTokenRequest)
 }
 
-// @Summary Get realtime token request
-// @Description Returns the signed realtime token request for the authenticated actor.
-// @ID getRealtimeTokenRequest
+// @Summary Get realtime token
+// @Description Returns a signed realtime access token for the authenticated actor.
+// @ID getRealtimeToken
 // @Tags Realtime
 // @Produce json
-// @Success 200 {object} services.RealtimeTokenRequest
+// @Success 200 {object} services.RealtimeToken
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
@@ -47,7 +47,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) getTokenRequest(c *gin.Context) {
 	authContext := authctx.GetAuthContext(c)
 
-	resp, err := h.service.CreateTokenRequest(
+	resp, err := h.service.CreateToken(
 		&services.CreateRealtimeTokenRequest{
 			UserID:         authContext.UserID,
 			OrganizationID: authContext.OrganizationID,

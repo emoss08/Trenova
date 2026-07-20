@@ -20,21 +20,21 @@ import (
 )
 
 type stubRealtimeService struct {
-	resp    *servicesport.RealtimeTokenRequest
+	resp    *servicesport.RealtimeToken
 	err     error
 	lastReq *servicesport.CreateRealtimeTokenRequest
 }
 
-func (s *stubRealtimeService) CreateTokenRequest(
+func (s *stubRealtimeService) CreateToken(
 	req *servicesport.CreateRealtimeTokenRequest,
-) (*servicesport.RealtimeTokenRequest, error) {
+) (*servicesport.RealtimeToken, error) {
 	s.lastReq = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
 	if s.resp == nil {
-		return &servicesport.RealtimeTokenRequest{}, nil
+		return &servicesport.RealtimeToken{}, nil
 	}
 
 	return s.resp, nil
@@ -88,7 +88,7 @@ func TestGetTokenRequest_Success(t *testing.T) {
 	t.Parallel()
 
 	svc := &stubRealtimeService{
-		resp: &servicesport.RealtimeTokenRequest{KeyName: "ably-key"},
+		resp: &servicesport.RealtimeToken{Token: "foony-jwt"},
 	}
 	_, router := newRealtimeTestHandler(t, svc)
 
@@ -98,10 +98,10 @@ func TestGetTokenRequest_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var body servicesport.RealtimeTokenRequest
+	var body servicesport.RealtimeToken
 	err := json.Unmarshal(w.Body.Bytes(), &body)
 	require.NoError(t, err)
-	assert.Equal(t, svc.resp.KeyName, body.KeyName)
+	assert.Equal(t, svc.resp.Token, body.Token)
 	assert.NotNil(t, svc.lastReq)
 	assert.False(t, svc.lastReq.UserID.IsNil())
 	assert.False(t, svc.lastReq.OrganizationID.IsNil())

@@ -1,9 +1,12 @@
 package realtimeservice
 
 import (
+	"encoding/base64"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/ably/ably-go/ably"
+	realtime "github.com/Foony-Limited/realtime-go"
 	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -11,14 +14,17 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestCreateTokenRequest(t *testing.T) {
+const testAPIKey = "app.test:super-secret"
+
+func TestCreateToken(t *testing.T) {
 	t.Parallel()
 
-	client, err := ably.NewREST(ably.WithKey("app.test:super-secret"))
+	client, err := realtime.NewRest(realtime.RestOptions{Key: testAPIKey})
 	require.NoError(t, err)
 
 	svc := &Service{
 		l:      zap.NewNop(),
+		apiKey: testAPIKey,
 		client: client,
 	}
 
@@ -28,31 +34,37 @@ func TestCreateTokenRequest(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	result, tokenErr := svc.CreateTokenRequest(req)
+	result, tokenErr := svc.CreateToken(req)
 	require.NoError(t, tokenErr)
 	require.NotNil(t, result)
 
 	assert.Equal(t, req.UserID.String(), result.ClientID)
-	assert.Equal(t, defaultTokenTTL, result.TTL)
-	assert.Equal(
+	assert.NotEmpty(t, result.Token)
+	assert.Greater(t, result.ExpiresAt, time.Now().UnixMilli())
+
+	segments := strings.Split(result.Token, ".")
+	require.Len(t, segments, 3)
+
+	payload, decErr := base64.RawURLEncoding.DecodeString(segments[1])
+	require.NoError(t, decErr)
+
+	claims := string(payload)
+	assert.Contains(t, claims, req.UserID.String())
+	assert.Contains(
 		t,
-		tenantCapability(req.OrganizationID.String(), req.BusinessUnitID.String()),
-		result.Capability,
+		claims,
+		"tenant:"+req.OrganizationID.String()+":"+req.BusinessUnitID.String()+":*",
 	)
-	assert.NotEmpty(t, result.KeyName)
-	assert.NotEmpty(t, result.Nonce)
-	assert.NotEmpty(t, result.MAC)
-	assert.NotZero(t, result.Timestamp)
 }
 
-func TestCreateTokenRequest_ValidationErrors(t *testing.T) {
+func TestCreateToken_ValidationErrors(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{l: zap.NewNop()}
 
-	_, err := svc.CreateTokenRequest(nil)
+	_, err := svc.CreateToken(nil)
 	require.Error(t, err)
 
-	_, err = svc.CreateTokenRequest(&servicesport.CreateRealtimeTokenRequest{})
+	_, err = svc.CreateToken(&servicesport.CreateRealtimeTokenRequest{})
 	require.Error(t, err)
 }

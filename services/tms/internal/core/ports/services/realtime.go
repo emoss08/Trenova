@@ -7,14 +7,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type RealtimeTokenRequest struct {
-	KeyName    string `json:"keyName"`
-	ClientID   string `json:"clientId"`
-	Nonce      string `json:"nonce"`
-	MAC        string `json:"mac"`
-	Capability string `json:"capability"`
-	Timestamp  int64  `json:"timestamp"`
-	TTL        int64  `json:"ttl"`
+type RealtimeToken struct {
+	Token     string `json:"token"`
+	ClientID  string `json:"clientId"`
+	ExpiresAt int64  `json:"expiresAt"`
 }
 
 type CreateRealtimeTokenRequest struct {
@@ -59,9 +55,9 @@ type PublishResourceInvalidationRequest struct {
 }
 
 type RealtimeService interface {
-	CreateTokenRequest(
+	CreateToken(
 		req *CreateRealtimeTokenRequest,
-	) (*RealtimeTokenRequest, error)
+	) (*RealtimeToken, error)
 	PublishResourceInvalidation(
 		ctx context.Context,
 		req *PublishResourceInvalidationRequest,

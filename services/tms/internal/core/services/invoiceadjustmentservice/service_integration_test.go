@@ -254,9 +254,9 @@ func (noopAuditService) RegisterSensitiveFields(
 
 type noopRealtimeService struct{}
 
-func (noopRealtimeService) CreateTokenRequest(
+func (noopRealtimeService) CreateToken(
 	*servicesports.CreateRealtimeTokenRequest,
-) (*servicesports.RealtimeTokenRequest, error) {
+) (*servicesports.RealtimeToken, error) {
 	return nil, nil
 }
 

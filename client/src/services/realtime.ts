@@ -1,29 +1,22 @@
 import { api } from "@/lib/api";
-import * as Ably from "ably";
+import { type Channel, Realtime } from "@foony/realtime";
 
-interface RealtimeTokenRequest {
-  keyName: string;
+interface RealtimeTokenResponse {
+  token: string;
   clientId: string;
-  nonce: string;
-  mac: string;
-  capability: string;
-  timestamp: number;
-  ttl: number;
+  expiresAt: number;
 }
 
 export class RealtimeService {
-  private client: Ably.Realtime | null = null;
+  private client: Realtime | null = null;
 
   public connect() {
     if (this.client) {
       return this.client;
     }
 
-    this.client = new Ably.Realtime({
-      autoConnect: true,
-      authCallback: (_tokenParams, callback) => {
-        void this.authorize(callback);
-      },
+    this.client = new Realtime({
+      authCallback: () => this.authorize(),
     });
 
     return this.client;
@@ -34,7 +27,7 @@ export class RealtimeService {
   }
 
   public isConnectedOrConnecting() {
-    const state = this.client?.connection.state;
+    const state = this.client?.getState();
     return state === "connected" || state === "connecting";
   }
 
@@ -51,15 +44,16 @@ export class RealtimeService {
     this.client = null;
 
     try {
-      if (client.connection.state !== "closing" && client.connection.state !== "closed") {
-        client.close();
+      const state = client.getState();
+      if (state !== "closing" && state !== "closed") {
+        void client.close();
       }
     } catch {
       // Best-effort close: if already closed/disposed, no action needed.
     }
   }
 
-  public getChannel(name: string) {
+  public getChannel(name: string): Channel {
     if (!this.client) {
       throw new Error("Realtime client is not connected");
     }
@@ -76,12 +70,12 @@ export class RealtimeService {
   }
 
   public connectionState() {
-    return this.client?.connection.state ?? "closed";
+    return this.client?.getState() ?? "closed";
   }
 
   public async leavePresenceIfPossible(channelName: string) {
     const client = this.client;
-    if (!client || client.connection.state !== "connected") {
+    if (!client || client.getState() !== "connected") {
       return;
     }
 
@@ -97,23 +91,8 @@ export class RealtimeService {
     }
   }
 
-  private async authorize(
-    callback: (
-      error: string | Ably.ErrorInfo | null,
-      tokenRequestOrDetails:
-        | string
-        | Ably.TokenDetails
-        | Ably.TokenRequest
-        | null,
-    ) => void,
-  ) {
-    try {
-      const tokenRequest = await api.get<RealtimeTokenRequest>(
-        "/realtime/token-request/",
-      );
-      callback(null, tokenRequest as Ably.TokenRequest);
-    } catch {
-      callback("Failed to fetch realtime token request", null);
-    }
+  private async authorize(): Promise<string> {
+    const response = await api.get<RealtimeTokenResponse>("/realtime/token-request/");
+    return response.token;
   }
 }

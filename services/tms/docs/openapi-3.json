@@ -8235,28 +8235,16 @@
                 },
                 "type": "object"
             },
-            "github_com_emoss08_trenova_internal_core_ports_services.RealtimeTokenRequest": {
+            "github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken": {
                 "properties": {
-                    "capability": {
-                        "type": "string"
-                    },
                     "clientId": {
                         "type": "string"
                     },
-                    "keyName": {
-                        "type": "string"
-                    },
-                    "mac": {
-                        "type": "string"
-                    },
-                    "nonce": {
-                        "type": "string"
-                    },
-                    "timestamp": {
+                    "expiresAt": {
                         "type": "integer"
                     },
-                    "ttl": {
-                        "type": "integer"
+                    "token": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -28706,14 +28694,14 @@
         },
         "/realtime/token-request/": {
             "get": {
-                "description": "Returns the signed realtime token request for the authenticated actor.",
-                "operationId": "getRealtimeTokenRequest",
+                "description": "Returns a signed realtime access token for the authenticated actor.",
+                "operationId": "getRealtimeToken",
                 "responses": {
                     "200": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.RealtimeTokenRequest"
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken"
                                 }
                             }
                         },
@@ -28745,7 +28733,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Get realtime token request",
+                "summary": "Get realtime token",
                 "tags": [
                     "Realtime"
                 ]

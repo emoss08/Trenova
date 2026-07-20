@@ -37,7 +37,7 @@ type TwilioConfig struct {
 	FromNumber string `mapstructure:"fromNumber" validate:"required_if=Enabled true"`
 }
 
-type AblyConfig struct {
+type FoonyConfig struct {
 	APIKey string `mapstructure:"apiKey" validate:"required"`
 }
 
@@ -735,6 +735,8 @@ type ReportingConfig struct {
 	CSVIncludeBOM           bool          `mapstructure:"csvIncludeBom"`
 	ExplainCostLimit        float64       `mapstructure:"explainCostLimit"        validate:"min=0"`
 	ExplainRowLimit         float64       `mapstructure:"explainRowLimit"         validate:"min=0"`
+	DeliveryLinkBaseURL     string        `mapstructure:"deliveryLinkBaseUrl"     validate:"omitempty,url"`
+	EmailMaxAttachmentBytes int64         `mapstructure:"emailMaxAttachmentBytes" validate:"min=0"`
 }
 
 func (c *ReportingConfig) GetPoolMaxOpenConns() int {
@@ -891,6 +893,17 @@ func (c *ReportingConfig) GetExplainRowLimit() float64 {
 	return c.ExplainRowLimit
 }
 
+func (c *ReportingConfig) GetDeliveryLinkBaseURL() string {
+	return strings.TrimSuffix(c.DeliveryLinkBaseURL, "/")
+}
+
+func (c *ReportingConfig) GetEmailMaxAttachmentBytes() int64 {
+	if c.EmailMaxAttachmentBytes == 0 {
+		return 10 << 20
+	}
+	return c.EmailMaxAttachmentBytes
+}
+
 type AppConfig struct {
 	Name               string `mapstructure:"name"               validate:"required,min=1,max=100"`
 	Env                string `mapstructure:"env"                validate:"required,oneof=development staging production test"`
@@ -1012,7 +1025,7 @@ type Config struct {
 	Temporal             TemporalConfig             `mapstructure:"temporal"             validate:"required"`
 	Storage              StorageConfig              `mapstructure:"storage"              validate:"required"`
 	System               SystemConfig               `mapstructure:"system"               validate:"required"`
-	Ably                 AblyConfig                 `mapstructure:"ably"                 validate:"required"`
+	Foony                FoonyConfig                `mapstructure:"foony"                validate:"required"`
 	Search               SearchConfig               `mapstructure:"search"`
 	DocumentIntelligence DocumentIntelligenceConfig `mapstructure:"documentIntelligence"`
 	Audit                AuditConfig                `mapstructure:"audit"`
@@ -1038,7 +1051,7 @@ func (c *Config) GetStorageConfig() *StorageConfig { return &c.Storage }
 
 func (c *Config) GetTwilioConfig() *TwilioConfig { return &c.Twilio }
 
-func (c *Config) GetAblyConfig() *AblyConfig { return &c.Ably }
+func (c *Config) GetFoonyConfig() *FoonyConfig { return &c.Foony }
 
 func (c *Config) GetSystemConfig() *SystemConfig { return &c.System }
 

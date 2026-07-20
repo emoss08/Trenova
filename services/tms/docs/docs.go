@@ -14468,20 +14468,20 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns the signed realtime token request for the authenticated actor.",
+                "description": "Returns a signed realtime access token for the authenticated actor.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Realtime"
                 ],
-                "summary": "Get realtime token request",
-                "operationId": "getRealtimeTokenRequest",
+                "summary": "Get realtime token",
+                "operationId": "getRealtimeToken",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RealtimeTokenRequest"
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken"
                         }
                     },
                     "401": {
@@ -31032,29 +31032,17 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_emoss08_trenova_internal_core_ports_services.RealtimeTokenRequest": {
+        "github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken": {
             "type": "object",
             "properties": {
-                "capability": {
-                    "type": "string"
-                },
                 "clientId": {
                     "type": "string"
                 },
-                "keyName": {
-                    "type": "string"
-                },
-                "mac": {
-                    "type": "string"
-                },
-                "nonce": {
-                    "type": "string"
-                },
-                "timestamp": {
+                "expiresAt": {
                     "type": "integer"
                 },
-                "ttl": {
-                    "type": "integer"
+                "token": {
+                    "type": "string"
                 }
             }
         },

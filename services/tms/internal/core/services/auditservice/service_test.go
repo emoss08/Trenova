@@ -148,10 +148,10 @@ func (m *mockBufferRepository) Size(ctx context.Context) (int64, error) {
 
 type noopRealtimeService struct{}
 
-func (s *noopRealtimeService) CreateTokenRequest(
+func (s *noopRealtimeService) CreateToken(
 	_ *services.CreateRealtimeTokenRequest,
-) (*services.RealtimeTokenRequest, error) {
-	return &services.RealtimeTokenRequest{}, nil
+) (*services.RealtimeToken, error) {
+	return &services.RealtimeToken{}, nil
 }
 
 func (s *noopRealtimeService) PublishResourceInvalidation(

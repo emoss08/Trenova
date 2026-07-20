@@ -147,9 +147,9 @@ func (failingShipmentEventObserver) OnShipmentEvent(
 
 type noopRealtimeService struct{}
 
-func (noopRealtimeService) CreateTokenRequest(
+func (noopRealtimeService) CreateToken(
 	*services.CreateRealtimeTokenRequest,
-) (*services.RealtimeTokenRequest, error) {
+) (*services.RealtimeToken, error) {
 	return nil, nil
 }
 

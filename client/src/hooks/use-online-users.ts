@@ -2,11 +2,6 @@ import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useEffect, useMemo, useState } from "react";
 
-interface PresenceMember {
-  clientId?: string | null;
-  connectionId?: string | null;
-}
-
 interface PresenceEvent {
   clientId?: string | null;
   connectionId?: string | null;
@@ -61,10 +56,8 @@ export function useOnlineUsers() {
     }
 
     const client = apiService.realtimeService.connect();
-    if (
-      client.connection.state === "closing" ||
-      client.connection.state === "closed"
-    ) {
+    const state = client.getState();
+    if (state === "closing" || state === "closed") {
       return;
     }
 
@@ -74,37 +67,6 @@ export function useOnlineUsers() {
         user.businessUnitId,
       ),
     );
-
-    let cancelled = false;
-
-    const syncPresence = async () => {
-      try {
-        if (
-          cancelled ||
-          client.connection.state !== "connected" ||
-          (channel.state !== "attached" && channel.state !== "attaching")
-        ) {
-          return;
-        }
-
-        const members = await channel.presence.get();
-        if (cancelled) return;
-
-        const byUser = new Map<string, Set<string>>();
-        members.forEach((member: PresenceMember) => {
-          if (!member.clientId || !member.connectionId) return;
-          const existing = byUser.get(member.clientId) ?? new Set<string>();
-          existing.add(member.connectionId);
-          byUser.set(member.clientId, existing);
-        });
-
-        setConnectionsByUser(byUser);
-      } catch {
-        if (!cancelled) {
-          setConnectionsByUser(new Map());
-        }
-      }
-    };
 
     const onPresenceEvent = (message: PresenceEvent) => {
       if (!message.clientId || !message.connectionId) return;
@@ -126,26 +88,19 @@ export function useOnlineUsers() {
       });
     };
 
-    const initialize = async () => {
-      try {
-        await channel.presence.subscribe(onPresenceEvent);
-        await syncPresence();
-      } catch {
-        if (!cancelled) {
-          setConnectionsByUser(new Map());
-        }
-      }
-    };
-
-    void initialize();
+    // Subscribing asks the server for an initial member snapshot (delivered as
+    // enter events) followed by live enter/leave/update transitions.
+    const unsubscribe = channel.presence.subscribe(onPresenceEvent);
 
     return () => {
-      cancelled = true;
       try {
-        channel.presence.unsubscribe(onPresenceEvent);
+        unsubscribe();
       } catch {
         // Ignore teardown races when channel/client is already disposed.
       }
+      // Drop members from the previous tenant/channel so a switch starts clean
+      // before the next subscription's snapshot repopulates.
+      setConnectionsByUser(new Map());
     };
   }, [isAuthenticated, user?.businessUnitId, user?.currentOrganizationId]);
 

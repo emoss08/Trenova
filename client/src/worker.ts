@@ -49,12 +49,8 @@ const connectSources = [
   "https://maps.googleapis.com",
   "https://*.googleapis.com",
   "https://*.gstatic.com",
-  "https://*.ably.io",
-  "https://*.ably.net",
-  "https://*.ably-realtime.com",
-  "wss://*.ably.io",
-  "wss://*.ably.net",
-  "wss://*.ably-realtime.com",
+  "https://realtime.foony.io",
+  "wss://realtime.foony.io",
 ] as const;
 const localDevelopmentConnectSources = [
   "http://localhost:*",

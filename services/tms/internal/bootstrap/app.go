@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
@@ -66,6 +67,7 @@ func Options() fx.Option {
 		edijobs.Module,
 		emailjobs.Module,
 		exchangeratejobs.Module,
+		fuelpricejobs.Module,
 		thumbnailjobs.Module,
 		smsjobs.Module,
 		samsarajobs.Module,
@@ -103,7 +105,7 @@ func APIOptions() fx.Option {
 		api.ServiceModule,
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,
-		modulesinfra.AblyClientModule,
+		modulesinfra.FoonyClientModule,
 		modulesinfra.MeilisearchClientModule,
 	)
 }
@@ -111,7 +113,7 @@ func APIOptions() fx.Option {
 func WorkerOptions() fx.Option {
 	return fx.Options(
 		modulesinfra.StorageModule,
-		modulesinfra.AblyClientModule,
+		modulesinfra.FoonyClientModule,
 		modulesinfra.MeilisearchClientModule,
 		modulesinfra.SMSModule,
 		api.ServiceModule,

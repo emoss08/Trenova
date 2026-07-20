@@ -41,6 +41,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // @foony/realtime builds its Node-only `ws` fallback specifier at runtime
+    // (with @vite-ignore) so browser bundlers skip it. Excluding it from
+    // pre-bundling keeps esbuild from trying to resolve `ws`.
+    exclude: ["@foony/realtime"],
+  },
   server: {
     proxy: {
       "/api": {
@@ -88,7 +94,7 @@ export default defineConfig({
             },
             { name: "tanstack-vendored", test: /@tanstack/ },
             { name: "base-ui", test: /@base-ui/ },
-            { name: "ably", test: /ably/ },
+            { name: "foony", test: /@foony/ },
             { name: "framer-motion", test: /motion/ },
             { name: "nivo", test: /@nivo/ },
             { name: "recharts", test: /recharts/ },

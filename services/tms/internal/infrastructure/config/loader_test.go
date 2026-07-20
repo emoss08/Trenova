@@ -191,8 +191,8 @@ func newValidConfig() *Config {
 			SecretKey: "minioadmin",
 			Bucket:    "trenova",
 		},
-		Ably: AblyConfig{
-			APIKey: "ably.test:key",
+		Foony: FoonyConfig{
+			APIKey: "foony.test:key",
 		},
 		System: SystemConfig{
 			SystemUserPassword: "test-system-password",
@@ -1177,8 +1177,8 @@ storage:
   accessKey: "test"
   secretKey: "test"
   bucket: "test"
-ably:
-  apiKey: "ably.test:key"
+foony:
+  apiKey: "foony.test:key"
 system:
   systemUserPassword: "test-system-password"
 `

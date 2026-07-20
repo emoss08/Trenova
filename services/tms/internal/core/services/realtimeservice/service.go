@@ -6,39 +6,43 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ably/ably-go/ably"
+	realtime "github.com/Foony-Limited/realtime-go"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const defaultTokenTTL = int64(time.Hour / time.Millisecond)
+const defaultTokenTTL = time.Hour
 const resourceInvalidationEventName = "resource.invalidation"
 
 type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Client *ably.REST
+	Config *config.Config
+	Client *realtime.Rest
 }
 
 type Service struct {
 	l      *zap.Logger
-	client *ably.REST
+	apiKey string
+	client *realtime.Rest
 }
 
 func New(p Params) services.RealtimeService {
 	return &Service{
 		l:      p.Logger.Named("service.realtime"),
+		apiKey: p.Config.GetFoonyConfig().APIKey,
 		client: p.Client,
 	}
 }
 
-func (s *Service) CreateTokenRequest(
+func (s *Service) CreateToken(
 	req *services.CreateRealtimeTokenRequest,
-) (*services.RealtimeTokenRequest, error) {
+) (*services.RealtimeToken, error) {
 	if req == nil {
 		return nil, errortypes.NewBusinessError("realtime token request is required")
 	}
@@ -51,31 +55,28 @@ func (s *Service) CreateTokenRequest(
 		return nil, errortypes.NewBusinessError("realtime service is not configured")
 	}
 
-	tokenParams := &ably.TokenParams{
-		ClientID:   req.UserID.String(),
+	clientID := req.UserID.String()
+	token, err := realtime.CreateJWT(s.apiKey, realtime.CreateJWTParams{
+		ClientID:   clientID,
 		TTL:        defaultTokenTTL,
 		Capability: tenantCapability(req.OrganizationID.String(), req.BusinessUnitID.String()),
-	}
-
-	tokenReq, err := s.client.Auth.CreateTokenRequest(tokenParams)
+	})
 	if err != nil {
-		s.l.Error("failed to create Ably token request", zap.Error(err))
-		return nil, fmt.Errorf("create realtime token request: %w", err)
+		s.l.Error("failed to mint Foony token", zap.Error(err))
+		return nil, fmt.Errorf("mint realtime token: %w", err)
 	}
 
-	return &services.RealtimeTokenRequest{
-		KeyName:    tokenReq.KeyName,
-		ClientID:   tokenReq.ClientID,
-		Nonce:      tokenReq.Nonce,
-		MAC:        tokenReq.MAC,
-		Capability: tokenReq.Capability,
-		Timestamp:  tokenReq.Timestamp,
-		TTL:        tokenReq.TTL,
+	return &services.RealtimeToken{
+		Token:     token,
+		ClientID:  clientID,
+		ExpiresAt: time.Now().Add(defaultTokenTTL).UnixMilli(),
 	}, nil
 }
 
-func tenantCapability(orgID, buID string) string {
-	return fmt.Sprintf(`{"tenant:%s:%s:*":["subscribe","presence","history"]}`, orgID, buID)
+func tenantCapability(orgID, buID string) realtime.Capability {
+	return realtime.Capability{
+		fmt.Sprintf("tenant:%s:%s:*", orgID, buID): {"subscribe", "presence", "history"},
+	}
 }
 
 func (s *Service) PublishResourceInvalidation(
@@ -141,7 +142,7 @@ func (s *Service) PublishResourceInvalidation(
 		event.ActorAPIKeyID = req.ActorAPIKeyID.String()
 	}
 
-	if err := s.client.Channels.Get(channelName).Publish(
+	if _, err := s.client.Channels.Get(channelName).Publish(
 		ctx,
 		resourceInvalidationEventName,
 		event,

@@ -656,9 +656,9 @@ type fakeRealtimeService struct {
 	published []*services.PublishResourceInvalidationRequest
 }
 
-func (fakeRealtimeService) CreateTokenRequest(
+func (fakeRealtimeService) CreateToken(
 	*services.CreateRealtimeTokenRequest,
-) (*services.RealtimeTokenRequest, error) {
+) (*services.RealtimeToken, error) {
 	return nil, nil
 }
 

@@ -3,6 +3,7 @@ module github.com/emoss08/trenova
 go 1.26
 
 require (
+	github.com/Foony-Limited/realtime-go v0.1.1
 	github.com/chromedp/cdproto v0.0.0-20260714215040-dc233986426f
 	github.com/chromedp/chromedp v0.16.0
 	github.com/emoss08/trenova/shared v0.0.0
@@ -14,7 +15,6 @@ require (
 	cloud.google.com/go/kms v1.31.0
 	github.com/99designs/gqlgen v0.17.93
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/ably/ably-go v1.4.1
 	github.com/bytedance/sonic v1.15.2
 	github.com/chai2010/webp v1.4.0
 	github.com/coreos/go-oidc/v3 v3.19.0
@@ -122,7 +122,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/ably/vcdiff-go v0.0.2 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

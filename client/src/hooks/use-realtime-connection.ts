@@ -1,3 +1,4 @@
+import { downloadReportRun } from "@/hooks/use-reports";
 import { APP_ENV } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -103,7 +104,7 @@ export function useRealtimeConnection() {
     );
 
     const enterPresence = async () => {
-      if (disposed || client.connection.state !== "connected") {
+      if (disposed || client.getState() !== "connected") {
         return;
       }
 
@@ -118,14 +119,14 @@ export function useRealtimeConnection() {
       }
     };
 
-    const onConnectionState = () => {
+    const onConnectionState = (state: string) => {
       if (disposed) {
         return;
       }
 
-      useRealtimeStore.getState().setConnectionState(mapConnectionState(client.connection.state));
+      useRealtimeStore.getState().setConnectionState(mapConnectionState(state));
 
-      if (client.connection.state === "connected") {
+      if (state === "connected") {
         void enterPresence();
         invalidateCoreKeys();
       }
@@ -148,15 +149,29 @@ export function useRealtimeConnection() {
           } else {
             const notif = notifEvt.entity as {
               targetUserId?: string | null;
+              eventType?: string;
               title?: string;
               message?: string;
+              data?: Record<string, unknown> | null;
             };
 
             const isForCurrentUser = !notif.targetUserId || notif.targetUserId === user.id;
 
             if (isForCurrentUser && notif.title) {
+              const runId =
+                notif.eventType === "report_run_completed" &&
+                typeof notif.data?.runId === "string"
+                  ? notif.data.runId
+                  : null;
+
               toast.info(notif.title, {
                 description: notif.message,
+                action: runId
+                  ? {
+                      label: "Download",
+                      onClick: () => downloadReportRun({ id: runId }),
+                    }
+                  : undefined,
               });
             }
           }
@@ -203,15 +218,15 @@ export function useRealtimeConnection() {
       enqueueInvalidation(queryKeys);
     };
 
-    const onDebugConnectionState = (stateChange: { current: string }) => {
-      console.debug("[Trenova] realtime state:", stateChange.current);
+    const onDebugConnectionState = (state: string) => {
+      console.debug("[Trenova] realtime state:", state);
     };
     if (APP_ENV === "development") {
       client.connection.on(onDebugConnectionState);
     }
     client.connection.on(onConnectionState);
-    void dataEventsChannel.subscribe(onResourceEvent);
-    onConnectionState();
+    dataEventsChannel.subscribe(onResourceEvent);
+    onConnectionState(client.getState());
 
     return () => {
       disposed = true;
