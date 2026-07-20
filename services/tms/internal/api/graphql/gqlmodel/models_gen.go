@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
@@ -202,6 +203,8 @@ type CreateReportScheduleInput struct {
 	Timezone        *string  `json:"timezone,omitempty"`
 	Formats         []string `json:"formats"`
 	EmailRecipients []string `json:"emailRecipients,omitempty"`
+	EmailAttach     *bool    `json:"emailAttach,omitempty"`
+	NotifyUserIds   []string `json:"notifyUserIds,omitempty"`
 	Enabled         bool     `json:"enabled"`
 }
 
@@ -278,6 +281,14 @@ type DocumentTypeConnection struct {
 type DocumentTypeEdge struct {
 	Node   *documenttype.DocumentType `json:"node"`
 	Cursor string                     `json:"cursor"`
+}
+
+type EIASeriesOption struct {
+	SeriesID string                 `json:"seriesId"`
+	Code     string                 `json:"code"`
+	Name     string                 `json:"name"`
+	Region   string                 `json:"region"`
+	FuelType fuelsurcharge.FuelType `json:"fuelType"`
 }
 
 type EdiCommunicationProfileConnection struct {
@@ -542,6 +553,198 @@ type FormulaTemplateEdge struct {
 	Cursor string                           `json:"cursor"`
 }
 
+type FuelIndex struct {
+	ID             string                    `json:"id"`
+	BusinessUnitID string                    `json:"businessUnitId"`
+	OrganizationID string                    `json:"organizationId"`
+	Name           string                    `json:"name"`
+	Code           string                    `json:"code"`
+	Description    string                    `json:"description"`
+	Source         fuelsurcharge.IndexSource `json:"source"`
+	FuelType       fuelsurcharge.FuelType    `json:"fuelType"`
+	Region         string                    `json:"region"`
+	EiaSeriesID    string                    `json:"eiaSeriesId"`
+	Currency       string                    `json:"currency"`
+	IsActive       bool                      `json:"isActive"`
+	Version        int                       `json:"version"`
+	CreatedAt      int                       `json:"createdAt"`
+	UpdatedAt      int                       `json:"updatedAt"`
+}
+
+type FuelIndexConnection struct {
+	Edges      []*FuelIndexEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type FuelIndexEdge struct {
+	Node   *FuelIndex `json:"node"`
+	Cursor string     `json:"cursor"`
+}
+
+type FuelIndexInput struct {
+	Name        string                    `json:"name"`
+	Code        string                    `json:"code"`
+	Description *string                   `json:"description,omitempty"`
+	Source      fuelsurcharge.IndexSource `json:"source"`
+	FuelType    *fuelsurcharge.FuelType   `json:"fuelType,omitempty"`
+	Region      *string                   `json:"region,omitempty"`
+	EiaSeriesID *string                   `json:"eiaSeriesId,omitempty"`
+	Currency    *string                   `json:"currency,omitempty"`
+	IsActive    *bool                     `json:"isActive,omitempty"`
+}
+
+type FuelIndexLatestPrice struct {
+	Index    *FuelIndex      `json:"index"`
+	Latest   *FuelIndexPrice `json:"latest,omitempty"`
+	Previous *FuelIndexPrice `json:"previous,omitempty"`
+	Delta    *string         `json:"delta,omitempty"`
+}
+
+type FuelIndexPrice struct {
+	ID             string  `json:"id"`
+	BusinessUnitID string  `json:"businessUnitId"`
+	OrganizationID string  `json:"organizationId"`
+	FuelIndexID    string  `json:"fuelIndexId"`
+	PriceDate      string  `json:"priceDate"`
+	Price          string  `json:"price"`
+	Currency       string  `json:"currency"`
+	IsManual       bool    `json:"isManual"`
+	EnteredByID    *string `json:"enteredById,omitempty"`
+	SourceRaw      string  `json:"sourceRaw"`
+	FetchedAt      string  `json:"fetchedAt"`
+}
+
+type FuelIndexPriceInput struct {
+	FuelIndexID string `json:"fuelIndexId"`
+	PriceDate   string `json:"priceDate"`
+	Price       string `json:"price"`
+}
+
+type FuelProgramCurrentRate struct {
+	Program      *FuelSurchargeProgram  `json:"program"`
+	Price        *FuelIndexPrice        `json:"price,omitempty"`
+	RatePerMile  *string                `json:"ratePerMile,omitempty"`
+	Percent      *string                `json:"percent,omitempty"`
+	FlatAmount   *string                `json:"flatAmount,omitempty"`
+	UsedFallback bool                   `json:"usedFallback"`
+	MatchedRow   *FuelSurchargeTableRow `json:"matchedRow,omitempty"`
+}
+
+type FuelSurchargeProgram struct {
+	ID                   string                             `json:"id"`
+	BusinessUnitID       string                             `json:"businessUnitId"`
+	OrganizationID       string                             `json:"organizationId"`
+	Name                 string                             `json:"name"`
+	Code                 string                             `json:"code"`
+	Description          string                             `json:"description"`
+	Status               fuelsurcharge.ProgramStatus        `json:"status"`
+	FuelIndexID          string                             `json:"fuelIndexId"`
+	AccessorialChargeID  string                             `json:"accessorialChargeId"`
+	Method               fuelsurcharge.ProgramMethod        `json:"method"`
+	PegPrice             *string                            `json:"pegPrice,omitempty"`
+	Increment            *string                            `json:"increment,omitempty"`
+	IncrementRate        *string                            `json:"incrementRate,omitempty"`
+	MilesPerGallon       *string                            `json:"milesPerGallon,omitempty"`
+	PercentBasis         fuelsurcharge.PercentBasis         `json:"percentBasis"`
+	StepRounding         fuelsurcharge.StepRounding         `json:"stepRounding"`
+	RateRounding         fuelsurcharge.RateRounding         `json:"rateRounding"`
+	RatePrecision        int                                `json:"ratePrecision"`
+	MinAmount            *string                            `json:"minAmount,omitempty"`
+	MaxAmount            *string                            `json:"maxAmount,omitempty"`
+	DateBasis            fuelsurcharge.DateBasis            `json:"dateBasis"`
+	PriceEffectiveDay    int                                `json:"priceEffectiveDay"`
+	MissingPriceFallback fuelsurcharge.MissingPriceFallback `json:"missingPriceFallback"`
+	EffectiveStartDate   *int                               `json:"effectiveStartDate,omitempty"`
+	EffectiveEndDate     *int                               `json:"effectiveEndDate,omitempty"`
+	ShipmentTypeIds      []string                           `json:"shipmentTypeIds,omitempty"`
+	ServiceTypeIds       []string                           `json:"serviceTypeIds,omitempty"`
+	TractorTypeIds       []string                           `json:"tractorTypeIds,omitempty"`
+	TrailerTypeIds       []string                           `json:"trailerTypeIds,omitempty"`
+	Version              int                                `json:"version"`
+	CreatedAt            int                                `json:"createdAt"`
+	UpdatedAt            int                                `json:"updatedAt"`
+	FuelIndex            *FuelIndex                         `json:"fuelIndex,omitempty"`
+	AccessorialCharge    *ShipmentAccessorialCharge         `json:"accessorialCharge,omitempty"`
+	TableRows            []*FuelSurchargeTableRow           `json:"tableRows,omitempty"`
+}
+
+type FuelSurchargeProgramConnection struct {
+	Edges      []*FuelSurchargeProgramEdge `json:"edges"`
+	PageInfo   *PageInfo                   `json:"pageInfo"`
+	TotalCount *int                        `json:"totalCount,omitempty"`
+}
+
+type FuelSurchargeProgramEdge struct {
+	Node   *FuelSurchargeProgram `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type FuelSurchargeProgramInput struct {
+	Name                 string                              `json:"name"`
+	Code                 string                              `json:"code"`
+	Description          *string                             `json:"description,omitempty"`
+	Status               *fuelsurcharge.ProgramStatus        `json:"status,omitempty"`
+	FuelIndexID          string                              `json:"fuelIndexId"`
+	AccessorialChargeID  string                              `json:"accessorialChargeId"`
+	Method               fuelsurcharge.ProgramMethod         `json:"method"`
+	PegPrice             *string                             `json:"pegPrice,omitempty"`
+	Increment            *string                             `json:"increment,omitempty"`
+	IncrementRate        *string                             `json:"incrementRate,omitempty"`
+	MilesPerGallon       *string                             `json:"milesPerGallon,omitempty"`
+	PercentBasis         *fuelsurcharge.PercentBasis         `json:"percentBasis,omitempty"`
+	StepRounding         *fuelsurcharge.StepRounding         `json:"stepRounding,omitempty"`
+	RateRounding         *fuelsurcharge.RateRounding         `json:"rateRounding,omitempty"`
+	RatePrecision        *int                                `json:"ratePrecision,omitempty"`
+	MinAmount            *string                             `json:"minAmount,omitempty"`
+	MaxAmount            *string                             `json:"maxAmount,omitempty"`
+	DateBasis            *fuelsurcharge.DateBasis            `json:"dateBasis,omitempty"`
+	PriceEffectiveDay    *int                                `json:"priceEffectiveDay,omitempty"`
+	MissingPriceFallback *fuelsurcharge.MissingPriceFallback `json:"missingPriceFallback,omitempty"`
+	EffectiveStartDate   *int                                `json:"effectiveStartDate,omitempty"`
+	EffectiveEndDate     *int                                `json:"effectiveEndDate,omitempty"`
+	ShipmentTypeIds      []string                            `json:"shipmentTypeIds,omitempty"`
+	ServiceTypeIds       []string                            `json:"serviceTypeIds,omitempty"`
+	TractorTypeIds       []string                            `json:"tractorTypeIds,omitempty"`
+	TrailerTypeIds       []string                            `json:"trailerTypeIds,omitempty"`
+	TableRows            []*FuelSurchargeTableRowInput       `json:"tableRows,omitempty"`
+}
+
+type FuelSurchargeTableRow struct {
+	ID                     string  `json:"id"`
+	BusinessUnitID         string  `json:"businessUnitId"`
+	OrganizationID         string  `json:"organizationId"`
+	FuelSurchargeProgramID string  `json:"fuelSurchargeProgramId"`
+	PriceMin               *string `json:"priceMin,omitempty"`
+	PriceMax               *string `json:"priceMax,omitempty"`
+	Value                  string  `json:"value"`
+	SortOrder              int     `json:"sortOrder"`
+	CreatedAt              int     `json:"createdAt"`
+	UpdatedAt              int     `json:"updatedAt"`
+}
+
+type FuelSurchargeTableRowInput struct {
+	PriceMin  *string `json:"priceMin,omitempty"`
+	PriceMax  *string `json:"priceMax,omitempty"`
+	Value     string  `json:"value"`
+	SortOrder *int    `json:"sortOrder,omitempty"`
+}
+
+type GenerateFuelTableInput struct {
+	MinPrice   string `json:"minPrice"`
+	MaxPrice   string `json:"maxPrice"`
+	Increment  string `json:"increment"`
+	StartValue string `json:"startValue"`
+	ValueStep  string `json:"valueStep"`
+	OpenEnded  *bool  `json:"openEnded,omitempty"`
+}
+
+type GeneratedFuelTableRow struct {
+	PriceMin *string `json:"priceMin,omitempty"`
+	PriceMax *string `json:"priceMax,omitempty"`
+	Value    string  `json:"value"`
+}
+
 type HazardousMaterialConnection struct {
 	Edges      []*HazardousMaterialEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
@@ -657,6 +860,11 @@ type NotificationConnection struct {
 type NotificationEdge struct {
 	Node   *notification.Notification `json:"node"`
 	Cursor string                     `json:"cursor"`
+}
+
+type NotificationFilterInput struct {
+	State      *NotificationState `json:"state,omitempty"`
+	UnreadOnly *bool              `json:"unreadOnly,omitempty"`
 }
 
 type OrderCharge struct {
@@ -963,6 +1171,8 @@ type ReportSchedule struct {
 	Timezone            string   `json:"timezone"`
 	Formats             []string `json:"formats"`
 	EmailRecipients     []string `json:"emailRecipients"`
+	EmailAttach         bool     `json:"emailAttach"`
+	NotifyUserIds       []string `json:"notifyUserIds"`
 	Enabled             bool     `json:"enabled"`
 	RunAsID             string   `json:"runAsId"`
 	LastRunID           *string  `json:"lastRunId,omitempty"`
@@ -1160,19 +1370,21 @@ type ShipmentActiveShipmentsBreakdown struct {
 }
 
 type ShipmentAdditionalCharge struct {
-	ID                  *string                    `json:"id,omitempty"`
-	BusinessUnitID      string                     `json:"businessUnitId"`
-	OrganizationID      string                     `json:"organizationId"`
-	ShipmentID          string                     `json:"shipmentId"`
-	AccessorialChargeID string                     `json:"accessorialChargeId"`
-	IsSystemGenerated   bool                       `json:"isSystemGenerated"`
-	Method              string                     `json:"method"`
-	Amount              string                     `json:"amount"`
-	Unit                int                        `json:"unit"`
-	Version             int                        `json:"version"`
-	CreatedAt           int                        `json:"createdAt"`
-	UpdatedAt           int                        `json:"updatedAt"`
-	AccessorialCharge   *ShipmentAccessorialCharge `json:"accessorialCharge,omitempty"`
+	ID                     *string                    `json:"id,omitempty"`
+	BusinessUnitID         string                     `json:"businessUnitId"`
+	OrganizationID         string                     `json:"organizationId"`
+	ShipmentID             string                     `json:"shipmentId"`
+	AccessorialChargeID    string                     `json:"accessorialChargeId"`
+	IsSystemGenerated      bool                       `json:"isSystemGenerated"`
+	Method                 string                     `json:"method"`
+	Amount                 string                     `json:"amount"`
+	Unit                   int                        `json:"unit"`
+	FuelSurchargeProgramID *string                    `json:"fuelSurchargeProgramId,omitempty"`
+	FuelSurchargeDetail    map[string]any             `json:"fuelSurchargeDetail,omitempty"`
+	Version                int                        `json:"version"`
+	CreatedAt              int                        `json:"createdAt"`
+	UpdatedAt              int                        `json:"updatedAt"`
+	AccessorialCharge      *ShipmentAccessorialCharge `json:"accessorialCharge,omitempty"`
 }
 
 type ShipmentAdditionalChargeInput struct {
@@ -2257,6 +2469,12 @@ type UpcomingWorkerPTOInput struct {
 	Timezone    *string           `json:"timezone,omitempty"`
 }
 
+type UpdateFuelIndexPriceInput struct {
+	ID        string `json:"id"`
+	PriceDate string `json:"priceDate"`
+	Price     string `json:"price"`
+}
+
 type UpdateOrderChargeInput struct {
 	OrderID     string `json:"orderId"`
 	ChargeID    string `json:"chargeId"`
@@ -2286,6 +2504,8 @@ type UpdateReportScheduleInput struct {
 	Timezone        *string  `json:"timezone,omitempty"`
 	Formats         []string `json:"formats"`
 	EmailRecipients []string `json:"emailRecipients,omitempty"`
+	EmailAttach     *bool    `json:"emailAttach,omitempty"`
+	NotifyUserIds   []string `json:"notifyUserIds,omitempty"`
 	Enabled         bool     `json:"enabled"`
 }
 
@@ -2581,6 +2801,61 @@ func (e MoveStatus) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type NotificationState string
+
+const (
+	NotificationStateInbox    NotificationState = "inbox"
+	NotificationStateArchived NotificationState = "archived"
+)
+
+var AllNotificationState = []NotificationState{
+	NotificationStateInbox,
+	NotificationStateArchived,
+}
+
+func (e NotificationState) IsValid() bool {
+	switch e {
+	case NotificationStateInbox, NotificationStateArchived:
+		return true
+	}
+	return false
+}
+
+func (e NotificationState) String() string {
+	return string(e)
+}
+
+func (e *NotificationState) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = NotificationState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid NotificationState", str)
+	}
+	return nil
+}
+
+func (e NotificationState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *NotificationState) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e NotificationState) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type SelectOptionResource string
 
 const (
@@ -2593,6 +2868,8 @@ const (
 	SelectOptionResourceShipment              SelectOptionResource = "SHIPMENT"
 	SelectOptionResourceOrder                 SelectOptionResource = "ORDER"
 	SelectOptionResourceEdiTransfer           SelectOptionResource = "EDI_TRANSFER"
+	SelectOptionResourceFuelIndex             SelectOptionResource = "FUEL_INDEX"
+	SelectOptionResourceFuelSurchargeProgram  SelectOptionResource = "FUEL_SURCHARGE_PROGRAM"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
@@ -2605,11 +2882,13 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceShipment,
 	SelectOptionResourceOrder,
 	SelectOptionResourceEdiTransfer,
+	SelectOptionResourceFuelIndex,
+	SelectOptionResourceFuelSurchargeProgram,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer:
+	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram:
 		return true
 	}
 	return false

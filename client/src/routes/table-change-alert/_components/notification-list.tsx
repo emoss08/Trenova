@@ -86,7 +86,7 @@ function NotificationRow({
 export default function NotificationList() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery(queries.notification.list({ limit: 50 }));
+  const { data, isLoading } = useQuery(queries.notification.feed({ first: 50 }));
   const { data: unreadCount = 0 } = useQuery(queries.notification.unreadCount());
 
   const notifications = data?.results ?? [];

@@ -14,24 +14,12 @@ import (
 
 // MarkNotificationsRead is the resolver for the markNotificationsRead field.
 func (r *mutationResolver) MarkNotificationsRead(ctx context.Context, ids []string) (bool, error) {
-	authCtx, err := r.requireAuth(ctx)
-	if err != nil {
-		return false, err
-	}
+	return r.notificationAction(ctx, ids, r.notificationService.MarkAsRead)
+}
 
-	notificationIDs, err := parseIDs(ids)
-	if err != nil {
-		return false, err
-	}
-
-	if err = r.notificationService.MarkAsRead(ctx, repositories.MarkNotificationsReadRequest{
-		IDs:        notificationIDs,
-		TenantInfo: tenantInfo(authCtx),
-	}); err != nil {
-		return false, err
-	}
-
-	return true, nil
+// MarkNotificationsUnread is the resolver for the markNotificationsUnread field.
+func (r *mutationResolver) MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error) {
+	return r.notificationAction(ctx, ids, r.notificationService.MarkAsUnread)
 }
 
 // MarkAllNotificationsRead is the resolver for the markAllNotificationsRead field.
@@ -52,8 +40,18 @@ func (r *mutationResolver) MarkAllNotificationsRead(ctx context.Context) (bool, 
 	return true, nil
 }
 
+// DismissNotifications is the resolver for the dismissNotifications field.
+func (r *mutationResolver) DismissNotifications(ctx context.Context, ids []string) (bool, error) {
+	return r.notificationAction(ctx, ids, r.notificationService.Dismiss)
+}
+
+// RestoreNotifications is the resolver for the restoreNotifications field.
+func (r *mutationResolver) RestoreNotifications(ctx context.Context, ids []string) (bool, error) {
+	return r.notificationAction(ctx, ids, r.notificationService.Restore)
+}
+
 // Notifications is the resolver for the notifications field.
-func (r *queryResolver) Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.NotificationConnection, error) {
+func (r *queryResolver) Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error) {
 	authCtx, err := r.requireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -64,13 +62,13 @@ func (r *queryResolver) Notifications(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	result, err := r.notificationService.ListConnection(
-		ctx,
-		&repositories.ListNotificationConnectionRequest{
-			Filter: tableInput.Filter,
-			Cursor: tableInput.Cursor,
-		},
-	)
+	req := &repositories.ListNotificationConnectionRequest{
+		Filter: tableInput.Filter,
+		Cursor: tableInput.Cursor,
+	}
+	applyNotificationFilter(req, filter)
+
+	result, err := r.notificationService.ListConnection(ctx, req)
 	if err != nil {
 		return nil, err
 	}

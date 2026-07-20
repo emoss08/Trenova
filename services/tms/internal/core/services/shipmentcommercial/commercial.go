@@ -24,11 +24,13 @@ type Params struct {
 
 	Formula         services.FormulaCalculator
 	AccessorialRepo repositories.AccessorialChargeRepository
+	FuelSurcharge   services.FuelSurchargeResolver
 }
 
 type Calculator struct {
 	formula         services.FormulaCalculator
 	accessorialRepo repositories.AccessorialChargeRepository
+	fuelSurcharge   services.FuelSurchargeResolver
 	now             func() int64
 }
 
@@ -36,6 +38,7 @@ func New(p Params) *Calculator {
 	return &Calculator{
 		formula:         p.Formula,
 		accessorialRepo: p.AccessorialRepo,
+		fuelSurcharge:   p.FuelSurcharge,
 		now:             timeutils.NowUnix,
 	}
 }
@@ -110,9 +113,9 @@ func (c *Calculator) calculateCommercialTotals(
 	entity *shipment.Shipment,
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
-	syncDetention bool,
+	syncGenerated bool,
 ) (decimal.Decimal, decimal.Decimal, *shipment.RatingDetail, error) {
-	if syncDetention {
+	if syncGenerated {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err
 		}
@@ -121,6 +124,12 @@ func (c *Calculator) calculateCommercialTotals(
 	baseCharge, ratingDetail, err := c.calculateBaseCharge(ctx, entity, userID)
 	if err != nil {
 		return decimal.Zero, decimal.Zero, nil, err
+	}
+
+	if syncGenerated {
+		if err = c.syncFuelSurcharge(ctx, entity, baseCharge); err != nil {
+			return decimal.Zero, decimal.Zero, nil, err
+		}
 	}
 
 	return baseCharge, CalculateAdditionalCharges(
@@ -345,6 +354,108 @@ func detentionUnits(
 	default:
 		return 1
 	}
+}
+
+func (c *Calculator) syncFuelSurcharge(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	baseCharge decimal.Decimal,
+) error {
+	if entity == nil || c.fuelSurcharge == nil {
+		return nil
+	}
+
+	resolved, err := c.fuelSurcharge.ResolveShipmentCharge(
+		ctx,
+		&services.ResolveShipmentChargeRequest{
+			Shipment:         entity,
+			Linehaul:         baseCharge,
+			AccessorialTotal: nonFuelSurchargeChargeTotal(entity, baseCharge),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if resolved == nil || resolved.Amount.LessThanOrEqual(decimal.Zero) {
+		removeGeneratedFuelSurchargeCharges(entity)
+		return nil
+	}
+
+	ensureGeneratedFuelSurchargeCharge(entity, resolved)
+	return nil
+}
+
+func nonFuelSurchargeChargeTotal(
+	entity *shipment.Shipment,
+	baseCharge decimal.Decimal,
+) decimal.Decimal {
+	total := decimal.Zero
+	for _, charge := range entity.AdditionalCharges {
+		if charge == nil || (charge.IsSystemGenerated && charge.FuelSurchargeProgramID != nil) {
+			continue
+		}
+		total = total.Add(CalculateAdditionalCharge(charge, baseCharge))
+	}
+	return total
+}
+
+func removeGeneratedFuelSurchargeCharges(entity *shipment.Shipment) {
+	filtered := entity.AdditionalCharges[:0]
+	for _, charge := range entity.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		if charge.IsSystemGenerated && charge.FuelSurchargeProgramID != nil {
+			continue
+		}
+		filtered = append(filtered, charge)
+	}
+	entity.AdditionalCharges = filtered
+}
+
+func ensureGeneratedFuelSurchargeCharge(
+	entity *shipment.Shipment,
+	resolved *services.ResolvedFuelSurcharge,
+) {
+	var generated *shipment.AdditionalCharge
+	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges))
+
+	for _, charge := range entity.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+
+		if !charge.IsSystemGenerated || charge.FuelSurchargeProgramID == nil {
+			filtered = append(filtered, charge)
+			continue
+		}
+
+		if generated == nil {
+			generated = charge
+		}
+	}
+
+	if generated == nil {
+		generated = &shipment.AdditionalCharge{
+			OrganizationID:    entity.OrganizationID,
+			BusinessUnitID:    entity.BusinessUnitID,
+			ShipmentID:        entity.ID,
+			IsSystemGenerated: true,
+		}
+	}
+
+	programID := resolved.ProgramID
+	generated.IsSystemGenerated = true
+	generated.AccessorialChargeID = resolved.AccessorialChargeID
+	generated.Method = accessorialcharge.MethodFlat
+	generated.Amount = resolved.Amount
+	generated.Unit = 1
+	generated.FuelSurchargeProgramID = &programID
+	generated.FuelSurchargeDetail = resolved.Detail
+
+	filtered = append(filtered, generated)
+	entity.AdditionalCharges = filtered
 }
 
 func removeGeneratedDetentionCharges(entity *shipment.Shipment, detentionChargeID pulid.ID) {

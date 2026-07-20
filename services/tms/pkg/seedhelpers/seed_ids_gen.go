@@ -15,6 +15,7 @@ const (
 	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
 	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
 	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
+	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
@@ -38,6 +39,7 @@ var AllSeedIDs = []SeedID{
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedFormulaTemplate,
+	SeedFuelSurcharge,
 	SeedGLAccount,
 	SeedLocation,
 	SeedLocationCategory,
@@ -71,6 +73,7 @@ var BaseSeedIDs = []SeedID{
 var DevelopmentSeedIDs = []SeedID{
 	SeedDocumentParsingRuleExample,
 	SeedFormulaTemplate,
+	SeedFuelSurcharge,
 	SeedLocation,
 	SeedLocationCategory,
 	SeedNormalAccount,

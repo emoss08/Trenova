@@ -9,6 +9,7 @@ const (
 	TypeOpenAI             = Type("OpenAI")
 	TypeOpenWeatherMap     = Type("OpenWeatherMap")
 	TypeOANDAExchangeRates = Type("OANDAExchangeRates")
+	TypeEIAFuelPrices      = Type("EIAFuelPrices")
 	TypePCMiler            = Type("PCMiler")
 	TypeResend             = Type("Resend")
 	TypeAmazonSES          = Type("AmazonSES")

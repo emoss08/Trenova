@@ -36,14 +36,12 @@ const (
 	CreditStatusReview    = CreditStatus("Review")
 )
 
-type FuelSurchargeMethod string
+type FuelSurchargeMode string
 
 const (
-	FuelSurchargeMethodNone         = FuelSurchargeMethod("None")
-	FuelSurchargeMethodPercentage   = FuelSurchargeMethod("Percentage")
-	FuelSurchargeMethodPerMile      = FuelSurchargeMethod("PerMile")
-	FuelSurchargeMethodFlatSchedule = FuelSurchargeMethod("FlatSchedule")
-	FuelSurchargeMethodIncluded     = FuelSurchargeMethod("Included")
+	FuelSurchargeModeNone         = FuelSurchargeMode("None")
+	FuelSurchargeModeProgram      = FuelSurchargeMode("Program")
+	FuelSurchargeModeFuelIncluded = FuelSurchargeMode("FuelIncluded")
 )
 
 type InvoiceNumberFormat string

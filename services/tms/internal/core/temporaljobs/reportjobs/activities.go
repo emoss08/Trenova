@@ -46,6 +46,7 @@ type ActivitiesParams struct {
 	ReportingDB         *postgres.ReportingConnection
 	Storage             storage.Client
 	NotificationService *notificationservice.Service
+	EmailService        services.EmailService      `optional:"true"`
 	RealtimeService     services.RealtimeService   `optional:"true"`
 	ResultCache         services.ReportResultCache `optional:"true"`
 	AuditService        services.AuditService
@@ -67,6 +68,7 @@ type Activities struct {
 	reportingDB  *postgres.ReportingConnection
 	storage      storage.Client
 	notification *notificationservice.Service
+	email        services.EmailService
 	realtime     services.RealtimeService
 	resultCache  services.ReportResultCache
 	audit        services.AuditService
@@ -91,6 +93,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		reportingDB:  p.ReportingDB,
 		storage:      p.Storage,
 		notification: p.NotificationService,
+		email:        p.EmailService,
 		realtime:     p.RealtimeService,
 		resultCache:  p.ResultCache,
 		audit:        p.AuditService,
@@ -203,6 +206,7 @@ func (a *Activities) PrepareRunActivity(
 		BusinessUnitID: run.BusinessUnitID,
 		RequestedByID:  run.RequestedByID,
 		RevisionID:     run.RevisionID,
+		ScheduleID:     run.ScheduleID,
 		CannedKey:      run.CannedKey,
 		Format:         run.Format,
 		Title:          title,
@@ -246,14 +250,23 @@ func (a *Activities) runDisplayMetadata(
 	run *report.ReportRun,
 	runnerTenant pagination.TenantInfo,
 ) (requestedBy, title, description string) {
-	title = "Report"
-
 	if user, userErr := a.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
 		TenantInfo:   runnerTenant,
 		LookupUserID: run.RequestedByID,
 	}); userErr == nil {
 		requestedBy = user.Name
 	}
+
+	title, description = a.reportTitle(ctx, run)
+
+	return requestedBy, title, description
+}
+
+func (a *Activities) reportTitle(
+	ctx context.Context,
+	run *report.ReportRun,
+) (title, description string) {
+	title = "Report"
 
 	switch {
 	case !run.DefinitionID.IsNil():
@@ -274,7 +287,7 @@ func (a *Activities) runDisplayMetadata(
 		}
 	}
 
-	return requestedBy, title, description
+	return title, description
 }
 
 func (a *Activities) ExecuteAndRenderActivity(
@@ -565,12 +578,12 @@ func (a *Activities) emitAudit(run *report.ReportRun) {
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
 		CurrentState: map[string]any{
-			"status":    string(run.Status),
-			"format":    string(run.Format),
-			"rowCount":  run.RowCount,
-			"byteSize":  run.ByteSize,
-			"truncated": run.Truncated,
-			"trigger":   string(run.Trigger),
+			dataKeyStatus:    string(run.Status),
+			dataKeyFormat:    string(run.Format),
+			dataKeyRowCount:  run.RowCount,
+			"byteSize":       run.ByteSize,
+			dataKeyTruncated: run.Truncated,
+			"trigger":        string(run.Trigger),
 		},
 	}); err != nil {
 		a.l.Warn("failed to audit report run completion",
@@ -579,26 +592,44 @@ func (a *Activities) emitAudit(run *report.ReportRun) {
 }
 
 func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun) {
-	title := "Your report is ready"
-	message := "The report finished generating and is ready to download."
+	name, _ := a.reportTitle(ctx, run)
+
+	title := "Report ready"
+	message := fmt.Sprintf("%q finished generating and is ready to download.", name)
 	priority := notification.PriorityMedium
 	eventType := "report_run_completed"
 
 	//nolint:exhaustive // only terminal failure states change the message
 	switch run.Status {
 	case report.RunStatusFailed:
-		title = "Report generation failed"
-		message = "The report could not be generated."
+		title = "Report failed"
+		message = fmt.Sprintf("%q could not be generated.", name)
 		if run.Error != nil && run.Error.Message != "" {
-			message = run.Error.Message
+			message = fmt.Sprintf("%q could not be generated: %s", name, run.Error.Message)
 		}
 		priority = notification.PriorityHigh
 		eventType = "report_run_failed"
 	case report.RunStatusCanceled:
-		title = "Report run canceled"
-		message = "The report run was canceled."
+		title = "Report canceled"
+		message = fmt.Sprintf("The run for %q was canceled.", name)
 		eventType = "report_run_canceled"
 	default:
+	}
+
+	data := map[string]any{
+		dataKeyRunID:      run.ID.String(),
+		dataKeyStatus:     string(run.Status),
+		dataKeyFormat:     string(run.Format),
+		dataKeyRowCount:   run.RowCount,
+		dataKeyTruncated:  run.Truncated,
+		dataKeyReportName: name,
+		dataKeyByteSize:   run.ByteSize,
+	}
+	if run.ArtifactExpiresAt > 0 {
+		data[dataKeyArtifactExpiresAt] = run.ArtifactExpiresAt
+	}
+	if !run.ScheduleID.IsNil() {
+		data[dataKeyScheduleID] = run.ScheduleID.String()
 	}
 
 	if _, err := a.notification.Create(ctx, &notification.Notification{
@@ -610,14 +641,8 @@ func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun
 		Priority:       priority,
 		Title:          title,
 		Message:        message,
-		Data: map[string]any{
-			"runId":     run.ID.String(),
-			"status":    string(run.Status),
-			"format":    string(run.Format),
-			"rowCount":  run.RowCount,
-			"truncated": run.Truncated,
-		},
-		Source: "reportjobs.FinalizeRun",
+		Data:           data,
+		Source:         "reportjobs.FinalizeRun",
 	}); err != nil {
 		a.l.Warn("failed to create report run notification",
 			zap.String("runId", run.ID.String()), zap.Error(err))

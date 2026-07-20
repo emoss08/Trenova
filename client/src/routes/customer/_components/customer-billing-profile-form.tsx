@@ -1,5 +1,6 @@
 import {
   DocumentTypeMultiSelectField,
+  FuelSurchargeProgramAutocompleteField,
   GLAccountAutocompleteField,
   UserAutocompleteField,
 } from "@/components/autocomplete-fields";
@@ -15,6 +16,7 @@ import {
   consolidationGroupByChoices,
   creditStatusChoices,
   currencyChoices,
+  customerFuelSurchargeModeChoices,
   customerPaymentTermChoices,
   invoiceAdjustmentSupportingDocumentPolicyChoices,
   invoiceMethodChoices,
@@ -26,6 +28,7 @@ import {
   ClockIcon,
   CreditCardIcon,
   FileTextIcon,
+  FuelIcon,
   GavelIcon,
   MailCheckIcon,
   SettingsIcon,
@@ -83,6 +86,7 @@ export function CustomerBillingProfileForm() {
     name: "billingProfile.applyLateCharges",
   });
   const taxExempt = useWatch({ control, name: "billingProfile.taxExempt" });
+  const fuelSurchargeMode = useWatch({ control, name: "billingProfile.fuelSurchargeMode" });
   const detentionBillingEnabled = useWatch({
     control,
     name: "billingProfile.detentionBillingEnabled",
@@ -393,6 +397,35 @@ export function CustomerBillingProfileForm() {
               label="Exemption Certificate Number"
               placeholder="e.g., EX-2024-00123"
               description="The customer's tax exemption certificate or resale number, required for audit compliance."
+            />
+          </FormControl>
+        )}
+      </FormGroup>
+      <Separator />
+      <SectionHeader
+        icon={FuelIcon}
+        title="Fuel Surcharge"
+        description="How fuel is billed for this customer — not everyone uses a fuel table, so pick the arrangement that matches the contract"
+      />
+      <FormGroup cols={1}>
+        <FormControl className="min-h-[3em] max-w-[400px]">
+          <SelectField
+            control={control}
+            name="billingProfile.fuelSurchargeMode"
+            label="Fuel Billing"
+            options={customerFuelSurchargeModeChoices}
+            description="Choose how fuel costs are recovered from this customer."
+          />
+        </FormControl>
+        {fuelSurchargeMode === "Program" && (
+          <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+            <FuelSurchargeProgramAutocompleteField
+              control={control}
+              name="billingProfile.fuelSurchargeProgramId"
+              label="Fuel Surcharge Program"
+              placeholder="Select a program"
+              rules={{ required: true }}
+              description="Every shipment for this customer gets the correct week's indexed surcharge from this program automatically."
             />
           </FormControl>
         )}

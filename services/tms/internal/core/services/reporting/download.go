@@ -3,7 +3,6 @@ package reporting
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -11,11 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
-const downloadURLExpiry = 60 * time.Second
+const (
+	downloadURLExpiry  = 60 * time.Second
+	maxDownloadNameLen = 120
+)
 
 type RunDownload struct {
 	URL      string
@@ -83,7 +86,12 @@ func (s *Service) downloadFileName(
 	}
 
 	stamp := time.Unix(run.CreatedAt, 0).UTC().Format("2006-01-02")
-	return fmt.Sprintf("%s %s.%s", sanitizeFileName(base), stamp, run.Format.Extension())
+	return fmt.Sprintf(
+		"%s %s.%s",
+		fileutils.SanitizeDisplayFilename(base, "report", maxDownloadNameLen),
+		stamp,
+		run.Format.Extension(),
+	)
 }
 
 func (s *Service) auditDownload(run *report.ReportRun) {
@@ -105,19 +113,4 @@ func (s *Service) auditDownload(run *report.ReportRun) {
 		s.l.Warn("failed to audit report download",
 			zap.String("runId", run.ID.String()), zap.Error(err))
 	}
-}
-
-func sanitizeFileName(name string) string {
-	replacer := strings.NewReplacer(
-		"/", "-", "\\", "-", ":", "-", "*", "-", "?", "-",
-		"\"", "'", "<", "-", ">", "-", "|", "-", "\n", " ", "\r", " ",
-	)
-	cleaned := strings.TrimSpace(replacer.Replace(name))
-	if cleaned == "" {
-		return "report"
-	}
-	if len(cleaned) > 120 {
-		cleaned = cleaned[:120]
-	}
-	return cleaned
 }

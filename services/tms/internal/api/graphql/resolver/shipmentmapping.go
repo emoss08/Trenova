@@ -589,6 +589,8 @@ func shipmentAdditionalChargesToModel(
 			Method:              string(entity.Method),
 			Amount:              entity.Amount.String(),
 			Unit:                int(entity.Unit),
+			FuelSurchargeProgramID: idPtrFromPulidPtr(entity.FuelSurchargeProgramID),
+			FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
 			Version:             int(entity.Version),
 			CreatedAt:           int(entity.CreatedAt),
 			UpdatedAt:           int(entity.UpdatedAt),

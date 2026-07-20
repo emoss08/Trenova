@@ -3,56 +3,72 @@ package shipmentcommentservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
+const (
+	mentionEventType     = "shipment_comment_mention"
+	mentionExcerptLength = 240
+
+	dataKeyShipmentID = "shipmentId"
+	dataKeyCommentID  = "commentId"
+)
+
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Repo         repositories.ShipmentCommentRepository
-	ShipmentRepo repositories.ShipmentRepository
-	UserRepo     repositories.UserRepository
-	AuditService services.AuditService
-	EventService services.ShipmentEventService
-	Realtime     services.RealtimeService
+	Logger              *zap.Logger
+	Repo                repositories.ShipmentCommentRepository
+	ShipmentRepo        repositories.ShipmentRepository
+	UserRepo            repositories.UserRepository
+	AuditService        services.AuditService
+	EventService        services.ShipmentEventService
+	Realtime            services.RealtimeService
+	NotificationService *notificationservice.Service
 }
 
 type service struct {
-	l            *zap.Logger
-	repo         repositories.ShipmentCommentRepository
-	shipmentRepo repositories.ShipmentRepository
-	userRepo     repositories.UserRepository
-	auditService services.AuditService
-	eventService services.ShipmentEventService
-	realtime     services.RealtimeService
+	l                   *zap.Logger
+	repo                repositories.ShipmentCommentRepository
+	shipmentRepo        repositories.ShipmentRepository
+	userRepo            repositories.UserRepository
+	auditService        services.AuditService
+	eventService        services.ShipmentEventService
+	realtime            services.RealtimeService
+	notificationService *notificationservice.Service
 }
 
 func New(p Params) services.ShipmentCommentService {
 	return &service{
-		l:            p.Logger.Named("service.shipment-comment"),
-		repo:         p.Repo,
-		shipmentRepo: p.ShipmentRepo,
-		userRepo:     p.UserRepo,
-		auditService: p.AuditService,
-		eventService: p.EventService,
-		realtime:     p.Realtime,
+		l:                   p.Logger.Named("service.shipment-comment"),
+		repo:                p.Repo,
+		shipmentRepo:        p.ShipmentRepo,
+		userRepo:            p.UserRepo,
+		auditService:        p.AuditService,
+		eventService:        p.EventService,
+		realtime:            p.Realtime,
+		notificationService: p.NotificationService,
 	}
 }
 
@@ -139,10 +155,11 @@ func (s *service) Create(
 		return nil, multiErr
 	}
 
-	if err := s.ensureShipmentExists(ctx, entity.ShipmentID, pagination.TenantInfo{
+	shp, err := s.getShipment(ctx, entity.ShipmentID, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -174,6 +191,7 @@ func (s *service) Create(
 		created,
 		auditActor,
 	))
+	s.notifyMentions(ctx, created, shp, userID, created.MentionedUserIDs)
 
 	return created, nil
 }
@@ -290,10 +308,11 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	if err := s.ensureShipmentExists(ctx, entity.ShipmentID, pagination.TenantInfo{
+	shp, err := s.getShipment(ctx, entity.ShipmentID, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -326,6 +345,8 @@ func (s *service) Update(
 		"Shipment comment updated",
 	)
 	s.publishCommentInvalidation(ctx, updated, auditActor, "updated", updated)
+	s.notifyMentions(ctx, updated, shp, userID,
+		sliceutils.Difference(updated.MentionedUserIDs, original.MentionedUserIDs))
 
 	return updated, nil
 }
@@ -398,11 +419,81 @@ func (s *service) ensureShipmentExists(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	_, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	_, err := s.getShipment(ctx, shipmentID, tenantInfo)
+	return err
+}
+
+func (s *service) getShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, error) {
+	return s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
 	})
-	return err
+}
+
+func (s *service) notifyMentions(
+	ctx context.Context,
+	comment *shipment.ShipmentComment,
+	shp *shipment.Shipment,
+	authorID pulid.ID,
+	targetIDs []pulid.ID,
+) {
+	if s.notificationService == nil || len(targetIDs) == 0 {
+		return
+	}
+
+	authorName := "A teammate"
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  comment.OrganizationID,
+		BuID:   comment.BusinessUnitID,
+		UserID: authorID,
+	}
+	if author, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo:   tenantInfo,
+		LookupUserID: authorID,
+	}); err == nil && author.Name != "" {
+		authorName = author.Name
+	}
+
+	excerpt := stringutils.Ellipsize(comment.Comment, mentionExcerptLength)
+
+	for _, targetID := range targetIDs {
+		if targetID == authorID {
+			continue
+		}
+
+		targetUserID := targetID
+		if _, err := s.notificationService.Create(ctx, &notification.Notification{
+			OrganizationID: comment.OrganizationID,
+			BusinessUnitID: &comment.BusinessUnitID,
+			TargetUserID:   &targetUserID,
+			Channel:        notification.ChannelUser,
+			EventType:      mentionEventType,
+			Priority:       notification.PriorityMedium,
+			Title:          fmt.Sprintf("%s mentioned you on %s", authorName, shp.ProNumber),
+			Message:        excerpt,
+			Data: map[string]any{
+				dataKeyShipmentID: comment.ShipmentID.String(),
+				dataKeyCommentID:  comment.ID.String(),
+				"authorId":        authorID.String(),
+				"authorName":      authorName,
+				"proNumber":       shp.ProNumber,
+			},
+			RelatedEntities: map[string]any{
+				dataKeyShipmentID: comment.ShipmentID.String(),
+				dataKeyCommentID:  comment.ID.String(),
+			},
+			Source: "shipmentcommentservice",
+		}); err != nil {
+			s.l.Warn("failed to create mention notification",
+				zap.String("commentId", comment.ID.String()),
+				zap.String("userId", targetID.String()),
+				zap.Error(err))
+		}
+	}
 }
 
 func (s *service) populateMentions(
@@ -512,8 +603,8 @@ func (s *service) logCommentAction(
 	opts := []services.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(map[string]any{
-			"shipmentId": entity.ShipmentID.String(),
-			"commentId":  entity.ID.String(),
+			dataKeyShipmentID: entity.ShipmentID.String(),
+			dataKeyCommentID:  entity.ID.String(),
 		}),
 	}
 	if previous != nil && current != nil {

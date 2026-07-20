@@ -30,4 +30,5 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewShipmentSeed())
 	r.MustRegister(development.NewDocumentParsingRuleExampleSeed())
 	r.MustRegister(development.NewRateTableSeed())
+	r.MustRegister(development.NewFuelSurchargeSeed())
 }

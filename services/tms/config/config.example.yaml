@@ -172,3 +172,8 @@ samsara:
     maxAttempts: 4
     initialBackoff: 500ms
     maxBackoff: 10s
+
+# Reporting configuration (optional — all keys have sensible defaults)
+reporting:
+  deliveryLinkBaseUrl: "" # Public app URL used in scheduled-report emails, e.g. https://app.example.com
+  emailMaxAttachmentBytes: 10485760 # Max artifact size attached to scheduled-report emails (10 MiB)

@@ -102,6 +102,12 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceEdiTransfer: {
 			resolve: r.resolveEDITransferSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceFuelIndex: {
+			resolve: r.resolveFuelIndexSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceFuelSurchargeProgram: {
+			resolve: r.resolveFuelSurchargeProgramSelectOptions,
+		},
 	}
 }
 

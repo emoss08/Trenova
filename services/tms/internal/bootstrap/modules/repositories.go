@@ -65,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/exchangeraterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fuelsurchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fleetcoderepository"
@@ -257,6 +258,9 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	distanceprofilerepository.New,
 	storedmileagerepository.New,
 	exchangeraterepository.New,
+	fuelsurchargerepository.NewIndexRepository,
+	fuelsurchargerepository.NewPriceRepository,
+	fuelsurchargerepository.NewProgramRepository,
 	tcasubscriptionrepository.New,
 	tcaallowlistrepository.New,
 	notificationrepository.New,

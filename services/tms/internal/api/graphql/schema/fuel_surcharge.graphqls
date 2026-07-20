@@ -1,0 +1,279 @@
+enum FuelIndexSource {
+  EIA
+  Custom
+}
+
+enum FuelType {
+  Diesel
+  Gasoline
+}
+
+enum FuelSurchargeProgramMethod {
+  PerMileStep
+  PerMileMPG
+  TablePerMile
+  TablePercent
+  TableFlat
+}
+
+enum FuelSurchargePercentBasis {
+  Linehaul
+  LinehaulPlusAccessorials
+}
+
+enum FuelSurchargeDateBasis {
+  PickupDate
+  TenderDate
+}
+
+enum FuelSurchargeStepRounding {
+  Up
+  Down
+  Nearest
+}
+
+enum FuelSurchargeRateRounding {
+  HalfUp
+  Up
+  Down
+}
+
+enum FuelSurchargeMissingPriceFallback {
+  UseLatestAvailable
+  Skip
+}
+
+enum FuelSurchargeProgramStatus {
+  Active
+  Inactive
+}
+
+type FuelIndex {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  code: String!
+  description: String!
+  source: FuelIndexSource!
+  fuelType: FuelType!
+  region: String!
+  eiaSeriesId: String!
+  currency: String!
+  isActive: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type FuelIndexEdge {
+  node: FuelIndex!
+  cursor: String!
+}
+
+type FuelIndexConnection {
+  edges: [FuelIndexEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelIndexPrice {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  fuelIndexId: ID!
+  priceDate: String!
+  price: String!
+  currency: String!
+  isManual: Boolean!
+  enteredById: ID
+  sourceRaw: String!
+  fetchedAt: String!
+}
+
+type FuelSurchargeTableRow {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  fuelSurchargeProgramId: ID!
+  priceMin: String
+  priceMax: String
+  value: String!
+  sortOrder: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type FuelSurchargeProgram {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  code: String!
+  description: String!
+  status: FuelSurchargeProgramStatus!
+  fuelIndexId: ID!
+  accessorialChargeId: ID!
+  method: FuelSurchargeProgramMethod!
+  pegPrice: String
+  increment: String
+  incrementRate: String
+  milesPerGallon: String
+  percentBasis: FuelSurchargePercentBasis!
+  stepRounding: FuelSurchargeStepRounding!
+  rateRounding: FuelSurchargeRateRounding!
+  ratePrecision: Int!
+  minAmount: String
+  maxAmount: String
+  dateBasis: FuelSurchargeDateBasis!
+  priceEffectiveDay: Int!
+  missingPriceFallback: FuelSurchargeMissingPriceFallback!
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+  shipmentTypeIds: [ID!]
+  serviceTypeIds: [ID!]
+  tractorTypeIds: [ID!]
+  trailerTypeIds: [ID!]
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  fuelIndex: FuelIndex
+  accessorialCharge: ShipmentAccessorialCharge
+  tableRows: [FuelSurchargeTableRow!]
+}
+
+type FuelSurchargeProgramEdge {
+  node: FuelSurchargeProgram!
+  cursor: String!
+}
+
+type FuelSurchargeProgramConnection {
+  edges: [FuelSurchargeProgramEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelIndexLatestPrice {
+  index: FuelIndex!
+  latest: FuelIndexPrice
+  previous: FuelIndexPrice
+  delta: String
+}
+
+type FuelProgramCurrentRate {
+  program: FuelSurchargeProgram!
+  price: FuelIndexPrice
+  ratePerMile: String
+  percent: String
+  flatAmount: String
+  usedFallback: Boolean!
+  matchedRow: FuelSurchargeTableRow
+}
+
+type GeneratedFuelTableRow {
+  priceMin: String
+  priceMax: String
+  value: String!
+}
+
+type EIASeriesOption {
+  seriesId: String!
+  code: String!
+  name: String!
+  region: String!
+  fuelType: FuelType!
+}
+
+input FuelIndexInput {
+  name: String!
+  code: String!
+  description: String
+  source: FuelIndexSource!
+  fuelType: FuelType
+  region: String
+  eiaSeriesId: String
+  currency: String
+  isActive: Boolean
+}
+
+input FuelIndexPriceInput {
+  fuelIndexId: ID!
+  priceDate: String!
+  price: String!
+}
+
+input UpdateFuelIndexPriceInput {
+  id: ID!
+  priceDate: String!
+  price: String!
+}
+
+input FuelSurchargeTableRowInput {
+  priceMin: String
+  priceMax: String
+  value: String!
+  sortOrder: Int
+}
+
+input FuelSurchargeProgramInput {
+  name: String!
+  code: String!
+  description: String
+  status: FuelSurchargeProgramStatus
+  fuelIndexId: ID!
+  accessorialChargeId: ID!
+  method: FuelSurchargeProgramMethod!
+  pegPrice: String
+  increment: String
+  incrementRate: String
+  milesPerGallon: String
+  percentBasis: FuelSurchargePercentBasis
+  stepRounding: FuelSurchargeStepRounding
+  rateRounding: FuelSurchargeRateRounding
+  ratePrecision: Int
+  minAmount: String
+  maxAmount: String
+  dateBasis: FuelSurchargeDateBasis
+  priceEffectiveDay: Int
+  missingPriceFallback: FuelSurchargeMissingPriceFallback
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+  shipmentTypeIds: [ID!]
+  serviceTypeIds: [ID!]
+  tractorTypeIds: [ID!]
+  trailerTypeIds: [ID!]
+  tableRows: [FuelSurchargeTableRowInput!]
+}
+
+input GenerateFuelTableInput {
+  minPrice: String!
+  maxPrice: String!
+  increment: String!
+  startValue: String!
+  valueStep: String!
+  openEnded: Boolean
+}
+
+extend type Query {
+  fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
+  fuelIndex(id: ID!): FuelIndex
+  fuelIndexPriceHistory(indexId: ID!, from: String, to: String, limit: Int): [FuelIndexPrice!]!
+  fuelDashboard: [FuelIndexLatestPrice!]!
+  fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
+  fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
+  fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
+  generateFuelSurchargeTable(input: GenerateFuelTableInput!): [GeneratedFuelTableRow!]!
+  eiaSeriesOptions: [EIASeriesOption!]!
+}
+
+extend type Mutation {
+  createFuelIndex(input: FuelIndexInput!): FuelIndex!
+  updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
+  deleteFuelIndex(id: ID!): Boolean!
+  addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
+  updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
+  deleteFuelIndexPrice(id: ID!): Boolean!
+  createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  deleteFuelSurchargeProgram(id: ID!): Boolean!
+}

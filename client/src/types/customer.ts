@@ -70,6 +70,9 @@ export type InvoiceAdjustmentSupportingDocumentPolicy = z.infer<
   typeof invoiceAdjustmentSupportingDocumentPolicySchema
 >;
 
+export const customerFuelSurchargeModeSchema = z.enum(["None", "Program", "FuelIncluded"]);
+export type CustomerFuelSurchargeMode = z.infer<typeof customerFuelSurchargeModeSchema>;
+
 export const customerBillingProfileSchema = z.object({
   id: z.string().optional(),
   version: z.number().int().min(0).optional(),
@@ -114,6 +117,8 @@ export const customerBillingProfileSchema = z.object({
   countLateOnlyOnAppointmentStops: z.boolean().default(false),
   countDetentionOnlyOnAppointmentStops: z.boolean().default(false),
   autoApplyAccessorials: z.boolean().default(true),
+  fuelSurchargeMode: customerFuelSurchargeModeSchema.default("None"),
+  fuelSurchargeProgramId: z.string().nullish(),
   billingCurrency: z.string().max(3).default("USD"),
   requirePONumber: z.boolean().default(false),
   requireBOLNumber: z.boolean().default(false),
@@ -123,6 +128,14 @@ export const customerBillingProfileSchema = z.object({
   defaultBillerId: nullableStringSchema,
   billingNotes: z.string().default(""),
   documentTypes: z.array(z.any()).nullish(),
+}).superRefine((data, ctx) => {
+  if (data.fuelSurchargeMode === "Program" && !data.fuelSurchargeProgramId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["fuelSurchargeProgramId"],
+      message: "Select the fuel surcharge program to apply for this customer",
+    });
+  }
 });
 
 export type CustomerBillingProfile = z.infer<

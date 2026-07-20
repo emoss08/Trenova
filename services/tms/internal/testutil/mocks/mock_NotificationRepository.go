@@ -447,7 +447,7 @@ func (_c *MockNotificationRepository_MarkAllAsRead_Call) RunAndReturn(run func(c
 }
 
 // MarkAsRead provides a mock function for the type MockNotificationRepository
-func (_mock *MockNotificationRepository) MarkAsRead(ctx context.Context, req repositories.MarkNotificationsReadRequest) error {
+func (_mock *MockNotificationRepository) MarkAsRead(ctx context.Context, req repositories.NotificationActionRequest) error {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -455,7 +455,7 @@ func (_mock *MockNotificationRepository) MarkAsRead(ctx context.Context, req rep
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.MarkNotificationsReadRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.NotificationActionRequest) error); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
@@ -470,20 +470,20 @@ type MockNotificationRepository_MarkAsRead_Call struct {
 
 // MarkAsRead is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.MarkNotificationsReadRequest
+//   - req repositories.NotificationActionRequest
 func (_e *MockNotificationRepository_Expecter) MarkAsRead(ctx any, req any) *MockNotificationRepository_MarkAsRead_Call {
 	return &MockNotificationRepository_MarkAsRead_Call{Call: _e.mock.On("MarkAsRead", ctx, req)}
 }
 
-func (_c *MockNotificationRepository_MarkAsRead_Call) Run(run func(ctx context.Context, req repositories.MarkNotificationsReadRequest)) *MockNotificationRepository_MarkAsRead_Call {
+func (_c *MockNotificationRepository_MarkAsRead_Call) Run(run func(ctx context.Context, req repositories.NotificationActionRequest)) *MockNotificationRepository_MarkAsRead_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repositories.MarkNotificationsReadRequest
+		var arg1 repositories.NotificationActionRequest
 		if args[1] != nil {
-			arg1 = args[1].(repositories.MarkNotificationsReadRequest)
+			arg1 = args[1].(repositories.NotificationActionRequest)
 		}
 		run(
 			arg0,
@@ -498,7 +498,178 @@ func (_c *MockNotificationRepository_MarkAsRead_Call) Return(err error) *MockNot
 	return _c
 }
 
-func (_c *MockNotificationRepository_MarkAsRead_Call) RunAndReturn(run func(ctx context.Context, req repositories.MarkNotificationsReadRequest) error) *MockNotificationRepository_MarkAsRead_Call {
+func (_c *MockNotificationRepository_MarkAsRead_Call) RunAndReturn(run func(ctx context.Context, req repositories.NotificationActionRequest) error) *MockNotificationRepository_MarkAsRead_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkAsUnread provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) MarkAsUnread(ctx context.Context, req repositories.NotificationActionRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkAsUnread")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.NotificationActionRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_MarkAsUnread_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkAsUnread'
+type MockNotificationRepository_MarkAsUnread_Call struct {
+	*mock.Call
+}
+
+// MarkAsUnread is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.NotificationActionRequest
+func (_e *MockNotificationRepository_Expecter) MarkAsUnread(ctx any, req any) *MockNotificationRepository_MarkAsUnread_Call {
+	return &MockNotificationRepository_MarkAsUnread_Call{Call: _e.mock.On("MarkAsUnread", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_MarkAsUnread_Call) Run(run func(ctx context.Context, req repositories.NotificationActionRequest)) *MockNotificationRepository_MarkAsUnread_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.NotificationActionRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.NotificationActionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_MarkAsUnread_Call) Return(err error) *MockNotificationRepository_MarkAsUnread_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_MarkAsUnread_Call) RunAndReturn(run func(ctx context.Context, req repositories.NotificationActionRequest) error) *MockNotificationRepository_MarkAsUnread_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Dismiss provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) Dismiss(ctx context.Context, req repositories.NotificationActionRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Dismiss")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.NotificationActionRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_Dismiss_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Dismiss'
+type MockNotificationRepository_Dismiss_Call struct {
+	*mock.Call
+}
+
+// Dismiss is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.NotificationActionRequest
+func (_e *MockNotificationRepository_Expecter) Dismiss(ctx any, req any) *MockNotificationRepository_Dismiss_Call {
+	return &MockNotificationRepository_Dismiss_Call{Call: _e.mock.On("Dismiss", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_Dismiss_Call) Run(run func(ctx context.Context, req repositories.NotificationActionRequest)) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.NotificationActionRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.NotificationActionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_Dismiss_Call) Return(err error) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_Dismiss_Call) RunAndReturn(run func(ctx context.Context, req repositories.NotificationActionRequest) error) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Restore provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) Restore(ctx context.Context, req repositories.NotificationActionRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Restore")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.NotificationActionRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_Restore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Restore'
+type MockNotificationRepository_Restore_Call struct {
+	*mock.Call
+}
+
+// Restore is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.NotificationActionRequest
+func (_e *MockNotificationRepository_Expecter) Restore(ctx any, req any) *MockNotificationRepository_Restore_Call {
+	return &MockNotificationRepository_Restore_Call{Call: _e.mock.On("Restore", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_Restore_Call) Run(run func(ctx context.Context, req repositories.NotificationActionRequest)) *MockNotificationRepository_Restore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.NotificationActionRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.NotificationActionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_Restore_Call) Return(err error) *MockNotificationRepository_Restore_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_Restore_Call) RunAndReturn(run func(ctx context.Context, req repositories.NotificationActionRequest) error) *MockNotificationRepository_Restore_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -17,6 +17,7 @@ type PreparedRun struct {
 	BusinessUnitID pulid.ID       `json:"businessUnitId"`
 	RequestedByID  pulid.ID       `json:"requestedById"`
 	RevisionID     pulid.ID       `json:"revisionId"`
+	ScheduleID     pulid.ID       `json:"scheduleId,omitempty"`
 	CannedKey      string         `json:"cannedKey,omitempty"`
 	Format         report.Format  `json:"format"`
 	Title          string         `json:"title"`
@@ -57,6 +58,20 @@ type RunReportResult struct {
 	RowCount  int64            `json:"rowCount"`
 	ByteSize  int64            `json:"byteSize"`
 	Truncated bool             `json:"truncated"`
+}
+
+type DeliverRunPayload struct {
+	RunID          pulid.ID `json:"runId"`
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+}
+
+type DeliverRunResult struct {
+	EmailedRecipients int    `json:"emailedRecipients"`
+	EmailAttached     bool   `json:"emailAttached"`
+	EmailError        string `json:"emailError,omitempty"`
+	NotifiedUsers     int    `json:"notifiedUsers"`
+	Skipped           bool   `json:"skipped"`
 }
 
 type CleanupExpiredResult struct {

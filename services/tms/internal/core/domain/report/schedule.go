@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -17,8 +18,57 @@ var (
 	_ validationframework.TenantedEntity = (*ReportSchedule)(nil)
 )
 
+const (
+	MaxScheduleEmailRecipients = 20
+	MaxScheduleNotifyUsers     = 20
+)
+
 type ScheduleDelivery struct {
-	EmailRecipients []string `json:"emailRecipients,omitempty"`
+	EmailRecipients []string   `json:"emailRecipients,omitempty"`
+	EmailAttach     bool       `json:"emailAttach,omitempty"`
+	NotifyUserIDs   []pulid.ID `json:"notifyUserIds,omitempty"`
+}
+
+func (d *ScheduleDelivery) HasEmail() bool {
+	return d != nil && len(d.EmailRecipients) > 0
+}
+
+func (d *ScheduleDelivery) HasNotify() bool {
+	return d != nil && len(d.NotifyUserIDs) > 0
+}
+
+func (d *ScheduleDelivery) Validate(multiErr *errortypes.MultiError) {
+	if d == nil {
+		return
+	}
+	if len(d.EmailRecipients) > MaxScheduleEmailRecipients {
+		multiErr.Add("emailRecipients", errortypes.ErrInvalid, fmt.Sprintf(
+			"A schedule supports at most %d email recipients", MaxScheduleEmailRecipients,
+		))
+	}
+	for i, recipient := range d.EmailRecipients {
+		if err := is.EmailFormat.Validate(recipient); err != nil {
+			multiErr.Add(
+				fmt.Sprintf("emailRecipients[%d]", i),
+				errortypes.ErrInvalid,
+				fmt.Sprintf("%q is not a valid email address", recipient),
+			)
+		}
+	}
+	if len(d.NotifyUserIDs) > MaxScheduleNotifyUsers {
+		multiErr.Add("notifyUserIds", errortypes.ErrInvalid, fmt.Sprintf(
+			"A schedule supports at most %d in-app recipients", MaxScheduleNotifyUsers,
+		))
+	}
+	for i, userID := range d.NotifyUserIDs {
+		if userID.IsNil() {
+			multiErr.Add(
+				fmt.Sprintf("notifyUserIds[%d]", i),
+				errortypes.ErrInvalid,
+				"In-app recipient is invalid",
+			)
+		}
+	}
 }
 
 type ReportSchedule struct {
@@ -65,6 +115,7 @@ func (rs *ReportSchedule) Validate(multiErr *errortypes.MultiError) {
 	if rs.RunAsID.IsNil() {
 		multiErr.Add("runAsId", errortypes.ErrRequired, "Run-as user is required")
 	}
+	rs.Delivery.Validate(multiErr)
 }
 
 func (rs *ReportSchedule) BeforeAppendModel(_ context.Context, query bun.Query) error {

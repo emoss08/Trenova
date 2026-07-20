@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -257,6 +258,7 @@ func reportScheduleToModel(entity *report.ReportSchedule) *gqlmodel.ReportSchedu
 		Timezone:            entity.Timezone,
 		Formats:             emptyIfNil(entity.Formats),
 		EmailRecipients:     []string{},
+		NotifyUserIds:       []string{},
 		Enabled:             entity.Enabled,
 		RunAsID:             entity.RunAsID.String(),
 		NextRunAt:           nilIfZero(entity.NextRunAt),
@@ -272,9 +274,33 @@ func reportScheduleToModel(entity *report.ReportSchedule) *gqlmodel.ReportSchedu
 	}
 	if entity.Delivery != nil {
 		model.EmailRecipients = emptyIfNil(entity.Delivery.EmailRecipients)
+		model.EmailAttach = entity.Delivery.EmailAttach
+		model.NotifyUserIds = pulidsToStrings(entity.Delivery.NotifyUserIDs)
 	}
 
 	return model
+}
+
+func pulidsToStrings(ids []pulid.ID) []string {
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, id.String())
+	}
+	return out
+}
+
+func parsePulids(field string, raw []string) ([]pulid.ID, error) {
+	out := make([]pulid.ID, 0, len(raw))
+	for i, value := range raw {
+		id, err := pulid.MustParse(value)
+		if err != nil {
+			return nil, errortypes.NewValidationError(
+				fmt.Sprintf("%s[%d]", field, i), errortypes.ErrInvalid, "Invalid identifier",
+			)
+		}
+		out = append(out, id)
+	}
+	return out, nil
 }
 
 func saveReportScheduleRequest(
@@ -287,13 +313,22 @@ func saveReportScheduleRequest(
 		return nil, err
 	}
 
+	notifyUserIDs, err := parsePulids("notifyUserIds", input.NotifyUserIds)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &reportingservice.SaveScheduleRequest{
 		Request:         reportingRequest(authCtx),
 		DefinitionID:    definitionID,
 		CronExpression:  input.CronExpression,
 		Formats:         input.Formats,
 		EmailRecipients: input.EmailRecipients,
+		NotifyUserIDs:   notifyUserIDs,
 		Enabled:         input.Enabled,
+	}
+	if input.EmailAttach != nil {
+		req.EmailAttach = *input.EmailAttach
 	}
 	if input.Timezone != nil {
 		req.Timezone = *input.Timezone

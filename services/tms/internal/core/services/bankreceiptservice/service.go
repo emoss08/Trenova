@@ -14,6 +14,7 @@ import (
 	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -28,35 +29,35 @@ import (
 type Params struct {
 	fx.In
 
-	Logger           *zap.Logger
-	Repo             repositoryports.BankReceiptRepository
-	WorkItemRepo     repositoryports.BankReceiptWorkItemRepository
-	PaymentRepo      repositoryports.CustomerPaymentRepository
-	AccountingRepo   repositoryports.AccountingControlRepository
-	NotificationRepo repositoryports.NotificationRepository
-	AuditService     serviceports.AuditService
+	Logger              *zap.Logger
+	Repo                repositoryports.BankReceiptRepository
+	WorkItemRepo        repositoryports.BankReceiptWorkItemRepository
+	PaymentRepo         repositoryports.CustomerPaymentRepository
+	AccountingRepo      repositoryports.AccountingControlRepository
+	NotificationService *notificationservice.Service
+	AuditService        serviceports.AuditService
 }
 
 type Service struct {
-	l                *zap.Logger
-	repo             repositoryports.BankReceiptRepository
-	workItemRepo     repositoryports.BankReceiptWorkItemRepository
-	paymentRepo      repositoryports.CustomerPaymentRepository
-	accountingRepo   repositoryports.AccountingControlRepository
-	notificationRepo repositoryports.NotificationRepository
-	auditService     serviceports.AuditService
+	l                   *zap.Logger
+	repo                repositoryports.BankReceiptRepository
+	workItemRepo        repositoryports.BankReceiptWorkItemRepository
+	paymentRepo         repositoryports.CustomerPaymentRepository
+	accountingRepo      repositoryports.AccountingControlRepository
+	notificationService *notificationservice.Service
+	auditService        serviceports.AuditService
 }
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	return &Service{
-		l:                p.Logger.Named("service.bank-receipt"),
-		repo:             p.Repo,
-		workItemRepo:     p.WorkItemRepo,
-		paymentRepo:      p.PaymentRepo,
-		accountingRepo:   p.AccountingRepo,
-		notificationRepo: p.NotificationRepo,
-		auditService:     p.AuditService,
+		l:                   p.Logger.Named("service.bank-receipt"),
+		repo:                p.Repo,
+		workItemRepo:        p.WorkItemRepo,
+		paymentRepo:         p.PaymentRepo,
+		accountingRepo:      p.AccountingRepo,
+		notificationService: p.NotificationService,
+		auditService:        p.AuditService,
 	}
 }
 
@@ -359,10 +360,10 @@ func (s *Service) markException(
 			"Bank receipt marked as reconciliation exception",
 		)
 	}
-	if s.notificationRepo != nil && s.accountingRepo != nil {
+	if s.notificationService != nil && s.accountingRepo != nil {
 		control, controlErr := s.accountingRepo.GetByOrgID(ctx, receipt.OrganizationID)
 		if controlErr == nil && control.NotifyOnReconciliationException {
-			_, _ = s.notificationRepo.Create(
+			_, _ = s.notificationService.Create(
 				ctx,
 				&notification.Notification{
 					OrganizationID: receipt.OrganizationID,

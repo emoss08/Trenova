@@ -105,6 +105,7 @@ export const Resource = {
   RevenueCode: "revenue_code",
   FormulaTemplate: "formula_template",
   RateTable: "rate_table",
+  FuelSurchargeProgram: "fuel_surcharge_program",
   Customer: "customer",
   CustomerContact: "customer_contact",
   Location: "location",

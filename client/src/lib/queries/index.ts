@@ -45,6 +45,7 @@ import { weatherAlert } from "./weather-alert";
 import { weatherRadar } from "./weather-radar";
 import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
+import { fuelSurcharge } from "./fuel-surcharge";
 
 const financialQueries = mergeQueryKeys(
   accountingControl,
@@ -65,6 +66,7 @@ const financialQueries = mergeQueryKeys(
   formulaTemplate,
   sequenceConfig,
   exchangeRate,
+  fuelSurcharge,
 );
 
 const operationsQueries = mergeQueryKeys(

@@ -8,6 +8,7 @@ import type { AccessorialCharge } from "@/types/accessorial-charge";
 import type { Shipment } from "@/types/shipment";
 import {
   BoxesIcon,
+  FuelIcon,
   PencilIcon,
   PlusIcon,
   ReceiptIcon,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { FuelSurchargeAuditPopover } from "./fuel-surcharge-audit-popover";
 import { AdditionalChargeDialog } from "./shipment-additional-charges-dialog";
 
 export default function AdditionalChargesSection() {
@@ -96,7 +98,11 @@ export default function AdditionalChargesSection() {
                 const chargeObj = (charge as any)?.accessorialCharge as
                   | AccessorialCharge
                   | undefined;
-                const displayName = chargeObj?.code ?? "—";
+                const isFuelSurcharge =
+                  !!charge?.isSystemGenerated && !!charge?.fuelSurchargeProgramId;
+                const displayName = isFuelSurcharge
+                  ? (chargeObj?.code ?? charge?.fuelSurchargeDetail?.programCode ?? "Fuel Surcharge")
+                  : (chargeObj?.code ?? "—");
                 const amt = Number(charge?.amount) || 0;
 
                 const chargeErrors = errors.additionalCharges?.[index];
@@ -115,7 +121,15 @@ export default function AdditionalChargesSection() {
                       hasErrors && "bg-destructive/10 ring-1 ring-destructive ring-inset",
                     )}
                   >
-                    <span className="col-span-4 truncate text-xs font-medium">{displayName}</span>
+                    <span className="col-span-4 flex items-center gap-1.5 truncate text-xs font-medium">
+                      {isFuelSurcharge && <FuelIcon className="size-3 shrink-0 text-primary" />}
+                      {displayName}
+                      {isFuelSurcharge && (
+                        <span className="rounded bg-primary/10 px-1 py-0.5 text-2xs text-primary">
+                          Auto
+                        </span>
+                      )}
+                    </span>
                     <span className="col-span-2 text-xs text-muted-foreground">
                       {charge?.unit ?? 1}
                     </span>
@@ -123,24 +137,30 @@ export default function AdditionalChargesSection() {
                       ${amt.toFixed(2)}
                     </span>
                     <div className="col-span-2 flex items-center justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={() => handleEdit(index)}
-                      >
-                        <PencilIcon className="size-3.5 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7"
-                        onClick={() => remove(index)}
-                      >
-                        <TrashIcon className="size-3.5 text-muted-foreground" />
-                      </Button>
+                      {isFuelSurcharge && charge?.fuelSurchargeDetail ? (
+                        <FuelSurchargeAuditPopover detail={charge.fuelSurchargeDetail} />
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => handleEdit(index)}
+                          >
+                            <PencilIcon className="size-3.5 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => remove(index)}
+                          >
+                            <TrashIcon className="size-3.5 text-muted-foreground" />
+                          </Button>
+                        </>
+                      )}
                       {hasErrors && (
                         <Tooltip>
                           <TooltipTrigger>

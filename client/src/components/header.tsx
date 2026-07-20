@@ -1,4 +1,4 @@
-import { NotificationPopover } from "@/components/notification-center/notification-popover";
+import { NotificationSheet } from "@/components/notification-center/notification-sheet";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -156,7 +156,7 @@ function NavActions() {
   return (
     <div className="ml-auto flex items-center gap-1 px-3 text-center">
       <SystemInformation />
-      <NotificationPopover />
+      <NotificationSheet />
       <Tooltip>
         <TooltipTrigger
           render={

@@ -157,6 +157,8 @@ type ReportSchedule {
   timezone: String!
   formats: [String!]!
   emailRecipients: [String!]!
+  emailAttach: Boolean!
+  notifyUserIds: [ID!]!
   enabled: Boolean!
   runAsId: ID!
   lastRunId: ID
@@ -302,6 +304,8 @@ input CreateReportScheduleInput {
   timezone: String
   formats: [String!]!
   emailRecipients: [String!]
+  emailAttach: Boolean
+  notifyUserIds: [ID!]
   enabled: Boolean!
 }
 
@@ -313,6 +317,8 @@ input UpdateReportScheduleInput {
   timezone: String
   formats: [String!]!
   emailRecipients: [String!]
+  emailAttach: Boolean
+  notifyUserIds: [ID!]
   enabled: Boolean!
 }
 

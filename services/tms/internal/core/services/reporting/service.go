@@ -28,6 +28,7 @@ type Params struct {
 	RunRepo          repositories.ReportRunRepository
 	ScheduleRepo     repositories.ReportScheduleRepository
 	OrganizationRepo repositories.OrganizationRepository
+	UserRepo         repositories.UserRepository
 	Compiler         services.ReportCompiler
 	Executor         services.ReportDatasetExecutor
 	WorkflowStarter  services.WorkflowStarter
@@ -43,6 +44,7 @@ type Service struct {
 	runRepo      repositories.ReportRunRepository
 	scheduleRepo repositories.ReportScheduleRepository
 	orgRepo      repositories.OrganizationRepository
+	userRepo     repositories.UserRepository
 	compiler     services.ReportCompiler
 	executor     services.ReportDatasetExecutor
 	workflows    services.WorkflowStarter
@@ -67,6 +69,7 @@ func New(p Params) *Service {
 		runRepo:      p.RunRepo,
 		scheduleRepo: p.ScheduleRepo,
 		orgRepo:      p.OrganizationRepo,
+		userRepo:     p.UserRepo,
 		compiler:     p.Compiler,
 		executor:     p.Executor,
 		workflows:    p.WorkflowStarter,

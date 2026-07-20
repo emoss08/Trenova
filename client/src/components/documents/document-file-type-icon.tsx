@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import {
+  FileCodeIcon,
   FileIcon,
   FileSpreadsheetIcon,
   FileTextIcon,
@@ -10,7 +11,7 @@ import { getFileCategory } from "./document-utils";
 type IconSize = "sm" | "md" | "lg" | "xl";
 
 interface DocumentFileTypeIconProps {
-  fileType: string;
+  fileType?: string;
   fileName?: string;
   size?: IconSize;
   className?: string;
@@ -47,6 +48,11 @@ const categoryStyles: Record<
     text: "text-blue-600 dark:text-blue-400",
     icon: FileTextIcon,
   },
+  data: {
+    bg: "bg-amber-100 dark:bg-amber-950/50",
+    text: "text-amber-600 dark:text-amber-400",
+    icon: FileCodeIcon,
+  },
   default: {
     bg: "bg-muted",
     text: "text-muted-foreground",
@@ -55,7 +61,7 @@ const categoryStyles: Record<
 };
 
 export function DocumentFileTypeIcon({
-  fileType,
+  fileType = "",
   fileName,
   size = "md",
   className,

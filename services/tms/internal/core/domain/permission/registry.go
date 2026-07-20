@@ -1072,6 +1072,21 @@ func (r *Registry) registerBillingResources() {
 		),
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFuelSurchargeProgram.String(),
+		DisplayName: "Fuel Surcharge Program",
+		Description: "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
+		Category:    "Billing",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Delete fuel surcharge programs and custom fuel indices",
+			},
+		),
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerCustomerResources() {

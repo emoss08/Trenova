@@ -135,6 +135,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt

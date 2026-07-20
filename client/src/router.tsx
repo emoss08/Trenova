@@ -497,6 +497,17 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/fuel-management",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FuelSurchargeProgram),
+            ),
+            async lazy() {
+              const { FuelManagementPage } = await import("@/routes/fuel-management/page");
+              return { Component: FuelManagementPage };
+            },
+          },
+          {
             path: "/equipment/tractors",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Tractor)),
             async lazy() {

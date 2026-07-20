@@ -128,6 +128,23 @@ func applyNotificationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQ
 	return q.Column(columns...)
 }
 
+func stateFilter(
+	q *bun.SelectQuery,
+	req *repositories.ListNotificationConnectionRequest,
+) *bun.SelectQuery {
+	if req.State == notification.StateArchived {
+		q = q.Where("notif.dismissed_at IS NOT NULL")
+	} else {
+		q = q.Where("notif.dismissed_at IS NULL")
+	}
+
+	if req.UnreadOnly {
+		q = q.Where("notif.read_at IS NULL")
+	}
+
+	return q
+}
+
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListNotificationConnectionRequest,
@@ -144,6 +161,7 @@ func (r *repository) applyCursorPageFilters(
 	}
 
 	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
+	q = stateFilter(q, req)
 	return r.userOrGlobalFilter(q, req.Filter.TenantInfo), nil
 }
 
@@ -159,6 +177,7 @@ func (r *repository) applyTotalCountFilters(
 	)
 
 	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
+	q = stateFilter(q, req)
 	return r.userOrGlobalFilter(q, req.Filter.TenantInfo)
 }
 
@@ -207,24 +226,84 @@ func (r *repository) ListConnection(
 	return result, nil
 }
 
-func (r *repository) MarkAsRead(
-	ctx context.Context,
-	req repositories.MarkNotificationsReadRequest,
-) error {
-	log := r.l.With(zap.String("operation", "MarkAsRead"))
-
-	_, err := r.db.DB().
+func (r *repository) actionQuery(req repositories.NotificationActionRequest) *bun.UpdateQuery {
+	return r.db.DB().
 		NewUpdate().
 		Model((*notification.Notification)(nil)).
-		Set("read_at = ?", timeutils.NowUnix()).
 		Where("notif.id IN (?)", bun.List(req.IDs)).
 		Where("notif.organization_id = ?", req.TenantInfo.OrgID).
 		Where("((notif.target_user_id = ? AND notif.business_unit_id = ?) OR notif.channel = ?)",
-			req.TenantInfo.UserID, req.TenantInfo.BuID, notification.ChannelGlobal).
+			req.TenantInfo.UserID, req.TenantInfo.BuID, notification.ChannelGlobal)
+}
+
+func (r *repository) MarkAsRead(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	log := r.l.With(zap.String("operation", "MarkAsRead"))
+
+	_, err := r.actionQuery(req).
+		Set("read_at = ?", timeutils.NowUnix()).
 		Where("notif.read_at IS NULL").
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to mark notifications as read", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) MarkAsUnread(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	log := r.l.With(zap.String("operation", "MarkAsUnread"))
+
+	_, err := r.actionQuery(req).
+		Set("read_at = NULL").
+		Where("notif.read_at IS NOT NULL").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to mark notifications as unread", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) Dismiss(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	log := r.l.With(zap.String("operation", "Dismiss"))
+
+	now := timeutils.NowUnix()
+	_, err := r.actionQuery(req).
+		Set("dismissed_at = ?", now).
+		Set("read_at = COALESCE(read_at, ?)", now).
+		Where("notif.dismissed_at IS NULL").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to dismiss notifications", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) Restore(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	log := r.l.With(zap.String("operation", "Restore"))
+
+	_, err := r.actionQuery(req).
+		Set("dismissed_at = NULL").
+		Where("notif.dismissed_at IS NOT NULL").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to restore notifications", zap.Error(err))
 		return err
 	}
 
@@ -246,6 +325,7 @@ func (r *repository) MarkAllAsRead(
 		Where("((notif.target_user_id = ? AND notif.business_unit_id = ?) OR notif.channel = ?)",
 			userID, tenantInfo.BuID, notification.ChannelGlobal).
 		Where("notif.read_at IS NULL").
+		Where("notif.dismissed_at IS NULL").
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to mark all notifications as read", zap.Error(err))
@@ -266,7 +346,8 @@ func (r *repository) CountUnread(
 		NewSelect().
 		Model((*notification.Notification)(nil)).
 		Where("notif.organization_id = ?", tenantInfo.OrgID).
-		Where("notif.read_at IS NULL")
+		Where("notif.read_at IS NULL").
+		Where("notif.dismissed_at IS NULL")
 
 	q = r.userOrGlobalFilter(q, tenantInfo)
 

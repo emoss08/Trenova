@@ -102,7 +102,7 @@ func TestSyncForShipment_UpdatesExistingAccessorialChargeID(t *testing.T) {
 			"id", "organization_id", "business_unit_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit", "version",
 		}).
 			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, originalAccessorialChargeID, entity.AdditionalCharges[0].Method, entity.AdditionalCharges[0].Amount.String(), entity.AdditionalCharges[0].Unit, 1))
-	mock.ExpectExec(`UPDATE "additional_charges" AS "ac" SET accessorial_charge_id = .*`).
+	mock.ExpectExec(`UPDATE "additional_charges" AS "ac" SET "accessorial_charge_id" = .*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	err := repo.SyncForShipment(t.Context(), db, entity)

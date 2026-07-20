@@ -27,6 +27,7 @@ type Report struct {
 	cacheLookupsTotal    *prometheus.CounterVec
 	artifactsCleaned     prometheus.Counter
 	zombieRunsReconciled prometheus.Counter
+	deliveriesTotal      *prometheus.CounterVec
 }
 
 func NewReport(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Report {
@@ -53,6 +54,7 @@ func NewReport(registry *prometheus.Registry, logger *zap.Logger, enabled bool) 
 		m.cacheLookupsTotal,
 		m.artifactsCleaned,
 		m.zombieRunsReconciled,
+		m.deliveriesTotal,
 	)
 
 	return m
@@ -141,6 +143,13 @@ func (m *Report) registerOperationalMetrics() {
 		Name:      "zombie_runs_reconciled_total",
 		Help:      "Abandoned report runs marked failed by the reconciliation schedule",
 	})
+
+	m.deliveriesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: Namespace,
+		Subsystem: reportingSubsystem,
+		Name:      "deliveries_total",
+		Help:      "Scheduled report deliveries by channel (email, notification) and outcome",
+	}, []string{"channel", reportLabelOutcome})
 }
 
 func (m *Report) RecordRun(
@@ -194,5 +203,11 @@ func (m *Report) RecordArtifactsCleaned(count int) {
 func (m *Report) RecordZombieRunsReconciled(count int) {
 	m.ifEnabled(func() {
 		m.zombieRunsReconciled.Add(float64(count))
+	})
+}
+
+func (m *Report) RecordDelivery(channel, outcome string) {
+	m.ifEnabled(func() {
+		m.deliveriesTotal.WithLabelValues(channel, outcome).Inc()
 	})
 }

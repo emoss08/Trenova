@@ -2,12 +2,14 @@ package reporting
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/cronutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -21,8 +23,18 @@ type SaveScheduleRequest struct {
 	Timezone        string
 	Formats         []string
 	EmailRecipients []string
+	EmailAttach     bool
+	NotifyUserIDs   []pulid.ID
 	Enabled         bool
 	Version         int64
+}
+
+func (req *SaveScheduleRequest) delivery() *report.ScheduleDelivery {
+	return &report.ScheduleDelivery{
+		EmailRecipients: sliceutils.DedupeStrings(req.EmailRecipients),
+		EmailAttach:     req.EmailAttach,
+		NotifyUserIDs:   sliceutils.Dedupe(req.NotifyUserIDs),
+	}
 }
 
 func (s *Service) validateScheduleRequest(
@@ -48,7 +60,46 @@ func (s *Service) validateScheduleRequest(
 		)
 	}
 
-	return nil
+	return s.validateNotifyUsers(ctx, req)
+}
+
+// validateNotifyUsers rejects in-app recipients that are not members of the
+// tenant, so a schedule can never leak report notifications across
+// organizations.
+func (s *Service) validateNotifyUsers(ctx context.Context, req *SaveScheduleRequest) error {
+	notifyUserIDs := sliceutils.Dedupe(req.NotifyUserIDs)
+	if len(notifyUserIDs) == 0 {
+		return nil
+	}
+
+	users, err := s.userRepo.GetByIDs(ctx, repositories.GetUsersByIDsRequest{
+		TenantInfo: req.TenantInfo,
+		UserIDs:    notifyUserIDs,
+	})
+	if err != nil {
+		s.l.Error("failed to resolve schedule notify users", zap.Error(err))
+		return err
+	}
+
+	if len(users) == len(notifyUserIDs) {
+		return nil
+	}
+
+	found := make(map[pulid.ID]struct{}, len(users))
+	for _, user := range users {
+		found[user.ID] = struct{}{}
+	}
+	multiErr := errortypes.NewMultiError()
+	for i, userID := range notifyUserIDs {
+		if _, ok := found[userID]; !ok {
+			multiErr.Add(
+				fmt.Sprintf("notifyUserIds[%d]", i),
+				errortypes.ErrInvalid,
+				"User is not a member of this organization",
+			)
+		}
+	}
+	return multiErr
 }
 
 func (s *Service) CreateSchedule(
@@ -71,7 +122,7 @@ func (s *Service) CreateSchedule(
 		CronExpression: req.CronExpression,
 		Timezone:       req.Timezone,
 		Formats:        req.Formats,
-		Delivery:       &report.ScheduleDelivery{EmailRecipients: req.EmailRecipients},
+		Delivery:       req.delivery(),
 		Enabled:        req.Enabled,
 		RunAsID:        req.TenantInfo.UserID,
 		NextRunAt:      nextRun,
@@ -122,7 +173,7 @@ func (s *Service) UpdateSchedule(
 	existing.CronExpression = req.CronExpression
 	existing.Timezone = req.Timezone
 	existing.Formats = req.Formats
-	existing.Delivery = &report.ScheduleDelivery{EmailRecipients: req.EmailRecipients}
+	existing.Delivery = req.delivery()
 	existing.Enabled = req.Enabled
 	existing.NextRunAt = nextRun
 	if req.Enabled {

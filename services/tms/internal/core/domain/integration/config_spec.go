@@ -123,6 +123,26 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 		},
 		SupportsTestConnect: true,
 	},
+	TypeEIAFuelPrices: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Free EIA Open Data API key from eia.gov/opendata. The key is sent as a query parameter to the EIA API only and never exposed to browsers.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://api.eia.gov/v2",
+				Placeholder: "https://api.eia.gov/v2",
+			},
+		},
+		SupportsTestConnect: true,
+	},
 	TypePCMiler: {
 		Fields: []ConfigFieldSpec{
 			{

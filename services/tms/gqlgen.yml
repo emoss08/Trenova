@@ -274,6 +274,33 @@ models:
   RateTable:
     model:
       - github.com/emoss08/trenova/internal/core/domain/ratetable.RateTable
+  FuelIndexSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.IndexSource
+  FuelType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.FuelType
+  FuelSurchargeProgramMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.ProgramMethod
+  FuelSurchargePercentBasis:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.PercentBasis
+  FuelSurchargeDateBasis:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.DateBasis
+  FuelSurchargeStepRounding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.StepRounding
+  FuelSurchargeRateRounding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.RateRounding
+  FuelSurchargeMissingPriceFallback:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.MissingPriceFallback
+  FuelSurchargeProgramStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.ProgramStatus
   EmailProvider:
     model:
       - github.com/emoss08/trenova/internal/core/domain/email.Provider

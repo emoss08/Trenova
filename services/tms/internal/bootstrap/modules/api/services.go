@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
+	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
@@ -298,6 +299,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	distanceprofileservice.New,
 	storedmileageservice.New,
 	exchangerateservice.New,
+	fuelsurchargeservice.New,
+	func(s *fuelsurchargeservice.Service) services.FuelSurchargeResolver { return s },
 	apikeyservice.New,
 	notificationservice.New,
 	openaidocumentservice.New,

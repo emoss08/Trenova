@@ -50,6 +50,27 @@ export function CategoryTile({ category, className }: { category: string; classN
   );
 }
 
+export function CategoryGroupHeader({
+  label,
+  count,
+  noun,
+}: {
+  label: string;
+  count: number;
+  noun: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {label}
+      </h2>
+      <span className="text-2xs text-muted-foreground/70 tabular-nums">
+        {count} {count === 1 ? noun : `${noun}s`}
+      </span>
+    </div>
+  );
+}
+
 export function ReportCard({
   children,
   index,
@@ -77,25 +98,6 @@ export function ReportCard({
     >
       {children}
     </m.div>
-  );
-}
-
-export function TagChips({ tags, max = 3 }: { tags: string[]; max?: number }) {
-  if (tags.length === 0) return null;
-  const visible = tags.slice(0, max);
-  const overflow = tags.length - visible.length;
-  return (
-    <div className="flex flex-wrap items-center gap-1">
-      {visible.map((tag) => (
-        <span
-          key={tag}
-          className="rounded-sm bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground"
-        >
-          {tag}
-        </span>
-      ))}
-      {overflow > 0 && <span className="text-2xs text-muted-foreground/70">+{overflow}</span>}
-    </div>
   );
 }
 

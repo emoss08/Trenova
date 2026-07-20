@@ -226,12 +226,54 @@ const additionalChargeBaseSchema = z.object({
   unit: z.number().int().min(1, { error: "Unit must be at least 1" }).default(1),
 });
 
+export const fuelSurchargeDetailSchema = z.object({
+  programId: z.string().optional(),
+  programName: z.string().optional(),
+  programCode: z.string().optional(),
+  method: z.string().optional(),
+  indexCode: z.string().optional(),
+  indexSource: z.string().optional(),
+  indexRegion: z.string().optional(),
+  indexFuelType: z.string().optional(),
+  eiaSeriesId: z.string().optional(),
+  priceDate: z.string().optional(),
+  price: z.number().optional(),
+  currency: z.string().optional(),
+  pegPrice: z.number().nullish(),
+  increment: z.number().nullish(),
+  incrementRate: z.number().nullish(),
+  milesPerGallon: z.number().nullish(),
+  bandMin: z.number().nullish(),
+  bandMax: z.number().nullish(),
+  bandValue: z.number().nullish(),
+  miles: z.number().nullish(),
+  ratePerMile: z.number().nullish(),
+  percent: z.number().nullish(),
+  percentBasis: z.string().nullish(),
+  linehaulBase: z.number().nullish(),
+  accessorialBase: z.number().nullish(),
+  rawAmount: z.number().optional(),
+  amount: z.number().optional(),
+  capApplied: z.boolean().optional(),
+  floorApplied: z.boolean().optional(),
+  stepRounding: z.string().optional(),
+  rateRounding: z.string().optional(),
+  dateBasis: z.string().optional(),
+  basisDate: z.string().optional(),
+  usedFallback: z.boolean().optional(),
+  stale: z.boolean().optional(),
+  calculatedAt: z.number().optional(),
+});
+export type FuelSurchargeDetail = z.infer<typeof fuelSurchargeDetailSchema>;
+
 export const additionalChargeSchema = z.object({
   ...tenantInfoSchema.shape,
   id: optionalStringSchema,
   isSystemGenerated: z.boolean().optional().default(false),
   ...additionalChargeBaseSchema.shape,
   accessorialCharge: z.custom<AccessorialCharge>().nullish(),
+  fuelSurchargeProgramId: z.string().nullish(),
+  fuelSurchargeDetail: fuelSurchargeDetailSchema.nullish(),
 });
 export type AdditionalCharge = z.infer<typeof additionalChargeSchema>;
 

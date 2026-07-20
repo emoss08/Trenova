@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -57,7 +58,7 @@ type Params struct {
 	CustomerRepo        repositories.CustomerRepository
 	DocumentRepo        repositories.DocumentRepository
 	BillingRepo         repositories.BillingControlRepository
-	NotificationRepo    repositories.NotificationRepository
+	NotificationService *notificationservice.Service
 	BillingQueueService services.BillingQueueService          `optional:"true"`
 	ServiceFailureRepo  repositories.ServiceFailureRepository `optional:"true"`
 	ServiceFailures     services.ServiceFailureEvaluator      `optional:"true"`
@@ -89,7 +90,7 @@ type service struct {
 	customerRepo        repositories.CustomerRepository
 	documentRepo        repositories.DocumentRepository
 	billingRepo         repositories.BillingControlRepository
-	notificationRepo    repositories.NotificationRepository
+	notificationService *notificationservice.Service
 	billingQueueService services.BillingQueueService
 	serviceFailureRepo  repositories.ServiceFailureRepository
 	serviceFailures     services.ServiceFailureEvaluator
@@ -123,7 +124,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		customerRepo:        p.CustomerRepo,
 		documentRepo:        p.DocumentRepo,
 		billingRepo:         p.BillingRepo,
-		notificationRepo:    p.NotificationRepo,
+		notificationService: p.NotificationService,
 		billingQueueService: p.BillingQueueService,
 		serviceFailureRepo:  p.ServiceFailureRepo,
 		serviceFailures:     p.ServiceFailures,
@@ -148,11 +149,11 @@ func (s *service) createNotification(
 	ctx context.Context,
 	entity *notification.Notification,
 ) {
-	if s.notificationRepo == nil || entity == nil {
+	if s.notificationService == nil || entity == nil {
 		return
 	}
 
-	if _, err := s.notificationRepo.Create(ctx, entity); err != nil {
+	if _, err := s.notificationService.Create(ctx, entity); err != nil {
 		s.l.Warn("failed to create notification", zap.Error(err))
 	}
 }

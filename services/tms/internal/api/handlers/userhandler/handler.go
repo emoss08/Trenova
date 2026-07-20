@@ -204,12 +204,19 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
+	userID, err := pulid.MustParse(c.Param("userID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,
 			UserID: authCtx.UserID,
 		},
+		LookupUserID:       userID,
 		IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
 	})
 	if err != nil {
@@ -261,12 +268,19 @@ func (h *Handler) me(c *gin.Context) {
 func (h *Handler) getOption(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
+	userID, err := pulid.MustParse(c.Param("userID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,
 			UserID: authCtx.UserID,
 		},
+		LookupUserID: userID,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

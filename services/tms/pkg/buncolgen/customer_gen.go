@@ -391,6 +391,8 @@ var CustomerBillingProfileColumns = struct {
 	InvoiceAdjustmentSupportingDocumentPolicy Column // "invoice_adjustment_supporting_document_policy" → qualified: "cbp.invoice_adjustment_supporting_document_policy"
 	DefaultBillerID                           Column // "default_biller_id" → qualified: "cbp.default_biller_id"
 	BillingNotes                              Column // "billing_notes" → qualified: "cbp.billing_notes"
+	FuelSurchargeMode                         Column // "fuel_surcharge_mode" → qualified: "cbp.fuel_surcharge_mode"
+	FuelSurchargeProgramID                    Column // "fuel_surcharge_program_id" → qualified: "cbp.fuel_surcharge_program_id"
 	Version                                   Column // "version" → qualified: "cbp.version"
 	CreatedAt                                 Column // "created_at" → qualified: "cbp.created_at"
 	UpdatedAt                                 Column // "updated_at" → qualified: "cbp.updated_at"
@@ -440,11 +442,13 @@ var CustomerBillingProfileColumns = struct {
 	RequireBOLNumber:                     NewColumn("require_bol_number", "cbp"),
 	RequireDeliveryNumber:                NewColumn("require_delivery_number", "cbp"),
 	InvoiceAdjustmentSupportingDocumentPolicy: NewColumn("invoice_adjustment_supporting_document_policy", "cbp"),
-	DefaultBillerID: NewColumn("default_biller_id", "cbp"),
-	BillingNotes:    NewColumn("billing_notes", "cbp"),
-	Version:         NewColumn("version", "cbp"),
-	CreatedAt:       NewColumn("created_at", "cbp"),
-	UpdatedAt:       NewColumn("updated_at", "cbp"),
+	DefaultBillerID:        NewColumn("default_biller_id", "cbp"),
+	BillingNotes:           NewColumn("billing_notes", "cbp"),
+	FuelSurchargeMode:      NewColumn("fuel_surcharge_mode", "cbp"),
+	FuelSurchargeProgramID: NewColumn("fuel_surcharge_program_id", "cbp"),
+	Version:                NewColumn("version", "cbp"),
+	CreatedAt:              NewColumn("created_at", "cbp"),
+	UpdatedAt:              NewColumn("updated_at", "cbp"),
 }
 
 // CustomerBillingProfileFieldMap maps JSON API field names to database column names.
@@ -499,6 +503,8 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"invoiceAdjustmentSupportingDocumentPolicy": "invoice_adjustment_supporting_document_policy",
 	"defaultBillerId":                           "default_biller_id",
 	"billingNotes":                              "billing_notes",
+	"fuelSurchargeMode":                         "fuel_surcharge_mode",
+	"fuelSurchargeProgramId":                    "fuel_surcharge_program_id",
 	"version":                                   "version",
 	"createdAt":                                 "created_at",
 	"updatedAt":                                 "updated_at",
@@ -554,6 +560,8 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"invoice_adjustment_supporting_document_policy",
 	"default_biller_id",
 	"billing_notes",
+	"fuel_surcharge_mode",
+	"fuel_surcharge_program_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -565,17 +573,19 @@ var CustomerBillingProfileInsertableColumns = []string{
 //	q.Relation(CustomerBillingProfileRelations.BusinessUnit)
 //	// Bun eager-loads the BusinessUnit association via a separate query
 var CustomerBillingProfileRelations = struct {
-	BusinessUnit   string
-	Organization   string
-	DefaultBiller  string
-	RevenueAccount string
-	ARAccount      string
+	BusinessUnit         string
+	Organization         string
+	DefaultBiller        string
+	RevenueAccount       string
+	ARAccount            string
+	FuelSurchargeProgram string
 }{
-	BusinessUnit:   "BusinessUnit",
-	Organization:   "Organization",
-	DefaultBiller:  "DefaultBiller",
-	RevenueAccount: "RevenueAccount",
-	ARAccount:      "ARAccount",
+	BusinessUnit:         "BusinessUnit",
+	Organization:         "Organization",
+	DefaultBiller:        "DefaultBiller",
+	RevenueAccount:       "RevenueAccount",
+	ARAccount:            "ARAccount",
+	FuelSurchargeProgram: "FuelSurchargeProgram",
 }
 
 // CustomerBillingProfileScopeTenant restricts a query to a single tenant by adding:
@@ -675,6 +685,8 @@ var CustomerBillingProfileFilter = struct {
 	InvoiceAdjustmentSupportingDocumentPolicy func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceAdjustmentSupportingDocumentPolicy" → DB: "invoice_adjustment_supporting_document_policy"
 	DefaultBillerID                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultBillerId" → DB: "default_biller_id"
 	BillingNotes                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingNotes" → DB: "billing_notes"
+	FuelSurchargeMode                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeMode" → DB: "fuel_surcharge_mode"
+	FuelSurchargeProgramID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeProgramId" → DB: "fuel_surcharge_program_id"
 	Version                                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -819,6 +831,12 @@ var CustomerBillingProfileFilter = struct {
 	},
 	BillingNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("billingNotes", op, value)
+	},
+	FuelSurchargeMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelSurchargeMode", op, value)
+	},
+	FuelSurchargeProgramID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelSurchargeProgramId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

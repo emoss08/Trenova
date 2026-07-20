@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -42,63 +43,63 @@ import (
 type Params struct {
 	fx.In
 
-	Logger             *zap.Logger
-	DB                 ports.DBConnection
-	Repo               repositories.InvoiceRepository
-	BillingQueueRepo   repositories.BillingQueueRepository
-	ShipmentRepo       repositories.ShipmentRepository
-	OrderRepo          repositories.OrderRepository
-	CustomerRepo       repositories.CustomerRepository
-	OrganizationRepo   repositories.OrganizationRepository
-	DocumentTypeRepo   repositories.DocumentTypeRepository
-	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
-	BillingRepo        repositories.BillingControlRepository
-	AccountingRepo     repositories.AccountingControlRepository
-	JournalRepo        repositories.JournalPostingRepository
-	AdjustmentRepo     repositories.InvoiceAdjustmentRepository
-	NotificationRepo   repositories.NotificationRepository
-	EmailRepo          repositories.EmailRepository
-	Validator          *Validator
-	AuditService       servicesports.AuditService
-	DocumentService    servicesports.InvoiceDocumentService `optional:"true"`
-	EmailService       servicesports.EmailService
-	Storage            storage.Client
-	Realtime           servicesports.RealtimeService
-	WorkflowStarter    servicesports.WorkflowStarter
-	SequenceGenerator  seqgen.Generator
-	OrderDerivation    servicesports.OrderDerivationService
-	AccountingPolicy   *accountingcontrolpolicyservice.Service
-	BillingPolicy      *billingcontrolpolicyservice.Service
+	Logger              *zap.Logger
+	DB                  ports.DBConnection
+	Repo                repositories.InvoiceRepository
+	BillingQueueRepo    repositories.BillingQueueRepository
+	ShipmentRepo        repositories.ShipmentRepository
+	OrderRepo           repositories.OrderRepository
+	CustomerRepo        repositories.CustomerRepository
+	OrganizationRepo    repositories.OrganizationRepository
+	DocumentTypeRepo    repositories.DocumentTypeRepository
+	CustomerLedgerRepo  repositories.CustomerLedgerProjectionRepository
+	BillingRepo         repositories.BillingControlRepository
+	AccountingRepo      repositories.AccountingControlRepository
+	JournalRepo         repositories.JournalPostingRepository
+	AdjustmentRepo      repositories.InvoiceAdjustmentRepository
+	NotificationService *notificationservice.Service
+	EmailRepo           repositories.EmailRepository
+	Validator           *Validator
+	AuditService        servicesports.AuditService
+	DocumentService     servicesports.InvoiceDocumentService `optional:"true"`
+	EmailService        servicesports.EmailService
+	Storage             storage.Client
+	Realtime            servicesports.RealtimeService
+	WorkflowStarter     servicesports.WorkflowStarter
+	SequenceGenerator   seqgen.Generator
+	OrderDerivation     servicesports.OrderDerivationService
+	AccountingPolicy    *accountingcontrolpolicyservice.Service
+	BillingPolicy       *billingcontrolpolicyservice.Service
 }
 
 type Service struct {
-	l                  *zap.Logger
-	db                 ports.DBConnection
-	repo               repositories.InvoiceRepository
-	billingQueueRepo   repositories.BillingQueueRepository
-	shipmentRepo       repositories.ShipmentRepository
-	orderRepo          repositories.OrderRepository
-	customerRepo       repositories.CustomerRepository
-	organizationRepo   repositories.OrganizationRepository
-	documentTypeRepo   repositories.DocumentTypeRepository
-	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
-	billingRepo        repositories.BillingControlRepository
-	accountingRepo     repositories.AccountingControlRepository
-	journalRepo        repositories.JournalPostingRepository
-	adjustmentRepo     repositories.InvoiceAdjustmentRepository
-	notificationRepo   repositories.NotificationRepository
-	emailRepo          repositories.EmailRepository
-	validator          *Validator
-	auditService       servicesports.AuditService
-	documentService    servicesports.InvoiceDocumentService
-	emailService       servicesports.EmailService
-	storage            storage.Client
-	realtime           servicesports.RealtimeService
-	workflowStarter    servicesports.WorkflowStarter
-	sequenceGenerator  seqgen.Generator
-	orderDerivation    servicesports.OrderDerivationService
-	accountingPolicy   *accountingcontrolpolicyservice.Service
-	billingPolicy      *billingcontrolpolicyservice.Service
+	l                   *zap.Logger
+	db                  ports.DBConnection
+	repo                repositories.InvoiceRepository
+	billingQueueRepo    repositories.BillingQueueRepository
+	shipmentRepo        repositories.ShipmentRepository
+	orderRepo           repositories.OrderRepository
+	customerRepo        repositories.CustomerRepository
+	organizationRepo    repositories.OrganizationRepository
+	documentTypeRepo    repositories.DocumentTypeRepository
+	customerLedgerRepo  repositories.CustomerLedgerProjectionRepository
+	billingRepo         repositories.BillingControlRepository
+	accountingRepo      repositories.AccountingControlRepository
+	journalRepo         repositories.JournalPostingRepository
+	adjustmentRepo      repositories.InvoiceAdjustmentRepository
+	notificationService *notificationservice.Service
+	emailRepo           repositories.EmailRepository
+	validator           *Validator
+	auditService        servicesports.AuditService
+	documentService     servicesports.InvoiceDocumentService
+	emailService        servicesports.EmailService
+	storage             storage.Client
+	realtime            servicesports.RealtimeService
+	workflowStarter     servicesports.WorkflowStarter
+	sequenceGenerator   seqgen.Generator
+	orderDerivation     servicesports.OrderDerivationService
+	accountingPolicy    *accountingcontrolpolicyservice.Service
+	billingPolicy       *billingcontrolpolicyservice.Service
 }
 
 type existingInvoiceLookupResult struct {
@@ -122,33 +123,33 @@ var _ servicesports.InvoiceService = (*Service)(nil)
 
 func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable API shape
 	return &Service{
-		l:                  p.Logger.Named("service.invoice"),
-		db:                 p.DB,
-		repo:               p.Repo,
-		billingQueueRepo:   p.BillingQueueRepo,
-		shipmentRepo:       p.ShipmentRepo,
-		orderRepo:          p.OrderRepo,
-		customerRepo:       p.CustomerRepo,
-		organizationRepo:   p.OrganizationRepo,
-		documentTypeRepo:   p.DocumentTypeRepo,
-		customerLedgerRepo: p.CustomerLedgerRepo,
-		billingRepo:        p.BillingRepo,
-		accountingRepo:     p.AccountingRepo,
-		journalRepo:        p.JournalRepo,
-		adjustmentRepo:     p.AdjustmentRepo,
-		notificationRepo:   p.NotificationRepo,
-		emailRepo:          p.EmailRepo,
-		validator:          p.Validator,
-		auditService:       p.AuditService,
-		documentService:    p.DocumentService,
-		emailService:       p.EmailService,
-		storage:            p.Storage,
-		realtime:           p.Realtime,
-		workflowStarter:    p.WorkflowStarter,
-		sequenceGenerator:  p.SequenceGenerator,
-		orderDerivation:    p.OrderDerivation,
-		accountingPolicy:   p.AccountingPolicy,
-		billingPolicy:      p.BillingPolicy,
+		l:                   p.Logger.Named("service.invoice"),
+		db:                  p.DB,
+		repo:                p.Repo,
+		billingQueueRepo:    p.BillingQueueRepo,
+		shipmentRepo:        p.ShipmentRepo,
+		orderRepo:           p.OrderRepo,
+		customerRepo:        p.CustomerRepo,
+		organizationRepo:    p.OrganizationRepo,
+		documentTypeRepo:    p.DocumentTypeRepo,
+		customerLedgerRepo:  p.CustomerLedgerRepo,
+		billingRepo:         p.BillingRepo,
+		accountingRepo:      p.AccountingRepo,
+		journalRepo:         p.JournalRepo,
+		adjustmentRepo:      p.AdjustmentRepo,
+		notificationService: p.NotificationService,
+		emailRepo:           p.EmailRepo,
+		validator:           p.Validator,
+		auditService:        p.AuditService,
+		documentService:     p.DocumentService,
+		emailService:        p.EmailService,
+		storage:             p.Storage,
+		realtime:            p.Realtime,
+		workflowStarter:     p.WorkflowStarter,
+		sequenceGenerator:   p.SequenceGenerator,
+		orderDerivation:     p.OrderDerivation,
+		accountingPolicy:    p.AccountingPolicy,
+		billingPolicy:       p.BillingPolicy,
 	}
 }
 
@@ -420,7 +421,7 @@ func (s *Service) notifyReconciliationWarning(
 	entity *invoice.Invoice,
 	legs []*shipment.Shipment,
 ) {
-	if s.accountingRepo == nil || s.notificationRepo == nil || entity == nil || len(legs) == 0 {
+	if s.accountingRepo == nil || s.notificationService == nil || entity == nil || len(legs) == 0 {
 		return
 	}
 
@@ -440,7 +441,7 @@ func (s *Service) notifyReconciliationWarning(
 		return
 	}
 
-	if _, err = s.notificationRepo.Create(ctx, &notification.Notification{
+	if _, err = s.notificationService.Create(ctx, &notification.Notification{
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: &entity.BusinessUnitID,
 		EventType:      "invoice_reconciliation_warning",

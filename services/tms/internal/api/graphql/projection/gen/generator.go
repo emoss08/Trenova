@@ -29,8 +29,23 @@ const (
 )
 
 var nonProjectionObjects = map[string]string{
+	"CannedReport":                  "GraphQL report catalog manifest DTO",
+	"ReportCatalog":                 "GraphQL report catalog manifest DTO",
+	"ReportCatalogEntity":           "GraphQL report catalog manifest DTO",
+	"ReportCatalogEnumValue":        "GraphQL report catalog manifest DTO",
+	"ReportCatalogField":            "GraphQL report catalog manifest DTO",
+	"ReportPreview":                 "GraphQL report preview DTO",
+	"ReportPreviewColumn":           "GraphQL report preview DTO",
+	"ReportPreviewRow":              "GraphQL report preview DTO",
+	"ReportRunError":                "GraphQL report run error DTO",
+	"EIASeriesOption":               "GraphQL fuel surcharge reference DTO",
+	"FuelIndexLatestPrice":          "GraphQL fuel dashboard DTO",
+	"FuelProgramCurrentRate":        "GraphQL fuel dashboard DTO",
+	"GeneratedFuelTableRow":         "GraphQL fuel table generator DTO",
 	"GeofenceVertex":                "GraphQL value object without Bun projection metadata",
 	"SelectOption":                  "GraphQL select-option DTO",
+	"SidebarPreferences":            "GraphQL sidebar preferences DTO",
+	"SidebarQuickActionOption":      "GraphQL sidebar quick-action DTO",
 	"ShipmentAxleWeight":            "GraphQL shipment workflow DTO",
 	"ShipmentHazmatZone":            "GraphQL shipment workflow DTO",
 	"ShipmentLoadingCommodity":      "GraphQL shipment workflow DTO",

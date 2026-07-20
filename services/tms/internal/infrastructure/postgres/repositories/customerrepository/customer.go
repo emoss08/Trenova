@@ -447,6 +447,8 @@ func (r *repository) saveBillingProfile(
 		Set("require_delivery_number = EXCLUDED.require_delivery_number").
 		Set("invoice_adjustment_supporting_document_policy = EXCLUDED.invoice_adjustment_supporting_document_policy").
 		Set("billing_notes = EXCLUDED.billing_notes").
+		Set("fuel_surcharge_mode = EXCLUDED.fuel_surcharge_mode").
+		Set("fuel_surcharge_program_id = EXCLUDED.fuel_surcharge_program_id").
 		Set("version = cbp.version + 1").
 		Set("updated_at = EXCLUDED.updated_at").
 		Returning("*").

@@ -10,7 +10,12 @@ import { PackageIcon, PencilRulerIcon, PlayIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { CategoryTile, ReportCard, ReportGridEmptyState, TagChips } from "./report-card-chrome";
+import {
+  compareReportsBySort,
+  groupByReportCategory,
+  type ReportSortOrder,
+} from "../reports-page-state";
+import { CategoryGroupHeader, ReportCard, ReportGridEmptyState } from "./report-card-chrome";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
 
 type RunDialogState = {
@@ -40,7 +45,6 @@ function CannedReportCard({
   return (
     <ReportCard index={index}>
       <div className="flex items-start gap-3">
-        <CategoryTile category={report.category} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <h3 className="truncate text-sm font-medium">{report.name}</h3>
@@ -54,12 +58,7 @@ function CannedReportCard({
         </div>
       </div>
 
-      <div className="mt-3">
-        <TagChips tags={report.tags} />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-        <span className="text-2xs text-muted-foreground capitalize">{report.category}</span>
+      <div className="mt-3 flex items-center justify-end border-t border-border/60 pt-3">
         <div className="flex items-center gap-1.5">
           {canCustomize && (
             <Button
@@ -85,7 +84,15 @@ function CannedReportCard({
   );
 }
 
-export function CannedGallery({ search }: { search: string }) {
+export function CannedGallery({
+  search,
+  sortBy,
+  category,
+}: {
+  search: string;
+  sortBy: ReportSortOrder;
+  category: string;
+}) {
   const navigate = useNavigate();
   const { data: cannedReports, isLoading } = useCannedReports();
   const forkCanned = useForkCannedReport();
@@ -94,16 +101,24 @@ export function CannedGallery({ search }: { search: string }) {
   const [customizingKey, setCustomizingKey] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    const reports = cannedReports ?? [];
     const term = search.trim().toLowerCase();
-    if (!term) return reports;
-    return reports.filter(
-      (report) =>
-        report.name.toLowerCase().includes(term) ||
-        report.description.toLowerCase().includes(term) ||
-        report.tags.some((tag) => tag.toLowerCase().includes(term)),
-    );
-  }, [cannedReports, search]);
+    return (cannedReports ?? [])
+      .filter((report) => {
+        if (category !== "all" && report.category !== category) {
+          return false;
+        }
+        if (!term) {
+          return true;
+        }
+        return (
+          report.name.toLowerCase().includes(term) ||
+          report.description.toLowerCase().includes(term) ||
+          report.tags.some((tag) => tag.toLowerCase().includes(term))
+        );
+      })
+      .sort(compareReportsBySort(sortBy));
+  }, [cannedReports, search, sortBy, category]);
+  const groups = useMemo(() => groupByReportCategory(filtered), [filtered]);
 
   if (isLoading) {
     return (
@@ -133,35 +148,44 @@ export function CannedGallery({ search }: { search: string }) {
 
   return (
     <>
-      <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {filtered.length === 0 ? (
+      {filtered.length === 0 ? (
+        <div className="grid p-4">
           <ReportGridEmptyState
             icon={PackageIcon}
             title="No gallery reports match"
-            description="Try a different search term."
+            description="Try a different search term, or clear the filters."
           />
-        ) : (
-          filtered.map((report, index) => (
-            <CannedReportCard
-              key={report.key}
-              report={report}
-              index={index}
-              canRun={canExport}
-              canCustomize={canCreate}
-              customizing={customizingKey === report.key}
-              onRun={() =>
-                setRunDialog({
-                  target: { cannedKey: report.key },
-                  name: report.name,
-                  defaultFormat: report.defaultFormat,
-                  parameters: parseReportIR(report.definition)?.parameters ?? [],
-                })
-              }
-              onCustomize={() => handleCustomize(report)}
-            />
-          ))
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="space-y-6 p-4">
+          {groups.map((group) => (
+            <section key={group.key} className="space-y-3">
+              <CategoryGroupHeader label={group.label} count={group.items.length} noun="report" />
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {group.items.map((report, indexInGroup) => (
+                  <CannedReportCard
+                    key={report.key}
+                    report={report}
+                    index={group.startIndex + indexInGroup}
+                    canRun={canExport}
+                    canCustomize={canCreate}
+                    customizing={customizingKey === report.key}
+                    onRun={() =>
+                      setRunDialog({
+                        target: { cannedKey: report.key },
+                        name: report.name,
+                        defaultFormat: report.defaultFormat,
+                        parameters: parseReportIR(report.definition)?.parameters ?? [],
+                      })
+                    }
+                    onCustomize={() => handleCustomize(report)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
       <RunReportDialog
         open={runDialog !== null}
         onOpenChange={(open) => {

@@ -158,6 +158,7 @@ func (r *repository) ListRatedByFormulaTemplate(
 	sp := buncolgen.ShipmentColumns
 	sm := buncolgen.ShipmentMoveColumns
 	stp := buncolgen.StopColumns
+
 	entities := make([]*shipment.Shipment, 0, req.Limit)
 	err := r.db.DBForContext(ctx).
 		NewSelect().

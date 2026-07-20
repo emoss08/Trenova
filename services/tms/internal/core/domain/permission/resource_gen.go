@@ -61,13 +61,14 @@ const (
 	ResourceStoredMileage            Resource = "stored_mileage"
 
 	// Billing
-	ResourceInvoice           Resource = "invoice"
-	ResourceBillingQueue      Resource = "billing_queue"
-	ResourceAccessorialCharge Resource = "accessorial_charge"
-	ResourceChargeType        Resource = "charge_type"
-	ResourceRevenueCode       Resource = "revenue_code"
-	ResourceFormulaTemplate   Resource = "formula_template"
-	ResourceRateTable         Resource = "rate_table"
+	ResourceInvoice              Resource = "invoice"
+	ResourceBillingQueue         Resource = "billing_queue"
+	ResourceAccessorialCharge    Resource = "accessorial_charge"
+	ResourceChargeType           Resource = "charge_type"
+	ResourceRevenueCode          Resource = "revenue_code"
+	ResourceFormulaTemplate      Resource = "formula_template"
+	ResourceRateTable            Resource = "rate_table"
+	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 
 	// Customers
 	ResourceCustomer        Resource = "customer"

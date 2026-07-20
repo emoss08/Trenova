@@ -1,8 +1,9 @@
 import { apiService } from "@/services/api";
+import type { NotificationFeedParams } from "@/services/notification";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const notification = createQueryKeys("notification", {
-  list: (params?: { limit?: number; offset?: number }) => ({
+  feed: (params?: NotificationFeedParams) => ({
     queryKey: [params],
     queryFn: async () => apiService.notificationService.listNotifications(params),
   }),

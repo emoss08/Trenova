@@ -56,12 +56,28 @@ type NotificationConnection {
   totalCount: Int
 }
 
+enum NotificationState {
+  inbox
+  archived
+}
+
+input NotificationFilterInput {
+  state: NotificationState
+  unreadOnly: Boolean
+}
+
 extend type Query {
-  notifications(input: DataTableConnectionInput!): NotificationConnection!
+  notifications(
+    input: DataTableConnectionInput!
+    filter: NotificationFilterInput
+  ): NotificationConnection!
   notificationUnreadCount: Int!
 }
 
 extend type Mutation {
   markNotificationsRead(ids: [ID!]!): Boolean!
+  markNotificationsUnread(ids: [ID!]!): Boolean!
   markAllNotificationsRead: Boolean!
+  dismissNotifications(ids: [ID!]!): Boolean!
+  restoreNotifications(ids: [ID!]!): Boolean!
 }

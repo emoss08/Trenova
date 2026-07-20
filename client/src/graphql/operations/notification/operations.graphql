@@ -9,13 +9,15 @@ fragment NotificationFields on Notification {
   title
   message
   data
+  relatedEntities
   source
   readAt
+  dismissedAt
   createdAt
 }
 
-query NotificationList($input: DataTableConnectionInput!) {
-  notifications(input: $input) {
+query NotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {
+  notifications(input: $input, filter: $filter) {
     edges {
       node {
         ...NotificationFields
@@ -36,6 +38,18 @@ mutation MarkNotificationsRead($ids: [ID!]!) {
   markNotificationsRead(ids: $ids)
 }
 
+mutation MarkNotificationsUnread($ids: [ID!]!) {
+  markNotificationsUnread(ids: $ids)
+}
+
 mutation MarkAllNotificationsRead {
   markAllNotificationsRead
+}
+
+mutation DismissNotifications($ids: [ID!]!) {
+  dismissNotifications(ids: $ids)
+}
+
+mutation RestoreNotifications($ids: [ID!]!) {
+  restoreNotifications(ids: $ids)
 }

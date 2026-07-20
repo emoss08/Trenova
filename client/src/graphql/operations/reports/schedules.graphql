@@ -5,6 +5,8 @@ fragment ReportScheduleFields on ReportSchedule {
   timezone
   formats
   emailRecipients
+  emailAttach
+  notifyUserIds
   enabled
   runAsId
   lastRunId

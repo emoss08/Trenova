@@ -46,6 +46,8 @@ export type PaginationInfo = z.infer<typeof paginationInfoSchema>;
 
 export type BaseEndpoint =
   | "/formula-templates/"
+  | "/fuel-indices/"
+  | "/fuel-surcharge-programs/"
   | "/equipment-types/"
   | "/equipment-manufacturers/"
   | "/fleet-codes/"

@@ -35,6 +35,7 @@ import type { OrganizationSelectOption } from "@/types/organization";
 import type { Role } from "@/types/role";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
+import type { EquipmentType as EquipmentTypeOption } from "@/types/equipment-type";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
 import type { User } from "@/types/user";
@@ -97,6 +98,8 @@ type BaseMultiSelectAutocompleteFieldProps<
   clearable?: boolean;
   placeholder?: string;
   extraSearchParams?: Record<string, string>;
+  maxCount?: number;
+  triggerClassName?: string;
 };
 
 type BaseStaticPermissionAutocompleteFieldProps<TForm extends FieldValues> = {
@@ -173,6 +176,14 @@ const orderSelectOptionsGraphQL = {
 
 const ediTransferSelectOptionsGraphQL = {
   resource: "EDI_TRANSFER",
+} satisfies GraphQLSelectOptionsConfig;
+
+const fuelIndexSelectOptionsGraphQL = {
+  resource: "FUEL_INDEX",
+} satisfies GraphQLSelectOptionsConfig;
+
+const fuelSurchargeProgramSelectOptionsGraphQL = {
+  resource: "FUEL_SURCHARGE_PROGRAM",
 } satisfies GraphQLSelectOptionsConfig;
 
 function getDocumentLabel(option: Document) {
@@ -1359,6 +1370,116 @@ export function BatchSourceAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.value}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => option.label}
+      {...props}
+    />
+  );
+}
+
+export function FuelIndexAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/fuel-indices/select-options/"
+      graphql={fuelIndexSelectOptionsGraphQL}
+      popoutLink="/billing/fuel-management"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => {
+        const region = selectOptionMetaString(option, "region");
+        return region ? `${option.label} · ${region}` : option.label;
+      }}
+      renderOption={(option) => {
+        const region = selectOptionMetaString(option, "region");
+        const fuelType = selectOptionMetaString(option, "fuelType");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span className="flex items-center gap-1.5">
+              {option.label}
+              {region && (
+                <span className="rounded bg-muted px-1 py-0.5 text-2xs text-muted-foreground">
+                  {region}
+                </span>
+              )}
+            </span>
+            {option?.description && (
+              <span className="w-full truncate text-2xs text-muted-foreground">
+                {option.description}
+                {fuelType ? ` · ${fuelType}` : ""}
+              </span>
+            )}
+          </div>
+        );
+      }}
+      {...props}
+    />
+  );
+}
+
+export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/fuel-surcharge-programs/select-options/"
+      graphql={fuelSurchargeProgramSelectOptionsGraphQL}
+      popoutLink="/billing/fuel-management"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ShipmentTypeMultiSelectField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<ShipmentType, T>) {
+  return (
+    <MultiSelectAutocompleteField<ShipmentType, T>
+      link="/shipment-types/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.code || ""}
+      renderOption={(option) => option.code || ""}
+      getOptionLabel={(option) => option.code || ""}
+      {...props}
+    />
+  );
+}
+
+export function ServiceTypeMultiSelectField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<ServiceType, T>) {
+  return (
+    <MultiSelectAutocompleteField<ServiceType, T>
+      link="/service-types/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.code || ""}
+      renderOption={(option) => option.code || ""}
+      getOptionLabel={(option) => option.code || ""}
+      {...props}
+    />
+  );
+}
+
+export function EquipmentTypeMultiSelectField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<EquipmentTypeOption, T>) {
+  return (
+    <MultiSelectAutocompleteField<EquipmentTypeOption, T>
+      link="/equipment-types/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.code || ""}
+      renderOption={(option) => option.code || ""}
+      getOptionLabel={(option) => option.code || ""}
       {...props}
     />
   );

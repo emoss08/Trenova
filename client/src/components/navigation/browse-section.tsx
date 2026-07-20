@@ -11,18 +11,18 @@ import type { NavGroup, NavItem, NavModule } from "@/config/navigation.types";
 import { isNavGroup } from "@/config/navigation.types";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { isRouteActive } from "@/lib/route-utils";
+import { findActiveNavPath, isRouteActive } from "@/lib/route-utils";
 import { cn } from "@/lib/utils";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { ChevronRightIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router";
 
-function NavItemRow({ item, currentPath }: { item: NavItem; currentPath: string }) {
+function NavItemRow({ item, activePath }: { item: NavItem; activePath: string | null }) {
   return (
     <SidebarNavLink
       to={item.path}
-      active={isRouteActive(currentPath, item.path)}
+      active={item.path === activePath}
       disabled={item.disabled}
     >
       <span className="truncate">{item.label}</span>
@@ -38,8 +38,8 @@ function NavItemRow({ item, currentPath }: { item: NavItem; currentPath: string 
   );
 }
 
-function NavGroupSection({ group, currentPath }: { group: NavGroup; currentPath: string }) {
-  const hasActiveChild = group.items.some((item) => isRouteActive(currentPath, item.path));
+function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: string | null }) {
+  const hasActiveChild = group.items.some((item) => item.path === activePath);
   const [open, setOpen] = useState(hasActiveChild || group.defaultOpen || false);
 
   return (
@@ -64,7 +64,7 @@ function NavGroupSection({ group, currentPath }: { group: NavGroup; currentPath:
       <CollapsibleContent>
         <div className="mt-0.5 ml-2 flex flex-col gap-0.5 border-l border-border pl-2">
           {group.items.map((item) => (
-            <NavItemRow key={item.id} item={item} currentPath={currentPath} />
+            <NavItemRow key={item.id} item={item} activePath={activePath} />
           ))}
         </div>
       </CollapsibleContent>
@@ -72,7 +72,7 @@ function NavGroupSection({ group, currentPath }: { group: NavGroup; currentPath:
   );
 }
 
-function AdminLinkGroups({ links, currentPath }: { links: SidebarLink[]; currentPath: string }) {
+function AdminLinkGroups({ links, activePath }: { links: SidebarLink[]; activePath: string | null }) {
   const grouped = useMemo(() => {
     const groups = new Map<string, SidebarLink[]>();
     for (const link of links) {
@@ -98,7 +98,7 @@ function AdminLinkGroups({ links, currentPath }: { links: SidebarLink[]; current
             <SidebarNavLink
               key={`${groupName}:${link.title}:${link.href}`}
               to={link.href}
-              active={isRouteActive(currentPath, link.href)}
+              active={link.href === activePath}
               disabled={link.disabled}
             >
               <span className="truncate">{link.title}</span>
@@ -168,6 +168,25 @@ export function BrowseSection() {
     () => new Map(),
   );
 
+  const activePath = useMemo(() => {
+    const candidatePaths: string[] = [];
+    for (const module of modules) {
+      for (const item of module.navigation) {
+        if (isNavGroup(item)) {
+          for (const child of item.items) {
+            candidatePaths.push(child.path);
+          }
+        } else {
+          candidatePaths.push(item.path);
+        }
+      }
+    }
+    for (const link of adminLinks) {
+      candidatePaths.push(link.href);
+    }
+    return findActiveNavPath(pathname, candidatePaths);
+  }, [modules, adminLinks, pathname]);
+
   const isModuleOpen = (moduleId: string) =>
     moduleOverrides.get(moduleId) ?? moduleId === activeModuleId;
 
@@ -205,7 +224,7 @@ export function BrowseSection() {
               open={isModuleOpen(module.id)}
               onOpenChange={(open) => setModuleOpen(module.id, open)}
             >
-              <AdminLinkGroups links={adminLinks} currentPath={pathname} />
+              <AdminLinkGroups links={adminLinks} activePath={activePath} />
             </ModuleSection>
           );
         }
@@ -220,9 +239,9 @@ export function BrowseSection() {
           >
             {module.navigation.map((item) =>
               isNavGroup(item) ? (
-                <NavGroupSection key={item.id} group={item} currentPath={pathname} />
+                <NavGroupSection key={item.id} group={item} activePath={activePath} />
               ) : (
-                <NavItemRow key={item.id} item={item} currentPath={pathname} />
+                <NavItemRow key={item.id} item={item} activePath={activePath} />
               ),
             )}
           </ModuleSection>

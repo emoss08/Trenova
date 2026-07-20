@@ -1,5 +1,5 @@
 import type { BadgeVariant } from "@/components/ui/badge";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict, isToday, isYesterday } from "date-fns";
 import {
   CircleAlertIcon,
   CircleCheckIcon,
@@ -12,6 +12,20 @@ export function formatTimestamp(unixSeconds: number): string {
   return formatDistanceToNowStrict(new Date(unixSeconds * 1000), {
     addSuffix: true,
   });
+}
+
+export const NOTIFICATION_DAY_GROUPS = ["Today", "Yesterday", "This week", "Older"] as const;
+
+export type NotificationDayGroup = (typeof NOTIFICATION_DAY_GROUPS)[number];
+
+const WEEK_SECONDS = 7 * 24 * 60 * 60;
+
+export function getNotificationDayGroup(unixSeconds: number): NotificationDayGroup {
+  const date = new Date(unixSeconds * 1000);
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  if (Date.now() / 1000 - unixSeconds < WEEK_SECONDS) return "This week";
+  return "Older";
 }
 
 export const SOURCE_LABELS: Record<string, string> = {

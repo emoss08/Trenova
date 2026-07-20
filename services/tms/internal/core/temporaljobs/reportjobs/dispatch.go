@@ -212,6 +212,19 @@ func (a *Activities) notifyScheduleOwner(
 	schedule *report.ReportSchedule,
 	title, message string,
 ) {
+	data := map[string]any{
+		dataKeyScheduleID: schedule.ID.String(),
+	}
+	if def, err := a.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: schedule.OrganizationID,
+			BuID:  schedule.BusinessUnitID,
+		},
+		DefinitionID: schedule.DefinitionID,
+	}); err == nil {
+		data[dataKeyReportName] = def.Name
+	}
+
 	if _, err := a.notification.Create(ctx, &notification.Notification{
 		OrganizationID: schedule.OrganizationID,
 		BusinessUnitID: &schedule.BusinessUnitID,
@@ -221,10 +234,8 @@ func (a *Activities) notifyScheduleOwner(
 		Priority:       notification.PriorityHigh,
 		Title:          title,
 		Message:        message,
-		Data: map[string]any{
-			"scheduleId": schedule.ID.String(),
-		},
-		Source: "reportjobs.DispatchDueSchedules",
+		Data:           data,
+		Source:         "reportjobs.DispatchDueSchedules",
 	}); err != nil {
 		a.l.Warn("failed to notify schedule owner",
 			zap.String("scheduleId", schedule.ID.String()), zap.Error(err))

@@ -27,6 +27,7 @@ import {
 } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
+import { EIAFuelPricesIntegrationModal } from "./eia/eia-integration-modal";
 import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-modal";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
@@ -398,6 +399,10 @@ export function IntegrationCatalogCard() {
       <OANDAExchangeRatesIntegrationModal
         open={searchParams.type === "OANDAExchangeRates"}
         onOpenChange={setModalOpen("OANDAExchangeRates")}
+      />
+      <EIAFuelPricesIntegrationModal
+        open={searchParams.type === "EIAFuelPrices"}
+        onOpenChange={setModalOpen("EIAFuelPrices")}
       />
       <PCMilerIntegrationModal
         open={searchParams.type === "PCMiler"}

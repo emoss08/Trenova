@@ -33,12 +33,23 @@ virtuals:
     - stopOrder
   EdiCommunicationProfile:
     - secretState
+  AuditEntry:
+    - entityRef
+  Order:
+    - legs
+  ReportSchedule:
+    - formats
+    - emailRecipients
+    - emailAttach
+    - notifyUserIds
   Location:
     - geofenceVertices
   Shipment:
     - customer
     - formulaTemplate
     - sourceDocumentId
+    - orderNumber
+    - orderStatus
   ShipmentAdditionalCharge:
     - accessorialCharge
   ShipmentCommodity:

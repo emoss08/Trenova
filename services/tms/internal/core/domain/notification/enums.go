@@ -55,6 +55,28 @@ func ChannelFromString(v string) (Channel, error) {
 	}
 }
 
+type State string
+
+const (
+	StateInbox    = State("inbox")
+	StateArchived = State("archived")
+)
+
+func (s State) String() string {
+	return string(s)
+}
+
+func StateFromString(v string) (State, error) {
+	switch v {
+	case "inbox":
+		return StateInbox, nil
+	case "archived":
+		return StateArchived, nil
+	default:
+		return "", errors.New("invalid state")
+	}
+}
+
 type DeliveryStatus string
 
 const (

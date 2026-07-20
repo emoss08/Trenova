@@ -23,6 +23,7 @@ type connectionTester interface {
 var connectionTesters = map[integration.Type]connectionTester{
 	integration.TypeSamsara:            &samsaraConnectionTester{},
 	integration.TypeOANDAExchangeRates: &oandaExchangeRatesConnectionTester{},
+	integration.TypeEIAFuelPrices:      &eiaFuelPricesConnectionTester{},
 	integration.TypePCMiler:            &pcmilerConnectionTester{},
 	integration.TypeResend:             &resendConnectionTester{},
 	integration.TypePostmark:           &postmarkConnectionTester{},
@@ -163,6 +164,80 @@ func (t *oandaExchangeRatesConnectionTester) Test(ctx context.Context, cfg map[s
 
 	if len(result.Quotes) == 0 {
 		return fmt.Errorf("OANDA returned no USD/EUR quote")
+	}
+
+	return nil
+}
+
+type eiaFuelPricesConnectionTester struct{}
+
+func (t *eiaFuelPricesConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+	apiKey := cfg["apiKey"]
+	if apiKey == "" {
+		return fmt.Errorf("API key is required")
+	}
+
+	baseURL := strings.TrimRight(strings.TrimSpace(cfg["baseUrl"]), "/")
+	if baseURL == "" {
+		baseURL = "https://api.eia.gov/v2"
+	}
+
+	endpoint, err := url.Parse(baseURL + "/petroleum/pri/gnd/data/")
+	if err != nil {
+		return fmt.Errorf("invalid EIA base URL: %w", err)
+	}
+	query := endpoint.Query()
+	query.Set("api_key", apiKey)
+	query.Set("frequency", "weekly")
+	query.Set("data[0]", "value")
+	query.Add("facets[series][]", "EMD_EPD2D_PTE_NUS_DPG")
+	query.Set("sort[0][column]", "period")
+	query.Set("sort[0][direction]", "desc")
+	query.Set("length", "1")
+	endpoint.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to connect to EIA: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		var result struct {
+			Error string `json:"error"`
+		}
+		if err = sonic.Unmarshal(body, &result); err != nil || result.Error == "" {
+			return fmt.Errorf("EIA returned status %d", resp.StatusCode)
+		}
+		return fmt.Errorf("EIA returned status %d: %s", resp.StatusCode, result.Error)
+	}
+
+	var result struct {
+		Response struct {
+			Data []struct {
+				Period string `json:"period"`
+				Value  string `json:"value"`
+			} `json:"data"`
+		} `json:"response"`
+	}
+	if err = sonic.Unmarshal(body, &result); err != nil {
+		return fmt.Errorf("invalid API response: %w", err)
+	}
+
+	if len(result.Response.Data) == 0 {
+		return fmt.Errorf("EIA returned no diesel price data")
 	}
 
 	return nil

@@ -40,6 +40,16 @@ var finalizeActivityOptions = workflow.ActivityOptions{
 	},
 }
 
+var deliverActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 2 * time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    2 * time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumAttempts:    deliverMaxAttempts,
+		MaximumInterval:    30 * time.Second,
+	},
+}
+
 var cleanupActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 10 * time.Minute,
 	HeartbeatTimeout:    time.Minute,
@@ -143,6 +153,23 @@ func RunReportWorkflow(
 		finalizeCtx, a.FinalizeRunActivity, finalize,
 	).Get(finalizeCtx, nil); err != nil {
 		return nil, err
+	}
+
+	// Delivery is best-effort: a failed email or notification must never fail
+	// the run itself — the artifact is finalized and downloadable either way.
+	if !prepared.ScheduleID.IsNil() {
+		deliverCtx := workflow.WithActivityOptions(ctx, deliverActivityOptions)
+		if err := workflow.ExecuteActivity(
+			deliverCtx, a.DeliverScheduledRunActivity,
+			&DeliverRunPayload{
+				RunID:          payload.RunID,
+				OrganizationID: payload.OrganizationID,
+				BusinessUnitID: payload.BusinessUnitID,
+			},
+		).Get(deliverCtx, nil); err != nil {
+			workflow.GetLogger(ctx).Error("scheduled report delivery failed",
+				"runId", payload.RunID.String(), "error", err)
+		}
 	}
 
 	return &RunReportResult{

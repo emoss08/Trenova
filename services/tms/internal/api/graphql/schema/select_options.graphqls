@@ -8,6 +8,8 @@ enum SelectOptionResource {
   SHIPMENT
   ORDER
   EDI_TRANSFER
+  FUEL_INDEX
+  FUEL_SURCHARGE_PROGRAM
 }
 
 input SelectOptionsInput {

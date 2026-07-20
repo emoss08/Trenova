@@ -37,6 +37,7 @@ import type {
   BillingCycleType,
   ConsolidationGroupBy,
   CreditStatus,
+  CustomerFuelSurchargeMode,
   CustomerPaymentTerm,
   InvoiceAdjustmentSupportingDocumentPolicy,
   InvoiceMethod,
@@ -87,6 +88,17 @@ import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { LocationGeofenceType } from "@/types/location";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
 import type { ManualJournalStatus } from "@/types/manual-journal";
+import type {
+  FuelIndexSource,
+  FuelSurchargeDateBasis,
+  FuelType,
+  FuelSurchargeFallback,
+  FuelSurchargePercentBasis,
+  FuelSurchargeProgramMethod,
+  FuelSurchargeProgramStatus,
+  FuelSurchargeRateRounding,
+  FuelSurchargeStepRounding,
+} from "@/types/fuel-surcharge";
 import type { RateTableLookupType } from "@/types/rate-table";
 import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
@@ -135,6 +147,123 @@ export const rateTableLookupTypeChoices = [
   { label: "Exact", value: "Exact", color: "#2563eb" },
   { label: "Range", value: "Range", color: "#9333ea" },
 ] satisfies ReadonlyArray<GenericSelectOption<RateTableLookupType>>;
+
+export const fuelIndexSourceChoices = [
+  { label: "DOE / EIA", value: "EIA", color: "#1a6fb5" },
+  { label: "Custom", value: "Custom", color: "#9333ea" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelIndexSource>>;
+
+export const fuelTypeChoices = [
+  { label: "Diesel", value: "Diesel", color: "#1a6fb5" },
+  { label: "Gasoline", value: "Gasoline", color: "#ea580c" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelType>>;
+
+export const fuelSurchargeMethodChoices = [
+  {
+    label: "Per Mile (Peg + Increment)",
+    value: "PerMileStep",
+    color: "#2563eb",
+    description:
+      "The classic truckload formula — the rate rises a set amount for every price step above your base price. No table to maintain.",
+  },
+  {
+    label: "Per Mile (MPG Formula)",
+    value: "PerMileMPG",
+    color: "#0891b2",
+    description:
+      "Recovers actual fuel cost: (price − base price) ÷ fleet MPG. Common for owner-operators and cost-plus contracts.",
+  },
+  {
+    label: "Custom Table: $ per Mile",
+    value: "TablePerMile",
+    color: "#9333ea",
+    description:
+      "Your own price bands, each with its own per-mile rate. Bands can be irregular — use this for customer-supplied fuel tables.",
+  },
+  {
+    label: "Custom Table: % of Charge",
+    value: "TablePercent",
+    color: "#c026d3",
+    description:
+      "Price bands map to a percentage of the freight charge — the standard LTL and brokerage style.",
+  },
+  {
+    label: "Custom Table: Flat Amount",
+    value: "TableFlat",
+    color: "#ea580c",
+    description: "Price bands map to a fixed dollar amount per shipment.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeProgramMethod>>;
+
+export const fuelSurchargePercentBasisChoices = [
+  {
+    label: "Linehaul only",
+    value: "Linehaul",
+    description: "Percentage applies to the base freight charge only — the most common contract term.",
+  },
+  {
+    label: "Linehaul + accessorials",
+    value: "LinehaulPlusAccessorials",
+    description:
+      "Percentage applies to the freight charge plus other accessorial charges (gross basis).",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargePercentBasis>>;
+
+export const customerFuelSurchargeModeChoices = [
+  {
+    label: "No fuel surcharge",
+    value: "None",
+    description: "Shipments for this customer never get an automatic fuel surcharge line.",
+  },
+  {
+    label: "Fuel surcharge program",
+    value: "Program",
+    description: "Apply a fuel surcharge program — the correct week's rate is added automatically.",
+  },
+  {
+    label: "Fuel included in rates",
+    value: "FuelIncluded",
+    description:
+      "All-in pricing: fuel is baked into the negotiated rates, so no separate surcharge is billed.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<CustomerFuelSurchargeMode>>;
+
+export const fuelSurchargeDateBasisChoices = [
+  { label: "Pickup Date", value: "PickupDate" },
+  { label: "Tender Date", value: "TenderDate" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeDateBasis>>;
+
+export const fuelSurchargeStepRoundingChoices = [
+  { label: "Round Up (any partial step counts)", value: "Up" },
+  { label: "Round Down", value: "Down" },
+  { label: "Round Nearest", value: "Nearest" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeStepRounding>>;
+
+export const fuelSurchargeRateRoundingChoices = [
+  { label: "Half Up", value: "HalfUp" },
+  { label: "Always Up", value: "Up" },
+  { label: "Always Down", value: "Down" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeRateRounding>>;
+
+export const fuelSurchargeFallbackChoices = [
+  { label: "Use latest available price", value: "UseLatestAvailable" },
+  { label: "Skip surcharge until price arrives", value: "Skip" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeFallback>>;
+
+export const fuelSurchargeEffectiveDayChoices = [
+  { label: "Sunday", value: 0 },
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday (industry standard)", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+] satisfies ReadonlyArray<GenericSelectOption<number>>;
+
+export const fuelSurchargeProgramStatusChoices = [
+  { label: "Active", value: "Active", color: "#15803d" },
+  { label: "Inactive", value: "Inactive", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<FuelSurchargeProgramStatus>>;
 
 export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },

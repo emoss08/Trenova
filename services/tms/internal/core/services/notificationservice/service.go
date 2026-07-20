@@ -99,9 +99,30 @@ func (s *Service) CountUnread(
 
 func (s *Service) MarkAsRead(
 	ctx context.Context,
-	req repositories.MarkNotificationsReadRequest,
+	req repositories.NotificationActionRequest,
 ) error {
 	return s.repo.MarkAsRead(ctx, req)
+}
+
+func (s *Service) MarkAsUnread(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	return s.repo.MarkAsUnread(ctx, req)
+}
+
+func (s *Service) Dismiss(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	return s.repo.Dismiss(ctx, req)
+}
+
+func (s *Service) Restore(
+	ctx context.Context,
+	req repositories.NotificationActionRequest,
+) error {
+	return s.repo.Restore(ctx, req)
 }
 
 func (s *Service) MarkAllAsRead(

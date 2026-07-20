@@ -49,31 +49,35 @@ var AdditionalChargeTable = TableInfo{
 //	q.Where(AdditionalChargeColumns.ID.Eq(), id)           // WHERE ac.id = ?
 //	q.Order(AdditionalChargeColumns.CreatedAt.OrderDesc())  // ORDER BY ac.created_at DESC
 var AdditionalChargeColumns = struct {
-	ID                  Column // "id" → qualified: "ac.id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "ac.business_unit_id"
-	OrganizationID      Column // "organization_id" → qualified: "ac.organization_id"
-	ShipmentID          Column // "shipment_id" → qualified: "ac.shipment_id"
-	AccessorialChargeID Column // "accessorial_charge_id" → qualified: "ac.accessorial_charge_id"
-	IsSystemGenerated   Column // "is_system_generated" → qualified: "ac.is_system_generated"
-	Method              Column // "method" → qualified: "ac.method"
-	Amount              Column // "amount" → qualified: "ac.amount"
-	Unit                Column // "unit" → qualified: "ac.unit"
-	Version             Column // "version" → qualified: "ac.version"
-	CreatedAt           Column // "created_at" → qualified: "ac.created_at"
-	UpdatedAt           Column // "updated_at" → qualified: "ac.updated_at"
+	ID                     Column // "id" → qualified: "ac.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "ac.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "ac.organization_id"
+	ShipmentID             Column // "shipment_id" → qualified: "ac.shipment_id"
+	AccessorialChargeID    Column // "accessorial_charge_id" → qualified: "ac.accessorial_charge_id"
+	IsSystemGenerated      Column // "is_system_generated" → qualified: "ac.is_system_generated"
+	Method                 Column // "method" → qualified: "ac.method"
+	Amount                 Column // "amount" → qualified: "ac.amount"
+	Unit                   Column // "unit" → qualified: "ac.unit"
+	FuelSurchargeProgramID Column // "fuel_surcharge_program_id" → qualified: "ac.fuel_surcharge_program_id"
+	FuelSurchargeDetail    Column // "fuel_surcharge_detail" → qualified: "ac.fuel_surcharge_detail"
+	Version                Column // "version" → qualified: "ac.version"
+	CreatedAt              Column // "created_at" → qualified: "ac.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "ac.updated_at"
 }{
-	ID:                  NewColumn("id", "ac"),
-	BusinessUnitID:      NewColumn("business_unit_id", "ac"),
-	OrganizationID:      NewColumn("organization_id", "ac"),
-	ShipmentID:          NewColumn("shipment_id", "ac"),
-	AccessorialChargeID: NewColumn("accessorial_charge_id", "ac"),
-	IsSystemGenerated:   NewColumn("is_system_generated", "ac"),
-	Method:              NewColumn("method", "ac"),
-	Amount:              NewColumn("amount", "ac"),
-	Unit:                NewColumn("unit", "ac"),
-	Version:             NewColumn("version", "ac"),
-	CreatedAt:           NewColumn("created_at", "ac"),
-	UpdatedAt:           NewColumn("updated_at", "ac"),
+	ID:                     NewColumn("id", "ac"),
+	BusinessUnitID:         NewColumn("business_unit_id", "ac"),
+	OrganizationID:         NewColumn("organization_id", "ac"),
+	ShipmentID:             NewColumn("shipment_id", "ac"),
+	AccessorialChargeID:    NewColumn("accessorial_charge_id", "ac"),
+	IsSystemGenerated:      NewColumn("is_system_generated", "ac"),
+	Method:                 NewColumn("method", "ac"),
+	Amount:                 NewColumn("amount", "ac"),
+	Unit:                   NewColumn("unit", "ac"),
+	FuelSurchargeProgramID: NewColumn("fuel_surcharge_program_id", "ac"),
+	FuelSurchargeDetail:    NewColumn("fuel_surcharge_detail", "ac"),
+	Version:                NewColumn("version", "ac"),
+	CreatedAt:              NewColumn("created_at", "ac"),
+	UpdatedAt:              NewColumn("updated_at", "ac"),
 }
 
 // AdditionalChargeFieldMap maps JSON API field names to database column names.
@@ -81,18 +85,20 @@ var AdditionalChargeColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AdditionalCharge.GetStaticFieldMap().
 var AdditionalChargeFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"shipmentId":          "shipment_id",
-	"accessorialChargeId": "accessorial_charge_id",
-	"isSystemGenerated":   "is_system_generated",
-	"method":              "method",
-	"amount":              "amount",
-	"unit":                "unit",
-	"version":             "version",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"shipmentId":             "shipment_id",
+	"accessorialChargeId":    "accessorial_charge_id",
+	"isSystemGenerated":      "is_system_generated",
+	"method":                 "method",
+	"amount":                 "amount",
+	"unit":                   "unit",
+	"fuelSurchargeProgramId": "fuel_surcharge_program_id",
+	"fuelSurchargeDetail":    "fuel_surcharge_detail",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // AdditionalChargeInsertableColumns lists column names suitable for INSERT statements on the "additional_charges" table.
@@ -107,6 +113,8 @@ var AdditionalChargeInsertableColumns = []string{
 	"method",
 	"amount",
 	"unit",
+	"fuel_surcharge_program_id",
+	"fuel_surcharge_detail",
 	"version",
 	"created_at",
 	"updated_at",
@@ -179,18 +187,20 @@ func AdditionalChargeApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery
 //	AdditionalChargeFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AdditionalChargeFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ShipmentID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	AccessorialChargeID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
-	IsSystemGenerated   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystemGenerated" → DB: "is_system_generated"
-	Method              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
-	Amount              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
-	Unit                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unit" → DB: "unit"
-	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShipmentID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	AccessorialChargeID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
+	IsSystemGenerated      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystemGenerated" → DB: "is_system_generated"
+	Method                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	Amount                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	Unit                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unit" → DB: "unit"
+	FuelSurchargeProgramID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeProgramId" → DB: "fuel_surcharge_program_id"
+	FuelSurchargeDetail    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeDetail" → DB: "fuel_surcharge_detail"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -218,6 +228,12 @@ var AdditionalChargeFilter = struct {
 	},
 	Unit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("unit", op, value)
+	},
+	FuelSurchargeProgramID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelSurchargeProgramId", op, value)
+	},
+	FuelSurchargeDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelSurchargeDetail", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

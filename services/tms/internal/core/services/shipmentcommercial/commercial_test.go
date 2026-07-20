@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -296,6 +297,217 @@ func TestCalculateTotals_PreservesOverriddenDetentionChargeAmounts(t *testing.T)
 	assert.Equal(t, int16(1), entity.AdditionalCharges[0].Unit)
 	assert.True(t, decimal.NewFromInt(200).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromInt(300).Equal(resp.TotalChargeAmount))
+}
+
+func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipment()
+	programID := pulid.MustNew("fsp_")
+	fuelChargeID := pulid.MustNew("acc_")
+
+	formula := mocks.NewMockFormulaCalculator(t)
+	formula.EXPECT().
+		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
+		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
+		Once()
+
+	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver.EXPECT().
+		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
+		Return(&services.ResolvedFuelSurcharge{
+			ProgramID:           programID,
+			AccessorialChargeID: fuelChargeID,
+			Amount:              decimal.RequireFromString("245.50"),
+			Detail:              &shipment.FuelSurchargeDetail{ProgramID: programID.String()},
+		}, nil).
+		Once()
+
+	calculator := New(Params{
+		Formula:         formula,
+		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:   resolver,
+	})
+
+	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+
+	require.NoError(t, err)
+	require.Len(t, entity.AdditionalCharges, 1)
+	charge := entity.AdditionalCharges[0]
+	assert.True(t, charge.IsSystemGenerated)
+	assert.Equal(t, fuelChargeID, charge.AccessorialChargeID)
+	assert.Equal(t, accessorialcharge.MethodFlat, charge.Method)
+	assert.Equal(t, int16(1), charge.Unit)
+	require.NotNil(t, charge.FuelSurchargeProgramID)
+	assert.Equal(t, programID, *charge.FuelSurchargeProgramID)
+	require.NotNil(t, charge.FuelSurchargeDetail)
+	assert.True(t, decimal.RequireFromString("245.50").Equal(charge.Amount))
+	assert.True(t, decimal.RequireFromString("245.50").Equal(entity.OtherChargeAmount.Decimal))
+	assert.True(t, decimal.RequireFromString("1245.50").Equal(entity.TotalChargeAmount.Decimal))
+}
+
+func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipment()
+	oldProgramID := pulid.MustNew("fsp_")
+	newProgramID := pulid.MustNew("fsp_")
+	oldChargeID := pulid.MustNew("acc_")
+	newChargeID := pulid.MustNew("acc_")
+
+	entity.AdditionalCharges = []*shipment.AdditionalCharge{
+		{
+			ID:                     pulid.MustNew("ac_"),
+			AccessorialChargeID:    oldChargeID,
+			IsSystemGenerated:      true,
+			Method:                 accessorialcharge.MethodFlat,
+			Amount:                 decimal.NewFromInt(100),
+			Unit:                   1,
+			FuelSurchargeProgramID: &oldProgramID,
+		},
+	}
+
+	formula := mocks.NewMockFormulaCalculator(t)
+	formula.EXPECT().
+		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
+		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
+		Once()
+
+	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver.EXPECT().
+		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
+		Return(&services.ResolvedFuelSurcharge{
+			ProgramID:           newProgramID,
+			AccessorialChargeID: newChargeID,
+			Amount:              decimal.NewFromInt(300),
+		}, nil).
+		Once()
+
+	calculator := New(Params{
+		Formula:         formula,
+		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:   resolver,
+	})
+
+	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+
+	require.NoError(t, err)
+	require.Len(t, entity.AdditionalCharges, 1)
+	charge := entity.AdditionalCharges[0]
+	assert.Equal(t, newChargeID, charge.AccessorialChargeID)
+	require.NotNil(t, charge.FuelSurchargeProgramID)
+	assert.Equal(t, newProgramID, *charge.FuelSurchargeProgramID)
+	assert.True(t, decimal.NewFromInt(300).Equal(charge.Amount))
+}
+
+func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipment()
+	programID := pulid.MustNew("fsp_")
+	manualChargeID := pulid.MustNew("acc_")
+
+	entity.AdditionalCharges = []*shipment.AdditionalCharge{
+		{
+			ID:                     pulid.MustNew("ac_"),
+			AccessorialChargeID:    pulid.MustNew("acc_"),
+			IsSystemGenerated:      true,
+			Method:                 accessorialcharge.MethodFlat,
+			Amount:                 decimal.NewFromInt(100),
+			Unit:                   1,
+			FuelSurchargeProgramID: &programID,
+		},
+		{
+			ID:                  pulid.MustNew("ac_"),
+			AccessorialChargeID: manualChargeID,
+			Method:              accessorialcharge.MethodFlat,
+			Amount:              decimal.NewFromInt(75),
+			Unit:                1,
+		},
+	}
+
+	formula := mocks.NewMockFormulaCalculator(t)
+	formula.EXPECT().
+		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
+		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
+		Once()
+
+	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver.EXPECT().
+		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "75")).
+		Return(nil, nil).
+		Once()
+
+	calculator := New(Params{
+		Formula:         formula,
+		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:   resolver,
+	})
+
+	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+
+	require.NoError(t, err)
+	require.Len(t, entity.AdditionalCharges, 1)
+	assert.Equal(t, manualChargeID, entity.AdditionalCharges[0].AccessorialChargeID)
+	assert.True(t, decimal.NewFromInt(75).Equal(entity.OtherChargeAmount.Decimal))
+}
+
+func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipment()
+	programID := pulid.MustNew("fsp_")
+
+	entity.AdditionalCharges = []*shipment.AdditionalCharge{
+		{
+			ID:                     pulid.MustNew("ac_"),
+			AccessorialChargeID:    pulid.MustNew("acc_"),
+			IsSystemGenerated:      true,
+			Method:                 accessorialcharge.MethodFlat,
+			Amount:                 decimal.NewFromInt(100),
+			Unit:                   1,
+			FuelSurchargeProgramID: &programID,
+		},
+	}
+
+	formula := mocks.NewMockFormulaCalculator(t)
+	formula.EXPECT().
+		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
+		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
+		Once()
+
+	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver.EXPECT().
+		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
+		Return(&services.ResolvedFuelSurcharge{
+			ProgramID:           programID,
+			AccessorialChargeID: pulid.MustNew("acc_"),
+			Amount:              decimal.Zero,
+		}, nil).
+		Once()
+
+	calculator := New(Params{
+		Formula:         formula,
+		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:   resolver,
+	})
+
+	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+
+	require.NoError(t, err)
+	assert.Empty(t, entity.AdditionalCharges)
+}
+
+func fuelChargeRequest(
+	entity *shipment.Shipment,
+	linehaul string,
+	accessorialTotal string,
+) any {
+	return mock.MatchedBy(func(req *services.ResolveShipmentChargeRequest) bool {
+		return req != nil && req.Shipment == entity &&
+			decimal.RequireFromString(linehaul).Equal(req.Linehaul) &&
+			decimal.RequireFromString(accessorialTotal).Equal(req.AccessorialTotal)
+	})
 }
 
 func validShipment() *shipment.Shipment {

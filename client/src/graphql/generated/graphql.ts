@@ -89,9 +89,11 @@ export type ConfigurationVisibility =
 export type CreateReportScheduleInput = {
   cronExpression: string;
   definitionId: string | number;
+  emailAttach?: boolean | null | undefined;
   emailRecipients?: Array<string> | null | undefined;
   enabled: boolean;
   formats: Array<string>;
+  notifyUserIds?: Array<string | number> | null | undefined;
   timezone?: string | null | undefined;
 };
 
@@ -330,6 +332,111 @@ export type FreightClass =
   | 'Class400'
   | 'Class500';
 
+export type FuelIndexInput = {
+  code: string;
+  currency?: string | null | undefined;
+  description?: string | null | undefined;
+  eiaSeriesId?: string | null | undefined;
+  fuelType?: FuelType | null | undefined;
+  isActive?: boolean | null | undefined;
+  name: string;
+  region?: string | null | undefined;
+  source: FuelIndexSource;
+};
+
+export type FuelIndexPriceInput = {
+  fuelIndexId: string | number;
+  price: string;
+  priceDate: string;
+};
+
+export type FuelIndexSource =
+  | 'Custom'
+  | 'EIA';
+
+export type FuelSurchargeDateBasis =
+  | 'PickupDate'
+  | 'TenderDate';
+
+export type FuelSurchargeMissingPriceFallback =
+  | 'Skip'
+  | 'UseLatestAvailable';
+
+export type FuelSurchargePercentBasis =
+  | 'Linehaul'
+  | 'LinehaulPlusAccessorials';
+
+export type FuelSurchargeProgramInput = {
+  accessorialChargeId: string | number;
+  code: string;
+  dateBasis?: FuelSurchargeDateBasis | null | undefined;
+  description?: string | null | undefined;
+  effectiveEndDate?: number | null | undefined;
+  effectiveStartDate?: number | null | undefined;
+  fuelIndexId: string | number;
+  increment?: string | null | undefined;
+  incrementRate?: string | null | undefined;
+  maxAmount?: string | null | undefined;
+  method: FuelSurchargeProgramMethod;
+  milesPerGallon?: string | null | undefined;
+  minAmount?: string | null | undefined;
+  missingPriceFallback?: FuelSurchargeMissingPriceFallback | null | undefined;
+  name: string;
+  pegPrice?: string | null | undefined;
+  percentBasis?: FuelSurchargePercentBasis | null | undefined;
+  priceEffectiveDay?: number | null | undefined;
+  ratePrecision?: number | null | undefined;
+  rateRounding?: FuelSurchargeRateRounding | null | undefined;
+  serviceTypeIds?: Array<string | number> | null | undefined;
+  shipmentTypeIds?: Array<string | number> | null | undefined;
+  status?: FuelSurchargeProgramStatus | null | undefined;
+  stepRounding?: FuelSurchargeStepRounding | null | undefined;
+  tableRows?: Array<FuelSurchargeTableRowInput> | null | undefined;
+  tractorTypeIds?: Array<string | number> | null | undefined;
+  trailerTypeIds?: Array<string | number> | null | undefined;
+};
+
+export type FuelSurchargeProgramMethod =
+  | 'PerMileMPG'
+  | 'PerMileStep'
+  | 'TableFlat'
+  | 'TablePerMile'
+  | 'TablePercent';
+
+export type FuelSurchargeProgramStatus =
+  | 'Active'
+  | 'Inactive';
+
+export type FuelSurchargeRateRounding =
+  | 'Down'
+  | 'HalfUp'
+  | 'Up';
+
+export type FuelSurchargeStepRounding =
+  | 'Down'
+  | 'Nearest'
+  | 'Up';
+
+export type FuelSurchargeTableRowInput = {
+  priceMax?: string | null | undefined;
+  priceMin?: string | null | undefined;
+  sortOrder?: number | null | undefined;
+  value: string;
+};
+
+export type FuelType =
+  | 'Diesel'
+  | 'Gasoline';
+
+export type GenerateFuelTableInput = {
+  increment: string;
+  maxPrice: string;
+  minPrice: string;
+  openEnded?: boolean | null | undefined;
+  startValue: string;
+  valueStep: string;
+};
+
 export type HazardousClass =
   | 'HazardClass1'
   | 'HazardClass1And1'
@@ -432,11 +539,20 @@ export type NotificationChannel =
   | 'role'
   | 'user';
 
+export type NotificationFilterInput = {
+  state?: NotificationState | null | undefined;
+  unreadOnly?: boolean | null | undefined;
+};
+
 export type NotificationPriority =
   | 'critical'
   | 'high'
   | 'low'
   | 'medium';
+
+export type NotificationState =
+  | 'archived'
+  | 'inbox';
 
 export type OrderInput = {
   baseAmount?: string | null | undefined;
@@ -614,6 +730,8 @@ export type SelectOptionResource =
   | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'
+  | 'FUEL_INDEX'
+  | 'FUEL_SURCHARGE_PROGRAM'
   | 'ORDER'
   | 'SHIPMENT'
   | 'TRACTOR'
@@ -1033,6 +1151,12 @@ export type UpcomingWorkerPtoInput = {
   workerId?: string | number | null | undefined;
 };
 
+export type UpdateFuelIndexPriceInput = {
+  id: string | number;
+  price: string;
+  priceDate: string;
+};
+
 export type UpdateOrderChargeInput = {
   amount: string;
   chargeId: string | number;
@@ -1057,10 +1181,12 @@ export type UpdateReportDefinitionInput = {
 export type UpdateReportScheduleInput = {
   cronExpression: string;
   definitionId: string | number;
+  emailAttach?: boolean | null | undefined;
   emailRecipients?: Array<string> | null | undefined;
   enabled: boolean;
   formats: Array<string>;
   id: string | number;
+  notifyUserIds?: Array<string | number> | null | undefined;
   timezone?: string | null | undefined;
   version: number;
 };
@@ -1468,6 +1594,128 @@ export type FormulaTemplateTableQueryVariables = Exact<{
 
 export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type FuelIndexFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, source: FuelIndexSource, fuelType: FuelType, region: string, eiaSeriesId: string, currency: string, isActive: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FuelIndexFieldsFragment' };
+
+export type FuelSurchargeProgramFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: FuelSurchargeProgramStatus, fuelIndexId: string, accessorialChargeId: string, method: FuelSurchargeProgramMethod, pegPrice: string | null, increment: string | null, incrementRate: string | null, milesPerGallon: string | null, percentBasis: FuelSurchargePercentBasis, stepRounding: FuelSurchargeStepRounding, rateRounding: FuelSurchargeRateRounding, ratePrecision: number, minAmount: string | null, maxAmount: string | null, dateBasis: FuelSurchargeDateBasis, priceEffectiveDay: number, missingPriceFallback: FuelSurchargeMissingPriceFallback, effectiveStartDate: number | null, effectiveEndDate: number | null, shipmentTypeIds: Array<string> | null, serviceTypeIds: Array<string> | null, tractorTypeIds: Array<string> | null, trailerTypeIds: Array<string> | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FuelSurchargeProgramFieldsFragment' };
+
+export type FuelIndexTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type FuelIndexTableQuery = { fuelIndexes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelIndexFieldsFragment': FuelIndexFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FuelSurchargeProgramTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type FuelSurchargeProgramTableQuery = { fuelSurchargePrograms: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FuelSurchargeProgramFieldsFragment': FuelSurchargeProgramFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FuelSurchargeProgramDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FuelSurchargeProgramDetailQuery = { fuelSurchargeProgram: { id: string, name: string, code: string, description: string, status: FuelSurchargeProgramStatus, fuelIndexId: string, accessorialChargeId: string, method: FuelSurchargeProgramMethod, pegPrice: string | null, increment: string | null, incrementRate: string | null, milesPerGallon: string | null, percentBasis: FuelSurchargePercentBasis, stepRounding: FuelSurchargeStepRounding, rateRounding: FuelSurchargeRateRounding, ratePrecision: number, minAmount: string | null, maxAmount: string | null, dateBasis: FuelSurchargeDateBasis, priceEffectiveDay: number, missingPriceFallback: FuelSurchargeMissingPriceFallback, effectiveStartDate: number | null, effectiveEndDate: number | null, shipmentTypeIds: Array<string> | null, serviceTypeIds: Array<string> | null, tractorTypeIds: Array<string> | null, trailerTypeIds: Array<string> | null, version: number, fuelIndex: { id: string, name: string, code: string, source: FuelIndexSource, fuelType: FuelType, region: string } | null, accessorialCharge: { id: string, code: string, description: string } | null, tableRows: Array<{ id: string, priceMin: string | null, priceMax: string | null, value: string, sortOrder: number }> | null } | null };
+
+export type FuelDashboardQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type FuelDashboardQuery = { fuelDashboard: Array<{ delta: string | null, index: { id: string, name: string, code: string, description: string, source: FuelIndexSource, fuelType: FuelType, region: string, eiaSeriesId: string, currency: string, isActive: boolean }, latest: { id: string, priceDate: string, price: string, currency: string, isManual: boolean } | null, previous: { id: string, priceDate: string, price: string, currency: string, isManual: boolean } | null }> };
+
+export type FuelIndexPriceHistoryQueryVariables = Exact<{
+  indexId: string | number;
+  from?: string | null | undefined;
+  to?: string | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type FuelIndexPriceHistoryQuery = { fuelIndexPriceHistory: Array<{ id: string, fuelIndexId: string, priceDate: string, price: string, currency: string, isManual: boolean, sourceRaw: string, fetchedAt: string }> };
+
+export type FuelProgramCurrentRatesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type FuelProgramCurrentRatesQuery = { fuelProgramCurrentRates: Array<{ ratePerMile: string | null, percent: string | null, flatAmount: string | null, usedFallback: boolean, program: { id: string, name: string, code: string, description: string, status: FuelSurchargeProgramStatus, method: FuelSurchargeProgramMethod, fuelIndexId: string, priceEffectiveDay: number, dateBasis: FuelSurchargeDateBasis, fuelIndex: { id: string, name: string, code: string, source: FuelIndexSource, fuelType: FuelType, region: string } | null }, price: { id: string, priceDate: string, price: string, currency: string } | null, matchedRow: { id: string, priceMin: string | null, priceMax: string | null, value: string } | null }> };
+
+export type GenerateFuelSurchargeTableQueryVariables = Exact<{
+  input: GenerateFuelTableInput;
+}>;
+
+
+export type GenerateFuelSurchargeTableQuery = { generateFuelSurchargeTable: Array<{ priceMin: string | null, priceMax: string | null, value: string }> };
+
+export type EiaSeriesOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type EiaSeriesOptionsQuery = { eiaSeriesOptions: Array<{ seriesId: string, code: string, name: string, region: string, fuelType: FuelType }> };
+
+export type CreateFuelIndexMutationVariables = Exact<{
+  input: FuelIndexInput;
+}>;
+
+
+export type CreateFuelIndexMutation = { createFuelIndex: { id: string, name: string, code: string } };
+
+export type UpdateFuelIndexMutationVariables = Exact<{
+  id: string | number;
+  input: FuelIndexInput;
+}>;
+
+
+export type UpdateFuelIndexMutation = { updateFuelIndex: { id: string, name: string, code: string } };
+
+export type DeleteFuelIndexMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteFuelIndexMutation = { deleteFuelIndex: boolean };
+
+export type AddFuelIndexPriceMutationVariables = Exact<{
+  input: FuelIndexPriceInput;
+}>;
+
+
+export type AddFuelIndexPriceMutation = { addFuelIndexPrice: { id: string, fuelIndexId: string, priceDate: string, price: string } };
+
+export type UpdateFuelIndexPriceMutationVariables = Exact<{
+  input: UpdateFuelIndexPriceInput;
+}>;
+
+
+export type UpdateFuelIndexPriceMutation = { updateFuelIndexPrice: { id: string, fuelIndexId: string, priceDate: string, price: string } };
+
+export type DeleteFuelIndexPriceMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteFuelIndexPriceMutation = { deleteFuelIndexPrice: boolean };
+
+export type CreateFuelSurchargeProgramMutationVariables = Exact<{
+  input: FuelSurchargeProgramInput;
+}>;
+
+
+export type CreateFuelSurchargeProgramMutation = { createFuelSurchargeProgram: { id: string, name: string, code: string } };
+
+export type UpdateFuelSurchargeProgramMutationVariables = Exact<{
+  id: string | number;
+  input: FuelSurchargeProgramInput;
+}>;
+
+
+export type UpdateFuelSurchargeProgramMutation = { updateFuelSurchargeProgram: { id: string, name: string, code: string } };
+
+export type DeleteFuelSurchargeProgramMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteFuelSurchargeProgramMutation = { deleteFuelSurchargeProgram: boolean };
+
 export type HazardousMaterialTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, description: string, class: HazardousClass, unNumber: string, packingGroup: PackingGroup, subsidiaryHazardClass: string, ergGuideNumber: string, labelCodes: string, specialProvisions: string, properShippingName: string, handlingInstructions: string, emergencyContact: string, emergencyContactPhoneNumber: string, quantityThreshold: string, placardRequired: boolean, isReportableQuantity: boolean, marinePollutant: boolean, inhalationHazard: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'HazardousMaterialTableRowFieldsFragment' };
 
 export type HazardousMaterialTableQueryVariables = Exact<{
@@ -1540,10 +1788,11 @@ export type ManualJournalTableQueryVariables = Exact<{
 
 export type ManualJournalTableQuery = { manualJournals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, source: string, readAt: number | null, createdAt: number } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
+export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, relatedEntities: unknown, source: string, readAt: number | null, dismissedAt: number | null, createdAt: number } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
 
 export type NotificationListQueryVariables = Exact<{
   input: DataTableConnectionInput;
+  filter?: NotificationFilterInput | null | undefined;
 }>;
 
 
@@ -1561,10 +1810,31 @@ export type MarkNotificationsReadMutationVariables = Exact<{
 
 export type MarkNotificationsReadMutation = { markNotificationsRead: boolean };
 
+export type MarkNotificationsUnreadMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type MarkNotificationsUnreadMutation = { markNotificationsUnread: boolean };
+
 export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type MarkAllNotificationsReadMutation = { markAllNotificationsRead: boolean };
+
+export type DismissNotificationsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type DismissNotificationsMutation = { dismissNotifications: boolean };
+
+export type RestoreNotificationsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type RestoreNotificationsMutation = { restoreNotifications: boolean };
 
 export type OrderDetailQueryVariables = Exact<{
   id: string | number;
@@ -1798,7 +2068,7 @@ export type CancelReportRunMutationVariables = Exact<{
 
 export type CancelReportRunMutation = { cancelReportRun: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } };
 
-export type ReportScheduleFieldsFragment = { id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, runAsId: string, lastRunId: string | null, nextRunAt: number | null, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportScheduleFieldsFragment' };
+export type ReportScheduleFieldsFragment = { id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, emailAttach: boolean, notifyUserIds: Array<string>, enabled: boolean, runAsId: string, lastRunId: string | null, nextRunAt: number | null, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportScheduleFieldsFragment' };
 
 export type ReportSchedulesQueryVariables = Exact<{
   definitionId?: string | number | null | undefined;
@@ -1907,7 +2177,7 @@ export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: st
 
 export type ShipmentMoveFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string | null, status: MoveStatus, loaded: boolean, sequence: number, distance: number | null, distanceSource: string | null, distanceProvider: string | null, distanceCalculatedAt: number | null, distanceRouteSignature: string | null, distanceDataVersion: string | null, distanceRoutingType: string | null, distanceUnits: string | null, distanceMetadata: unknown, version: number, createdAt: number, updatedAt: number, stops: Array<{ ' $fragmentRefs'?: { 'ShipmentStopFieldsFragment': ShipmentStopFieldsFragment } }>, assignment: { ' $fragmentRefs'?: { 'ShipmentAssignmentFieldsFragment': ShipmentAssignmentFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentMoveFieldsFragment' };
 
-export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, amount: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
+export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, amount: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
 
 export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
 
@@ -3166,6 +3436,61 @@ export const FormulaTemplateTableRowFieldsFragmentDoc = new TypedDocumentString(
   updatedAt
 }
     `, {"fragmentName":"FormulaTemplateTableRowFields"}) as unknown as TypedDocumentString<FormulaTemplateTableRowFieldsFragment, unknown>;
+export const FuelIndexFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FuelIndexFields on FuelIndex {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  source
+  fuelType
+  region
+  eiaSeriesId
+  currency
+  isActive
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FuelIndexFields"}) as unknown as TypedDocumentString<FuelIndexFieldsFragment, unknown>;
+export const FuelSurchargeProgramFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FuelSurchargeProgramFields on FuelSurchargeProgram {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  fuelIndexId
+  accessorialChargeId
+  method
+  pegPrice
+  increment
+  incrementRate
+  milesPerGallon
+  percentBasis
+  stepRounding
+  rateRounding
+  ratePrecision
+  minAmount
+  maxAmount
+  dateBasis
+  priceEffectiveDay
+  missingPriceFallback
+  effectiveStartDate
+  effectiveEndDate
+  shipmentTypeIds
+  serviceTypeIds
+  tractorTypeIds
+  trailerTypeIds
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FuelSurchargeProgramFields"}) as unknown as TypedDocumentString<FuelSurchargeProgramFieldsFragment, unknown>;
 export const HazardousMaterialTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment HazardousMaterialTableRowFields on HazardousMaterial {
   id
@@ -3395,8 +3720,10 @@ export const NotificationFieldsFragmentDoc = new TypedDocumentString(`
   title
   message
   data
+  relatedEntities
   source
   readAt
+  dismissedAt
   createdAt
 }
     `, {"fragmentName":"NotificationFields"}) as unknown as TypedDocumentString<NotificationFieldsFragment, unknown>;
@@ -3547,6 +3874,8 @@ export const ReportScheduleFieldsFragmentDoc = new TypedDocumentString(`
   timezone
   formats
   emailRecipients
+  emailAttach
+  notifyUserIds
   enabled
   runAsId
   lastRunId
@@ -3934,6 +4263,8 @@ export const ShipmentAdditionalChargeFieldsFragmentDoc = new TypedDocumentString
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -4239,6 +4570,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -6160,6 +6493,326 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   createdAt
   updatedAt
 }`, {"hash":"sha256:c01b733598294ed6c946e930dbe90a2c6ac8b264ef6cce8c9e19a4f7260c9722"}) as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+export const FuelIndexTableDocument = new TypedDocumentString(`
+    query FuelIndexTable($input: DataTableConnectionInput!) {
+  fuelIndexes(input: $input) {
+    edges {
+      node {
+        ...FuelIndexFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment FuelIndexFields on FuelIndex {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  source
+  fuelType
+  region
+  eiaSeriesId
+  currency
+  isActive
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:3d9de58edce377a1196d022cadeed9fdad99c2f1ab648d46185115a65dfc82ac"}) as unknown as TypedDocumentString<FuelIndexTableQuery, FuelIndexTableQueryVariables>;
+export const FuelSurchargeProgramTableDocument = new TypedDocumentString(`
+    query FuelSurchargeProgramTable($input: DataTableConnectionInput!) {
+  fuelSurchargePrograms(input: $input) {
+    edges {
+      node {
+        ...FuelSurchargeProgramFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment FuelSurchargeProgramFields on FuelSurchargeProgram {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  fuelIndexId
+  accessorialChargeId
+  method
+  pegPrice
+  increment
+  incrementRate
+  milesPerGallon
+  percentBasis
+  stepRounding
+  rateRounding
+  ratePrecision
+  minAmount
+  maxAmount
+  dateBasis
+  priceEffectiveDay
+  missingPriceFallback
+  effectiveStartDate
+  effectiveEndDate
+  shipmentTypeIds
+  serviceTypeIds
+  tractorTypeIds
+  trailerTypeIds
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d3b91b52c41c370b27562468cf3e00dee15ba60342572a7b0397447d370030d9"}) as unknown as TypedDocumentString<FuelSurchargeProgramTableQuery, FuelSurchargeProgramTableQueryVariables>;
+export const FuelSurchargeProgramDetailDocument = new TypedDocumentString(`
+    query FuelSurchargeProgramDetail($id: ID!) {
+  fuelSurchargeProgram(id: $id) {
+    id
+    name
+    code
+    description
+    status
+    fuelIndexId
+    accessorialChargeId
+    method
+    pegPrice
+    increment
+    incrementRate
+    milesPerGallon
+    percentBasis
+    stepRounding
+    rateRounding
+    ratePrecision
+    minAmount
+    maxAmount
+    dateBasis
+    priceEffectiveDay
+    missingPriceFallback
+    effectiveStartDate
+    effectiveEndDate
+    shipmentTypeIds
+    serviceTypeIds
+    tractorTypeIds
+    trailerTypeIds
+    version
+    fuelIndex {
+      id
+      name
+      code
+      source
+      fuelType
+      region
+    }
+    accessorialCharge {
+      id
+      code
+      description
+    }
+    tableRows {
+      id
+      priceMin
+      priceMax
+      value
+      sortOrder
+    }
+  }
+}
+    `, {"hash":"sha256:668cfbb25c0bc4ff5599aa92de019bbabb47ff8af16e9eb7f9a53e59698287a9"}) as unknown as TypedDocumentString<FuelSurchargeProgramDetailQuery, FuelSurchargeProgramDetailQueryVariables>;
+export const FuelDashboardDocument = new TypedDocumentString(`
+    query FuelDashboard {
+  fuelDashboard {
+    index {
+      id
+      name
+      code
+      description
+      source
+      fuelType
+      region
+      eiaSeriesId
+      currency
+      isActive
+    }
+    latest {
+      id
+      priceDate
+      price
+      currency
+      isManual
+    }
+    previous {
+      id
+      priceDate
+      price
+      currency
+      isManual
+    }
+    delta
+  }
+}
+    `, {"hash":"sha256:eb8d81ae4caebe6f5986cc6160e44c6c083ea25481fb4f66856d980d1b92ad43"}) as unknown as TypedDocumentString<FuelDashboardQuery, FuelDashboardQueryVariables>;
+export const FuelIndexPriceHistoryDocument = new TypedDocumentString(`
+    query FuelIndexPriceHistory($indexId: ID!, $from: String, $to: String, $limit: Int) {
+  fuelIndexPriceHistory(indexId: $indexId, from: $from, to: $to, limit: $limit) {
+    id
+    fuelIndexId
+    priceDate
+    price
+    currency
+    isManual
+    sourceRaw
+    fetchedAt
+  }
+}
+    `, {"hash":"sha256:2642b855e49ae205529b62bbdaa39e0c30f1476c31773ad47b63b0995208912c"}) as unknown as TypedDocumentString<FuelIndexPriceHistoryQuery, FuelIndexPriceHistoryQueryVariables>;
+export const FuelProgramCurrentRatesDocument = new TypedDocumentString(`
+    query FuelProgramCurrentRates {
+  fuelProgramCurrentRates {
+    program {
+      id
+      name
+      code
+      description
+      status
+      method
+      fuelIndexId
+      priceEffectiveDay
+      dateBasis
+      fuelIndex {
+        id
+        name
+        code
+        source
+        fuelType
+        region
+      }
+    }
+    price {
+      id
+      priceDate
+      price
+      currency
+    }
+    ratePerMile
+    percent
+    flatAmount
+    usedFallback
+    matchedRow {
+      id
+      priceMin
+      priceMax
+      value
+    }
+  }
+}
+    `, {"hash":"sha256:b6ded035e6dea96b6e99b7d7515aa56dab0a13682606b38c7374f980be5a15f0"}) as unknown as TypedDocumentString<FuelProgramCurrentRatesQuery, FuelProgramCurrentRatesQueryVariables>;
+export const GenerateFuelSurchargeTableDocument = new TypedDocumentString(`
+    query GenerateFuelSurchargeTable($input: GenerateFuelTableInput!) {
+  generateFuelSurchargeTable(input: $input) {
+    priceMin
+    priceMax
+    value
+  }
+}
+    `, {"hash":"sha256:a9038137e3854fa509ebd9e1ffaead13acfb73244483ca6a157c1676bab27dc1"}) as unknown as TypedDocumentString<GenerateFuelSurchargeTableQuery, GenerateFuelSurchargeTableQueryVariables>;
+export const EiaSeriesOptionsDocument = new TypedDocumentString(`
+    query EIASeriesOptions {
+  eiaSeriesOptions {
+    seriesId
+    code
+    name
+    region
+    fuelType
+  }
+}
+    `, {"hash":"sha256:aaf292fcd2d43d06a7f9694efaa21c08892e926da551fec3ee3747349ca474ee"}) as unknown as TypedDocumentString<EiaSeriesOptionsQuery, EiaSeriesOptionsQueryVariables>;
+export const CreateFuelIndexDocument = new TypedDocumentString(`
+    mutation CreateFuelIndex($input: FuelIndexInput!) {
+  createFuelIndex(input: $input) {
+    id
+    name
+    code
+  }
+}
+    `, {"hash":"sha256:c319990c4b5f3d40c1860bbed53325ee8253ff65822862a15d29417e5eb7c576"}) as unknown as TypedDocumentString<CreateFuelIndexMutation, CreateFuelIndexMutationVariables>;
+export const UpdateFuelIndexDocument = new TypedDocumentString(`
+    mutation UpdateFuelIndex($id: ID!, $input: FuelIndexInput!) {
+  updateFuelIndex(id: $id, input: $input) {
+    id
+    name
+    code
+  }
+}
+    `, {"hash":"sha256:4f399ea1e3726ba5b46b72cceedf871a79d6c5491ce72140b22f0e3ab382cf5e"}) as unknown as TypedDocumentString<UpdateFuelIndexMutation, UpdateFuelIndexMutationVariables>;
+export const DeleteFuelIndexDocument = new TypedDocumentString(`
+    mutation DeleteFuelIndex($id: ID!) {
+  deleteFuelIndex(id: $id)
+}
+    `, {"hash":"sha256:2755ccaf08a669e4ef6d4431518c9b88f6050aac4722e8317ec51c0ce60a5b5b"}) as unknown as TypedDocumentString<DeleteFuelIndexMutation, DeleteFuelIndexMutationVariables>;
+export const AddFuelIndexPriceDocument = new TypedDocumentString(`
+    mutation AddFuelIndexPrice($input: FuelIndexPriceInput!) {
+  addFuelIndexPrice(input: $input) {
+    id
+    fuelIndexId
+    priceDate
+    price
+  }
+}
+    `, {"hash":"sha256:df875f75a8e1490c5ede2d25401a7f4532db9104475770a27e64e660735d7f51"}) as unknown as TypedDocumentString<AddFuelIndexPriceMutation, AddFuelIndexPriceMutationVariables>;
+export const UpdateFuelIndexPriceDocument = new TypedDocumentString(`
+    mutation UpdateFuelIndexPrice($input: UpdateFuelIndexPriceInput!) {
+  updateFuelIndexPrice(input: $input) {
+    id
+    fuelIndexId
+    priceDate
+    price
+  }
+}
+    `, {"hash":"sha256:edc0d10d2ca1db5814601c0fbd342451e82e378fe16c5543c3b815a412a1e255"}) as unknown as TypedDocumentString<UpdateFuelIndexPriceMutation, UpdateFuelIndexPriceMutationVariables>;
+export const DeleteFuelIndexPriceDocument = new TypedDocumentString(`
+    mutation DeleteFuelIndexPrice($id: ID!) {
+  deleteFuelIndexPrice(id: $id)
+}
+    `, {"hash":"sha256:8903bc47ee21d85ead19724a808087144465a1468b0323a72386d1ee5b627b20"}) as unknown as TypedDocumentString<DeleteFuelIndexPriceMutation, DeleteFuelIndexPriceMutationVariables>;
+export const CreateFuelSurchargeProgramDocument = new TypedDocumentString(`
+    mutation CreateFuelSurchargeProgram($input: FuelSurchargeProgramInput!) {
+  createFuelSurchargeProgram(input: $input) {
+    id
+    name
+    code
+  }
+}
+    `, {"hash":"sha256:c38694d28544cc10ca5710f466a1932d5a860625706c97f7fee1ea1257db38b0"}) as unknown as TypedDocumentString<CreateFuelSurchargeProgramMutation, CreateFuelSurchargeProgramMutationVariables>;
+export const UpdateFuelSurchargeProgramDocument = new TypedDocumentString(`
+    mutation UpdateFuelSurchargeProgram($id: ID!, $input: FuelSurchargeProgramInput!) {
+  updateFuelSurchargeProgram(id: $id, input: $input) {
+    id
+    name
+    code
+  }
+}
+    `, {"hash":"sha256:2d15f5ba8184f8be6fdf1628b9d674c4c98f117fa8c36e0cabd847068c7cd45c"}) as unknown as TypedDocumentString<UpdateFuelSurchargeProgramMutation, UpdateFuelSurchargeProgramMutationVariables>;
+export const DeleteFuelSurchargeProgramDocument = new TypedDocumentString(`
+    mutation DeleteFuelSurchargeProgram($id: ID!) {
+  deleteFuelSurchargeProgram(id: $id)
+}
+    `, {"hash":"sha256:29699115bac5fef098c018951b45e9a68e8f1ab0fd98c45f23d69cfc60885a4b"}) as unknown as TypedDocumentString<DeleteFuelSurchargeProgramMutation, DeleteFuelSurchargeProgramMutationVariables>;
 export const HazardousMaterialTableDocument = new TypedDocumentString(`
     query HazardousMaterialTable($input: DataTableConnectionInput!) {
   hazardousMaterials(input: $input) {
@@ -6506,8 +7159,8 @@ fragment ManualJournalTableRowFields on ManualJournal {
   updatedAt
 }`, {"hash":"sha256:68c27faeae7ef0ec21693a745b9c58fb933c9e3ab8a395de79705953a4200bbd"}) as unknown as TypedDocumentString<ManualJournalTableQuery, ManualJournalTableQueryVariables>;
 export const NotificationListDocument = new TypedDocumentString(`
-    query NotificationList($input: DataTableConnectionInput!) {
-  notifications(input: $input) {
+    query NotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {
+  notifications(input: $input, filter: $filter) {
     edges {
       node {
         ...NotificationFields
@@ -6534,10 +7187,12 @@ fragment NotificationFields on Notification {
   title
   message
   data
+  relatedEntities
   source
   readAt
+  dismissedAt
   createdAt
-}`, {"hash":"sha256:521222189fc8fc082707badddfab4a76f8bb053d4603d33f06ad0c47cc64d5c0"}) as unknown as TypedDocumentString<NotificationListQuery, NotificationListQueryVariables>;
+}`, {"hash":"sha256:f025dd4c0d391b965d6c43d4a747b7366afc5b88a7365cad8010cf64ae5a8283"}) as unknown as TypedDocumentString<NotificationListQuery, NotificationListQueryVariables>;
 export const NotificationUnreadCountDocument = new TypedDocumentString(`
     query NotificationUnreadCount {
   notificationUnreadCount
@@ -6548,11 +7203,26 @@ export const MarkNotificationsReadDocument = new TypedDocumentString(`
   markNotificationsRead(ids: $ids)
 }
     `, {"hash":"sha256:1a766cf4ea3e134b35e5fa8ec5b904da700ab13ff3d61af7158809b586e6fe94"}) as unknown as TypedDocumentString<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>;
+export const MarkNotificationsUnreadDocument = new TypedDocumentString(`
+    mutation MarkNotificationsUnread($ids: [ID!]!) {
+  markNotificationsUnread(ids: $ids)
+}
+    `, {"hash":"sha256:4623f51d1c45a298af41a975f66d19897b98c9c1527f03162eefac1aef651ca2"}) as unknown as TypedDocumentString<MarkNotificationsUnreadMutation, MarkNotificationsUnreadMutationVariables>;
 export const MarkAllNotificationsReadDocument = new TypedDocumentString(`
     mutation MarkAllNotificationsRead {
   markAllNotificationsRead
 }
     `, {"hash":"sha256:e919497b911d73638f8329785ecb0b4b48a247bb6d037bf89b2a498c5bca336d"}) as unknown as TypedDocumentString<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
+export const DismissNotificationsDocument = new TypedDocumentString(`
+    mutation DismissNotifications($ids: [ID!]!) {
+  dismissNotifications(ids: $ids)
+}
+    `, {"hash":"sha256:762abd6aba103c349367b7834a0e909dd2e06b9d5c1a33f71a4467431db83d50"}) as unknown as TypedDocumentString<DismissNotificationsMutation, DismissNotificationsMutationVariables>;
+export const RestoreNotificationsDocument = new TypedDocumentString(`
+    mutation RestoreNotifications($ids: [ID!]!) {
+  restoreNotifications(ids: $ids)
+}
+    `, {"hash":"sha256:e97ca2a47ac7291064a1651afaf8807310b842b010cc23d5b383cab58018d6e1"}) as unknown as TypedDocumentString<RestoreNotificationsMutation, RestoreNotificationsMutationVariables>;
 export const OrderDetailDocument = new TypedDocumentString(`
     query OrderDetail($id: ID!) {
   order(id: $id) {
@@ -7282,6 +7952,8 @@ export const ReportSchedulesDocument = new TypedDocumentString(`
   timezone
   formats
   emailRecipients
+  emailAttach
+  notifyUserIds
   enabled
   runAsId
   lastRunId
@@ -7290,7 +7962,7 @@ export const ReportSchedulesDocument = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:d603651f2823a98bc47b3558cef67d298ac01b9fbffaae9cd39d5fac90026c15"}) as unknown as TypedDocumentString<ReportSchedulesQuery, ReportSchedulesQueryVariables>;
+}`, {"hash":"sha256:fb0abce2c56d49308309eb048fcef0541109551d0f8cca54338715dd93a42d09"}) as unknown as TypedDocumentString<ReportSchedulesQuery, ReportSchedulesQueryVariables>;
 export const CreateReportScheduleDocument = new TypedDocumentString(`
     mutation CreateReportSchedule($input: CreateReportScheduleInput!) {
   createReportSchedule(input: $input) {
@@ -7304,6 +7976,8 @@ export const CreateReportScheduleDocument = new TypedDocumentString(`
   timezone
   formats
   emailRecipients
+  emailAttach
+  notifyUserIds
   enabled
   runAsId
   lastRunId
@@ -7312,7 +7986,7 @@ export const CreateReportScheduleDocument = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:3f22766bf3dd7f7bfb6d0fa2fe2741c79d3f2114fd880701be48361673086b50"}) as unknown as TypedDocumentString<CreateReportScheduleMutation, CreateReportScheduleMutationVariables>;
+}`, {"hash":"sha256:ee897619e4e2b1caf4f1264ade16ce775982cf9c5cc88dc09ad205f30ccdd3b0"}) as unknown as TypedDocumentString<CreateReportScheduleMutation, CreateReportScheduleMutationVariables>;
 export const UpdateReportScheduleDocument = new TypedDocumentString(`
     mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {
   updateReportSchedule(input: $input) {
@@ -7326,6 +8000,8 @@ export const UpdateReportScheduleDocument = new TypedDocumentString(`
   timezone
   formats
   emailRecipients
+  emailAttach
+  notifyUserIds
   enabled
   runAsId
   lastRunId
@@ -7334,7 +8010,7 @@ export const UpdateReportScheduleDocument = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:b13c9bb014da42b426bd265027748f001ba98737acf2bf757e5bf17f933e64d4"}) as unknown as TypedDocumentString<UpdateReportScheduleMutation, UpdateReportScheduleMutationVariables>;
+}`, {"hash":"sha256:a9575950d10c3f1a2351f3eaa0f4680bedbbbea15e4f29b1518f26542000f8e8"}) as unknown as TypedDocumentString<UpdateReportScheduleMutation, UpdateReportScheduleMutationVariables>;
 export const DeleteReportScheduleDocument = new TypedDocumentString(`
     mutation DeleteReportSchedule($id: ID!) {
   deleteReportSchedule(id: $id)
@@ -7724,6 +8400,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -7895,7 +8573,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:f5cd9ca38789950ae0acecb4d1437f831a9ecc0ffbe1f0128329e8768fce0c5c"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:b912a64830c6a009cb5958aa6d55a0d6d616532891684d8b0079bf8ec1c07783"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -8031,6 +8709,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -8198,7 +8878,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:7140985f0760018f1faf7704de63168439a5c54d413497ca66def9eb10d863ae"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:2d4edc02b3f56c496354758f710613864d7eb25c042c070f7330f1944ae5dd21"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -8493,6 +9173,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -8664,7 +9346,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:259f6742486bf7a2f4cfd44a00c303d0ebcde9f379f8bc944e27331dedc78db0"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:a8c5e7224bda2bb00b9a52a66a73c50aa22cedba3d978a10118f46801fce4fdb"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -8808,6 +9490,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -8979,7 +9663,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:de42ed156eb13c6b6cc8d1b3bc0ecf85dca6836909b7a91129fff1fe4747a010"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:c6e940f97584369fb22afdcd1eb8e559a089a1dc5df7881963c44f0c3a049479"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -9123,6 +9807,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -9294,7 +9980,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:2e34058deb77b3c563f1e11666c062c1c7e6e76b1d93bb238d368841d0f92ace"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:495799bcb5084edcf2041173d7892566c571169386e65051d64e34817bc473ee"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
     query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
   shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
@@ -9648,6 +10334,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -9815,7 +10503,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:f93be74cadf7023b6128fefa39182823c0ca1fe0182fb5fa6ff1ada9fb6143d8"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:5bc76a3490d1dbecab310e9b45dcae784451b384f8fbccfb1baee893f84cd30b"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -9951,6 +10639,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -10118,7 +10808,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:7fe07e15add8878c4054607895a727b9d1a203744fa1aad8130a3143e33014bf"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:e01723c164148827b6186c6bc993a9615fb78ec7f8865ab174b2072861990946"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -10254,6 +10944,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -10421,7 +11113,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:5a11fe2606f52b3ce83d31f1fee592ff6de431bd22a97ab827abaa7787acef11"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:a334c5bac81378fbb4ef116e61a75852cc53654a14a68938daabf52f594414f2"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -10557,6 +11249,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -10724,7 +11418,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:9da085bfa759ea5472ecaf9920de9b68f66c5ce60de7bfbe64372d5b0f3d89fd"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:ca0ef1555c836a86dcbc78b7f141ef65e6e1336da625ed4f7a15aa1353e82dc1"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -10871,6 +11565,8 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   method
   amount
   unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
   version
   createdAt
   updatedAt
@@ -11038,7 +11734,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:96d83971d324ca9c7703920a5ec1c799ae2ea7c82397a5146ffdefc1cbd14b81"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:7c6a46887a168400d0d89085cd13d60479ab76a4944f0535a0cb6befdd8526c0"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {

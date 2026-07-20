@@ -537,17 +537,20 @@ export function MultiSelectAutocomplete<T>({
               disabled={isLocked}
             >
               {selectedOptions.length > 0 ? (
-                <div className="flex w-full flex-wrap items-center justify-between gap-2 py-1">
-                  <div className="flex flex-wrap gap-1">
+                <div className="flex w-full min-w-0 items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-1">
                     {selectedOptions.slice(0, maxCount).map((option) => (
                       <span
                         key={getOptionValue(option).toString()}
-                        className={cn(multiSelectVariants({ variant: "default" }))}
+                        title={getDisplayValue(option)}
+                        className={cn("min-w-0", multiSelectVariants({ variant: "default" }))}
                       >
-                        {renderBadge ? renderBadge(option) : getDisplayValue(option)}
+                        <span className="min-w-0 truncate">
+                          {renderBadge ? renderBadge(option) : getDisplayValue(option)}
+                        </span>
                         {!isLocked && (
                           <span
-                            className="size-4 cursor-pointer"
+                            className="size-4 shrink-0 cursor-pointer"
                             onClick={(event) => {
                               event.stopPropagation();
                               removeOption(getOptionValue(option).toString());
@@ -561,16 +564,16 @@ export function MultiSelectAutocomplete<T>({
                     {selectedOptions.length > maxCount && (
                       <Badge
                         className={cn(
-                          "h-auto max-h-5 border-foreground/10 bg-transparent text-foreground hover:bg-transparent",
+                          "h-auto max-h-5 shrink-0 border-foreground/10 bg-transparent text-foreground hover:bg-transparent",
                           multiSelectVariants({ variant: "default" }),
                         )}
                       >
-                        {`+ ${selectedOptions.length - maxCount} more`}
+                        {`+${selectedOptions.length - maxCount} more`}
                       </Badge>
                     )}
                   </div>
 
-                  <div className="flex items-center">
+                  <div className="flex shrink-0 items-center">
                     {selectedOptions.length > 0 && !loading && !isLocked && (
                       <div className="flex-rowitems-center flex justify-center gap-0.5">
                         <span

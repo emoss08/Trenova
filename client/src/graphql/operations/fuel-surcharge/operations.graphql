@@ -1,0 +1,298 @@
+fragment FuelIndexFields on FuelIndex {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  source
+  fuelType
+  region
+  eiaSeriesId
+  currency
+  isActive
+  version
+  createdAt
+  updatedAt
+}
+
+fragment FuelSurchargeProgramFields on FuelSurchargeProgram {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  fuelIndexId
+  accessorialChargeId
+  method
+  pegPrice
+  increment
+  incrementRate
+  milesPerGallon
+  percentBasis
+  stepRounding
+  rateRounding
+  ratePrecision
+  minAmount
+  maxAmount
+  dateBasis
+  priceEffectiveDay
+  missingPriceFallback
+  effectiveStartDate
+  effectiveEndDate
+  shipmentTypeIds
+  serviceTypeIds
+  tractorTypeIds
+  trailerTypeIds
+  version
+  createdAt
+  updatedAt
+}
+
+query FuelIndexTable($input: DataTableConnectionInput!) {
+  fuelIndexes(input: $input) {
+    edges {
+      node {
+        ...FuelIndexFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query FuelSurchargeProgramTable($input: DataTableConnectionInput!) {
+  fuelSurchargePrograms(input: $input) {
+    edges {
+      node {
+        ...FuelSurchargeProgramFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query FuelSurchargeProgramDetail($id: ID!) {
+  fuelSurchargeProgram(id: $id) {
+    id
+    name
+    code
+    description
+    status
+    fuelIndexId
+    accessorialChargeId
+    method
+    pegPrice
+    increment
+    incrementRate
+    milesPerGallon
+    percentBasis
+    stepRounding
+    rateRounding
+    ratePrecision
+    minAmount
+    maxAmount
+    dateBasis
+    priceEffectiveDay
+    missingPriceFallback
+    effectiveStartDate
+    effectiveEndDate
+    shipmentTypeIds
+    serviceTypeIds
+    tractorTypeIds
+    trailerTypeIds
+    version
+    fuelIndex {
+      id
+      name
+      code
+      source
+      fuelType
+      region
+    }
+    accessorialCharge {
+      id
+      code
+      description
+    }
+    tableRows {
+      id
+      priceMin
+      priceMax
+      value
+      sortOrder
+    }
+  }
+}
+
+query FuelDashboard {
+  fuelDashboard {
+    index {
+      id
+      name
+      code
+      description
+      source
+      fuelType
+      region
+      eiaSeriesId
+      currency
+      isActive
+    }
+    latest {
+      id
+      priceDate
+      price
+      currency
+      isManual
+    }
+    previous {
+      id
+      priceDate
+      price
+      currency
+      isManual
+    }
+    delta
+  }
+}
+
+query FuelIndexPriceHistory($indexId: ID!, $from: String, $to: String, $limit: Int) {
+  fuelIndexPriceHistory(indexId: $indexId, from: $from, to: $to, limit: $limit) {
+    id
+    fuelIndexId
+    priceDate
+    price
+    currency
+    isManual
+    sourceRaw
+    fetchedAt
+  }
+}
+
+query FuelProgramCurrentRates {
+  fuelProgramCurrentRates {
+    program {
+      id
+      name
+      code
+      description
+      status
+      method
+      fuelIndexId
+      priceEffectiveDay
+      dateBasis
+      fuelIndex {
+        id
+        name
+        code
+        source
+        fuelType
+        region
+      }
+    }
+    price {
+      id
+      priceDate
+      price
+      currency
+    }
+    ratePerMile
+    percent
+    flatAmount
+    usedFallback
+    matchedRow {
+      id
+      priceMin
+      priceMax
+      value
+    }
+  }
+}
+
+query GenerateFuelSurchargeTable($input: GenerateFuelTableInput!) {
+  generateFuelSurchargeTable(input: $input) {
+    priceMin
+    priceMax
+    value
+  }
+}
+
+query EIASeriesOptions {
+  eiaSeriesOptions {
+    seriesId
+    code
+    name
+    region
+    fuelType
+  }
+}
+
+mutation CreateFuelIndex($input: FuelIndexInput!) {
+  createFuelIndex(input: $input) {
+    id
+    name
+    code
+  }
+}
+
+mutation UpdateFuelIndex($id: ID!, $input: FuelIndexInput!) {
+  updateFuelIndex(id: $id, input: $input) {
+    id
+    name
+    code
+  }
+}
+
+mutation DeleteFuelIndex($id: ID!) {
+  deleteFuelIndex(id: $id)
+}
+
+mutation AddFuelIndexPrice($input: FuelIndexPriceInput!) {
+  addFuelIndexPrice(input: $input) {
+    id
+    fuelIndexId
+    priceDate
+    price
+  }
+}
+
+mutation UpdateFuelIndexPrice($input: UpdateFuelIndexPriceInput!) {
+  updateFuelIndexPrice(input: $input) {
+    id
+    fuelIndexId
+    priceDate
+    price
+  }
+}
+
+mutation DeleteFuelIndexPrice($id: ID!) {
+  deleteFuelIndexPrice(id: $id)
+}
+
+mutation CreateFuelSurchargeProgram($input: FuelSurchargeProgramInput!) {
+  createFuelSurchargeProgram(input: $input) {
+    id
+    name
+    code
+  }
+}
+
+mutation UpdateFuelSurchargeProgram($id: ID!, $input: FuelSurchargeProgramInput!) {
+  updateFuelSurchargeProgram(id: $id, input: $input) {
+    id
+    name
+    code
+  }
+}
+
+mutation DeleteFuelSurchargeProgram($id: ID!) {
+  deleteFuelSurchargeProgram(id: $id)
+}

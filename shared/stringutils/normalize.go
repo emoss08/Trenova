@@ -1,6 +1,9 @@
 package stringutils
 
-import "unicode"
+import (
+	"strings"
+	"unicode"
+)
 
 func NormalizeIdentifier(value string) string {
 	buf := make([]rune, 0, len(value))
@@ -23,4 +26,14 @@ func TruncateRunes(value string, maxLength int) string {
 	}
 
 	return string(runes[:maxLength])
+}
+
+func Ellipsize(value string, maxLength int) string {
+	value = strings.TrimSpace(value)
+	truncated := TruncateRunes(value, maxLength)
+	if truncated == value {
+		return value
+	}
+
+	return strings.TrimRight(truncated, " ") + "…"
 }

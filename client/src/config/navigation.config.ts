@@ -220,6 +220,12 @@ const billingModule: NavModule = {
       resource: Resource.Invoice,
     },
     {
+      id: "fuel-management",
+      label: "Fuel Management",
+      path: "/billing/fuel-management",
+      resource: Resource.FuelSurchargeProgram,
+    },
+    {
       id: "billing-config-group",
       label: "Configuration Files",
       defaultOpen: false,
@@ -609,6 +615,16 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["rate", "table", "lookup"],
+    },
+    {
+      id: "create-fuel-surcharge-program",
+      label: "Create Fuel Surcharge Program",
+      description: "Add a new fuel surcharge program",
+      path: "/billing/fuel-management",
+      resource: Resource.FuelSurchargeProgram,
+      requiredOperation: Operation.Create,
+      query: { tab: "programs" },
+      keywords: ["fuel", "surcharge", "fsc", "doe", "diesel"],
     },
     {
       id: "create-account-type",

@@ -223,6 +223,8 @@ func (r *mutationResolver) UpdateReportSchedule(ctx context.Context, input gqlmo
 		Timezone:        input.Timezone,
 		Formats:         input.Formats,
 		EmailRecipients: input.EmailRecipients,
+		EmailAttach:     input.EmailAttach,
+		NotifyUserIds:   input.NotifyUserIds,
 		Enabled:         input.Enabled,
 	}, &input)
 	if err != nil {

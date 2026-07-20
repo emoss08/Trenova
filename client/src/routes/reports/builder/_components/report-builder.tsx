@@ -198,16 +198,6 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
             placeholder="Untitled report"
             className="max-w-80 min-w-0 flex-1 truncate rounded-md bg-transparent px-1.5 py-1 text-sm font-medium transition-colors outline-none placeholder:text-muted-foreground/60 hover:bg-muted/60 focus:bg-muted/60"
           />
-          {entity && (
-            <Badge variant="outline" className="shrink-0">
-              {entity.label}
-            </Badge>
-          )}
-          {definition?.kind === "canned_fork" && (
-            <Badge variant="indigo" className="shrink-0">
-              Customized
-            </Badge>
-          )}
           {definition?.status === "needs_attention" && (
             <Badge variant="warning" className="shrink-0">
               Needs Attention

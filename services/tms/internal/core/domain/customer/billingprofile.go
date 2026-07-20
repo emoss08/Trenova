@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
+	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -32,7 +34,7 @@ type CustomerBillingProfile struct {
 	AutoCreditHold                            bool                                      `json:"autoCreditHold"                            bun:"auto_credit_hold,type:BOOLEAN,notnull,default:false"`
 	CreditHoldReason                          string                                    `json:"creditHoldReason"                          bun:"credit_hold_reason,type:TEXT,nullzero"`
 	InvoiceMethod                             InvoiceMethod                             `json:"invoiceMethod"                             bun:"invoice_method,type:invoice_method_enum,notnull,default:'Individual'"`
-	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"              bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull,default:true"`
+	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"               bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull,default:true"`
 	AllowInvoiceConsolidation                 bool                                      `json:"allowInvoiceConsolidation"                 bun:"allow_invoice_consolidation,type:BOOLEAN,notnull,default:false"`
 	ConsolidationPeriodDays                   int8                                      `json:"consolidationPeriodDays"                   bun:"consolidation_period_days,type:INTEGER,notnull,default:7"`
 	ConsolidationGroupBy                      ConsolidationGroupBy                      `json:"consolidationGroupBy"                      bun:"consolidation_group_by,type:consolidation_group_by_enum,notnull,default:'None'"`
@@ -64,10 +66,9 @@ type CustomerBillingProfile struct {
 	InvoiceAdjustmentSupportingDocumentPolicy InvoiceAdjustmentSupportingDocumentPolicy `json:"invoiceAdjustmentSupportingDocumentPolicy" bun:"invoice_adjustment_supporting_document_policy,type:invoice_adjustment_supporting_document_policy_enum,notnull,default:'Inherit'"`
 	DefaultBillerID                           *pulid.ID                                 `json:"defaultBillerId"                           bun:"default_biller_id,type:VARCHAR(100),nullzero"`
 	BillingNotes                              string                                    `json:"billingNotes"                              bun:"billing_notes,type:TEXT,nullzero"`
+	FuelSurchargeMode                         FuelSurchargeMode                         `json:"fuelSurchargeMode"                         bun:"fuel_surcharge_mode,type:customer_fuel_surcharge_mode_enum,notnull,default:'None'"`
+	FuelSurchargeProgramID                    *pulid.ID                                 `json:"fuelSurchargeProgramId"                    bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
 	// UseFactoring                bool                 `json:"useFactoring"                bun:"use_factoring,type:BOOLEAN,notnull,default:false"`
-	// FuelSurchargeMethod         FuelSurchargeMethod  `json:"fuelSurchargeMethod"         bun:"fuel_surcharge_method,type:fuel_surcharge_method_enum,notnull,default:'None'"`
-
-	// FuelSurchargeProfileID      *pulid.ID            `json:"fuelSurchargeProfileId"      bun:"fuel_surcharge_profile_id,type:VARCHAR(100),nullzero"`
 	// FactoringCompanyID          *pulid.ID            `json:"factoringCompanyId"          bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
@@ -75,18 +76,38 @@ type CustomerBillingProfile struct {
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit   *tenant.BusinessUnit         `json:"-"              bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization   *tenant.Organization         `json:"-"              bun:"rel:belongs-to,join:organization_id=id"`
-	DefaultBiller  *tenant.User                 `json:"defaultBiller"  bun:"rel:belongs-to,join:default_biller_id=id"`
-	RevenueAccount *glaccount.GLAccount         `json:"revenueAccount" bun:"rel:belongs-to,join:revenue_account_id=id"`
-	ARAccount      *glaccount.GLAccount         `json:"arAccount"      bun:"rel:belongs-to,join:ar_account_id=id"`
-	DocumentTypes  []*documenttype.DocumentType `json:"documentTypes"  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
-	// FuelSurchargeProfile *FuelSurchargeProfile        `json:"fuelSurchargeProfile" bun:"rel:belongs-to,join:fuel_surcharge_profile_id=id"`
+	BusinessUnit         *tenant.BusinessUnit                `json:"-"                              bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization         *tenant.Organization                `json:"-"                              bun:"rel:belongs-to,join:organization_id=id"`
+	DefaultBiller        *tenant.User                        `json:"defaultBiller"                  bun:"rel:belongs-to,join:default_biller_id=id"`
+	RevenueAccount       *glaccount.GLAccount                `json:"revenueAccount"                 bun:"rel:belongs-to,join:revenue_account_id=id"`
+	ARAccount            *glaccount.GLAccount                `json:"arAccount"                      bun:"rel:belongs-to,join:ar_account_id=id"`
+	DocumentTypes        []*documenttype.DocumentType        `json:"documentTypes"                  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
+	FuelSurchargeProgram *fuelsurcharge.FuelSurchargeProgram `json:"fuelSurchargeProgram,omitempty" bun:"rel:belongs-to,join:fuel_surcharge_program_id=id"`
 	// FactoringCompany     *FactoringCompany            `json:"factoringCompany" bun:"rel:belongs-to,join:factoring_company_id=id"`
 }
 
 func (b *CustomerBillingProfile) GetID() string {
 	return b.ID.String()
+}
+
+func (b *CustomerBillingProfile) Validate(multiErr *errortypes.MultiError) {
+	switch b.FuelSurchargeMode {
+	case FuelSurchargeModeNone, FuelSurchargeModeProgram, FuelSurchargeModeFuelIncluded:
+	default:
+		multiErr.Add("billingProfile.fuelSurchargeMode", errortypes.ErrInvalid,
+			"Fuel surcharge mode is invalid")
+	}
+
+	if b.FuelSurchargeMode == FuelSurchargeModeProgram &&
+		(b.FuelSurchargeProgramID == nil || b.FuelSurchargeProgramID.IsNil()) {
+		multiErr.Add("billingProfile.fuelSurchargeProgramId", errortypes.ErrRequired,
+			"Select the fuel surcharge program to apply for this customer")
+	}
+}
+
+func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {
+	return b.FuelSurchargeMode == FuelSurchargeModeProgram &&
+		b.FuelSurchargeProgramID != nil && !b.FuelSurchargeProgramID.IsNil()
 }
 
 func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBillingProfile {
@@ -95,6 +116,7 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		BusinessUnitID:              buID,
 		CustomerID:                  customerID,
 		AutoSendInvoiceOnGeneration: true,
+		FuelSurchargeMode:           FuelSurchargeModeNone,
 		InvoiceAdjustmentSupportingDocumentPolicy: InvoiceAdjustmentSupportingDocumentPolicyInherit,
 	}
 }
@@ -115,6 +137,12 @@ func (b *CustomerBillingProfile) BeforeAppendModel(_ context.Context, query bun.
 	now := timeutils.NowUnix()
 	if b.InvoiceAdjustmentSupportingDocumentPolicy == "" {
 		b.InvoiceAdjustmentSupportingDocumentPolicy = InvoiceAdjustmentSupportingDocumentPolicyInherit
+	}
+	if b.FuelSurchargeMode == "" {
+		b.FuelSurchargeMode = FuelSurchargeModeNone
+	}
+	if b.FuelSurchargeMode != FuelSurchargeModeProgram {
+		b.FuelSurchargeProgramID = nil
 	}
 
 	switch query.(type) {

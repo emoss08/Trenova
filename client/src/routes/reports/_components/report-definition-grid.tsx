@@ -52,7 +52,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { irToInput } from "../builder/_components/builder-state";
-import { CategoryTile, ReportCard, ReportGridEmptyState, TagChips } from "./report-card-chrome";
+import {
+  compareReportsBySort,
+  groupByReportCategory,
+  type ReportSortOrder,
+  type ReportStatusFilter,
+} from "../reports-page-state";
+import { CategoryGroupHeader, ReportCard, ReportGridEmptyState } from "./report-card-chrome";
 import { ReportSchedulesDialog } from "./report-schedules-dialog";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
 
@@ -108,7 +114,6 @@ function DefinitionCard({
   return (
     <ReportCard index={index} onClick={() => void navigate(`/reports/builder/${definition.id}`)}>
       <div className="flex items-start gap-3">
-        <CategoryTile category={definition.category} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <StatusDot status={definition.status} />
@@ -177,15 +182,6 @@ function DefinitionCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-1.5">
-        {definition.kind === "canned_fork" && (
-          <span className="rounded-sm bg-indigo-500/10 px-1.5 py-0.5 text-2xs font-medium text-indigo-600 dark:text-indigo-400">
-            Customized
-          </span>
-        )}
-        <TagChips tags={definition.tags} />
-      </div>
-
       <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
         <div className="flex items-center gap-2 text-2xs text-muted-foreground">
           {definition.visibility === "shared" ? (
@@ -224,7 +220,17 @@ function DefinitionCard({
   );
 }
 
-export function ReportDefinitionGrid({ search }: { search: string }) {
+export function ReportDefinitionGrid({
+  search,
+  sortBy,
+  category,
+  status,
+}: {
+  search: string;
+  sortBy: ReportSortOrder;
+  category: string;
+  status: ReportStatusFilter;
+}) {
   const navigate = useNavigate();
   const { data: definitions, isLoading } = useReportDefinitionList(search);
   const deleteDefinition = useDeleteReportDefinition();
@@ -277,20 +283,30 @@ export function ReportDefinitionGrid({ search }: { search: string }) {
     );
   }
 
+  const filtered = (definitions ?? [])
+    .filter(
+      (definition) =>
+        (category === "all" || definition.category === category) &&
+        (status === "all" || definition.status === status),
+    )
+    .sort(compareReportsBySort(sortBy));
+  const groups = groupByReportCategory(filtered);
+  const hasFilters = Boolean(search) || category !== "all" || status !== "all";
+
   return (
     <>
-      <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {(definitions ?? []).length === 0 ? (
+      {filtered.length === 0 ? (
+        <div className="grid p-4">
           <ReportGridEmptyState
             icon={FileChartColumnIcon}
-            title={search ? "No reports match your search" : "No reports yet"}
+            title={hasFilters ? "No reports match your search and filters" : "No reports yet"}
             description={
-              search
-                ? "Try a different name, or clear the search."
+              hasFilters
+                ? "Try a different name, or clear the search and filters."
                 : "Build a custom report or customize one from the gallery."
             }
             action={
-              !search && canCreate ? (
+              !hasFilters && canCreate ? (
                 <Button size="sm" onClick={() => void navigate("/reports/builder")}>
                   <PlusIcon className="size-4" />
                   New Report
@@ -298,27 +314,36 @@ export function ReportDefinitionGrid({ search }: { search: string }) {
               ) : undefined
             }
           />
-        ) : (
-          (definitions ?? []).map((definition, index) => (
-            <DefinitionCard
-              key={definition.id}
-              definition={definition}
-              index={index}
-              onRun={() =>
-                setRunDialog({
-                  target: { definitionId: definition.id },
-                  name: definition.name,
-                  defaultFormat: definition.defaultFormat,
-                  parameters: parseReportIR(definition.definition)?.parameters ?? [],
-                })
-              }
-              onSchedules={() => setScheduleTarget(definition)}
-              onDuplicate={() => duplicateDefinition(definition)}
-              onDelete={() => setDeleteTarget(definition)}
-            />
-          ))
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="space-y-6 p-4">
+          {groups.map((group) => (
+            <section key={group.key} className="space-y-3">
+              <CategoryGroupHeader label={group.label} count={group.items.length} noun="report" />
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {group.items.map((definition, indexInGroup) => (
+                  <DefinitionCard
+                    key={definition.id}
+                    definition={definition}
+                    index={group.startIndex + indexInGroup}
+                    onRun={() =>
+                      setRunDialog({
+                        target: { definitionId: definition.id },
+                        name: definition.name,
+                        defaultFormat: definition.defaultFormat,
+                        parameters: parseReportIR(definition.definition)?.parameters ?? [],
+                      })
+                    }
+                    onSchedules={() => setScheduleTarget(definition)}
+                    onDuplicate={() => duplicateDefinition(definition)}
+                    onDelete={() => setDeleteTarget(definition)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
       <RunReportDialog
         open={runDialog !== null}
         onOpenChange={(open) => {

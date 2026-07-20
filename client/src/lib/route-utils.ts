@@ -23,6 +23,10 @@ function formatSegmentLabel(segment: string): string {
     .trim();
 }
 
+function stripTrailingSlash(path: string): string {
+  return path.endsWith("/") ? path.slice(0, -1) : path;
+}
+
 export function isRouteActive(currentPath: string, itemPath?: string): boolean {
   if (!itemPath) {
     return false;
@@ -31,9 +35,35 @@ export function isRouteActive(currentPath: string, itemPath?: string): boolean {
     return currentPath === "/";
   }
 
-  const current = currentPath.endsWith("/") ? currentPath.slice(0, -1) : currentPath;
-  const target = itemPath.endsWith("/") ? itemPath.slice(0, -1) : itemPath;
-  return current.startsWith(target);
+  const current = stripTrailingSlash(currentPath);
+  const target = stripTrailingSlash(itemPath);
+  return current === target || current.startsWith(`${target}/`);
+}
+
+/**
+ * Resolves the single best-matching nav path for the current location using
+ * longest-prefix-wins, so a parent path (e.g. `/reports`) does not stay active
+ * when a more specific sibling (e.g. `/reports/runs`) matches.
+ */
+export function findActiveNavPath(
+  currentPath: string,
+  candidatePaths: readonly string[],
+): string | null {
+  let bestMatch: string | null = null;
+  let bestLength = -1;
+
+  for (const candidate of candidatePaths) {
+    if (!isRouteActive(currentPath, candidate)) {
+      continue;
+    }
+    const length = stripTrailingSlash(candidate).length;
+    if (length > bestLength) {
+      bestMatch = candidate;
+      bestLength = length;
+    }
+  }
+
+  return bestMatch;
 }
 
 export function generateBreadcrumbSegments(pathname: string) {

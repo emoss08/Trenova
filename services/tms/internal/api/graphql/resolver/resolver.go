@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
@@ -26,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
@@ -94,6 +96,10 @@ type Params struct {
 	FiscalYearService            *fiscalyearservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
 	RateTableService             *ratetableservice.Service
+	FuelSurchargeService         *fuelsurchargeservice.Service
+	FuelIndexRepo                repositories.FuelIndexRepository
+	FuelIndexPriceRepo           repositories.FuelIndexPriceRepository
+	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
 	EmailService                 *emailservice.Service
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
@@ -154,6 +160,10 @@ type Resolver struct {
 	fiscalYearService            *fiscalyearservice.Service
 	formulaTemplateService       *formulatemplateservice.Service
 	rateTableService             *ratetableservice.Service
+	fuelSurchargeService         *fuelsurchargeservice.Service
+	fuelIndexRepo                repositories.FuelIndexRepository
+	fuelIndexPriceRepo           repositories.FuelIndexPriceRepository
+	fuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
 	emailService                 *emailservice.Service
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
@@ -215,6 +225,10 @@ func New(p Params) *Resolver {
 		fiscalYearService:            p.FiscalYearService,
 		formulaTemplateService:       p.FormulaTemplateService,
 		rateTableService:             p.RateTableService,
+		fuelSurchargeService:         p.FuelSurchargeService,
+		fuelIndexRepo:                p.FuelIndexRepo,
+		fuelIndexPriceRepo:           p.FuelIndexPriceRepo,
+		fuelSurchargeProgramRepo:     p.FuelSurchargeProgramRepo,
 		emailService:                 p.EmailService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
 		distanceOverrideService:      p.DistanceOverrideService,

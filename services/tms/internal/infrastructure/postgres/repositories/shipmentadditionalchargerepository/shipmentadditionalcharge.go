@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -151,15 +152,20 @@ func (r *repository) updateCharge(
 	charge.Version = ov + 1
 	charge.UpdatedAt = timeutils.NowUnix()
 
+	cols := buncolgen.AdditionalChargeColumns
 	results, err := tx.NewUpdate().
-		Model((*shipment.AdditionalCharge)(nil)).
-		Set("accessorial_charge_id = ?", charge.AccessorialChargeID).
-		Set("is_system_generated = ?", charge.IsSystemGenerated).
-		Set("method = ?", charge.Method).
-		Set("amount = ?", charge.Amount).
-		Set("unit = ?", charge.Unit).
-		Set("version = ?", charge.Version).
-		Set("updated_at = ?", charge.UpdatedAt).
+		Model(charge).
+		Column(
+			cols.AccessorialChargeID.Bare(),
+			cols.IsSystemGenerated.Bare(),
+			cols.Method.Bare(),
+			cols.Amount.Bare(),
+			cols.Unit.Bare(),
+			cols.FuelSurchargeProgramID.Bare(),
+			cols.FuelSurchargeDetail.Bare(),
+			cols.Version.Bare(),
+			cols.UpdatedAt.Bare(),
+		).
 		Where("id = ?", charge.ID).
 		Where("shipment_id = ?", charge.ShipmentID).
 		Where("organization_id = ?", charge.OrganizationID).

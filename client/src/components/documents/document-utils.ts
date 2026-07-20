@@ -23,5 +23,8 @@ export function getFileCategory(fileType: string, fileName?: string): string {
   ) {
     return "document";
   }
+  if (type === "application/json" || type.includes("xml") || ["json", "xml"].includes(ext)) {
+    return "data";
+  }
   return "default";
 }

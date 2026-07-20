@@ -334,6 +334,8 @@ type ShipmentAdditionalCharge {
   method: String!
   amount: String!
   unit: Int!
+  fuelSurchargeProgramId: ID
+  fuelSurchargeDetail: JSON
   version: Int!
   createdAt: Int!
   updatedAt: Int!

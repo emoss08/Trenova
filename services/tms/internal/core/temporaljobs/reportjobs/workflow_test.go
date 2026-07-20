@@ -44,6 +44,7 @@ func newEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 	env.RegisterActivity(a.PrepareRunActivity)
 	env.RegisterActivity(a.ExecuteAndRenderActivity)
 	env.RegisterActivity(a.FinalizeRunActivity)
+	env.RegisterActivity(a.DeliverScheduledRunActivity)
 	return env
 }
 
@@ -78,6 +79,78 @@ func TestRunReportWorkflowSuccess(t *testing.T) {
 	require.NotNil(t, finalized)
 	assert.Equal(t, report.RunStatusSucceeded, finalized.Status)
 	assert.Equal(t, "reports/org_test/rrun_test/1/report.csv", finalized.ArtifactKey)
+}
+
+func TestRunReportWorkflowManualRunSkipsDelivery(t *testing.T) {
+	env := newEnv(t)
+
+	env.OnActivity("PrepareRunActivity", mock.Anything, mock.Anything).
+		Return(testPrepared(), nil)
+	env.OnActivity("ExecuteAndRenderActivity", mock.Anything, mock.Anything).
+		Return(&ExecuteResult{ArtifactKey: "reports/x", RowCount: 1, ByteSize: 10}, nil)
+	env.OnActivity("FinalizeRunActivity", mock.Anything, mock.Anything).
+		Return(nil)
+
+	env.ExecuteWorkflow(RunReportWorkflow, testPayload())
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+
+	env.AssertNotCalled(t, "DeliverScheduledRunActivity", mock.Anything, mock.Anything)
+}
+
+func TestRunReportWorkflowScheduledRunDelivers(t *testing.T) {
+	env := newEnv(t)
+
+	prepared := testPrepared()
+	prepared.ScheduleID = pulid.ID("rsch_test")
+	env.OnActivity("PrepareRunActivity", mock.Anything, mock.Anything).
+		Return(prepared, nil)
+	env.OnActivity("ExecuteAndRenderActivity", mock.Anything, mock.Anything).
+		Return(&ExecuteResult{ArtifactKey: "reports/x", RowCount: 1, ByteSize: 10}, nil)
+	env.OnActivity("FinalizeRunActivity", mock.Anything, mock.Anything).
+		Return(nil)
+
+	var delivered *DeliverRunPayload
+	env.OnActivity("DeliverScheduledRunActivity", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			delivered = args.Get(1).(*DeliverRunPayload)
+		}).
+		Return(&DeliverRunResult{EmailedRecipients: 2}, nil)
+
+	env.ExecuteWorkflow(RunReportWorkflow, testPayload())
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+
+	require.NotNil(t, delivered, "a scheduled run must trigger delivery")
+	assert.Equal(t, pulid.ID("rrun_test"), delivered.RunID)
+	assert.Equal(t, pulid.ID("org_test"), delivered.OrganizationID)
+	assert.Equal(t, pulid.ID("bu_test"), delivered.BusinessUnitID)
+}
+
+func TestRunReportWorkflowDeliveryFailureDoesNotFailRun(t *testing.T) {
+	env := newEnv(t)
+
+	prepared := testPrepared()
+	prepared.ScheduleID = pulid.ID("rsch_test")
+	env.OnActivity("PrepareRunActivity", mock.Anything, mock.Anything).
+		Return(prepared, nil)
+	env.OnActivity("ExecuteAndRenderActivity", mock.Anything, mock.Anything).
+		Return(&ExecuteResult{ArtifactKey: "reports/x", RowCount: 1, ByteSize: 10}, nil)
+	env.OnActivity("FinalizeRunActivity", mock.Anything, mock.Anything).
+		Return(nil)
+	env.OnActivity("DeliverScheduledRunActivity", mock.Anything, mock.Anything).
+		Return(nil, temporal.NewNonRetryableApplicationError(
+			"boom", "DELIVERY", errors.New("boom"),
+		))
+
+	env.ExecuteWorkflow(RunReportWorkflow, testPayload())
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError(),
+		"delivery failures must never fail a finalized run")
+
+	var result RunReportResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, report.RunStatusSucceeded, result.Status)
 }
 
 func TestRunReportWorkflowValidationFailureFinalizesFailed(t *testing.T) {

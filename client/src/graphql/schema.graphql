@@ -344,9 +344,11 @@ enum ConfigurationVisibility {
 input CreateReportScheduleInput {
   cronExpression: String!
   definitionId: ID!
+  emailAttach: Boolean
   emailRecipients: [String!]
   enabled: Boolean!
   formats: [String!]!
+  notifyUserIds: [ID!]
   timezone: String
 }
 
@@ -574,6 +576,14 @@ enum DriverType {
   OTR
   Regional
   Team
+}
+
+type EIASeriesOption {
+  code: String!
+  fuelType: FuelType!
+  name: String!
+  region: String!
+  seriesId: String!
 }
 
 type EdiCommunicationProfile {
@@ -1399,6 +1409,248 @@ enum FreightClass {
   Class500
 }
 
+type FuelIndex {
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  currency: String!
+  description: String!
+  eiaSeriesId: String!
+  fuelType: FuelType!
+  id: ID!
+  isActive: Boolean!
+  name: String!
+  organizationId: ID!
+  region: String!
+  source: FuelIndexSource!
+  updatedAt: Int!
+  version: Int!
+}
+
+type FuelIndexConnection {
+  edges: [FuelIndexEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelIndexEdge {
+  cursor: String!
+  node: FuelIndex!
+}
+
+input FuelIndexInput {
+  code: String!
+  currency: String
+  description: String
+  eiaSeriesId: String
+  fuelType: FuelType
+  isActive: Boolean
+  name: String!
+  region: String
+  source: FuelIndexSource!
+}
+
+type FuelIndexLatestPrice {
+  delta: String
+  index: FuelIndex!
+  latest: FuelIndexPrice
+  previous: FuelIndexPrice
+}
+
+type FuelIndexPrice {
+  businessUnitId: ID!
+  currency: String!
+  enteredById: ID
+  fetchedAt: String!
+  fuelIndexId: ID!
+  id: ID!
+  isManual: Boolean!
+  organizationId: ID!
+  price: String!
+  priceDate: String!
+  sourceRaw: String!
+}
+
+input FuelIndexPriceInput {
+  fuelIndexId: ID!
+  price: String!
+  priceDate: String!
+}
+
+enum FuelIndexSource {
+  Custom
+  EIA
+}
+
+type FuelProgramCurrentRate {
+  flatAmount: String
+  matchedRow: FuelSurchargeTableRow
+  percent: String
+  price: FuelIndexPrice
+  program: FuelSurchargeProgram!
+  ratePerMile: String
+  usedFallback: Boolean!
+}
+
+enum FuelSurchargeDateBasis {
+  PickupDate
+  TenderDate
+}
+
+enum FuelSurchargeMissingPriceFallback {
+  Skip
+  UseLatestAvailable
+}
+
+enum FuelSurchargePercentBasis {
+  Linehaul
+  LinehaulPlusAccessorials
+}
+
+type FuelSurchargeProgram {
+  accessorialCharge: ShipmentAccessorialCharge
+  accessorialChargeId: ID!
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  dateBasis: FuelSurchargeDateBasis!
+  description: String!
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  fuelIndex: FuelIndex
+  fuelIndexId: ID!
+  id: ID!
+  increment: String
+  incrementRate: String
+  maxAmount: String
+  method: FuelSurchargeProgramMethod!
+  milesPerGallon: String
+  minAmount: String
+  missingPriceFallback: FuelSurchargeMissingPriceFallback!
+  name: String!
+  organizationId: ID!
+  pegPrice: String
+  percentBasis: FuelSurchargePercentBasis!
+  priceEffectiveDay: Int!
+  ratePrecision: Int!
+  rateRounding: FuelSurchargeRateRounding!
+  serviceTypeIds: [ID!]
+  shipmentTypeIds: [ID!]
+  status: FuelSurchargeProgramStatus!
+  stepRounding: FuelSurchargeStepRounding!
+  tableRows: [FuelSurchargeTableRow!]
+  tractorTypeIds: [ID!]
+  trailerTypeIds: [ID!]
+  updatedAt: Int!
+  version: Int!
+}
+
+type FuelSurchargeProgramConnection {
+  edges: [FuelSurchargeProgramEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FuelSurchargeProgramEdge {
+  cursor: String!
+  node: FuelSurchargeProgram!
+}
+
+input FuelSurchargeProgramInput {
+  accessorialChargeId: ID!
+  code: String!
+  dateBasis: FuelSurchargeDateBasis
+  description: String
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  fuelIndexId: ID!
+  increment: String
+  incrementRate: String
+  maxAmount: String
+  method: FuelSurchargeProgramMethod!
+  milesPerGallon: String
+  minAmount: String
+  missingPriceFallback: FuelSurchargeMissingPriceFallback
+  name: String!
+  pegPrice: String
+  percentBasis: FuelSurchargePercentBasis
+  priceEffectiveDay: Int
+  ratePrecision: Int
+  rateRounding: FuelSurchargeRateRounding
+  serviceTypeIds: [ID!]
+  shipmentTypeIds: [ID!]
+  status: FuelSurchargeProgramStatus
+  stepRounding: FuelSurchargeStepRounding
+  tableRows: [FuelSurchargeTableRowInput!]
+  tractorTypeIds: [ID!]
+  trailerTypeIds: [ID!]
+}
+
+enum FuelSurchargeProgramMethod {
+  PerMileMPG
+  PerMileStep
+  TableFlat
+  TablePerMile
+  TablePercent
+}
+
+enum FuelSurchargeProgramStatus {
+  Active
+  Inactive
+}
+
+enum FuelSurchargeRateRounding {
+  Down
+  HalfUp
+  Up
+}
+
+enum FuelSurchargeStepRounding {
+  Down
+  Nearest
+  Up
+}
+
+type FuelSurchargeTableRow {
+  businessUnitId: ID!
+  createdAt: Int!
+  fuelSurchargeProgramId: ID!
+  id: ID!
+  organizationId: ID!
+  priceMax: String
+  priceMin: String
+  sortOrder: Int!
+  updatedAt: Int!
+  value: String!
+}
+
+input FuelSurchargeTableRowInput {
+  priceMax: String
+  priceMin: String
+  sortOrder: Int
+  value: String!
+}
+
+enum FuelType {
+  Diesel
+  Gasoline
+}
+
+input GenerateFuelTableInput {
+  increment: String!
+  maxPrice: String!
+  minPrice: String!
+  openEnded: Boolean
+  startValue: String!
+  valueStep: String!
+}
+
+type GeneratedFuelTableRow {
+  priceMax: String
+  priceMin: String
+  value: String!
+}
+
 type GeofenceVertex {
   latitude: Float!
   longitude: Float!
@@ -1875,6 +2127,7 @@ enum MoveStatus {
 }
 
 type Mutation {
+  addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
   approveWorkerPTO(id: ID!): WorkerPTO!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
@@ -1895,6 +2148,8 @@ type Mutation {
   closeOrder(id: ID!): Order!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
+  createFuelIndex(input: FuelIndexInput!): FuelIndex!
+  createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createInvoiceFromOrder(orderId: ID!): Invoice!
   createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
   createOrder(input: OrderInput!): Order!
@@ -1905,17 +2160,22 @@ type Mutation {
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
+  deleteFuelIndex(id: ID!): Boolean!
+  deleteFuelIndexPrice(id: ID!): Boolean!
+  deleteFuelSurchargeProgram(id: ID!): Boolean!
   deleteReportDefinition(id: ID!): Boolean!
   deleteReportSchedule(id: ID!): Boolean!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
+  dismissNotifications(ids: [ID!]!): Boolean!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
   markAllNotificationsRead: Boolean!
   markNotificationsRead(ids: [ID!]!): Boolean!
+  markNotificationsUnread(ids: [ID!]!): Boolean!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
@@ -1926,6 +2186,7 @@ type Mutation {
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   resetCannedFork(id: ID!): ReportDefinition!
+  restoreNotifications(ids: [ID!]!): Boolean!
   runReport(input: RunReportInput!): ReportRun!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
@@ -1934,6 +2195,9 @@ type Mutation {
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
+  updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
+  updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
+  updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   updateOrder(id: ID!, input: OrderInput!): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
@@ -1998,11 +2262,21 @@ type NotificationEdge {
   node: Notification!
 }
 
+input NotificationFilterInput {
+  state: NotificationState
+  unreadOnly: Boolean
+}
+
 enum NotificationPriority {
   critical
   high
   low
   medium
+}
+
+enum NotificationState {
+  archived
+  inbox
 }
 
 type Order {
@@ -2200,6 +2474,7 @@ type Query {
   ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
   ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
+  eiaSeriesOptions: [EIASeriesOption!]!
   emailProfile(id: ID!): EmailProfile
   emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
   equipmentManufacturer(id: ID!): EquipmentManufacturer
@@ -2212,6 +2487,14 @@ type Query {
   fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
   formulaTemplate(id: ID!): FormulaTemplate
   formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
+  fuelDashboard: [FuelIndexLatestPrice!]!
+  fuelIndex(id: ID!): FuelIndex
+  fuelIndexPriceHistory(from: String, indexId: ID!, limit: Int, to: String): [FuelIndexPrice!]!
+  fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
+  fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
+  fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
+  fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
+  generateFuelSurchargeTable(input: GenerateFuelTableInput!): [GeneratedFuelTableRow!]!
   hazardousMaterial(id: ID!): HazardousMaterial
   hazardousMaterials(input: DataTableConnectionInput!): HazardousMaterialConnection!
   hazmatSegregationRule(id: ID!): HazmatSegregationRule
@@ -2229,7 +2512,7 @@ type Query {
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   notificationUnreadCount: Int!
-  notifications(input: DataTableConnectionInput!): NotificationConnection!
+  notifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
   order(id: ID!): Order
   orders(input: DataTableConnectionInput!): OrderConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
@@ -2549,12 +2832,14 @@ type ReportSchedule {
   createdAt: Int!
   cronExpression: String!
   definitionId: ID!
+  emailAttach: Boolean!
   emailRecipients: [String!]!
   enabled: Boolean!
   formats: [String!]!
   id: ID!
   lastRunId: ID
   nextRunAt: Int
+  notifyUserIds: [ID!]!
   runAsId: ID!
   timezone: String!
   updatedAt: Int!
@@ -2664,6 +2949,8 @@ enum SelectOptionResource {
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  FUEL_INDEX
+  FUEL_SURCHARGE_PROGRAM
   ORDER
   SHIPMENT
   TRACTOR
@@ -2924,6 +3211,8 @@ type ShipmentAdditionalCharge {
   amount: String!
   businessUnitId: ID!
   createdAt: Int!
+  fuelSurchargeDetail: JSON
+  fuelSurchargeProgramId: ID
   id: ID
   isSystemGenerated: Boolean!
   method: String!
@@ -4317,6 +4606,12 @@ input UpcomingWorkerPTOInput {
   workerId: ID
 }
 
+input UpdateFuelIndexPriceInput {
+  id: ID!
+  price: String!
+  priceDate: String!
+}
+
 input UpdateOrderChargeInput {
   amount: String!
   chargeId: ID!
@@ -4341,10 +4636,12 @@ input UpdateReportDefinitionInput {
 input UpdateReportScheduleInput {
   cronExpression: String!
   definitionId: ID!
+  emailAttach: Boolean
   emailRecipients: [String!]
   enabled: Boolean!
   formats: [String!]!
   id: ID!
+  notifyUserIds: [ID!]
   timezone: String
   version: Int!
 }

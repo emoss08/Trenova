@@ -9,6 +9,7 @@ export const integrationModalTypes = [
   "OpenAI",
   "OpenWeatherMap",
   "OANDAExchangeRates",
+  "EIAFuelPrices",
   "PCMiler",
   "Resend",
   "Postmark",

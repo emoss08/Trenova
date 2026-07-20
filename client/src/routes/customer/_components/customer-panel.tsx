@@ -64,6 +64,8 @@ const DEFAULT_VALUES: Customer = {
     countLateOnlyOnAppointmentStops: false,
     countDetentionOnlyOnAppointmentStops: false,
     autoApplyAccessorials: true,
+    fuelSurchargeMode: "None",
+    fuelSurchargeProgramId: null,
     billingCurrency: "USD",
     requirePONumber: false,
     requireBOLNumber: false,
