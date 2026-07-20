@@ -502,6 +502,56 @@ models:
   Customer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.Customer
+  CustomerBillingCycleType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.BillingCycleType
+  CustomerPaymentTerm:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.PaymentTerm
+  CustomerCreditStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.CreditStatus
+  CustomerInvoiceMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceMethod
+  CustomerConsolidationGroupBy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.ConsolidationGroupBy
+  CustomerInvoiceNumberFormat:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceNumberFormat
+  CustomerInvoiceAdjustmentSupportingDocumentPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceAdjustmentSupportingDocumentPolicy
+  CustomerFuelSurchargeMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.FuelSurchargeMode
+  CustomerBillingProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.CustomerBillingProfile
+    fields:
+      arAccountId:
+        fieldName: ARAccountID
+      requirePONumber:
+        fieldName: RequirePONumber
+      requireBOLNumber:
+        fieldName: RequireBOLNumber
+      creditLimit:
+        resolver: true
+      creditBalance:
+        resolver: true
+      lateChargeRate:
+        resolver: true
+      detentionRatePerHour:
+        resolver: true
+  CustomerEmailProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customer.CustomerEmailProfile
+    fields:
+      ccRecipients:
+        fieldName: CCRecipients
+      bccRecipients:
+        fieldName: BCCRecipients
   DistanceOverride:
     model:
       - github.com/emoss08/trenova/internal/core/domain/distanceoverride.DistanceOverride

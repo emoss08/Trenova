@@ -1328,6 +1328,7 @@ type Shipment struct {
 	MarkedReadyToBillAt    *int                        `json:"markedReadyToBillAt,omitempty"`
 	BilledAt               *int                        `json:"billedAt,omitempty"`
 	RatingUnit             int                         `json:"ratingUnit"`
+	FuelSurchargeLocked    bool                        `json:"fuelSurchargeLocked"`
 	RatingDetail           *ShipmentRatingDetail       `json:"ratingDetail,omitempty"`
 	Version                int                         `json:"version"`
 	CreatedAt              int                         `json:"createdAt"`
@@ -1388,14 +1389,15 @@ type ShipmentAdditionalCharge struct {
 }
 
 type ShipmentAdditionalChargeInput struct {
-	ID                  *string `json:"id,omitempty"`
-	ShipmentID          *string `json:"shipmentId,omitempty"`
-	AccessorialChargeID string  `json:"accessorialChargeId"`
-	IsSystemGenerated   *bool   `json:"isSystemGenerated,omitempty"`
-	Method              *string `json:"method,omitempty"`
-	Amount              *string `json:"amount,omitempty"`
-	Unit                *int    `json:"unit,omitempty"`
-	Version             *int    `json:"version,omitempty"`
+	ID                     *string `json:"id,omitempty"`
+	ShipmentID             *string `json:"shipmentId,omitempty"`
+	AccessorialChargeID    string  `json:"accessorialChargeId"`
+	IsSystemGenerated      *bool   `json:"isSystemGenerated,omitempty"`
+	Method                 *string `json:"method,omitempty"`
+	Amount                 *string `json:"amount,omitempty"`
+	Unit                   *int    `json:"unit,omitempty"`
+	FuelSurchargeProgramID *string `json:"fuelSurchargeProgramId,omitempty"`
+	Version                *int    `json:"version,omitempty"`
 }
 
 type ShipmentAnalytics struct {
@@ -1893,6 +1895,7 @@ type ShipmentInput struct {
 	MarkedReadyToBillAt    *int                             `json:"markedReadyToBillAt,omitempty"`
 	BilledAt               *int                             `json:"billedAt,omitempty"`
 	RatingUnit             *int                             `json:"ratingUnit,omitempty"`
+	FuelSurchargeLocked    *bool                            `json:"fuelSurchargeLocked,omitempty"`
 	RatingDetail           *ShipmentRatingDetailInput       `json:"ratingDetail,omitempty"`
 	Version                *int                             `json:"version,omitempty"`
 	Moves                  []*ShipmentMoveInput             `json:"moves,omitempty"`
@@ -2185,9 +2188,10 @@ type ShipmentTomorrowsPickups struct {
 }
 
 type ShipmentTotalsResponse struct {
-	FreightChargeAmount string `json:"freightChargeAmount"`
-	OtherChargeAmount   string `json:"otherChargeAmount"`
-	TotalChargeAmount   string `json:"totalChargeAmount"`
+	FreightChargeAmount string                    `json:"freightChargeAmount"`
+	OtherChargeAmount   string                    `json:"otherChargeAmount"`
+	TotalChargeAmount   string                    `json:"totalChargeAmount"`
+	FuelSurcharge       *ShipmentAdditionalCharge `json:"fuelSurcharge,omitempty"`
 }
 
 type ShipmentTransferOwnershipInput struct {

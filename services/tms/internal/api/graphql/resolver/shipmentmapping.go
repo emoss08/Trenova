@@ -139,6 +139,7 @@ func shipmentFromInput(
 		MarkedReadyToBillAt:    int64Ptr(input.MarkedReadyToBillAt),
 		BilledAt:               int64Ptr(input.BilledAt),
 		RatingUnit:             int64Value(input.RatingUnit),
+		FuelSurchargeLocked:    boolValue(input.FuelSurchargeLocked),
 		SourceDocumentID:       stringValue(input.SourceDocumentID),
 	}
 	if entity.RatingUnit == 0 {
@@ -339,6 +340,10 @@ func shipmentAdditionalChargesFromInput(
 		if input.Method != nil {
 			method = accessorialcharge.Method(*input.Method)
 		}
+		fuelSurchargeProgramID, err := optionalID(input.FuelSurchargeProgramID)
+		if err != nil {
+			return nil, err
+		}
 		charge := &shipmentdomain.AdditionalCharge{
 			ID:                  id,
 			BusinessUnitID:      authCtx.BusinessUnitID,
@@ -349,6 +354,9 @@ func shipmentAdditionalChargesFromInput(
 			Method:              method,
 			Amount:              amount,
 			Unit:                unit,
+		}
+		if !fuelSurchargeProgramID.IsNil() {
+			charge.FuelSurchargeProgramID = &fuelSurchargeProgramID
 		}
 		if input.Version != nil {
 			charge.Version = int64(*input.Version)
@@ -453,6 +461,7 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		MarkedReadyToBillAt:    intPtr(entity.MarkedReadyToBillAt),
 		BilledAt:               intPtr(entity.BilledAt),
 		RatingUnit:             int(entity.RatingUnit),
+		FuelSurchargeLocked:    entity.FuelSurchargeLocked,
 		RatingDetail:           ratingDetailToModel(entity.RatingDetail),
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
@@ -571,6 +580,31 @@ func shipmentAssignmentToModel(
 	}, nil
 }
 
+func shipmentAdditionalChargeToModel(
+	entity *shipmentdomain.AdditionalCharge,
+) *gqlmodel.ShipmentAdditionalCharge {
+	if entity == nil {
+		return nil
+	}
+	return &gqlmodel.ShipmentAdditionalCharge{
+		ID:                     idPtr(entity.ID),
+		BusinessUnitID:         entity.BusinessUnitID.String(),
+		OrganizationID:         entity.OrganizationID.String(),
+		ShipmentID:             entity.ShipmentID.String(),
+		AccessorialChargeID:    entity.AccessorialChargeID.String(),
+		IsSystemGenerated:      entity.IsSystemGenerated,
+		Method:                 string(entity.Method),
+		Amount:                 entity.Amount.String(),
+		Unit:                   int(entity.Unit),
+		FuelSurchargeProgramID: idPtrFromPulidPtr(entity.FuelSurchargeProgramID),
+		FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
+		Version:                int(entity.Version),
+		CreatedAt:              int(entity.CreatedAt),
+		UpdatedAt:              int(entity.UpdatedAt),
+		AccessorialCharge:      shipmentAccessorialChargeToModel(entity.AccessorialCharge),
+	}
+}
+
 func shipmentAdditionalChargesToModel(
 	entities []*shipmentdomain.AdditionalCharge,
 ) ([]*gqlmodel.ShipmentAdditionalCharge, error) {
@@ -579,23 +613,7 @@ func shipmentAdditionalChargesToModel(
 		if entity == nil {
 			continue
 		}
-		charges = append(charges, &gqlmodel.ShipmentAdditionalCharge{
-			ID:                  idPtr(entity.ID),
-			BusinessUnitID:      entity.BusinessUnitID.String(),
-			OrganizationID:      entity.OrganizationID.String(),
-			ShipmentID:          entity.ShipmentID.String(),
-			AccessorialChargeID: entity.AccessorialChargeID.String(),
-			IsSystemGenerated:   entity.IsSystemGenerated,
-			Method:              string(entity.Method),
-			Amount:              entity.Amount.String(),
-			Unit:                int(entity.Unit),
-			FuelSurchargeProgramID: idPtrFromPulidPtr(entity.FuelSurchargeProgramID),
-			FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
-			Version:             int(entity.Version),
-			CreatedAt:           int(entity.CreatedAt),
-			UpdatedAt:           int(entity.UpdatedAt),
-			AccessorialCharge:   shipmentAccessorialChargeToModel(entity.AccessorialCharge),
-		})
+		charges = append(charges, shipmentAdditionalChargeToModel(entity))
 	}
 	return charges, nil
 }
@@ -707,6 +725,7 @@ func shipmentTotalsToModel(
 		FreightChargeAmount: response.FreightChargeAmount.String(),
 		OtherChargeAmount:   response.OtherChargeAmount.String(),
 		TotalChargeAmount:   response.TotalChargeAmount.String(),
+		FuelSurcharge:       shipmentAdditionalChargeToModel(response.FuelSurcharge),
 	}
 }
 

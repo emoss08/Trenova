@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -43,6 +44,11 @@ func New(p Params) *Calculator {
 	}
 }
 
+type chargeSyncOptions struct {
+	detention bool
+	fuel      bool
+}
+
 func (c *Calculator) Recalculate(
 	ctx context.Context,
 	entity *shipment.Shipment,
@@ -54,7 +60,7 @@ func (c *Calculator) Recalculate(
 		entity,
 		control,
 		userID,
-		true,
+		chargeSyncOptions{detention: true, fuel: true},
 	)
 	if err != nil {
 		return err
@@ -79,7 +85,7 @@ func (c *Calculator) CalculateTotals(
 		entity,
 		control,
 		userID,
-		false,
+		chargeSyncOptions{fuel: true},
 	)
 	if err != nil {
 		return nil, err
@@ -89,7 +95,17 @@ func (c *Calculator) CalculateTotals(
 		FreightChargeAmount: baseCharge,
 		OtherChargeAmount:   otherChargeAmount,
 		TotalChargeAmount:   baseCharge.Add(otherChargeAmount),
+		FuelSurcharge:       findGeneratedFuelSurchargeCharge(entity),
 	}, nil
+}
+
+func findGeneratedFuelSurchargeCharge(entity *shipment.Shipment) *shipment.AdditionalCharge {
+	for _, charge := range entity.AdditionalCharges {
+		if charge != nil && charge.IsSystemGenerated && charge.FuelSurchargeProgramID != nil {
+			return charge
+		}
+	}
+	return nil
 }
 
 func CalculateAdditionalCharges(
@@ -113,9 +129,9 @@ func (c *Calculator) calculateCommercialTotals(
 	entity *shipment.Shipment,
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
-	syncGenerated bool,
+	sync chargeSyncOptions,
 ) (decimal.Decimal, decimal.Decimal, *shipment.RatingDetail, error) {
-	if syncGenerated {
+	if sync.detention {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err
 		}
@@ -126,7 +142,7 @@ func (c *Calculator) calculateCommercialTotals(
 		return decimal.Zero, decimal.Zero, nil, err
 	}
 
-	if syncGenerated {
+	if sync.fuel {
 		if err = c.syncFuelSurcharge(ctx, entity, baseCharge); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err
 		}
@@ -186,7 +202,7 @@ func (c *Calculator) calculateBaseCharge(
 		FormulaTemplateID:   resp.FormulaTemplateID,
 		FormulaTemplateName: resp.FormulaTemplateName,
 		Expression:          resp.Expression,
-		ResolvedVariables:   resp.Variables,
+		ResolvedVariables:   maputils.WithoutFuncValues(resp.Variables),
 		Result:              result,
 		RatedAt:             c.now(),
 		VersionNumber:       resp.VersionNumber,
@@ -362,6 +378,10 @@ func (c *Calculator) syncFuelSurcharge(
 	baseCharge decimal.Decimal,
 ) error {
 	if entity == nil || c.fuelSurcharge == nil {
+		return nil
+	}
+
+	if entity.FuelSurchargeLocked {
 		return nil
 	}
 

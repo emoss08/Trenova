@@ -239,6 +239,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -813,6 +814,15 @@ mutation CalculateShipmentTotals($input: ShipmentInput!) {
     freightChargeAmount
     otherChargeAmount
     totalChargeAmount
+    fuelSurcharge {
+      accessorialChargeId
+      isSystemGenerated
+      method
+      amount
+      unit
+      fuelSurchargeProgramId
+      fuelSurchargeDetail
+    }
   }
 }
 

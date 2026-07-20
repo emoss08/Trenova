@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/fx"
@@ -657,7 +658,7 @@ func (s *Service) testExpressionAgainstShipment(
 		Valid:             true,
 		Result:            resp.Amount,
 		Breakdown:         resp.Breakdown,
-		ResolvedVariables: sanitizeResolvedVariables(resp.Variables),
+		ResolvedVariables: maputils.WithoutFuncValues(resp.Variables),
 		Message:           "Expression evaluated against shipment",
 	}
 }

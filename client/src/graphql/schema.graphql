@@ -385,12 +385,14 @@ type Customer {
   addressLine1: String
   addressLine2: String
   allowConsolidation: Boolean!
+  billingProfile: CustomerBillingProfile
   businessUnit: BusinessUnit
   businessUnitId: ID!
   city: String
   code: String!
   consolidationPriority: Int!
   createdAt: Int!
+  emailProfile: CustomerEmailProfile
   exclusiveConsolidation: Boolean!
   externalId: String
   id: ID!
@@ -402,9 +404,76 @@ type Customer {
   organizationId: ID!
   placeId: String
   postalCode: String!
+  state: UsState
   stateId: ID!
   status: EntityStatus!
   updatedAt: Int!
+  version: Int!
+}
+
+enum CustomerBillingCycleType {
+  BiWeekly
+  Daily
+  Immediate
+  Monthly
+  PerShipment
+  Quarterly
+  Weekly
+}
+
+type CustomerBillingProfile {
+  allowInvoiceConsolidation: Boolean!
+  applyLateCharges: Boolean!
+  arAccountId: ID
+  autoApplyAccessorials: Boolean!
+  autoBill: Boolean!
+  autoCreditHold: Boolean!
+  autoMarkReadyToBill: Boolean!
+  autoSendInvoiceOnGeneration: Boolean!
+  autoTransfer: Boolean!
+  billingCurrency: String!
+  billingCycleDayOfWeek: Int
+  billingCycleType: CustomerBillingCycleType!
+  billingNotes: String!
+  businessUnitId: ID!
+  consolidationGroupBy: CustomerConsolidationGroupBy!
+  consolidationPeriodDays: Int!
+  countDetentionOnlyOnAppointmentStops: Boolean!
+  countLateOnlyOnAppointmentStops: Boolean!
+  createdAt: Int!
+  creditBalance: String!
+  creditHoldReason: String!
+  creditLimit: String
+  creditStatus: CustomerCreditStatus!
+  customerId: ID!
+  customerInvoicePrefix: String!
+  defaultBillerId: ID
+  detentionBillingEnabled: Boolean!
+  detentionFreeMinutes: Int!
+  detentionRatePerHour: String
+  documentTypes: [DocumentType!]
+  enforceCreditLimit: Boolean!
+  enforceCustomerBillingReq: Boolean!
+  fuelSurchargeMode: CustomerFuelSurchargeMode!
+  fuelSurchargeProgramId: ID
+  gracePeriodDays: Int!
+  hasBillingControlOverrides: Boolean!
+  id: ID!
+  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
+  invoiceCopies: Int!
+  invoiceMethod: CustomerInvoiceMethod!
+  invoiceNumberFormat: CustomerInvoiceNumberFormat!
+  lateChargeRate: String
+  organizationId: ID!
+  paymentTerm: CustomerPaymentTerm!
+  requireBOLNumber: Boolean!
+  requireDeliveryNumber: Boolean!
+  requirePONumber: Boolean!
+  revenueAccountId: ID
+  taxExempt: Boolean!
+  taxExemptNumber: String!
+  updatedAt: Int!
+  validateCustomerRates: Boolean!
   version: Int!
 }
 
@@ -414,9 +483,78 @@ type CustomerConnection {
   totalCount: Int
 }
 
+enum CustomerConsolidationGroupBy {
+  BOL
+  Division
+  Location
+  None
+  PONumber
+}
+
+enum CustomerCreditStatus {
+  Active
+  Hold
+  Review
+  Suspended
+  Warning
+}
+
 type CustomerEdge {
   cursor: String!
   node: Customer!
+}
+
+type CustomerEmailProfile {
+  attachmentName: String!
+  bccRecipients: String!
+  businessUnitId: ID!
+  ccRecipients: String!
+  comment: String!
+  createdAt: Int!
+  customerId: ID!
+  fromEmail: String!
+  id: ID!
+  includeShipmentDetail: Boolean!
+  organizationId: ID!
+  readReceipt: Boolean!
+  subject: String!
+  toRecipients: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum CustomerFuelSurchargeMode {
+  FuelIncluded
+  None
+  Program
+}
+
+enum CustomerInvoiceAdjustmentSupportingDocumentPolicy {
+  Inherit
+  Optional
+  Required
+}
+
+enum CustomerInvoiceMethod {
+  Individual
+  Summary
+  SummaryWithDetail
+}
+
+enum CustomerInvoiceNumberFormat {
+  CustomPrefix
+  Default
+  POBased
+}
+
+enum CustomerPaymentTerm {
+  DueOnReceipt
+  Net10
+  Net15
+  Net30
+  Net45
+  Net60
+  Net90
 }
 
 input DataTableConnectionInput {
@@ -3146,6 +3284,7 @@ type Shipment {
   formulaTemplate: ShipmentFormulaTemplate
   formulaTemplateId: ID!
   freightChargeAmount: String!
+  fuelSurchargeLocked: Boolean!
   id: ID!
   markedReadyToBillAt: Int
   moves: [ShipmentMove!]!
@@ -3226,6 +3365,7 @@ type ShipmentAdditionalCharge {
 input ShipmentAdditionalChargeInput {
   accessorialChargeId: ID!
   amount: String = "0"
+  fuelSurchargeProgramId: ID
   id: ID
   isSystemGenerated: Boolean = false
   method: String = "Flat"
@@ -3797,6 +3937,7 @@ input ShipmentInput {
   entryMethod: ShipmentEntryMethod = Manual
   formulaTemplateId: ID!
   freightChargeAmount: String = "0"
+  fuelSurchargeLocked: Boolean = false
   markedReadyToBillAt: Int
   moves: [ShipmentMoveInput!] = []
   orderId: ID
@@ -4132,6 +4273,7 @@ type ShipmentTomorrowsPickups {
 
 type ShipmentTotalsResponse {
   freightChargeAmount: String!
+  fuelSurcharge: ShipmentAdditionalCharge
   otherChargeAmount: String!
   totalChargeAmount: String!
 }

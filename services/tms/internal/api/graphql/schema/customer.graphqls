@@ -1,3 +1,138 @@
+enum CustomerBillingCycleType {
+  Immediate
+  Daily
+  Weekly
+  BiWeekly
+  Monthly
+  Quarterly
+  PerShipment
+}
+
+enum CustomerPaymentTerm {
+  Net10
+  Net15
+  Net30
+  Net45
+  Net60
+  Net90
+  DueOnReceipt
+}
+
+enum CustomerCreditStatus {
+  Active
+  Warning
+  Hold
+  Suspended
+  Review
+}
+
+enum CustomerInvoiceMethod {
+  Individual
+  Summary
+  SummaryWithDetail
+}
+
+enum CustomerConsolidationGroupBy {
+  None
+  Location
+  PONumber
+  BOL
+  Division
+}
+
+enum CustomerInvoiceNumberFormat {
+  Default
+  CustomPrefix
+  POBased
+}
+
+enum CustomerInvoiceAdjustmentSupportingDocumentPolicy {
+  Inherit
+  Required
+  Optional
+}
+
+enum CustomerFuelSurchargeMode {
+  None
+  Program
+  FuelIncluded
+}
+
+type CustomerBillingProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  customerId: ID!
+  billingCycleType: CustomerBillingCycleType!
+  billingCycleDayOfWeek: Int
+  paymentTerm: CustomerPaymentTerm!
+  hasBillingControlOverrides: Boolean!
+  creditLimit: String
+  creditBalance: String!
+  creditStatus: CustomerCreditStatus!
+  enforceCreditLimit: Boolean!
+  autoCreditHold: Boolean!
+  creditHoldReason: String!
+  invoiceMethod: CustomerInvoiceMethod!
+  autoSendInvoiceOnGeneration: Boolean!
+  allowInvoiceConsolidation: Boolean!
+  consolidationPeriodDays: Int!
+  consolidationGroupBy: CustomerConsolidationGroupBy!
+  invoiceNumberFormat: CustomerInvoiceNumberFormat!
+  customerInvoicePrefix: String!
+  invoiceCopies: Int!
+  revenueAccountId: ID
+  arAccountId: ID
+  applyLateCharges: Boolean!
+  lateChargeRate: String
+  gracePeriodDays: Int!
+  taxExempt: Boolean!
+  taxExemptNumber: String!
+  enforceCustomerBillingReq: Boolean!
+  validateCustomerRates: Boolean!
+  autoTransfer: Boolean!
+  autoMarkReadyToBill: Boolean!
+  autoBill: Boolean!
+  detentionBillingEnabled: Boolean!
+  detentionFreeMinutes: Int!
+  detentionRatePerHour: String
+  countLateOnlyOnAppointmentStops: Boolean!
+  countDetentionOnlyOnAppointmentStops: Boolean!
+  autoApplyAccessorials: Boolean!
+  billingCurrency: String!
+  requirePONumber: Boolean!
+  requireBOLNumber: Boolean!
+  requireDeliveryNumber: Boolean!
+  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
+  defaultBillerId: ID
+  billingNotes: String!
+  fuelSurchargeMode: CustomerFuelSurchargeMode!
+  fuelSurchargeProgramId: ID
+  documentTypes: [DocumentType!]
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CustomerEmailProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  customerId: ID!
+  subject: String!
+  comment: String!
+  fromEmail: String!
+  toRecipients: String!
+  ccRecipients: String!
+  bccRecipients: String!
+  attachmentName: String!
+  readReceipt: Boolean!
+  includeShipmentDetail: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
 type Customer {
   id: ID!
   businessUnitId: ID!
@@ -23,6 +158,9 @@ type Customer {
   updatedAt: Int!
   businessUnit: BusinessUnit
   organization: Organization
+  state: UsState
+  billingProfile: CustomerBillingProfile
+  emailProfile: CustomerEmailProfile
 }
 
 type CustomerEdge {

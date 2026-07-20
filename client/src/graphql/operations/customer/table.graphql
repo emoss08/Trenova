@@ -1,3 +1,85 @@
+fragment CustomerBillingProfileFields on CustomerBillingProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  billingCycleType
+  billingCycleDayOfWeek
+  paymentTerm
+  hasBillingControlOverrides
+  creditLimit
+  creditBalance
+  creditStatus
+  enforceCreditLimit
+  autoCreditHold
+  creditHoldReason
+  invoiceMethod
+  autoSendInvoiceOnGeneration
+  allowInvoiceConsolidation
+  consolidationPeriodDays
+  consolidationGroupBy
+  invoiceNumberFormat
+  customerInvoicePrefix
+  invoiceCopies
+  revenueAccountId
+  arAccountId
+  applyLateCharges
+  lateChargeRate
+  gracePeriodDays
+  taxExempt
+  taxExemptNumber
+  enforceCustomerBillingReq
+  validateCustomerRates
+  autoTransfer
+  autoMarkReadyToBill
+  autoBill
+  detentionBillingEnabled
+  detentionFreeMinutes
+  detentionRatePerHour
+  countLateOnlyOnAppointmentStops
+  countDetentionOnlyOnAppointmentStops
+  autoApplyAccessorials
+  billingCurrency
+  requirePONumber
+  requireBOLNumber
+  requireDeliveryNumber
+  invoiceAdjustmentSupportingDocumentPolicy
+  defaultBillerId
+  billingNotes
+  fuelSurchargeMode
+  fuelSurchargeProgramId
+  documentTypes {
+    id
+    code
+    name
+    color
+    documentClassification
+    documentCategory
+  }
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CustomerEmailProfileFields on CustomerEmailProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  subject
+  comment
+  fromEmail
+  toRecipients
+  ccRecipients
+  bccRecipients
+  attachmentName
+  readReceipt
+  includeShipmentDetail
+  version
+  createdAt
+  updatedAt
+}
+
 fragment CustomerTableRowFields on Customer {
   id
   businessUnitId
@@ -6,11 +88,27 @@ fragment CustomerTableRowFields on Customer {
   status
   code
   name
+  addressLine1
+  addressLine2
   city
   postalCode
+  isGeocoded
+  longitude
+  latitude
+  placeId
+  externalId
+  allowConsolidation
+  exclusiveConsolidation
+  consolidationPriority
   version
   createdAt
   updatedAt
+  billingProfile {
+    ...CustomerBillingProfileFields
+  }
+  emailProfile {
+    ...CustomerEmailProfileFields
+  }
 }
 
 query CustomerTable($input: DataTableConnectionInput!) {

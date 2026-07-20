@@ -174,6 +174,9 @@ func (r *repository) ListConnection(
 					Model(entities).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return applyCustomerColumns(sq, req.CustomerColumns)
+					}).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.addOptions(sq, req.CustomerFilterOptions)
 					})
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {

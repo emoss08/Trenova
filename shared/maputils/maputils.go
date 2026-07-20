@@ -3,6 +3,7 @@ package maputils
 import (
 	"fmt"
 	"maps"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -32,6 +33,22 @@ func Path(root any, path string) any {
 func CloneShallow(input map[string]any) map[string]any {
 	output := make(map[string]any, len(input))
 	maps.Copy(output, input)
+	return output
+}
+
+func WithoutFuncValues(input map[string]any) map[string]any {
+	if len(input) == 0 {
+		return nil
+	}
+
+	output := make(map[string]any, len(input))
+	for key, value := range input {
+		if value != nil && reflect.TypeOf(value).Kind() == reflect.Func {
+			continue
+		}
+		output[key] = value
+	}
+
 	return output
 }
 

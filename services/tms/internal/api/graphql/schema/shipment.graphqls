@@ -176,6 +176,7 @@ type Shipment {
   markedReadyToBillAt: Int
   billedAt: Int
   ratingUnit: Int!
+  fuelSurchargeLocked: Boolean!
   ratingDetail: ShipmentRatingDetail
   version: Int!
   createdAt: Int!
@@ -465,6 +466,7 @@ type ShipmentTotalsResponse {
   freightChargeAmount: String!
   otherChargeAmount: String!
   totalChargeAmount: String!
+  fuelSurcharge: ShipmentAdditionalCharge
 }
 
 type ShipmentDistanceMoveResult {
@@ -963,6 +965,7 @@ input ShipmentInput {
   markedReadyToBillAt: Int
   billedAt: Int
   ratingUnit: Int = 1
+  fuelSurchargeLocked: Boolean = false
   ratingDetail: ShipmentRatingDetailInput
   version: Int
   moves: [ShipmentMoveInput!] = []
@@ -1017,6 +1020,7 @@ input ShipmentAdditionalChargeInput {
   method: String = "Flat"
   amount: String = "0"
   unit: Int = 1
+  fuelSurchargeProgramId: ID
   version: Int
 }
 

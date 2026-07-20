@@ -21,9 +21,10 @@ type ListCustomerRequest struct {
 }
 
 type ListCustomerConnectionRequest struct {
-	Filter          *pagination.QueryOptions `json:"filter"`
-	Cursor          pagination.CursorInfo    `json:"-"`
-	CustomerColumns []string                 `json:"-"`
+	Filter                *pagination.QueryOptions `json:"filter"`
+	Cursor                pagination.CursorInfo    `json:"-"`
+	CustomerColumns       []string                 `json:"-"`
+	CustomerFilterOptions `json:"-"`
 }
 
 type GetCustomerByIDRequest struct {

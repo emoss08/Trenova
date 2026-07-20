@@ -24,7 +24,11 @@ export function ShipmentForm() {
     parseAsBoolean.withDefault(false),
   );
 
-  const { control } = useFormContext<Shipment>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<Shipment>();
+  console.info("shipment form errors", errors);
   const billingTransferStatus = useWatch({ control, name: "billingTransferStatus" });
 
   const isInBillingReview = BILLING_REVIEW_STATUSES.has(billingTransferStatus as string);

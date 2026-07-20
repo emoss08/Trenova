@@ -97,6 +97,58 @@ export type CreateReportScheduleInput = {
   timezone?: string | null | undefined;
 };
 
+export type CustomerBillingCycleType =
+  | 'BiWeekly'
+  | 'Daily'
+  | 'Immediate'
+  | 'Monthly'
+  | 'PerShipment'
+  | 'Quarterly'
+  | 'Weekly';
+
+export type CustomerConsolidationGroupBy =
+  | 'BOL'
+  | 'Division'
+  | 'Location'
+  | 'None'
+  | 'PONumber';
+
+export type CustomerCreditStatus =
+  | 'Active'
+  | 'Hold'
+  | 'Review'
+  | 'Suspended'
+  | 'Warning';
+
+export type CustomerFuelSurchargeMode =
+  | 'FuelIncluded'
+  | 'None'
+  | 'Program';
+
+export type CustomerInvoiceAdjustmentSupportingDocumentPolicy =
+  | 'Inherit'
+  | 'Optional'
+  | 'Required';
+
+export type CustomerInvoiceMethod =
+  | 'Individual'
+  | 'Summary'
+  | 'SummaryWithDetail';
+
+export type CustomerInvoiceNumberFormat =
+  | 'CustomPrefix'
+  | 'Default'
+  | 'POBased';
+
+export type CustomerPaymentTerm =
+  | 'DueOnReceipt'
+  | 'Net10'
+  | 'Net15'
+  | 'Net30'
+  | 'Net45'
+  | 'Net60'
+  | 'Net90';
+
 export type DataTableConnectionInput = {
   after?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
@@ -790,6 +842,7 @@ export type ServiceFailureType =
 export type ShipmentAdditionalChargeInput = {
   accessorialChargeId: string | number;
   amount?: string | null | undefined;
+  fuelSurchargeProgramId?: string | number | null | undefined;
   id?: string | number | null | undefined;
   isSystemGenerated?: boolean | null | undefined;
   method?: string | null | undefined;
@@ -953,6 +1006,7 @@ export type ShipmentInput = {
   entryMethod?: ShipmentEntryMethod | null | undefined;
   formulaTemplateId: string | number;
   freightChargeAmount?: string | null | undefined;
+  fuelSurchargeLocked?: boolean | null | undefined;
   markedReadyToBillAt?: number | null | undefined;
   moves?: Array<ShipmentMoveInput> | null | undefined;
   orderId?: string | number | null | undefined;
@@ -1313,7 +1367,11 @@ export type CustomFieldDefinitionTableQueryVariables = Exact<{
 
 export type CustomFieldDefinitionTableQuery = { customFieldDefinitions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomFieldDefinitionTableRowFieldsFragment': CustomFieldDefinitionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, city: string | null, postalCode: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, detentionBillingEnabled: boolean, detentionFreeMinutes: number, detentionRatePerHour: string | null, countLateOnlyOnAppointmentStops: boolean, countDetentionOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+
+export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
+
+export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
 
 export type CustomerTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -2183,7 +2241,7 @@ export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitI
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, version: number, createdAt: number, updatedAt: number, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, version: number, createdAt: number, updatedAt: number, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -2359,7 +2417,7 @@ export type CalculateShipmentTotalsMutationVariables = Exact<{
 }>;
 
 
-export type CalculateShipmentTotalsMutation = { calculateShipmentTotals: { freightChargeAmount: string, otherChargeAmount: string, totalChargeAmount: string } };
+export type CalculateShipmentTotalsMutation = { calculateShipmentTotals: { freightChargeAmount: string, otherChargeAmount: string, totalChargeAmount: string, fuelSurcharge: { accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown } | null } };
 
 export type CalculateShipmentDistanceMutationVariables = Exact<{
   input: ShipmentInput;
@@ -2758,6 +2816,90 @@ export const CustomFieldDefinitionTableRowFieldsFragmentDoc = new TypedDocumentS
   updatedAt
 }
     `, {"fragmentName":"CustomFieldDefinitionTableRowFields"}) as unknown as TypedDocumentString<CustomFieldDefinitionTableRowFieldsFragment, unknown>;
+export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CustomerBillingProfileFields on CustomerBillingProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  billingCycleType
+  billingCycleDayOfWeek
+  paymentTerm
+  hasBillingControlOverrides
+  creditLimit
+  creditBalance
+  creditStatus
+  enforceCreditLimit
+  autoCreditHold
+  creditHoldReason
+  invoiceMethod
+  autoSendInvoiceOnGeneration
+  allowInvoiceConsolidation
+  consolidationPeriodDays
+  consolidationGroupBy
+  invoiceNumberFormat
+  customerInvoicePrefix
+  invoiceCopies
+  revenueAccountId
+  arAccountId
+  applyLateCharges
+  lateChargeRate
+  gracePeriodDays
+  taxExempt
+  taxExemptNumber
+  enforceCustomerBillingReq
+  validateCustomerRates
+  autoTransfer
+  autoMarkReadyToBill
+  autoBill
+  detentionBillingEnabled
+  detentionFreeMinutes
+  detentionRatePerHour
+  countLateOnlyOnAppointmentStops
+  countDetentionOnlyOnAppointmentStops
+  autoApplyAccessorials
+  billingCurrency
+  requirePONumber
+  requireBOLNumber
+  requireDeliveryNumber
+  invoiceAdjustmentSupportingDocumentPolicy
+  defaultBillerId
+  billingNotes
+  fuelSurchargeMode
+  fuelSurchargeProgramId
+  documentTypes {
+    id
+    code
+    name
+    color
+    documentClassification
+    documentCategory
+  }
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CustomerBillingProfileFields"}) as unknown as TypedDocumentString<CustomerBillingProfileFieldsFragment, unknown>;
+export const CustomerEmailProfileFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CustomerEmailProfileFields on CustomerEmailProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  subject
+  comment
+  fromEmail
+  toRecipients
+  ccRecipients
+  bccRecipients
+  attachmentName
+  readReceipt
+  includeShipmentDetail
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CustomerEmailProfileFields"}) as unknown as TypedDocumentString<CustomerEmailProfileFieldsFragment, unknown>;
 export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment CustomerTableRowFields on Customer {
   id
@@ -2767,13 +2909,108 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   status
   code
   name
+  addressLine1
+  addressLine2
   city
   postalCode
+  isGeocoded
+  longitude
+  latitude
+  placeId
+  externalId
+  allowConsolidation
+  exclusiveConsolidation
+  consolidationPriority
+  version
+  createdAt
+  updatedAt
+  billingProfile {
+    ...CustomerBillingProfileFields
+  }
+  emailProfile {
+    ...CustomerEmailProfileFields
+  }
+}
+    fragment CustomerBillingProfileFields on CustomerBillingProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  billingCycleType
+  billingCycleDayOfWeek
+  paymentTerm
+  hasBillingControlOverrides
+  creditLimit
+  creditBalance
+  creditStatus
+  enforceCreditLimit
+  autoCreditHold
+  creditHoldReason
+  invoiceMethod
+  autoSendInvoiceOnGeneration
+  allowInvoiceConsolidation
+  consolidationPeriodDays
+  consolidationGroupBy
+  invoiceNumberFormat
+  customerInvoicePrefix
+  invoiceCopies
+  revenueAccountId
+  arAccountId
+  applyLateCharges
+  lateChargeRate
+  gracePeriodDays
+  taxExempt
+  taxExemptNumber
+  enforceCustomerBillingReq
+  validateCustomerRates
+  autoTransfer
+  autoMarkReadyToBill
+  autoBill
+  detentionBillingEnabled
+  detentionFreeMinutes
+  detentionRatePerHour
+  countLateOnlyOnAppointmentStops
+  countDetentionOnlyOnAppointmentStops
+  autoApplyAccessorials
+  billingCurrency
+  requirePONumber
+  requireBOLNumber
+  requireDeliveryNumber
+  invoiceAdjustmentSupportingDocumentPolicy
+  defaultBillerId
+  billingNotes
+  fuelSurchargeMode
+  fuelSurchargeProgramId
+  documentTypes {
+    id
+    code
+    name
+    color
+    documentClassification
+    documentCategory
+  }
   version
   createdAt
   updatedAt
 }
-    `, {"fragmentName":"CustomerTableRowFields"}) as unknown as TypedDocumentString<CustomerTableRowFieldsFragment, unknown>;
+fragment CustomerEmailProfileFields on CustomerEmailProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  subject
+  comment
+  fromEmail
+  toRecipients
+  ccRecipients
+  bccRecipients
+  attachmentName
+  readReceipt
+  includeShipmentDetail
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"CustomerTableRowFields"}) as unknown as TypedDocumentString<CustomerTableRowFieldsFragment, unknown>;
 export const DistanceOverrideLocationFieldsFragmentDoc = new TypedDocumentString(`
     fragment DistanceOverrideLocationFields on Location {
   id
@@ -4372,6 +4609,7 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -5401,7 +5639,87 @@ export const CustomerTableDocument = new TypedDocumentString(`
     }
   }
 }
-    fragment CustomerTableRowFields on Customer {
+    fragment CustomerBillingProfileFields on CustomerBillingProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  billingCycleType
+  billingCycleDayOfWeek
+  paymentTerm
+  hasBillingControlOverrides
+  creditLimit
+  creditBalance
+  creditStatus
+  enforceCreditLimit
+  autoCreditHold
+  creditHoldReason
+  invoiceMethod
+  autoSendInvoiceOnGeneration
+  allowInvoiceConsolidation
+  consolidationPeriodDays
+  consolidationGroupBy
+  invoiceNumberFormat
+  customerInvoicePrefix
+  invoiceCopies
+  revenueAccountId
+  arAccountId
+  applyLateCharges
+  lateChargeRate
+  gracePeriodDays
+  taxExempt
+  taxExemptNumber
+  enforceCustomerBillingReq
+  validateCustomerRates
+  autoTransfer
+  autoMarkReadyToBill
+  autoBill
+  detentionBillingEnabled
+  detentionFreeMinutes
+  detentionRatePerHour
+  countLateOnlyOnAppointmentStops
+  countDetentionOnlyOnAppointmentStops
+  autoApplyAccessorials
+  billingCurrency
+  requirePONumber
+  requireBOLNumber
+  requireDeliveryNumber
+  invoiceAdjustmentSupportingDocumentPolicy
+  defaultBillerId
+  billingNotes
+  fuelSurchargeMode
+  fuelSurchargeProgramId
+  documentTypes {
+    id
+    code
+    name
+    color
+    documentClassification
+    documentCategory
+  }
+  version
+  createdAt
+  updatedAt
+}
+fragment CustomerEmailProfileFields on CustomerEmailProfile {
+  id
+  businessUnitId
+  organizationId
+  customerId
+  subject
+  comment
+  fromEmail
+  toRecipients
+  ccRecipients
+  bccRecipients
+  attachmentName
+  readReceipt
+  includeShipmentDetail
+  version
+  createdAt
+  updatedAt
+}
+fragment CustomerTableRowFields on Customer {
   id
   businessUnitId
   organizationId
@@ -5409,16 +5727,32 @@ export const CustomerTableDocument = new TypedDocumentString(`
   status
   code
   name
+  addressLine1
+  addressLine2
   city
   postalCode
+  isGeocoded
+  longitude
+  latitude
+  placeId
+  externalId
+  allowConsolidation
+  exclusiveConsolidation
+  consolidationPriority
   version
   createdAt
   updatedAt
+  billingProfile {
+    ...CustomerBillingProfileFields
+  }
+  emailProfile {
+    ...CustomerEmailProfileFields
+  }
 }
 fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:5ac7ef474cb02cd3fca00e2b844961604af9f174a0cc8e792838273aa9df80ee"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+}`, {"hash":"sha256:5a193fd06a8c6ee5b581c9fad145441766cfbb218821bc3ee33b0b4dfefb4322"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DistanceOverrideTableDocument = new TypedDocumentString(`
     query DistanceOverrideTable($input: DataTableConnectionInput!) {
   distanceOverrides(input: $input) {
@@ -8501,6 +8835,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -8573,7 +8908,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:b912a64830c6a009cb5958aa6d55a0d6d616532891684d8b0079bf8ec1c07783"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:5bb6197733f36f72dcd91614c2d7ba3ef4141e5ce6f370bc7b3fac9abcdf163d"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -8810,6 +9145,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -8878,7 +9214,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:2d4edc02b3f56c496354758f710613864d7eb25c042c070f7330f1944ae5dd21"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:3701e061139f49248815683900867b873b462d200a27846ffe0bb053339aecd4"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -9274,6 +9610,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -9346,7 +9683,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:a8c5e7224bda2bb00b9a52a66a73c50aa22cedba3d978a10118f46801fce4fdb"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:312e7a8a5ebf7eda28cf83266be4d61cab94bef980183b9b236ea319c58b738d"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -9591,6 +9928,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -9663,7 +10001,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:c6e940f97584369fb22afdcd1eb8e559a089a1dc5df7881963c44f0c3a049479"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:eb79a2171d15cace2694bc8bddf94e2fd96b56966fdb057d9d35440be189c550"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -9908,6 +10246,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -9980,7 +10319,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:495799bcb5084edcf2041173d7892566c571169386e65051d64e34817bc473ee"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:15823444d264474f897584359043af5aa688f1bc6c911465179a6cb4b1e341ff"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
     query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
   shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
@@ -10435,6 +10774,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -10503,7 +10843,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:5bc76a3490d1dbecab310e9b45dcae784451b384f8fbccfb1baee893f84cd30b"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:33bf61afb83ec5de2cbb281cd034de8ff36704d5e9ae988f5f0bc909699a3b46"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -10740,6 +11080,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -10808,7 +11149,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:e01723c164148827b6186c6bc993a9615fb78ec7f8865ab174b2072861990946"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:b898ca84a20427c07d26fbfcd21ffc69c5af808d084c8e09e6e7c58323519954"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -11045,6 +11386,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -11113,7 +11455,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:a334c5bac81378fbb4ef116e61a75852cc53654a14a68938daabf52f594414f2"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:fca901f9a15e33aa3c64a8dfd1b0afaf2d790c784297717f1acdbbec592b1c44"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -11350,6 +11692,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -11418,7 +11761,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:ca0ef1555c836a86dcbc78b7f141ef65e6e1336da625ed4f7a15aa1353e82dc1"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:66c24a5c220cc1f04a02293cf06278cdeb21acb9f2741791c5b4e50d6f0a99de"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -11666,6 +12009,7 @@ fragment ShipmentFields on Shipment {
   markedReadyToBillAt
   billedAt
   ratingUnit
+  fuelSurchargeLocked
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -11734,7 +12078,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:7c6a46887a168400d0d89085cd13d60479ab76a4944f0535a0cb6befdd8526c0"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:74acdf68d7a893c548951c675febe4ed95ed351834fa85bb87687e4744f817d3"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {
@@ -11789,9 +12133,18 @@ export const CalculateShipmentTotalsDocument = new TypedDocumentString(`
     freightChargeAmount
     otherChargeAmount
     totalChargeAmount
+    fuelSurcharge {
+      accessorialChargeId
+      isSystemGenerated
+      method
+      amount
+      unit
+      fuelSurchargeProgramId
+      fuelSurchargeDetail
+    }
   }
 }
-    `, {"hash":"sha256:43a6fc69562eda15d32d926f91ac7b9256b587b90c05d7dc4d5c964c0bc000b1"}) as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
+    `, {"hash":"sha256:675789448d139ef11053baf07c910d999193810b6acd81ae401229c1e1753a75"}) as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
 export const CalculateShipmentDistanceDocument = new TypedDocumentString(`
     mutation CalculateShipmentDistance($input: ShipmentInput!) {
   calculateShipmentDistance(input: $input) {

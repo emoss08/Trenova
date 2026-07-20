@@ -8,12 +8,63 @@ package resolver
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+// BillingCycleDayOfWeek is the resolver for the billingCycleDayOfWeek field.
+func (r *customerBillingProfileResolver) BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error) {
+	if obj.BillingCycleDayOfWeek == nil {
+		return nil, nil
+	}
+	day := int(*obj.BillingCycleDayOfWeek)
+	return &day, nil
+}
+
+// CreditLimit is the resolver for the creditLimit field.
+func (r *customerBillingProfileResolver) CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
+	return nullDecimalToStringPtr(obj.CreditLimit), nil
+}
+
+// CreditBalance is the resolver for the creditBalance field.
+func (r *customerBillingProfileResolver) CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error) {
+	return obj.CreditBalance.String(), nil
+}
+
+// ConsolidationPeriodDays is the resolver for the consolidationPeriodDays field.
+func (r *customerBillingProfileResolver) ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
+	return int(obj.ConsolidationPeriodDays), nil
+}
+
+// InvoiceCopies is the resolver for the invoiceCopies field.
+func (r *customerBillingProfileResolver) InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
+	return int(obj.InvoiceCopies), nil
+}
+
+// LateChargeRate is the resolver for the lateChargeRate field.
+func (r *customerBillingProfileResolver) LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
+	return nullDecimalToStringPtr(obj.LateChargeRate), nil
+}
+
+// GracePeriodDays is the resolver for the gracePeriodDays field.
+func (r *customerBillingProfileResolver) GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
+	return int(obj.GracePeriodDays), nil
+}
+
+// DetentionFreeMinutes is the resolver for the detentionFreeMinutes field.
+func (r *customerBillingProfileResolver) DetentionFreeMinutes(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
+	return int(obj.DetentionFreeMinutes), nil
+}
+
+// DetentionRatePerHour is the resolver for the detentionRatePerHour field.
+func (r *customerBillingProfileResolver) DetentionRatePerHour(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
+	return nullDecimalToStringPtr(obj.DetentionRatePerHour), nil
+}
 
 // Customers is the resolver for the customers field.
 func (r *queryResolver) Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error) {
@@ -33,6 +84,11 @@ func (r *queryResolver) Customers(ctx context.Context, input gqlmodel.DataTableC
 			Filter:          tableInput.Filter,
 			Cursor:          tableInput.Cursor,
 			CustomerColumns: customerColumns(ctx, "edges.node"),
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeState:          graphql.FieldRequested(ctx, "edges.node.state"),
+				IncludeBillingProfile: graphql.FieldRequested(ctx, "edges.node.billingProfile"),
+				IncludeEmailProfile:   graphql.FieldRequested(ctx, "edges.node.emailProfile"),
+			},
 		},
 	)
 	if err != nil {
@@ -57,5 +113,17 @@ func (r *queryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 	return r.customerService.Get(ctx, repositories.GetCustomerByIDRequest{
 		ID:         customerID,
 		TenantInfo: tenantInfo(authCtx),
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeState:          true,
+			IncludeBillingProfile: true,
+			IncludeEmailProfile:   true,
+		},
 	})
 }
+
+// CustomerBillingProfile returns generated.CustomerBillingProfileResolver implementation.
+func (r *Resolver) CustomerBillingProfile() generated.CustomerBillingProfileResolver {
+	return &customerBillingProfileResolver{r}
+}
+
+type customerBillingProfileResolver struct{ *Resolver }

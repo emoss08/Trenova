@@ -564,6 +564,7 @@ function toShipmentInput(payload: Shipment | ShipmentCreateInput | ShipmentUpdat
     markedReadyToBillAt: payload.markedReadyToBillAt,
     billedAt: payload.billedAt,
     ratingUnit: payload.ratingUnit,
+    fuelSurchargeLocked: payload.fuelSurchargeLocked ?? false,
     ratingDetail: payload.ratingDetail,
     version: "version" in payload ? payload.version : undefined,
     moves: payload.moves?.map(toShipmentMoveInput) ?? [],
@@ -622,6 +623,10 @@ function toAdditionalChargeInput(
     method: charge.method,
     amount: String(charge.amount ?? "0"),
     unit: charge.unit,
+    fuelSurchargeProgramId:
+      "fuelSurchargeProgramId" in charge
+        ? ((charge.fuelSurchargeProgramId as string | null | undefined) ?? undefined)
+        : undefined,
     version: charge.version,
   };
 }

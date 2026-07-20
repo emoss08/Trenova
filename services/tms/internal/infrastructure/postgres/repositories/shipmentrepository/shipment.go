@@ -482,6 +482,7 @@ func (r *repository) Update(
 
 		results, err := r.db.DBForContext(c).NewUpdate().
 			Model(entity).
+			ExcludeColumn(sp.CreatedAt.Bare()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

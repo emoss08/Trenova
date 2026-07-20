@@ -178,6 +178,7 @@ function createDefaultShipmentValues(draft: DocumentShipmentDraft | null): Shipm
     actualShipDate: undefined,
     canceledAt: undefined,
     ratingUnit: 1,
+    fuelSurchargeLocked: false,
     additionalCharges: [],
     commodities: [],
     moves,

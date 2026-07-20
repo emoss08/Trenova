@@ -218,8 +218,8 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
   const isStepMethod = method === "PerMileStep";
 
   return (
-    <Card>
-      <CardHeader className="border-b py-3">
+    <Card className="gap-0 p-0">
+      <CardHeader className="border-b pt-3 gap-0">
         <CardTitle className="text-sm font-medium">Week Resolution & Rounding</CardTitle>
         <p className="text-xs text-muted-foreground">
           Pins exactly which week&apos;s price applies and how rates round — the two most common
@@ -325,9 +325,9 @@ function ApplicabilitySection() {
   const { control } = useFormContext<FuelSurchargeProgramFormValues>();
 
   return (
-    <Card>
-      <CardHeader className="border-b py-3">
-        <CardTitle className="text-sm font-medium">Applicability</CardTitle>
+    <Card className="gap-0">
+      <CardHeader className="border-b pb-3 gap-0">
+        <CardTitle className="text-sm font-medium gap-0">Applicability</CardTitle>
         <p className="text-xs text-muted-foreground">
           Leave a filter empty to apply to all — the surcharge only generates when the shipment
           matches every non-empty filter

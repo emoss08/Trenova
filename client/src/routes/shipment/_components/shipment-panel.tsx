@@ -78,6 +78,7 @@ const defaultValues: ShipmentCreateInput = {
   actualShipDate: undefined,
   canceledAt: undefined,
   ratingUnit: 1,
+  fuelSurchargeLocked: false,
   additionalCharges: [],
   commodities: [],
   moves: [

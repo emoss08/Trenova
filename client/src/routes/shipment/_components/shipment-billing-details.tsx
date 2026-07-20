@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon } from "lucide-react";
 import type React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 
 function Inner({ children }: { children: React.ReactNode }) {
@@ -247,10 +248,19 @@ function RatingBreakdownCard() {
 export default function ShipmentBillingDetails() {
   const { control } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
-  const { isCalculating, error: totalsError } = useShipmentTotalsPreview();
+  const {
+    isCalculating,
+    error: totalsError,
+    fuelSurchargeChange,
+    resolveFuelSurchargeChange,
+  } = useShipmentTotalsPreview();
 
   return (
     <Inner>
+      <FuelSurchargeChangeDialog
+        change={fuelSurchargeChange}
+        onResolve={resolveFuelSurchargeChange}
+      />
       {customerId && <CreditHoldAlert customerId={customerId} />}
       <FormGroup cols={2}>
         <FormControl>
@@ -271,9 +281,7 @@ export default function ShipmentBillingDetails() {
             placeholder="Select Order"
             description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
             disabled={!customerId}
-            extraSearchParams={
-              customerId ? { customerId, attachableOnly: "true" } : undefined
-            }
+            extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
           />
         </FormControl>
         <FormControl>

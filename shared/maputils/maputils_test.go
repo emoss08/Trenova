@@ -72,3 +72,26 @@ func TestCloneShallow(t *testing.T) {
 	assert.Equal(t, "one", input["value"])
 	assert.Equal(t, "two", output["value"])
 }
+
+func TestWithoutFuncValues(t *testing.T) {
+	t.Parallel()
+
+	input := map[string]any{
+		"amount": 12.5,
+		"label":  "linehaul",
+		"nested": map[string]any{"k": "v"},
+		"resolver": func(string, any) (float64, error) {
+			return 0, nil
+		},
+	}
+
+	output := WithoutFuncValues(input)
+
+	assert.Len(t, output, 3)
+	assert.Equal(t, 12.5, output["amount"])
+	assert.Equal(t, "linehaul", output["label"])
+	assert.NotContains(t, output, "resolver")
+
+	assert.Nil(t, WithoutFuncValues(nil))
+	assert.Nil(t, WithoutFuncValues(map[string]any{}))
+}

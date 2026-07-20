@@ -19,6 +19,10 @@ export const nullableTextSchema = z
   .transform((value) => value ?? "");
 export const versionSchema = z.number().int().min(0).optional();
 export const timestampSchema = z.number().int().positive().optional();
+// Server-managed audit timestamps. They are round-tripped through the form for
+// display but stripped before submit, so they must never block validation — a
+// record with an unset (0) timestamp still has to be editable.
+export const auditTimestampSchema = z.number().int().min(0).optional();
 export const nullableStringSchema = z
   .union([z.string().transform((val) => (val === "" ? null : val)), z.null()])
   .nullish();
@@ -36,8 +40,8 @@ export const nullableArraySchema = <T extends z.ZodTypeAny>(schema: T) =>
 export const tenantInfoSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
+  createdAt: auditTimestampSchema,
+  updatedAt: auditTimestampSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
 });

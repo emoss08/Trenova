@@ -91,6 +91,7 @@ type Shipment struct {
 	MarkedReadyToBillAt    *int64                `json:"markedReadyToBillAt"        bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
 	BilledAt               *int64                `json:"billedAt"                   bun:"billed_at,type:BIGINT,nullzero"`
 	RatingUnit             int64                 `json:"ratingUnit"                 bun:"rating_unit,type:INTEGER,notnull,default:1"`
+	FuelSurchargeLocked    bool                  `json:"fuelSurchargeLocked"        bun:"fuel_surcharge_locked,type:BOOLEAN,notnull,default:false"`
 	RatingDetail           *RatingDetail         `json:"ratingDetail"               bun:"rating_detail,type:JSONB,nullzero"`
 	SourceDocumentID       string                `json:"sourceDocumentId,omitempty" bun:"-"`
 	SearchVector           string                `json:"-"                          bun:"search_vector,type:TSVECTOR,scanonly"`

@@ -9,6 +9,7 @@ import type { Shipment } from "@/types/shipment";
 import {
   BoxesIcon,
   FuelIcon,
+  LockIcon,
   PencilIcon,
   PlusIcon,
   ReceiptIcon,
@@ -24,8 +25,10 @@ import { AdditionalChargeDialog } from "./shipment-additional-charges-dialog";
 export default function AdditionalChargesSection() {
   const {
     control,
+    setValue,
     formState: { errors },
   } = useFormContext<Shipment>();
+  const fuelSurchargeLocked = useWatch({ control, name: "fuelSurchargeLocked" });
   const { fields, append, update, remove } = useFieldArray({
     control,
     name: "additionalCharges",
@@ -101,7 +104,9 @@ export default function AdditionalChargesSection() {
                 const isFuelSurcharge =
                   !!charge?.isSystemGenerated && !!charge?.fuelSurchargeProgramId;
                 const displayName = isFuelSurcharge
-                  ? (chargeObj?.code ?? charge?.fuelSurchargeDetail?.programCode ?? "Fuel Surcharge")
+                  ? (chargeObj?.code ??
+                    charge?.fuelSurchargeDetail?.programCode ??
+                    "Fuel Surcharge")
                   : (chargeObj?.code ?? "—");
                 const amt = Number(charge?.amount) || 0;
 
@@ -124,10 +129,32 @@ export default function AdditionalChargesSection() {
                     <span className="col-span-4 flex items-center gap-1.5 truncate text-xs font-medium">
                       {isFuelSurcharge && <FuelIcon className="size-3 shrink-0 text-primary" />}
                       {displayName}
-                      {isFuelSurcharge && (
+                      {isFuelSurcharge && !fuelSurchargeLocked && (
                         <span className="rounded bg-primary/10 px-1 py-0.5 text-2xs text-primary">
                           Auto
                         </span>
+                      )}
+                      {isFuelSurcharge && fuelSurchargeLocked && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setValue("fuelSurchargeLocked", false, { shouldDirty: true })
+                              }
+                              className="flex items-center gap-1 rounded bg-amber-500/10 px-1 py-0.5 text-2xs text-amber-600 dark:text-amber-400"
+                            >
+                              <LockIcon className="size-2.5" />
+                              Locked
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6}>
+                            <p className="max-w-56 text-xs">
+                              Kept at its original amount — shipment changes won&apos;t re-rate it.
+                              Click to unlock and re-rate automatically.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </span>
                     <span className="col-span-2 text-xs text-muted-foreground">

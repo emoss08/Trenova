@@ -374,6 +374,7 @@ const shipmentBaseSchema = z.object({
   markedReadyToBillAt: nullableIntegerSchema,
   billedAt: nullableIntegerSchema,
   ratingUnit: z.number().int().positive().default(1),
+  fuelSurchargeLocked: z.boolean().default(false),
   ratingDetail: ratingDetailSchema.nullable().optional(),
 });
 
@@ -450,10 +451,22 @@ export const transferOwnershipSchema = z.object({
 });
 export type TransferOwnershipPayload = z.infer<typeof transferOwnershipSchema>;
 
+export const shipmentTotalsFuelSurchargeSchema = z.object({
+  accessorialChargeId: z.string(),
+  isSystemGenerated: z.boolean().default(true),
+  method: accessorialChargeMethodSchema.default("Flat"),
+  amount: decimalStringSchema,
+  unit: z.number().int().default(1),
+  fuelSurchargeProgramId: z.string().nullish(),
+  fuelSurchargeDetail: fuelSurchargeDetailSchema.nullish(),
+});
+export type ShipmentTotalsFuelSurcharge = z.infer<typeof shipmentTotalsFuelSurchargeSchema>;
+
 export const shipmentTotalsResponseSchema = z.object({
   freightChargeAmount: decimalStringSchema,
   otherChargeAmount: decimalStringSchema,
   totalChargeAmount: decimalStringSchema,
+  fuelSurcharge: shipmentTotalsFuelSurchargeSchema.nullish(),
 });
 export type ShipmentTotalsResponse = z.infer<typeof shipmentTotalsResponseSchema>;
 

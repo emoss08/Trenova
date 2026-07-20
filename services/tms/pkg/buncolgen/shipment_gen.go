@@ -525,6 +525,7 @@ var ShipmentColumns = struct {
 	MarkedReadyToBillAt    Column // "marked_ready_to_bill_at" → qualified: "sp.marked_ready_to_bill_at"
 	BilledAt               Column // "billed_at" → qualified: "sp.billed_at"
 	RatingUnit             Column // "rating_unit" → qualified: "sp.rating_unit"
+	FuelSurchargeLocked    Column // "fuel_surcharge_locked" → qualified: "sp.fuel_surcharge_locked"
 	RatingDetail           Column // "rating_detail" → qualified: "sp.rating_detail"
 	SearchVector           Column // "search_vector" → qualified: "sp.search_vector"
 	Rank                   Column // "rank" → qualified: "sp.rank"
@@ -568,6 +569,7 @@ var ShipmentColumns = struct {
 	MarkedReadyToBillAt:    NewColumn("marked_ready_to_bill_at", "sp"),
 	BilledAt:               NewColumn("billed_at", "sp"),
 	RatingUnit:             NewColumn("rating_unit", "sp"),
+	FuelSurchargeLocked:    NewColumn("fuel_surcharge_locked", "sp"),
 	RatingDetail:           NewColumn("rating_detail", "sp"),
 	SearchVector:           NewColumn("search_vector", "sp"),
 	Rank:                   NewColumn("rank", "sp"),
@@ -617,6 +619,7 @@ var ShipmentFieldMap = map[string]string{
 	"markedReadyToBillAt":    "marked_ready_to_bill_at",
 	"billedAt":               "billed_at",
 	"ratingUnit":             "rating_unit",
+	"fuelSurchargeLocked":    "fuel_surcharge_locked",
 	"ratingDetail":           "rating_detail",
 	"version":                "version",
 	"createdAt":              "created_at",
@@ -662,6 +665,7 @@ var ShipmentInsertableColumns = []string{
 	"marked_ready_to_bill_at",
 	"billed_at",
 	"rating_unit",
+	"fuel_surcharge_locked",
 	"rating_detail",
 	"version",
 	"created_at",
@@ -793,6 +797,7 @@ var ShipmentFilter = struct {
 	MarkedReadyToBillAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "markedReadyToBillAt" → DB: "marked_ready_to_bill_at"
 	BilledAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billedAt" → DB: "billed_at"
 	RatingUnit             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingUnit" → DB: "rating_unit"
+	FuelSurchargeLocked    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeLocked" → DB: "fuel_surcharge_locked"
 	RatingDetail           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingDetail" → DB: "rating_detail"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -905,6 +910,9 @@ var ShipmentFilter = struct {
 	},
 	RatingUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("ratingUnit", op, value)
+	},
+	FuelSurchargeLocked: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelSurchargeLocked", op, value)
 	},
 	RatingDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("ratingDetail", op, value)
