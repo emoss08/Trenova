@@ -1,8 +1,15 @@
 import type { Shipment } from "@/types/shipment";
 import { describe, expect, it } from "vitest";
-import { buildTimelineData, UNASSIGNED_ROW_KEY } from "./use-timeline-data";
+import {
+  buildTimelineData,
+  DWELL_CRITICAL_SECONDS,
+  DWELL_WATCH_SECONDS,
+  sortTimelineRows,
+  UNASSIGNED_ROW_KEY,
+} from "./use-timeline-data";
 
 const RANGE = { start: 1_000_000, end: 1_086_400 }; // one-day window
+const NOW = RANGE.start;
 
 type StopSeed = {
   start: number;
@@ -87,7 +94,7 @@ describe("buildTimelineData", () => {
       ]),
     ];
 
-    const data = buildTimelineData(shipments, 2, RANGE);
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
 
     expect(data.rows).toHaveLength(1);
     expect(data.rows[0].workerName).toBe("Alice Driver");
@@ -117,7 +124,7 @@ describe("buildTimelineData", () => {
       ]),
     ];
 
-    const data = buildTimelineData(shipments, 2, RANGE);
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
 
     expect(data.rows).toHaveLength(1);
     expect(data.rows[0].laneCount).toBe(2);
@@ -137,7 +144,7 @@ describe("buildTimelineData", () => {
       ]),
     ];
 
-    const data = buildTimelineData(shipments, 1, RANGE);
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
 
     expect(data.rows).toHaveLength(1);
     expect(data.rows[0].workerName).toBe("Alice Driver");
@@ -161,7 +168,7 @@ describe("buildTimelineData", () => {
       ]),
     ];
 
-    const data = buildTimelineData(shipments, 1, RANGE);
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
 
     expect(data.rows[0].bars[0].start).toBe(RANGE.start + 8000);
     expect(data.rows[0].bars[0].end).toBe(RANGE.start + 13_000);
@@ -192,7 +199,7 @@ describe("buildTimelineData", () => {
       ]),
     ];
 
-    const data = buildTimelineData(shipments, 2, RANGE);
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
 
     const aliceRow = data.rows.find((r) => r.key === "wkr_a");
     expect(aliceRow?.bars.map((b) => b.moveId)).toEqual(["mov_live"]);
@@ -214,14 +221,167 @@ describe("buildTimelineData", () => {
       ]),
     ];
 
-    const data = buildTimelineData(shipments, 1, RANGE);
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
 
     expect(data.rows).toHaveLength(0);
     expect(data.barCount).toBe(0);
   });
 
   it("flags truncation when the server reports more matches than fetched", () => {
-    const data = buildTimelineData([], 400, RANGE);
+    const data = buildTimelineData([], 400, RANGE, NOW);
     expect(data.truncated).toBe(true);
+  });
+
+  it("detects dwell on arrived-but-not-departed stops with severity tiers", () => {
+    const arrival = RANGE.start + 1000;
+    const shipments = [
+      makeShipment("shp_1", "InTransit", [
+        {
+          id: "mov_1",
+          workerId: "wkr_a",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000, actualArrival: arrival }],
+        },
+      ]),
+    ];
+
+    const belowThreshold = buildTimelineData(
+      shipments,
+      1,
+      RANGE,
+      arrival + DWELL_WATCH_SECONDS - 60,
+    );
+    expect(belowThreshold.rows[0].bars[0].dwell).toBeNull();
+    expect(belowThreshold.exceptions.dwelling).toBe(0);
+
+    const watching = buildTimelineData(shipments, 1, RANGE, arrival + DWELL_WATCH_SECONDS + 60);
+    expect(watching.rows[0].bars[0].dwell?.severity).toBe("watch");
+    expect(watching.rows[0].bars[0].dwell?.locationCode).toBe("LOC0");
+    expect(watching.exceptions.dwelling).toBe(1);
+    expect(watching.rows[0].alert).toBe("watch");
+
+    const critical = buildTimelineData(shipments, 1, RANGE, arrival + DWELL_CRITICAL_SECONDS + 60);
+    expect(critical.rows[0].bars[0].dwell?.severity).toBe("critical");
+    expect(critical.rows[0].alert).toBe("late");
+  });
+
+  it("does not flag dwell once the stop has departed", () => {
+    const arrival = RANGE.start + 1000;
+    const shipments = [
+      makeShipment("shp_1", "InTransit", [
+        {
+          id: "mov_1",
+          workerId: "wkr_a",
+          stops: [
+            {
+              start: RANGE.start + 1000,
+              end: RANGE.start + 5000,
+              actualArrival: arrival,
+              actualDeparture: arrival + 600,
+            },
+          ],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 1, RANGE, arrival + DWELL_CRITICAL_SECONDS * 2);
+    expect(data.rows[0].bars[0].dwell).toBeNull();
+  });
+
+  it("flags overlapping live moves on a driver but never the unassigned lane", () => {
+    const shipments = [
+      makeShipment("shp_1", "Assigned", [
+        {
+          id: "mov_1",
+          workerId: "wkr_a",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 30_000 }],
+        },
+      ]),
+      makeShipment("shp_2", "Assigned", [
+        {
+          id: "mov_2",
+          workerId: "wkr_a",
+          stops: [{ start: RANGE.start + 5000, end: RANGE.start + 20_000 }],
+        },
+      ]),
+      makeShipment("shp_3", "New", [
+        { id: "mov_3", stops: [{ start: RANGE.start + 1000, end: RANGE.start + 30_000 }] },
+      ]),
+      makeShipment("shp_4", "New", [
+        { id: "mov_4", stops: [{ start: RANGE.start + 5000, end: RANGE.start + 20_000 }] },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 4, RANGE, NOW);
+
+    expect(data.rows[0].bars.every((bar) => bar.hasOverlap)).toBe(true);
+    expect(data.rows[0].stats.overlaps).toBe(2);
+    expect(data.unassignedRow?.bars.every((bar) => !bar.hasOverlap)).toBe(true);
+    expect(data.exceptions.overlaps).toBe(2);
+    expect(data.exceptions.unassigned).toBe(2);
+  });
+
+  it("counts late loads and marks the row alert", () => {
+    const shipments = [
+      makeShipment("shp_1", "Delayed", [
+        {
+          id: "mov_1",
+          workerId: "wkr_a",
+          workerName: "Alice Driver",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
+
+    expect(data.rows[0].bars[0].tone).toBe("late");
+    expect(data.rows[0].stats.late).toBe(1);
+    expect(data.rows[0].alert).toBe("late");
+    expect(data.exceptions.late).toBe(1);
+  });
+});
+
+describe("sortTimelineRows", () => {
+  const shipments = [
+    makeShipment("shp_1", "Delayed", [
+      {
+        id: "mov_1",
+        workerId: "wkr_a",
+        workerName: "Alice Driver",
+        stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+      },
+    ]),
+    makeShipment("shp_2", "Assigned", [
+      {
+        id: "mov_2",
+        workerId: "wkr_b",
+        workerName: "Aaron Hauler",
+        stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+      },
+      {
+        id: "mov_3",
+        workerId: "wkr_b",
+        workerName: "Aaron Hauler",
+        stops: [{ start: RANGE.start + 40_000, end: RANGE.start + 50_000 }],
+      },
+    ]),
+  ];
+
+  it("keeps the name order untouched", () => {
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
+    expect(sortTimelineRows(data.rows, "name")).toBe(data.rows);
+  });
+
+  it("ranks drivers with exceptions first", () => {
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
+    const sorted = sortTimelineRows(data.rows, "exceptions");
+    expect(sorted.map((row) => row.workerName)).toEqual(["Alice Driver", "Aaron Hauler"]);
+    expect(data.rows.map((row) => row.workerName)).toEqual(["Aaron Hauler", "Alice Driver"]);
+  });
+
+  it("ranks the busiest drivers first", () => {
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
+    const sorted = sortTimelineRows(data.rows, "loads");
+    expect(sorted.map((row) => row.workerName)).toEqual(["Aaron Hauler", "Alice Driver"]);
   });
 });
