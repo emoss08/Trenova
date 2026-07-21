@@ -1,12 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  ArrowDownUpIcon,
+  CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsDownUpIcon,
+  ChevronsUpDownIcon,
+  Rows2Icon,
+  Rows3Icon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { useState } from "react";
+import type { TimelineDensity } from "./constants";
 import { formatRangeLabel, isTodayAnchor, ZOOM_OPTIONS } from "./time-scale";
-import type { TimelineZoom } from "../url-state";
+import type { TimelineSort, TimelineZoom } from "../url-state";
 
 const LEGEND_ITEMS: readonly { label: string; dotClass: string }[] = [
   { label: "On time", dotClass: "bg-brand" },
@@ -15,9 +33,18 @@ const LEGEND_ITEMS: readonly { label: string; dotClass: string }[] = [
   { label: "Delivered", dotClass: "bg-success" },
 ] as const;
 
+const SORT_OPTIONS: readonly { id: TimelineSort; label: string }[] = [
+  { id: "name", label: "Driver name" },
+  { id: "exceptions", label: "Exceptions first" },
+  { id: "loads", label: "Most loads" },
+] as const;
+
 type TimelineToolbarProps = {
   anchor: Date;
   zoom: TimelineZoom;
+  sort: TimelineSort;
+  density: TimelineDensity;
+  allCollapsed: boolean;
   barCount: number;
   shipmentCount: number;
   totalCount: number;
@@ -27,11 +54,17 @@ type TimelineToolbarProps = {
   onToday: () => void;
   onAnchorSelect: (date: Date) => void;
   onZoomChange: (zoom: TimelineZoom) => void;
+  onSortChange: (sort: TimelineSort) => void;
+  onDensityChange: (density: TimelineDensity) => void;
+  onToggleCollapseAll: () => void;
 };
 
 export function TimelineToolbar({
   anchor,
   zoom,
+  sort,
+  density,
+  allCollapsed,
   barCount,
   shipmentCount,
   totalCount,
@@ -41,8 +74,12 @@ export function TimelineToolbar({
   onToday,
   onAnchorSelect,
   onZoomChange,
+  onSortChange,
+  onDensityChange,
+  onToggleCollapseAll,
 }: TimelineToolbarProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const isCompact = density === "compact";
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5">
@@ -52,6 +89,7 @@ export function TimelineToolbar({
           variant="ghost"
           size="icon-xs"
           aria-label="Previous period"
+          title="Previous period (←)"
           onClick={() => onShift(-1)}
         >
           <ChevronLeftIcon className="size-3.5" />
@@ -60,6 +98,7 @@ export function TimelineToolbar({
           type="button"
           variant="outline"
           size="xxs"
+          title="Jump to today (T)"
           onClick={onToday}
           disabled={isTodayAnchor(anchor)}
         >
@@ -70,6 +109,7 @@ export function TimelineToolbar({
           variant="ghost"
           size="icon-xs"
           aria-label="Next period"
+          title="Next period (→)"
           onClick={() => onShift(1)}
         >
           <ChevronRightIcon className="size-3.5" />
@@ -121,6 +161,62 @@ export function TimelineToolbar({
             {option.label}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center gap-0.5">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Sort rows"
+                title={`Sort · ${SORT_OPTIONS.find((o) => o.id === sort)?.label}`}
+              />
+            }
+          >
+            <ArrowDownUpIcon className={cn("size-3.5", sort !== "name" && "text-brand")} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-40">
+            <DropdownMenuRadioGroup
+              value={sort}
+              onValueChange={(value) => onSortChange(value as TimelineSort)}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option.id} value={option.id}>
+                  {option.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label={isCompact ? "Switch to comfortable rows" : "Switch to compact rows"}
+          title={isCompact ? "Switch to comfortable rows" : "Switch to compact rows"}
+          onClick={() => onDensityChange(isCompact ? "comfortable" : "compact")}
+        >
+          {isCompact ? <Rows2Icon className="size-3.5" /> : <Rows3Icon className="size-3.5" />}
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label={allCollapsed ? "Expand all rows" : "Collapse all rows"}
+          title={allCollapsed ? "Expand all rows" : "Collapse all rows"}
+          onClick={onToggleCollapseAll}
+        >
+          {allCollapsed ? (
+            <ChevronsUpDownIcon className="size-3.5" />
+          ) : (
+            <ChevronsDownUpIcon className="size-3.5" />
+          )}
+        </Button>
       </div>
 
       <div className="ml-auto flex items-center gap-3">
