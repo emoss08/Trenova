@@ -185,12 +185,12 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		batchID := pulid.MustNew("jb_")
 		entryID := pulid.MustNew("je_")
 		sourceID := pulid.MustNew("jsrc_")
-		entryDescription := fmt.Sprintf("Customer payment %s", created.ID.String())
+		entryDescription := fmt.Sprintf("Customer payment %s", created.DocumentLabel())
 		appliedCreditAccountID := control.DefaultARAccountID
 		if control.AccountingBasis == tenant.AccountingBasisCash ||
 			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
 			appliedCreditAccountID = control.DefaultRevenueAccountID
-			entryDescription = fmt.Sprintf("Customer cash receipt %s", created.ID.String())
+			entryDescription = fmt.Sprintf("Customer cash receipt %s", created.DocumentLabel())
 		}
 		lines := make([]repositories.JournalPostingLine, 0, 2+len(created.Applications))
 		lines = append(
@@ -471,14 +471,14 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 		}
 		payment = updatedPayment
 
-		entryDescription := fmt.Sprintf("Customer payment application %s", payment.ID.String())
+		entryDescription := fmt.Sprintf("Customer payment application %s", payment.DocumentLabel())
 		creditAccountID := control.DefaultARAccountID
 		if control.AccountingBasis == tenant.AccountingBasisCash ||
 			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
 			creditAccountID = control.DefaultRevenueAccountID
 			entryDescription = fmt.Sprintf(
 				"Customer payment revenue recognition %s",
-				payment.ID.String(),
+				payment.DocumentLabel(),
 			)
 		}
 		lines := make([]repositories.JournalPostingLine, 0, len(applications)+1)
@@ -745,12 +745,15 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 			invoices[idx] = updatedInvoice
 		}
 
-		entryDescription := fmt.Sprintf("Customer payment reversal %s", payment.ID.String())
+		entryDescription := fmt.Sprintf("Customer payment reversal %s", payment.DocumentLabel())
 		debitAccountID := control.DefaultARAccountID
 		if control.AccountingBasis == tenant.AccountingBasisCash ||
 			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
 			debitAccountID = control.DefaultRevenueAccountID
-			entryDescription = fmt.Sprintf("Customer cash receipt reversal %s", payment.ID.String())
+			entryDescription = fmt.Sprintf(
+				"Customer cash receipt reversal %s",
+				payment.DocumentLabel(),
+			)
 		}
 		lines := make([]repositories.JournalPostingLine, 0, 3)
 		lineNumber := int16(1)

@@ -1,0 +1,189 @@
+enum CostCategoryType {
+  DriverWages
+  DriverBenefits
+  Fuel
+  EquipmentPayments
+  Maintenance
+  Insurance
+  Tires
+  Tolls
+  PermitsLicenses
+  Overhead
+  Custom
+}
+
+enum CostBehavior {
+  Fixed
+  Variable
+}
+
+enum CostRateSource {
+  Benchmark
+  Override
+  GLActual
+}
+
+enum EffectiveRateSource {
+  Benchmark
+  Override
+  GLActual
+  LiveIndex
+}
+
+type CostingControl {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  fuelIndexId: ID
+  fuelIndex: FuelIndex
+  useLiveFuelPrice: Boolean!
+  milesPerGallon: String!
+  includeDeadheadMiles: Boolean!
+  glActualsEnabled: Boolean!
+  glRollingMonths: Int!
+  plannedMonthlyMiles: Int
+  targetMarginPercent: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  categories: [CostCategory!]!
+}
+
+type CostCategory {
+  id: ID!
+  category: CostCategoryType!
+  name: String!
+  costBehavior: CostBehavior!
+  rateSource: CostRateSource!
+  benchmarkRatePerMile: String!
+  overrideRatePerMile: String
+  isActive: Boolean!
+  sortOrder: Int!
+  version: Int!
+  glAccounts: [CostCategoryGLAccountLink!]!
+}
+
+type CostCategoryGLAccountLink {
+  id: ID!
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+}
+
+type FuelCostResolution {
+  pricePerGallon: String
+  priceDate: String!
+  fuelIndexId: ID
+  milesPerGallon: String!
+  source: EffectiveRateSource!
+}
+
+type ResolvedCategoryRate {
+  category: CostCategoryType!
+  name: String!
+  costBehavior: CostBehavior!
+  ratePerMile: String!
+  effectiveSource: EffectiveRateSource!
+}
+
+type GLActualsWindow {
+  fromDate: Int!
+  toDate: Int!
+  fleetMiles: Float!
+  hasPostings: Boolean!
+}
+
+type ResolvedCostProfile {
+  totalCpm: String!
+  variableCpm: String!
+  fixedCpm: String!
+  targetMarginPercent: String
+  includeDeadheadMiles: Boolean!
+  asOfDate: String!
+  fuel: FuelCostResolution
+  categories: [ResolvedCategoryRate!]!
+  glWindow: GLActualsWindow
+}
+
+type CategoryCostLine {
+  category: CostCategoryType!
+  name: String!
+  costBehavior: CostBehavior!
+  ratePerMile: String!
+  amount: String!
+  effectiveSource: EffectiveRateSource!
+}
+
+type ShipmentProfitability {
+  shipmentId: ID!
+  loadedMiles: Float!
+  deadheadMiles: Float!
+  totalMiles: Float!
+  revenue: String!
+  estimatedCost: String!
+  profit: String!
+  marginPercent: String
+  revenuePerLoadedMile: String
+  breakEvenRpm: String
+  missingDistance: Boolean!
+  breakdown: [CategoryCostLine!]!
+  profile: ResolvedCostProfile!
+}
+
+type ShipmentProfitabilityEstimate {
+  shipmentId: ID!
+  loadedMiles: Float!
+  deadheadMiles: Float!
+  totalMiles: Float!
+  costPerMile: String!
+  estimatedCost: String!
+  profit: String!
+  marginPercent: String
+  breakEvenRpm: String
+  targetMarginPercent: String
+  missingDistance: Boolean!
+}
+
+type FleetCostSummary {
+  avgCpm: String!
+  avgMarginPercent: String
+  shipmentCount: Int!
+  unprofitableCount: Int!
+  totalRevenue: String!
+  totalEstimatedCost: String!
+  totalMiles: Float!
+  emptyMiles: Float!
+}
+
+input CostingControlInput {
+  fuelIndexId: ID
+  useLiveFuelPrice: Boolean!
+  milesPerGallon: String!
+  includeDeadheadMiles: Boolean!
+  glActualsEnabled: Boolean!
+  glRollingMonths: Int!
+  plannedMonthlyMiles: Int
+  targetMarginPercent: String
+  version: Int!
+}
+
+input CostCategoryUpdateInput {
+  id: ID!
+  rateSource: CostRateSource!
+  overrideRatePerMile: String
+  isActive: Boolean!
+  glAccountIds: [ID!]!
+  version: Int!
+}
+
+extend type Query {
+  costingControl: CostingControl!
+  resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
+  shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
+  fleetCostSummary(startDate: Int, endDate: Int): FleetCostSummary!
+}
+
+extend type Mutation {
+  updateCostingControl(input: CostingControlInput!): CostingControl!
+  updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
+}

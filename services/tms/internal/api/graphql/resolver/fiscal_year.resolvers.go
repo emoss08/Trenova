@@ -8,12 +8,19 @@ package resolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+// Periods is the resolver for the periods field.
+func (r *fiscalYearResolver) Periods(ctx context.Context, obj *fiscalyear.FiscalYear) ([]*fiscalperiod.FiscalPeriod, error) {
+	return r.fiscalYearService.ListPeriods(ctx, obj.ID, obj.OrganizationID, obj.BusinessUnitID)
+}
 
 // FiscalYears is the resolver for the fiscalYears field.
 func (r *queryResolver) FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error) {
@@ -59,3 +66,8 @@ func (r *queryResolver) FiscalYear(ctx context.Context, id string) (*fiscalyear.
 		TenantInfo: tenantInfo(authCtx),
 	})
 }
+
+// FiscalYear returns generated.FiscalYearResolver implementation.
+func (r *Resolver) FiscalYear() generated.FiscalYearResolver { return &fiscalYearResolver{r} }
+
+type fiscalYearResolver struct{ *Resolver }

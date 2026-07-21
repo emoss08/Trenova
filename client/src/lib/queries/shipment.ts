@@ -1,3 +1,4 @@
+import { getShipmentProfitabilityGraphQL } from "@/lib/graphql/shipment";
 import { apiService } from "@/services/api";
 import type { PaginationInfo } from "@/types/server";
 import type { Shipment } from "@/types/shipment";
@@ -15,6 +16,10 @@ export const shipment = createQueryKeys("shipment", {
   billingReadiness: (shipmentId: Shipment["id"]) => ({
     queryKey: ["billing-readiness", shipmentId],
     queryFn: async () => apiService.shipmentService.getBillingReadiness(shipmentId),
+  }),
+  profitability: (shipmentId: Shipment["id"]) => ({
+    queryKey: ["profitability", shipmentId],
+    queryFn: async () => getShipmentProfitabilityGraphQL(shipmentId),
   }),
   listUnassigned: (req: { limit: number; after?: string | null }) => ({
     queryKey: ["list-unassigned", req],

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -509,6 +510,42 @@ func (s *AdminAccountSeed) createOrganizationControls(
 	}
 	if err := params.sc.TrackCreated(ctx, "shipment_controls", shipmentControl.ID, s.Name()); err != nil {
 		return err
+	}
+
+	costingControl := &costingcontrol.CostingControl{
+		ID:                   pulid.MustNew("cstc_"),
+		OrganizationID:       params.org.ID,
+		BusinessUnitID:       params.org.BusinessUnitID,
+		UseLiveFuelPrice:     false,
+		MilesPerGallon:       costingcontrol.DefaultMilesPerGallon(),
+		IncludeDeadheadMiles: true,
+		GLRollingMonths:      3,
+		CreatedAt:            params.now,
+		UpdatedAt:            params.now,
+	}
+	if _, err := params.tx.NewInsert().Model(costingControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create costing control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "costing_controls", costingControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	costCategories := costingcontrol.DefaultCategories()
+	for _, category := range costCategories {
+		category.ID = pulid.MustNew("ccat_")
+		category.OrganizationID = params.org.ID
+		category.BusinessUnitID = params.org.BusinessUnitID
+		category.CostingControlID = costingControl.ID
+		category.CreatedAt = params.now
+		category.UpdatedAt = params.now
+	}
+	if _, err := params.tx.NewInsert().Model(&costCategories).Exec(ctx); err != nil {
+		return fmt.Errorf("create cost categories: %w", err)
+	}
+	for _, category := range costCategories {
+		if err := params.sc.TrackCreated(ctx, "cost_categories", category.ID, s.Name()); err != nil {
+			return err
+		}
 	}
 
 	documentControl := tenant.NewDefaultDocumentControl(params.org.ID, params.org.BusinessUnitID)

@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,7 +17,8 @@ import (
 )
 
 type Payment struct {
-	bun.BaseModel `bun:"table:customer_payments,alias:cp" json:"-"`
+	bun.BaseModel             `bun:"table:customer_payments,alias:cp" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
 	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
@@ -145,6 +149,41 @@ func (p *Payment) SyncAmounts() {
 	if strings.TrimSpace(p.CurrencyCode) == "" {
 		p.CurrencyCode = money.DefaultCurrencyCode
 	}
+}
+
+func (p *Payment) DocumentLabel() string {
+	if ref := strings.TrimSpace(p.ReferenceNumber); ref != "" {
+		return ref
+	}
+	return money.FormatMinor(p.AmountMinor, p.CurrencyCode) + " on " +
+		time.Unix(p.PaymentDate, 0).UTC().Format("2006-01-02")
+}
+
+func (p *Payment) GetTableName() string {
+	return "customer_payments"
+}
+
+func (p *Payment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "cp",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{
+				Name:   "reference_number",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{Name: "memo", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+		},
+	}
+}
+
+func (p *Payment) GetID() pulid.ID {
+	return p.ID
+}
+
+func (p *Payment) GetCreatedAt() int64 {
+	return p.CreatedAt
 }
 
 func (p *Payment) IsFullyApplied() bool {

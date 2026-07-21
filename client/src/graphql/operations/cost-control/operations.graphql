@@ -1,0 +1,89 @@
+query CostingControlPage {
+  costingControl {
+    id
+    businessUnitId
+    organizationId
+    fuelIndexId
+    fuelIndex {
+      id
+      name
+      code
+      source
+      fuelType
+      isActive
+    }
+    useLiveFuelPrice
+    milesPerGallon
+    includeDeadheadMiles
+    glActualsEnabled
+    glRollingMonths
+    plannedMonthlyMiles
+    targetMarginPercent
+    version
+    createdAt
+    updatedAt
+    categories {
+      id
+      category
+      name
+      costBehavior
+      rateSource
+      benchmarkRatePerMile
+      overrideRatePerMile
+      isActive
+      sortOrder
+      version
+      glAccounts {
+        id
+        glAccountId
+        accountCode
+        accountName
+      }
+    }
+  }
+}
+
+query ResolvedCostProfilePage($asOfDate: String) {
+  resolvedCostProfile(asOfDate: $asOfDate) {
+    totalCpm
+    variableCpm
+    fixedCpm
+    targetMarginPercent
+    includeDeadheadMiles
+    asOfDate
+    fuel {
+      pricePerGallon
+      priceDate
+      fuelIndexId
+      milesPerGallon
+      source
+    }
+    categories {
+      category
+      name
+      costBehavior
+      ratePerMile
+      effectiveSource
+    }
+    glWindow {
+      fromDate
+      toDate
+      fleetMiles
+      hasPostings
+    }
+  }
+}
+
+mutation UpdateCostingControl($input: CostingControlInput!) {
+  updateCostingControl(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateCostCategory($input: CostCategoryUpdateInput!) {
+  updateCostCategory(input: $input) {
+    id
+    version
+  }
+}

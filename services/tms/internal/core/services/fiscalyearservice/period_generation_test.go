@@ -18,7 +18,7 @@ func TestGenerateMonthlyPeriods_CalendarYear(t *testing.T) {
 		EndDate:        time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := GenerateMonthlyPeriods(fy)
+	periods := fy.GenerateMonthlyPeriods()
 
 	if len(periods) != 12 {
 		t.Fatalf("expected 12 periods, got %d", len(periods))
@@ -86,7 +86,7 @@ func TestGenerateMonthlyPeriods_LeapYear(t *testing.T) {
 		EndDate:        time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := GenerateMonthlyPeriods(fy)
+	periods := fy.GenerateMonthlyPeriods()
 
 	if len(periods) != 12 {
 		t.Fatalf("expected 12 periods, got %d", len(periods))
@@ -107,7 +107,7 @@ func TestGenerateMonthlyPeriods_NonCalendarFiscalYear(t *testing.T) {
 		EndDate:        time.Date(2026, 3, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := GenerateMonthlyPeriods(fy)
+	periods := fy.GenerateMonthlyPeriods()
 
 	if len(periods) != 12 {
 		t.Fatalf("expected 12 periods, got %d", len(periods))
@@ -143,7 +143,7 @@ func TestGenerateMonthlyPeriods_Contiguous(t *testing.T) {
 		EndDate:        time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC).Unix(),
 	}
 
-	periods := GenerateMonthlyPeriods(fy)
+	periods := fy.GenerateMonthlyPeriods()
 
 	firstStart := time.Unix(periods[0].StartDate, 0).UTC()
 	if firstStart.Unix() != fy.StartDate {

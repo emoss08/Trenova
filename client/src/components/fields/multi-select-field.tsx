@@ -13,6 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { API_BASE_URL } from "@/lib/constants";
+import {
+  fetchGraphQLSelectOptions,
+  selectOptionFiltersFromSearchParams,
+  type GraphQLSelectOptionsConfig,
+} from "@/lib/graphql/select-options";
 import { cn } from "@/lib/utils";
 import { multiSelectVariants } from "@/lib/variants/async-multi-select";
 import { type GenericLimitOffsetResponse } from "@/types/server";
@@ -39,6 +44,7 @@ import { FieldWrapper } from "./field-components";
 
 export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
   link: string;
+  graphql?: GraphQLSelectOptionsConfig;
   preload?: boolean;
   renderOption: (option: TOption) => React.ReactNode;
   renderBadge?: (option: TOption) => React.ReactNode;
@@ -73,6 +79,7 @@ export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldV
   description?: string;
   className?: string;
   link: string;
+  graphql?: GraphQLSelectOptionsConfig;
   preload?: boolean;
   renderOption: (option: TOption) => React.ReactNode;
   renderBadge?: (option: TOption) => React.ReactNode;
@@ -96,9 +103,24 @@ async function fetchOptions<T>(
   inputValue: string,
   page: number,
   extraSearchParams?: Record<string, string>,
+  graphql?: GraphQLSelectOptionsConfig,
 ): Promise<GenericLimitOffsetResponse<T>> {
   const limit = 10;
   const offset = (page - 1) * limit;
+
+  if (graphql) {
+    const response = await fetchGraphQLSelectOptions({
+      resource: graphql.resource,
+      query: inputValue || undefined,
+      page,
+      initialLimit: limit,
+      filters: {
+        ...selectOptionFiltersFromSearchParams(extraSearchParams),
+        ...graphql.filters,
+      },
+    });
+    return response as GenericLimitOffsetResponse<T>;
+  }
 
   const fetchURL = new URL(`${API_BASE_URL}${link}`, window.location.origin);
   fetchURL.searchParams.set("limit", limit.toString());
@@ -126,9 +148,23 @@ async function fetchOptionsByIds(
   link: string,
   ids: string[],
   extraSearchParams?: Record<string, string>,
+  graphql?: GraphQLSelectOptionsConfig,
 ) {
   if (!ids.length) {
     return [];
+  }
+
+  if (graphql) {
+    const response = await fetchGraphQLSelectOptions({
+      resource: graphql.resource,
+      ids,
+      initialLimit: ids.length,
+      filters: {
+        ...selectOptionFiltersFromSearchParams(extraSearchParams),
+        ...graphql.filters,
+      },
+    });
+    return response.results;
   }
 
   const promises = ids.map(async (id) => {
@@ -164,6 +200,7 @@ async function fetchOptionsByIds(
 
 export function MultiSelectAutocomplete<T>({
   link,
+  graphql,
   preload = false,
   renderOption,
   renderBadge,
@@ -268,7 +305,7 @@ export function MultiSelectAutocomplete<T>({
             const strings = values.filter((v): v is string => typeof v === "string");
             const additionalOptionsPromise =
               strings.length > 0
-                ? fetchOptionsByIds(link, strings, extraSearchParams)
+                ? fetchOptionsByIds(link, strings, extraSearchParams, graphql)
                 : Promise.resolve([] as T[]);
 
             const additionalOptions = await additionalOptionsPromise;
@@ -278,6 +315,7 @@ export function MultiSelectAutocomplete<T>({
             link,
             values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
             extraSearchParams,
+            graphql,
           );
 
       await resolveInitialOptions
@@ -303,13 +341,13 @@ export function MultiSelectAutocomplete<T>({
     };
 
     void fetchInitialValues();
-  }, [values, link, nestedValues, getOptionValue, extraSearchParams]);
+  }, [values, link, nestedValues, getOptionValue, extraSearchParams, graphql]);
 
   useEffect(() => {
     const loadOptions = async () => {
       dispatchAsyncState({ type: "fetchStart" });
 
-      await fetchOptions<T>(link, debouncedSearchTerm, page, extraSearchParams)
+      await fetchOptions<T>(link, debouncedSearchTerm, page, extraSearchParams, graphql)
         .then((response) => {
           dispatchAsyncState({
             type: "fetchSuccess",
@@ -333,7 +371,7 @@ export function MultiSelectAutocomplete<T>({
     if (open) {
       void loadOptions();
     }
-  }, [debouncedSearchTerm, open, page, link, extraSearchParams]);
+  }, [debouncedSearchTerm, open, page, link, extraSearchParams, graphql]);
 
   useEffect(() => {
     return () => {
@@ -728,6 +766,7 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
   rules,
   className,
   link,
+  graphql,
   preload,
   renderOption,
   renderBadge,
@@ -758,6 +797,7 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
           >
             <MultiSelectAutocomplete<TOption>
               link={link}
+              graphql={graphql}
               preload={preload}
               renderOption={renderOption}
               renderBadge={renderBadge}

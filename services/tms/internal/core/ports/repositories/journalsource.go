@@ -23,4 +23,8 @@ type JournalSourceRepository interface {
 		req GetJournalSourceByObjectRequest,
 		sourceEventType string,
 	) (*journalsource.Source, error)
+	ListByObject(
+		ctx context.Context,
+		req GetJournalSourceByObjectRequest,
+	) ([]*journalsource.Source, error)
 }

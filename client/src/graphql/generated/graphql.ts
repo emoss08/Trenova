@@ -17,6 +17,12 @@ export type AccountCategory =
   | 'Liability'
   | 'Revenue';
 
+export type ApplyCustomerPaymentInput = {
+  accountingDate: number;
+  applications: Array<CustomerPaymentApplicationInput>;
+  paymentId: string | number;
+};
+
 export type AssignmentStatus =
   | 'Canceled'
   | 'Completed'
@@ -86,6 +92,49 @@ export type ConfigurationVisibility =
   | 'Public'
   | 'Shared';
 
+export type CostBehavior =
+  | 'Fixed'
+  | 'Variable';
+
+export type CostCategoryType =
+  | 'Custom'
+  | 'DriverBenefits'
+  | 'DriverWages'
+  | 'EquipmentPayments'
+  | 'Fuel'
+  | 'Insurance'
+  | 'Maintenance'
+  | 'Overhead'
+  | 'PermitsLicenses'
+  | 'Tires'
+  | 'Tolls';
+
+export type CostCategoryUpdateInput = {
+  glAccountIds: Array<string | number>;
+  id: string | number;
+  isActive: boolean;
+  overrideRatePerMile?: string | null | undefined;
+  rateSource: CostRateSource;
+  version: number;
+};
+
+export type CostRateSource =
+  | 'Benchmark'
+  | 'GLActual'
+  | 'Override';
+
+export type CostingControlInput = {
+  fuelIndexId?: string | number | null | undefined;
+  glActualsEnabled: boolean;
+  glRollingMonths: number;
+  includeDeadheadMiles: boolean;
+  milesPerGallon: string;
+  plannedMonthlyMiles?: number | null | undefined;
+  targetMarginPercent?: string | null | undefined;
+  useLiveFuelPrice: boolean;
+  version: number;
+};
+
 export type CreateReportScheduleInput = {
   cronExpression: string;
   definitionId: string | number;
@@ -139,6 +188,24 @@ export type CustomerInvoiceNumberFormat =
   | 'CustomPrefix'
   | 'Default'
   | 'POBased';
+
+export type CustomerPaymentApplicationInput = {
+  appliedAmountMinor: number;
+  invoiceId: string | number;
+  shortPayAmountMinor?: number | null | undefined;
+};
+
+export type CustomerPaymentMethod =
+  | 'ACH'
+  | 'Card'
+  | 'Cash'
+  | 'Check'
+  | 'Other'
+  | 'Wire';
+
+export type CustomerPaymentStatus =
+  | 'Posted'
+  | 'Reversed';
 
 export type CustomerPaymentTerm =
   | 'DueOnReceipt'
@@ -267,6 +334,12 @@ export type EdiTransferStatus =
   | 'Rejected'
   | 'Submitted';
 
+export type EffectiveRateSource =
+  | 'Benchmark'
+  | 'GLActual'
+  | 'LiveIndex'
+  | 'Override';
+
 export type EmailProfileStatus =
   | 'Active'
   | 'Inactive';
@@ -343,6 +416,13 @@ export type FieldType =
 export type FilterGroupInput = {
   filters: Array<FieldFilterInput>;
 };
+
+export type FiscalPeriodStatus =
+  | 'Closed'
+  | 'Inactive'
+  | 'Locked'
+  | 'Open'
+  | 'PermanentlyClosed';
 
 export type FiscalYearStatus =
   | 'Closed'
@@ -663,6 +743,24 @@ export type PackingGroup =
   | 'II'
   | 'III';
 
+export type PeriodType =
+  | 'Adjusting'
+  | 'Month'
+  | 'Quarter'
+  | 'Week';
+
+export type PostCustomerPaymentInput = {
+  accountingDate: number;
+  amountMinor: number;
+  applications?: Array<CustomerPaymentApplicationInput> | null | undefined;
+  currencyCode?: string | null | undefined;
+  customerId: string | number;
+  memo?: string | null | undefined;
+  paymentDate: number;
+  paymentMethod: CustomerPaymentMethod;
+  referenceNumber?: string | null | undefined;
+};
+
 export type RateTableLookupType =
   | 'Exact'
   | 'Range';
@@ -754,6 +852,12 @@ export type ReportSortInput = {
   direction: string;
 };
 
+export type ReverseCustomerPaymentInput = {
+  accountingDate: number;
+  paymentId: string | number;
+  reason?: string | null | undefined;
+};
+
 export type RunReportInput = {
   cannedKey?: string | null | undefined;
   definitionId?: string | number | null | undefined;
@@ -779,11 +883,15 @@ export type SegregationType =
   | 'Separated';
 
 export type SelectOptionResource =
+  | 'CUSTOMER'
   | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'
+  | 'FISCAL_PERIOD'
+  | 'FISCAL_YEAR'
   | 'FUEL_INDEX'
   | 'FUEL_SURCHARGE_PROGRAM'
+  | 'GL_ACCOUNT'
   | 'ORDER'
   | 'SHIPMENT'
   | 'TRACTOR'
@@ -1300,6 +1408,97 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type ArAgingSummaryQueryVariables = Exact<{
+  asOfDate?: number | null | undefined;
+}>;
+
+
+export type ArAgingSummaryQuery = { arAgingSummary: { asOfDate: number, totals: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, rows: Array<{ customerId: string, customerName: string, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number } }> } };
+
+export type ArOpenItemsQueryVariables = Exact<{
+  customerId?: string | number | null | undefined;
+  asOfDate?: number | null | undefined;
+}>;
+
+
+export type ArOpenItemsQuery = { arOpenItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> };
+
+export type ArCustomerLedgerQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type ArCustomerLedgerQuery = { arCustomerLedger: Array<{ customerId: string, transactionDate: number, eventType: string, documentNumber: string, sourceObjectType: string, sourceObjectId: string, amountMinor: number, relatedInvoiceId: string | null }> };
+
+export type ArCustomerStatementQueryVariables = Exact<{
+  customerId: string | number;
+  startDate?: number | null | undefined;
+  asOfDate?: number | null | undefined;
+}>;
+
+
+export type ArCustomerStatementQuery = { arCustomerStatement: { customerId: string, customerName: string, statementDate: number, startDate: number, openingBalanceMinor: number, totalChargesMinor: number, totalPaymentsMinor: number, endingBalanceMinor: number, aging: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, transactions: Array<{ transactionDate: number, eventType: string, documentNumber: string, sourceObjectId: string, amountMinor: number, chargeMinor: number, paymentMinor: number, runningBalanceMinor: number }>, openItems: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, billType: string, invoiceDate: number, dueDate: number, currencyCode: string, shipmentProNumber: string, shipmentBol: string, totalAmountMinor: number, appliedAmountMinor: number, openAmountMinor: number, daysPastDue: number, settlementStatus: string, disputeStatus: string, hasShortPay: boolean }> } };
+
+export type ArDashboardKpisQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ArDashboardKpisQuery = { arDashboardKpis: { asOfDate: number, currentDsoDays: number, dsoDeltaDays: number, cei: number, avgDaysToPay: number, overduePercent: number, writeOffRatio: number, disputeRate: number, shortPayRate: number, overview: { totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, disputedOpenMinor: number, openInvoiceCount: number, overdueInvoiceCount: number, disputedInvoiceCount: number, avgDaysPastDue: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number } } } };
+
+export type ArDsoTrendQueryVariables = Exact<{
+  weeks?: number | null | undefined;
+}>;
+
+
+export type ArDsoTrendQuery = { arDsoTrend: Array<{ periodEnd: number, dsoDays: number, arBalanceMinor: number, billedMinor: number }> };
+
+export type ArAgingTrendQueryVariables = Exact<{
+  weeks?: number | null | undefined;
+}>;
+
+
+export type ArAgingTrendQuery = { arAgingTrend: Array<{ periodEnd: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number } }> };
+
+export type ArCashFlowForecastQueryVariables = Exact<{
+  pastWeeks?: number | null | undefined;
+  futureWeeks?: number | null | undefined;
+}>;
+
+
+export type ArCashFlowForecastQuery = { arCashFlowForecast: Array<{ weekStart: number, expectedMinor: number, openDueMinor: number, actualMinor: number, isForecast: boolean }> };
+
+export type ArCollectionPerformanceQueryVariables = Exact<{
+  periodDays?: number | null | undefined;
+}>;
+
+
+export type ArCollectionPerformanceQuery = { arCollectionPerformance: { cei: number, writeOffRatio: number, disputeRate: number, shortPayRate: number, totals: { periodStart: number, periodEnd: number, beginningOpenMinor: number, endingOpenMinor: number, endingCurrentMinor: number, creditSalesMinor: number, collectedMinor: number, avgDaysToPay: number, shortPayMinor: number, shortPayApplicationCount: number, applicationCount: number, disputedInvoiceCount: number, postedInvoiceCount: number } } };
+
+export type ArTopOverdueCustomersQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type ArTopOverdueCustomersQuery = { arTopOverdueCustomers: Array<{ customerId: string, customerName: string, overdueMinor: number, totalOpenMinor: number, oldestDaysPastDue: number, openInvoiceCount: number }> };
+
+export type ArCollectionsWorklistQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type ArCollectionsWorklistQuery = { arCollectionsWorklist: Array<{ invoiceId: string, customerId: string, customerName: string, invoiceNumber: string, dueDate: number, openAmountMinor: number, daysPastDue: number, isDisputed: boolean, hasShortPay: boolean, severity: string }> };
+
+export type ArPaymentStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ArPaymentStatsQuery = { arPaymentStats: { postedTodayMinor: number, postedTodayCount: number, unappliedCashMinor: number, unappliedPaymentCount: number, reversedLast30Minor: number, reversedLast30Count: number } };
+
+export type ArCustomerProfileQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type ArCustomerProfileQuery = { arCustomerProfile: { dsoDays: number, creditUtilization: number, delinquencyScore: number, snapshot: { customerId: string, customerName: string, totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, creditLimitMinor: number, hasCreditLimit: boolean, openInvoiceCount: number, oldestOpenInvoiceDate: number, oldestDaysPastDue: number, lastPaymentDate: number, lastPaymentMinor: number, avgDaysToPay: number, billedTrailing91Minor: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, monthlyCollections: Array<{ monthStart: number, amountMinor: number }> } } };
+
 export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
 
 export type ApiKeyTableQueryVariables = Exact<{
@@ -1358,6 +1557,32 @@ export type CommodityTableQueryVariables = Exact<{
 
 export type CommodityTableQuery = { commodities: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CommodityTableRowFieldsFragment': CommodityTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CostingControlPageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CostingControlPageQuery = { costingControl: { id: string, businessUnitId: string, organizationId: string, fuelIndexId: string | null, useLiveFuelPrice: boolean, milesPerGallon: string, includeDeadheadMiles: boolean, glActualsEnabled: boolean, glRollingMonths: number, plannedMonthlyMiles: number | null, targetMarginPercent: string | null, version: number, createdAt: number, updatedAt: number, fuelIndex: { id: string, name: string, code: string, source: FuelIndexSource, fuelType: FuelType, isActive: boolean } | null, categories: Array<{ id: string, category: CostCategoryType, name: string, costBehavior: CostBehavior, rateSource: CostRateSource, benchmarkRatePerMile: string, overrideRatePerMile: string | null, isActive: boolean, sortOrder: number, version: number, glAccounts: Array<{ id: string, glAccountId: string, accountCode: string, accountName: string }> }> } };
+
+export type ResolvedCostProfilePageQueryVariables = Exact<{
+  asOfDate?: string | null | undefined;
+}>;
+
+
+export type ResolvedCostProfilePageQuery = { resolvedCostProfile: { totalCpm: string, variableCpm: string, fixedCpm: string, targetMarginPercent: string | null, includeDeadheadMiles: boolean, asOfDate: string, fuel: { pricePerGallon: string | null, priceDate: string, fuelIndexId: string | null, milesPerGallon: string, source: EffectiveRateSource } | null, categories: Array<{ category: CostCategoryType, name: string, costBehavior: CostBehavior, ratePerMile: string, effectiveSource: EffectiveRateSource }>, glWindow: { fromDate: number, toDate: number, fleetMiles: number, hasPostings: boolean } | null } };
+
+export type UpdateCostingControlMutationVariables = Exact<{
+  input: CostingControlInput;
+}>;
+
+
+export type UpdateCostingControlMutation = { updateCostingControl: { id: string, version: number } };
+
+export type UpdateCostCategoryMutationVariables = Exact<{
+  input: CostCategoryUpdateInput;
+}>;
+
+
+export type UpdateCostCategoryMutation = { updateCostCategory: { id: string, version: number } };
+
 export type CustomFieldDefinitionTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, name: string, label: string, description: string | null, fieldType: FieldType, isRequired: boolean, isActive: boolean, displayOrder: number, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomFieldDefinitionTableRowFieldsFragment' };
 
 export type CustomFieldDefinitionTableQueryVariables = Exact<{
@@ -1366,6 +1591,41 @@ export type CustomFieldDefinitionTableQueryVariables = Exact<{
 
 
 export type CustomFieldDefinitionTableQuery = { customFieldDefinitions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomFieldDefinitionTableRowFieldsFragment': CustomFieldDefinitionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CustomerPaymentTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CustomerPaymentTableQuery = { customerPayments: { totalCount: number | null, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, postedBatchId: string | null, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, applications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, updatedAt: number }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CustomerPaymentDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CustomerPaymentDetailQuery = { customerPayment: { id: string, organizationId: string, businessUnitId: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, postedBatchId: string | null, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, applications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, updatedAt: number, invoice: { id: string, number: string, invoiceDate: number, dueDate: number | null, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, billToName: string } | null }> | null } | null };
+
+export type PostAndApplyCustomerPaymentMutationVariables = Exact<{
+  input: PostCustomerPaymentInput;
+}>;
+
+
+export type PostAndApplyCustomerPaymentMutation = { postAndApplyCustomerPayment: { id: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, postedBatchId: string | null, createdAt: number, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
+
+export type ApplyUnappliedCustomerPaymentMutationVariables = Exact<{
+  input: ApplyCustomerPaymentInput;
+}>;
+
+
+export type ApplyUnappliedCustomerPaymentMutation = { applyUnappliedCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
+
+export type ReverseCustomerPaymentMutationVariables = Exact<{
+  input: ReverseCustomerPaymentInput;
+}>;
+
+
+export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
 export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, detentionBillingEnabled: boolean, detentionFreeMinutes: number, detentionRatePerHour: string | null, countLateOnlyOnAppointmentStops: boolean, countDetentionOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
@@ -1625,7 +1885,9 @@ export type BulkUpdateEquipmentTypeStatusMutationVariables = Exact<{
 
 export type BulkUpdateEquipmentTypeStatusMutation = { bulkUpdateEquipmentTypeStatus: Array<{ ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } }> };
 
-export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
+export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
+
+export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number, periods: Array<{ ' $fragmentRefs'?: { 'FiscalPeriodFieldsFragment': FiscalPeriodFieldsFragment } }> } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
 
 export type FiscalYearTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -1809,6 +2071,29 @@ export type InvoiceTableQueryVariables = Exact<{
 
 
 export type InvoiceTableQuery = { invoices: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceTableRowFieldsFragment': InvoiceTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type JournalEntryDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type JournalEntryDetailQuery = { journalEntry: { id: string, organizationId: string, businessUnitId: string, batchId: string, fiscalYearId: string, fiscalPeriodId: string, entryNumber: string, entryType: string, status: string, accountingDate: number, description: string, referenceType: string, referenceId: string, totalDebit: number, totalCredit: number, isPosted: boolean, isReversal: boolean, reversalOfId: string | null, reversedById: string | null, reversalDate: number | null, reversalReason: string, lines: Array<{ id: string, journalEntryId: string, glAccountId: string, lineNumber: number, description: string, debitAmount: number, creditAmount: number, netAmount: number, customerId: string | null, locationId: string | null, glAccount: { id: string, accountCode: string, name: string } | null }> | null } | null };
+
+export type JournalSourceByObjectQueryVariables = Exact<{
+  sourceType: string;
+  sourceId: string;
+}>;
+
+
+export type JournalSourceByObjectQuery = { journalSourceByObject: { id: string, sourceObjectType: string, sourceObjectId: string, sourceEventType: string, sourceDocumentNumber: string, status: string } | null };
+
+export type JournalEntriesBySourceQueryVariables = Exact<{
+  sourceType: string;
+  sourceId: string;
+}>;
+
+
+export type JournalEntriesBySourceQuery = { journalEntriesBySource: Array<{ id: string, batchId: string, entryNumber: string, entryType: string, status: string, accountingDate: number, description: string, referenceType: string, referenceId: string, totalDebit: number, totalCredit: number, isPosted: boolean, isReversal: boolean, lines: Array<{ id: string, journalEntryId: string, glAccountId: string, lineNumber: number, description: string, debitAmount: number, creditAmount: number, netAmount: number, customerId: string | null, locationId: string | null, glAccount: { id: string, accountCode: string, name: string } | null }> | null }> };
 
 export type JournalReversalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originalJournalEntryId: string, reversalJournalEntryId: string | null, postedBatchId: string | null, status: JournalReversalStatus, requestedAccountingDate: number, resolvedFiscalYearId: string, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, requestedById: string, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string | null, cancelledById: string | null, cancelledAt: number | null, cancelReason: string | null, postedById: string | null, postedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'JournalReversalTableRowFieldsFragment' };
 
@@ -2227,7 +2512,7 @@ export type ShipmentWorkerFieldsFragment = { id: string, firstName: string, last
 
 export type ShipmentTractorFieldsFragment = { id: string, code: string } & { ' $fragmentName'?: 'ShipmentTractorFieldsFragment' };
 
-export type ShipmentTrailerFieldsFragment = { id: string, code: string } & { ' $fragmentName'?: 'ShipmentTrailerFieldsFragment' };
+export type ShipmentTrailerFieldsFragment = { id: string, code: string, equipmentTypeId: string } & { ' $fragmentName'?: 'ShipmentTrailerFieldsFragment' };
 
 export type ShipmentAssignmentFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, primaryWorkerId: string | null, tractorId: string | null, trailerId: string | null, secondaryWorkerId: string | null, status: AssignmentStatus, archivedAt: number | null, version: number, createdAt: number, updatedAt: number, tractor: { ' $fragmentRefs'?: { 'ShipmentTractorFieldsFragment': ShipmentTractorFieldsFragment } } | null, trailer: { ' $fragmentRefs'?: { 'ShipmentTrailerFieldsFragment': ShipmentTrailerFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'ShipmentWorkerFieldsFragment': ShipmentWorkerFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'ShipmentWorkerFieldsFragment': ShipmentWorkerFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentAssignmentFieldsFragment' };
 
@@ -2241,7 +2526,7 @@ export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitI
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, version: number, createdAt: number, updatedAt: number, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, version: number, createdAt: number, updatedAt: number, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -2278,7 +2563,7 @@ export type ShipmentPageAnalyticsQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string, origin: string, destination: string, driver: string, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
+export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, profitability: { avgCpm: number, avgMarginPct: number, hasMargin: boolean, unprofitableCount: number, shipmentCount: number, totalMiles: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string, origin: string, destination: string, driver: string, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
 
 export type ShipmentTomorrowsPickupsQueryVariables = Exact<{
   limit?: number | null | undefined;
@@ -2478,6 +2763,13 @@ export type DeleteShipmentCommentMutationVariables = Exact<{
 
 
 export type DeleteShipmentCommentMutation = { deleteShipmentComment: boolean };
+
+export type ShipmentProfitabilityQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentProfitabilityQuery = { shipmentProfitability: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, revenue: string, estimatedCost: string, profit: string, marginPercent: string | null, revenuePerLoadedMile: string | null, breakEvenRpm: string | null, missingDistance: boolean, breakdown: Array<{ category: CostCategoryType, name: string, costBehavior: CostBehavior, ratePerMile: string, amount: string, effectiveSource: EffectiveRateSource }>, profile: { totalCpm: string, variableCpm: string, fixedCpm: string, targetMarginPercent: string | null, includeDeadheadMiles: boolean, asOfDate: string, fuel: { pricePerGallon: string | null, priceDate: string, fuelIndexId: string | null, milesPerGallon: string, source: EffectiveRateSource } | null, glWindow: { fromDate: number, toDate: number, fleetMiles: number, hasPostings: boolean } | null } } };
 
 export type UpdateSidebarPreferencesMutationVariables = Exact<{
   input: SidebarPreferencesInput;
@@ -3615,6 +3907,24 @@ fragment UsStateTableFields on UsState {
   name
   abbreviation
 }`, {"fragmentName":"TrailerTableRowFields"}) as unknown as TypedDocumentString<TrailerTableRowFieldsFragment, unknown>;
+export const FiscalPeriodFieldsFragmentDoc = new TypedDocumentString(`
+    fragment FiscalPeriodFields on FiscalPeriod {
+  id
+  businessUnitId
+  organizationId
+  fiscalYearId
+  periodNumber
+  periodType
+  status
+  name
+  startDate
+  endDate
+  closedAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"FiscalPeriodFields"}) as unknown as TypedDocumentString<FiscalPeriodFieldsFragment, unknown>;
 export const FiscalYearTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment FiscalYearTableRowFields on FiscalYear {
   id
@@ -3632,8 +3942,26 @@ export const FiscalYearTableRowFieldsFragmentDoc = new TypedDocumentString(`
   version
   createdAt
   updatedAt
+  periods {
+    ...FiscalPeriodFields
+  }
 }
-    `, {"fragmentName":"FiscalYearTableRowFields"}) as unknown as TypedDocumentString<FiscalYearTableRowFieldsFragment, unknown>;
+    fragment FiscalPeriodFields on FiscalPeriod {
+  id
+  businessUnitId
+  organizationId
+  fiscalYearId
+  periodNumber
+  periodType
+  status
+  name
+  startDate
+  endDate
+  closedAt
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"FiscalYearTableRowFields"}) as unknown as TypedDocumentString<FiscalYearTableRowFieldsFragment, unknown>;
 export const FleetCodeTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment FleetCodeTableRowFields on FleetCode {
   id
@@ -4325,6 +4653,7 @@ export const ShipmentTrailerFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
     `, {"fragmentName":"ShipmentTrailerFields"}) as unknown as TypedDocumentString<ShipmentTrailerFieldsFragment, unknown>;
 export const ShipmentWorkerFieldsFragmentDoc = new TypedDocumentString(`
@@ -4378,6 +4707,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }`, {"fragmentName":"ShipmentAssignmentFields"}) as unknown as TypedDocumentString<ShipmentAssignmentFieldsFragment, unknown>;
 export const ShipmentMoveFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentMoveFields on ShipmentMove {
@@ -4435,6 +4765,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -4610,6 +4941,19 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -4717,6 +5061,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -5361,6 +5706,296 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:2822d802104dfabd7fe2f2d1ca2f602dc8252429dbef72cd86a9cb81d97c1a11"}) as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
+export const ArAgingSummaryDocument = new TypedDocumentString(`
+    query ArAgingSummary($asOfDate: Int) {
+  arAgingSummary(asOfDate: $asOfDate) {
+    asOfDate
+    totals {
+      currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+    }
+    rows {
+      customerId
+      customerName
+      buckets {
+        currentMinor
+        days1To30Minor
+        days31To60Minor
+        days61To90Minor
+        daysOver90Minor
+        totalOpenMinor
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:e15d59a908dce2b711f04ab748e41238803ed73f0e5a3566b1adfb553521f532"}) as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;
+export const ArOpenItemsDocument = new TypedDocumentString(`
+    query ArOpenItems($customerId: ID, $asOfDate: Int) {
+  arOpenItems(customerId: $customerId, asOfDate: $asOfDate) {
+    invoiceId
+    customerId
+    customerName
+    invoiceNumber
+    billType
+    invoiceDate
+    dueDate
+    currencyCode
+    shipmentProNumber
+    shipmentBol
+    totalAmountMinor
+    appliedAmountMinor
+    openAmountMinor
+    daysPastDue
+    settlementStatus
+    disputeStatus
+    hasShortPay
+  }
+}
+    `, {"hash":"sha256:03f9416ae24afd23531a73b23ace5f76aaea88bd287a1aae0b12bd75424fedc2"}) as unknown as TypedDocumentString<ArOpenItemsQuery, ArOpenItemsQueryVariables>;
+export const ArCustomerLedgerDocument = new TypedDocumentString(`
+    query ArCustomerLedger($customerId: ID!) {
+  arCustomerLedger(customerId: $customerId) {
+    customerId
+    transactionDate
+    eventType
+    documentNumber
+    sourceObjectType
+    sourceObjectId
+    amountMinor
+    relatedInvoiceId
+  }
+}
+    `, {"hash":"sha256:d9554d04015d108ca655b857f923eae260ae36f143a509025f79717a4fdf65c4"}) as unknown as TypedDocumentString<ArCustomerLedgerQuery, ArCustomerLedgerQueryVariables>;
+export const ArCustomerStatementDocument = new TypedDocumentString(`
+    query ArCustomerStatement($customerId: ID!, $startDate: Int, $asOfDate: Int) {
+  arCustomerStatement(
+    customerId: $customerId
+    startDate: $startDate
+    asOfDate: $asOfDate
+  ) {
+    customerId
+    customerName
+    statementDate
+    startDate
+    openingBalanceMinor
+    totalChargesMinor
+    totalPaymentsMinor
+    endingBalanceMinor
+    aging {
+      currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+    }
+    transactions {
+      transactionDate
+      eventType
+      documentNumber
+      sourceObjectId
+      amountMinor
+      chargeMinor
+      paymentMinor
+      runningBalanceMinor
+    }
+    openItems {
+      invoiceId
+      customerId
+      customerName
+      invoiceNumber
+      billType
+      invoiceDate
+      dueDate
+      currencyCode
+      shipmentProNumber
+      shipmentBol
+      totalAmountMinor
+      appliedAmountMinor
+      openAmountMinor
+      daysPastDue
+      settlementStatus
+      disputeStatus
+      hasShortPay
+    }
+  }
+}
+    `, {"hash":"sha256:02fa7018fe90124e84ec3909ad97282fdad2a2ee737eea5465e6ca2ca52a0b70"}) as unknown as TypedDocumentString<ArCustomerStatementQuery, ArCustomerStatementQueryVariables>;
+export const ArDashboardKpisDocument = new TypedDocumentString(`
+    query ArDashboardKpis {
+  arDashboardKpis {
+    asOfDate
+    overview {
+      totalOpenMinor
+      overdueMinor
+      unappliedCashMinor
+      disputedOpenMinor
+      openInvoiceCount
+      overdueInvoiceCount
+      disputedInvoiceCount
+      avgDaysPastDue
+      buckets {
+        currentMinor
+        days1To30Minor
+        days31To60Minor
+        days61To90Minor
+        daysOver90Minor
+        totalOpenMinor
+      }
+    }
+    currentDsoDays
+    dsoDeltaDays
+    cei
+    avgDaysToPay
+    overduePercent
+    writeOffRatio
+    disputeRate
+    shortPayRate
+  }
+}
+    `, {"hash":"sha256:a05fd02645fddb941d688972550b27be3ce6665510aecb4170c44dd11c491452"}) as unknown as TypedDocumentString<ArDashboardKpisQuery, ArDashboardKpisQueryVariables>;
+export const ArDsoTrendDocument = new TypedDocumentString(`
+    query ArDsoTrend($weeks: Int) {
+  arDsoTrend(weeks: $weeks) {
+    periodEnd
+    dsoDays
+    arBalanceMinor
+    billedMinor
+  }
+}
+    `, {"hash":"sha256:031255e1f9c64413b438a2b3825d9dd8c2101fb1705a6c0e6e66175243334571"}) as unknown as TypedDocumentString<ArDsoTrendQuery, ArDsoTrendQueryVariables>;
+export const ArAgingTrendDocument = new TypedDocumentString(`
+    query ArAgingTrend($weeks: Int) {
+  arAgingTrend(weeks: $weeks) {
+    periodEnd
+    buckets {
+      currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+    }
+  }
+}
+    `, {"hash":"sha256:ef0336444abe3d8b2ab3101645e9f24367fbb81bda8e4c66f902a2fbfedda191"}) as unknown as TypedDocumentString<ArAgingTrendQuery, ArAgingTrendQueryVariables>;
+export const ArCashFlowForecastDocument = new TypedDocumentString(`
+    query ArCashFlowForecast($pastWeeks: Int, $futureWeeks: Int) {
+  arCashFlowForecast(pastWeeks: $pastWeeks, futureWeeks: $futureWeeks) {
+    weekStart
+    expectedMinor
+    openDueMinor
+    actualMinor
+    isForecast
+  }
+}
+    `, {"hash":"sha256:a5a6d234e6dcbd2be9e4244023746ee4c4644b2f93108d908e5f457f74031246"}) as unknown as TypedDocumentString<ArCashFlowForecastQuery, ArCashFlowForecastQueryVariables>;
+export const ArCollectionPerformanceDocument = new TypedDocumentString(`
+    query ArCollectionPerformance($periodDays: Int) {
+  arCollectionPerformance(periodDays: $periodDays) {
+    totals {
+      periodStart
+      periodEnd
+      beginningOpenMinor
+      endingOpenMinor
+      endingCurrentMinor
+      creditSalesMinor
+      collectedMinor
+      avgDaysToPay
+      shortPayMinor
+      shortPayApplicationCount
+      applicationCount
+      disputedInvoiceCount
+      postedInvoiceCount
+    }
+    cei
+    writeOffRatio
+    disputeRate
+    shortPayRate
+  }
+}
+    `, {"hash":"sha256:d3e0b01af564df96113a703515f4c80fdefdbd7b2e70914bd8b7567153fc7e66"}) as unknown as TypedDocumentString<ArCollectionPerformanceQuery, ArCollectionPerformanceQueryVariables>;
+export const ArTopOverdueCustomersDocument = new TypedDocumentString(`
+    query ArTopOverdueCustomers($limit: Int) {
+  arTopOverdueCustomers(limit: $limit) {
+    customerId
+    customerName
+    overdueMinor
+    totalOpenMinor
+    oldestDaysPastDue
+    openInvoiceCount
+  }
+}
+    `, {"hash":"sha256:dddd0e21b1ac01157ee2f9d7b763f1f83ec482078ae54b30d159aa1e3641e408"}) as unknown as TypedDocumentString<ArTopOverdueCustomersQuery, ArTopOverdueCustomersQueryVariables>;
+export const ArCollectionsWorklistDocument = new TypedDocumentString(`
+    query ArCollectionsWorklist($limit: Int) {
+  arCollectionsWorklist(limit: $limit) {
+    invoiceId
+    customerId
+    customerName
+    invoiceNumber
+    dueDate
+    openAmountMinor
+    daysPastDue
+    isDisputed
+    hasShortPay
+    severity
+  }
+}
+    `, {"hash":"sha256:a72cdc4147d001e5acaecc0659d81becc1a7fb642c63c8e3f79240651ffadb40"}) as unknown as TypedDocumentString<ArCollectionsWorklistQuery, ArCollectionsWorklistQueryVariables>;
+export const ArPaymentStatsDocument = new TypedDocumentString(`
+    query ArPaymentStats {
+  arPaymentStats {
+    postedTodayMinor
+    postedTodayCount
+    unappliedCashMinor
+    unappliedPaymentCount
+    reversedLast30Minor
+    reversedLast30Count
+  }
+}
+    `, {"hash":"sha256:a4fe33f6233932aadde3e5ec2e4dc656c78b2e73188bab35638f674c3045bbeb"}) as unknown as TypedDocumentString<ArPaymentStatsQuery, ArPaymentStatsQueryVariables>;
+export const ArCustomerProfileDocument = new TypedDocumentString(`
+    query ArCustomerProfile($customerId: ID!) {
+  arCustomerProfile(customerId: $customerId) {
+    snapshot {
+      customerId
+      customerName
+      totalOpenMinor
+      overdueMinor
+      unappliedCashMinor
+      creditLimitMinor
+      hasCreditLimit
+      openInvoiceCount
+      oldestOpenInvoiceDate
+      oldestDaysPastDue
+      lastPaymentDate
+      lastPaymentMinor
+      avgDaysToPay
+      billedTrailing91Minor
+      buckets {
+        currentMinor
+        days1To30Minor
+        days31To60Minor
+        days61To90Minor
+        daysOver90Minor
+        totalOpenMinor
+      }
+      monthlyCollections {
+        monthStart
+        amountMinor
+      }
+    }
+    dsoDays
+    creditUtilization
+    delinquencyScore
+  }
+}
+    `, {"hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}) as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
 export const ApiKeyTableDocument = new TypedDocumentString(`
     query ApiKeyTable($input: DataTableConnectionInput!) {
   apiKeys(input: $input) {
@@ -5590,6 +6225,100 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:041b888950efa127280047210c6b31f1c0cc7acae490838d5dbe274e6f5c9e82"}) as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;
+export const CostingControlPageDocument = new TypedDocumentString(`
+    query CostingControlPage {
+  costingControl {
+    id
+    businessUnitId
+    organizationId
+    fuelIndexId
+    fuelIndex {
+      id
+      name
+      code
+      source
+      fuelType
+      isActive
+    }
+    useLiveFuelPrice
+    milesPerGallon
+    includeDeadheadMiles
+    glActualsEnabled
+    glRollingMonths
+    plannedMonthlyMiles
+    targetMarginPercent
+    version
+    createdAt
+    updatedAt
+    categories {
+      id
+      category
+      name
+      costBehavior
+      rateSource
+      benchmarkRatePerMile
+      overrideRatePerMile
+      isActive
+      sortOrder
+      version
+      glAccounts {
+        id
+        glAccountId
+        accountCode
+        accountName
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:a85cccb870b7669eca888497e484d84fee24b403957e9d3bbf4ff03b337551ea"}) as unknown as TypedDocumentString<CostingControlPageQuery, CostingControlPageQueryVariables>;
+export const ResolvedCostProfilePageDocument = new TypedDocumentString(`
+    query ResolvedCostProfilePage($asOfDate: String) {
+  resolvedCostProfile(asOfDate: $asOfDate) {
+    totalCpm
+    variableCpm
+    fixedCpm
+    targetMarginPercent
+    includeDeadheadMiles
+    asOfDate
+    fuel {
+      pricePerGallon
+      priceDate
+      fuelIndexId
+      milesPerGallon
+      source
+    }
+    categories {
+      category
+      name
+      costBehavior
+      ratePerMile
+      effectiveSource
+    }
+    glWindow {
+      fromDate
+      toDate
+      fleetMiles
+      hasPostings
+    }
+  }
+}
+    `, {"hash":"sha256:0b2352614b5935706f571748ef919218386d7f44cee104d0a0382467511caf67"}) as unknown as TypedDocumentString<ResolvedCostProfilePageQuery, ResolvedCostProfilePageQueryVariables>;
+export const UpdateCostingControlDocument = new TypedDocumentString(`
+    mutation UpdateCostingControl($input: CostingControlInput!) {
+  updateCostingControl(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:c1105bb2e20563d6d25437d41bf5dc0dbe04cd9acf23164e4782478cbd49fa0d"}) as unknown as TypedDocumentString<UpdateCostingControlMutation, UpdateCostingControlMutationVariables>;
+export const UpdateCostCategoryDocument = new TypedDocumentString(`
+    mutation UpdateCostCategory($input: CostCategoryUpdateInput!) {
+  updateCostCategory(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:2c74749981a6ed8680896dcf651f47a87e3aa698c2d3bf3c5c9b717e359ca828"}) as unknown as TypedDocumentString<UpdateCostCategoryMutation, UpdateCostCategoryMutationVariables>;
 export const CustomFieldDefinitionTableDocument = new TypedDocumentString(`
     query CustomFieldDefinitionTable($input: DataTableConnectionInput!) {
   customFieldDefinitions(input: $input) {
@@ -5625,6 +6354,190 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:8adb1344e082bff954969a271a629448765d0bf043201cbc840773ef215a8e11"}) as unknown as TypedDocumentString<CustomFieldDefinitionTableQuery, CustomFieldDefinitionTableQueryVariables>;
+export const CustomerPaymentTableDocument = new TypedDocumentString(`
+    query CustomerPaymentTable($input: DataTableConnectionInput!) {
+  customerPayments(input: $input) {
+    edges {
+      node {
+        id
+        organizationId
+        businessUnitId
+        customerId
+        paymentDate
+        accountingDate
+        amountMinor
+        appliedAmountMinor
+        unappliedAmountMinor
+        status
+        paymentMethod
+        referenceNumber
+        memo
+        currencyCode
+        postedBatchId
+        reversalBatchId
+        reversedById
+        reversedAt
+        reversalReason
+        createdById
+        updatedById
+        version
+        createdAt
+        updatedAt
+        customer {
+          id
+          code
+          name
+        }
+        applications {
+          id
+          customerPaymentId
+          invoiceId
+          appliedAmountMinor
+          shortPayAmountMinor
+          lineNumber
+          createdAt
+          updatedAt
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:95620bd474574dcb0e33efe78fadb92dd80a9a653322950286efc88f36eeb35d"}) as unknown as TypedDocumentString<CustomerPaymentTableQuery, CustomerPaymentTableQueryVariables>;
+export const CustomerPaymentDetailDocument = new TypedDocumentString(`
+    query CustomerPaymentDetail($id: ID!) {
+  customerPayment(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    customerId
+    paymentDate
+    accountingDate
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    paymentMethod
+    referenceNumber
+    memo
+    currencyCode
+    postedBatchId
+    reversalBatchId
+    reversedById
+    reversedAt
+    reversalReason
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+    customer {
+      id
+      code
+      name
+    }
+    applications {
+      id
+      customerPaymentId
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+      createdAt
+      updatedAt
+      invoice {
+        id
+        number
+        invoiceDate
+        dueDate
+        totalAmount
+        appliedAmount
+        settlementStatus
+        disputeStatus
+        billToName
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:63ba0ffb6ef2656f7dc2721a0f6fc0da8dc0d184ee08e3871f26e1048b6a9c3f"}) as unknown as TypedDocumentString<CustomerPaymentDetailQuery, CustomerPaymentDetailQueryVariables>;
+export const PostAndApplyCustomerPaymentDocument = new TypedDocumentString(`
+    mutation PostAndApplyCustomerPayment($input: PostCustomerPaymentInput!) {
+  postAndApplyCustomerPayment(input: $input) {
+    id
+    customerId
+    paymentDate
+    accountingDate
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    paymentMethod
+    referenceNumber
+    memo
+    currencyCode
+    postedBatchId
+    createdAt
+    updatedAt
+    applications {
+      id
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+    }
+  }
+}
+    `, {"hash":"sha256:8509b32952e2ba614257d3189c57cbd58da45afbb0dafb31f17958e117f62ea6"}) as unknown as TypedDocumentString<PostAndApplyCustomerPaymentMutation, PostAndApplyCustomerPaymentMutationVariables>;
+export const ApplyUnappliedCustomerPaymentDocument = new TypedDocumentString(`
+    mutation ApplyUnappliedCustomerPayment($input: ApplyCustomerPaymentInput!) {
+  applyUnappliedCustomerPayment(input: $input) {
+    id
+    customerId
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    updatedAt
+    applications {
+      id
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+    }
+  }
+}
+    `, {"hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}) as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
+export const ReverseCustomerPaymentDocument = new TypedDocumentString(`
+    mutation ReverseCustomerPayment($input: ReverseCustomerPaymentInput!) {
+  reverseCustomerPayment(input: $input) {
+    id
+    customerId
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    reversalBatchId
+    reversedById
+    reversedAt
+    reversalReason
+    updatedAt
+    applications {
+      id
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+    }
+  }
+}
+    `, {"hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}) as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
 export const CustomerTableDocument = new TypedDocumentString(`
     query CustomerTable($input: DataTableConnectionInput!) {
   customers(input: $input) {
@@ -6739,6 +7652,22 @@ export const FiscalYearTableDocument = new TypedDocumentString(`
   hasNextPage
   endCursor
 }
+fragment FiscalPeriodFields on FiscalPeriod {
+  id
+  businessUnitId
+  organizationId
+  fiscalYearId
+  periodNumber
+  periodType
+  status
+  name
+  startDate
+  endDate
+  closedAt
+  version
+  createdAt
+  updatedAt
+}
 fragment FiscalYearTableRowFields on FiscalYear {
   id
   businessUnitId
@@ -6755,7 +7684,10 @@ fragment FiscalYearTableRowFields on FiscalYear {
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:b201f867a66edbfce1f3b205c8cfe6b1a7882dc5896b6b3b2e149a9ed1d654b4"}) as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
+  periods {
+    ...FiscalPeriodFields
+  }
+}`, {"hash":"sha256:159f55ea593ba3c8d3ad7f9c22cbdc9f4faf731f2b1dd2ebe34da83b1eac82b3"}) as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
 export const FleetCodeTableDocument = new TypedDocumentString(`
     query FleetCodeTable($input: DataTableConnectionInput!) {
   fleetCodes(input: $input) {
@@ -7318,6 +8250,98 @@ fragment InvoiceTableRowFields on Invoice {
     code
   }
 }`, {"hash":"sha256:c0a125f36486b5046c94215debaab6cc1d2f63ff57cfdfed8c9d9ceadb3c1d3c"}) as unknown as TypedDocumentString<InvoiceTableQuery, InvoiceTableQueryVariables>;
+export const JournalEntryDetailDocument = new TypedDocumentString(`
+    query JournalEntryDetail($id: ID!) {
+  journalEntry(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    batchId
+    fiscalYearId
+    fiscalPeriodId
+    entryNumber
+    entryType
+    status
+    accountingDate
+    description
+    referenceType
+    referenceId
+    totalDebit
+    totalCredit
+    isPosted
+    isReversal
+    reversalOfId
+    reversedById
+    reversalDate
+    reversalReason
+    lines {
+      id
+      journalEntryId
+      glAccountId
+      lineNumber
+      description
+      debitAmount
+      creditAmount
+      netAmount
+      customerId
+      locationId
+      glAccount {
+        id
+        accountCode
+        name
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:9115c76311ea912a3c9abf400bf6fc66c811ec2227b1500769f88a829782a646"}) as unknown as TypedDocumentString<JournalEntryDetailQuery, JournalEntryDetailQueryVariables>;
+export const JournalSourceByObjectDocument = new TypedDocumentString(`
+    query JournalSourceByObject($sourceType: String!, $sourceId: String!) {
+  journalSourceByObject(sourceType: $sourceType, sourceId: $sourceId) {
+    id
+    sourceObjectType
+    sourceObjectId
+    sourceEventType
+    sourceDocumentNumber
+    status
+  }
+}
+    `, {"hash":"sha256:9fc6924e799999cbc0d1e413752b76e244eb6f3d8f0cef4eec55f1c5d2b785af"}) as unknown as TypedDocumentString<JournalSourceByObjectQuery, JournalSourceByObjectQueryVariables>;
+export const JournalEntriesBySourceDocument = new TypedDocumentString(`
+    query JournalEntriesBySource($sourceType: String!, $sourceId: String!) {
+  journalEntriesBySource(sourceType: $sourceType, sourceId: $sourceId) {
+    id
+    batchId
+    entryNumber
+    entryType
+    status
+    accountingDate
+    description
+    referenceType
+    referenceId
+    totalDebit
+    totalCredit
+    isPosted
+    isReversal
+    lines {
+      id
+      journalEntryId
+      glAccountId
+      lineNumber
+      description
+      debitAmount
+      creditAmount
+      netAmount
+      customerId
+      locationId
+      glAccount {
+        id
+        accountCode
+        name
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:fda3eefb446f90d8e933f63b8db868bf7045f0a841ecafdd013ff3240df17e1f"}) as unknown as TypedDocumentString<JournalEntriesBySourceQuery, JournalEntriesBySourceQueryVariables>;
 export const JournalReversalTableDocument = new TypedDocumentString(`
     query JournalReversalTable($input: DataTableConnectionInput!) {
   journalReversals(input: $input) {
@@ -8643,6 +9667,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -8836,6 +9861,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -8908,7 +9946,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:5bb6197733f36f72dcd91614c2d7ba3ef4141e5ce6f370bc7b3fac9abcdf163d"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:4d28a793afb960f68dd010b19099e1f7bc0dfd278fb78ab01139d854554e379b"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -8953,6 +9991,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -9146,6 +10185,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -9214,7 +10266,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:3701e061139f49248815683900867b873b462d200a27846ffe0bb053339aecd4"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:df20d9c13e8b8d79f81f2fe031f751730fbcb1c787ba643b75c2f331104a5750"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -9261,6 +10313,14 @@ export const ShipmentPageAnalyticsDocument = new TypedDocumentString(`
       target
       deltaPp
       sevenDayPercent
+    }
+    profitability {
+      avgCpm
+      avgMarginPct
+      hasMargin
+      unprofitableCount
+      shipmentCount
+      totalMiles
     }
     revenueToday {
       total
@@ -9338,7 +10398,7 @@ export const ShipmentPageAnalyticsDocument = new TypedDocumentString(`
     }
   }
 }
-    `, {"hash":"sha256:2fdb047822c415d2359c27fae392ff5cd6db97f04c3a53aaf25d0af6c04125fd"}) as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
+    `, {"hash":"sha256:ad48e5077b2ccc6fd13488ff0477d404b19f9a4067a6d2dbc5451ec44869443e"}) as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
 export const ShipmentTomorrowsPickupsDocument = new TypedDocumentString(`
     query ShipmentTomorrowsPickups($limit: Int, $offset: Int, $timezone: String) {
   shipmentAnalytics(
@@ -9418,6 +10478,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -9611,6 +10672,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -9683,7 +10757,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:312e7a8a5ebf7eda28cf83266be4d61cab94bef980183b9b236ea319c58b738d"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:23ad07cfa42399cad844ccc2f57f993ffaa92d817a2b839116236fb8aeb1a388"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -9736,6 +10810,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -9929,6 +11004,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -10001,7 +11089,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:eb79a2171d15cace2694bc8bddf94e2fd96b56966fdb057d9d35440be189c550"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:dee39a3d7c719d04e89edbb797b19d1e25ab78b29f4f5c0be7126011eabb80b7"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -10054,6 +11142,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -10247,6 +11336,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -10319,7 +11421,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:15823444d264474f897584359043af5aa688f1bc6c911465179a6cb4b1e341ff"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:7db4c4d1b677282ede5ee206ac55d615348347ad352ee1f3c90a25d0bb9a36e5"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
     query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
   shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
@@ -10582,6 +11684,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -10775,6 +11878,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -10843,7 +11959,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:33bf61afb83ec5de2cbb281cd034de8ff36704d5e9ae988f5f0bc909699a3b46"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:326291ba8669217819cfd1c4af15079ce55b7da617c47bc50de2a9c369f71385"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -10888,6 +12004,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -11081,6 +12198,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -11149,7 +12279,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:b898ca84a20427c07d26fbfcd21ffc69c5af808d084c8e09e6e7c58323519954"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:18c59e6b19b7aac3db3baf9965db1d32bf5f0b18de0f44697db50572377188d3"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -11194,6 +12324,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -11387,6 +12518,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -11455,7 +12599,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:fca901f9a15e33aa3c64a8dfd1b0afaf2d790c784297717f1acdbbec592b1c44"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:c4aab7651a8aada657e62050b5050a42b0147ea3f5a0857ccf4630718d549e89"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -11500,6 +12644,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -11693,6 +12838,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -11761,7 +12919,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:66c24a5c220cc1f04a02293cf06278cdeb21acb9f2741791c5b4e50d6f0a99de"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:6344073680c40eb23265bad1341c0ea6dfafd5663ec4449e2309c5fe14b6d754"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -11817,6 +12975,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 fragment ShipmentAssignmentFields on ShipmentAssignment {
   id
@@ -12010,6 +13169,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -12078,7 +13250,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:74acdf68d7a893c548951c675febe4ed95ed351834fa85bb87687e4744f817d3"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:ee216ef9ed7f98ccdceb2c1293cebe603782238fe351089d291d1ebeed6f1deb"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {
@@ -12385,6 +13557,52 @@ export const DeleteShipmentCommentDocument = new TypedDocumentString(`
   deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
 }
     `, {"hash":"sha256:a20dcdea6225911dd4742c1e415a5f1e2b04d0111fbaf5ecbda1e8136b3dfa14"}) as unknown as TypedDocumentString<DeleteShipmentCommentMutation, DeleteShipmentCommentMutationVariables>;
+export const ShipmentProfitabilityDocument = new TypedDocumentString(`
+    query ShipmentProfitability($shipmentId: ID!) {
+  shipmentProfitability(shipmentId: $shipmentId) {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    revenue
+    estimatedCost
+    profit
+    marginPercent
+    revenuePerLoadedMile
+    breakEvenRpm
+    missingDistance
+    breakdown {
+      category
+      name
+      costBehavior
+      ratePerMile
+      amount
+      effectiveSource
+    }
+    profile {
+      totalCpm
+      variableCpm
+      fixedCpm
+      targetMarginPercent
+      includeDeadheadMiles
+      asOfDate
+      fuel {
+        pricePerGallon
+        priceDate
+        fuelIndexId
+        milesPerGallon
+        source
+      }
+      glWindow {
+        fromDate
+        toDate
+        fleetMiles
+        hasPostings
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:ba934decc6721bef0b703376a291e500f48d887692508b928c2286896b52d8a9"}) as unknown as TypedDocumentString<ShipmentProfitabilityQuery, ShipmentProfitabilityQueryVariables>;
 export const UpdateSidebarPreferencesDocument = new TypedDocumentString(`
     mutation UpdateSidebarPreferences($input: SidebarPreferencesInput!) {
   updateSidebarPreferences(input: $input) {

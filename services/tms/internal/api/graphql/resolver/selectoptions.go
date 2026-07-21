@@ -75,6 +75,9 @@ func (r *queryResolver) resolveSelectOptions(
 
 func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry {
 	return map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry{
+		gqlmodel.SelectOptionResourceCustomer: {
+			resolve: r.resolveCustomerSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceEquipmentType: {
 			resolve: r.resolveEquipmentTypeSelectOptions,
 		},
@@ -107,6 +110,15 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceFuelSurchargeProgram: {
 			resolve: r.resolveFuelSurchargeProgramSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceFiscalYear: {
+			resolve: r.resolveFiscalYearSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceFiscalPeriod: {
+			resolve: r.resolveFiscalPeriodSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceGlAccount: {
+			resolve: r.resolveGLAccountSelectOptions,
 		},
 	}
 }
@@ -575,8 +587,8 @@ func equipmentTypeClassesFilter(filters map[string]any) []string {
 	case []any:
 		classes := make([]string, 0, len(typed))
 		for _, item := range typed {
-			class, ok := item.(string)
-			if ok && class != "" {
+			class, isString := item.(string)
+			if isString && class != "" {
 				classes = append(classes, class)
 			}
 		}

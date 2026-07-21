@@ -1,3 +1,20 @@
+fragment FiscalPeriodFields on FiscalPeriod {
+  id
+  businessUnitId
+  organizationId
+  fiscalYearId
+  periodNumber
+  periodType
+  status
+  name
+  startDate
+  endDate
+  closedAt
+  version
+  createdAt
+  updatedAt
+}
+
 fragment FiscalYearTableRowFields on FiscalYear {
   id
   businessUnitId
@@ -14,6 +31,9 @@ fragment FiscalYearTableRowFields on FiscalYear {
   version
   createdAt
   updatedAt
+  periods {
+    ...FiscalPeriodFields
+  }
 }
 
 query FiscalYearTable($input: DataTableConnectionInput!) {

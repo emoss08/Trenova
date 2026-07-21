@@ -1,0 +1,272 @@
+query ArAgingSummary($asOfDate: Int) {
+  arAgingSummary(asOfDate: $asOfDate) {
+    asOfDate
+    totals {
+      currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+    }
+    rows {
+      customerId
+      customerName
+      buckets {
+        currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+      }
+    }
+  }
+}
+
+query ArOpenItems($customerId: ID, $asOfDate: Int) {
+  arOpenItems(customerId: $customerId, asOfDate: $asOfDate) {
+    invoiceId
+    customerId
+    customerName
+    invoiceNumber
+    billType
+    invoiceDate
+    dueDate
+    currencyCode
+    shipmentProNumber
+    shipmentBol
+    totalAmountMinor
+    appliedAmountMinor
+    openAmountMinor
+    daysPastDue
+    settlementStatus
+    disputeStatus
+    hasShortPay
+  }
+}
+
+query ArCustomerLedger($customerId: ID!) {
+  arCustomerLedger(customerId: $customerId) {
+    customerId
+    transactionDate
+    eventType
+    documentNumber
+    sourceObjectType
+    sourceObjectId
+    amountMinor
+    relatedInvoiceId
+  }
+}
+
+query ArCustomerStatement($customerId: ID!, $startDate: Int, $asOfDate: Int) {
+  arCustomerStatement(customerId: $customerId, startDate: $startDate, asOfDate: $asOfDate) {
+    customerId
+    customerName
+    statementDate
+    startDate
+    openingBalanceMinor
+    totalChargesMinor
+    totalPaymentsMinor
+    endingBalanceMinor
+    aging {
+      currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+    }
+    transactions {
+      transactionDate
+      eventType
+      documentNumber
+      sourceObjectId
+      amountMinor
+      chargeMinor
+      paymentMinor
+      runningBalanceMinor
+    }
+    openItems {
+      invoiceId
+    customerId
+    customerName
+    invoiceNumber
+    billType
+    invoiceDate
+    dueDate
+    currencyCode
+    shipmentProNumber
+    shipmentBol
+    totalAmountMinor
+    appliedAmountMinor
+    openAmountMinor
+    daysPastDue
+    settlementStatus
+    disputeStatus
+    hasShortPay
+    }
+  }
+}
+
+query ArDashboardKpis {
+  arDashboardKpis {
+    asOfDate
+    overview {
+      totalOpenMinor
+      overdueMinor
+      unappliedCashMinor
+      disputedOpenMinor
+      openInvoiceCount
+      overdueInvoiceCount
+      disputedInvoiceCount
+      avgDaysPastDue
+      buckets {
+        currentMinor
+        days1To30Minor
+        days31To60Minor
+        days61To90Minor
+        daysOver90Minor
+        totalOpenMinor
+      }
+    }
+    currentDsoDays
+    dsoDeltaDays
+    cei
+    avgDaysToPay
+    overduePercent
+    writeOffRatio
+    disputeRate
+    shortPayRate
+  }
+}
+
+query ArDsoTrend($weeks: Int) {
+  arDsoTrend(weeks: $weeks) {
+    periodEnd
+    dsoDays
+    arBalanceMinor
+    billedMinor
+  }
+}
+
+query ArAgingTrend($weeks: Int) {
+  arAgingTrend(weeks: $weeks) {
+    periodEnd
+    buckets {
+      currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+    }
+  }
+}
+
+query ArCashFlowForecast($pastWeeks: Int, $futureWeeks: Int) {
+  arCashFlowForecast(pastWeeks: $pastWeeks, futureWeeks: $futureWeeks) {
+    weekStart
+    expectedMinor
+    openDueMinor
+    actualMinor
+    isForecast
+  }
+}
+
+query ArCollectionPerformance($periodDays: Int) {
+  arCollectionPerformance(periodDays: $periodDays) {
+    totals {
+      periodStart
+      periodEnd
+      beginningOpenMinor
+      endingOpenMinor
+      endingCurrentMinor
+      creditSalesMinor
+      collectedMinor
+      avgDaysToPay
+      shortPayMinor
+      shortPayApplicationCount
+      applicationCount
+      disputedInvoiceCount
+      postedInvoiceCount
+    }
+    cei
+    writeOffRatio
+    disputeRate
+    shortPayRate
+  }
+}
+
+query ArTopOverdueCustomers($limit: Int) {
+  arTopOverdueCustomers(limit: $limit) {
+    customerId
+    customerName
+    overdueMinor
+    totalOpenMinor
+    oldestDaysPastDue
+    openInvoiceCount
+  }
+}
+
+query ArCollectionsWorklist($limit: Int) {
+  arCollectionsWorklist(limit: $limit) {
+    invoiceId
+    customerId
+    customerName
+    invoiceNumber
+    dueDate
+    openAmountMinor
+    daysPastDue
+    isDisputed
+    hasShortPay
+    severity
+  }
+}
+
+query ArPaymentStats {
+  arPaymentStats {
+    postedTodayMinor
+    postedTodayCount
+    unappliedCashMinor
+    unappliedPaymentCount
+    reversedLast30Minor
+    reversedLast30Count
+  }
+}
+
+query ArCustomerProfile($customerId: ID!) {
+  arCustomerProfile(customerId: $customerId) {
+    snapshot {
+      customerId
+      customerName
+      totalOpenMinor
+      overdueMinor
+      unappliedCashMinor
+      creditLimitMinor
+      hasCreditLimit
+      openInvoiceCount
+      oldestOpenInvoiceDate
+      oldestDaysPastDue
+      lastPaymentDate
+      lastPaymentMinor
+      avgDaysToPay
+      billedTrailing91Minor
+      buckets {
+        currentMinor
+      days1To30Minor
+      days31To60Minor
+      days61To90Minor
+      daysOver90Minor
+      totalOpenMinor
+      }
+      monthlyCollections {
+        monthStart
+        amountMinor
+      }
+    }
+    dsoDays
+    creditUtilization
+    delinquencyScore
+  }
+}

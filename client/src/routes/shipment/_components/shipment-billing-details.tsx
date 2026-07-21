@@ -20,6 +20,7 @@ import type React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
 import { PreviousRatesButton } from "./previous-rates-dialog";
+import { ProfitabilitySummary } from "./profitability/profitability-summary";
 
 function Inner({ children }: { children: React.ReactNode }) {
   const { control, getValues } = useFormContext<Shipment>();
@@ -246,8 +247,9 @@ function RatingBreakdownCard() {
 }
 
 export default function ShipmentBillingDetails() {
-  const { control } = useFormContext<Shipment>();
+  const { control, getValues } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
+  const shipmentId = getValues("id");
   const {
     isCalculating,
     error: totalsError,
@@ -262,6 +264,7 @@ export default function ShipmentBillingDetails() {
         onResolve={resolveFuelSurchargeChange}
       />
       {customerId && <CreditHoldAlert customerId={customerId} />}
+      {shipmentId && <ProfitabilitySummary shipmentId={shipmentId} />}
       <FormGroup cols={2}>
         <FormControl>
           <CustomerAutocompleteField

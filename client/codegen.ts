@@ -4,7 +4,10 @@ const config: CodegenConfig = {
   schema: "../services/tms/internal/api/graphql/schema/*.graphqls",
   documents: "src/graphql/operations/**/*.graphql",
   hooks: {
-    afterAllFileWrite: ["node scripts/sync-graphql-persisted-documents.mjs"],
+    afterAllFileWrite: [
+      "node scripts/sync-graphql-persisted-documents.mjs",
+      "node scripts/generate-graphql-catalog.mjs",
+    ],
   },
   generates: {
     "src/graphql/generated/": {

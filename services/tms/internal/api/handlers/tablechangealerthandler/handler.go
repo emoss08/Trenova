@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
@@ -17,36 +19,48 @@ import (
 type Params struct {
 	fx.In
 
-	Service      *tablechangealertservice.Service
-	ErrorHandler *helpers.ErrorHandler
+	Service              *tablechangealertservice.Service
+	ErrorHandler         *helpers.ErrorHandler
+	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *tablechangealertservice.Service
 	eh      *helpers.ErrorHandler
+	pm      *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
 		eh:      p.ErrorHandler,
+		pm:      p.PermissionMiddleware,
 	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	tca := rg.Group("/tca")
+	resource := permission.ResourceTableChangeAlert.String()
 
 	allowlist := tca.Group("/allowlisted-tables")
-	allowlist.GET("/", h.listAllowlistedTables)
+	allowlist.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.listAllowlistedTables)
 
 	subs := tca.Group("/subscriptions")
-	subs.GET("/", h.listSubscriptions)
-	subs.GET("/:id", h.getSubscription)
-	subs.POST("/", h.createSubscription)
-	subs.PUT("/:id", h.updateSubscription)
-	subs.DELETE("/:id", h.deleteSubscription)
-	subs.PATCH("/:id/pause", h.pauseSubscription)
-	subs.PATCH("/:id/resume", h.resumeSubscription)
+	subs.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.listSubscriptions)
+	subs.GET("/:id", h.pm.RequirePermission(resource, permission.OpRead), h.getSubscription)
+	subs.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.createSubscription)
+	subs.PUT("/:id", h.pm.RequirePermission(resource, permission.OpUpdate), h.updateSubscription)
+	subs.DELETE("/:id", h.pm.RequirePermission(resource, permission.OpDelete), h.deleteSubscription)
+	subs.PATCH(
+		"/:id/pause",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.pauseSubscription,
+	)
+	subs.PATCH(
+		"/:id/resume",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.resumeSubscription,
+	)
 }
 
 func (h *Handler) listAllowlistedTables(c *gin.Context) {

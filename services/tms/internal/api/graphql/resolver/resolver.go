@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
+	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
+	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
@@ -31,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -75,6 +78,11 @@ type Params struct {
 	EquipmentTypeService         *equipmenttypeservice.Service
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
+	AccountsReceivableService    *accountsreceivableservice.Service
+	CustomerPaymentService       services.CustomerPaymentService
+	CustomerPaymentRepo          repositories.CustomerPaymentRepository
+	CustomerRepo                 repositories.CustomerRepository
+	GLAccountRepo                repositories.GLAccountRepository
 	CommodityService             *commodityservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
@@ -97,15 +105,19 @@ type Params struct {
 	FormulaTemplateService       *formulatemplateservice.Service
 	RateTableService             *ratetableservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
+	CostingService               *costingservice.Service
 	FuelIndexRepo                repositories.FuelIndexRepository
 	FuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
+	FiscalYearRepo               repositories.FiscalYearRepository
+	FiscalPeriodRepo             repositories.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
 	StoredMileageService         *storedmileageservice.Service
 	ManualJournalService         *manualjournalservice.Service
+	JournalEntryService          *journalentryservice.Service
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 services.AuditService
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
@@ -138,6 +150,11 @@ type Resolver struct {
 	equipmentTypeService         *equipmenttypeservice.Service
 	accessorialChargeService     *accessorialchargeservice.Service
 	accountTypeService           *accounttypeservice.Service
+	accountsReceivableService    *accountsreceivableservice.Service
+	customerPaymentService       services.CustomerPaymentService
+	customerPaymentRepo          repositories.CustomerPaymentRepository
+	customerRepo                 repositories.CustomerRepository
+	glAccountRepo                repositories.GLAccountRepository
 	commodityService             *commodityservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
@@ -161,15 +178,19 @@ type Resolver struct {
 	formulaTemplateService       *formulatemplateservice.Service
 	rateTableService             *ratetableservice.Service
 	fuelSurchargeService         *fuelsurchargeservice.Service
+	costingService               *costingservice.Service
 	fuelIndexRepo                repositories.FuelIndexRepository
 	fuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	fuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
+	fiscalYearRepo               repositories.FiscalYearRepository
+	fiscalPeriodRepo             repositories.FiscalPeriodRepository
 	emailService                 *emailservice.Service
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
 	distanceProfileService       *distanceprofileservice.Service
 	storedMileageService         *storedmileageservice.Service
 	manualJournalService         *manualjournalservice.Service
+	journalEntryService          *journalentryservice.Service
 	journalReversalService       *journalreversalservice.Service
 	auditService                 services.AuditService
 	serviceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
@@ -203,6 +224,11 @@ func New(p Params) *Resolver {
 		equipmentTypeService:         p.EquipmentTypeService,
 		accessorialChargeService:     p.AccessorialChargeService,
 		accountTypeService:           p.AccountTypeService,
+		accountsReceivableService:    p.AccountsReceivableService,
+		customerPaymentService:       p.CustomerPaymentService,
+		customerPaymentRepo:          p.CustomerPaymentRepo,
+		customerRepo:                 p.CustomerRepo,
+		glAccountRepo:                p.GLAccountRepo,
 		commodityService:             p.CommodityService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,
@@ -226,15 +252,19 @@ func New(p Params) *Resolver {
 		formulaTemplateService:       p.FormulaTemplateService,
 		rateTableService:             p.RateTableService,
 		fuelSurchargeService:         p.FuelSurchargeService,
+		costingService:               p.CostingService,
 		fuelIndexRepo:                p.FuelIndexRepo,
 		fuelIndexPriceRepo:           p.FuelIndexPriceRepo,
 		fuelSurchargeProgramRepo:     p.FuelSurchargeProgramRepo,
+		fiscalYearRepo:               p.FiscalYearRepo,
+		fiscalPeriodRepo:             p.FiscalPeriodRepo,
 		emailService:                 p.EmailService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
 		distanceOverrideService:      p.DistanceOverrideService,
 		distanceProfileService:       p.DistanceProfileService,
 		storedMileageService:         p.StoredMileageService,
 		manualJournalService:         p.ManualJournalService,
+		journalEntryService:          p.JournalEntryService,
 		journalReversalService:       p.JournalReversalService,
 		auditService:                 p.AuditService,
 		serviceFailureReasonCodeSvc:  p.ServiceFailureReasonCodeSvc,

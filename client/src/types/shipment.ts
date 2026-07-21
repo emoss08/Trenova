@@ -12,10 +12,7 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { locationSchema } from "./location";
-import { tractorSchema } from "./tractor";
-import { trailerSchema } from "./trailer";
 import { userSchema } from "./user";
-import { workerSchema } from "./worker";
 
 export const shipmentStatusSchema = z.enum([
   "New",
@@ -163,6 +160,25 @@ export const assignmentPayloadSchema = z.object({
 });
 export type AssignmentPayload = z.infer<typeof assignmentPayloadSchema>;
 
+const assignmentTractorSummarySchema = z.object({
+  id: optionalStringSchema,
+  code: optionalStringSchema,
+});
+
+const assignmentTrailerSummarySchema = z.object({
+  id: optionalStringSchema,
+  code: optionalStringSchema,
+  equipmentTypeId: nullableStringSchema,
+});
+
+const assignmentWorkerSummarySchema = z.object({
+  id: optionalStringSchema,
+  firstName: optionalStringSchema,
+  lastName: optionalStringSchema,
+  wholeName: optionalStringSchema,
+  profilePicUrl: nullableStringSchema,
+});
+
 export const assignmentSchema = z.object({
   id: optionalStringSchema,
   shipmentMoveId: optionalStringSchema,
@@ -171,10 +187,10 @@ export const assignmentSchema = z.object({
   tractorId: nullableStringSchema,
   secondaryWorkerId: nullableStringSchema,
   trailerId: nullableStringSchema,
-  tractor: tractorSchema.nullish(),
-  trailer: trailerSchema.nullish(),
-  primaryWorker: workerSchema.nullish(),
-  secondaryWorker: workerSchema.nullish(),
+  tractor: assignmentTractorSummarySchema.nullish(),
+  trailer: assignmentTrailerSummarySchema.nullish(),
+  primaryWorker: assignmentWorkerSummarySchema.nullish(),
+  secondaryWorker: assignmentWorkerSummarySchema.nullish(),
   version: z.number().optional(),
 });
 export type Assignment = z.infer<typeof assignmentSchema>;
@@ -339,7 +355,7 @@ export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
 const shipmentBaseSchema = z.object({
   sourceDocumentId: nullableStringSchema,
-  orderId: optionalStringSchema,
+  orderId: nullableStringSchema,
   orderNumber: nullableStringSchema,
   orderStatus: nullableStringSchema,
   serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
@@ -378,9 +394,27 @@ const shipmentBaseSchema = z.object({
   ratingDetail: ratingDetailSchema.nullable().optional(),
 });
 
+export const shipmentProfitabilityEstimateSchema = z.object({
+  shipmentId: z.string(),
+  loadedMiles: z.number(),
+  deadheadMiles: z.number(),
+  totalMiles: z.number(),
+  costPerMile: z.string(),
+  estimatedCost: z.string(),
+  profit: z.string(),
+  marginPercent: z.string().nullish(),
+  breakEvenRpm: z.string().nullish(),
+  targetMarginPercent: z.string().nullish(),
+  missingDistance: z.boolean(),
+});
+export type ShipmentProfitabilityEstimate = z.infer<
+  typeof shipmentProfitabilityEstimateSchema
+>;
+
 export const shipmentSchema = z.object({
   ...tenantInfoSchema.shape,
   ...shipmentBaseSchema.shape,
+  profitabilityEstimate: shipmentProfitabilityEstimateSchema.nullish(),
   moves: z.array(shipmentMoveSchema).default([]),
   additionalCharges: z.array(additionalChargeSchema).default([]),
   commodities: z.array(shipmentCommoditySchema).default([]),

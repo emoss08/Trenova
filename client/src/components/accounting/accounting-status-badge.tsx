@@ -5,16 +5,18 @@ import type { WorkItemStatus } from "@/types/bank-receipt-work-item";
 import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { ManualJournalStatus } from "@/types/manual-journal";
 
-type AccountingStatus =
+export type AccountingStatus =
   | ManualJournalStatus
   | JournalReversalStatus
   | BankReceiptStatus
   | BankReceiptBatchStatus
-  | WorkItemStatus;
+  | WorkItemStatus
+  | (string & {});
 
 const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
   Draft: "secondary",
   Requested: "secondary",
+  Pending: "orange",
   PendingApproval: "orange",
   Approved: "active",
   Rejected: "inactive",

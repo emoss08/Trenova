@@ -253,6 +253,26 @@ function JournalPolicyCard() {
           <FormControl className="max-w-[420px]">
             <GLAccountAutocompleteField
               control={control}
+              name="defaultCashAccountId"
+              label="Default Cash Account"
+              placeholder="Select cash account"
+              description="GL account debited when customer payments are posted. Required to record customer payments."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultUnappliedCashAccountId"
+              label="Default Unapplied Cash Account"
+              placeholder="Select unapplied cash account"
+              description="Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
               name="defaultExpenseAccountId"
               label="Default Expense Account"
               placeholder="Select expense account"

@@ -162,9 +162,11 @@ export class GraphQLRequestError extends Error {
   }
 }
 
-export function resolveGraphQLURL(apiBaseURL = API_BASE_URL): string {
+export function resolveGraphQLURL(apiBaseURL = API_BASE_URL, operationName?: string): string {
+  const suffix = operationName ? `?op=${encodeURIComponent(operationName)}` : "";
+
   if (!apiBaseURL.startsWith("http")) {
-    return "/graphql";
+    return `/graphql${suffix}`;
   }
 
   const url = new URL(apiBaseURL);
@@ -172,7 +174,16 @@ export function resolveGraphQLURL(apiBaseURL = API_BASE_URL): string {
   url.search = "";
   url.hash = "";
 
-  return url.toString();
+  return `${url.toString()}${suffix}`;
+}
+
+const operationNamePattern = /\b(?:query|mutation|subscription)\s+(\w+)/;
+
+// extractOperationName reads the operation name from a GraphQL document string so the
+// request URL can be labelled per-operation (e.g. /graphql?op=ShipmentDetail) instead of the
+// opaque /graphql that persisted-query POSTs would otherwise show in the network tab.
+export function extractOperationName(query: string): string | undefined {
+  return operationNamePattern.exec(query)?.[1];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -234,8 +245,9 @@ export async function requestGraphQL<
   operationName,
   variables,
 }: GraphQLRequestParams<TVariables>): Promise<TData> {
+  const query = document.toString();
   const body: GraphQLRequestBody<TVariables> = {
-    query: document.toString(),
+    query,
     operationName,
     variables,
   };
@@ -249,7 +261,8 @@ export async function requestGraphQL<
     };
   }
 
-  const response = await fetch(resolveGraphQLURL(), {
+  const operationLabel = operationName ?? extractOperationName(query);
+  const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
     body: JSON.stringify(body),
     credentials: "include",
     headers: await withCsrfHeader("POST", { "Content-Type": "application/json" }, "/graphql"),

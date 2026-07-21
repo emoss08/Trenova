@@ -14,7 +14,14 @@ export type ShipmentAnalyticsData = {
     sparkline: { hour: string; value: number }[];
     deltaPct: number;
     rpm: number;
-    marginPct: number;
+  };
+  profitability: {
+    avgCpm: number;
+    avgMarginPct: number;
+    hasMargin: boolean;
+    unprofitableCount: number;
+    shipmentCount: number;
+    totalMiles: number;
   };
   activeShipments: {
     count: number;
@@ -131,7 +138,14 @@ export const defaultAnalyticsData: ShipmentAnalyticsData = {
     sparkline: asSparkline(REVENUE_SERIES),
     deltaPct: 8.1,
     rpm: 2.18,
-    marginPct: 22.4,
+  },
+  profitability: {
+    avgCpm: 0,
+    avgMarginPct: 0,
+    hasMargin: false,
+    unprofitableCount: 0,
+    shipmentCount: 0,
+    totalMiles: 0,
   },
   activeShipments: {
     count: 142,
@@ -233,6 +247,7 @@ export function mergeShipmentAnalyticsWithDefaults(
 ): ShipmentAnalyticsData {
   return {
     revenueToday: { ...defaultAnalyticsData.revenueToday, ...data.revenueToday },
+    profitability: { ...defaultAnalyticsData.profitability, ...data.profitability },
     activeShipments: {
       ...defaultAnalyticsData.activeShipments,
       ...data.activeShipments,

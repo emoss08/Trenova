@@ -28,6 +28,8 @@ models:
         resolver: true
       orderStatus:
         resolver: true
+      profitabilityEstimate:
+        resolver: true
   JSON:
     model:
       - github.com/99designs/gqlgen/graphql.Map
@@ -259,6 +261,18 @@ models:
   FiscalYear:
     model:
       - github.com/emoss08/trenova/internal/core/domain/fiscalyear.FiscalYear
+    fields:
+      periods:
+        resolver: true
+  PeriodType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fiscalperiod.PeriodType
+  FiscalPeriodStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fiscalperiod.Status
+  FiscalPeriod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fiscalperiod.FiscalPeriod
   FormulaTemplateStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/formulatemplate.Status
@@ -618,6 +632,18 @@ models:
   ManualJournal:
     model:
       - github.com/emoss08/trenova/internal/core/domain/manualjournal.Request
+  JournalEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/journalentry.Entry
+  JournalEntryLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/journalentry.Line
+    fields:
+      glAccount:
+        resolver: true
+  JournalSourceInfo:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/journalsource.Source
   JournalReversalStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/journalreversal.Status
@@ -647,6 +673,87 @@ models:
   Notification:
     model:
       - github.com/emoss08/trenova/internal/core/domain/notification.Notification
+  CustomerPaymentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customerpayment.Status
+  CustomerPaymentMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customerpayment.Method
+  CustomerPayment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customerpayment.Payment
+    fields:
+      customer:
+        resolver: true
+  CustomerPaymentApplication:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customerpayment.Application
+    fields:
+      invoice:
+        resolver: true
+  ARAgingBucketTotals:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARAgingBucketTotals
+  ARCustomerAgingRow:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCustomerAgingRow
+  ARAgingSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARAgingSummary
+  AROpenItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AROpenItem
+    fields:
+      shipmentBol:
+        fieldName: ShipmentBOL
+  ARLedgerEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARLedgerEntry
+  ARStatementTransaction:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARStatementTransaction
+  ARCustomerStatement:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARCustomerStatement
+  ARBalanceOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARBalanceOverview
+  ARDashboardKPIs:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARDashboardKPIs
+  ARDSOTrendPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARDSOTrendPoint
+  ARAgingTrendPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARAgingTrendPoint
+  ARCashFlowPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCashFlowPoint
+  ARCollectionTotals:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCollectionTotals
+  ARCollectionPerformance:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARCollectionPerformance
+  ARTopOverdueCustomer:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARTopOverdueCustomer
+  ARCollectionsWorklistItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCollectionsWorklistItem
+  ARMonthlyCollectionPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARMonthlyCollectionPoint
+  ARCustomerSnapshot:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCustomerSnapshot
+  ARCustomerProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ARCustomerProfile
+  ARPaymentStats:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ARPaymentStats
   ConfigurationVisibility:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tableconfiguration.Visibility

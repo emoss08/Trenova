@@ -5,6 +5,214 @@ schema {
 
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
+type ARAgingBucketTotals {
+  currentMinor: Int!
+  days1To30Minor: Int!
+  days31To60Minor: Int!
+  days61To90Minor: Int!
+  daysOver90Minor: Int!
+  totalOpenMinor: Int!
+}
+
+type ARAgingSummary {
+  asOfDate: Int!
+  rows: [ARCustomerAgingRow!]!
+  totals: ARAgingBucketTotals!
+}
+
+type ARAgingTrendPoint {
+  buckets: ARAgingBucketTotals!
+  periodEnd: Int!
+}
+
+type ARBalanceOverview {
+  avgDaysPastDue: Float!
+  buckets: ARAgingBucketTotals!
+  disputedInvoiceCount: Int!
+  disputedOpenMinor: Int!
+  openInvoiceCount: Int!
+  overdueInvoiceCount: Int!
+  overdueMinor: Int!
+  totalOpenMinor: Int!
+  unappliedCashMinor: Int!
+}
+
+type ARCashFlowPoint {
+  actualMinor: Int!
+  expectedMinor: Int!
+  isForecast: Boolean!
+  openDueMinor: Int!
+  weekStart: Int!
+}
+
+type ARCollectionPerformance {
+  cei: Float!
+  disputeRate: Float!
+  shortPayRate: Float!
+  totals: ARCollectionTotals!
+  writeOffRatio: Float!
+}
+
+type ARCollectionTotals {
+  applicationCount: Int!
+  avgDaysToPay: Float!
+  beginningOpenMinor: Int!
+  collectedMinor: Int!
+  creditSalesMinor: Int!
+  disputedInvoiceCount: Int!
+  endingCurrentMinor: Int!
+  endingOpenMinor: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  postedInvoiceCount: Int!
+  shortPayApplicationCount: Int!
+  shortPayMinor: Int!
+}
+
+type ARCollectionsWorklistItem {
+  customerId: ID!
+  customerName: String!
+  daysPastDue: Int!
+  dueDate: Int!
+  hasShortPay: Boolean!
+  invoiceId: ID!
+  invoiceNumber: String!
+  isDisputed: Boolean!
+  openAmountMinor: Int!
+  severity: String!
+}
+
+type ARCustomerAgingRow {
+  buckets: ARAgingBucketTotals!
+  customerId: ID!
+  customerName: String!
+}
+
+type ARCustomerProfile {
+  creditUtilization: Float!
+  delinquencyScore: Float!
+  dsoDays: Float!
+  snapshot: ARCustomerSnapshot!
+}
+
+type ARCustomerSnapshot {
+  avgDaysToPay: Float!
+  billedTrailing91Minor: Int!
+  buckets: ARAgingBucketTotals!
+  creditLimitMinor: Int!
+  customerId: ID!
+  customerName: String!
+  hasCreditLimit: Boolean!
+  lastPaymentDate: Int!
+  lastPaymentMinor: Int!
+  monthlyCollections: [ARMonthlyCollectionPoint!]!
+  oldestDaysPastDue: Int!
+  oldestOpenInvoiceDate: Int!
+  openInvoiceCount: Int!
+  overdueMinor: Int!
+  totalOpenMinor: Int!
+  unappliedCashMinor: Int!
+}
+
+type ARCustomerStatement {
+  aging: ARAgingBucketTotals!
+  customerId: ID!
+  customerName: String!
+  endingBalanceMinor: Int!
+  openItems: [AROpenItem!]!
+  openingBalanceMinor: Int!
+  startDate: Int!
+  statementDate: Int!
+  totalChargesMinor: Int!
+  totalPaymentsMinor: Int!
+  transactions: [ARStatementTransaction!]!
+}
+
+type ARDSOTrendPoint {
+  arBalanceMinor: Int!
+  billedMinor: Int!
+  dsoDays: Float!
+  periodEnd: Int!
+}
+
+type ARDashboardKPIs {
+  asOfDate: Int!
+  avgDaysToPay: Float!
+  cei: Float!
+  currentDsoDays: Float!
+  disputeRate: Float!
+  dsoDeltaDays: Float!
+  overduePercent: Float!
+  overview: ARBalanceOverview!
+  shortPayRate: Float!
+  writeOffRatio: Float!
+}
+
+type ARLedgerEntry {
+  amountMinor: Int!
+  customerId: ID!
+  documentNumber: String!
+  eventType: String!
+  relatedInvoiceId: ID
+  sourceObjectId: String!
+  sourceObjectType: String!
+  transactionDate: Int!
+}
+
+type ARMonthlyCollectionPoint {
+  amountMinor: Int!
+  monthStart: Int!
+}
+
+type AROpenItem {
+  appliedAmountMinor: Int!
+  billType: String!
+  currencyCode: String!
+  customerId: ID!
+  customerName: String!
+  daysPastDue: Int!
+  disputeStatus: String!
+  dueDate: Int!
+  hasShortPay: Boolean!
+  invoiceDate: Int!
+  invoiceId: ID!
+  invoiceNumber: String!
+  openAmountMinor: Int!
+  settlementStatus: String!
+  shipmentBol: String!
+  shipmentProNumber: String!
+  totalAmountMinor: Int!
+}
+
+type ARPaymentStats {
+  postedTodayCount: Int!
+  postedTodayMinor: Int!
+  reversedLast30Count: Int!
+  reversedLast30Minor: Int!
+  unappliedCashMinor: Int!
+  unappliedPaymentCount: Int!
+}
+
+type ARStatementTransaction {
+  amountMinor: Int!
+  chargeMinor: Int!
+  documentNumber: String!
+  eventType: String!
+  paymentMinor: Int!
+  runningBalanceMinor: Int!
+  sourceObjectId: String!
+  transactionDate: Int!
+}
+
+type ARTopOverdueCustomer {
+  customerId: ID!
+  customerName: String!
+  oldestDaysPastDue: Int!
+  openInvoiceCount: Int!
+  overdueMinor: Int!
+  totalOpenMinor: Int!
+}
+
 type AccessorialCharge {
   amount: Float!
   businessUnit: BusinessUnit
@@ -108,6 +316,12 @@ type ApiKeyConnection {
 type ApiKeyEdge {
   cursor: String!
   node: ApiKey!
+}
+
+input ApplyCustomerPaymentInput {
+  accountingDate: Int!
+  applications: [CustomerPaymentApplicationInput!]!
+  paymentId: ID!
 }
 
 enum AssignmentStatus {
@@ -294,6 +508,15 @@ type CannedReport {
   version: String!
 }
 
+type CategoryCostLine {
+  amount: String!
+  category: CostCategoryType!
+  costBehavior: CostBehavior!
+  effectiveSource: EffectiveRateSource!
+  name: String!
+  ratePerMile: String!
+}
+
 type Commodity {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -339,6 +562,92 @@ enum ConfigurationVisibility {
   Private
   Public
   Shared
+}
+
+enum CostBehavior {
+  Fixed
+  Variable
+}
+
+type CostCategory {
+  benchmarkRatePerMile: String!
+  category: CostCategoryType!
+  costBehavior: CostBehavior!
+  glAccounts: [CostCategoryGLAccountLink!]!
+  id: ID!
+  isActive: Boolean!
+  name: String!
+  overrideRatePerMile: String
+  rateSource: CostRateSource!
+  sortOrder: Int!
+  version: Int!
+}
+
+type CostCategoryGLAccountLink {
+  accountCode: String!
+  accountName: String!
+  glAccountId: ID!
+  id: ID!
+}
+
+enum CostCategoryType {
+  Custom
+  DriverBenefits
+  DriverWages
+  EquipmentPayments
+  Fuel
+  Insurance
+  Maintenance
+  Overhead
+  PermitsLicenses
+  Tires
+  Tolls
+}
+
+input CostCategoryUpdateInput {
+  glAccountIds: [ID!]!
+  id: ID!
+  isActive: Boolean!
+  overrideRatePerMile: String
+  rateSource: CostRateSource!
+  version: Int!
+}
+
+enum CostRateSource {
+  Benchmark
+  GLActual
+  Override
+}
+
+type CostingControl {
+  businessUnitId: ID!
+  categories: [CostCategory!]!
+  createdAt: Int!
+  fuelIndex: FuelIndex
+  fuelIndexId: ID
+  glActualsEnabled: Boolean!
+  glRollingMonths: Int!
+  id: ID!
+  includeDeadheadMiles: Boolean!
+  milesPerGallon: String!
+  organizationId: ID!
+  plannedMonthlyMiles: Int
+  targetMarginPercent: String
+  updatedAt: Int!
+  useLiveFuelPrice: Boolean!
+  version: Int!
+}
+
+input CostingControlInput {
+  fuelIndexId: ID
+  glActualsEnabled: Boolean!
+  glRollingMonths: Int!
+  includeDeadheadMiles: Boolean!
+  milesPerGallon: String!
+  plannedMonthlyMiles: Int
+  targetMarginPercent: String
+  useLiveFuelPrice: Boolean!
+  version: Int!
 }
 
 input CreateReportScheduleInput {
@@ -545,6 +854,80 @@ enum CustomerInvoiceNumberFormat {
   CustomPrefix
   Default
   POBased
+}
+
+type CustomerPayment {
+  accountingDate: Int!
+  amountMinor: Int!
+  applications: [CustomerPaymentApplication!]
+  appliedAmountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Int!
+  createdById: ID!
+  currencyCode: String!
+  customer: Customer
+  customerId: ID!
+  id: ID!
+  memo: String!
+  organizationId: ID!
+  paymentDate: Int!
+  paymentMethod: CustomerPaymentMethod!
+  postedBatchId: ID
+  referenceNumber: String!
+  reversalBatchId: ID
+  reversalReason: String!
+  reversedAt: Int
+  reversedById: ID
+  status: CustomerPaymentStatus!
+  unappliedAmountMinor: Int!
+  updatedAt: Int!
+  updatedById: ID
+  version: Int!
+}
+
+type CustomerPaymentApplication {
+  appliedAmountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Int!
+  customerPaymentId: ID!
+  id: ID!
+  invoice: Invoice
+  invoiceId: ID!
+  lineNumber: Int!
+  organizationId: ID!
+  shortPayAmountMinor: Int!
+  updatedAt: Int!
+}
+
+input CustomerPaymentApplicationInput {
+  appliedAmountMinor: Int!
+  invoiceId: ID!
+  shortPayAmountMinor: Int
+}
+
+type CustomerPaymentConnection {
+  edges: [CustomerPaymentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CustomerPaymentEdge {
+  cursor: String!
+  node: CustomerPayment!
+}
+
+enum CustomerPaymentMethod {
+  ACH
+  Card
+  Cash
+  Check
+  Other
+  Wire
+}
+
+enum CustomerPaymentStatus {
+  Posted
+  Reversed
 }
 
 enum CustomerPaymentTerm {
@@ -1215,6 +1598,13 @@ type EdiVolumePoint {
   sentCount: Int!
 }
 
+enum EffectiveRateSource {
+  Benchmark
+  GLActual
+  LiveIndex
+  Override
+}
+
 type EmailProfile {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -1412,6 +1802,35 @@ input FilterGroupInput {
   filters: [FieldFilterInput!]!
 }
 
+type FiscalPeriod {
+  adjustmentDeadline: Int
+  allowAdjustingEntries: Boolean!
+  businessUnitId: ID!
+  closedAt: Int
+  createdAt: Int!
+  endDate: Int!
+  fiscalYearId: ID!
+  id: ID!
+  isAdjusting: Boolean!
+  lockedAt: Int
+  name: String!
+  organizationId: ID!
+  periodNumber: Int!
+  periodType: PeriodType!
+  startDate: Int!
+  status: FiscalPeriodStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum FiscalPeriodStatus {
+  Closed
+  Inactive
+  Locked
+  Open
+  PermanentlyClosed
+}
+
 type FiscalYear {
   allowAdjustingEntries: Boolean!
   businessUnit: BusinessUnit
@@ -1425,6 +1844,7 @@ type FiscalYear {
   name: String!
   organization: Organization
   organizationId: ID!
+  periods: [FiscalPeriod!]!
   startDate: Int!
   status: FiscalYearStatus!
   updatedAt: Int!
@@ -1479,6 +1899,17 @@ type FleetCodeConnection {
 type FleetCodeEdge {
   cursor: String!
   node: FleetCode!
+}
+
+type FleetCostSummary {
+  avgCpm: String!
+  avgMarginPercent: String
+  emptyMiles: Float!
+  shipmentCount: Int!
+  totalEstimatedCost: String!
+  totalMiles: Float!
+  totalRevenue: String!
+  unprofitableCount: Int!
 }
 
 input ForkCannedReportInput {
@@ -1545,6 +1976,14 @@ enum FreightClass {
   Class300
   Class400
   Class500
+}
+
+type FuelCostResolution {
+  fuelIndexId: ID
+  milesPerGallon: String!
+  priceDate: String!
+  pricePerGallon: String
+  source: EffectiveRateSource!
 }
 
 type FuelIndex {
@@ -1772,6 +2211,13 @@ input FuelSurchargeTableRowInput {
 enum FuelType {
   Diesel
   Gasoline
+}
+
+type GLActualsWindow {
+  fleetMiles: Float!
+  fromDate: Int!
+  hasPostings: Boolean!
+  toDate: Int!
 }
 
 input GenerateFuelTableInput {
@@ -2051,6 +2497,51 @@ enum InvoiceStatus {
 
 scalar JSON
 
+type JournalEntry {
+  accountingDate: Int!
+  batchId: ID!
+  businessUnitId: ID!
+  description: String!
+  entryNumber: String!
+  entryType: String!
+  fiscalPeriodId: ID!
+  fiscalYearId: ID!
+  id: ID!
+  isPosted: Boolean!
+  isReversal: Boolean!
+  lines: [JournalEntryLine!]
+  organizationId: ID!
+  referenceId: String!
+  referenceType: String!
+  reversalDate: Int
+  reversalOfId: ID
+  reversalReason: String!
+  reversedById: ID
+  status: String!
+  totalCredit: Int!
+  totalDebit: Int!
+}
+
+type JournalEntryLine {
+  creditAmount: Int!
+  customerId: ID
+  debitAmount: Int!
+  description: String!
+  glAccount: JournalEntryLineAccount
+  glAccountId: ID!
+  id: ID!
+  journalEntryId: ID!
+  lineNumber: Int!
+  locationId: ID
+  netAmount: Int!
+}
+
+type JournalEntryLineAccount {
+  accountCode: String!
+  id: ID!
+  name: String!
+}
+
 type JournalReversal {
   approvedAt: Int
   approvedById: ID
@@ -2098,6 +2589,15 @@ enum JournalReversalStatus {
   Posted
   Rejected
   Requested
+}
+
+type JournalSourceInfo {
+  id: ID!
+  sourceDocumentNumber: String!
+  sourceEventType: String!
+  sourceObjectId: String!
+  sourceObjectType: String!
+  status: String!
 }
 
 input LocateTractorInput {
@@ -2267,6 +2767,7 @@ enum MoveStatus {
 type Mutation {
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
+  applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   approveWorkerPTO(id: ID!): WorkerPTO!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
@@ -2320,17 +2821,21 @@ type Mutation {
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   resetCannedFork(id: ID!): ReportDefinition!
   restoreNotifications(ids: [ID!]!): Boolean!
+  reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   runReport(input: RunReportInput!): ReportRun!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
+  updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
+  updateCostingControl(input: CostingControlInput!): CostingControl!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
@@ -2573,6 +3078,25 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+enum PeriodType {
+  Adjusting
+  Month
+  Quarter
+  Week
+}
+
+input PostCustomerPaymentInput {
+  accountingDate: Int!
+  amountMinor: Int!
+  applications: [CustomerPaymentApplicationInput!]
+  currencyCode: String
+  customerId: ID!
+  memo: String
+  paymentDate: Int!
+  paymentMethod: CustomerPaymentMethod!
+  referenceNumber: String
+}
+
 type Query {
   accessorialCharge(id: ID!): AccessorialCharge
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
@@ -2580,6 +3104,19 @@ type Query {
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
+  arAgingSummary(asOfDate: Int): ARAgingSummary!
+  arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
+  arCashFlowForecast(futureWeeks: Int, pastWeeks: Int): [ARCashFlowPoint!]!
+  arCollectionPerformance(periodDays: Int): ARCollectionPerformance!
+  arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
+  arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
+  arCustomerProfile(customerId: ID!): ARCustomerProfile!
+  arCustomerStatement(asOfDate: Int, customerId: ID!, startDate: Int): ARCustomerStatement!
+  arDashboardKpis: ARDashboardKPIs!
+  arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!
+  arOpenItems(asOfDate: Int, customerId: ID): [AROpenItem!]!
+  arPaymentStats: ARPaymentStats!
+  arTopOverdueCustomers(limit: Int): [ARTopOverdueCustomer!]!
   attentionSummary: AttentionSummary!
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
   auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
@@ -2587,9 +3124,12 @@ type Query {
   cannedReports: [CannedReport!]!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
+  costingControl: CostingControl!
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
   customer(id: ID!): Customer
+  customerPayment(id: ID!): CustomerPayment
+  customerPayments(input: DataTableConnectionInput!): CustomerPaymentConnection!
   customers(input: DataTableConnectionInput!): CustomerConnection!
   defaultTableConfiguration(resource: String!): TableConfiguration
   distanceOverride(id: ID!): DistanceOverride
@@ -2623,6 +3163,7 @@ type Query {
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
   fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
+  fleetCostSummary(endDate: Int, startDate: Int): FleetCostSummary!
   formulaTemplate(id: ID!): FormulaTemplate
   formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
   fuelDashboard: [FuelIndexLatestPrice!]!
@@ -2641,8 +3182,11 @@ type Query {
   holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
   invoice(id: ID!): Invoice
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
+  journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
+  journalEntry(id: ID!): JournalEntry
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
+  journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
   location(id: ID!): Location
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
   locationCategory(id: ID!): LocationCategory
@@ -2664,6 +3208,7 @@ type Query {
   reportRun(id: ID!): ReportRun!
   reportRuns(filter: ReportRunsFilterInput, input: DataTableConnectionInput!): ReportRunConnection!
   reportSchedules(definitionId: ID): [ReportSchedule!]!
+  resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
   role(id: ID!): Role
   roles(input: DataTableConnectionInput!): RoleConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
@@ -2681,6 +3226,7 @@ type Query {
   shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
+  shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
   shipmentType(id: ID!): ShipmentType
   shipmentTypes(input: DataTableConnectionInput!): ShipmentTypeConnection!
   shipmentUIPolicy: ShipmentUIPolicy!
@@ -2989,6 +3535,32 @@ input ReportSortInput {
   direction: String!
 }
 
+type ResolvedCategoryRate {
+  category: CostCategoryType!
+  costBehavior: CostBehavior!
+  effectiveSource: EffectiveRateSource!
+  name: String!
+  ratePerMile: String!
+}
+
+type ResolvedCostProfile {
+  asOfDate: String!
+  categories: [ResolvedCategoryRate!]!
+  fixedCpm: String!
+  fuel: FuelCostResolution
+  glWindow: GLActualsWindow
+  includeDeadheadMiles: Boolean!
+  targetMarginPercent: String
+  totalCpm: String!
+  variableCpm: String!
+}
+
+input ReverseCustomerPaymentInput {
+  accountingDate: Int!
+  paymentId: ID!
+  reason: String
+}
+
 type Role {
   businessUnitId: ID!
   coreResponsibility: String
@@ -3084,11 +3656,15 @@ type SelectOptionEdge {
 }
 
 enum SelectOptionResource {
+  CUSTOMER
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  FISCAL_PERIOD
+  FISCAL_YEAR
   FUEL_INDEX
   FUEL_SURCHARGE_PROGRAM
+  GL_ACCOUNT
   ORDER
   SHIPMENT
   TRACTOR
@@ -3297,6 +3873,7 @@ type Shipment {
   ownerId: ID
   pieces: Int
   proNumber: String!
+  profitabilityEstimate: ShipmentProfitabilityEstimate
   ratingDetail: ShipmentRatingDetail
   ratingUnit: Int!
   serviceTypeId: ID!
@@ -3383,6 +3960,7 @@ type ShipmentAnalytics {
   laneHeatmap: ShipmentLaneHeatmap
   onTimePercent: ShipmentOnTime
   page: String!
+  profitability: ShipmentProfitabilityAnalytics
   readyToDispatch: ShipmentReadyToDispatch
   revenueToday: ShipmentRevenueToday
   savedViewCounts: ShipmentSavedViewCounts
@@ -4127,6 +4705,45 @@ input ShipmentPreviousRatesInput {
 type ShipmentPreviousRatesResponse {
   items: [ShipmentPreviousRateSummary!]!
   total: Int!
+}
+
+type ShipmentProfitability {
+  breakEvenRpm: String
+  breakdown: [CategoryCostLine!]!
+  deadheadMiles: Float!
+  estimatedCost: String!
+  loadedMiles: Float!
+  marginPercent: String
+  missingDistance: Boolean!
+  profile: ResolvedCostProfile!
+  profit: String!
+  revenue: String!
+  revenuePerLoadedMile: String
+  shipmentId: ID!
+  totalMiles: Float!
+}
+
+type ShipmentProfitabilityAnalytics {
+  avgCpm: Float!
+  avgMarginPct: Float!
+  hasMargin: Boolean!
+  shipmentCount: Int!
+  totalMiles: Float!
+  unprofitableCount: Int!
+}
+
+type ShipmentProfitabilityEstimate {
+  breakEvenRpm: String
+  costPerMile: String!
+  deadheadMiles: Float!
+  estimatedCost: String!
+  loadedMiles: Float!
+  marginPercent: String
+  missingDistance: Boolean!
+  profit: String!
+  shipmentId: ID!
+  targetMarginPercent: String
+  totalMiles: Float!
 }
 
 type ShipmentRatingDetail {

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
-	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -200,7 +199,7 @@ func (a *Activities) CheckAndCreateNextFiscalYearActivity(
 			ToTemporalError()
 	}
 
-	periods := fiscalyearservice.GenerateMonthlyPeriods(createdFY)
+	periods := createdFY.GenerateMonthlyPeriods()
 	bulkErr := a.fpRepo.BulkCreate(ctx, &repositories.BulkCreateFiscalPeriodsRequest{
 		Periods: periods,
 	})

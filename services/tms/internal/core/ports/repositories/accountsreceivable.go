@@ -8,12 +8,14 @@ import (
 )
 
 type ARLedgerEntry struct {
-	CustomerID      pulid.ID `json:"customerId"`
-	TransactionDate int64    `json:"transactionDate"`
-	EventType       string   `json:"eventType"`
-	DocumentNumber  string   `json:"documentNumber"`
-	SourceObjectID  string   `json:"sourceObjectId"`
-	AmountMinor     int64    `json:"amountMinor"`
+	CustomerID       pulid.ID `json:"customerId"`
+	TransactionDate  int64    `json:"transactionDate"`
+	EventType        string   `json:"eventType"`
+	DocumentNumber   string   `json:"documentNumber"`
+	SourceObjectType string   `json:"sourceObjectType"`
+	SourceObjectID   string   `json:"sourceObjectId"`
+	AmountMinor      int64    `json:"amountMinor"`
+	RelatedInvoiceID pulid.ID `json:"relatedInvoiceId"`
 }
 
 type ARAgingBucketTotals struct {
@@ -46,6 +48,9 @@ type AROpenItem struct {
 	AppliedAmountMinor int64    `json:"appliedAmountMinor"`
 	OpenAmountMinor    int64    `json:"openAmountMinor"`
 	DaysPastDue        int      `json:"daysPastDue"`
+	SettlementStatus   string   `json:"settlementStatus"`
+	DisputeStatus      string   `json:"disputeStatus"`
+	HasShortPay        bool     `json:"hasShortPay"`
 }
 
 type ListCustomerLedgerRequest struct {

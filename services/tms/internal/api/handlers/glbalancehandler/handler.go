@@ -34,19 +34,19 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/trial-balance")
 	api.GET(
 		"/:fiscalPeriodID/",
-		h.pm.RequirePermission(permission.ResourceGeneralLedgerAccount.String(), permission.OpRead),
+		h.pm.RequirePermission(permission.ResourceAccountingReport.String(), permission.OpRead),
 		h.listByPeriod,
 	)
 
 	statements := rg.Group("/accounting/statements")
 	statements.GET(
 		"/income-statement/:fiscalPeriodID/",
-		h.pm.RequirePermission(permission.ResourceGeneralLedgerAccount.String(), permission.OpRead),
+		h.pm.RequirePermission(permission.ResourceAccountingReport.String(), permission.OpRead),
 		h.incomeStatement,
 	)
 	statements.GET(
 		"/balance-sheet/:fiscalPeriodID/",
-		h.pm.RequirePermission(permission.ResourceGeneralLedgerAccount.String(), permission.OpRead),
+		h.pm.RequirePermission(permission.ResourceAccountingReport.String(), permission.OpRead),
 		h.balanceSheet,
 	)
 }

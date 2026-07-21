@@ -11,6 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +19,7 @@ import (
 
 // TcaSubscriptions is the resolver for the tcaSubscriptions field.
 func (r *queryResolver) TcaSubscriptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.TCASubscriptionConnection, error) {
-	authCtx, err := r.requireAuth(ctx)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceTableChangeAlert, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func (r *queryResolver) TcaSubscriptions(ctx context.Context, input gqlmodel.Dat
 
 // TcaSubscription is the resolver for the tcaSubscription field.
 func (r *queryResolver) TcaSubscription(ctx context.Context, id string) (*tablechangealert.TCASubscription, error) {
-	authCtx, err := r.requireAuth(ctx)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceTableChangeAlert, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}

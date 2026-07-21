@@ -12,6 +12,7 @@ import { ActionsCell } from "./command-center/cells/actions-cell";
 import { DriverCell } from "./command-center/cells/driver-cell";
 import { EtaCell } from "./command-center/cells/eta-cell";
 import { LaneCell } from "./command-center/cells/lane-cell";
+import { MarginCell } from "./command-center/cells/margin-cell";
 import { RevenueCell } from "./command-center/cells/revenue-cell";
 import { StatusCell } from "./command-center/cells/status-cell";
 
@@ -263,6 +264,20 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
         label: "Revenue",
         apiField: "totalChargeAmount",
         sortable: true,
+        filterable: false,
+      },
+    },
+    {
+      id: "margin",
+      header: () => <div className="text-right">Margin</div>,
+      accessorFn: (row) => row.profitabilityEstimate?.marginPercent ?? null,
+      cell: ({ row }) => <MarginCell shipment={row.original} />,
+      size: 120,
+      minSize: 100,
+      maxSize: 160,
+      meta: {
+        label: "Margin",
+        sortable: false,
         filterable: false,
       },
     },

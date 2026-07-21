@@ -45,3 +45,11 @@ func TestDecimalFromMinor(t *testing.T) {
 	assert.True(t, decimal.RequireFromString("10.25").Equal(DecimalFromMinor(1025)))
 	assert.True(t, decimal.RequireFromString("-3.50").Equal(DecimalFromMinor(-350)))
 }
+
+func TestFormatMinor(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "10.25 USD", FormatMinor(1025, "usd"))
+	assert.Equal(t, "1000.00 USD", FormatMinor(100000, ""))
+	assert.Equal(t, "-3.50 EUR", FormatMinor(-350, "EUR"))
+}

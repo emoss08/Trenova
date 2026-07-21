@@ -1,153 +1,169 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import {
+  AgingDistributionBar,
+  type AgingBucketTotals,
+} from "@/components/accounting/aging-buckets";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { EmptyState } from "@/components/empty-state";
+import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/use-permission";
+import { dateToUnixTimestamp, toDate } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@/lib/utils";
-import type { AROpenItem } from "@/types/ar-open-items";
+import { Operation, Resource } from "@/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardListIcon, FileTextIcon, ReceiptTextIcon } from "lucide-react";
+import type { RowSelectionState } from "@tanstack/react-table";
+import {
+  ClipboardListIcon,
+  FileTextIcon,
+  HandCoinsIcon,
+  ReceiptTextIcon,
+  XIcon,
+} from "lucide-react";
+import { m } from "motion/react";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Link } from "react-router";
+import { useForm, useWatch } from "react-hook-form";
+import { useNavigate } from "react-router";
+import { OpenItemsTable } from "./_components/open-items-table";
 
 type FilterValues = {
   customerId: string;
+  asOfDate: number | null;
 };
 
-function formatDate(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function AgingBadge({ daysPastDue }: { daysPastDue: number }) {
-  if (daysPastDue <= 0) {
-    return <Badge variant="active">Current</Badge>;
-  }
-  if (daysPastDue <= 30) {
-    return <Badge variant="orange">{daysPastDue}d overdue</Badge>;
-  }
-  if (daysPastDue <= 60) {
-    return <Badge variant="inactive">{daysPastDue}d overdue</Badge>;
-  }
-  return <Badge variant="inactive">{daysPastDue}d overdue</Badge>;
-}
-
-function SummaryCard({
-  label,
-  value,
-  count,
-  colorClass,
-}: {
-  label: string;
-  value: number;
-  count: number;
-  colorClass?: string;
-}) {
-  return (
-    <div className="rounded-lg border bg-card px-4 py-3">
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </p>
-      <p className={cn("mt-1 text-2xl font-semibold tracking-tight tabular-nums", colorClass)}>
-        {formatCurrency(value / 100)}
-      </p>
-      <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-        {count} {count === 1 ? "item" : "items"}
-      </p>
-    </div>
-  );
+function bucketize(daysPastDue: number): keyof AgingBucketTotals {
+  if (daysPastDue <= 0) return "currentMinor";
+  if (daysPastDue <= 30) return "days1To30Minor";
+  if (daysPastDue <= 60) return "days31To60Minor";
+  if (daysPastDue <= 90) return "days61To90Minor";
+  return "daysOver90Minor";
 }
 
 export function AROpenItemsPage() {
-  const [asOfDate, setAsOfDate] = useState("");
+  const navigate = useNavigate();
+  const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const filterForm = useForm<FilterValues>({
-    defaultValues: { customerId: "" },
+    defaultValues: { customerId: "", asOfDate: null },
   });
+  const customerId = useWatch({ control: filterForm.control, name: "customerId" });
+  const asOfValue = useWatch({ control: filterForm.control, name: "asOfDate" });
 
-  const customerId = filterForm.watch("customerId");
+  const asOfUnix = useMemo(() => {
+    const date = toDate(asOfValue ?? undefined);
+    if (!date) return undefined;
+    date.setHours(23, 59, 59, 0);
+    return dateToUnixTimestamp(date);
+  }, [asOfValue]);
 
-  const queryParams = useMemo(() => {
-    const params: Record<string, string> = {};
-    if (customerId) params.customerId = customerId;
-    if (asOfDate) {
-      const [year, month, day] = asOfDate.split("-").map(Number);
-      params.asOfDate = String(Math.floor(new Date(year, month - 1, day).getTime() / 1000));
-    }
-    return Object.keys(params).length > 0 ? params : undefined;
-  }, [customerId, asOfDate]);
-
-  const { data: items, isLoading, isError } = useQuery({
-    ...queries.ar.openItems(queryParams),
-  });
+  const {
+    data: items,
+    isLoading,
+    isError,
+  } = useQuery(queries.ar.openItems({ customerId: customerId || undefined, asOfDate: asOfUnix }));
 
   const openItems = useMemo(() => items ?? [], [items]);
 
   const stats = useMemo(() => {
-    const current = openItems.filter((i) => i.daysPastDue <= 0);
-    const overdue = openItems.filter((i) => i.daysPastDue > 0);
+    const totals: AgingBucketTotals = {
+      currentMinor: 0,
+      days1To30Minor: 0,
+      days31To60Minor: 0,
+      days61To90Minor: 0,
+      daysOver90Minor: 0,
+      totalOpenMinor: 0,
+    };
+    let overdueAmount = 0;
+    let overdueCount = 0;
+    let weightedAgeSum = 0;
+    for (const item of openItems) {
+      totals[bucketize(item.daysPastDue)] += item.openAmountMinor;
+      totals.totalOpenMinor += item.openAmountMinor;
+      if (item.daysPastDue > 0) {
+        overdueAmount += item.openAmountMinor;
+        overdueCount += 1;
+      }
+      weightedAgeSum += item.daysPastDue * item.openAmountMinor;
+    }
     return {
-      totalOpen: openItems.reduce((s, i) => s + i.openAmountMinor, 0),
-      totalCount: openItems.length,
-      currentAmount: current.reduce((s, i) => s + i.openAmountMinor, 0),
-      currentCount: current.length,
-      overdueAmount: overdue.reduce((s, i) => s + i.openAmountMinor, 0),
-      overdueCount: overdue.length,
+      totals,
+      overdueAmount,
+      overdueCount,
+      currentAmount: totals.currentMinor,
+      currentCount: openItems.length - overdueCount,
+      avgAgeDays: totals.totalOpenMinor > 0 ? weightedAgeSum / totals.totalOpenMinor : 0,
     };
   }, [openItems]);
+
+  const selection = useMemo(() => {
+    const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
+    const selectedItems = openItems.filter((item) => selectedIds.includes(item.invoiceId));
+    const customerIds = new Set(selectedItems.map((item) => item.customerId));
+    return {
+      items: selectedItems,
+      totalOpen: selectedItems.reduce((sum, item) => sum + item.openAmountMinor, 0),
+      singleCustomerId: customerIds.size === 1 ? [...customerIds][0] : undefined,
+    };
+  }, [rowSelection, openItems]);
+
+  const handleApplyPayment = () => {
+    if (!selection.singleCustomerId) return;
+    const invoiceIds = selection.items.map((item) => item.invoiceId).join(",");
+    void navigate(
+      `/accounting/ar/payments?panelType=create&customerId=${selection.singleCustomerId}&invoiceIds=${invoiceIds}`,
+    );
+  };
 
   return (
     <PageLayout
       pageHeaderProps={{
         title: "Open Items",
         description: "Outstanding invoices and their payment status across all customers.",
+        actions: canRecordPayment ? (
+          <Button
+            size="sm"
+            onClick={() => void navigate("/accounting/ar/payments?panelType=create")}
+          >
+            <HandCoinsIcon className="size-4" />
+            Record Payment
+          </Button>
+        ) : undefined,
       }}
     >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="w-[260px]">
-            <label className="mb-1 block text-2xs font-medium text-muted-foreground">
-              Customer
-            </label>
+          <div className="w-65">
             <CustomerAutocompleteField
               control={filterForm.control}
               name="customerId"
+              label="Customer"
               placeholder="All customers"
               clearable
             />
           </div>
-          <div className="w-[180px]">
-            <label className="mb-1 block text-2xs font-medium text-muted-foreground">
-              As of Date
-            </label>
-            <Input
-              type="date"
-              value={asOfDate}
-              onChange={(e) => setAsOfDate(e.target.value)}
-              className="h-9 text-xs"
+          <div className="w-45">
+            <AutoCompleteDateField
+              control={filterForm.control}
+              name="asOfDate"
+              label="As of Date"
+              placeholder="Today"
+              clearable
             />
           </div>
         </div>
 
         {isLoading ? (
           <>
-            <div className="grid gap-2.5 md:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid gap-2.5 md:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 rounded-lg" />
               ))}
             </div>
-            <div className="space-y-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+            <Skeleton className="h-64 w-full rounded-md" />
           </>
         ) : isError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
@@ -155,25 +171,92 @@ export function AROpenItemsPage() {
           </div>
         ) : (
           <>
-            <div className="grid gap-2.5 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
               <SummaryCard
+                index={0}
                 label="Total Open"
-                value={stats.totalOpen}
-                count={stats.totalCount}
+                value={formatCurrency(stats.totals.totalOpenMinor / 100)}
+                detail={`${openItems.length} ${openItems.length === 1 ? "item" : "items"}`}
               />
               <SummaryCard
+                index={1}
                 label="Current"
-                value={stats.currentAmount}
-                count={stats.currentCount}
-                colorClass="text-green-600 dark:text-green-400"
+                value={formatCurrency(stats.currentAmount / 100)}
+                detail={`${stats.currentCount} items`}
+                valueClassName="text-emerald-600 dark:text-emerald-400"
               />
               <SummaryCard
+                index={2}
                 label="Overdue"
-                value={stats.overdueAmount}
-                count={stats.overdueCount}
-                colorClass="text-red-600 dark:text-red-400"
+                value={formatCurrency(stats.overdueAmount / 100)}
+                detail={`${stats.overdueCount} items`}
+                valueClassName={
+                  stats.overdueAmount > 0 ? "text-red-600 dark:text-red-400" : undefined
+                }
+              />
+              <SummaryCard
+                index={3}
+                label="Avg Age"
+                value={`${stats.avgAgeDays.toFixed(0)}d`}
+                detail="weighted by open $"
+              />
+              <SummaryCard
+                index={4}
+                label="Count"
+                value={String(openItems.length)}
+                detail="open invoices"
               />
             </div>
+
+            {stats.totals.totalOpenMinor > 0 ? (
+              <Card className="gap-0 rounded-md py-3">
+                <CardContent className="px-4">
+                  <AgingDistributionBar totals={stats.totals} />
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {selection.items.length > 0 ? (
+              <m.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="flex items-center justify-between rounded-md border bg-card px-3 py-2"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium tabular-nums">
+                    {selection.items.length} selected · {formatCurrency(selection.totalOpen / 100)}
+                  </span>
+                  {!selection.singleCustomerId ? (
+                    <span className="text-xs text-muted-foreground">
+                      Select invoices from a single customer to apply a payment
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRowSelection({})}
+                    className="h-7 text-xs"
+                  >
+                    <XIcon className="size-3.5" />
+                    Clear
+                  </Button>
+                  {canRecordPayment ? (
+                    <Button
+                      size="sm"
+                      onClick={handleApplyPayment}
+                      disabled={!selection.singleCustomerId}
+                      className="h-7 text-xs"
+                    >
+                      <HandCoinsIcon className="size-3.5" />
+                      Apply Payment
+                    </Button>
+                  ) : null}
+                </div>
+              </m.div>
+            ) : null}
 
             {openItems.length === 0 ? (
               <div className="flex justify-center pt-8">
@@ -184,101 +267,56 @@ export function AROpenItemsPage() {
                 />
               </div>
             ) : (
-              <div className="overflow-hidden rounded-lg border">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/50 text-left text-muted-foreground">
-                      <tr>
-                        <th className="px-3 py-2.5 text-xs font-medium">Invoice</th>
-                        <th className="px-3 py-2.5 text-xs font-medium">Customer</th>
-                        <th className="px-3 py-2.5 text-xs font-medium">Type</th>
-                        <th className="px-3 py-2.5 text-xs font-medium">PRO / BOL</th>
-                        <th className="px-3 py-2.5 text-xs font-medium">Invoice Date</th>
-                        <th className="px-3 py-2.5 text-xs font-medium">Due Date</th>
-                        <th className="px-3 py-2.5 text-xs font-medium">Status</th>
-                        <th className="px-3 py-2.5 text-right text-xs font-medium">Total</th>
-                        <th className="px-3 py-2.5 text-right text-xs font-medium">Applied</th>
-                        <th className="px-3 py-2.5 text-right text-xs font-medium">Open</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {openItems.map((item: AROpenItem) => (
-                        <tr
-                          key={item.invoiceId}
-                          className="border-t transition-colors hover:bg-muted/40"
-                        >
-                          <td className="px-3 py-2.5 font-mono text-xs font-medium">
-                            {item.invoiceNumber}
-                          </td>
-                          <td className="px-3 py-2.5">
-                            <Link
-                              to={`/accounting/ar/customer-statement/${item.customerId}`}
-                              className="text-xs font-medium hover:underline"
-                            >
-                              {item.customerName}
-                            </Link>
-                          </td>
-                          <td className="px-3 py-2.5 text-xs text-muted-foreground capitalize">
-                            {item.billType}
-                          </td>
-                          <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground">
-                            {item.shipmentProNumber || item.shipmentBolNumber || "\u2014"}
-                          </td>
-                          <td className="px-3 py-2.5 text-xs">{formatDate(item.invoiceDate)}</td>
-                          <td className="px-3 py-2.5 text-xs">{formatDate(item.dueDate)}</td>
-                          <td className="px-3 py-2.5">
-                            <AgingBadge daysPastDue={item.daysPastDue} />
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <AmountDisplay value={item.totalAmountMinor} className="text-xs" />
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <AmountDisplay
-                              value={item.appliedAmountMinor}
-                              className="text-xs text-muted-foreground"
-                            />
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <AmountDisplay
-                              value={item.openAmountMinor}
-                              className="text-xs font-semibold"
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="border-t bg-muted/30">
-                      <tr>
-                        <td colSpan={7} className="px-3 py-2.5 text-right text-xs font-medium">
-                          Totals
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <AmountDisplay
-                            value={openItems.reduce((s, i) => s + i.totalAmountMinor, 0)}
-                            className="text-xs font-semibold"
-                          />
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <AmountDisplay
-                            value={openItems.reduce((s, i) => s + i.appliedAmountMinor, 0)}
-                            className="text-xs font-semibold"
-                          />
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <AmountDisplay
-                            value={stats.totalOpen}
-                            className="text-xs font-bold"
-                          />
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
+              <OpenItemsTable
+                items={openItems}
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
+              />
             )}
           </>
         )}
       </div>
     </PageLayout>
+  );
+}
+
+function SummaryCard({
+  index,
+  label,
+  value,
+  detail,
+  valueClassName,
+}: {
+  index: number;
+  label: string;
+  value: string;
+  detail?: string;
+  valueClassName?: string;
+}) {
+  return (
+    <m.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
+    >
+      <Card className="h-full gap-0 rounded-lg py-3">
+        <CardContent className="px-4">
+          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            {label}
+          </p>
+          <p
+            className={cn(
+              "mt-1 text-2xl font-semibold tracking-tight tabular-nums",
+              valueClassName,
+            )}
+          >
+            {value}
+          </p>
+          {detail ? (
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{detail}</p>
+          ) : null}
+        </CardContent>
+      </Card>
+    </m.div>
   );
 }

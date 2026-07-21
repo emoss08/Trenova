@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { nullableStringSchema, optionalStringSchema } from "./helpers";
 
+export const journalEntryLineGLAccountSchema = z.object({
+  id: z.string(),
+  accountCode: z.string(),
+  name: z.string(),
+});
+export type JournalEntryLineGLAccount = z.infer<typeof journalEntryLineGLAccountSchema>;
+
 export const journalEntryLineSchema = z.object({
   id: z.string(),
   journalEntryId: z.string(),
@@ -12,6 +19,7 @@ export const journalEntryLineSchema = z.object({
   netAmount: z.number().int(),
   customerId: nullableStringSchema,
   locationId: nullableStringSchema,
+  glAccount: journalEntryLineGLAccountSchema.nullish(),
 });
 export type JournalEntryLine = z.infer<typeof journalEntryLineSchema>;
 

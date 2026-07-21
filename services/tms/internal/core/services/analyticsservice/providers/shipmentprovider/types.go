@@ -133,3 +133,12 @@ type SavedViewCounts struct {
 	Unassigned      int `json:"unassigned"       bun:"unassigned"`
 	DeliveringToday int `json:"delivering-today" bun:"delivering_today"`
 }
+
+type ProfitabilityCard struct {
+	AvgCPM            float64 `json:"avgCpm"`
+	AvgMarginPct      float64 `json:"avgMarginPct"`
+	HasMargin         bool    `json:"hasMargin"`
+	UnprofitableCount int     `json:"unprofitableCount"`
+	ShipmentCount     int     `json:"shipmentCount"`
+	TotalMiles        float64 `json:"totalMiles"`
+}

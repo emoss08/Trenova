@@ -50,10 +50,17 @@ type openItemRecord struct {
 	AppliedAmountMinor int64  `bun:"applied_amount_minor"`
 	OpenAmountMinor    int64  `bun:"open_amount_minor"`
 	DaysPastDue        int    `bun:"days_past_due"`
+	SettlementStatus   string `bun:"settlement_status"`
+	DisputeStatus      string `bun:"dispute_status"`
+	HasShortPay        bool   `bun:"has_short_pay"`
 }
 
 func New(p Params) repositories.AccountsReceivableRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.accounts-receivable-repository")}
+}
+
+func NewAnalytics(p Params) repositories.ARAnalyticsRepository {
+	return &repository{db: p.DB, l: p.Logger.Named("postgres.ar-analytics-repository")}
 }
 
 func (r *repository) ListCustomerLedger(
@@ -62,7 +69,7 @@ func (r *repository) ListCustomerLedger(
 ) ([]*repositories.ARLedgerEntry, error) {
 	entries := make([]*repositories.ARLedgerEntry, 0)
 	err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_id, amount_minor
+		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_type, source_object_id, amount_minor, COALESCE(related_invoice_id, '') AS related_invoice_id
 		FROM customer_ledger_entries
 		WHERE organization_id = ?
 		  AND business_unit_id = ?
@@ -143,7 +150,22 @@ func (r *repository) ListOpenItems(
 			CASE
 				WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN 0
 				ELSE GREATEST(((? - inv.due_date) / 86400)::INT, 0)
-			END AS days_past_due
+			END AS days_past_due,
+			inv.settlement_status,
+			inv.dispute_status,
+			EXISTS (
+				SELECT 1
+				FROM customer_payment_applications cpa
+				JOIN customer_payments cp
+				  ON cp.id = cpa.customer_payment_id
+				 AND cp.organization_id = cpa.organization_id
+				 AND cp.business_unit_id = cpa.business_unit_id
+				 AND cp.status = 'Posted'
+				WHERE cpa.invoice_id = inv.id
+				  AND cpa.organization_id = inv.organization_id
+				  AND cpa.business_unit_id = inv.business_unit_id
+				  AND cpa.short_pay_amount_minor > 0
+			) AS has_short_pay
 		FROM invoices inv
 		WHERE inv.organization_id = ?
 		  AND inv.business_unit_id = ?
@@ -181,6 +203,9 @@ func (r *repository) ListOpenItems(
 			AppliedAmountMinor: rec.AppliedAmountMinor,
 			OpenAmountMinor:    rec.OpenAmountMinor,
 			DaysPastDue:        rec.DaysPastDue,
+			SettlementStatus:   rec.SettlementStatus,
+			DisputeStatus:      rec.DisputeStatus,
+			HasShortPay:        rec.HasShortPay,
 		})
 	}
 

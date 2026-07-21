@@ -315,7 +315,10 @@ const routes: RouteObject[] = [
 
           {
             path: "/accounting",
-            loader: protectedLoader,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
             async lazy() {
               const { AccountingDashboardPage } =
                 await import("@/routes/accounting-dashboard/page");
@@ -393,7 +396,10 @@ const routes: RouteObject[] = [
           },
           {
             path: "/accounting/ar/aging",
-            loader: protectedLoader,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
             async lazy() {
               const { ARAgingPage } = await import("@/routes/ar-aging/page");
               return { Component: ARAgingPage };
@@ -401,7 +407,10 @@ const routes: RouteObject[] = [
           },
           {
             path: "/accounting/ar/customer-ledger",
-            loader: protectedLoader,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
             async lazy() {
               const { CustomerLedgerPage } = await import("@/routes/customer-ledger/page");
               return { Component: CustomerLedgerPage };
@@ -409,15 +418,32 @@ const routes: RouteObject[] = [
           },
           {
             path: "/accounting/ar/open-items",
-            loader: protectedLoader,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
             async lazy() {
               const { AROpenItemsPage } = await import("@/routes/ar-open-items/page");
               return { Component: AROpenItemsPage };
             },
           },
           {
+            path: "/accounting/ar/payments",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CustomerPayment),
+            ),
+            async lazy() {
+              const { CustomerPaymentsPage } = await import("@/routes/customer-payments/page");
+              return { Component: CustomerPaymentsPage };
+            },
+          },
+          {
             path: "/accounting/ar/customer-statement/:customerId",
-            loader: protectedLoader,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
             async lazy() {
               const { CustomerStatementPage } = await import("@/routes/customer-statement/page");
               return { Component: CustomerStatementPage };
@@ -643,6 +669,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 path: "billing-controls",
+                loader: createPermissionLoader(Resource.BillingControl),
                 async lazy() {
                   const { BillingControlPage } = await import("@/routes/billing-control/page");
                   return { Component: BillingControlPage };
@@ -664,6 +691,14 @@ const routes: RouteObject[] = [
                   const { AccountingControlPage } =
                     await import("@/routes/accounting-control/page");
                   return { Component: AccountingControlPage };
+                },
+              },
+              {
+                path: "cost-control",
+                loader: createPermissionLoader(Resource.CostingControl),
+                async lazy() {
+                  const { CostControlPage } = await import("@/routes/cost-control/page");
+                  return { Component: CostControlPage };
                 },
               },
               {
@@ -851,6 +886,15 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "graphql-explorer",
+                loader: createPermissionLoader(Resource.Organization, Operation.Read),
+                async lazy() {
+                  const { GraphQLExplorerPage } =
+                    await import("@/routes/admin/graphql-explorer/page");
+                  return { Component: GraphQLExplorerPage };
+                },
+              },
+              {
                 path: "integrations",
                 loader: createPermissionLoader(Resource.Integration, Operation.Read),
                 async lazy() {
@@ -860,7 +904,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "api-keys",
-                loader: createPermissionLoader(Resource.Integration, Operation.Read),
+                loader: createPermissionLoader(Resource.ApiKey, Operation.Read),
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };

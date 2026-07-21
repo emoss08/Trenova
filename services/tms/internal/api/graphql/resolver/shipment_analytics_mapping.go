@@ -27,6 +27,7 @@ func shipmentAnalyticsToModel(data services.AnalyticsData) (*gqlmodel.ShipmentAn
 		CustomerMix:        customerMixFromAnalytics(data["customerMix"]),
 		TomorrowsPickups:   tomorrowsPickupsFromAnalytics(data["tomorrowsPickups"]),
 		LaneHeatmap:        laneHeatmapFromAnalytics(data["laneHeatmap"]),
+		Profitability:      profitabilityFromAnalytics(data["profitability"]),
 	}, nil
 }
 
@@ -280,6 +281,22 @@ func laneHeatmapFromAnalytics(value any) *gqlmodel.ShipmentLaneHeatmap {
 		WindowDays: intutils.IntValue(card["windowDays"]),
 		Cells:      cells,
 		Total:      intutils.IntValue(card["total"]),
+	}
+}
+
+func profitabilityFromAnalytics(value any) *gqlmodel.ShipmentProfitabilityAnalytics {
+	card := analyticsObject(value)
+	if card == nil {
+		return nil
+	}
+	hasMargin, _ := card["hasMargin"].(bool)
+	return &gqlmodel.ShipmentProfitabilityAnalytics{
+		AvgCpm:            floatutils.FloatValue(card["avgCpm"]),
+		AvgMarginPct:      floatutils.FloatValue(card["avgMarginPct"]),
+		HasMargin:         hasMargin,
+		UnprofitableCount: intutils.IntValue(card["unprofitableCount"]),
+		ShipmentCount:     intutils.IntValue(card["shipmentCount"]),
+		TotalMiles:        floatutils.FloatValue(card["totalMiles"]),
 	}
 }
 

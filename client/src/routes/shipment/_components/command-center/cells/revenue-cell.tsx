@@ -1,13 +1,7 @@
-import { formatCurrency } from "@/lib/utils";
+import { parseDecimal } from "@/lib/profitability";
 import { getTotalMiles } from "@/lib/shipment-utils";
+import { formatCurrency } from "@/lib/utils";
 import type { Shipment } from "@/types/shipment";
-
-function parseDecimal(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) return 0;
-  if (typeof value === "number") return value;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
 export function RevenueCell({ shipment }: { shipment: Shipment }) {
   const total = parseDecimal(shipment.totalChargeAmount as unknown as string | number);

@@ -102,6 +102,8 @@ export const accountingControlSchema = z.object({
   exchangeRateOverridePolicy: exchangeRateOverridePolicySchema,
 
   defaultRevenueAccountId: nullableStringSchema,
+  defaultCashAccountId: nullableStringSchema,
+  defaultUnappliedCashAccountId: nullableStringSchema,
   defaultExpenseAccountId: nullableStringSchema,
   defaultArAccountId: nullableStringSchema,
   defaultApAccountId: nullableStringSchema,

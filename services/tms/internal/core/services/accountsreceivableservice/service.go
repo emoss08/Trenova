@@ -15,17 +15,23 @@ import (
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Repo   repositoryports.AccountsReceivableRepository
+	Logger        *zap.Logger
+	Repo          repositoryports.AccountsReceivableRepository
+	AnalyticsRepo repositoryports.ARAnalyticsRepository
 }
 
 type Service struct {
-	l    *zap.Logger
-	repo repositoryports.AccountsReceivableRepository
+	l             *zap.Logger
+	repo          repositoryports.AccountsReceivableRepository
+	analyticsRepo repositoryports.ARAnalyticsRepository
 }
 
 func New(p Params) *Service {
-	return &Service{l: p.Logger.Named("service.accounts-receivable"), repo: p.Repo}
+	return &Service{
+		l:             p.Logger.Named("service.accounts-receivable"),
+		repo:          p.Repo,
+		analyticsRepo: p.AnalyticsRepo,
+	}
 }
 
 func (s *Service) ListCustomerLedger(

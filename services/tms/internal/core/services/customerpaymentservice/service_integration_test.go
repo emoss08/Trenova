@@ -1707,6 +1707,30 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	require.NotEmpty(t, listResult.Items)
 	assert.Equal(t, payment.ID, listResult.Items[0].ID)
 
+	connResult, err := paymentRepo.ListConnection(
+		ctx,
+		&repositories.ListCustomerPaymentConnectionRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: pagination.TenantInfo{
+					OrgID:  org.ID,
+					BuID:   org.BusinessUnitID,
+					UserID: user.ID,
+				},
+				Pagination: pagination.Info{Limit: 10, Offset: 0},
+			},
+			Cursor: pagination.CursorInfo{Limit: 10},
+		},
+	)
+	require.NoError(t, err)
+	require.NotEmpty(t, connResult.Items)
+	connPayment := connResult.Items[0]
+	assert.Equal(t, payment.ID, connPayment.ID)
+	assert.Equal(t, shp.CustomerID, connPayment.CustomerID)
+	assert.EqualValues(t, 10000, connPayment.AmountMinor)
+	assert.Equal(t, customerpayment.StatusPosted, connPayment.Status)
+	require.NotEmpty(t, connPayment.Applications)
+	assert.Equal(t, inv.ID, connPayment.Applications[0].InvoiceID)
+
 	got, err := svc.Get(
 		ctx,
 		&serviceports.GetCustomerPaymentRequest{

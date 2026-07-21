@@ -123,6 +123,29 @@ export function formatCurrency(num: number, currency: string = "USD"): string {
   }).format(num);
 }
 
+export function formatCompactCurrency(num: number, currency: string = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(num);
+}
+
+export function formatPercent(value: number, digits: number = 1): string {
+  return `${value.toFixed(digits)}%`;
+}
+
+export function formatPerMile(value: number, digits: number = 2, currency: string = "USD"): string {
+  const formatted = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value);
+  return `${formatted}/mi`;
+}
+
 export function formatLocation(location?: Location) {
   if (!location) {
     return "";

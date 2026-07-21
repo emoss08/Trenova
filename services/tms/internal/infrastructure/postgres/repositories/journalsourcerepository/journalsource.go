@@ -61,6 +61,30 @@ func (r *repository) GetByObjectAndEvent(
 	return r.getByObjectQuery(ctx, req, sourceEventType)
 }
 
+func (r *repository) ListByObject(
+	ctx context.Context,
+	req repositories.GetJournalSourceByObjectRequest,
+) ([]*journalsource.Source, error) {
+	records := make([]*sourceRecord, 0)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&records).
+		Where("js.organization_id = ?", req.TenantInfo.OrgID).
+		Where("js.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("js.source_object_type = ?", req.SourceObjectType).
+		Where("js.source_object_id = ?", req.SourceObjectID).
+		Order("js.created_at ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sources := make([]*journalsource.Source, 0, len(records))
+	for _, rec := range records {
+		sources = append(sources, mapSourceRecord(rec))
+	}
+	return sources, nil
+}
+
 func (r *repository) getByObjectQuery(
 	ctx context.Context,
 	req repositories.GetJournalSourceByObjectRequest,
@@ -83,6 +107,10 @@ func (r *repository) getByObjectQuery(
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "JournalSource")
 	}
+	return mapSourceRecord(rec), nil
+}
+
+func mapSourceRecord(rec *sourceRecord) *journalsource.Source {
 	return &journalsource.Source{
 		ID:                   pulid.ID(rec.ID),
 		OrganizationID:       pulid.ID(rec.OrganizationID),
@@ -95,5 +123,5 @@ func (r *repository) getByObjectQuery(
 		IdempotencyKey:       rec.IdempotencyKey,
 		JournalBatchID:       pulid.ID(rec.JournalBatchID),
 		JournalEntryID:       pulid.ID(rec.JournalEntryID),
-	}, nil
+	}
 }

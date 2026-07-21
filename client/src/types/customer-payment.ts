@@ -44,3 +44,40 @@ export const customerPaymentSchema = z.object({
   applications: z.array(paymentApplicationSchema).optional(),
 });
 export type CustomerPayment = z.infer<typeof customerPaymentSchema>;
+
+export const cashApplicationRowSchema = z.object({
+  invoiceId: z.string(),
+  invoiceNumber: z.string(),
+  invoiceDate: z.number().int(),
+  dueDate: z.number().int(),
+  daysPastDue: z.number().int(),
+  openAmountMinor: z.number().int(),
+  checked: z.boolean(),
+  appliedAmount: z.number().min(0, "Applied amount cannot be negative"),
+  shortPayAmount: z.number().min(0, "Short-pay amount cannot be negative"),
+});
+export type CashApplicationRow = z.infer<typeof cashApplicationRowSchema>;
+
+export const recordPaymentSchema = z.object({
+  customerId: z.string().min(1, "Customer is required"),
+  paymentDate: z.number({ error: "Payment date is required" }).int().positive("Payment date is required"),
+  accountingDate: z
+    .number({ error: "Accounting date is required" })
+    .int()
+    .positive("Accounting date is required"),
+  amount: z.number({ error: "Amount is required" }).positive("Amount must be greater than zero"),
+  paymentMethod: paymentMethodSchema,
+  referenceNumber: optionalStringSchema,
+  memo: optionalStringSchema,
+  applications: z.array(cashApplicationRowSchema),
+});
+export type RecordPaymentFormValues = z.infer<typeof recordPaymentSchema>;
+
+export const applyUnappliedSchema = z.object({
+  accountingDate: z
+    .number({ error: "Accounting date is required" })
+    .int()
+    .positive("Accounting date is required"),
+  applications: z.array(cashApplicationRowSchema),
+});
+export type ApplyUnappliedFormValues = z.infer<typeof applyUnappliedSchema>;

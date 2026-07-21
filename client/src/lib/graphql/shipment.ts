@@ -21,6 +21,7 @@ import {
   ShipmentEventsDocument,
   ShipmentPageAnalyticsDocument,
   ShipmentPreviousRatesDocument,
+  ShipmentProfitabilityDocument,
   ShipmentSavedViewCountsDocument,
   ShipmentUiPolicyDocument,
   TransferShipmentOwnershipDocument,
@@ -207,6 +208,15 @@ export async function getShipmentBillingReadinessGraphQL(shipmentId: Shipment["i
     variables: { shipmentId },
   });
   return data.shipmentBillingReadiness;
+}
+
+export async function getShipmentProfitabilityGraphQL(shipmentId: Shipment["id"]) {
+  const data = await requestShipmentGraphQL({
+    document: ShipmentProfitabilityDocument,
+    operationName: "ShipmentProfitability",
+    variables: { shipmentId },
+  });
+  return data.shipmentProfitability;
 }
 
 export async function getShipmentSavedViewCountsGraphQL(timezone: string) {

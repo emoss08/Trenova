@@ -426,6 +426,11 @@ const accountingModule: NavModule = {
           label: "Open Items",
           path: "/accounting/ar/open-items",
         },
+        {
+          id: "customer-payments",
+          label: "Customer Payments",
+          path: "/accounting/ar/payments",
+        },
       ],
     },
     {
@@ -847,6 +852,13 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/cost-control",
+    title: "Cost Control",
+    group: "Organization",
+    resource: Resource.CostingControl,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/billing-controls/",
     title: "Billing Controls",
     group: "Organization",
@@ -1029,6 +1041,13 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/graphql-explorer",
+    title: "GraphQL Explorer",
+    group: "Data & Integrations",
+    resource: Resource.Organization,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/organization/ai-logs/",
     title: "AI Logs",
     group: "Data & Integrations",
@@ -1045,7 +1064,7 @@ export const adminLinks: SidebarLink[] = [
     href: "/admin/api-keys",
     title: "API Keys",
     group: "Data & Integrations",
-    resource: Resource.Integration,
+    resource: Resource.ApiKey,
     requiredOperation: Operation.Read,
   },
   {

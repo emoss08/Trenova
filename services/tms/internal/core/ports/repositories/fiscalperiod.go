@@ -81,10 +81,19 @@ type GetExpiredOpenPeriodsRequest struct {
 	BeforeDate int64    `json:"beforeDate"`
 }
 
+type FiscalPeriodSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+	FiscalYearID       pulid.ID
+}
+
 type FiscalPeriodRepository interface {
 	List(
 		ctx context.Context,
 		req *ListFiscalPeriodsRequest,
+	) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error)
+	SelectOptions(
+		ctx context.Context,
+		req *FiscalPeriodSelectOptionsRequest,
 	) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error)
 	GetByID(
 		ctx context.Context,

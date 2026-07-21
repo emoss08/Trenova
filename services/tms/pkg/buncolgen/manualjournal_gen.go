@@ -116,6 +116,17 @@ var LineInsertableColumns = []string{
 	"updated_at",
 }
 
+// LineRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(LineRelations.GLAccount)
+//	// Bun eager-loads the GLAccount association via a separate query
+var LineRelations = struct {
+	GLAccount string
+}{
+	GLAccount: "GLAccount",
+}
+
 // LineScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE mjrl.organization_id = ? AND mjrl.business_unit_id = ?

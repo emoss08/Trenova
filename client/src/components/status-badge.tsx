@@ -1,6 +1,7 @@
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BillingQueueStatus } from "@/types/billing-queue";
+import type { CustomerPaymentStatus } from "@/types/customer-payment";
 import type { InvoiceStatus, SettlementStatus } from "@/types/invoice";
 import type { OrderStatus } from "@/types/order";
 import {
@@ -449,6 +450,30 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
     Unpaid: {
       className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
       text: "Unpaid",
+    },
+  };
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        statusAttributes[status].className,
+      )}
+    >
+      {statusAttributes[status].text}
+    </span>
+  );
+}
+
+export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPaymentStatus }) {
+  const statusAttributes: Record<CustomerPaymentStatus, PlainBadgeAttrProps> = {
+    Posted: {
+      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      text: "Posted",
+    },
+    Reversed: {
+      className: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+      text: "Reversed",
     },
   };
 

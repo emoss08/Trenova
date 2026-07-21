@@ -29,11 +29,7 @@ export function FiscalPeriodSelector({ value, onChange, className }: FiscalPerio
 
   const periodSearchParams = useMemo(() => {
     if (!selectedYearId) return undefined;
-    return {
-      fieldFilters: JSON.stringify([
-        { field: "fiscalYearId", operator: "eq", value: selectedYearId },
-      ]),
-    };
+    return { fiscalYearId: selectedYearId };
   }, [selectedYearId]);
 
   return (

@@ -1,114 +1,180 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { SourceDrillDownLink } from "@/components/accounting/source-drill-down-link";
+import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
+import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
+import { Operation, Resource } from "@/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { SearchIcon } from "lucide-react";
-import { useState } from "react";
-import { useSearchParams } from "react-router";
+import {
+  BookOpenIcon,
+  DownloadIcon,
+  FileTextIcon,
+  HandCoinsIcon,
+  ReceiptTextIcon,
+  UserSearchIcon,
+} from "lucide-react";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router";
+import { CustomerSnapshotHeader } from "./_components/customer-snapshot-header";
+import { LedgerTable } from "./_components/ledger-table";
+
+type FilterValues = {
+  customerId: string;
+};
 
 export function CustomerLedgerPage() {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { allowed: canRecordPayment } = usePermission(
+    Resource.CustomerPayment,
+    Operation.Create,
+  );
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialCustomerId = searchParams.get("customerId") ?? "";
-  const [customerId, setCustomerId] = useState(initialCustomerId);
 
-  const { data, isLoading } = useQuery({
+  const filterForm = useForm<FilterValues>({
+    defaultValues: { customerId: initialCustomerId },
+  });
+  const customerId = useWatch({ control: filterForm.control, name: "customerId" });
+
+  useEffect(() => {
+    const current = searchParams.get("customerId") ?? "";
+    if ((customerId || "") !== current) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (customerId) {
+            next.set("customerId", customerId);
+          } else {
+            next.delete("customerId");
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [customerId, searchParams, setSearchParams]);
+
+  const { data: entries, isLoading: ledgerLoading } = useQuery({
     ...queries.ar.customerLedger(customerId),
     enabled: Boolean(customerId),
   });
 
-  const entries = data ?? [];
-
-  let runningBalance = 0;
-  const entriesWithBalance = entries.map((entry) => {
-    runningBalance += entry.amountMinor;
-    return { ...entry, runningBalance };
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    ...queries.ar.customerProfile(customerId),
+    enabled: Boolean(customerId),
   });
+
+  const handleExport = () => {
+    if (!entries?.length) return;
+    let runningBalance = 0;
+    const rows = [
+      ["Date", "Document", "Event", "Source Type", "Amount", "Balance"],
+      ...entries.map((entry) => {
+        runningBalance += entry.amountMinor;
+        return [
+          new Date(entry.transactionDate * 1000).toISOString().slice(0, 10),
+          entry.documentNumber,
+          entry.eventType,
+          entry.sourceObjectType,
+          (entry.amountMinor / 100).toFixed(2),
+          (runningBalance / 100).toFixed(2),
+        ];
+      }),
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `customer-ledger-${customerId}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <PageLayout
       pageHeaderProps={{
         title: "Customer Ledger",
-        description: "View transaction history for a customer.",
+        description: "Statement-style transaction history with the customer's AR profile.",
+        actions: customerId ? (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={!entries?.length}>
+              <DownloadIcon className="size-4" />
+              Export
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                void navigate(`/accounting/ar/customer-statement/${customerId}`)
+              }
+            >
+              <FileTextIcon className="size-4" />
+              Statement
+            </Button>
+            {canRecordPayment ? (
+              <Button
+                size="sm"
+                onClick={() =>
+                  void navigate(
+                    `/accounting/ar/payments?panelType=create&customerId=${customerId}`,
+                  )
+                }
+              >
+                <HandCoinsIcon className="size-4" />
+                Record Payment
+              </Button>
+            ) : null}
+          </div>
+        ) : undefined,
       }}
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
-        <div className="max-w-sm">
-          <Input
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            placeholder="Enter customer ID..."
-            leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+        <div className="w-[300px]">
+          <label className="mb-1 block text-2xs font-medium text-muted-foreground">
+            Customer
+          </label>
+          <CustomerAutocompleteField
+            control={filterForm.control}
+            name="customerId"
+            placeholder="Select a customer..."
+            clearable
           />
         </div>
 
         {!customerId ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border bg-card">
-            <p className="text-sm text-muted-foreground">
-              Enter a customer ID to view their ledger.
-            </p>
-          </div>
-        ) : isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : entries.length === 0 ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border bg-card">
-            <p className="text-sm text-muted-foreground">
-              No ledger entries found for this customer.
-            </p>
+          <div className="flex justify-center pt-12">
+            <EmptyState
+              title="Select a customer"
+              description="Choose a customer to see their AR profile, running ledger, and payment history."
+              icons={[UserSearchIcon, BookOpenIcon, ReceiptTextIcon]}
+            />
           </div>
         ) : (
-          <div className="overflow-hidden rounded-md border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2 text-xs font-medium">Date</th>
-                  <th className="px-3 py-2 text-xs font-medium">Document</th>
-                  <th className="px-3 py-2 text-xs font-medium">Event Type</th>
-                  <th className="px-3 py-2 text-xs font-medium">Source</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium">Amount</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium">Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entriesWithBalance.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-t transition-colors hover:bg-muted/50"
-                  >
-                    <td className="px-3 py-2 text-xs">
-                      {new Date(entry.transactionDate * 1000).toLocaleDateString()}
-                    </td>
-                    <td className="px-3 py-2 font-mono text-xs">{entry.documentNumber}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground capitalize">
-                      {entry.sourceEventType}
-                    </td>
-                    <td className="px-3 py-2">
-                      <SourceDrillDownLink
-                        sourceType={entry.sourceObjectType}
-                        sourceId={entry.sourceObjectId}
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <AmountDisplay value={entry.amountMinor} variant="auto" className="text-xs" />
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <AmountDisplay
-                        value={entry.runningBalance}
-                        variant="auto"
-                        className="text-xs font-medium"
-                      />
-                    </td>
-                  </tr>
+          <>
+            <CustomerSnapshotHeader profile={profile} isLoading={profileLoading} />
+
+            {ledgerLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <Skeleton key={index} className="h-10 w-full" />
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            ) : !entries || entries.length === 0 ? (
+              <div className="flex justify-center pt-8">
+                <EmptyState
+                  title="No ledger activity"
+                  description="This customer has no posted AR transactions yet."
+                  icons={[BookOpenIcon, FileTextIcon, ReceiptTextIcon]}
+                />
+              </div>
+            ) : (
+              <LedgerTable entries={entries} />
+            )}
+          </>
         )}
       </div>
     </PageLayout>

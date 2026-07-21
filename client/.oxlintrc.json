@@ -182,6 +182,17 @@
                 "no-unsafe-negation": "off",
                 "no-with": "off"
             }
+        },
+        {
+            "files": [
+                "scripts/**"
+            ],
+            "env": {
+                "node": true
+            },
+            "rules": {
+                "no-undef": "off"
+            }
         }
     ]
 }

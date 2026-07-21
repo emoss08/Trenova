@@ -1,0 +1,223 @@
+type ARAgingBucketTotals {
+  currentMinor: Int!
+  days1To30Minor: Int!
+  days31To60Minor: Int!
+  days61To90Minor: Int!
+  daysOver90Minor: Int!
+  totalOpenMinor: Int!
+}
+
+type ARCustomerAgingRow {
+  customerId: ID!
+  customerName: String!
+  buckets: ARAgingBucketTotals!
+}
+
+type ARAgingSummary {
+  asOfDate: Int!
+  totals: ARAgingBucketTotals!
+  rows: [ARCustomerAgingRow!]!
+}
+
+type AROpenItem {
+  invoiceId: ID!
+  customerId: ID!
+  customerName: String!
+  invoiceNumber: String!
+  billType: String!
+  invoiceDate: Int!
+  dueDate: Int!
+  currencyCode: String!
+  shipmentProNumber: String!
+  shipmentBol: String!
+  totalAmountMinor: Int!
+  appliedAmountMinor: Int!
+  openAmountMinor: Int!
+  daysPastDue: Int!
+  settlementStatus: String!
+  disputeStatus: String!
+  hasShortPay: Boolean!
+}
+
+type ARLedgerEntry {
+  customerId: ID!
+  transactionDate: Int!
+  eventType: String!
+  documentNumber: String!
+  sourceObjectType: String!
+  sourceObjectId: String!
+  amountMinor: Int!
+  relatedInvoiceId: ID
+}
+
+type ARStatementTransaction {
+  transactionDate: Int!
+  eventType: String!
+  documentNumber: String!
+  sourceObjectId: String!
+  amountMinor: Int!
+  chargeMinor: Int!
+  paymentMinor: Int!
+  runningBalanceMinor: Int!
+}
+
+type ARCustomerStatement {
+  customerId: ID!
+  customerName: String!
+  statementDate: Int!
+  startDate: Int!
+  openingBalanceMinor: Int!
+  totalChargesMinor: Int!
+  totalPaymentsMinor: Int!
+  endingBalanceMinor: Int!
+  aging: ARAgingBucketTotals!
+  transactions: [ARStatementTransaction!]!
+  openItems: [AROpenItem!]!
+}
+
+type ARBalanceOverview {
+  totalOpenMinor: Int!
+  overdueMinor: Int!
+  unappliedCashMinor: Int!
+  disputedOpenMinor: Int!
+  openInvoiceCount: Int!
+  overdueInvoiceCount: Int!
+  disputedInvoiceCount: Int!
+  avgDaysPastDue: Float!
+  buckets: ARAgingBucketTotals!
+}
+
+type ARDashboardKPIs {
+  asOfDate: Int!
+  overview: ARBalanceOverview!
+  currentDsoDays: Float!
+  dsoDeltaDays: Float!
+  cei: Float!
+  avgDaysToPay: Float!
+  overduePercent: Float!
+  writeOffRatio: Float!
+  disputeRate: Float!
+  shortPayRate: Float!
+}
+
+type ARDSOTrendPoint {
+  periodEnd: Int!
+  dsoDays: Float!
+  arBalanceMinor: Int!
+  billedMinor: Int!
+}
+
+type ARAgingTrendPoint {
+  periodEnd: Int!
+  buckets: ARAgingBucketTotals!
+}
+
+type ARCashFlowPoint {
+  weekStart: Int!
+  expectedMinor: Int!
+  openDueMinor: Int!
+  actualMinor: Int!
+  isForecast: Boolean!
+}
+
+type ARCollectionTotals {
+  periodStart: Int!
+  periodEnd: Int!
+  beginningOpenMinor: Int!
+  endingOpenMinor: Int!
+  endingCurrentMinor: Int!
+  creditSalesMinor: Int!
+  collectedMinor: Int!
+  avgDaysToPay: Float!
+  shortPayMinor: Int!
+  shortPayApplicationCount: Int!
+  applicationCount: Int!
+  disputedInvoiceCount: Int!
+  postedInvoiceCount: Int!
+}
+
+type ARCollectionPerformance {
+  totals: ARCollectionTotals!
+  cei: Float!
+  writeOffRatio: Float!
+  disputeRate: Float!
+  shortPayRate: Float!
+}
+
+type ARTopOverdueCustomer {
+  customerId: ID!
+  customerName: String!
+  overdueMinor: Int!
+  totalOpenMinor: Int!
+  oldestDaysPastDue: Int!
+  openInvoiceCount: Int!
+}
+
+type ARCollectionsWorklistItem {
+  invoiceId: ID!
+  customerId: ID!
+  customerName: String!
+  invoiceNumber: String!
+  dueDate: Int!
+  openAmountMinor: Int!
+  daysPastDue: Int!
+  isDisputed: Boolean!
+  hasShortPay: Boolean!
+  severity: String!
+}
+
+type ARMonthlyCollectionPoint {
+  monthStart: Int!
+  amountMinor: Int!
+}
+
+type ARCustomerSnapshot {
+  customerId: ID!
+  customerName: String!
+  totalOpenMinor: Int!
+  overdueMinor: Int!
+  unappliedCashMinor: Int!
+  creditLimitMinor: Int!
+  hasCreditLimit: Boolean!
+  openInvoiceCount: Int!
+  oldestOpenInvoiceDate: Int!
+  oldestDaysPastDue: Int!
+  lastPaymentDate: Int!
+  lastPaymentMinor: Int!
+  avgDaysToPay: Float!
+  billedTrailing91Minor: Int!
+  buckets: ARAgingBucketTotals!
+  monthlyCollections: [ARMonthlyCollectionPoint!]!
+}
+
+type ARPaymentStats {
+  postedTodayMinor: Int!
+  postedTodayCount: Int!
+  unappliedCashMinor: Int!
+  unappliedPaymentCount: Int!
+  reversedLast30Minor: Int!
+  reversedLast30Count: Int!
+}
+
+type ARCustomerProfile {
+  snapshot: ARCustomerSnapshot!
+  dsoDays: Float!
+  creditUtilization: Float!
+  delinquencyScore: Float!
+}
+
+extend type Query {
+  arAgingSummary(asOfDate: Int): ARAgingSummary!
+  arOpenItems(customerId: ID, asOfDate: Int): [AROpenItem!]!
+  arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
+  arCustomerStatement(customerId: ID!, startDate: Int, asOfDate: Int): ARCustomerStatement!
+  arDashboardKpis: ARDashboardKPIs!
+  arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!
+  arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
+  arCashFlowForecast(pastWeeks: Int, futureWeeks: Int): [ARCashFlowPoint!]!
+  arCollectionPerformance(periodDays: Int): ARCollectionPerformance!
+  arTopOverdueCustomers(limit: Int): [ARTopOverdueCustomer!]!
+  arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
+  arCustomerProfile(customerId: ID!): ARCustomerProfile!
+  arPaymentStats: ARPaymentStats!
+}

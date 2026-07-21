@@ -7,10 +7,12 @@ import (
 	"math"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,15 +34,17 @@ const defaultTomorrowsPickupsLimit = 20
 type ProviderParams struct {
 	fx.In
 
-	DB           *postgres.Connection
-	Logger       *zap.Logger
-	DispatchRepo repositories.DispatchControlRepository
+	DB             *postgres.Connection
+	Logger         *zap.Logger
+	DispatchRepo   repositories.DispatchControlRepository
+	CostingService *costingservice.Service
 }
 
 type Provider struct {
-	l            *zap.Logger
-	db           *postgres.Connection
-	dispatchRepo repositories.DispatchControlRepository
+	l              *zap.Logger
+	db             *postgres.Connection
+	dispatchRepo   repositories.DispatchControlRepository
+	costingService *costingservice.Service
 }
 
 type laneStateRow struct {
@@ -94,9 +98,10 @@ type tomorrowsPickupsRequest struct {
 
 func NewProvider(p ProviderParams) *Provider {
 	return &Provider{
-		l:            p.Logger.Named("analyticsprovider.shipment"),
-		db:           p.DB,
-		dispatchRepo: p.DispatchRepo,
+		l:              p.Logger.Named("analyticsprovider.shipment"),
+		db:             p.DB,
+		dispatchRepo:   p.DispatchRepo,
+		costingService: p.CostingService,
 	}
 }
 
@@ -230,6 +235,12 @@ func (p *Provider) getFullAnalyticsData(
 		return nil, err
 	}
 
+	profitability, err := p.getProfitability(ctx, opts.OrgID, opts.BuID)
+	if err != nil {
+		log.Error("failed to get profitability summary", zap.Error(err))
+		return nil, err
+	}
+
 	data := services.AnalyticsData{
 		"activeShipments":    activeShipments,
 		"onTimePercent":      onTime,
@@ -242,9 +253,39 @@ func (p *Provider) getFullAnalyticsData(
 		"customerMix":        customerMix,
 		"tomorrowsPickups":   tomorrowsPickups,
 		"laneHeatmap":        laneHeatmap,
+		"profitability":      profitability,
 	}
 
 	return data, nil
+}
+
+func (p *Provider) getProfitability(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (*ProfitabilityCard, error) {
+	now := timeutils.NowUnix()
+	summary, err := p.costingService.FleetSummary(
+		ctx,
+		pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		now-costingcontrol.DefaultFleetSummaryWindowSeconds,
+		now,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	card := &ProfitabilityCard{
+		UnprofitableCount: summary.UnprofitableCount,
+		ShipmentCount:     summary.ShipmentCount,
+		TotalMiles:        summary.TotalMiles,
+	}
+	card.AvgCPM, _ = summary.AvgCPM.Float64()
+	if summary.AvgMarginPercent.Valid {
+		card.HasMargin = true
+		card.AvgMarginPct, _ = summary.AvgMarginPercent.Decimal.Float64()
+	}
+
+	return card, nil
 }
 
 var activeStatuses = []shipment.Status{

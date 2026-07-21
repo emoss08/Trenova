@@ -5,7 +5,9 @@ const SOURCE_ROUTE_MAP: Record<string, (id: string) => string> = {
   manual_journal: (id) => `/accounting/manual-journals/${id}`,
   journal_reversal: (id) => `/accounting/journal-reversals/${id}`,
   invoice: (id) => `/billing/invoices?item=${id}`,
-  customer_payment: (id) => `/accounting/ar/customer-ledger?paymentId=${id}`,
+  customer_payment: (id) => `/accounting/ar/payments?panelType=edit&panelEntityId=${id}`,
+  CustomerPayment: (id) => `/accounting/ar/payments?panelType=edit&panelEntityId=${id}`,
+  invoice_posted: (id) => `/billing/invoices?item=${id}`,
   shipment: (id) => `/shipment-management/shipments?item=${id}`,
 };
 

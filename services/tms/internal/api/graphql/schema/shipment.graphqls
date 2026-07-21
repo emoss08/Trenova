@@ -154,6 +154,7 @@ type Shipment {
   orderId: ID
   orderNumber: String
   orderStatus: OrderStatus
+  profitabilityEstimate: ShipmentProfitabilityEstimate
   status: ShipmentStatus!
   tenderStatus: ShipmentTenderStatus
   entryMethod: ShipmentEntryMethod
@@ -642,6 +643,16 @@ type ShipmentAnalytics {
   customerMix: ShipmentCustomerMix
   tomorrowsPickups: ShipmentTomorrowsPickups
   laneHeatmap: ShipmentLaneHeatmap
+  profitability: ShipmentProfitabilityAnalytics
+}
+
+type ShipmentProfitabilityAnalytics {
+  avgCpm: Float!
+  avgMarginPct: Float!
+  hasMargin: Boolean!
+  unprofitableCount: Int!
+  shipmentCount: Int!
+  totalMiles: Float!
 }
 
 type ShipmentActiveShipments {

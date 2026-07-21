@@ -1,0 +1,88 @@
+query JournalEntryDetail($id: ID!) {
+  journalEntry(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    batchId
+    fiscalYearId
+    fiscalPeriodId
+    entryNumber
+    entryType
+    status
+    accountingDate
+    description
+    referenceType
+    referenceId
+    totalDebit
+    totalCredit
+    isPosted
+    isReversal
+    reversalOfId
+    reversedById
+    reversalDate
+    reversalReason
+    lines {
+      id
+      journalEntryId
+      glAccountId
+      lineNumber
+      description
+      debitAmount
+      creditAmount
+      netAmount
+      customerId
+      locationId
+      glAccount {
+        id
+        accountCode
+        name
+      }
+    }
+  }
+}
+
+query JournalSourceByObject($sourceType: String!, $sourceId: String!) {
+  journalSourceByObject(sourceType: $sourceType, sourceId: $sourceId) {
+    id
+    sourceObjectType
+    sourceObjectId
+    sourceEventType
+    sourceDocumentNumber
+    status
+  }
+}
+
+query JournalEntriesBySource($sourceType: String!, $sourceId: String!) {
+  journalEntriesBySource(sourceType: $sourceType, sourceId: $sourceId) {
+    id
+    batchId
+    entryNumber
+    entryType
+    status
+    accountingDate
+    description
+    referenceType
+    referenceId
+    totalDebit
+    totalCredit
+    isPosted
+    isReversal
+    lines {
+      id
+      journalEntryId
+      glAccountId
+      lineNumber
+      description
+      debitAmount
+      creditAmount
+      netAmount
+      customerId
+      locationId
+      glAccount {
+        id
+        accountCode
+        name
+      }
+    }
+  }
+}

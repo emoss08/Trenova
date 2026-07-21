@@ -1,5 +1,4 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -19,7 +18,7 @@ import { ManualJournalForm } from "./manual-journal-form";
 type JournalFormValues = {
   description: string;
   reason: string;
-  accountingDate: string;
+  accountingDate: number | null;
   requestedFiscalYearId: string;
   requestedFiscalPeriodId: string;
   currencyCode: string;
@@ -46,7 +45,7 @@ function CreatePanel({
     defaultValues: {
       description: "",
       reason: "",
-      accountingDate: "",
+      accountingDate: null,
       requestedFiscalYearId: "",
       requestedFiscalPeriodId: "",
       currencyCode: "USD",
@@ -76,6 +75,7 @@ function CreatePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
+      size="xl"
       title="New Manual Journal"
       description="Create a new manual journal entry draft."
       footer={
@@ -131,7 +131,7 @@ function EditPanel({
       ? {
           description: journal.description,
           reason: journal.reason,
-          accountingDate: String(journal.accountingDate),
+          accountingDate: journal.accountingDate || null,
           requestedFiscalYearId: journal.requestedFiscalYearId,
           requestedFiscalPeriodId: journal.requestedFiscalPeriodId,
           currencyCode: journal.currencyCode || "USD",
@@ -242,6 +242,7 @@ function EditPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
+      size="xl"
       title={journal?.requestNumber ? `Journal ${journal.requestNumber}` : "Manual Journal"}
       description="View or manage this manual journal entry."
       headerActions={status ? <AccountingStatusBadge status={status} /> : undefined}
@@ -262,31 +263,6 @@ function EditPanel({
               <ManualJournalForm isDraft={isDraft} />
             </Form>
           </FormProvider>
-
-          {journal ? (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h4 className="text-xs font-semibold">Summary</h4>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Total Debit</span>
-                  <AmountDisplay value={journal.totalDebit} className="font-medium" />
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Total Credit</span>
-                  <AmountDisplay value={journal.totalCredit} className="font-medium" />
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Difference</span>
-                  <AmountDisplay
-                    value={journal.totalDebit - journal.totalCredit}
-                    variant={journal.totalDebit === journal.totalCredit ? "neutral" : "negative"}
-                    className="font-medium"
-                  />
-                </div>
-              </div>
-            </>
-          ) : null}
 
           {status === "PendingApproval" ? (
             <>

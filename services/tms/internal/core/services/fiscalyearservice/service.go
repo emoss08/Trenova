@@ -279,6 +279,17 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 	return createdEntity, nil
 }
 
+func (s *Service) ListPeriods(
+	ctx context.Context,
+	fiscalYearID, orgID, buID pulid.ID,
+) ([]*fiscalperiod.FiscalPeriod, error) {
+	return s.fiscalPeriodRepo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
+		FiscalYearID: fiscalYearID,
+		OrgID:        orgID,
+		BuID:         buID,
+	})
+}
+
 func (s *Service) GetPeriodForDate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -310,15 +321,9 @@ func (s *Service) Create(
 		return nil, multiErr
 	}
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	createdEntity, err := s.createWithPeriods(ctx, entity, log)
 	if err != nil {
-		log.Error("failed to create fiscal year", zap.Error(err))
 		return nil, err
-	}
-
-	if genErr := s.generatePeriods(ctx, createdEntity, log); genErr != nil {
-		log.Error("failed to generate fiscal periods", zap.Error(genErr))
-		return nil, genErr
 	}
 
 	if err = s.auditService.LogAction(&services.LogActionParams{
@@ -333,6 +338,51 @@ func (s *Service) Create(
 		auditservice.WithComment("Fiscal year created"),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	return createdEntity, nil
+}
+
+func (s *Service) createWithPeriods(
+	ctx context.Context,
+	entity *fiscalyear.FiscalYear,
+	log *zap.Logger,
+) (*fiscalyear.FiscalYear, error) {
+	if s.db == nil {
+		createdEntity, err := s.repo.Create(ctx, entity)
+		if err != nil {
+			log.Error("failed to create fiscal year", zap.Error(err))
+			return nil, err
+		}
+
+		if genErr := s.generatePeriods(ctx, createdEntity, log); genErr != nil {
+			log.Error("failed to generate fiscal periods", zap.Error(genErr))
+			return nil, genErr
+		}
+
+		return createdEntity, nil
+	}
+
+	var createdEntity *fiscalyear.FiscalYear
+	err := s.db.WithTx(
+		ctx,
+		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		func(txCtx context.Context, _ bun.Tx) error {
+			var txErr error
+			createdEntity, txErr = s.repo.Create(txCtx, entity)
+			if txErr != nil {
+				return txErr
+			}
+
+			return s.generatePeriods(txCtx, createdEntity, log)
+		},
+	)
+	if err != nil {
+		log.Error("failed to create fiscal year with periods", zap.Error(err))
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"The fiscal year is busy. Retry the request.",
+		)
 	}
 
 	return createdEntity, nil
@@ -676,7 +726,7 @@ func (s *Service) generatePeriods(
 	fy *fiscalyear.FiscalYear,
 	log *zap.Logger,
 ) error {
-	periods := GenerateMonthlyPeriods(fy)
+	periods := fy.GenerateMonthlyPeriods()
 
 	err := s.fiscalPeriodRepo.BulkCreate(ctx, &repositories.BulkCreateFiscalPeriodsRequest{
 		Periods: periods,
@@ -696,40 +746,4 @@ func (s *Service) generatePeriods(
 	)
 
 	return nil
-}
-
-func GenerateMonthlyPeriods(fy *fiscalyear.FiscalYear) []*fiscalperiod.FiscalPeriod {
-	startTime := time.Unix(fy.StartDate, 0).UTC()
-	endTime := time.Unix(fy.EndDate, 0).UTC()
-
-	periods := make([]*fiscalperiod.FiscalPeriod, 0, 12)
-	currentStart := startTime
-
-	for i := 1; currentStart.Before(endTime); i++ {
-		nextMonthStart := currentStart.AddDate(0, 1, 0)
-		periodEnd := nextMonthStart.Add(-time.Second)
-
-		if periodEnd.After(endTime) || periodEnd.Equal(endTime) {
-			periodEnd = endTime
-		}
-
-		periodName := fmt.Sprintf("Period %d - %s", i, currentStart.Format("January 2006"))
-
-		period := &fiscalperiod.FiscalPeriod{
-			FiscalYearID:   fy.ID,
-			OrganizationID: fy.OrganizationID,
-			BusinessUnitID: fy.BusinessUnitID,
-			PeriodNumber:   i,
-			PeriodType:     fiscalperiod.PeriodTypeMonth,
-			Name:           periodName,
-			StartDate:      currentStart.Unix(),
-			EndDate:        periodEnd.Unix(),
-			Status:         fiscalperiod.StatusOpen,
-		}
-
-		periods = append(periods, period)
-		currentStart = periodEnd.Add(time.Second)
-	}
-
-	return periods
 }

@@ -13,6 +13,7 @@ import { audit } from "./audit";
 import { billingControl } from "./billing-control";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
+import { customerPayment } from "./customer-payment";
 import { dataEntryControl } from "./data-entry-control";
 import { distanceControl } from "./distance-control";
 import { documentControl } from "./document-control";
@@ -46,6 +47,7 @@ import { weatherRadar } from "./weather-radar";
 import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 import { fuelSurcharge } from "./fuel-surcharge";
+import { costControl } from "./cost-control";
 
 const financialQueries = mergeQueryKeys(
   accountingControl,
@@ -63,10 +65,12 @@ const financialQueries = mergeQueryKeys(
   invoiceAdjustment,
   invoiceAdjustmentControl,
   customer,
+  customerPayment,
   formulaTemplate,
   sequenceConfig,
   exchangeRate,
   fuelSurcharge,
+  costControl,
 );
 
 const operationsQueries = mergeQueryKeys(

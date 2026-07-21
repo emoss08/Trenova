@@ -3,6 +3,8 @@ package fiscalyear
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -208,6 +210,39 @@ func (fy *FiscalYear) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 			},
 		},
 	}
+}
+
+func (fy *FiscalYear) GenerateMonthlyPeriods() []*fiscalperiod.FiscalPeriod {
+	startTime := time.Unix(fy.StartDate, 0).UTC()
+	endTime := time.Unix(fy.EndDate, 0).UTC()
+
+	periods := make([]*fiscalperiod.FiscalPeriod, 0, 12)
+	currentStart := startTime
+
+	for i := 1; currentStart.Before(endTime); i++ {
+		nextMonthStart := currentStart.AddDate(0, 1, 0)
+		periodEnd := nextMonthStart.Add(-time.Second)
+
+		if periodEnd.After(endTime) || periodEnd.Equal(endTime) {
+			periodEnd = endTime
+		}
+
+		periods = append(periods, &fiscalperiod.FiscalPeriod{
+			FiscalYearID:   fy.ID,
+			OrganizationID: fy.OrganizationID,
+			BusinessUnitID: fy.BusinessUnitID,
+			PeriodNumber:   i,
+			PeriodType:     fiscalperiod.PeriodTypeMonth,
+			Name:           fmt.Sprintf("Period %d - %s", i, currentStart.Format("January 2006")),
+			StartDate:      currentStart.Unix(),
+			EndDate:        periodEnd.Unix(),
+			Status:         fiscalperiod.StatusOpen,
+		})
+
+		currentStart = periodEnd.Add(time.Second)
+	}
+
+	return periods
 }
 
 func (fy *FiscalYear) BeforeAppendModel(_ context.Context, query bun.Query) error {

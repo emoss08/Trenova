@@ -5,12 +5,14 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
+	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -95,6 +97,10 @@ func (s *GLAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 					return fmt.Errorf("apply accounting control defaults for org %s: %w", org.Name, err)
 				}
 
+				if err = s.applyCostCategoryGLAccounts(ctx, tx, sc, org.ID, org.BusinessUnitID); err != nil {
+					return fmt.Errorf("apply cost category GL accounts for org %s: %w", org.Name, err)
+				}
+
 				totalAccountCount += accountCount
 				createdOrgCount++
 			}
@@ -155,6 +161,107 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 		Where("business_unit_id = ?", buID).
 		Exec(ctx)
 	return err
+}
+
+var costCategoryGLAccountCodes = map[costingcontrol.CategoryType][]string{
+	costingcontrol.CategoryTypeDriverWages:       {"5010", "5020", "5030"},
+	costingcontrol.CategoryTypeDriverBenefits:    {"5040"},
+	costingcontrol.CategoryTypeFuel:              {"5110", "5120", "5130"},
+	costingcontrol.CategoryTypeEquipmentPayments: {"6710", "6810"},
+	costingcontrol.CategoryTypeMaintenance:       {"5210", "5220", "5230", "5250"},
+	costingcontrol.CategoryTypeInsurance:         {"5310", "5320", "5330", "5340"},
+	costingcontrol.CategoryTypeTires:             {"5240"},
+	costingcontrol.CategoryTypeTolls:             {"5510", "5520"},
+	costingcontrol.CategoryTypePermitsLicenses:   {"5410", "5420", "5430", "5440"},
+	costingcontrol.CategoryTypeOverhead:          {"6010", "6020", "6030", "6040", "6110", "6130"},
+}
+
+func (s *GLAccountSeed) applyCostCategoryGLAccounts(
+	ctx context.Context,
+	tx bun.Tx,
+	sc *seedhelpers.SeedContext,
+	orgID, buID pulid.ID,
+) error {
+	categories := make([]*costingcontrol.CostCategory, 0, len(costCategoryGLAccountCodes))
+	if err := tx.NewSelect().
+		Model(&categories).
+		Where("organization_id = ?", orgID).
+		Where("business_unit_id = ?", buID).
+		Scan(ctx); err != nil {
+		return err
+	}
+
+	if len(categories) == 0 {
+		return nil
+	}
+
+	allCodes := make([]string, 0, 32)
+	for _, codes := range costCategoryGLAccountCodes {
+		allCodes = append(allCodes, codes...)
+	}
+
+	type accountRow struct {
+		ID   pulid.ID `bun:"id"`
+		Code string   `bun:"account_code"`
+	}
+
+	rows := make([]accountRow, 0, len(allCodes))
+	if err := tx.NewSelect().
+		Model((*glaccount.GLAccount)(nil)).
+		Column("id", "account_code").
+		Where("organization_id = ?", orgID).
+		Where("business_unit_id = ?", buID).
+		Where("account_code IN (?)", bun.List(allCodes)).
+		Scan(ctx, &rows); err != nil {
+		return err
+	}
+
+	accountsByCode := make(map[string]pulid.ID, len(rows))
+	for i := range rows {
+		accountsByCode[rows[i].Code] = rows[i].ID
+	}
+
+	now := timeutils.NowUnix()
+	links := make([]*costingcontrol.CostCategoryGLAccount, 0, len(allCodes))
+	for _, category := range categories {
+		codes, ok := costCategoryGLAccountCodes[category.Category]
+		if !ok {
+			continue
+		}
+		for _, code := range codes {
+			accountID, found := accountsByCode[code]
+			if !found {
+				continue
+			}
+			links = append(links, &costingcontrol.CostCategoryGLAccount{
+				ID:             pulid.MustNew("ccga_"),
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				CostCategoryID: category.ID,
+				GLAccountID:    accountID,
+				CreatedAt:      now,
+			})
+		}
+	}
+
+	if len(links) == 0 {
+		return nil
+	}
+
+	if _, err := tx.NewInsert().
+		Model(&links).
+		On("CONFLICT (organization_id, cost_category_id, gl_account_id) DO NOTHING").
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	for _, link := range links {
+		if err := sc.TrackCreated(ctx, "cost_category_gl_accounts", link.ID, s.Name()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *GLAccountSeed) createDefaultAccountTypes(

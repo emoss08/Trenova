@@ -86,7 +86,7 @@ export function JournalEntryDetailPage() {
               <div className="flex items-center gap-3">
                 <CardTitle className="font-mono">{entry.entryNumber}</CardTitle>
                 <Badge variant="outline">{entry.entryType}</Badge>
-                <AccountingStatusBadge status={entry.status as any} />
+                <AccountingStatusBadge status={entry.status} />
               </div>
               <span className="text-sm text-muted-foreground">{accountingDate}</span>
             </div>

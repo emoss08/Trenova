@@ -159,6 +159,9 @@ func (r *repository) GetByID(
 		Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("mjrl.line_number ASC")
 		}).
+		Relation("Lines.GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Column("id", "business_unit_id", "organization_id", "account_code", "name")
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "ManualJournalRequest")

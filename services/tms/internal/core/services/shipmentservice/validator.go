@@ -63,7 +63,7 @@ func newValidatorBuilder(
 		WithModelName("Shipment").
 		WithCustomRule(createMoveValidationRule()).
 		WithCustomRule(createStopValidationRule()).
-		WithCustomRule(createAdditionalChargeValidationRule(controlRepo)).
+		WithCustomRule(createAdditionalChargeValidationRule()).
 		WithCustomRule(createCommodityValidationRule()).
 		WithCustomRule(createShipmentStatusCoordinationRule()).
 		WithCustomRule(createHazmatSegregationRule(controlRepo, commodityRepo, hazmatRuleRepo)).

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
@@ -86,6 +87,12 @@ type APIKeyConnection struct {
 type APIKeyEdge struct {
 	Node   *apikey.Key `json:"node"`
 	Cursor string      `json:"cursor"`
+}
+
+type ApplyCustomerPaymentInput struct {
+	PaymentID      string                             `json:"paymentId"`
+	AccountingDate int                                `json:"accountingDate"`
+	Applications   []*CustomerPaymentApplicationInput `json:"applications"`
 }
 
 type AttentionSummary struct {
@@ -186,6 +193,15 @@ type CannedReport struct {
 	Definition    map[string]any `json:"definition"`
 }
 
+type CategoryCostLine struct {
+	Category        CostCategoryType    `json:"category"`
+	Name            string              `json:"name"`
+	CostBehavior    CostBehavior        `json:"costBehavior"`
+	RatePerMile     string              `json:"ratePerMile"`
+	Amount          string              `json:"amount"`
+	EffectiveSource EffectiveRateSource `json:"effectiveSource"`
+}
+
 type CommodityConnection struct {
 	Edges      []*CommodityEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
@@ -195,6 +211,67 @@ type CommodityConnection struct {
 type CommodityEdge struct {
 	Node   *commodity.Commodity `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+type CostCategory struct {
+	ID                   string                       `json:"id"`
+	Category             CostCategoryType             `json:"category"`
+	Name                 string                       `json:"name"`
+	CostBehavior         CostBehavior                 `json:"costBehavior"`
+	RateSource           CostRateSource               `json:"rateSource"`
+	BenchmarkRatePerMile string                       `json:"benchmarkRatePerMile"`
+	OverrideRatePerMile  *string                      `json:"overrideRatePerMile,omitempty"`
+	IsActive             bool                         `json:"isActive"`
+	SortOrder            int                          `json:"sortOrder"`
+	Version              int                          `json:"version"`
+	GlAccounts           []*CostCategoryGLAccountLink `json:"glAccounts"`
+}
+
+type CostCategoryGLAccountLink struct {
+	ID          string `json:"id"`
+	GlAccountID string `json:"glAccountId"`
+	AccountCode string `json:"accountCode"`
+	AccountName string `json:"accountName"`
+}
+
+type CostCategoryUpdateInput struct {
+	ID                  string         `json:"id"`
+	RateSource          CostRateSource `json:"rateSource"`
+	OverrideRatePerMile *string        `json:"overrideRatePerMile,omitempty"`
+	IsActive            bool           `json:"isActive"`
+	GlAccountIds        []string       `json:"glAccountIds"`
+	Version             int            `json:"version"`
+}
+
+type CostingControl struct {
+	ID                   string          `json:"id"`
+	BusinessUnitID       string          `json:"businessUnitId"`
+	OrganizationID       string          `json:"organizationId"`
+	FuelIndexID          *string         `json:"fuelIndexId,omitempty"`
+	FuelIndex            *FuelIndex      `json:"fuelIndex,omitempty"`
+	UseLiveFuelPrice     bool            `json:"useLiveFuelPrice"`
+	MilesPerGallon       string          `json:"milesPerGallon"`
+	IncludeDeadheadMiles bool            `json:"includeDeadheadMiles"`
+	GlActualsEnabled     bool            `json:"glActualsEnabled"`
+	GlRollingMonths      int             `json:"glRollingMonths"`
+	PlannedMonthlyMiles  *int            `json:"plannedMonthlyMiles,omitempty"`
+	TargetMarginPercent  *string         `json:"targetMarginPercent,omitempty"`
+	Version              int             `json:"version"`
+	CreatedAt            int             `json:"createdAt"`
+	UpdatedAt            int             `json:"updatedAt"`
+	Categories           []*CostCategory `json:"categories"`
+}
+
+type CostingControlInput struct {
+	FuelIndexID          *string `json:"fuelIndexId,omitempty"`
+	UseLiveFuelPrice     bool    `json:"useLiveFuelPrice"`
+	MilesPerGallon       string  `json:"milesPerGallon"`
+	IncludeDeadheadMiles bool    `json:"includeDeadheadMiles"`
+	GlActualsEnabled     bool    `json:"glActualsEnabled"`
+	GlRollingMonths      int     `json:"glRollingMonths"`
+	PlannedMonthlyMiles  *int    `json:"plannedMonthlyMiles,omitempty"`
+	TargetMarginPercent  *string `json:"targetMarginPercent,omitempty"`
+	Version              int     `json:"version"`
 }
 
 type CreateReportScheduleInput struct {
@@ -228,6 +305,23 @@ type CustomerConnection struct {
 type CustomerEdge struct {
 	Node   *customer.Customer `json:"node"`
 	Cursor string             `json:"cursor"`
+}
+
+type CustomerPaymentApplicationInput struct {
+	InvoiceID           string `json:"invoiceId"`
+	AppliedAmountMinor  int    `json:"appliedAmountMinor"`
+	ShortPayAmountMinor *int   `json:"shortPayAmountMinor,omitempty"`
+}
+
+type CustomerPaymentConnection struct {
+	Edges      []*CustomerPaymentEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type CustomerPaymentEdge struct {
+	Node   *customerpayment.Payment `json:"node"`
+	Cursor string                   `json:"cursor"`
 }
 
 type DataTableConnectionInput struct {
@@ -537,6 +631,17 @@ type FleetCodeEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+type FleetCostSummary struct {
+	AvgCpm             string  `json:"avgCpm"`
+	AvgMarginPercent   *string `json:"avgMarginPercent,omitempty"`
+	ShipmentCount      int     `json:"shipmentCount"`
+	UnprofitableCount  int     `json:"unprofitableCount"`
+	TotalRevenue       string  `json:"totalRevenue"`
+	TotalEstimatedCost string  `json:"totalEstimatedCost"`
+	TotalMiles         float64 `json:"totalMiles"`
+	EmptyMiles         float64 `json:"emptyMiles"`
+}
+
 type ForkCannedReportInput struct {
 	CannedKey string  `json:"cannedKey"`
 	Name      *string `json:"name,omitempty"`
@@ -551,6 +656,14 @@ type FormulaTemplateConnection struct {
 type FormulaTemplateEdge struct {
 	Node   *formulatemplate.FormulaTemplate `json:"node"`
 	Cursor string                           `json:"cursor"`
+}
+
+type FuelCostResolution struct {
+	PricePerGallon *string             `json:"pricePerGallon,omitempty"`
+	PriceDate      string              `json:"priceDate"`
+	FuelIndexID    *string             `json:"fuelIndexId,omitempty"`
+	MilesPerGallon string              `json:"milesPerGallon"`
+	Source         EffectiveRateSource `json:"source"`
 }
 
 type FuelIndex struct {
@@ -730,6 +843,13 @@ type FuelSurchargeTableRowInput struct {
 	SortOrder *int    `json:"sortOrder,omitempty"`
 }
 
+type GLActualsWindow struct {
+	FromDate    int     `json:"fromDate"`
+	ToDate      int     `json:"toDate"`
+	FleetMiles  float64 `json:"fleetMiles"`
+	HasPostings bool    `json:"hasPostings"`
+}
+
 type GenerateFuelTableInput struct {
 	MinPrice   string `json:"minPrice"`
 	MaxPrice   string `json:"maxPrice"`
@@ -787,6 +907,12 @@ type InvoiceConnection struct {
 type InvoiceEdge struct {
 	Node   *invoice.Invoice `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type JournalEntryLineAccount struct {
+	ID          string `json:"id"`
+	AccountCode string `json:"accountCode"`
+	Name        string `json:"name"`
 }
 
 type JournalReversalConnection struct {
@@ -928,6 +1054,18 @@ type OrganizationInput struct {
 type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 	EndCursor   *string `json:"endCursor,omitempty"`
+}
+
+type PostCustomerPaymentInput struct {
+	CustomerID      string                             `json:"customerId"`
+	PaymentDate     int                                `json:"paymentDate"`
+	AccountingDate  int                                `json:"accountingDate"`
+	AmountMinor     int                                `json:"amountMinor"`
+	PaymentMethod   customerpayment.Method             `json:"paymentMethod"`
+	ReferenceNumber *string                            `json:"referenceNumber,omitempty"`
+	Memo            *string                            `json:"memo,omitempty"`
+	CurrencyCode    *string                            `json:"currencyCode,omitempty"`
+	Applications    []*CustomerPaymentApplicationInput `json:"applications,omitempty"`
 }
 
 type Query struct {
@@ -1188,6 +1326,32 @@ type ReportSortInput struct {
 	Direction string `json:"direction"`
 }
 
+type ResolvedCategoryRate struct {
+	Category        CostCategoryType    `json:"category"`
+	Name            string              `json:"name"`
+	CostBehavior    CostBehavior        `json:"costBehavior"`
+	RatePerMile     string              `json:"ratePerMile"`
+	EffectiveSource EffectiveRateSource `json:"effectiveSource"`
+}
+
+type ResolvedCostProfile struct {
+	TotalCpm             string                  `json:"totalCpm"`
+	VariableCpm          string                  `json:"variableCpm"`
+	FixedCpm             string                  `json:"fixedCpm"`
+	TargetMarginPercent  *string                 `json:"targetMarginPercent,omitempty"`
+	IncludeDeadheadMiles bool                    `json:"includeDeadheadMiles"`
+	AsOfDate             string                  `json:"asOfDate"`
+	Fuel                 *FuelCostResolution     `json:"fuel,omitempty"`
+	Categories           []*ResolvedCategoryRate `json:"categories"`
+	GlWindow             *GLActualsWindow        `json:"glWindow,omitempty"`
+}
+
+type ReverseCustomerPaymentInput struct {
+	PaymentID      string  `json:"paymentId"`
+	AccountingDate int     `json:"accountingDate"`
+	Reason         *string `json:"reason,omitempty"`
+}
+
 type RoleConnection struct {
 	Edges      []*RoleEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
@@ -1289,56 +1453,57 @@ type ServiceTypeEdge struct {
 }
 
 type Shipment struct {
-	ID                     string                      `json:"id"`
-	BusinessUnitID         string                      `json:"businessUnitId"`
-	OrganizationID         string                      `json:"organizationId"`
-	SourceDocumentID       *string                     `json:"sourceDocumentId,omitempty"`
-	ServiceTypeID          string                      `json:"serviceTypeId"`
-	ShipmentTypeID         string                      `json:"shipmentTypeId"`
-	CustomerID             string                      `json:"customerId"`
-	TractorTypeID          *string                     `json:"tractorTypeId,omitempty"`
-	TrailerTypeID          *string                     `json:"trailerTypeId,omitempty"`
-	OwnerID                *string                     `json:"ownerId,omitempty"`
-	EnteredByID            *string                     `json:"enteredById,omitempty"`
-	CanceledByID           *string                     `json:"canceledById,omitempty"`
-	FormulaTemplateID      string                      `json:"formulaTemplateId"`
-	ConsolidationGroupID   *string                     `json:"consolidationGroupId,omitempty"`
-	OrderID                *string                     `json:"orderId,omitempty"`
-	OrderNumber            *string                     `json:"orderNumber,omitempty"`
-	OrderStatus            *order.Status               `json:"orderStatus,omitempty"`
-	Status                 ShipmentStatus              `json:"status"`
-	TenderStatus           *ShipmentTenderStatus       `json:"tenderStatus,omitempty"`
-	EntryMethod            *ShipmentEntryMethod        `json:"entryMethod,omitempty"`
-	ProNumber              string                      `json:"proNumber"`
-	Bol                    *string                     `json:"bol,omitempty"`
-	CancelReason           string                      `json:"cancelReason"`
-	OtherChargeAmount      string                      `json:"otherChargeAmount"`
-	FreightChargeAmount    string                      `json:"freightChargeAmount"`
-	BaseRate               string                      `json:"baseRate"`
-	TotalChargeAmount      string                      `json:"totalChargeAmount"`
-	Pieces                 *int                        `json:"pieces,omitempty"`
-	Weight                 *int                        `json:"weight,omitempty"`
-	TemperatureMin         *int                        `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int                        `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int                        `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int                        `json:"actualShipDate,omitempty"`
-	CanceledAt             *int                        `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string                     `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int                        `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int                        `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int                        `json:"billedAt,omitempty"`
-	RatingUnit             int                         `json:"ratingUnit"`
-	FuelSurchargeLocked    bool                        `json:"fuelSurchargeLocked"`
-	RatingDetail           *ShipmentRatingDetail       `json:"ratingDetail,omitempty"`
-	Version                int                         `json:"version"`
-	CreatedAt              int                         `json:"createdAt"`
-	UpdatedAt              int                         `json:"updatedAt"`
-	Moves                  []*ShipmentMove             `json:"moves"`
-	AdditionalCharges      []*ShipmentAdditionalCharge `json:"additionalCharges"`
-	Commodities            []*ShipmentCommodity        `json:"commodities"`
-	Customer               *ShipmentCustomer           `json:"customer,omitempty"`
-	Owner                  *tenant.User                `json:"owner,omitempty"`
-	FormulaTemplate        *ShipmentFormulaTemplate    `json:"formulaTemplate,omitempty"`
+	ID                     string                         `json:"id"`
+	BusinessUnitID         string                         `json:"businessUnitId"`
+	OrganizationID         string                         `json:"organizationId"`
+	SourceDocumentID       *string                        `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID          string                         `json:"serviceTypeId"`
+	ShipmentTypeID         string                         `json:"shipmentTypeId"`
+	CustomerID             string                         `json:"customerId"`
+	TractorTypeID          *string                        `json:"tractorTypeId,omitempty"`
+	TrailerTypeID          *string                        `json:"trailerTypeId,omitempty"`
+	OwnerID                *string                        `json:"ownerId,omitempty"`
+	EnteredByID            *string                        `json:"enteredById,omitempty"`
+	CanceledByID           *string                        `json:"canceledById,omitempty"`
+	FormulaTemplateID      string                         `json:"formulaTemplateId"`
+	ConsolidationGroupID   *string                        `json:"consolidationGroupId,omitempty"`
+	OrderID                *string                        `json:"orderId,omitempty"`
+	OrderNumber            *string                        `json:"orderNumber,omitempty"`
+	OrderStatus            *order.Status                  `json:"orderStatus,omitempty"`
+	ProfitabilityEstimate  *ShipmentProfitabilityEstimate `json:"profitabilityEstimate,omitempty"`
+	Status                 ShipmentStatus                 `json:"status"`
+	TenderStatus           *ShipmentTenderStatus          `json:"tenderStatus,omitempty"`
+	EntryMethod            *ShipmentEntryMethod           `json:"entryMethod,omitempty"`
+	ProNumber              string                         `json:"proNumber"`
+	Bol                    *string                        `json:"bol,omitempty"`
+	CancelReason           string                         `json:"cancelReason"`
+	OtherChargeAmount      string                         `json:"otherChargeAmount"`
+	FreightChargeAmount    string                         `json:"freightChargeAmount"`
+	BaseRate               string                         `json:"baseRate"`
+	TotalChargeAmount      string                         `json:"totalChargeAmount"`
+	Pieces                 *int                           `json:"pieces,omitempty"`
+	Weight                 *int                           `json:"weight,omitempty"`
+	TemperatureMin         *int                           `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                           `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                           `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                           `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                           `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string                        `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                           `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                           `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                           `json:"billedAt,omitempty"`
+	RatingUnit             int                            `json:"ratingUnit"`
+	FuelSurchargeLocked    bool                           `json:"fuelSurchargeLocked"`
+	RatingDetail           *ShipmentRatingDetail          `json:"ratingDetail,omitempty"`
+	Version                int                            `json:"version"`
+	CreatedAt              int                            `json:"createdAt"`
+	UpdatedAt              int                            `json:"updatedAt"`
+	Moves                  []*ShipmentMove                `json:"moves"`
+	AdditionalCharges      []*ShipmentAdditionalCharge    `json:"additionalCharges"`
+	Commodities            []*ShipmentCommodity           `json:"commodities"`
+	Customer               *ShipmentCustomer              `json:"customer,omitempty"`
+	Owner                  *tenant.User                   `json:"owner,omitempty"`
+	FormulaTemplate        *ShipmentFormulaTemplate       `json:"formulaTemplate,omitempty"`
 }
 
 type ShipmentAccessorialCharge struct {
@@ -1401,19 +1566,20 @@ type ShipmentAdditionalChargeInput struct {
 }
 
 type ShipmentAnalytics struct {
-	Page               string                       `json:"page"`
-	SavedViewCounts    *ShipmentSavedViewCounts     `json:"savedViewCounts,omitempty"`
-	ActiveShipments    *ShipmentActiveShipments     `json:"activeShipments,omitempty"`
-	OnTimePercent      *ShipmentOnTime              `json:"onTimePercent,omitempty"`
-	RevenueToday       *ShipmentRevenueToday        `json:"revenueToday,omitempty"`
-	EmptyMilePercent   *ShipmentEmptyMile           `json:"emptyMilePercent,omitempty"`
-	AtRisk             *ShipmentAtRisk              `json:"atRisk,omitempty"`
-	Unassigned         *ShipmentUnassignedAnalytics `json:"unassigned,omitempty"`
-	ReadyToDispatch    *ShipmentReadyToDispatch     `json:"readyToDispatch,omitempty"`
-	DetentionWatchlist *ShipmentDetentionWatchlist  `json:"detentionWatchlist,omitempty"`
-	CustomerMix        *ShipmentCustomerMix         `json:"customerMix,omitempty"`
-	TomorrowsPickups   *ShipmentTomorrowsPickups    `json:"tomorrowsPickups,omitempty"`
-	LaneHeatmap        *ShipmentLaneHeatmap         `json:"laneHeatmap,omitempty"`
+	Page               string                          `json:"page"`
+	SavedViewCounts    *ShipmentSavedViewCounts        `json:"savedViewCounts,omitempty"`
+	ActiveShipments    *ShipmentActiveShipments        `json:"activeShipments,omitempty"`
+	OnTimePercent      *ShipmentOnTime                 `json:"onTimePercent,omitempty"`
+	RevenueToday       *ShipmentRevenueToday           `json:"revenueToday,omitempty"`
+	EmptyMilePercent   *ShipmentEmptyMile              `json:"emptyMilePercent,omitempty"`
+	AtRisk             *ShipmentAtRisk                 `json:"atRisk,omitempty"`
+	Unassigned         *ShipmentUnassignedAnalytics    `json:"unassigned,omitempty"`
+	ReadyToDispatch    *ShipmentReadyToDispatch        `json:"readyToDispatch,omitempty"`
+	DetentionWatchlist *ShipmentDetentionWatchlist     `json:"detentionWatchlist,omitempty"`
+	CustomerMix        *ShipmentCustomerMix            `json:"customerMix,omitempty"`
+	TomorrowsPickups   *ShipmentTomorrowsPickups       `json:"tomorrowsPickups,omitempty"`
+	LaneHeatmap        *ShipmentLaneHeatmap            `json:"laneHeatmap,omitempty"`
+	Profitability      *ShipmentProfitabilityAnalytics `json:"profitability,omitempty"`
 }
 
 type ShipmentAnalyticsInput struct {
@@ -2068,6 +2234,45 @@ type ShipmentPreviousRatesResponse struct {
 	Total int                            `json:"total"`
 }
 
+type ShipmentProfitability struct {
+	ShipmentID           string               `json:"shipmentId"`
+	LoadedMiles          float64              `json:"loadedMiles"`
+	DeadheadMiles        float64              `json:"deadheadMiles"`
+	TotalMiles           float64              `json:"totalMiles"`
+	Revenue              string               `json:"revenue"`
+	EstimatedCost        string               `json:"estimatedCost"`
+	Profit               string               `json:"profit"`
+	MarginPercent        *string              `json:"marginPercent,omitempty"`
+	RevenuePerLoadedMile *string              `json:"revenuePerLoadedMile,omitempty"`
+	BreakEvenRpm         *string              `json:"breakEvenRpm,omitempty"`
+	MissingDistance      bool                 `json:"missingDistance"`
+	Breakdown            []*CategoryCostLine  `json:"breakdown"`
+	Profile              *ResolvedCostProfile `json:"profile"`
+}
+
+type ShipmentProfitabilityAnalytics struct {
+	AvgCpm            float64 `json:"avgCpm"`
+	AvgMarginPct      float64 `json:"avgMarginPct"`
+	HasMargin         bool    `json:"hasMargin"`
+	UnprofitableCount int     `json:"unprofitableCount"`
+	ShipmentCount     int     `json:"shipmentCount"`
+	TotalMiles        float64 `json:"totalMiles"`
+}
+
+type ShipmentProfitabilityEstimate struct {
+	ShipmentID          string  `json:"shipmentId"`
+	LoadedMiles         float64 `json:"loadedMiles"`
+	DeadheadMiles       float64 `json:"deadheadMiles"`
+	TotalMiles          float64 `json:"totalMiles"`
+	CostPerMile         string  `json:"costPerMile"`
+	EstimatedCost       string  `json:"estimatedCost"`
+	Profit              string  `json:"profit"`
+	MarginPercent       *string `json:"marginPercent,omitempty"`
+	BreakEvenRpm        *string `json:"breakEvenRpm,omitempty"`
+	TargetMarginPercent *string `json:"targetMarginPercent,omitempty"`
+	MissingDistance     bool    `json:"missingDistance"`
+}
+
 type ShipmentRatingDetail struct {
 	FormulaTemplateID   string `json:"formulaTemplateId"`
 	FormulaTemplateName string `json:"formulaTemplateName"`
@@ -2634,6 +2839,191 @@ func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type CostBehavior string
+
+const (
+	CostBehaviorFixed    CostBehavior = "Fixed"
+	CostBehaviorVariable CostBehavior = "Variable"
+)
+
+var AllCostBehavior = []CostBehavior{
+	CostBehaviorFixed,
+	CostBehaviorVariable,
+}
+
+func (e CostBehavior) IsValid() bool {
+	switch e {
+	case CostBehaviorFixed, CostBehaviorVariable:
+		return true
+	}
+	return false
+}
+
+func (e CostBehavior) String() string {
+	return string(e)
+}
+
+func (e *CostBehavior) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CostBehavior(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CostBehavior", str)
+	}
+	return nil
+}
+
+func (e CostBehavior) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CostBehavior) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CostBehavior) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CostCategoryType string
+
+const (
+	CostCategoryTypeDriverWages       CostCategoryType = "DriverWages"
+	CostCategoryTypeDriverBenefits    CostCategoryType = "DriverBenefits"
+	CostCategoryTypeFuel              CostCategoryType = "Fuel"
+	CostCategoryTypeEquipmentPayments CostCategoryType = "EquipmentPayments"
+	CostCategoryTypeMaintenance       CostCategoryType = "Maintenance"
+	CostCategoryTypeInsurance         CostCategoryType = "Insurance"
+	CostCategoryTypeTires             CostCategoryType = "Tires"
+	CostCategoryTypeTolls             CostCategoryType = "Tolls"
+	CostCategoryTypePermitsLicenses   CostCategoryType = "PermitsLicenses"
+	CostCategoryTypeOverhead          CostCategoryType = "Overhead"
+	CostCategoryTypeCustom            CostCategoryType = "Custom"
+)
+
+var AllCostCategoryType = []CostCategoryType{
+	CostCategoryTypeDriverWages,
+	CostCategoryTypeDriverBenefits,
+	CostCategoryTypeFuel,
+	CostCategoryTypeEquipmentPayments,
+	CostCategoryTypeMaintenance,
+	CostCategoryTypeInsurance,
+	CostCategoryTypeTires,
+	CostCategoryTypeTolls,
+	CostCategoryTypePermitsLicenses,
+	CostCategoryTypeOverhead,
+	CostCategoryTypeCustom,
+}
+
+func (e CostCategoryType) IsValid() bool {
+	switch e {
+	case CostCategoryTypeDriverWages, CostCategoryTypeDriverBenefits, CostCategoryTypeFuel, CostCategoryTypeEquipmentPayments, CostCategoryTypeMaintenance, CostCategoryTypeInsurance, CostCategoryTypeTires, CostCategoryTypeTolls, CostCategoryTypePermitsLicenses, CostCategoryTypeOverhead, CostCategoryTypeCustom:
+		return true
+	}
+	return false
+}
+
+func (e CostCategoryType) String() string {
+	return string(e)
+}
+
+func (e *CostCategoryType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CostCategoryType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CostCategoryType", str)
+	}
+	return nil
+}
+
+func (e CostCategoryType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CostCategoryType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CostCategoryType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CostRateSource string
+
+const (
+	CostRateSourceBenchmark CostRateSource = "Benchmark"
+	CostRateSourceOverride  CostRateSource = "Override"
+	CostRateSourceGLActual  CostRateSource = "GLActual"
+)
+
+var AllCostRateSource = []CostRateSource{
+	CostRateSourceBenchmark,
+	CostRateSourceOverride,
+	CostRateSourceGLActual,
+}
+
+func (e CostRateSource) IsValid() bool {
+	switch e {
+	case CostRateSourceBenchmark, CostRateSourceOverride, CostRateSourceGLActual:
+		return true
+	}
+	return false
+}
+
+func (e CostRateSource) String() string {
+	return string(e)
+}
+
+func (e *CostRateSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CostRateSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CostRateSource", str)
+	}
+	return nil
+}
+
+func (e CostRateSource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CostRateSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CostRateSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type EdiSummaryAttentionKind string
 
 const (
@@ -2739,6 +3129,65 @@ func (e *EdiTransferDirection) UnmarshalJSON(b []byte) error {
 }
 
 func (e EdiTransferDirection) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type EffectiveRateSource string
+
+const (
+	EffectiveRateSourceBenchmark EffectiveRateSource = "Benchmark"
+	EffectiveRateSourceOverride  EffectiveRateSource = "Override"
+	EffectiveRateSourceGLActual  EffectiveRateSource = "GLActual"
+	EffectiveRateSourceLiveIndex EffectiveRateSource = "LiveIndex"
+)
+
+var AllEffectiveRateSource = []EffectiveRateSource{
+	EffectiveRateSourceBenchmark,
+	EffectiveRateSourceOverride,
+	EffectiveRateSourceGLActual,
+	EffectiveRateSourceLiveIndex,
+}
+
+func (e EffectiveRateSource) IsValid() bool {
+	switch e {
+	case EffectiveRateSourceBenchmark, EffectiveRateSourceOverride, EffectiveRateSourceGLActual, EffectiveRateSourceLiveIndex:
+		return true
+	}
+	return false
+}
+
+func (e EffectiveRateSource) String() string {
+	return string(e)
+}
+
+func (e *EffectiveRateSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EffectiveRateSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EffectiveRateSource", str)
+	}
+	return nil
+}
+
+func (e EffectiveRateSource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EffectiveRateSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EffectiveRateSource) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -2863,6 +3312,7 @@ func (e NotificationState) MarshalJSON() ([]byte, error) {
 type SelectOptionResource string
 
 const (
+	SelectOptionResourceCustomer              SelectOptionResource = "CUSTOMER"
 	SelectOptionResourceEquipmentType         SelectOptionResource = "EQUIPMENT_TYPE"
 	SelectOptionResourceEquipmentManufacturer SelectOptionResource = "EQUIPMENT_MANUFACTURER"
 	SelectOptionResourceTrailer               SelectOptionResource = "TRAILER"
@@ -2874,9 +3324,13 @@ const (
 	SelectOptionResourceEdiTransfer           SelectOptionResource = "EDI_TRANSFER"
 	SelectOptionResourceFuelIndex             SelectOptionResource = "FUEL_INDEX"
 	SelectOptionResourceFuelSurchargeProgram  SelectOptionResource = "FUEL_SURCHARGE_PROGRAM"
+	SelectOptionResourceFiscalYear            SelectOptionResource = "FISCAL_YEAR"
+	SelectOptionResourceFiscalPeriod          SelectOptionResource = "FISCAL_PERIOD"
+	SelectOptionResourceGlAccount             SelectOptionResource = "GL_ACCOUNT"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
+	SelectOptionResourceCustomer,
 	SelectOptionResourceEquipmentType,
 	SelectOptionResourceEquipmentManufacturer,
 	SelectOptionResourceTrailer,
@@ -2888,11 +3342,14 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceEdiTransfer,
 	SelectOptionResourceFuelIndex,
 	SelectOptionResourceFuelSurchargeProgram,
+	SelectOptionResourceFiscalYear,
+	SelectOptionResourceFiscalPeriod,
+	SelectOptionResourceGlAccount,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram:
+	case SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount:
 		return true
 	}
 	return false

@@ -40,6 +40,7 @@ fragment ShipmentTractorFields on Tractor {
 fragment ShipmentTrailerFields on Trailer {
   id
   code
+  equipmentTypeId
 }
 
 fragment ShipmentAssignmentFields on ShipmentAssignment {
@@ -240,6 +241,19 @@ fragment ShipmentFields on Shipment {
   billedAt
   ratingUnit
   fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
@@ -468,6 +482,14 @@ query ShipmentPageAnalytics($input: ShipmentAnalyticsInput!) {
       target
       deltaPp
       sevenDayPercent
+    }
+    profitability {
+      avgCpm
+      avgMarginPct
+      hasMargin
+      unprofitableCount
+      shipmentCount
+      totalMiles
     }
     revenueToday {
       total
@@ -966,4 +988,49 @@ mutation UpdateShipmentComment(
 
 mutation DeleteShipmentComment($shipmentId: ID!, $commentId: ID!) {
   deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
+}
+
+query ShipmentProfitability($shipmentId: ID!) {
+  shipmentProfitability(shipmentId: $shipmentId) {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    revenue
+    estimatedCost
+    profit
+    marginPercent
+    revenuePerLoadedMile
+    breakEvenRpm
+    missingDistance
+    breakdown {
+      category
+      name
+      costBehavior
+      ratePerMile
+      amount
+      effectiveSource
+    }
+    profile {
+      totalCpm
+      variableCpm
+      fixedCpm
+      targetMarginPercent
+      includeDeadheadMiles
+      asOfDate
+      fuel {
+        pricePerGallon
+        priceDate
+        fuelIndexId
+        milesPerGallon
+        source
+      }
+      glWindow {
+        fromDate
+        toDate
+        fleetMiles
+        hasPostings
+      }
+    }
+  }
 }

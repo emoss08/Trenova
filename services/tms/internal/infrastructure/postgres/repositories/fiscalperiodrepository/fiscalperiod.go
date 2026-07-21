@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
@@ -73,6 +75,42 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.FiscalPeriodSelectOptionsRequest,
+) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
+	cols := buncolgen.FiscalPeriodColumns
+	return dbhelper.SelectOptions[*fiscalperiod.FiscalPeriod](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.FiscalYearID,
+				cols.Name,
+				cols.PeriodNumber,
+				cols.PeriodType,
+				cols.Status,
+				cols.StartDate,
+				cols.EndDate,
+				cols.IsAdjusting,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				if !req.FiscalYearID.IsNil() {
+					q = q.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
+				}
+				return q.Order(cols.PeriodNumber.OrderAsc())
+			},
+			EntityName:       "FiscalPeriod",
+			SearchColumnRefs: []buncolgen.Column{cols.Name},
+		},
+	)
 }
 
 func (r *repository) GetByID(

@@ -19,6 +19,7 @@
     "b:build": "bunx --bun vite build",
     "deploy": "pnpm run build && wrangler deploy",
     "doctor": "npx react-doctor@latest",
+    "graphql:catalog": "node scripts/generate-graphql-catalog.mjs",
     "graphql:codegen": "graphql-codegen --config codegen.ts",
     "graphql:codegen:check": "pnpm graphql:codegen && git diff --exit-code -- src/graphql/generated src/graphql/schema.graphql ../services/tms/internal/api/graphql/persisted-documents.json",
     "graphql:codegen:watch": "graphql-codegen --config codegen.ts --watch"

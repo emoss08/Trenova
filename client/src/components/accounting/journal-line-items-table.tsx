@@ -24,7 +24,16 @@ export function JournalLineItemsTable({ lines, totalDebit, totalCredit }: Journa
           {lines.map((line) => (
             <tr key={line.id} className="border-t transition-colors hover:bg-muted/50">
               <td className="px-3 py-2 font-mono text-2xs">{line.lineNumber}</td>
-              <td className="px-3 py-2 font-mono text-xs">{line.glAccountId}</td>
+              <td className="px-3 py-2 text-xs">
+                {line.glAccount ? (
+                  <span className="flex flex-col">
+                    <span className="font-mono">{line.glAccount.accountCode}</span>
+                    <span className="text-2xs text-muted-foreground">{line.glAccount.name}</span>
+                  </span>
+                ) : (
+                  <span className="font-mono">{line.glAccountId}</span>
+                )}
+              </td>
               <td className="px-3 py-2 text-xs">{line.description}</td>
               <td className="px-3 py-2 text-right">
                 {line.debitAmount > 0 ? (

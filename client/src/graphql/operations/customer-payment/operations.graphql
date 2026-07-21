@@ -1,0 +1,175 @@
+query CustomerPaymentTable($input: DataTableConnectionInput!) {
+  customerPayments(input: $input) {
+    edges {
+      node {
+        id
+        organizationId
+        businessUnitId
+        customerId
+        paymentDate
+        accountingDate
+        amountMinor
+        appliedAmountMinor
+        unappliedAmountMinor
+        status
+        paymentMethod
+        referenceNumber
+        memo
+        currencyCode
+        postedBatchId
+        reversalBatchId
+        reversedById
+        reversedAt
+        reversalReason
+        createdById
+        updatedById
+        version
+        createdAt
+        updatedAt
+        customer {
+          id
+          code
+          name
+        }
+        applications {
+          id
+          customerPaymentId
+          invoiceId
+          appliedAmountMinor
+          shortPayAmountMinor
+          lineNumber
+          createdAt
+          updatedAt
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query CustomerPaymentDetail($id: ID!) {
+  customerPayment(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    customerId
+    paymentDate
+    accountingDate
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    paymentMethod
+    referenceNumber
+    memo
+    currencyCode
+    postedBatchId
+    reversalBatchId
+    reversedById
+    reversedAt
+    reversalReason
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+    customer {
+      id
+      code
+      name
+    }
+    applications {
+      id
+      customerPaymentId
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+      createdAt
+      updatedAt
+      invoice {
+        id
+        number
+        invoiceDate
+        dueDate
+        totalAmount
+        appliedAmount
+        settlementStatus
+        disputeStatus
+        billToName
+      }
+    }
+  }
+}
+
+mutation PostAndApplyCustomerPayment($input: PostCustomerPaymentInput!) {
+  postAndApplyCustomerPayment(input: $input) {
+    id
+    customerId
+    paymentDate
+    accountingDate
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    paymentMethod
+    referenceNumber
+    memo
+    currencyCode
+    postedBatchId
+    createdAt
+    updatedAt
+    applications {
+      id
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+    }
+  }
+}
+
+mutation ApplyUnappliedCustomerPayment($input: ApplyCustomerPaymentInput!) {
+  applyUnappliedCustomerPayment(input: $input) {
+    id
+    customerId
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    updatedAt
+    applications {
+      id
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+    }
+  }
+}
+
+mutation ReverseCustomerPayment($input: ReverseCustomerPaymentInput!) {
+  reverseCustomerPayment(input: $input) {
+    id
+    customerId
+    amountMinor
+    appliedAmountMinor
+    unappliedAmountMinor
+    status
+    reversalBatchId
+    reversedById
+    reversedAt
+    reversalReason
+    updatedAt
+    applications {
+      id
+      invoiceId
+      appliedAmountMinor
+      shortPayAmountMinor
+      lineNumber
+    }
+  }
+}

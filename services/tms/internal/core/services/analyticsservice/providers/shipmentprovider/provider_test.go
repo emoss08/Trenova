@@ -5,15 +5,18 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -129,6 +132,7 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 	assert.Contains(t, data, "revenueToday")
 	assert.Contains(t, data, "activeShipments")
 	assert.Contains(t, data, "detentionWatchlist")
+	assert.Contains(t, data, "profitability")
 	assert.NotContains(t, data, "tenderAccept")
 	assert.NotContains(t, data, "hosNearLimit")
 	assert.NotContains(t, data, "detentionAlerts")
@@ -187,11 +191,42 @@ func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockDispa
 
 	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
 
+	costingControlRepo := mocks.NewMockCostingControlRepository(t)
+	costingControlRepo.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(newTestCostingControl(), nil).
+		Maybe()
+
+	costingActualsRepo := mocks.NewMockCostingActualsRepository(t)
+	costingActualsRepo.EXPECT().
+		FleetCostAggregates(mock.Anything, mock.Anything).
+		Return(&repositories.FleetCostAggregatesResult{}, nil).
+		Maybe()
+
+	costingService := costingservice.NewTestService(costingservice.TestServiceParams{
+		Repo:        costingControlRepo,
+		ActualsRepo: costingActualsRepo,
+	})
+
 	return &Provider{
-		l:            zap.NewNop(),
-		db:           postgres.NewTestConnection(bunDB),
-		dispatchRepo: dispatchRepo,
+		l:              zap.NewNop(),
+		db:             postgres.NewTestConnection(bunDB),
+		dispatchRepo:   dispatchRepo,
+		costingService: costingService,
 	}, mockDB, dispatchRepo
+}
+
+func newTestCostingControl() *costingcontrol.CostingControl {
+	control := &costingcontrol.CostingControl{
+		ID:                   pulid.MustNew("cstc_"),
+		BusinessUnitID:       pulid.MustNew("bu_"),
+		OrganizationID:       pulid.MustNew("org_"),
+		MilesPerGallon:       costingcontrol.DefaultMilesPerGallon(),
+		IncludeDeadheadMiles: true,
+		GLRollingMonths:      3,
+	}
+	control.Categories = costingcontrol.DefaultCategories()
+	return control
 }
 
 func TestGetDetentionWatchlist_ReturnsRowsWithToneThresholds(t *testing.T) {

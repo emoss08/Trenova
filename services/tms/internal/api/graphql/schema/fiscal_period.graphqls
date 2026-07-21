@@ -1,0 +1,35 @@
+enum PeriodType {
+  Month
+  Quarter
+  Week
+  Adjusting
+}
+
+enum FiscalPeriodStatus {
+  Inactive
+  Open
+  Locked
+  Closed
+  PermanentlyClosed
+}
+
+type FiscalPeriod {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  fiscalYearId: ID!
+  periodNumber: Int!
+  periodType: PeriodType!
+  status: FiscalPeriodStatus!
+  name: String!
+  startDate: Int!
+  endDate: Int!
+  isAdjusting: Boolean!
+  allowAdjustingEntries: Boolean!
+  adjustmentDeadline: Int
+  lockedAt: Int
+  closedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}

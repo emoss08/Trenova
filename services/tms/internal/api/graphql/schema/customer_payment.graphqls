@@ -1,0 +1,108 @@
+enum CustomerPaymentStatus {
+  Posted
+  Reversed
+}
+
+enum CustomerPaymentMethod {
+  ACH
+  Check
+  Wire
+  Card
+  Cash
+  Other
+}
+
+type CustomerPaymentApplication {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  customerPaymentId: ID!
+  invoiceId: ID!
+  appliedAmountMinor: Int!
+  shortPayAmountMinor: Int!
+  lineNumber: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  invoice: Invoice
+}
+
+type CustomerPayment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  customerId: ID!
+  paymentDate: Int!
+  accountingDate: Int!
+  amountMinor: Int!
+  appliedAmountMinor: Int!
+  unappliedAmountMinor: Int!
+  status: CustomerPaymentStatus!
+  paymentMethod: CustomerPaymentMethod!
+  referenceNumber: String!
+  memo: String!
+  currencyCode: String!
+  postedBatchId: ID
+  reversalBatchId: ID
+  reversedById: ID
+  reversedAt: Int
+  reversalReason: String!
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  customer: Customer
+  applications: [CustomerPaymentApplication!]
+}
+
+type CustomerPaymentEdge {
+  node: CustomerPayment!
+  cursor: String!
+}
+
+type CustomerPaymentConnection {
+  edges: [CustomerPaymentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input CustomerPaymentApplicationInput {
+  invoiceId: ID!
+  appliedAmountMinor: Int!
+  shortPayAmountMinor: Int
+}
+
+input PostCustomerPaymentInput {
+  customerId: ID!
+  paymentDate: Int!
+  accountingDate: Int!
+  amountMinor: Int!
+  paymentMethod: CustomerPaymentMethod!
+  referenceNumber: String
+  memo: String
+  currencyCode: String
+  applications: [CustomerPaymentApplicationInput!]
+}
+
+input ApplyCustomerPaymentInput {
+  paymentId: ID!
+  accountingDate: Int!
+  applications: [CustomerPaymentApplicationInput!]!
+}
+
+input ReverseCustomerPaymentInput {
+  paymentId: ID!
+  accountingDate: Int!
+  reason: String
+}
+
+extend type Query {
+  customerPayments(input: DataTableConnectionInput!): CustomerPaymentConnection!
+  customerPayment(id: ID!): CustomerPayment
+}
+
+extend type Mutation {
+  postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
+  applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
+  reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+}

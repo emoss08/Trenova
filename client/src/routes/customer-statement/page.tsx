@@ -5,9 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import type {
+  AROpenItem,
+  ARStatementTransaction,
+} from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@/lib/utils";
-import type { StatementOpenItem, StatementTransaction } from "@/types/customer-statement";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -94,21 +97,21 @@ export function CustomerStatementPage() {
   const [statementDate, setStatementDate] = useState("");
   const [startDate, setStartDate] = useState("");
 
-  const queryParams = useMemo(() => {
-    const params: Record<string, string> = {};
+  const queryOptions = useMemo(() => {
+    const options: { startDate?: number; asOfDate?: number } = {};
     if (statementDate) {
       const [y, m, d] = statementDate.split("-").map(Number);
-      params.statementDate = String(Math.floor(new Date(y, m - 1, d).getTime() / 1000));
+      options.asOfDate = Math.floor(new Date(y, m - 1, d, 23, 59, 59).getTime() / 1000);
     }
     if (startDate) {
       const [y, m, d] = startDate.split("-").map(Number);
-      params.startDate = String(Math.floor(new Date(y, m - 1, d).getTime() / 1000));
+      options.startDate = Math.floor(new Date(y, m - 1, d).getTime() / 1000);
     }
-    return Object.keys(params).length > 0 ? params : undefined;
+    return options;
   }, [statementDate, startDate]);
 
   const { data: statement, isLoading, isError } = useQuery({
-    ...queries.ar.customerStatement(customerId!, queryParams),
+    ...queries.ar.customerStatement(customerId!, queryOptions),
     enabled: Boolean(customerId),
   });
 
@@ -318,17 +321,17 @@ export function CustomerStatementPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {statement.transactions.map((txn: StatementTransaction, idx: number) => (
+                  {statement.transactions.map((txn: ARStatementTransaction, idx: number) => (
                     <tr
                       key={`${txn.documentNumber}-${idx}`}
                       className="border-t transition-colors hover:bg-muted/40"
                     >
-                      <td className="px-4 py-2.5 text-xs">{formatDate(txn.date)}</td>
+                      <td className="px-4 py-2.5 text-xs">{formatDate(txn.transactionDate)}</td>
                       <td className="px-4 py-2.5 font-mono text-xs font-medium">
                         {txn.documentNumber}
                       </td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground">
-                        {txn.description}
+                        {txn.eventType}
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         {txn.chargeMinor > 0 ? (
@@ -384,7 +387,7 @@ export function CustomerStatementPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {statement.openItems.map((item: StatementOpenItem) => (
+                  {statement.openItems.map((item: AROpenItem) => (
                     <tr
                       key={item.invoiceNumber}
                       className="border-t transition-colors hover:bg-muted/40"

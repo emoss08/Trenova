@@ -63,6 +63,10 @@ type CountFiscalYearsByTenantRequest struct {
 	BuID  pulid.ID `json:"buId"`
 }
 
+type FiscalYearSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+}
+
 type FiscalYearRepository interface {
 	List(
 		ctx context.Context,
@@ -72,6 +76,10 @@ type FiscalYearRepository interface {
 		ctx context.Context,
 		req *ListFiscalYearConnectionRequest,
 	) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error)
+	SelectOptions(
+		ctx context.Context,
+		req *FiscalYearSelectOptionsRequest,
+	) (*pagination.ListResult[*fiscalyear.FiscalYear], error)
 	GetByID(
 		ctx context.Context,
 		req GetFiscalYearByIDRequest,

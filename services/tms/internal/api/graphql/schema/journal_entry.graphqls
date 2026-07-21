@@ -1,0 +1,59 @@
+type JournalEntryLineAccount {
+  id: ID!
+  accountCode: String!
+  name: String!
+}
+
+type JournalEntryLine {
+  id: ID!
+  journalEntryId: ID!
+  glAccountId: ID!
+  lineNumber: Int!
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  netAmount: Int!
+  customerId: ID
+  locationId: ID
+  glAccount: JournalEntryLineAccount
+}
+
+type JournalEntry {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  batchId: ID!
+  fiscalYearId: ID!
+  fiscalPeriodId: ID!
+  entryNumber: String!
+  entryType: String!
+  status: String!
+  accountingDate: Int!
+  description: String!
+  referenceType: String!
+  referenceId: String!
+  totalDebit: Int!
+  totalCredit: Int!
+  isPosted: Boolean!
+  isReversal: Boolean!
+  reversalOfId: ID
+  reversedById: ID
+  reversalDate: Int
+  reversalReason: String!
+  lines: [JournalEntryLine!]
+}
+
+type JournalSourceInfo {
+  id: ID!
+  sourceObjectType: String!
+  sourceObjectId: String!
+  sourceEventType: String!
+  sourceDocumentNumber: String!
+  status: String!
+}
+
+extend type Query {
+  journalEntry(id: ID!): JournalEntry
+  journalEntriesBySource(sourceType: String!, sourceId: String!): [JournalEntry!]!
+  journalSourceByObject(sourceType: String!, sourceId: String!): JournalSourceInfo
+}

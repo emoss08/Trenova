@@ -23,6 +23,7 @@ type FiscalYear {
   updatedAt: Int!
   businessUnit: BusinessUnit
   organization: Organization
+  periods: [FiscalPeriod!]!
 }
 
 type FiscalYearEdge {

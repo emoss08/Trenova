@@ -11,6 +11,13 @@ export const manualJournalStatusSchema = z.enum([
 ]);
 export type ManualJournalStatus = z.infer<typeof manualJournalStatusSchema>;
 
+export const manualJournalLineGLAccountSchema = z.object({
+  id: z.string(),
+  accountCode: z.string(),
+  name: z.string(),
+});
+export type ManualJournalLineGLAccount = z.infer<typeof manualJournalLineGLAccountSchema>;
+
 export const manualJournalLineSchema = z.object({
   id: optionalStringSchema,
   organizationId: optionalStringSchema,
@@ -23,6 +30,7 @@ export const manualJournalLineSchema = z.object({
   creditAmount: z.number().int(),
   customerId: nullableStringSchema,
   locationId: nullableStringSchema,
+  glAccount: manualJournalLineGLAccountSchema.nullish(),
   createdAt: z.number().int().optional(),
   updatedAt: z.number().int().optional(),
 });

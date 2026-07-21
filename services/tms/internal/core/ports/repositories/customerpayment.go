@@ -26,11 +26,20 @@ type FindCustomerPaymentMatchCandidatesRequest struct {
 	ReceiptDate     int64                 `json:"receiptDate"`
 }
 
+type ListCustomerPaymentConnectionRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"cursor"`
+}
+
 type CustomerPaymentRepository interface {
 	List(
 		ctx context.Context,
 		req *ListCustomerPaymentsRequest,
 	) (*pagination.ListResult[*customerpayment.Payment], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListCustomerPaymentConnectionRequest,
+	) (*pagination.CursorListResult[*customerpayment.Payment], error)
 	GetByID(
 		ctx context.Context,
 		req GetCustomerPaymentByIDRequest,

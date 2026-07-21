@@ -35,6 +35,16 @@ const KPI_INFO = {
       },
       { label: "Delta", value: "Compares today so far with the same elapsed window yesterday." },
       { label: "RPM", value: "Revenue divided by loaded miles for shipments in today's window." },
+      {
+        label: "CPM",
+        value:
+          "Fleet cost per mile resolved from your cost profile — benchmarks, overrides, GL actuals, and live fuel.",
+      },
+      {
+        label: "Margin",
+        value:
+          "Trailing 30-day revenue minus estimated cost, over revenue. Includes unprofitable-load count in the fleet summary.",
+      },
     ],
   },
   activeShipments: {
@@ -136,6 +146,15 @@ const KPI_INFO = {
   },
 };
 
+function profitabilitySub(merged: ShipmentAnalyticsData): string {
+  const rpm = `RPM $${merged.revenueToday.rpm.toFixed(2)}`;
+  const { avgCpm, avgMarginPct, hasMargin } = merged.profitability;
+  if (!hasMargin) {
+    return avgCpm > 0 ? `${rpm}  ·  CPM $${avgCpm.toFixed(2)}` : rpm;
+  }
+  return `${rpm}  ·  CPM $${avgCpm.toFixed(2)}  ·  Margin ${avgMarginPct.toFixed(1)}%`;
+}
+
 export default function KpiRail() {
   const { data } = useSuspenseQuery(analytics.get("shipment-management"));
   const merged = mergeShipmentAnalyticsWithDefaults(data as DeepPartial<ShipmentAnalyticsData>);
@@ -152,7 +171,7 @@ export default function KpiRail() {
         delta={merged.revenueToday.deltaPct}
         deltaLabel="%"
         deltaTone="success"
-        sub={`RPM $${merged.revenueToday.rpm.toFixed(2)}  ·  Avg margin ${merged.revenueToday.marginPct.toFixed(1)}%`}
+        sub={profitabilitySub(merged)}
         sparkData={revenueSparkline}
         sparkColor="var(--success)"
         icon={<DollarSignIcon {...ICON_PROPS} />}

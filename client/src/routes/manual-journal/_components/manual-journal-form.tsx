@@ -5,14 +5,14 @@ import {
   FiscalPeriodAutocompleteField,
   FiscalYearAutocompleteField,
 } from "@/components/autocomplete-fields";
+import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { JournalEntryLine } from "@/types/journal-entry";
 import type { ManualJournalLine } from "@/types/manual-journal";
-import { AlertTriangleIcon } from "lucide-react";
+import { CheckCircle2Icon, ScaleIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -28,6 +28,7 @@ function mapToJournalEntryLines(lines: ManualJournalLine[]): JournalEntryLine[] 
     netAmount: l.debitAmount - l.creditAmount,
     customerId: l.customerId ?? null,
     locationId: l.locationId ?? null,
+    glAccount: l.glAccount ?? null,
   }));
 }
 
@@ -39,46 +40,53 @@ function BalanceSummary({
   totalCredit: number;
 }) {
   const difference = totalDebit - totalCredit;
-  const isBalanced = totalDebit === totalCredit && totalDebit > 0;
+  const hasAmounts = totalDebit + totalCredit > 0;
+  const isBalanced = difference === 0 && totalDebit > 0;
 
   return (
-    <div className="mt-3 overflow-hidden rounded-lg border bg-muted/50 p-2">
-      <div className="mb-3">
-        <span className="text-xs font-medium">Balance Summary</span>
-        <p className="mt-0.5 text-2xs text-muted-foreground">
-          Journal entries must balance — total debits must equal total credits.
-        </p>
+    <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-lg border bg-muted/30">
+      <div className="flex flex-col gap-1 px-4 py-3">
+        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+          Total Debits
+        </span>
+        <AmountDisplay value={totalDebit} className="text-sm font-semibold" />
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total Debit</span>
-          <AmountDisplay value={totalDebit} className="text-sm tabular-nums" />
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total Credit</span>
-          <AmountDisplay value={totalCredit} className="text-sm tabular-nums" />
-        </div>
-        <Separator />
-        <div className="flex items-center justify-between">
-          <span
-            className={cn(
-              "text-sm font-medium",
-              isBalanced ? "text-foreground" : "text-red-600 dark:text-red-400",
-            )}
-          >
-            Difference
-          </span>
-          <span className="flex items-center gap-1.5">
-            {!isBalanced && totalDebit + totalCredit > 0 ? (
-              <AlertTriangleIcon className="size-3.5 text-red-600 dark:text-red-400" />
-            ) : null}
-            <AmountDisplay
-              value={difference}
-              variant={isBalanced ? "neutral" : "negative"}
-              className="text-base font-semibold tabular-nums"
-            />
-          </span>
-        </div>
+      <div className="flex flex-col gap-1 px-4 py-3">
+        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+          Total Credits
+        </span>
+        <AmountDisplay value={totalCredit} className="text-sm font-semibold" />
+      </div>
+      <div
+        className={cn(
+          "flex flex-col gap-1 px-4 py-3",
+          hasAmounts && (isBalanced ? "bg-green-600/10" : "bg-red-600/10"),
+        )}
+      >
+        <span
+          className={cn(
+            "text-2xs font-medium tracking-wide uppercase",
+            !hasAmounts && "text-muted-foreground",
+            hasAmounts &&
+              (isBalanced
+                ? "text-green-700 dark:text-green-400"
+                : "text-red-700 dark:text-red-400"),
+          )}
+        >
+          {isBalanced ? "Balanced" : "Difference"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {isBalanced ? (
+            <CheckCircle2Icon className="size-4 text-green-600 dark:text-green-400" />
+          ) : hasAmounts ? (
+            <ScaleIcon className="size-4 text-red-600 dark:text-red-400" />
+          ) : null}
+          <AmountDisplay
+            value={difference}
+            variant={!hasAmounts || isBalanced ? "neutral" : "negative"}
+            className="text-sm font-semibold"
+          />
+        </span>
       </div>
     </div>
   );
@@ -89,7 +97,7 @@ type ManualJournalFormProps = {
 };
 
 export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
   const lines: ManualJournalLine[] = useWatch({ control, name: "lines" }) ?? [];
   const fiscalYearId: string = useWatch({ control, name: "requestedFiscalYearId" }) ?? "";
 
@@ -98,18 +106,14 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
 
   const periodSearchParams = useMemo(() => {
     if (!fiscalYearId) return undefined;
-    return {
-      fieldFilters: JSON.stringify([
-        { field: "fiscalYearId", operator: "eq", value: fiscalYearId },
-      ]),
-    };
+    return { fiscalYearId };
   }, [fiscalYearId]);
 
   return (
     <div className="flex flex-col gap-6">
       <FormSection
         title="Journal Details"
-        description="Basic information about the manual journal entry"
+        description="Describe the entry and when it should hit the general ledger."
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -117,10 +121,10 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               control={control}
               name="description"
               label="Description"
-              rules={{ required: true }}
+              rules={{ required: "Description is required" }}
               disabled={!isDraft}
-              description="A brief summary of the journal entry purpose."
-              placeholder="Describe the purpose of this journal entry"
+              description="A short summary that will appear on the posted journal entry."
+              placeholder="e.g. Accrue December fuel invoices"
             />
           </FormControl>
           <FormControl>
@@ -129,29 +133,21 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               name="reason"
               label="Reason"
               disabled={!isDraft}
-              description="Why this journal entry is being created."
-              placeholder="Provide context or justification"
+              description="Business justification for the adjustment, shown to approvers."
+              placeholder="e.g. Vendor invoices received after period cutoff"
             />
           </FormControl>
         </FormGroup>
-        <FormGroup cols={3}>
+        <FormGroup cols={2}>
           <FormControl>
-            <FiscalYearAutocompleteField
+            <AutoCompleteDateField
               control={control}
-              name="requestedFiscalYearId"
-              label="Fiscal Year"
-              placeholder="Select Fiscal Year"
-              description="The fiscal year this entry applies to."
-            />
-          </FormControl>
-          <FormControl>
-            <FiscalPeriodAutocompleteField
-              control={control}
-              name="requestedFiscalPeriodId"
-              label="Fiscal Period"
-              placeholder="Select Period"
-              description="The fiscal period within the selected year."
-              extraSearchParams={periodSearchParams}
+              name="accountingDate"
+              label="Accounting Date"
+              rules={{ required: "Accounting date is required" }}
+              disabled={!isDraft}
+              description="The GL date for this entry. It must fall within an open fiscal period."
+              placeholder="Select date"
             />
           </FormControl>
           <FormControl>
@@ -160,8 +156,33 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               name="currencyCode"
               label="Currency"
               disabled={!isDraft}
-              description="ISO currency code for all amounts."
+              maxLength={3}
+              description="ISO 4217 code for all line amounts (e.g. USD)."
               placeholder="USD"
+            />
+          </FormControl>
+        </FormGroup>
+        <FormGroup cols={2}>
+          <FormControl>
+            <FiscalYearAutocompleteField
+              control={control}
+              name="requestedFiscalYearId"
+              label="Fiscal Year"
+              disabled={!isDraft}
+              placeholder="Select fiscal year"
+              description="Requested fiscal year. The posting period is resolved from the accounting date."
+              onOptionChange={() => setValue("requestedFiscalPeriodId", "")}
+            />
+          </FormControl>
+          <FormControl>
+            <FiscalPeriodAutocompleteField
+              control={control}
+              name="requestedFiscalPeriodId"
+              label="Fiscal Period"
+              disabled={!isDraft || !fiscalYearId}
+              placeholder={fiscalYearId ? "Select period" : "Select a fiscal year first"}
+              description="Requested period within the selected fiscal year."
+              extraSearchParams={periodSearchParams}
             />
           </FormControl>
         </FormGroup>
@@ -169,8 +190,8 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
 
       <FormSection
         title="Line Items"
-        description="Debit and credit entries that make up this journal"
         titleCount={lines.length}
+        description="Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted."
         className="border-t border-border pt-4"
       >
         {isDraft ? (

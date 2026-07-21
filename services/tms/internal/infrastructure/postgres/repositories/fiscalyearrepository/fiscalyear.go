@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -79,6 +80,37 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.FiscalYearSelectOptionsRequest,
+) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
+	cols := buncolgen.FiscalYearColumns
+	return dbhelper.SelectOptions[*fiscalyear.FiscalYear](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Name,
+				cols.Year,
+				cols.Status,
+				cols.StartDate,
+				cols.EndDate,
+				cols.IsCurrent,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order(cols.IsCurrent.OrderDesc(), cols.Year.OrderDesc())
+			},
+			EntityName:       "FiscalYear",
+			SearchColumnRefs: []buncolgen.Column{cols.Name},
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(

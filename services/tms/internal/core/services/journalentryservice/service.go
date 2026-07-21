@@ -52,6 +52,48 @@ func (s *Service) GetEntry(
 	)
 }
 
+func (s *Service) ListEntriesBySource(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	sourceObjectType, sourceObjectID string,
+) ([]*journalentry.Entry, error) {
+	sources, err := s.sourceRepo.ListByObject(
+		ctx,
+		repositories.GetJournalSourceByObjectRequest{
+			TenantInfo:       tenantInfo,
+			SourceObjectType: sourceObjectType,
+			SourceObjectID:   sourceObjectID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[pulid.ID]struct{}, len(sources))
+	entries := make([]*journalentry.Entry, 0, len(sources))
+	for _, source := range sources {
+		if source == nil || source.JournalEntryID.IsNil() {
+			continue
+		}
+		if _, ok := seen[source.JournalEntryID]; ok {
+			continue
+		}
+		seen[source.JournalEntryID] = struct{}{}
+		entry, entryErr := s.entryRepo.GetByID(
+			ctx,
+			repositories.GetJournalEntryByIDRequest{
+				ID:         source.JournalEntryID,
+				TenantInfo: tenantInfo,
+			},
+		)
+		if entryErr != nil {
+			return nil, entryErr
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
 func (s *Service) GetSourceByObject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

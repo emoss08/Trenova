@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -373,7 +374,7 @@ func (r *mutationResolver) CalculateShipmentLoadingOptimization(ctx context.Cont
 
 // CreateShipmentComment is the resolver for the createShipmentComment field.
 func (r *mutationResolver) CreateShipmentComment(ctx context.Context, shipmentID string, input gqlmodel.ShipmentCommentInput) (*gqlmodel.ShipmentComment, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpCreate)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipmentComment, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +419,7 @@ func (r *mutationResolver) CreateShipmentComment(ctx context.Context, shipmentID
 
 // UpdateShipmentComment is the resolver for the updateShipmentComment field.
 func (r *mutationResolver) UpdateShipmentComment(ctx context.Context, shipmentID string, commentID string, input gqlmodel.ShipmentCommentUpdateInput) (*gqlmodel.ShipmentComment, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipmentComment, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +470,7 @@ func (r *mutationResolver) UpdateShipmentComment(ctx context.Context, shipmentID
 
 // DeleteShipmentComment is the resolver for the deleteShipmentComment field.
 func (r *mutationResolver) DeleteShipmentComment(ctx context.Context, shipmentID string, commentID string) (bool, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpDelete)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipmentComment, permission.OpDelete)
 	if err != nil {
 		return false, err
 	}
@@ -802,6 +803,28 @@ func (r *shipmentResolver) OrderStatus(ctx context.Context, obj *gqlmodel.Shipme
 		return nil, err
 	}
 	return &parent.Status, nil
+}
+
+// ProfitabilityEstimate is the resolver for the profitabilityEstimate field.
+func (r *shipmentResolver) ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error) {
+	if obj == nil || obj.ID == "" {
+		return nil, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("Shipment profitability loader is not configured")
+	}
+
+	estimate, err := loadersForRequest.ShipmentProfitabilityByID.Load(ctx, obj.ID)()
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return shipmentProfitabilityEstimateToModel(estimate), nil
 }
 
 // Shipment returns generated.ShipmentResolver implementation.

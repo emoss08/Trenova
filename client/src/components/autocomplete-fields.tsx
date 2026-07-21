@@ -3,12 +3,12 @@ import type {
   GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
+import { formatRange } from "@/lib/date";
 import { formatLocation } from "@/lib/utils";
 import type { AccessorialCharge } from "@/types/accessorial-charge";
 import type { AccountType } from "@/types/account-type";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Commodity } from "@/types/commodity";
-import type { Customer } from "@/types/customer";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
@@ -23,11 +23,8 @@ import type {
 } from "@/types/edi";
 import type { EmailProfile } from "@/types/email";
 import type { SelectOption as StaticSelectOption } from "@/types/fields";
-import type { FiscalPeriod } from "@/types/fiscal-period";
-import type { FiscalYear } from "@/types/fiscal-year";
 import type { FleetCode } from "@/types/fleet-code";
 import type { FormulaTemplate } from "@/types/formula-template";
-import type { GLAccount } from "@/types/gl-account";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 import type { Location } from "@/types/location";
 import type { LocationCategory } from "@/types/location-category";
@@ -63,6 +60,7 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   filterOption?: (option: TOption) => boolean;
   noResultsMessage?: string;
   initialLimit?: number;
+  triggerClassName?: string;
 };
 
 type ControlledAutocompleteFieldProps<TOption> = {
@@ -142,6 +140,26 @@ function selectOptionMetaString(option: GraphQLSelectOption, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+function selectOptionMetaNumber(option: GraphQLSelectOption, key: string) {
+  const value = option.meta?.[key];
+  return typeof value === "number" ? value : null;
+}
+
+function selectOptionMetaBoolean(option: GraphQLSelectOption, key: string) {
+  return option.meta?.[key] === true;
+}
+
+function selectOptionDateRange(option: GraphQLSelectOption) {
+  const startDate = selectOptionMetaNumber(option, "startDate");
+  const endDate = selectOptionMetaNumber(option, "endDate");
+  if (startDate == null || endDate == null) return "";
+  return formatRange(startDate, endDate);
+}
+
+const customerSelectOptionsGraphQL = {
+  resource: "CUSTOMER",
+} satisfies GraphQLSelectOptionsConfig;
+
 const usStateSelectOptionsGraphQL = {
   resource: "US_STATE",
 } satisfies GraphQLSelectOptionsConfig;
@@ -180,6 +198,18 @@ const ediTransferSelectOptionsGraphQL = {
 
 const fuelIndexSelectOptionsGraphQL = {
   resource: "FUEL_INDEX",
+} satisfies GraphQLSelectOptionsConfig;
+
+const fiscalYearSelectOptionsGraphQL = {
+  resource: "FISCAL_YEAR",
+} satisfies GraphQLSelectOptionsConfig;
+
+const fiscalPeriodSelectOptionsGraphQL = {
+  resource: "FISCAL_PERIOD",
+} satisfies GraphQLSelectOptionsConfig;
+
+const glAccountSelectOptionsGraphQL = {
+  resource: "GL_ACCOUNT",
 } satisfies GraphQLSelectOptionsConfig;
 
 const fuelSurchargeProgramSelectOptionsGraphQL = {
@@ -583,20 +613,25 @@ export function OrderAutocompleteField<T extends FieldValues>({
 
 export function CustomerAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Customer, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Customer, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/customers/select-options/"
+      graphql={customerSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/customers"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
-      renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>
-            {option.code} - {option.name}
-          </span>
-        </div>
-      )}
+      getDisplayValue={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{code ? `${code} - ${option.label}` : option.label}</span>
+          </div>
+        );
+      }}
       {...props}
     />
   );
@@ -675,20 +710,54 @@ export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
 
 export function GLAccountAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<GLAccount, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<GLAccount, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/gl-accounts/select-options/"
+      graphql={glAccountSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => `${option.accountCode} - ${option.name}`}
+      getDisplayValue={(option) =>
+        option.description ? `${option.label} - ${option.description}` : option.label
+      }
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.accountCode}</span>
-          {option?.name && (
-            <span className="w-full truncate text-2xs text-muted-foreground">{option.name}</span>
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.description}
+            </span>
           )}
         </div>
       )}
+      {...props}
+    />
+  );
+}
+
+export function GLAccountMultiSelectAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
+      link="/gl-accounts/select-options/"
+      graphql={glAccountSelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) =>
+        option.description ? `${option.label} - ${option.description}` : option.label
+      }
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      getOptionLabel={(option) =>
+        option.description ? `${option.label} - ${option.description}` : option.label
+      }
       {...props}
     />
   );
@@ -1322,18 +1391,37 @@ export function CommodityAutocompleteField<T extends FieldValues>({
 
 export function FiscalYearAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<FiscalYear, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<FiscalYear, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/fiscal-years/"
+      graphql={fiscalYearSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
-      renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">{option.year}</span>
-        </div>
-      )}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => {
+        const status = selectOptionMetaString(option, "status");
+        const dateRange = selectOptionDateRange(option);
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span className="flex items-center gap-1.5">
+              {option.label}
+              {selectOptionMetaBoolean(option, "isCurrent") && (
+                <span className="inline-flex items-center rounded border border-green-600/30 bg-green-600/20 px-1 py-px text-[10px] font-medium text-green-700 dark:text-green-400">
+                  Current
+                </span>
+              )}
+              {status && status !== "Open" && (
+                <span className="rounded bg-muted px-1 py-0.5 text-2xs text-muted-foreground">
+                  {status}
+                </span>
+              )}
+            </span>
+            {dateRange && (
+              <span className="w-full truncate text-2xs text-muted-foreground">{dateRange}</span>
+            )}
+          </div>
+        );
+      }}
       {...props}
     />
   );
@@ -1341,20 +1429,33 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
 
 export function FiscalPeriodAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<FiscalPeriod, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<FiscalPeriod, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/fiscal-periods/"
+      graphql={fiscalPeriodSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || `Period ${option.periodNumber}`}
-      renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.name || `Period ${option.periodNumber}`}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground capitalize">
-            {option.periodType}
-          </span>
-        </div>
-      )}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => {
+        const status = selectOptionMetaString(option, "status");
+        const periodType = selectOptionMetaString(option, "periodType");
+        const dateRange = selectOptionDateRange(option);
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span className="flex items-center gap-1.5">
+              {option.label}
+              {status && status !== "Open" && (
+                <span className="rounded bg-muted px-1 py-0.5 text-2xs text-muted-foreground">
+                  {status}
+                </span>
+              )}
+            </span>
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {[periodType, dateRange].filter(Boolean).join(" · ")}
+            </span>
+          </div>
+        );
+      }}
       {...props}
     />
   );
