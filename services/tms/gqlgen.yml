@@ -72,6 +72,15 @@ models:
   HoldReason:
     model:
       - github.com/emoss08/trenova/internal/core/domain/holdreason.HoldReason
+  RecurringShipmentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/recurringshipment.Status
+  RecurringShipmentExceptionPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/recurringshipment.ExceptionPolicy
+  RecurringShipment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/recurringshipment.RecurringShipment
   Trailer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/trailer.Trailer

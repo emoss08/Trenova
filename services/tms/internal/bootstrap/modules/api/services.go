@@ -84,6 +84,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
+	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
@@ -273,6 +274,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	locationservice.New,
 	documenttypeservice.New,
 	holdreasonservice.New,
+	recurringshipmentservice.New,
 	ratetableservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(

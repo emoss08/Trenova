@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
@@ -90,6 +91,7 @@ type Params struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	RecurringShipmentService     *recurringshipmentservice.Service
 	LocationService              *locationservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
 	DocumentTypeService          *documenttypeservice.Service
@@ -162,6 +164,7 @@ type Resolver struct {
 	hazardousMaterialService     *hazardousmaterialservice.Service
 	hazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	holdReasonService            *holdreasonservice.Service
+	recurringShipmentService     *recurringshipmentservice.Service
 	locationService              *locationservice.Service
 	locationCategoryService      *locationcategoryservice.Service
 	documentTypeService          *documenttypeservice.Service
@@ -236,6 +239,7 @@ func New(p Params) *Resolver {
 		hazardousMaterialService:     p.HazardousMaterialService,
 		hazmatSegregationRuleService: p.HazmatSegregationRuleService,
 		holdReasonService:            p.HoldReasonService,
+		recurringShipmentService:     p.RecurringShipmentService,
 		locationService:              p.LocationService,
 		locationCategoryService:      p.LocationCategoryService,
 		documentTypeService:          p.DocumentTypeService,

@@ -46,6 +46,7 @@ const (
 	// Operations
 	ResourceOrder                    Resource = "order"
 	ResourceShipment                 Resource = "shipment"
+	ResourceRecurringShipment        Resource = "recurring_shipment"
 	ResourceShipmentComment          Resource = "shipment_comment"
 	ResourceShipmentMove             Resource = "shipment_move"
 	ResourceShipmentStop             Resource = "shipment_stop"

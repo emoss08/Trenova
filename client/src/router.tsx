@@ -82,6 +82,17 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/shipment-management/recurring-shipments",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.RecurringShipment),
+            ),
+            async lazy() {
+              const { RecurringShipmentsPage } = await import("@/routes/recurring-shipment/page");
+              return { Component: RecurringShipmentsPage };
+            },
+          },
+          {
             path: "/shipment-management/orders",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Order)),
             async lazy() {

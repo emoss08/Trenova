@@ -1,16 +1,32 @@
 package shipmentrepository
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 )
 
 const maxShipmentBOLLength = 100
+
+// ShipmentCopySpec drives a single graph copy of a source shipment. DateAnchor,
+// when set, re-anchors the first stop's scheduled window start to the given
+// unix time and shifts every other stop window by the same offset.
+type ShipmentCopySpec struct {
+	ProNumber   string
+	BOL         string
+	RequestedBy pulid.ID
+	DateAnchor  *int64
+}
 
 type duplicatedShipmentGraph struct {
 	shipments         []*shipment.Shipment
@@ -42,41 +58,36 @@ func buildDuplicatedShipmentGraph(
 		),
 	}
 
-	for idx, proNumber := range proNumbers {
-		duplicatedShipment := duplicateShipment(source, proNumber, idx+1, requestedBy)
-		graph.shipments = append(graph.shipments, duplicatedShipment)
+	var dateAnchor *int64
+	if overrideDates {
+		now := timeutils.NowUnix()
+		dateAnchor = &now
+	}
 
-		duplicatedMoves, duplicatedStops := duplicateMovesAndStops(
-			source.Moves,
-			duplicatedShipment,
-			overrideDates,
-		)
-		duplicatedShipment.Moves = duplicatedMoves
-		duplicatedCharges := duplicateAdditionalCharges(
-			source.AdditionalCharges,
-			duplicatedShipment.ID,
-		)
-		duplicatedShipment.AdditionalCharges = duplicatedCharges
-		duplicatedCommodities := duplicateShipmentCommodities(
-			source.Commodities,
-			duplicatedShipment.ID,
-		)
-		duplicatedShipment.Commodities = duplicatedCommodities
-		graph.moves = append(graph.moves, duplicatedMoves...)
-		graph.stops = append(graph.stops, duplicatedStops...)
-		graph.additionalCharges = append(graph.additionalCharges, duplicatedCharges...)
-		graph.commodities = append(graph.commodities, duplicatedCommodities...)
+	for idx, proNumber := range proNumbers {
+		duplicated := CopyShipmentGraph(source, ShipmentCopySpec{
+			ProNumber:   proNumber,
+			BOL:         deriveDuplicateBOL(source.BOL, idx+1),
+			RequestedBy: requestedBy,
+			DateAnchor:  dateAnchor,
+		})
+
+		graph.shipments = append(graph.shipments, duplicated)
+		graph.moves = append(graph.moves, duplicated.Moves...)
+		for _, move := range duplicated.Moves {
+			graph.stops = append(graph.stops, move.Stops...)
+		}
+		graph.additionalCharges = append(graph.additionalCharges, duplicated.AdditionalCharges...)
+		graph.commodities = append(graph.commodities, duplicated.Commodities...)
 	}
 
 	return graph
 }
 
-func duplicateShipment(
-	source *shipment.Shipment,
-	proNumber string,
-	copyNumber int,
-	requestedBy pulid.ID,
-) *shipment.Shipment {
+// CopyShipmentGraph produces one fresh copy of the source shipment with new
+// identifiers, reset operational state, and its full move/stop/charge/commodity
+// graph attached.
+func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipment.Shipment {
 	duplicated := &shipment.Shipment{
 		ID:                  pulid.MustNew("shp_"),
 		BusinessUnitID:      source.BusinessUnitID,
@@ -88,8 +99,8 @@ func duplicateShipment(
 		TrailerTypeID:       source.TrailerTypeID,
 		FormulaTemplateID:   source.FormulaTemplateID,
 		Status:              shipment.StatusNew,
-		ProNumber:           proNumber,
-		BOL:                 deriveDuplicateBOL(source.BOL, copyNumber),
+		ProNumber:           spec.ProNumber,
+		BOL:                 spec.BOL,
 		OtherChargeAmount:   source.OtherChargeAmount,
 		FreightChargeAmount: source.FreightChargeAmount,
 		TotalChargeAmount:   source.TotalChargeAmount,
@@ -98,19 +109,93 @@ func duplicateShipment(
 		TemperatureMin:      intutils.ClonePointer(source.TemperatureMin),
 		TemperatureMax:      intutils.ClonePointer(source.TemperatureMax),
 		RatingUnit:          source.RatingUnit,
-		EnteredByID:         requestedBy,
+		EnteredByID:         spec.RequestedBy,
 	}
 
+	moves, _ := duplicateMovesAndStops(source.Moves, duplicated, spec.DateAnchor)
+	duplicated.Moves = moves
+	duplicated.AdditionalCharges = duplicateAdditionalCharges(
+		source.AdditionalCharges,
+		duplicated.ID,
+	)
+	duplicated.Commodities = duplicateShipmentCommodities(source.Commodities, duplicated.ID)
+
 	return duplicated
+}
+
+// BuildAutoOrder wraps a copied shipment in its own single-leg commercial
+// order, preserving the "everything has a commercial parent" invariant.
+func BuildAutoOrder(entity *shipment.Shipment, orderNumber string) *order.Order {
+	return &order.Order{
+		ID:             pulid.MustNew("ord_"),
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		CustomerID:     entity.CustomerID,
+		OwnerID:        entity.OwnerID,
+		EnteredByID:    entity.EnteredByID,
+		Status:         order.StatusConfirmed,
+		OrderNumber:    orderNumber,
+		CurrencyCode:   "USD",
+		TotalAmount:    entity.TotalChargeAmount,
+	}
+}
+
+// LoadShipmentGraphSource loads a tenant-scoped shipment with its ordered
+// moves/stops, additional charges, and commodities — the full graph needed to
+// produce copies.
+func LoadShipmentGraphSource(
+	ctx context.Context,
+	db bun.IDB,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) (*shipment.Shipment, error) {
+	sp := buncolgen.ShipmentColumns
+	sm := buncolgen.ShipmentMoveColumns
+	stp := buncolgen.StopColumns
+	entity := new(shipment.Shipment)
+	err := db.
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
+				Where(sp.ID.Eq(), shipmentID)
+		}).
+		RelationWithOpts(buncolgen.ShipmentRelations.Moves, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(sm.Sequence.OrderAsc())
+			},
+		}).
+		RelationWithOpts(buncolgen.Rel(buncolgen.ShipmentRelations.Moves, buncolgen.ShipmentMoveRelations.Stops), bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(stp.Sequence.OrderAsc())
+			},
+		}).
+		Relation(buncolgen.ShipmentRelations.AdditionalCharges).
+		Relation(buncolgen.ShipmentRelations.Commodities).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Shipment")
+	}
+
+	return entity, nil
 }
 
 func duplicateMovesAndStops(
 	sourceMoves []*shipment.ShipmentMove,
 	parent *shipment.Shipment,
-	overrideDates bool,
+	dateAnchor *int64,
 ) ([]*shipment.ShipmentMove, []*shipment.Stop) {
 	moves := make([]*shipment.ShipmentMove, 0, len(sourceMoves))
 	stops := make([]*shipment.Stop, 0, countMoveStops(sourceMoves))
+
+	var offset int64
+	var applyOffset bool
+	if dateAnchor != nil {
+		if firstStop := firstSourceStop(sourceMoves); firstStop != nil {
+			offset = *dateAnchor - firstStop.ScheduledWindowStart
+			applyOffset = true
+		}
+	}
 
 	for _, sourceMove := range sourceMoves {
 		duplicatedMove := &shipment.ShipmentMove{
@@ -124,7 +209,7 @@ func duplicateMovesAndStops(
 			Distance:       intutils.ClonePointer(sourceMove.Distance),
 		}
 
-		moveStops := duplicateStops(sourceMove.Stops, duplicatedMove.ID, overrideDates)
+		moveStops := duplicateStops(sourceMove.Stops, duplicatedMove.ID, offset, applyOffset)
 		duplicatedMove.Stops = moveStops
 
 		moves = append(moves, duplicatedMove)
@@ -134,22 +219,31 @@ func duplicateMovesAndStops(
 	return moves, stops
 }
 
+func firstSourceStop(sourceMoves []*shipment.ShipmentMove) *shipment.Stop {
+	for _, move := range sourceMoves {
+		if move == nil {
+			continue
+		}
+		if len(move.Stops) > 0 {
+			return move.Stops[0]
+		}
+	}
+
+	return nil
+}
+
 func duplicateStops(
 	sourceStops []*shipment.Stop,
 	moveID pulid.ID,
-	overrideDates bool,
+	offset int64,
+	applyOffset bool,
 ) []*shipment.Stop {
 	stops := make([]*shipment.Stop, 0, len(sourceStops))
-
-	var offset int64
-	if overrideDates && len(sourceStops) > 0 {
-		offset = timeutils.NowUnix() - sourceStops[0].ScheduledWindowStart
-	}
 
 	for _, sourceStop := range sourceStops {
 		scheduledWindowStart := sourceStop.ScheduledWindowStart
 		scheduledWindowEnd := intutils.ClonePointer(sourceStop.ScheduledWindowEnd)
-		if overrideDates {
+		if applyOffset {
 			scheduledWindowStart += offset
 			if scheduledWindowEnd != nil {
 				*scheduledWindowEnd += offset
