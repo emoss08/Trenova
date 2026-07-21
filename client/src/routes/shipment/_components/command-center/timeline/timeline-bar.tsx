@@ -1,13 +1,13 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatDurationFromSeconds, formatToUserTimezone } from "@/lib/date";
 import { getDestinationLocation, getOriginLocation, type ShipmentEtaTone } from "@/lib/shipment-utils";
 import { cn } from "@/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { BAR_HEIGHT_PX, LANE_HEIGHT_PX, ROW_PADDING_PX } from "./constants";
+import { ChevronLeftIcon, ChevronRightIcon, TimerIcon } from "lucide-react";
+import { DENSITY_CONFIGS, type TimelineDensity } from "./constants";
 import { getBarGeometry, type TimeRange } from "./time-scale";
 import type { TimelineZoom } from "../url-state";
-import type { TimelineBar } from "./use-timeline-data";
+import type { TimelineBar, TimelineStopMarker } from "./use-timeline-data";
 
 const BAR_TONE_CLASS: Record<ShipmentEtaTone, string> = {
   ontime: "border-brand/45 bg-brand/12 hover:bg-brand/20",
@@ -36,11 +36,27 @@ function formatTime(seconds: number) {
   return formatToUserTimezone(seconds, { showTimeZone: false, showSeconds: false });
 }
 
+function stopTimesLabel(stop: TimelineStopMarker): string {
+  const parts: string[] = [];
+  if (stop.scheduledStart) {
+    parts.push(
+      stop.scheduledEnd && stop.scheduledEnd !== stop.scheduledStart
+        ? `win ${formatTime(stop.scheduledStart)}–${formatTime(stop.scheduledEnd)}`
+        : formatTime(stop.scheduledStart),
+    );
+  }
+  if (stop.actualArrival) parts.push(`arr ${formatTime(stop.actualArrival)}`);
+  if (stop.actualDeparture) parts.push(`dep ${formatTime(stop.actualDeparture)}`);
+  return parts.join(" · ");
+}
+
 type TimelineBarItemProps = {
   bar: TimelineBar;
   range: TimeRange;
   zoom: TimelineZoom;
+  density: TimelineDensity;
   isHighlighted: boolean;
+  dimmed: boolean;
   draggable: boolean;
   onHoverChange: (shipmentId: string | null) => void;
   onSelect: (bar: TimelineBar, anchor: HTMLElement) => void;
@@ -50,7 +66,9 @@ export function TimelineBarItem({
   bar,
   range,
   zoom,
+  density,
   isHighlighted,
+  dimmed,
   draggable,
   onHoverChange,
   onSelect,
@@ -62,12 +80,14 @@ export function TimelineBarItem({
     disabled: !draggable,
   });
 
+  const { laneHeightPx, barHeightPx, rowPaddingPx } = DENSITY_CONFIGS[density];
   const shipment = bar.shipment;
   const originCode = getOriginLocation(shipment)?.code ?? "—";
   const destCode = getDestinationLocation(shipment)?.code ?? "—";
   const completedStops = bar.stops.filter((s) => s.status === "Completed").length;
   const progress = bar.stops.length > 0 ? completedStops / bar.stops.length : 0;
   const showLabel = geometry.width >= 72;
+  const showDwellBadge = !!bar.dwell && geometry.width >= 40;
   const barSpanSeconds = Math.max(bar.end - bar.start, 1);
 
   return (
@@ -85,14 +105,15 @@ export function TimelineBarItem({
           BAR_TONE_CLASS[bar.tone],
           bar.isCanceled && "border-dashed opacity-60",
           isHighlighted && "shadow-md ring-1 ring-foreground/25",
+          dimmed && "opacity-25",
           isDragging && "opacity-40",
           draggable && "cursor-grab active:cursor-grabbing",
         )}
         style={{
           left: geometry.left,
           width: geometry.width,
-          height: BAR_HEIGHT_PX,
-          top: ROW_PADDING_PX / 2 + bar.laneIndex * LANE_HEIGHT_PX + (LANE_HEIGHT_PX - BAR_HEIGHT_PX) / 2,
+          height: barHeightPx,
+          top: rowPaddingPx / 2 + bar.laneIndex * laneHeightPx + (laneHeightPx - barHeightPx) / 2,
         }}
       >
         {geometry.clippedStart && (
@@ -111,8 +132,25 @@ export function TimelineBarItem({
             </span>
           </span>
         )}
+        {showDwellBadge && bar.dwell && (
+          <span
+            aria-hidden
+            className={cn(
+              "ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px font-table text-[8.5px] font-semibold tabular-nums",
+              bar.dwell.severity === "critical"
+                ? "bg-destructive/90 text-white"
+                : "bg-warning/90 text-white",
+            )}
+          >
+            <TimerIcon className="size-2.5 animate-pulse" />
+            {geometry.width >= 96 && formatDurationFromSeconds(bar.dwell.seconds)}
+          </span>
+        )}
         {geometry.clippedEnd && (
-          <ChevronRightIcon className="ml-auto size-3 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronRightIcon
+            className={cn("size-3 shrink-0 text-muted-foreground", !showDwellBadge && "ml-auto")}
+            aria-hidden
+          />
         )}
         {bar.stops.map((stop) => {
           const offset = ((Math.min(Math.max(stop.time, bar.start), bar.end) - bar.start) /
@@ -138,7 +176,7 @@ export function TimelineBarItem({
           />
         )}
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-64">
+      <TooltipContent side="top" className="max-w-72">
         <div className="flex flex-col gap-1 py-0.5">
           <p className="font-table text-[11px] font-semibold tabular-nums">
             {shipment.proNumber ?? "—"}
@@ -147,10 +185,26 @@ export function TimelineBarItem({
             </span>
           </p>
           <p className="text-[10.5px] opacity-80">{shipment.customer?.name ?? "No customer"}</p>
+          {bar.dwell && (
+            <p
+              className={cn(
+                "flex items-center gap-1 text-[10.5px] font-semibold",
+                bar.dwell.severity === "critical" ? "text-destructive" : "text-warning",
+              )}
+            >
+              <TimerIcon className="size-3" />
+              Dwelling {formatDurationFromSeconds(bar.dwell.seconds)} at {bar.dwell.locationCode}
+            </p>
+          )}
+          {bar.hasOverlap && (
+            <p className="text-[10.5px] font-semibold text-warning">
+              Overlaps another load on this driver
+            </p>
+          )}
           <div className="mt-0.5 flex flex-col gap-0.5">
             {bar.stops.map((stop) => (
               <p key={stop.id} className="font-table text-[10px] tabular-nums opacity-80">
-                {STOP_LABEL[stop.type]} · {stop.locationCode} · {formatTime(stop.time)}
+                {STOP_LABEL[stop.type]} · {stop.locationCode} · {stopTimesLabel(stop)}
               </p>
             ))}
           </div>

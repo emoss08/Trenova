@@ -1,7 +1,7 @@
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent } from "@/components/ui/popover";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatDurationFromSeconds, formatToUserTimezone } from "@/lib/date";
 import {
   getDestinationLocation,
   getOriginLocation,
@@ -12,15 +12,32 @@ import {
   ArrowLeftRightIcon,
   CircleCheckIcon,
   CircleDashedIcon,
+  CircleDotIcon,
   PencilIcon,
   TableIcon,
+  TimerIcon,
 } from "lucide-react";
-import type { TimelineBar } from "./use-timeline-data";
+import type { TimelineBar, TimelineStopMarker } from "./use-timeline-data";
 
 function parseDecimal(value: unknown): number {
   if (typeof value === "number") return value;
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatTime(seconds: number) {
+  return formatToUserTimezone(seconds, { showTimeZone: false, showSeconds: false });
+}
+
+function stopTimeDetail(stop: TimelineStopMarker): string {
+  if (stop.actualDeparture) return `dep ${formatTime(stop.actualDeparture)}`;
+  if (stop.actualArrival) return `arr ${formatTime(stop.actualArrival)}`;
+  if (stop.scheduledStart) {
+    return stop.scheduledEnd && stop.scheduledEnd !== stop.scheduledStart
+      ? `${formatTime(stop.scheduledStart)}–${formatTime(stop.scheduledEnd)}`
+      : formatTime(stop.scheduledStart);
+  }
+  return formatTime(stop.time);
 }
 
 type BarDetailPopoverProps = {
@@ -65,6 +82,21 @@ export function BarDetailPopover({
           <ShipmentStatusBadge status={shipment.status} />
         </div>
 
+        {bar.dwell && (
+          <div
+            className={cn(
+              "flex items-center gap-1.5 border-b border-border px-3 py-1.5 text-[10.5px] font-semibold",
+              bar.dwell.severity === "critical"
+                ? "bg-destructive/10 text-destructive"
+                : "bg-warning/10 text-warning",
+            )}
+          >
+            <TimerIcon className="size-3 shrink-0" />
+            Dwelling {formatDurationFromSeconds(bar.dwell.seconds)} at {bar.dwell.locationName}
+            {bar.dwell.severity === "critical" && " · detention risk"}
+          </div>
+        )}
+
         <div className="flex flex-col gap-1.5 px-3 py-2">
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate font-table text-[11px] font-medium tabular-nums">
@@ -77,10 +109,14 @@ export function BarDetailPopover({
           <ol className="flex flex-col gap-1">
             {bar.stops.map((stop) => {
               const isDone = stop.status === "Completed";
+              const isAtStop =
+                !isDone && !!stop.actualArrival && !stop.actualDeparture && stop.status !== "Canceled";
               return (
                 <li key={stop.id} className="flex items-center gap-1.5 text-[10.5px]">
                   {isDone ? (
                     <CircleCheckIcon className="size-3 shrink-0 text-success" />
+                  ) : isAtStop ? (
+                    <CircleDotIcon className="size-3 shrink-0 animate-pulse text-brand" />
                   ) : (
                     <CircleDashedIcon className="size-3 shrink-0 text-muted-foreground" />
                   )}
@@ -88,7 +124,7 @@ export function BarDetailPopover({
                     {stop.locationName}
                   </span>
                   <span className="ml-auto shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
-                    {formatToUserTimezone(stop.time, { showTimeZone: false, showSeconds: false })}
+                    {stopTimeDetail(stop)}
                   </span>
                 </li>
               );
