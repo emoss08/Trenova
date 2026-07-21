@@ -35,9 +35,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { toast } from "sonner";
 import { AssignmentDialog } from "../../assignment-dialog";
 import { useCommandCenterStore } from "../store";
-import { useCommandCenterUrl, type TimelineZoom } from "../url-state";
+import { useCommandCenterUrl, type TimelineSort, type TimelineZoom } from "../url-state";
 import type { CommandCenterTableSummary } from "../command-center-table";
 import { RAIL_WIDTH_PX, rowHeightPx } from "./constants";
+import { ExceptionStrip } from "./exception-strip";
 import {
   buildDayColumns,
   buildHourTicks,
@@ -53,9 +54,12 @@ import { TimelineRowItem } from "./timeline-row";
 import { TimelineToolbar } from "./timeline-toolbar";
 import { BarDetailPopover } from "./bar-detail-popover";
 import {
+  barMatchesFocus,
+  sortTimelineRows,
   UNASSIGNED_ROW_KEY,
   useTimelineData,
   type TimelineBar,
+  type TimelineFocus,
   type TimelineRow,
 } from "./use-timeline-data";
 
@@ -66,6 +70,22 @@ type PendingAssignment = {
   existingAssignment: TimelineBar["assignment"];
   prefill: Partial<AssignmentPayload> | null;
 };
+
+type FocusMatch = {
+  rowIndex: number;
+  bar: TimelineBar;
+};
+
+function computeFocusMatches(rows: TimelineRow[], focus: TimelineFocus | null): FocusMatch[] {
+  if (!focus) return [];
+  const matches: FocusMatch[] = [];
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    for (const bar of rows[rowIndex].bars) {
+      if (barMatchesFocus(bar, focus)) matches.push({ rowIndex, bar });
+    }
+  }
+  return matches;
+}
 
 type CommandCenterTimelineProps = {
   fieldFilters: FieldFilter[];
@@ -80,12 +100,17 @@ export default function CommandCenterTimeline({
   query,
   onSummaryChange,
 }: CommandCenterTimelineProps) {
-  const [{ at, zoom }, setUrl] = useCommandCenterUrl();
+  const [{ at, zoom, tsort }, setUrl] = useCommandCenterUrl();
   const [, setPanelParams] = useQueryStates(panelSearchParamsParser);
   const queryClient = useQueryClient();
 
   const highlightId = useCommandCenterStore.use.highlightId();
   const setHighlightId = useCommandCenterStore.use.setHighlightId();
+  const collapsedRowKeys = useCommandCenterStore.use.collapsedRowKeys();
+  const toggleRowCollapsed = useCommandCenterStore.use.toggleRowCollapsed();
+  const setCollapsedRowKeys = useCommandCenterStore.use.setCollapsedRowKeys();
+  const density = useCommandCenterStore.use.timelineDensity();
+  const setDensity = useCommandCenterStore.use.setTimelineDensity();
   const canAssign = usePermissionStore((state) =>
     state.hasPermission(Resource.Shipment, Operation.Update),
   );
@@ -108,6 +133,7 @@ export default function CommandCenterTimeline({
     fieldFilters,
     filterGroups,
     query,
+    now,
     enabled: true,
   });
 
@@ -127,23 +153,35 @@ export default function CommandCenterTimeline({
     onSummaryChange,
   ]);
 
-  const displayRows = useMemo<TimelineRow[]>(
-    () => (data.unassignedRow ? [data.unassignedRow, ...data.rows] : data.rows),
-    [data.unassignedRow, data.rows],
-  );
+  const displayRows = useMemo<TimelineRow[]>(() => {
+    const sorted = sortTimelineRows(data.rows, tsort);
+    return data.unassignedRow ? [data.unassignedRow, ...sorted] : sorted;
+  }, [data.unassignedRow, data.rows, tsort]);
+
+  const [focus, setFocus] = useState<TimelineFocus | null>(null);
+  const [matchIndex, setMatchIndex] = useState(0);
+  const matches = useMemo(() => computeFocusMatches(displayRows, focus), [displayRows, focus]);
+  const safeMatchIndex = matches.length > 0 ? Math.min(matchIndex, matches.length - 1) : -1;
+
+  useEffect(() => {
+    if (focus && data.exceptions[focus] === 0) setFocus(null);
+  }, [focus, data.exceptions]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
     count: displayRows.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index) => rowHeightPx(displayRows[index].laneCount),
+    estimateSize: (index) => {
+      const row = displayRows[index];
+      return rowHeightPx(row.laneCount, density, !!collapsedRowKeys[row.key]);
+    },
     getItemKey: (index) => displayRows[index].key,
     overscan: 6,
   });
 
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [displayRows, rowVirtualizer]);
+  }, [displayRows, density, collapsedRowKeys, rowVirtualizer]);
 
   const rangeKey = `${range.start}:${zoom}`;
   useLayoutEffect(() => {
@@ -169,6 +207,56 @@ export default function CommandCenterTimeline({
   const suppressClickRef = useRef(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const scrollToMatch = useCallback(
+    (match: FocusMatch) => {
+      rowVirtualizer.scrollToIndex(match.rowIndex, { align: "center" });
+      const el = scrollRef.current;
+      if (el) {
+        const x = secondsToX(match.bar.start, range, zoom);
+        el.scrollLeft = Math.max(0, RAIL_WIDTH_PX + x - el.clientWidth / 3);
+      }
+      setHighlightId(match.bar.shipment.id ?? null);
+    },
+    [range, zoom, rowVirtualizer, setHighlightId],
+  );
+
+  const handleFocusChange = useCallback(
+    (next: TimelineFocus | null) => {
+      setFocus(next);
+      setMatchIndex(0);
+      if (!next) {
+        setHighlightId(null);
+        return;
+      }
+      const nextMatches = computeFocusMatches(displayRows, next);
+      if (nextMatches.length > 0) scrollToMatch(nextMatches[0]);
+    },
+    [displayRows, scrollToMatch, setHighlightId],
+  );
+
+  const handleFocusStep = useCallback(
+    (direction: 1 | -1) => {
+      if (matches.length === 0) return;
+      const current = safeMatchIndex < 0 ? 0 : safeMatchIndex;
+      const next = (current + direction + matches.length) % matches.length;
+      setMatchIndex(next);
+      scrollToMatch(matches[next]);
+    },
+    [matches, safeMatchIndex, scrollToMatch],
+  );
+
+  const allCollapsed =
+    displayRows.length > 0 && displayRows.every((row) => !!collapsedRowKeys[row.key]);
+  const handleToggleCollapseAll = useCallback(() => {
+    if (allCollapsed) {
+      setCollapsedRowKeys({});
+      return;
+    }
+    const next: Record<string, true> = {};
+    for (const row of displayRows) next[row.key] = true;
+    setCollapsedRowKeys(next);
+  }, [allCollapsed, displayRows, setCollapsedRowKeys]);
 
   const handleSelectBar = useCallback((bar: TimelineBar, anchorEl: HTMLElement) => {
     if (suppressClickRef.current) {
@@ -264,6 +352,45 @@ export default function CommandCenterTimeline({
     (next: TimelineZoom) => void setUrl({ zoom: next === "day" ? null : next }),
     [setUrl],
   );
+  const handleSortChange = useCallback(
+    (next: TimelineSort) => void setUrl({ tsort: next === "name" ? null : next }),
+    [setUrl],
+  );
+
+  const hasModalOpen = !!pendingAssignment || !!pendingUnassign;
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (hasModalOpen) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable ||
+          target.closest('[role="dialog"]'))
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        handleShift(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        handleShift(1);
+      } else if (event.key === "t" || event.key === "T") {
+        handleToday();
+      } else if (event.key === "Escape") {
+        setSelectedBar(null);
+        setFocus(null);
+        setHighlightId(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleShift, handleToday, hasModalOpen, setHighlightId]);
 
   const isInitialLoading = dataQuery.isLoading;
   const isEmpty = !isInitialLoading && !dataQuery.isError && displayRows.length === 0;
@@ -274,6 +401,9 @@ export default function CommandCenterTimeline({
       <TimelineToolbar
         anchor={anchor}
         zoom={zoom}
+        sort={tsort}
+        density={density}
+        allCollapsed={allCollapsed}
         barCount={data.barCount}
         shipmentCount={data.shipmentCount}
         totalCount={data.totalCount}
@@ -283,7 +413,21 @@ export default function CommandCenterTimeline({
         onToday={handleToday}
         onAnchorSelect={handleAnchorSelect}
         onZoomChange={handleZoomChange}
+        onSortChange={handleSortChange}
+        onDensityChange={setDensity}
+        onToggleCollapseAll={handleToggleCollapseAll}
       />
+
+      {!isInitialLoading && !dataQuery.isError && displayRows.length > 0 && (
+        <ExceptionStrip
+          exceptions={data.exceptions}
+          focus={focus}
+          matchCount={matches.length}
+          matchIndex={safeMatchIndex}
+          onFocusChange={handleFocusChange}
+          onStep={handleFocusStep}
+        />
+      )}
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div
@@ -346,10 +490,14 @@ export default function CommandCenterTimeline({
                           row={row}
                           range={range}
                           zoom={zoom}
+                          density={density}
+                          collapsed={!!collapsedRowKeys[row.key]}
+                          focus={focus}
                           canvasWidth={canvasWidth}
                           highlightId={highlightId}
                           draggable={canAssign}
                           droppable={canAssign}
+                          onToggleCollapsed={toggleRowCollapsed}
                           onHoverChange={setHighlightId}
                           onSelectBar={handleSelectBar}
                         />
