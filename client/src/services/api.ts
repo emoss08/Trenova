@@ -39,6 +39,7 @@ import { GoogleMapsService } from "./google-maps";
 import { HazardousMaterialService } from "./hazardous-material";
 import { HazmatSegregationRuleService } from "./hazmat-segregation-rule";
 import { HoldReasonService } from "./hold-reason";
+import { RecurringShipmentService } from "@/services/recurring-shipment";
 import { IntegrationService } from "./integration";
 import { InvoiceService } from "./invoice";
 import { InvoiceAdjustmentService } from "./invoice-adjustment";
@@ -102,6 +103,7 @@ class APIService {
   public fiscalPeriodService: FiscalPeriodService;
   public locationService: LocationService;
   public holdReasonService: HoldReasonService;
+  public recurringShipmentService: RecurringShipmentService;
   public rateTableService: RateTableService;
   public shipmentCommentService: ShipmentCommentService;
   public shipmentControlService: ShipmentControlService;
@@ -175,6 +177,7 @@ class APIService {
     this.fiscalPeriodService = new FiscalPeriodService();
     this.locationService = new LocationService();
     this.holdReasonService = new HoldReasonService();
+    this.recurringShipmentService = new RecurringShipmentService();
     this.rateTableService = new RateTableService();
     this.shipmentCommentService = new ShipmentCommentService();
     this.shipmentControlService = new ShipmentControlService();

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,7 +64,8 @@ func TestDuplicateStops_OverrideDatesPreservesRelativeOffsets(t *testing.T) {
 	source := duplicateSourceFixture().Moves[0].Stops
 	originalGap := source[1].ScheduledWindowStart - source[0].ScheduledWindowStart
 
-	duplicated := duplicateStops(source, moveID, true)
+	offset := timeutils.NowUnix() - source[0].ScheduledWindowStart
+	duplicated := duplicateStops(source, moveID, offset, true)
 
 	require.Len(t, duplicated, 2)
 	assert.Equal(t, originalGap, duplicated[1].ScheduledWindowStart-duplicated[0].ScheduledWindowStart)

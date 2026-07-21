@@ -1,0 +1,65 @@
+enum RecurringShipmentStatus {
+  Active
+  Paused
+  Expired
+}
+
+enum RecurringShipmentExceptionPolicy {
+  Skip
+  PreviousBusinessDay
+  NextBusinessDay
+}
+
+type RecurringShipment {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  sourceShipmentId: ID!
+  customerId: ID
+  originLocationId: ID
+  destinationLocationId: ID
+  enteredById: ID
+  lastGeneratedShipmentId: ID
+  name: String!
+  description: String!
+  status: RecurringShipmentStatus!
+  cronExpression: String!
+  timezone: String!
+  startDate: Int
+  endDate: Int
+  maxOccurrences: Int
+  leadTimeDays: Int!
+  skipWeekends: Boolean!
+  exceptionPolicy: RecurringShipmentExceptionPolicy!
+  blackoutDates: [String!]
+  autoGenerate: Boolean!
+  nextOccurrenceAt: Int
+  nextOccurrenceSourceAt: Int
+  lastOccurrenceAt: Int
+  lastRunAt: Int
+  generationCount: Int!
+  consecutiveFailures: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  customer: Customer
+  originLocation: Location
+  destinationLocation: Location
+  enteredBy: User
+}
+
+type RecurringShipmentEdge {
+  node: RecurringShipment!
+  cursor: String!
+}
+
+type RecurringShipmentConnection {
+  edges: [RecurringShipmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
+  recurringShipment(id: ID!): RecurringShipment
+}

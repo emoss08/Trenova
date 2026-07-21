@@ -96,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
@@ -203,6 +204,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	seqgen.NewFormatProvider,
 	seqgen.NewGenerator,
 	shipmentrepository.New,
+	recurringshipmentrepository.New,
 	shipmenttyperepository.New,
 	hazardousmaterialrepository.New,
 	hazmatsegregationrulerepository.New,

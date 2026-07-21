@@ -1,6 +1,6 @@
 {
-  "operationCount": 190,
-  "fragmentCount": 92,
+  "operationCount": 191,
+  "fragmentCount": 93,
   "operations": [
     {
       "name": "AccessorialChargeTable",
@@ -3019,6 +3019,31 @@
       "sdl": "query RecentActivity($first: Int!, $after: String) {\n  auditEntries(input: { first: $first, after: $after }) {\n    edges {\n      node {\n        id\n        resource\n        operation\n        resourceId\n        timestamp\n        comment\n        entityRef\n        user {\n          id\n          name\n          username\n          profilePicUrl\n          thumbnailUrl\n        }\n      }\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}"
     },
     {
+      "name": "RecurringShipmentTable",
+      "kind": "query",
+      "domain": "recurring-shipment",
+      "sourceFile": "src/graphql/operations/recurring-shipment/table.graphql",
+      "hash": "sha256:cc7af92cb220140002f4f6d8e4f32ee167ac757ee5427b9ff84403137e736eec",
+      "rootFields": [
+        "recurringShipments"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "RecurringShipmentTableRowFields"
+      ],
+      "usages": [
+        "src/lib/graphql/recurring-shipment-table.ts"
+      ],
+      "sdl": "query RecurringShipmentTable($input: DataTableConnectionInput!) {\n  recurringShipments(input: $input) {\n    edges {\n      node {\n        ...RecurringShipmentTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
+    },
+    {
       "name": "RejectWorkerPto",
       "kind": "mutation",
       "domain": "worker",
@@ -4967,6 +4992,7 @@
         "NotificationList",
         "OrderTable",
         "RateTableTable",
+        "RecurringShipmentTable",
         "ReportDefinitionsTable",
         "ReportRunsTable",
         "RoleTable",
@@ -5490,6 +5516,18 @@
       ],
       "usages": [],
       "sdl": "fragment RateTableTableRowFields on RateTable {\n  id\n  businessUnitId\n  organizationId\n  name\n  key\n  description\n  lookupType\n  active\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "RecurringShipmentTableRowFields",
+      "typeCondition": "RecurringShipment",
+      "domain": "recurring-shipment",
+      "sourceFile": "src/graphql/operations/recurring-shipment/table.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "RecurringShipmentTable"
+      ],
+      "usages": [],
+      "sdl": "fragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
     },
     {
       "name": "ReportDefinitionFields",

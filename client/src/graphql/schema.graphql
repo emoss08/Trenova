@@ -3201,6 +3201,8 @@ type Query {
   previewReport(definition: ReportIRInput!, params: JSON): ReportPreview!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
+  recurringShipment(id: ID!): RecurringShipment
+  recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
   reportCatalog: ReportCatalog!
   reportDefinition(id: ID!): ReportDefinition!
   reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
@@ -3289,6 +3291,67 @@ enum RateUnit {
   Hour
   Mile
   Stop
+}
+
+type RecurringShipment {
+  autoGenerate: Boolean!
+  blackoutDates: [String!]
+  businessUnitId: ID!
+  consecutiveFailures: Int!
+  createdAt: Int!
+  cronExpression: String!
+  customer: Customer
+  customerId: ID
+  description: String!
+  destinationLocation: Location
+  destinationLocationId: ID
+  endDate: Int
+  enteredBy: User
+  enteredById: ID
+  exceptionPolicy: RecurringShipmentExceptionPolicy!
+  generationCount: Int!
+  id: ID!
+  lastGeneratedShipmentId: ID
+  lastOccurrenceAt: Int
+  lastRunAt: Int
+  leadTimeDays: Int!
+  maxOccurrences: Int
+  name: String!
+  nextOccurrenceAt: Int
+  nextOccurrenceSourceAt: Int
+  organizationId: ID!
+  originLocation: Location
+  originLocationId: ID
+  skipWeekends: Boolean!
+  sourceShipmentId: ID!
+  startDate: Int
+  status: RecurringShipmentStatus!
+  timezone: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RecurringShipmentConnection {
+  edges: [RecurringShipmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RecurringShipmentEdge {
+  cursor: String!
+  node: RecurringShipment!
+}
+
+enum RecurringShipmentExceptionPolicy {
+  NextBusinessDay
+  PreviousBusinessDay
+  Skip
+}
+
+enum RecurringShipmentStatus {
+  Active
+  Expired
+  Paused
 }
 
 input RemoveOrderChargeInput {
