@@ -46,7 +46,7 @@ function LaneCell({ row }: { row: RecurringShipment }) {
 function ScheduleCell({ row }: { row: RecurringShipment }) {
   return (
     <div className="flex flex-col">
-      <span className="text-sm">{describeCron(row.cronExpression)}</span>
+      <span className="text-sm">{describeCron(row.cronExpression) ?? row.cronExpression}</span>
       <span className="text-2xs text-muted-foreground">{row.timezone}</span>
     </div>
   );

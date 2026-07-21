@@ -100,7 +100,7 @@ export default function RecurringShipmentTable() {
         graphql={recurringShipmentTableGraphQLConfig}
         resource={Resource.RecurringShipment}
         columns={columns}
-        rowActions={rowActions}
+        contextMenuActions={rowActions}
         TablePanel={RecurringShipmentPanel}
       />
       <RecurringShipmentRunsDialog series={runsSeries} open={runsOpen} onOpenChange={setRunsOpen} />
