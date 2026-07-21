@@ -188,6 +188,7 @@ func (r *repository) UpdateCategory(
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
+		// test
 		log.Error("failed to update cost category", zap.Error(err))
 		return nil, err
 	}
