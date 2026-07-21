@@ -79,7 +79,7 @@ export class RecurringShipmentService {
     );
     return {
       ...response,
-      results: safeParse(
+      results: await safeParse(
         recurringShipmentRunSchema.array(),
         response.results,
         "RecurringShipmentRuns",
