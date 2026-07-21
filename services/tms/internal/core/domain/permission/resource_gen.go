@@ -30,6 +30,7 @@ const (
 	ResourceRiskDecision          Resource = "risk_decision"
 	ResourceExternalIdentity      Resource = "external_identity"
 	ResourceMFAAuthenticator      Resource = "mfa_authenticator"
+	ResourceTableChangeAlert      Resource = "table_change_alert"
 
 	// Equipment
 	ResourceEquipmentType         Resource = "equipment_type"
@@ -86,6 +87,7 @@ const (
 	ResourceAccountingControl        Resource = "accounting_control"
 	ResourceAccountsReceivable       Resource = "accounts_receivable"
 	ResourceBillingControl           Resource = "billing_control"
+	ResourceCostingControl           Resource = "costing_control"
 	ResourceInvoiceAdjustmentControl Resource = "invoice_adjustment_control"
 	ResourceAccountType              Resource = "account_type"
 	ResourceGeneralLedgerAccount     Resource = "general_ledger_account"
@@ -98,6 +100,7 @@ const (
 	ResourceCustomerPayment          Resource = "customer_payment"
 	ResourceBankReceipt              Resource = "bank_receipt"
 	ResourceBankReceiptWorkItem      Resource = "bank_receipt_work_item"
+	ResourceAccountingReport         Resource = "accounting_report"
 
 	// Compliance
 	ResourceQualification          Resource = "qualification"

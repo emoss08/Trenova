@@ -86,7 +86,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:definitionID/",
 		h.pm.RequirePermission(
 			permission.ResourceCustomFieldDefinition.String(),
-			permission.OpUpdate,
+			permission.OpDelete,
 		),
 		h.delete,
 	)

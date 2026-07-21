@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -31,7 +32,8 @@ type TableConfig struct {
 }
 
 type TableConfiguration struct {
-	bun.BaseModel `bun:"table:table_configurations,alias:tc" json:"-"`
+	bun.BaseModel             `bun:"table:table_configurations,alias:tc" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                              json:"-"`
 
 	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID pulid.ID     `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`

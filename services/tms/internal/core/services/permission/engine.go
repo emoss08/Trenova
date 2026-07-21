@@ -121,10 +121,7 @@ func (e *engine) checkUserPermission(
 	load permissionLoadResult,
 	req *services.PermissionCheckRequest,
 ) (*services.PermissionCheckResult, error) {
-	perms := load.perms
-	effectiveResource := e.registry.GetEffectiveResource(req.Resource)
-
-	resourcePerms, ok := perms.Resources[effectiveResource]
+	resourcePerms, ok := e.resolveResourcePermission(load.perms, req.Resource, req.Operation)
 	if !ok {
 		return e.permissionResult(&permissionResultRequest{
 			log:    log,
@@ -135,29 +132,40 @@ func (e *engine) checkUserPermission(
 		}), nil
 	}
 
-	if slices.Contains(resourcePerms.Operations, string(req.Operation)) {
-		result := e.permissionResult(&permissionResultRequest{
-			log:       log,
-			start:     start,
-			load:      load,
-			req:       req,
-			allowed:   true,
-			reason:    "allowed",
-			dataScope: permission.DataScope(resourcePerms.DataScope),
-		})
-		if !result.Allowed {
-			return result, nil
-		}
-		return e.applyAccessPolicies(ctx, req, result)
+	result := e.permissionResult(&permissionResultRequest{
+		log:       log,
+		start:     start,
+		load:      load,
+		req:       req,
+		allowed:   true,
+		reason:    "allowed",
+		dataScope: permission.DataScope(resourcePerms.DataScope),
+	})
+	if !result.Allowed {
+		return result, nil
+	}
+	return e.applyAccessPolicies(ctx, req, result)
+}
+
+func (e *engine) resolveResourcePermission(
+	perms *repositories.CachedPermissions,
+	resource string,
+	op permission.Operation,
+) (*repositories.CachedResourcePermission, bool) {
+	if rp, ok := perms.Resources[resource]; ok &&
+		slices.Contains(rp.Operations, string(op)) {
+		return rp, true
 	}
 
-	return e.permissionResult(&permissionResultRequest{
-		log:    log,
-		start:  start,
-		load:   load,
-		req:    req,
-		reason: "no_permission",
-	}), nil
+	effectiveResource := e.registry.GetEffectiveResource(resource)
+	if effectiveResource != resource {
+		if rp, ok := perms.Resources[effectiveResource]; ok &&
+			slices.Contains(rp.Operations, string(op)) {
+			return rp, true
+		}
+	}
+
+	return nil, false
 }
 
 func (e *engine) applyAccessPolicies(
@@ -735,8 +743,7 @@ func (e *engine) checkAPIKeyPermission(
 		return nil, err
 	}
 
-	effectiveResource := e.registry.GetEffectiveResource(req.Resource)
-	resourcePerms, ok := perms.Resources[effectiveResource]
+	resourcePerms, ok := e.resolveResourcePermission(perms, req.Resource, req.Operation)
 	if !ok {
 		return &services.PermissionCheckResult{
 			Allowed:       false,
@@ -747,20 +754,10 @@ func (e *engine) checkAPIKeyPermission(
 		}, nil
 	}
 
-	if slices.Contains(resourcePerms.Operations, string(req.Operation)) {
-		return &services.PermissionCheckResult{
-			Allowed:       true,
-			Reason:        "allowed",
-			DataScope:     permission.DataScope(resourcePerms.DataScope),
-			CacheHit:      false,
-			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
-	}
-
 	return &services.PermissionCheckResult{
-		Allowed:       false,
-		Reason:        "no_permission",
-		DataScope:     "",
+		Allowed:       true,
+		Reason:        "allowed",
+		DataScope:     permission.DataScope(resourcePerms.DataScope),
 		CacheHit:      false,
 		CheckDuration: time.Since(start).Milliseconds(),
 	}, nil
@@ -1050,6 +1047,11 @@ func (e *engine) buildEffectivePermissions(
 	}
 }
 
+type resourceBitmask struct {
+	Resource string
+	Bitmask  uint32
+}
+
 func (e *engine) computeChecksum(manifest *services.LightPermissionManifest) string {
 	keys := make([]string, 0, len(manifest.Permissions))
 	for k := range manifest.Permissions {
@@ -1057,18 +1059,23 @@ func (e *engine) computeChecksum(manifest *services.LightPermissionManifest) str
 	}
 	sort.Strings(keys)
 
+	permissions := make([]resourceBitmask, len(keys))
+	for i, k := range keys {
+		permissions[i] = resourceBitmask{Resource: k, Bitmask: manifest.Permissions[k]}
+	}
+
 	data := struct {
 		ActiveRoleIDs          []pulid.ID
 		AuthorizedRoleIDs      []pulid.ID
 		RequiresRoleActivation bool
 		MaxSensitivity         string
-		Permissions            map[string]uint32
+		Permissions            []resourceBitmask
 	}{
 		ActiveRoleIDs:          manifest.ActiveRoleIDs,
 		AuthorizedRoleIDs:      manifest.AuthorizedRoleIDs,
 		RequiresRoleActivation: manifest.RequiresRoleActivation,
 		MaxSensitivity:         string(manifest.MaxSensitivity),
-		Permissions:            manifest.Permissions,
+		Permissions:            permissions,
 	}
 
 	bytes, _ := sonic.Marshal(data)

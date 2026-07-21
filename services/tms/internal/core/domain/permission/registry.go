@@ -222,6 +222,10 @@ var standardOps = []OperationDefinition{
 	{Operation: OpImport, DisplayName: "Import", Description: "Import records from file"},
 }
 
+var standardOpsWithDelete = append(slices.Clone(standardOps),
+	OperationDefinition{Operation: OpDelete, DisplayName: "Delete", Description: "Delete records"},
+)
+
 var readOnlyOps = []OperationDefinition{
 	{Operation: OpRead, DisplayName: "Read", Description: "View records"},
 }
@@ -301,6 +305,32 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCustomFieldDefinition.String(),
+		DisplayName: "Custom Field Definition",
+		Description: "Custom field definitions and resource assignments",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View custom field definitions"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create custom field definitions",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify custom field definitions",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Delete custom field definitions",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceSequenceConfig.String(),
 		DisplayName:        "Sequence Configuration",
 		Description:        "Sequence generator configuration",
@@ -323,7 +353,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Email Profile",
 		Description:        "Transactional email sender profiles and assignments",
 		Category:           "Administration",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
@@ -341,7 +371,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Email Suppression",
 		Description:        "Email bounce, complaint, and manual suppression records",
 		Category:           "Administration",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityConfidential,
 	})
 
@@ -350,7 +380,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "EDI",
 		Description:        "EDI partner setup, mapping profiles, and load tender transfers",
 		Category:           "Administration",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
@@ -470,6 +500,36 @@ func (r *Registry) registerAdministrationResources() {
 		Category:           "Administration",
 		Operations:         readOnlyOps,
 		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceTableChangeAlert.String(),
+		DisplayName: "Table Change Alert",
+		Description: "Table change alert subscriptions and notifications",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View table change alert subscriptions",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create table change alert subscriptions",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify, pause, and resume table change alert subscriptions",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Delete table change alert subscriptions",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
 	})
 }
 
@@ -678,6 +738,21 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourceShipmentComment.String(),
+		DisplayName:    "Shipment Comment",
+		Description:    "Shipment comment management",
+		Category:       "Operations",
+		ParentResource: ResourceShipment.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View shipment comments"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Add shipment comments"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify shipment comments"},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete shipment comments"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:       ResourceShipmentMove.String(),
 		DisplayName:    "Shipment Move",
 		Description:    "Shipment move management",
@@ -820,7 +895,7 @@ func (r *Registry) registerOperationsResources() {
 		DisplayName:        "Distance Profile",
 		Description:        "Distance calculation routing profiles",
 		Category:           "Operations",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -829,7 +904,7 @@ func (r *Registry) registerOperationsResources() {
 		DisplayName:        "Distance Override",
 		Description:        "Lane-specific distance overrides",
 		Category:           "Operations",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -847,7 +922,7 @@ func (r *Registry) registerOperationsResources() {
 		DisplayName:        "Stored Mileage",
 		Description:        "Reusable stored mileage lane records",
 		Category:           "Operations",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -1059,32 +1134,20 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceRateTable.String(),
-		DisplayName: "Rate Table",
-		Description: "Tenant rate lookup tables (fuel surcharges, lane rates, weight breaks)",
-		Category:    "Billing",
-		Operations: append(slices.Clone(standardOps),
-			OperationDefinition{
-				Operation:   OpDelete,
-				DisplayName: "Delete",
-				Description: "Delete rate tables",
-			},
-		),
+		Resource:           ResourceRateTable.String(),
+		DisplayName:        "Rate Table",
+		Description:        "Tenant rate lookup tables (fuel surcharges, lane rates, weight breaks)",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceFuelSurchargeProgram.String(),
-		DisplayName: "Fuel Surcharge Program",
-		Description: "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
-		Category:    "Billing",
-		Operations: append(slices.Clone(standardOps),
-			OperationDefinition{
-				Operation:   OpDelete,
-				DisplayName: "Delete",
-				Description: "Delete fuel surcharge programs and custom fuel indices",
-			},
-		),
+		Resource:           ResourceFuelSurchargeProgram.String(),
+		DisplayName:        "Fuel Surcharge Program",
+		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 }
@@ -1230,6 +1293,15 @@ func (r *Registry) registerAccountingResources() {
 		Resource:           ResourceBillingControl.String(),
 		DisplayName:        "Billing Control",
 		Description:        "Billing policy and workflow control configuration",
+		Category:           "Accounting",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceCostingControl.String(),
+		DisplayName:        "Costing Control",
+		Description:        "Cost per mile and shipment profitability estimation configuration",
 		Category:           "Accounting",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
@@ -1416,6 +1488,18 @@ func (r *Registry) registerAccountingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAccountingReport.String(),
+		DisplayName: "Accounting Report",
+		Description: "Trial balance, income statement, and balance sheet reporting",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View accounting reports"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export accounting reports"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceBankReceiptWorkItem.String(),
 		DisplayName: "Bank Receipt Work Item",
 		Description: "Reconciliation exception queue for bank receipts",
@@ -1456,7 +1540,7 @@ func (r *Registry) registerComplianceResources() {
 		DisplayName:        "Document",
 		Description:        "Uploaded document records and intelligence output",
 		Category:           "Compliance",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 
@@ -1465,7 +1549,7 @@ func (r *Registry) registerComplianceResources() {
 		DisplayName:        "Document Type",
 		Description:        "Document type configuration and classification targets",
 		Category:           "Compliance",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
 

@@ -9,9 +9,10 @@ import vitesseLight from "shiki/themes/vitesse-light.mjs";
 import jsonLanguage from "shiki/langs/json.mjs";
 import javascriptLanguage from "shiki/langs/javascript.mjs";
 import plsqlLanguage from "shiki/langs/plsql.mjs";
+import graphqlLanguage from "shiki/langs/graphql.mjs";
 
 type ResolvedTheme = "light" | "dark";
-type SupportedLang = "json" | "plsql" | "javascript";
+type SupportedLang = "json" | "plsql" | "javascript" | "graphql";
 type DarkTheme = "vitesse-black" | "vitesse-dark";
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
@@ -20,7 +21,7 @@ function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighterCore({
       themes: [vitesseLight, vitesseBlack, vitesseDark],
-      langs: [jsonLanguage, plsqlLanguage, javascriptLanguage],
+      langs: [jsonLanguage, plsqlLanguage, javascriptLanguage, graphqlLanguage],
       engine: createJavaScriptRegexEngine(),
     });
   }
