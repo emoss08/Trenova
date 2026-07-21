@@ -5,6 +5,7 @@ import { parseAsBoolean, useQueryState } from "nuqs";
 import { type ReactNode, lazy, Suspense } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { ShipmentFormSkeleton } from "../shipment-form-skeleton";
+import { RecurringShipmentSuggestion } from "./recurring-shipment-suggestion";
 
 const ServiceDetails = lazy(() => import("./shipment-service-details"));
 const BillingDetails = lazy(() => import("./shipment-billing-details"));
@@ -42,6 +43,7 @@ export function ShipmentForm() {
         <div className="relative">
           <div className="flex flex-col gap-6">
             {isInvoiced && <InvoicedBanner />}
+            <RecurringShipmentSuggestion />
             <ServiceDetails />
             <SectionLock locked={isInvoiced}>
               <BillingDetails />

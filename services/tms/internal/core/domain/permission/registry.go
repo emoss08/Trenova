@@ -738,6 +738,33 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourceRecurringShipment.String(),
+		DisplayName:    "Recurring Shipment",
+		Description:    "Recurring shipment series management and scheduled generation",
+		Category:       "Operations",
+		ParentResource: ResourceShipment.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View recurring shipments"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create recurring shipments",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify recurring shipments, pause and resume series",
+			},
+			{
+				Operation:   OpDuplicate,
+				DisplayName: "Generate",
+				Description: "Generate shipments from a recurring series",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:       ResourceShipmentComment.String(),
 		DisplayName:    "Shipment Comment",
 		Description:    "Shipment comment management",

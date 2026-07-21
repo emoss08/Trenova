@@ -55,6 +55,12 @@ const shipmentManagementModule: NavModule = {
       resource: Resource.Shipment,
     },
     {
+      id: "recurring-shipments",
+      label: "Recurring Shipments",
+      path: "/shipment-management/recurring-shipments",
+      resource: Resource.RecurringShipment,
+    },
+    {
       id: "orders",
       label: "Orders",
       path: "/shipment-management/orders",

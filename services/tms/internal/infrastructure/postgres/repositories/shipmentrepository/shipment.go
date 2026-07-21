@@ -857,18 +857,7 @@ func (r *repository) BulkDuplicate(
 		if duplicated == nil || idx >= len(orderNumbers) {
 			continue
 		}
-		autoOrder := &order.Order{
-			ID:             pulid.MustNew("ord_"),
-			OrganizationID: duplicated.OrganizationID,
-			BusinessUnitID: duplicated.BusinessUnitID,
-			CustomerID:     duplicated.CustomerID,
-			OwnerID:        duplicated.OwnerID,
-			EnteredByID:    duplicated.EnteredByID,
-			Status:         order.StatusConfirmed,
-			OrderNumber:    orderNumbers[idx],
-			CurrencyCode:   "USD",
-			TotalAmount:    duplicated.TotalChargeAmount,
-		}
+		autoOrder := BuildAutoOrder(duplicated, orderNumbers[idx])
 		duplicated.OrderID = autoOrder.ID
 		autoOrders = append(autoOrders, autoOrder)
 	}
@@ -950,43 +939,30 @@ func (r *repository) getDuplicateSource(
 	ctx context.Context,
 	req *repositories.BulkDuplicateShipmentRequest,
 ) (*shipment.Shipment, error) {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
-	entity := new(shipment.Shipment)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
-				Where(sp.ID.Eq(), req.ShipmentID)
-		}).
-		RelationWithOpts(buncolgen.ShipmentRelations.Moves, bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(sm.Sequence.OrderAsc())
-			},
-		}).
-		RelationWithOpts(buncolgen.Rel(buncolgen.ShipmentRelations.Moves, buncolgen.ShipmentMoveRelations.Stops), bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(stp.Sequence.OrderAsc())
-			},
-		}).
-		Relation(buncolgen.ShipmentRelations.AdditionalCharges).
-		Relation(buncolgen.ShipmentRelations.Commodities).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Shipment")
-	}
-
-	return entity, nil
+	return LoadShipmentGraphSource(
+		ctx,
+		r.db.DBForContext(ctx),
+		req.TenantInfo,
+		req.ShipmentID,
+	)
 }
 
 func (r *repository) resolveSequenceCodes(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) (locationCode, businessUnitCode string, err error) {
+	return ResolveSequenceCodes(ctx, r.db.DBForContext(ctx), entity)
+}
+
+// ResolveSequenceCodes resolves the location and business-unit codes feeding
+// pro-number/order-number sequence generation for copies of the given shipment.
+func ResolveSequenceCodes(
+	ctx context.Context,
+	db bun.IDB,
+	entity *shipment.Shipment,
+) (locationCode, businessUnitCode string, err error) {
 	bu := new(tenant.BusinessUnit)
-	err = r.db.DBForContext(ctx).NewSelect().
+	err = db.NewSelect().
 		Model(bu).
 		Column(buncolgen.BusinessUnitColumns.Code.Bare()).
 		Where(buncolgen.BusinessUnitColumns.ID.Eq(), entity.BusinessUnitID).
@@ -999,7 +975,7 @@ func (r *repository) resolveSequenceCodes(
 
 	if len(entity.Moves) > 0 && len(entity.Moves[0].Stops) > 0 {
 		var code string
-		err = r.db.DBForContext(ctx).NewSelect().
+		err = db.NewSelect().
 			TableExpr("locations").
 			Column("code").
 			Where("id = ?", entity.Moves[0].Stops[0].LocationID).

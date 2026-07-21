@@ -771,6 +771,16 @@ export type RateUnit =
   | 'Mile'
   | 'Stop';
 
+export type RecurringShipmentExceptionPolicy =
+  | 'NextBusinessDay'
+  | 'PreviousBusinessDay'
+  | 'Skip';
+
+export type RecurringShipmentStatus =
+  | 'Active'
+  | 'Expired'
+  | 'Paused';
+
 export type RemoveOrderChargeInput = {
   chargeId: string | number;
   orderId: string | number;
@@ -2304,6 +2314,15 @@ export type RateTableTableQueryVariables = Exact<{
 
 
 export type RateTableTableQuery = { rateTables: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateTableTableRowFieldsFragment': RateTableTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
+
+export type RecurringShipmentTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RecurringShipmentTableQuery = { recurringShipments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RecurringShipmentTableRowFieldsFragment': RecurringShipmentTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type CannedReportsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -4379,6 +4398,53 @@ export const RateTableTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"RateTableTableRowFields"}) as unknown as TypedDocumentString<RateTableTableRowFieldsFragment, unknown>;
+export const RecurringShipmentTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RecurringShipmentTableRowFields on RecurringShipment {
+  id
+  businessUnitId
+  organizationId
+  sourceShipmentId
+  customerId
+  originLocationId
+  destinationLocationId
+  name
+  description
+  status
+  cronExpression
+  timezone
+  startDate
+  endDate
+  maxOccurrences
+  leadTimeDays
+  skipWeekends
+  exceptionPolicy
+  blackoutDates
+  autoGenerate
+  nextOccurrenceAt
+  lastOccurrenceAt
+  lastRunAt
+  generationCount
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+  customer {
+    id
+    name
+    code
+  }
+  originLocation {
+    id
+    name
+    code
+  }
+  destinationLocation {
+    id
+    name
+    code
+  }
+}
+    `, {"fragmentName":"RecurringShipmentTableRowFields"}) as unknown as TypedDocumentString<RecurringShipmentTableRowFieldsFragment, unknown>;
 export const ReportDefinitionFieldsFragmentDoc = new TypedDocumentString(`
     fragment ReportDefinitionFields on ReportDefinition {
   id
@@ -8883,6 +8949,69 @@ fragment RateTableTableRowFields on RateTable {
   createdAt
   updatedAt
 }`, {"hash":"sha256:809e150e9d42fd0b2fecd3ced6e252820043552da234d6c6c72295e9303ffeee"}) as unknown as TypedDocumentString<RateTableTableQuery, RateTableTableQueryVariables>;
+export const RecurringShipmentTableDocument = new TypedDocumentString(`
+    query RecurringShipmentTable($input: DataTableConnectionInput!) {
+  recurringShipments(input: $input) {
+    edges {
+      node {
+        ...RecurringShipmentTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RecurringShipmentTableRowFields on RecurringShipment {
+  id
+  businessUnitId
+  organizationId
+  sourceShipmentId
+  customerId
+  originLocationId
+  destinationLocationId
+  name
+  description
+  status
+  cronExpression
+  timezone
+  startDate
+  endDate
+  maxOccurrences
+  leadTimeDays
+  skipWeekends
+  exceptionPolicy
+  blackoutDates
+  autoGenerate
+  nextOccurrenceAt
+  lastOccurrenceAt
+  lastRunAt
+  generationCount
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+  customer {
+    id
+    name
+    code
+  }
+  originLocation {
+    id
+    name
+    code
+  }
+  destinationLocation {
+    id
+    name
+    code
+  }
+}`, {"hash":"sha256:cc7af92cb220140002f4f6d8e4f32ee167ac757ee5427b9ff84403137e736eec"}) as unknown as TypedDocumentString<RecurringShipmentTableQuery, RecurringShipmentTableQueryVariables>;
 export const CannedReportsDocument = new TypedDocumentString(`
     query CannedReports {
   cannedReports {

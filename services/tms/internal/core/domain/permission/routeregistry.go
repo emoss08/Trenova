@@ -603,6 +603,16 @@ func (rr *RouteRegistry) registerOperationsRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/shipment-management/recurring-shipments",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceRecurringShipment, Operation: OpRead},
+		},
+		DisplayName: "Recurring Shipments",
+		Category:    "Operations",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/shipment-management/service-failures",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

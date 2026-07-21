@@ -1,0 +1,59 @@
+fragment RecurringShipmentTableRowFields on RecurringShipment {
+  id
+  businessUnitId
+  organizationId
+  sourceShipmentId
+  customerId
+  originLocationId
+  destinationLocationId
+  name
+  description
+  status
+  cronExpression
+  timezone
+  startDate
+  endDate
+  maxOccurrences
+  leadTimeDays
+  skipWeekends
+  exceptionPolicy
+  blackoutDates
+  autoGenerate
+  nextOccurrenceAt
+  lastOccurrenceAt
+  lastRunAt
+  generationCount
+  consecutiveFailures
+  version
+  createdAt
+  updatedAt
+  customer {
+    id
+    name
+    code
+  }
+  originLocation {
+    id
+    name
+    code
+  }
+  destinationLocation {
+    id
+    name
+    code
+  }
+}
+
+query RecurringShipmentTable($input: DataTableConnectionInput!) {
+  recurringShipments(input: $input) {
+    edges {
+      node {
+        ...RecurringShipmentTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratetable"
+	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
@@ -1080,6 +1081,17 @@ type RateTableConnection struct {
 type RateTableEdge struct {
 	Node   *ratetable.RateTable `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+type RecurringShipmentConnection struct {
+	Edges      []*RecurringShipmentEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type RecurringShipmentEdge struct {
+	Node   *recurringshipment.RecurringShipment `json:"node"`
+	Cursor string                               `json:"cursor"`
 }
 
 type RemoveOrderChargeInput struct {
