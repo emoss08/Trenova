@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
@@ -25,6 +26,7 @@ var usPostalCodeRegex = regexp.MustCompile(`^\d{5}(-\d{4})?$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*Worker)(nil)
+	_ bun.AfterScanRowHook               = (*Worker)(nil)
 	_ domaintypes.PostgresSearchable     = (*Worker)(nil)
 	_ validationframework.TenantedEntity = (*Worker)(nil)
 	_ customfield.CustomFieldsSupporter  = (*Worker)(nil)
@@ -232,6 +234,18 @@ func (w *Worker) GetResourceType() string {
 
 func (w *Worker) GetResourceID() string {
 	return w.ID.String()
+}
+
+// AfterScanRow backfills WholeName when a query loads workers without the
+// whole_name generated column — bun omits scanonly fields from the column
+// lists it builds, so relation loads (e.g. assignment → primary worker) never
+// fetch it. Mirrors the column's generation expression.
+func (w *Worker) AfterScanRow(_ context.Context) error {
+	if w.WholeName == "" && (w.FirstName != "" || w.LastName != "") {
+		w.WholeName = strings.TrimSpace(w.FirstName + " " + w.LastName)
+	}
+
+	return nil
 }
 
 func (w *Worker) BeforeAppendModel(_ context.Context, query bun.Query) error {

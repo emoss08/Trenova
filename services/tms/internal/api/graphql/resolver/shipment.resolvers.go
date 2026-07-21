@@ -519,6 +519,8 @@ func (r *queryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: boolValue(input.ExpandShipmentDetails),
 			Status:                stringValue(input.Status),
+			ActivityWindowStart:   int64Value(input.ActivityWindowStart),
+			ActivityWindowEnd:     int64Value(input.ActivityWindowEnd),
 		},
 	})
 	if err != nil {

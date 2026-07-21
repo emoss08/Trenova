@@ -15,6 +15,12 @@ import (
 type ShipmentOptions struct {
 	ExpandShipmentDetails bool   `form:"expandShipmentDetails" json:"expandShipmentDetails" query:"expandShipmentDetails"`
 	Status                string `form:"status"                json:"status"                query:"status"`
+	ActivityWindowStart   int64  `form:"activityWindowStart"   json:"activityWindowStart"   query:"activityWindowStart"`
+	ActivityWindowEnd     int64  `form:"activityWindowEnd"     json:"activityWindowEnd"     query:"activityWindowEnd"`
+}
+
+func (o ShipmentOptions) HasActivityWindow() bool {
+	return o.ActivityWindowStart > 0 && o.ActivityWindowEnd > 0
 }
 
 type ListShipmentsRequest struct {

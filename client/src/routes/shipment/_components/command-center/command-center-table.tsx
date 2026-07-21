@@ -41,14 +41,13 @@ import {
   type Table as TanstackTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronLeftIcon, ChevronRightIcon, LayoutGridIcon, TableIcon } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { ChartGanttIcon, ChevronLeftIcon, ChevronRightIcon, TableIcon } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
 import { PanelSkeleton } from "./expanded-row/panel-skeletons";
 import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
-import { TimelinePlaceholder } from "./timeline-placeholder";
 import {
   PAGE_SIZE_OPTIONS,
   useCommandCenterUrl,
@@ -70,6 +69,7 @@ const DataTableSaveConfigDialog = lazy(() =>
   })),
 );
 const ExpandedRow = lazy(() => import("./expanded-row").then((m) => ({ default: m.ExpandedRow })));
+const CommandCenterTimeline = lazy(() => import("./timeline"));
 
 function ToolbarButtonSkeleton() {
   return <Skeleton className="h-7 w-20" />;
@@ -77,6 +77,16 @@ function ToolbarButtonSkeleton() {
 
 function SearchSkeleton() {
   return <Skeleton className="h-7 w-48" />;
+}
+
+function TimelineLoadingFallback() {
+  return (
+    <div className="flex h-[clamp(420px,58vh,640px)] flex-col gap-2 p-3">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <Skeleton key={index} className="h-10 w-full" />
+      ))}
+    </div>
+  );
 }
 
 function ExpandedRowLoadingFallback() {
@@ -198,7 +208,7 @@ export function CommandCenterTable({
         filterGroups: userFilterGroups,
       }),
     placeholderData: (prev) => prev,
-    enabled: canFetchPage,
+    enabled: canFetchPage && viewMode === "table",
   });
 
   useEffect(() => {
@@ -218,8 +228,17 @@ export function CommandCenterTable({
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
   const backgroundQueriesEnabled = dataQuery.isSuccess && !dataQuery.isFetching;
 
+  const [timelineSummary, setTimelineSummary] = useState<CommandCenterTableSummary | null>(null);
+  const handleTimelineSummaryChange = useCallback(
+    (summary: CommandCenterTableSummary) => {
+      setTimelineSummary(summary);
+      onSummaryChange?.(summary);
+    },
+    [onSummaryChange],
+  );
+
   useEffect(() => {
-    if (!dataQuery.data) return;
+    if (!dataQuery.data || viewMode !== "table") return;
     onSummaryChange?.({
       totalCount,
       dataUpdatedAt: dataQuery.dataUpdatedAt,
@@ -231,6 +250,7 @@ export function CommandCenterTable({
     dataQuery.dataUpdatedAt,
     onSummaryChange,
     totalCount,
+    viewMode,
   ]);
 
   const table = useReactTable({
@@ -309,49 +329,13 @@ export function CommandCenterTable({
     </>
   );
 
-  if (viewMode === "timeline") {
-    return (
-      <section className="flex flex-col rounded-md border border-border bg-card">
-        <SavedViewsBar rightSlot={rightSlot} countsEnabled={backgroundQueriesEnabled} />
-        <div className="p-4">
-          <TimelinePlaceholder />
-        </div>
-        <Suspense fallback={null}>
-          <DataTableSaveConfigDialog
-            open={saveDialogOpen}
-            onOpenChange={setSaveDialogOpen}
-            resource={RESOURCE_NAME}
-            currentConfig={currentConfig}
-          />
-        </Suspense>
-      </section>
-    );
-  }
+  const countsEnabled =
+    viewMode === "table"
+      ? backgroundQueriesEnabled
+      : (timelineSummary?.backgroundQueriesEnabled ?? false);
 
-  return (
-    <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
-      <SavedViewsBar rightSlot={rightSlot} countsEnabled={backgroundQueriesEnabled} />
-      <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
-        <Suspense fallback={<SearchSkeleton />}>
-          <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
-        </Suspense>
-        <Suspense fallback={<ToolbarButtonSkeleton />}>
-          <DataTableFilterBuilder
-            columns={columns as ColumnDef<unknown>[]}
-            filters={filterItems}
-            onFiltersChange={setFilterItems}
-          />
-        </Suspense>
-        <div className="mx-1 h-4 w-px bg-border" />
-        <FilterChipRow />
-        <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
-          {rows.length} of {totalCount} results
-        </p>
-        <Suspense fallback={<ToolbarButtonSkeleton />}>
-          <DataTableViewOptions table={table as unknown as TanstackTable<unknown>} />
-        </Suspense>
-      </div>
-
+  const tableBody = (
+    <>
       <div className="relative overflow-x-auto">
         <Table>
           <colgroup>
@@ -423,6 +407,49 @@ export function CommandCenterTable({
         onPrev={() => setPageIndex(Math.max(0, pageIndex - 1))}
         onNext={() => setPageIndex(Math.min(totalPages - 1, pageIndex + 1))}
       />
+    </>
+  );
+
+  return (
+    <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
+      <SavedViewsBar rightSlot={rightSlot} countsEnabled={countsEnabled} />
+      <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
+        <Suspense fallback={<SearchSkeleton />}>
+          <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
+        </Suspense>
+        <Suspense fallback={<ToolbarButtonSkeleton />}>
+          <DataTableFilterBuilder
+            columns={columns as ColumnDef<unknown>[]}
+            filters={filterItems}
+            onFiltersChange={setFilterItems}
+          />
+        </Suspense>
+        <div className="mx-1 h-4 w-px bg-border" />
+        <FilterChipRow />
+        {viewMode === "table" && (
+          <>
+            <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
+              {rows.length} of {totalCount} results
+            </p>
+            <Suspense fallback={<ToolbarButtonSkeleton />}>
+              <DataTableViewOptions table={table as unknown as TanstackTable<unknown>} />
+            </Suspense>
+          </>
+        )}
+      </div>
+
+      {viewMode === "timeline" ? (
+        <Suspense fallback={<TimelineLoadingFallback />}>
+          <CommandCenterTimeline
+            fieldFilters={mergedFieldFilters}
+            filterGroups={userFilterGroups}
+            query={query}
+            onSummaryChange={handleTimelineSummaryChange}
+          />
+        </Suspense>
+      ) : (
+        tableBody
+      )}
 
       <Suspense fallback={null}>
         <DataTableSaveConfigDialog
@@ -474,7 +501,7 @@ function ViewModeToggle({
             : "bg-background text-muted-foreground hover:text-foreground",
         )}
       >
-        <LayoutGridIcon className="size-3" />
+        <ChartGanttIcon className="size-3" />
         Timeline
       </button>
     </div>

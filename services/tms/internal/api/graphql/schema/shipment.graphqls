@@ -1131,6 +1131,8 @@ input ShipmentsInput {
   sort: [SortFieldInput!]
   expandShipmentDetails: Boolean = false
   status: String
+  activityWindowStart: Int
+  activityWindowEnd: Int
 }
 
 input ShipmentEventsInput {

@@ -65,7 +65,7 @@ func (r *repository) List(
 		NewSelect().
 		Model((*shipment.Shipment)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return countShipmentListQuery(sq, req)
+			return countShipmentListQuery(sq, dba, req)
 		}).
 		Count(ctx)
 	if err != nil {
@@ -82,7 +82,7 @@ func (r *repository) List(
 				ColumnExpr(buncolgen.ShipmentTable.All())
 		},
 		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-			return cursorFilterQuery(sq, req)
+			return cursorFilterQuery(sq, dba, req)
 		},
 	})
 	if err != nil {
@@ -266,7 +266,7 @@ func (r *repository) GetUnassigned(
 					Status: string(shipment.StatusNew),
 				},
 			}
-			return countShipmentListQuery(sq, &countReq).
+			return countShipmentListQuery(sq, dba, &countReq).
 				Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
 		}).
 		Count(ctx)

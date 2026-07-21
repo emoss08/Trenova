@@ -76,6 +76,8 @@ type ShipmentPageRequest = {
   query?: string;
   fieldFilters?: FieldFilterInput[];
   filterGroups?: FilterGroupInput[];
+  activityWindowStart?: number;
+  activityWindowEnd?: number;
 };
 
 type ShipmentGraphQLParams<TVariables> = {
@@ -117,6 +119,8 @@ export async function listShipmentsGraphQL(
         fieldFilters: req.fieldFilters ?? [],
         filterGroups: req.filterGroups ?? [],
         expandShipmentDetails: true,
+        activityWindowStart: req.activityWindowStart,
+        activityWindowEnd: req.activityWindowEnd,
       },
     },
   });

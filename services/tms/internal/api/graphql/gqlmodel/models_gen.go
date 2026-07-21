@@ -2445,6 +2445,8 @@ type ShipmentsInput struct {
 	Sort                  []*SortFieldInput   `json:"sort,omitempty"`
 	ExpandShipmentDetails *bool               `json:"expandShipmentDetails,omitempty"`
 	Status                *string             `json:"status,omitempty"`
+	ActivityWindowStart   *int                `json:"activityWindowStart,omitempty"`
+	ActivityWindowEnd     *int                `json:"activityWindowEnd,omitempty"`
 }
 
 type SidebarActivityPreference struct {

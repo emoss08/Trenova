@@ -33,6 +33,12 @@ type AssignmentDialogProps = {
   onOpenChange: (open: boolean) => void;
   moveId: string;
   existingAssignment?: Assignment | null;
+  /**
+   * Field values that take precedence over the existing assignment when the
+   * dialog opens — e.g. the target driver after a drag-to-reassign on the
+   * dispatch timeline. Must be referentially stable while the dialog is open.
+   */
+  prefill?: Partial<AssignmentPayload> | null;
   onAssigned?: (assignment: Assignment) => void;
 };
 
@@ -41,6 +47,7 @@ export function AssignmentDialog({
   onOpenChange,
   moveId,
   existingAssignment,
+  prefill,
   onAssigned,
 }: AssignmentDialogProps) {
   const queryClient = useQueryClient();
@@ -75,22 +82,15 @@ export function AssignmentDialog({
   } = form;
 
   useEffect(() => {
-    if (open && existingAssignment) {
-      reset({
-        tractorId: existingAssignment.tractorId ?? "",
-        trailerId: existingAssignment.trailerId ?? null,
-        primaryWorkerId: existingAssignment.primaryWorkerId ?? "",
-        secondaryWorkerId: existingAssignment.secondaryWorkerId ?? null,
-      });
-    } else if (open) {
-      reset({
-        tractorId: "",
-        trailerId: null,
-        primaryWorkerId: "",
-        secondaryWorkerId: null,
-      });
-    }
-  }, [open, existingAssignment, reset]);
+    if (!open) return;
+    reset({
+      tractorId: existingAssignment?.tractorId ?? "",
+      trailerId: existingAssignment?.trailerId ?? null,
+      primaryWorkerId: existingAssignment?.primaryWorkerId ?? "",
+      secondaryWorkerId: existingAssignment?.secondaryWorkerId ?? null,
+      ...prefill,
+    });
+  }, [open, existingAssignment, prefill, reset]);
 
   const watchedTrailerId = useWatch({ control, name: "trailerId" });
   useEffect(() => {

@@ -88,6 +88,36 @@ export function getShipmentProgress(status: ShipmentStatus) {
   return SHIPMENT_STATUS_PROGRESS[status];
 }
 
+export type ShipmentEtaTone = "ontime" | "watch" | "late" | "delivered" | "pending";
+
+export function getShipmentEtaTone(shipment: Shipment): ShipmentEtaTone {
+  switch (shipment.status) {
+    case "Completed":
+    case "Invoiced":
+    case "ReadyToInvoice":
+      return "delivered";
+    case "Delayed":
+      return "late";
+    case "InTransit":
+    case "PartiallyCompleted": {
+      // If we're past the destination's scheduled-window midpoint we treat it
+      // as "watch" — running close to or past the booked time.
+      const stop = getDestinationStop(shipment);
+      if (!stop?.scheduledWindowStart) return "ontime";
+      const end = stop.scheduledWindowEnd ?? stop.scheduledWindowStart;
+      const mid = (stop.scheduledWindowStart + end) / 2;
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      if (nowSeconds >= end) return "late";
+      if (nowSeconds >= mid) return "watch";
+      return "ontime";
+    }
+    case "Canceled":
+      return "pending";
+    default:
+      return "pending";
+  }
+}
+
 export function isEligibleTenderStatus(tenderStatus: Shipment["tenderStatus"]) {
   return (
     !tenderStatus ||

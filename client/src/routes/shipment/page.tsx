@@ -44,7 +44,7 @@ export function ShipmentsPage() {
     setIsRefreshing(true);
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["shipment-list", "command-center"] }),
+        queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
         queryClient.invalidateQueries({
           queryKey: analytics.get("shipment-management").queryKey,
         }),

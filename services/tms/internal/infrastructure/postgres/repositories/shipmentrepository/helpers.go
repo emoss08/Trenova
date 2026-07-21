@@ -47,6 +47,7 @@ func standardShipmentFilter(
 
 func cursorFilterQuery(
 	q *bun.SelectQuery,
+	dba bun.IDB,
 	req *repositories.ListShipmentsRequest,
 ) (*bun.SelectQuery, error) {
 	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -63,25 +64,25 @@ func cursorFilterQuery(
 	if err != nil {
 		return q, err
 	}
-	if req.ShipmentOptions.Status != "" {
-		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(req.ShipmentOptions.Status))
-	}
+	q = applyShipmentOptionFilters(q, dba, req.ShipmentOptions)
 
 	return q, nil
 }
 
 func countShipmentListQuery(
 	q *bun.SelectQuery,
+	dba bun.IDB,
 	req *repositories.ListShipmentsRequest,
 ) *bun.SelectQuery {
 	countReq := *req
 	countReq.ShipmentOptions.ExpandShipmentDetails = false
 
-	return baseShipmentListQuery(q, &countReq)
+	return baseShipmentListQuery(q, dba, &countReq)
 }
 
 func baseShipmentListQuery(
 	q *bun.SelectQuery,
+	dba bun.IDB,
 	req *repositories.ListShipmentsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
@@ -95,11 +96,45 @@ func baseShipmentListQuery(
 		return standardShipmentFilter(sq, req.ShipmentOptions)
 	})
 
-	if req.ShipmentOptions.Status != "" {
-		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(req.ShipmentOptions.Status))
+	return applyShipmentOptionFilters(q, dba, req.ShipmentOptions)
+}
+
+func applyShipmentOptionFilters(
+	q *bun.SelectQuery,
+	dba bun.IDB,
+	opts repositories.ShipmentOptions,
+) *bun.SelectQuery {
+	if opts.Status != "" {
+		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(opts.Status))
+	}
+	if opts.HasActivityWindow() {
+		q = q.Where("EXISTS (?)", activityWindowPredicate(dba, opts))
 	}
 
 	return q
+}
+
+func activityWindowPredicate(
+	dba bun.IDB,
+	opts repositories.ShipmentOptions,
+) *bun.SelectQuery {
+	return dba.NewSelect().
+		TableExpr(`"shipment_moves" AS "sm_aw"`).
+		ColumnExpr("1").
+		Join(`JOIN "stops" AS "stp_aw"`).
+		JoinOn("stp_aw.shipment_move_id = sm_aw.id").
+		JoinOn("stp_aw.organization_id = sm_aw.organization_id").
+		JoinOn("stp_aw.business_unit_id = sm_aw.business_unit_id").
+		Where("sm_aw.shipment_id = sp.id").
+		Where("sm_aw.organization_id = sp.organization_id").
+		Where("sm_aw.business_unit_id = sp.business_unit_id").
+		Where("sm_aw.status != ?", shipment.MoveStatusCanceled).
+		Where("stp_aw.scheduled_window_start > 0").
+		Where("stp_aw.scheduled_window_start <= ?", opts.ActivityWindowEnd).
+		Where(
+			"COALESCE(stp_aw.scheduled_window_end, stp_aw.scheduled_window_start) >= ?",
+			opts.ActivityWindowStart,
+		)
 }
 
 func unassignedShipmentListQuery(

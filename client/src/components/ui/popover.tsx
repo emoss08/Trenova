@@ -14,7 +14,7 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
 type PopoverContentProps = PopoverPrimitive.Popup.Props &
   Pick<
     PopoverPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset" | "collisionBoundary"
+    "align" | "alignOffset" | "side" | "sideOffset" | "collisionBoundary" | "anchor"
   > & {
     positionerClassName?: string;
   };
@@ -27,6 +27,7 @@ function PopoverContent({
   side = "bottom",
   sideOffset = 4,
   collisionBoundary,
+  anchor,
   ...props
 }: PopoverContentProps) {
   return (
@@ -37,6 +38,7 @@ function PopoverContent({
         side={side}
         sideOffset={sideOffset}
         collisionBoundary={collisionBoundary}
+        anchor={anchor}
         className={cn("isolate z-50", positionerClassName)}
       >
         <PopoverPrimitive.Popup

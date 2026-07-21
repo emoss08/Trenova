@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -71,16 +72,25 @@ func (r *repository) selectControl(
 	req *repositories.GetCostingControlRequest,
 ) (*costingcontrol.CostingControl, error) {
 	entity := new(costingcontrol.CostingControl)
+	rels := buncolgen.CostingControlRelations
+	costCategoryCols := buncolgen.CostCategoryColumns
+
 	err := r.db.DBForContext(ctx).NewSelect().
 		Model(entity).
-		Relation("FuelIndex").
-		Relation("Categories", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("ccat.sort_order ASC", "ccat.created_at ASC")
+		Relation(rels.FuelIndex).
+		RelationWithOpts(rels.Categories, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(
+					costCategoryCols.SortOrder.OrderAsc(),
+					costCategoryCols.CreatedAt.OrderAsc(),
+				)
+			},
 		}).
 		Relation("Categories.GLAccounts").
 		Relation("Categories.GLAccounts.GLAccount").
-		Where("cstc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("cstc.business_unit_id = ?", req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CostingControlScopeTenant(sq, req.TenantInfo)
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

@@ -17,6 +17,8 @@ const SAVED_VIEW_IDS = SAVED_VIEWS.map((v) => v.id) as readonly SavedViewId[];
 const CHIP_IDS = CHIP_FILTERS.map((c) => c.id) as readonly ChipFilterId[];
 const VIEW_MODES = ["table", "timeline"] as const;
 export type CommandCenterViewMode = (typeof VIEW_MODES)[number];
+const TIMELINE_ZOOMS = ["day", "3day", "week"] as const;
+export type TimelineZoom = (typeof TIMELINE_ZOOMS)[number];
 
 /**
  * URL state for the Shipments Command Center. Backing every cross-cutting bit
@@ -34,6 +36,8 @@ export const commandCenterParser = {
   page: parseAsInteger.withDefault(1),
   size: parseAsInteger.withDefault(10),
   q: parseAsString.withDefault(""),
+  at: parseAsString,
+  zoom: parseAsStringLiteral(TIMELINE_ZOOMS).withDefault("day"),
 };
 
 export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;

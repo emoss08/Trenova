@@ -1243,6 +1243,8 @@ export type ShipmentTransferToBillingInput = {
 };
 
 export type ShipmentsInput = {
+  activityWindowEnd?: number | null | undefined;
+  activityWindowStart?: number | null | undefined;
   after?: string | null | undefined;
   expandShipmentDetails?: boolean | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;

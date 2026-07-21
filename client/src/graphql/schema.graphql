@@ -4948,6 +4948,8 @@ type ShipmentValidationResponse {
 }
 
 input ShipmentsInput {
+  activityWindowEnd: Int
+  activityWindowStart: Int
   after: String
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
