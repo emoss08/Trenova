@@ -17,6 +17,8 @@ export default function AuditLogTable() {
       resource={Resource.AuditLog}
       columns={columns}
       TablePanel={AuditLogPanel}
+      enableCreateAction={false}
+      enableReadOnlyPanel
     />
   );
 }
