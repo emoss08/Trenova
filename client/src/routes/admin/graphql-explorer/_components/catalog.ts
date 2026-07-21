@@ -80,12 +80,15 @@ export function resolveSelection(selection: CatalogSelection | null): {
 
 const listTypePattern = /^\[(.+)\]$/;
 
-function scaffoldValue(type: string): unknown {
+export function baseTypeName(type: string): string {
+  return type.replace(/[[\]!]/g, "");
+}
+
+function scaffoldValue(type: string, seen: Set<string>): unknown {
   const required = type.endsWith("!");
   const inner = required ? type.slice(0, -1) : type;
 
-  const listMatch = listTypePattern.exec(inner);
-  if (listMatch) {
+  if (listTypePattern.test(inner)) {
     return [];
   }
 
@@ -99,8 +102,33 @@ function scaffoldValue(type: string): unknown {
     case "String":
       return "";
     default:
-      return null;
+      break;
   }
+
+  const named = catalog.types[inner];
+  if (!named) {
+    return null;
+  }
+  if (named.kind === "enum") {
+    return named.values[0] ?? null;
+  }
+  if (named.kind === "scalar") {
+    return inner === "JSON" || inner === "Any" ? {} : null;
+  }
+  if (seen.has(inner)) {
+    return null;
+  }
+  seen.add(inner);
+  const value: Record<string, unknown> = {};
+  for (const field of named.fields) {
+    if (field.defaultJson !== undefined) {
+      value[field.name] = field.defaultJson;
+    } else if (field.type.endsWith("!")) {
+      value[field.name] = scaffoldValue(field.type, seen);
+    }
+  }
+  seen.delete(inner);
+  return value;
 }
 
 export function scaffoldVariables(variables: CatalogVariable[]): string {
@@ -109,9 +137,33 @@ export function scaffoldVariables(variables: CatalogVariable[]): string {
   }
   const scaffold: Record<string, unknown> = {};
   for (const variable of variables) {
-    scaffold[variable.name] = scaffoldValue(variable.type);
+    scaffold[variable.name] = scaffoldValue(variable.type, new Set());
   }
   return JSON.stringify(scaffold, null, 2);
+}
+
+export function referencedTypeNames(variables: CatalogVariable[]): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  const queue = variables.map((variable) => baseTypeName(variable.type));
+  while (queue.length > 0) {
+    const name = queue.shift() as string;
+    if (seen.has(name)) {
+      continue;
+    }
+    seen.add(name);
+    const named = catalog.types[name];
+    if (!named) {
+      continue;
+    }
+    names.push(name);
+    if (named.kind === "input") {
+      for (const field of named.fields) {
+        queue.push(baseTypeName(field.type));
+      }
+    }
+  }
+  return names;
 }
 
 export function parseSelectionParam(value: string | null): CatalogSelection | null {

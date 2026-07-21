@@ -63,9 +63,9 @@ export function GraphQLExplorerPage() {
           </Badge>
         }
       />
-      <div className="min-h-0 flex-1 p-4 pt-0">
-        <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1 rounded-lg border">
-          <ResizablePanel defaultSize={350} minSize={350} maxSize={400}>
+      <div className="min-h-0 flex-1 p-0">
+        <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
+          <ResizablePanel defaultSize="340px" minSize="280px" maxSize="480px">
             <ListPanel
               query={query}
               filter={filter}
@@ -76,7 +76,7 @@ export function GraphQLExplorerPage() {
             />
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={70} minSize={40}>
+          <ResizablePanel minSize="40%">
             <div className="flex h-full min-h-0 flex-col overflow-hidden p-4">
               <DetailPanel operation={operation} fragment={fragment} onSelect={setSelection} />
             </div>

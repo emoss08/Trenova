@@ -1,49 +1,92 @@
+import { CopyIconButton } from "@/components/copy-icon-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ShikiCodeBlock } from "@/components/ui/shiki-code-block";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type {
-  CatalogFragment,
-  CatalogOperation,
-  CatalogSelection,
-} from "@/types/graphql-catalog";
-import { CheckIcon, CopyIcon, FileCodeIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import type { CatalogFragment, CatalogOperation, CatalogSelection } from "@/types/graphql-catalog";
+import { Kbd } from "@/components/ui/kbd";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileCodeIcon } from "lucide-react";
+import { m } from "motion/react";
+import { useMemo } from "react";
+import { catalog, referencedTypeNames } from "./catalog";
 import { RunPanel } from "./run-panel";
 
 type BadgeKind = "query" | "mutation" | "subscription" | "fragment";
 
-function KindBadge({ kind }: { kind: BadgeKind }) {
-  const styles: Record<BadgeKind, string> = {
-    query: "border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400",
-    mutation: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    subscription: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    fragment: "border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  };
+const KIND_TEXT: Record<BadgeKind, string> = {
+  query: "text-sky-600 dark:text-sky-400",
+  mutation: "text-amber-600 dark:text-amber-400",
+  subscription: "text-emerald-600 dark:text-emerald-400",
+  fragment: "text-violet-600 dark:text-violet-400",
+};
+
+const KIND_TINT: Record<BadgeKind, string> = {
+  query: "bg-sky-500/10",
+  mutation: "bg-amber-500/10",
+  subscription: "bg-emerald-500/10",
+  fragment: "bg-violet-500/10",
+};
+
+function HashChip({ hash }: { hash: string }) {
+  const short = `${hash.slice(0, 13)}…${hash.slice(-6)}`;
   return (
-    <Badge variant="outline" className={cn("font-mono text-2xs uppercase", styles[kind])}>
-      {kind}
-    </Badge>
+    <span
+      title={hash}
+      className="inline-flex items-center gap-0.5 rounded-md border bg-muted/40 py-0.5 pr-0.5 pl-1.5 font-mono text-2xs text-muted-foreground"
+    >
+      {short}
+      <CopyIconButton value={hash} label="Copy hash" size="icon-xxs" />
+    </span>
   );
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = useCallback(() => {
-    void navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }, [value]);
+function DocumentHeader({
+  kind,
+  name,
+  suffix,
+  domain,
+  sourceFile,
+  hash,
+}: {
+  kind: BadgeKind;
+  name: string;
+  suffix?: React.ReactNode;
+  domain: string;
+  sourceFile: string;
+  hash?: string | null;
+}) {
   return (
-    <Tooltip>
-      <TooltipTrigger render={<Button size="icon-xs" variant="ghost" onClick={copy} />}>
-        {copied ? <CheckIcon className="size-3.5 text-emerald-500" /> : <CopyIcon className="size-3.5" />}
-      </TooltipTrigger>
-      <TooltipContent>{copied ? "Copied" : label}</TooltipContent>
-    </Tooltip>
+    <m.div
+      key={`${kind}:${name}`}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-lg border bg-card"
+    >
+      <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent)] [background-size:12px_12px] text-border" />
+      <div
+        className={cn(
+          "pointer-events-none absolute -top-20 -right-10 size-56 rounded-full blur-3xl",
+          KIND_TINT[kind],
+        )}
+      />
+      <div className="relative flex flex-col gap-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className={cn("font-mono text-sm font-medium", KIND_TEXT[kind])}>{kind}</span>
+          <h2 className="font-mono text-lg font-semibold tracking-tight">{name}</h2>
+          {suffix}
+          <CopyIconButton value={name} label="Copy name" />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Badge variant="secondary" className="font-normal">
+            {domain}
+          </Badge>
+          <span className="font-mono text-xs text-muted-foreground">{sourceFile}</span>
+          {hash && <HashChip hash={hash} />}
+        </div>
+      </div>
+    </m.div>
   );
 }
 
@@ -55,13 +98,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Chips({
-  values,
-  onSelect,
-}: {
-  values: string[];
-  onSelect?: (name: string) => void;
-}) {
+function Chips({ values, onSelect }: { values: string[]; onSelect?: (name: string) => void }) {
   return (
     <div className="mt-1.5 flex flex-wrap gap-1.5">
       {values.map((value) =>
@@ -119,17 +156,6 @@ function UsagesTab({ usages }: { usages: string[] }) {
   );
 }
 
-function MetaRow({ domain, sourceFile }: { domain: string; sourceFile: string }) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-      <Badge variant="secondary" className="font-normal">
-        {domain}
-      </Badge>
-      <span className="font-mono">{sourceFile}</span>
-    </div>
-  );
-}
-
 function OperationDetail({
   operation,
   onSelect,
@@ -137,22 +163,23 @@ function OperationDetail({
   operation: CatalogOperation;
   onSelect: (selection: CatalogSelection) => void;
 }) {
+  const inputTypeSdl = useMemo(() => {
+    const names = referencedTypeNames(operation.variables);
+    return names
+      .map((name) => catalog.types[name]?.sdl)
+      .filter(Boolean)
+      .join("\n\n");
+  }, [operation.variables]);
+
   return (
     <Tabs defaultValue="definition" className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <KindBadge kind={operation.kind} />
-          <h2 className="font-mono text-lg font-semibold">{operation.name}</h2>
-          <CopyButton value={operation.name} label="Copy name" />
-        </div>
-        <MetaRow domain={operation.domain} sourceFile={operation.sourceFile} />
-        {operation.hash && (
-          <div className="flex items-center gap-1 text-2xs text-muted-foreground">
-            <span className="font-mono">{operation.hash}</span>
-            <CopyButton value={operation.hash} label="Copy hash" />
-          </div>
-        )}
-      </div>
+      <DocumentHeader
+        kind={operation.kind}
+        name={operation.name}
+        domain={operation.domain}
+        sourceFile={operation.sourceFile}
+        hash={operation.hash}
+      />
 
       <TabsList variant="underline" className="w-full justify-start border-b border-border">
         <TabsTrigger value="definition">Definition</TabsTrigger>
@@ -160,69 +187,82 @@ function OperationDetail({
         <TabsTrigger value="usages">Usages ({operation.usages.length})</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="definition" className="m-0 min-h-0 flex-1 overflow-auto">
-        <div className="flex flex-col gap-4">
-          {operation.variables.length > 0 && (
+      <TabsContent value="definition" className="m-0 min-h-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full [&_[data-slot=scroll-area-viewport]>div]:block!">
+          <div className="flex flex-col gap-4">
+            {operation.variables.length > 0 && (
+              <div>
+                <SectionLabel>Variables</SectionLabel>
+                <div className="mt-1.5 overflow-hidden rounded-md border">
+                  <table className="w-full text-xs">
+                    <tbody>
+                      {operation.variables.map((variable) => (
+                        <tr key={variable.name} className="border-b last:border-b-0">
+                          <td className="w-1/3 px-2.5 py-1.5 font-mono">${variable.name}</td>
+                          <td className="px-2.5 py-1.5 font-mono text-muted-foreground">
+                            {variable.type}
+                            {variable.defaultValue !== null && (
+                              <span className="text-muted-foreground/60">
+                                {" = "}
+                                {variable.defaultValue}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {inputTypeSdl && (
+              <div>
+                <SectionLabel>Input types</SectionLabel>
+                <div className="mt-1.5">
+                  <ShikiCodeBlock code={inputTypeSdl} lang="graphql" darkTheme="vitesse-dark" />
+                </div>
+              </div>
+            )}
+
+            {operation.rootFields.length > 0 && (
+              <div>
+                <SectionLabel>Root fields</SectionLabel>
+                <Chips values={operation.rootFields} />
+              </div>
+            )}
+
+            {operation.fragments.length > 0 && (
+              <div>
+                <SectionLabel>Fragments ({operation.fragments.length})</SectionLabel>
+                <Chips
+                  values={operation.fragments}
+                  onSelect={(name) => onSelect({ kind: "fragment", name })}
+                />
+              </div>
+            )}
+
             <div>
-              <SectionLabel>Variables</SectionLabel>
-              <div className="mt-1.5 overflow-hidden rounded-md border">
-                <table className="w-full text-xs">
-                  <tbody>
-                    {operation.variables.map((variable) => (
-                      <tr key={variable.name} className="border-b last:border-b-0">
-                        <td className="w-1/3 px-2.5 py-1.5 font-mono">${variable.name}</td>
-                        <td className="px-2.5 py-1.5 font-mono text-muted-foreground">
-                          {variable.type}
-                          {variable.defaultValue !== null && (
-                            <span className="text-muted-foreground/60">
-                              {" = "}
-                              {variable.defaultValue}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex items-center justify-between">
+                <SectionLabel>Definition</SectionLabel>
+                <CopyIconButton value={operation.sdl} label="Copy definition" />
+              </div>
+              <div className="mt-1.5">
+                <ShikiCodeBlock code={operation.sdl} lang="graphql" darkTheme="vitesse-dark" />
               </div>
             </div>
-          )}
-
-          {operation.rootFields.length > 0 && (
-            <div>
-              <SectionLabel>Root fields</SectionLabel>
-              <Chips values={operation.rootFields} />
-            </div>
-          )}
-
-          {operation.fragments.length > 0 && (
-            <div>
-              <SectionLabel>Fragments ({operation.fragments.length})</SectionLabel>
-              <Chips
-                values={operation.fragments}
-                onSelect={(name) => onSelect({ kind: "fragment", name })}
-              />
-            </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between">
-              <SectionLabel>Definition</SectionLabel>
-              <CopyButton value={operation.sdl} label="Copy definition" />
-            </div>
-            <div className="mt-1.5">
-              <ShikiCodeBlock code={operation.sdl} lang="graphql" darkTheme="vitesse-dark" />
-            </div>
           </div>
-        </div>
+        </ScrollArea>
       </TabsContent>
 
       <TabsContent value="run" className="m-0 flex min-h-0 flex-1 flex-col">
         <RunPanel operation={operation} />
       </TabsContent>
 
-      <TabsContent value="usages" className="m-0 min-h-0 flex-1 overflow-auto">
-        <UsagesTab usages={operation.usages} />
+      <TabsContent value="usages" className="m-0 min-h-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full [&_[data-slot=scroll-area-viewport]>div]:block!">
+          <UsagesTab usages={operation.usages} />
+        </ScrollArea>
       </TabsContent>
     </Tabs>
   );
@@ -237,57 +277,63 @@ function FragmentDetail({
 }) {
   return (
     <Tabs defaultValue="definition" className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <KindBadge kind="fragment" />
-          <h2 className="font-mono text-lg font-semibold">{fragment.name}</h2>
-          <span className="font-mono text-sm text-muted-foreground">on {fragment.typeCondition}</span>
-          <CopyButton value={fragment.name} label="Copy name" />
-        </div>
-        <MetaRow domain={fragment.domain} sourceFile={fragment.sourceFile} />
-      </div>
+      <DocumentHeader
+        kind="fragment"
+        name={fragment.name}
+        suffix={
+          <span className="font-mono text-sm text-muted-foreground">
+            on {fragment.typeCondition}
+          </span>
+        }
+        domain={fragment.domain}
+        sourceFile={fragment.sourceFile}
+      />
 
       <TabsList variant="underline" className="w-full justify-start border-b border-border">
         <TabsTrigger value="definition">Definition</TabsTrigger>
         <TabsTrigger value="usages">Usages ({fragment.usages.length})</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="definition" className="m-0 min-h-0 flex-1 overflow-auto">
-        <div className="flex flex-col gap-4">
-          {fragment.usedByOperations.length > 0 && (
-            <div>
-              <SectionLabel>Used by ({fragment.usedByOperations.length})</SectionLabel>
-              <Chips
-                values={fragment.usedByOperations}
-                onSelect={(name) => onSelect({ kind: "operation", name })}
-              />
-            </div>
-          )}
+      <TabsContent value="definition" className="m-0 min-h-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full [&_[data-slot=scroll-area-viewport]>div]:block!">
+          <div className="flex flex-col gap-4">
+            {fragment.usedByOperations.length > 0 && (
+              <div>
+                <SectionLabel>Used by ({fragment.usedByOperations.length})</SectionLabel>
+                <Chips
+                  values={fragment.usedByOperations}
+                  onSelect={(name) => onSelect({ kind: "operation", name })}
+                />
+              </div>
+            )}
 
-          {fragment.fragments.length > 0 && (
-            <div>
-              <SectionLabel>Nested fragments</SectionLabel>
-              <Chips
-                values={fragment.fragments}
-                onSelect={(name) => onSelect({ kind: "fragment", name })}
-              />
-            </div>
-          )}
+            {fragment.fragments.length > 0 && (
+              <div>
+                <SectionLabel>Nested fragments</SectionLabel>
+                <Chips
+                  values={fragment.fragments}
+                  onSelect={(name) => onSelect({ kind: "fragment", name })}
+                />
+              </div>
+            )}
 
-          <div>
-            <div className="flex items-center justify-between">
-              <SectionLabel>Definition</SectionLabel>
-              <CopyButton value={fragment.sdl} label="Copy definition" />
-            </div>
-            <div className="mt-1.5">
-              <ShikiCodeBlock code={fragment.sdl} lang="graphql" darkTheme="vitesse-dark" />
+            <div>
+              <div className="flex items-center justify-between">
+                <SectionLabel>Definition</SectionLabel>
+                <CopyIconButton value={fragment.sdl} label="Copy definition" />
+              </div>
+              <div className="mt-1.5">
+                <ShikiCodeBlock code={fragment.sdl} lang="graphql" darkTheme="vitesse-dark" />
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollArea>
       </TabsContent>
 
-      <TabsContent value="usages" className="m-0 min-h-0 flex-1 overflow-auto">
-        <UsagesTab usages={fragment.usages} />
+      <TabsContent value="usages" className="m-0 min-h-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full [&_[data-slot=scroll-area-viewport]>div]:block!">
+          <UsagesTab usages={fragment.usages} />
+        </ScrollArea>
       </TabsContent>
     </Tabs>
   );
@@ -309,12 +355,26 @@ export function DetailPanel({
     return <FragmentDetail fragment={fragment} onSelect={onSelect} />;
   }
   return (
-    <div className="flex h-full flex-col items-center justify-center text-center">
-      <FileCodeIcon className="size-8 text-muted-foreground" />
-      <p className="mt-3 text-sm font-medium">Select an operation</p>
-      <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-        Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.
-      </p>
+    <div className="relative flex h-full flex-col items-center justify-center overflow-hidden text-center">
+      <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] [background-size:14px_14px] text-border/70" />
+      <div className="relative flex flex-col items-center">
+        <FileCodeIcon className="size-8 text-muted-foreground" />
+        <p className="mt-3 text-sm font-medium">Select an operation</p>
+        <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+          Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.
+        </p>
+        <div className="mt-4 flex items-center gap-3 text-2xs text-muted-foreground/70">
+          <span className="flex items-center gap-1">
+            <Kbd>/</Kbd> search
+          </span>
+          <span className="flex items-center gap-1">
+            <Kbd>↑↓</Kbd> navigate
+          </span>
+          <span className="flex items-center gap-1">
+            <Kbd>⏎</Kbd> open
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

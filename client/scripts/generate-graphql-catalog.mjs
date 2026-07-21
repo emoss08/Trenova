@@ -1,13 +1,23 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Kind, parse, print } from "graphql";
+import {
+  buildSchema,
+  isEnumType,
+  isInputObjectType,
+  isScalarType,
+  Kind,
+  parse,
+  print,
+  valueFromASTUntyped,
+} from "graphql";
 
 const clientRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const operationsDir = resolve(clientRoot, "src/graphql/operations");
 const srcDir = resolve(clientRoot, "src");
 const generatedDir = resolve(clientRoot, "src/graphql/generated");
 const persistedDocumentsPath = resolve(generatedDir, "persisted-documents.json");
+const schemaFile = resolve(clientRoot, "src/graphql/schema.graphql");
 const outputFile = resolve(generatedDir, "operation-catalog.json");
 
 function toPosix(absolutePath) {
@@ -85,6 +95,74 @@ function variableList(operationNode) {
     type: print(definition.type),
     defaultValue: definition.defaultValue ? print(definition.defaultValue) : null,
   }));
+}
+
+function namedTypeName(typeNode) {
+  let node = typeNode;
+  while (node.kind === Kind.NON_NULL_TYPE || node.kind === Kind.LIST_TYPE) {
+    node = node.type;
+  }
+  return node.name.value;
+}
+
+function collectVariableTypeNames(operationNode, acc) {
+  for (const definition of operationNode.variableDefinitions ?? []) {
+    acc.add(namedTypeName(definition.type));
+  }
+  return acc;
+}
+
+function buildTypeIndex(schema, seedTypeNames) {
+  const index = {};
+  const queue = [...seedTypeNames];
+  const seen = new Set();
+
+  while (queue.length > 0) {
+    const name = queue.shift();
+    if (seen.has(name)) {
+      continue;
+    }
+    seen.add(name);
+
+    const type = schema.getType(name);
+    if (!type) {
+      continue;
+    }
+
+    if (isInputObjectType(type)) {
+      const fields = Object.values(type.getFields()).map((field) => {
+        const fieldTypeName = namedTypeName(field.astNode.type);
+        queue.push(fieldTypeName);
+        return {
+          name: field.name,
+          type: print(field.astNode.type),
+          defaultValue: field.astNode.defaultValue ? print(field.astNode.defaultValue) : null,
+          defaultJson:
+            field.astNode.defaultValue === undefined
+              ? undefined
+              : valueFromASTUntyped(field.astNode.defaultValue),
+        };
+      });
+      index[name] = {
+        kind: "input",
+        fields,
+        sdl: print(type.astNode),
+      };
+    } else if (isEnumType(type)) {
+      index[name] = {
+        kind: "enum",
+        values: type.getValues().map((value) => value.name),
+        sdl: type.astNode ? print(type.astNode) : `enum ${name}`,
+      };
+    } else if (isScalarType(type) && !["Int", "Float", "String", "Boolean", "ID"].includes(name)) {
+      index[name] = {
+        kind: "scalar",
+        sdl: type.astNode ? print(type.astNode) : `scalar ${name}`,
+      };
+    }
+  }
+
+  return index;
 }
 
 function rootFieldNames(selectionSet) {
@@ -168,7 +246,18 @@ async function main() {
     }
   }
 
-  const [hashMap, usageIndex] = await Promise.all([buildHashMap(), buildUsageIndex()]);
+  const [hashMap, usageIndex, schemaSdl] = await Promise.all([
+    buildHashMap(),
+    buildUsageIndex(),
+    readFile(schemaFile, "utf8"),
+  ]);
+  const schema = buildSchema(schemaSdl, { assumeValidSDL: true });
+
+  const seedTypeNames = new Set();
+  for (const { node } of operationRecords) {
+    collectVariableTypeNames(node, seedTypeNames);
+  }
+  const types = buildTypeIndex(schema, [...seedTypeNames].sort((a, b) => a.localeCompare(b)));
 
   const operations = operationRecords
     .map(({ node, sourceFile }) => {
@@ -219,6 +308,7 @@ async function main() {
     fragmentCount: fragments.length,
     operations,
     fragments,
+    types,
   };
 
   await writeFile(outputFile, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");

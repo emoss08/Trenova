@@ -6190,5 +6190,3109 @@
       "usages": [],
       "sdl": "fragment WorkerUsStateFields on UsState {\n  id\n  name\n  abbreviation\n}"
     }
-  ]
+  ],
+  "types": {
+    "ApplyCustomerPaymentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accountingDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "applications",
+          "type": "[CustomerPaymentApplicationInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ApplyCustomerPaymentInput {\n  accountingDate: Int!\n  applications: [CustomerPaymentApplicationInput!]!\n  paymentId: ID!\n}"
+    },
+    "BillingQueueAssignInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "billerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input BillingQueueAssignInput {\n  billerId: ID!\n}"
+    },
+    "BillingQueueUpdateStatusInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cancelReason",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "exceptionNotes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "exceptionReasonCode",
+          "type": "BillingQueueExceptionReasonCode",
+          "defaultValue": null
+        },
+        {
+          "name": "reviewNotes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "BillingQueueStatus!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input BillingQueueUpdateStatusInput {\n  cancelReason: String\n  exceptionNotes: String\n  exceptionReasonCode: BillingQueueExceptionReasonCode\n  reviewNotes: String\n  status: BillingQueueStatus!\n}"
+    },
+    "BulkUpdateEquipmentTypeStatusInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "equipmentTypeIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input BulkUpdateEquipmentTypeStatusInput {\n  equipmentTypeIds: [ID!]!\n  status: EntityStatus!\n}"
+    },
+    "ConfigurationVisibility": {
+      "kind": "enum",
+      "values": [
+        "Private",
+        "Public",
+        "Shared"
+      ],
+      "sdl": "enum ConfigurationVisibility {\n  Private\n  Public\n  Shared\n}"
+    },
+    "CostCategoryUpdateInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "glAccountIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "isActive",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "overrideRatePerMile",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rateSource",
+          "type": "CostRateSource!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CostCategoryUpdateInput {\n  glAccountIds: [ID!]!\n  id: ID!\n  isActive: Boolean!\n  overrideRatePerMile: String\n  rateSource: CostRateSource!\n  version: Int!\n}"
+    },
+    "CostingControlInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "fuelIndexId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "glActualsEnabled",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "glRollingMonths",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeDeadheadMiles",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "milesPerGallon",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "plannedMonthlyMiles",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "targetMarginPercent",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "useLiveFuelPrice",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CostingControlInput {\n  fuelIndexId: ID\n  glActualsEnabled: Boolean!\n  glRollingMonths: Int!\n  includeDeadheadMiles: Boolean!\n  milesPerGallon: String!\n  plannedMonthlyMiles: Int\n  targetMarginPercent: String\n  useLiveFuelPrice: Boolean!\n  version: Int!\n}"
+    },
+    "CreateReportScheduleInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cronExpression",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "definitionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "emailAttach",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "emailRecipients",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "formats",
+          "type": "[String!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "notifyUserIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "timezone",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateReportScheduleInput {\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  notifyUserIds: [ID!]\n  timezone: String\n}"
+    },
+    "DataTableConnectionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DataTableConnectionInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  query: String\n  sort: [SortFieldInput!]\n}"
+    },
+    "EdiDocumentDirection": {
+      "kind": "enum",
+      "values": [
+        "Inbound",
+        "Outbound"
+      ],
+      "sdl": "enum EdiDocumentDirection {\n  Inbound\n  Outbound\n}"
+    },
+    "EdiTemplateStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Archived",
+        "Certified",
+        "Deprecated",
+        "Draft",
+        "Superseded"
+      ],
+      "sdl": "enum EdiTemplateStatus {\n  Active\n  Archived\n  Certified\n  Deprecated\n  Draft\n  Superseded\n}"
+    },
+    "EdiTransferDirection": {
+      "kind": "enum",
+      "values": [
+        "Inbound",
+        "Outbound"
+      ],
+      "sdl": "enum EdiTransferDirection {\n  Inbound\n  Outbound\n}"
+    },
+    "EquipmentClass": {
+      "kind": "enum",
+      "values": [
+        "Container",
+        "Other",
+        "Tractor",
+        "Trailer"
+      ],
+      "sdl": "enum EquipmentClass {\n  Container\n  Other\n  Tractor\n  Trailer\n}"
+    },
+    "EquipmentTypeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "class",
+          "type": "EquipmentClass!",
+          "defaultValue": null
+        },
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "color",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "interiorLength",
+          "type": "Float",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus",
+          "defaultValue": "Active",
+          "defaultJson": "Active"
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input EquipmentTypeInput {\n  class: EquipmentClass!\n  code: String!\n  color: String\n  description: String\n  interiorLength: Float\n  status: EntityStatus = Active\n  version: Int\n}"
+    },
+    "EquipmentTypePatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "class",
+          "type": "EquipmentClass",
+          "defaultValue": null
+        },
+        {
+          "name": "code",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "color",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "interiorLength",
+          "type": "Float",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input EquipmentTypePatchInput {\n  class: EquipmentClass\n  code: String\n  color: String @goField(omittable: true)\n  description: String @goField(omittable: true)\n  interiorLength: Float @goField(omittable: true)\n  status: EntityStatus\n  version: Int\n}"
+    },
+    "ForkCannedReportInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cannedKey",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ForkCannedReportInput {\n  cannedKey: String!\n  name: String\n}"
+    },
+    "FuelIndexInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "currency",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "eiaSeriesId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fuelType",
+          "type": "FuelType",
+          "defaultValue": null
+        },
+        {
+          "name": "isActive",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "region",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "source",
+          "type": "FuelIndexSource!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelIndexInput {\n  code: String!\n  currency: String\n  description: String\n  eiaSeriesId: String\n  fuelType: FuelType\n  isActive: Boolean\n  name: String!\n  region: String\n  source: FuelIndexSource!\n}"
+    },
+    "FuelIndexPriceInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "fuelIndexId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "price",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "priceDate",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelIndexPriceInput {\n  fuelIndexId: ID!\n  price: String!\n  priceDate: String!\n}"
+    },
+    "FuelSurchargeProgramInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accessorialChargeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "dateBasis",
+          "type": "FuelSurchargeDateBasis",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "effectiveEndDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "effectiveStartDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "fuelIndexId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "increment",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "incrementRate",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "maxAmount",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "method",
+          "type": "FuelSurchargeProgramMethod!",
+          "defaultValue": null
+        },
+        {
+          "name": "milesPerGallon",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "minAmount",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "missingPriceFallback",
+          "type": "FuelSurchargeMissingPriceFallback",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "pegPrice",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "percentBasis",
+          "type": "FuelSurchargePercentBasis",
+          "defaultValue": null
+        },
+        {
+          "name": "priceEffectiveDay",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "ratePrecision",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "rateRounding",
+          "type": "FuelSurchargeRateRounding",
+          "defaultValue": null
+        },
+        {
+          "name": "serviceTypeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentTypeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "FuelSurchargeProgramStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "stepRounding",
+          "type": "FuelSurchargeStepRounding",
+          "defaultValue": null
+        },
+        {
+          "name": "tableRows",
+          "type": "[FuelSurchargeTableRowInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "tractorTypeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "trailerTypeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelSurchargeProgramInput {\n  accessorialChargeId: ID!\n  code: String!\n  dateBasis: FuelSurchargeDateBasis\n  description: String\n  effectiveEndDate: Int\n  effectiveStartDate: Int\n  fuelIndexId: ID!\n  increment: String\n  incrementRate: String\n  maxAmount: String\n  method: FuelSurchargeProgramMethod!\n  milesPerGallon: String\n  minAmount: String\n  missingPriceFallback: FuelSurchargeMissingPriceFallback\n  name: String!\n  pegPrice: String\n  percentBasis: FuelSurchargePercentBasis\n  priceEffectiveDay: Int\n  ratePrecision: Int\n  rateRounding: FuelSurchargeRateRounding\n  serviceTypeIds: [ID!]\n  shipmentTypeIds: [ID!]\n  status: FuelSurchargeProgramStatus\n  stepRounding: FuelSurchargeStepRounding\n  tableRows: [FuelSurchargeTableRowInput!]\n  tractorTypeIds: [ID!]\n  trailerTypeIds: [ID!]\n}"
+    },
+    "GenerateFuelTableInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "increment",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "maxPrice",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "minPrice",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "openEnded",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "startValue",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "valueStep",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input GenerateFuelTableInput {\n  increment: String!\n  maxPrice: String!\n  minPrice: String!\n  openEnded: Boolean\n  startValue: String!\n  valueStep: String!\n}"
+    },
+    "JSON": {
+      "kind": "scalar",
+      "sdl": "scalar JSON"
+    },
+    "NotificationFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "state",
+          "type": "NotificationState",
+          "defaultValue": null
+        },
+        {
+          "name": "unreadOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input NotificationFilterInput {\n  state: NotificationState\n  unreadOnly: Boolean\n}"
+    },
+    "OrderInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "baseAmount",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "bol",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "customerId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "ownerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "poNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "quotedAmount",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input OrderInput {\n  baseAmount: String\n  bol: String\n  currencyCode: String\n  customerId: ID!\n  ownerId: ID\n  poNumber: String\n  quotedAmount: String\n  version: Int\n}"
+    },
+    "OrganizationInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "addressLine1",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "addressLine2",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "bucketName",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "city",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "dotNumber",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "loginSlug",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "logoUrl",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "postalCode",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "scacCode",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "stateId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "taxId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "timezone",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input OrganizationInput {\n  addressLine1: String!\n  addressLine2: String\n  bucketName: String\n  city: String!\n  dotNumber: String!\n  loginSlug: String\n  logoUrl: String\n  name: String!\n  postalCode: String!\n  scacCode: String!\n  stateId: ID!\n  taxId: String\n  timezone: String!\n  version: Int!\n}"
+    },
+    "PostCustomerPaymentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accountingDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "applications",
+          "type": "[CustomerPaymentApplicationInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "customerId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "memo",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentMethod",
+          "type": "CustomerPaymentMethod!",
+          "defaultValue": null
+        },
+        {
+          "name": "referenceNumber",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PostCustomerPaymentInput {\n  accountingDate: Int!\n  amountMinor: Int!\n  applications: [CustomerPaymentApplicationInput!]\n  currencyCode: String\n  customerId: ID!\n  memo: String\n  paymentDate: Int!\n  paymentMethod: CustomerPaymentMethod!\n  referenceNumber: String\n}"
+    },
+    "RemoveOrderChargeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "chargeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "orderId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RemoveOrderChargeInput {\n  chargeId: ID!\n  orderId: ID!\n}"
+    },
+    "ReportIRInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "columns",
+          "type": "[ReportColumnInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "entity",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "filters",
+          "type": "ReportFilterGroupInput",
+          "defaultValue": null
+        },
+        {
+          "name": "having",
+          "type": "ReportFilterGroupInput",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "parameters",
+          "type": "[ReportParameterDefInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "pivot",
+          "type": "ReportPivotInput",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[ReportSortInput!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportIRInput {\n  columns: [ReportColumnInput!]!\n  entity: String!\n  filters: ReportFilterGroupInput\n  having: ReportFilterGroupInput\n  limit: Int\n  parameters: [ReportParameterDefInput!]\n  pivot: ReportPivotInput\n  sort: [ReportSortInput!]\n}"
+    },
+    "ReportRunsFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "definitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "mineOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[String!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportRunsFilterInput {\n  definitionId: ID\n  mineOnly: Boolean\n  statuses: [String!]\n}"
+    },
+    "ReverseCustomerPaymentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accountingDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReverseCustomerPaymentInput {\n  accountingDate: Int!\n  paymentId: ID!\n  reason: String\n}"
+    },
+    "RunReportInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cannedKey",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "definitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "format",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "params",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RunReportInput {\n  cannedKey: String\n  definitionId: ID\n  format: String!\n  params: JSON\n}"
+    },
+    "SaveReportDefinitionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "category",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultFormat",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "definition",
+          "type": "ReportIRInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "tags",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "visibility",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SaveReportDefinitionInput {\n  category: String\n  defaultFormat: String\n  definition: ReportIRInput!\n  description: String\n  name: String!\n  status: String\n  tags: [String!]\n  visibility: String\n}"
+    },
+    "SelectOptionsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "filters",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "ids",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "resource",
+          "type": "SelectOptionResource!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SelectOptionsInput {\n  filters: JSON\n  first: Int = 20\n  ids: [ID!]\n  offset: Int = 0\n  query: String\n  resource: SelectOptionResource!\n}"
+    },
+    "ShipmentAnalyticsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "endDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "include",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "timezone",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "windowDays",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentAnalyticsInput {\n  endDate: Int\n  include: String\n  limit: Int\n  offset: Int\n  startDate: Int\n  timezone: String\n  windowDays: Int\n}"
+    },
+    "ShipmentBulkTransferToBillingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "billType",
+          "type": "BillType",
+          "defaultValue": "Invoice",
+          "defaultJson": "Invoice"
+        },
+        {
+          "name": "shipmentIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentBulkTransferToBillingInput {\n  billType: BillType = Invoice\n  shipmentIds: [ID!]!\n}"
+    },
+    "ShipmentCancelInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cancelReason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentCancelInput {\n  cancelReason: String\n}"
+    },
+    "ShipmentCommentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "comment",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "mentionedUserIds",
+          "type": "[ID!]",
+          "defaultValue": "[]",
+          "defaultJson": []
+        },
+        {
+          "name": "priority",
+          "type": "ShipmentCommentPriority",
+          "defaultValue": "Normal",
+          "defaultJson": "Normal"
+        },
+        {
+          "name": "type",
+          "type": "ShipmentCommentType",
+          "defaultValue": "Internal",
+          "defaultJson": "Internal"
+        },
+        {
+          "name": "visibility",
+          "type": "ShipmentCommentVisibility",
+          "defaultValue": "Internal",
+          "defaultJson": "Internal"
+        }
+      ],
+      "sdl": "input ShipmentCommentInput {\n  comment: String!\n  mentionedUserIds: [ID!] = []\n  priority: ShipmentCommentPriority = Normal\n  type: ShipmentCommentType = Internal\n  visibility: ShipmentCommentVisibility = Internal\n}"
+    },
+    "ShipmentCommentUpdateInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "comment",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "mentionedUserIds",
+          "type": "[ID!]",
+          "defaultValue": "[]",
+          "defaultJson": []
+        },
+        {
+          "name": "priority",
+          "type": "ShipmentCommentPriority",
+          "defaultValue": "Normal",
+          "defaultJson": "Normal"
+        },
+        {
+          "name": "type",
+          "type": "ShipmentCommentType",
+          "defaultValue": "Internal",
+          "defaultJson": "Internal"
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "visibility",
+          "type": "ShipmentCommentVisibility",
+          "defaultValue": "Internal",
+          "defaultJson": "Internal"
+        }
+      ],
+      "sdl": "input ShipmentCommentUpdateInput {\n  comment: String!\n  id: ID!\n  mentionedUserIds: [ID!] = []\n  priority: ShipmentCommentPriority = Normal\n  type: ShipmentCommentType = Internal\n  version: Int!\n  visibility: ShipmentCommentVisibility = Internal\n}"
+    },
+    "ShipmentDuplicateBolInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "bol",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentDuplicateBolInput {\n  bol: String!\n  shipmentId: ID\n}"
+    },
+    "ShipmentDuplicateInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "count",
+          "type": "Int",
+          "defaultValue": "1",
+          "defaultJson": 1
+        },
+        {
+          "name": "overrideDates",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentDuplicateInput {\n  count: Int = 1\n  overrideDates: Boolean = false\n  shipmentId: ID!\n}"
+    },
+    "ShipmentEventsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "before",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "types",
+          "type": "[ShipmentEventType!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentEventsInput {\n  before: Int\n  limit: Int\n  shipmentId: ID\n  types: [ShipmentEventType!]\n}"
+    },
+    "ShipmentHazmatInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "commodityIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentHazmatInput {\n  commodityIds: [ID!]!\n}"
+    },
+    "ShipmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "actualDeliveryDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "actualShipDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "additionalCharges",
+          "type": "[ShipmentAdditionalChargeInput!]",
+          "defaultValue": "[]",
+          "defaultJson": []
+        },
+        {
+          "name": "baseRate",
+          "type": "String",
+          "defaultValue": "\"0\"",
+          "defaultJson": "0"
+        },
+        {
+          "name": "billedAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "billingTransferStatus",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "bol",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "cancelReason",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "canceledAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "canceledById",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "commodities",
+          "type": "[ShipmentCommodityInput!]",
+          "defaultValue": "[]",
+          "defaultJson": []
+        },
+        {
+          "name": "consolidationGroupId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "customerId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "enteredById",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "entryMethod",
+          "type": "ShipmentEntryMethod",
+          "defaultValue": "Manual",
+          "defaultJson": "Manual"
+        },
+        {
+          "name": "formulaTemplateId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "freightChargeAmount",
+          "type": "String",
+          "defaultValue": "\"0\"",
+          "defaultJson": "0"
+        },
+        {
+          "name": "fuelSurchargeLocked",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "markedReadyToBillAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "moves",
+          "type": "[ShipmentMoveInput!]",
+          "defaultValue": "[]",
+          "defaultJson": []
+        },
+        {
+          "name": "orderId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "otherChargeAmount",
+          "type": "String",
+          "defaultValue": "\"0\"",
+          "defaultJson": "0"
+        },
+        {
+          "name": "ownerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "pieces",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "proNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "ratingDetail",
+          "type": "ShipmentRatingDetailInput",
+          "defaultValue": null
+        },
+        {
+          "name": "ratingUnit",
+          "type": "Int",
+          "defaultValue": "1",
+          "defaultJson": 1
+        },
+        {
+          "name": "serviceTypeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentTypeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "sourceDocumentId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "ShipmentStatus",
+          "defaultValue": "New",
+          "defaultJson": "New"
+        },
+        {
+          "name": "temperatureMax",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "temperatureMin",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "tenderStatus",
+          "type": "ShipmentTenderStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "totalChargeAmount",
+          "type": "String",
+          "defaultValue": "\"0\"",
+          "defaultJson": "0"
+        },
+        {
+          "name": "tractorTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "trailerTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "transferredToBillingAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "weight",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentInput {\n  actualDeliveryDate: Int\n  actualShipDate: Int\n  additionalCharges: [ShipmentAdditionalChargeInput!] = []\n  baseRate: String = \"0\"\n  billedAt: Int\n  billingTransferStatus: String\n  bol: String\n  cancelReason: String\n  canceledAt: Int\n  canceledById: ID\n  commodities: [ShipmentCommodityInput!] = []\n  consolidationGroupId: ID\n  customerId: ID!\n  enteredById: ID\n  entryMethod: ShipmentEntryMethod = Manual\n  formulaTemplateId: ID!\n  freightChargeAmount: String = \"0\"\n  fuelSurchargeLocked: Boolean = false\n  markedReadyToBillAt: Int\n  moves: [ShipmentMoveInput!] = []\n  orderId: ID\n  otherChargeAmount: String = \"0\"\n  ownerId: ID\n  pieces: Int\n  proNumber: String\n  ratingDetail: ShipmentRatingDetailInput\n  ratingUnit: Int = 1\n  serviceTypeId: ID!\n  shipmentTypeId: ID!\n  sourceDocumentId: String\n  status: ShipmentStatus = New\n  temperatureMax: Int\n  temperatureMin: Int\n  tenderStatus: ShipmentTenderStatus\n  totalChargeAmount: String = \"0\"\n  tractorTypeId: ID\n  trailerTypeId: ID\n  transferredToBillingAt: Int\n  version: Int\n  weight: Int\n}"
+    },
+    "ShipmentLoadingOptimizationInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "commodities",
+          "type": "[ShipmentLoadingCommodityInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "equipmentTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "stops",
+          "type": "[ShipmentLoadingStopInput!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentLoadingOptimizationInput {\n  commodities: [ShipmentLoadingCommodityInput!]!\n  equipmentTypeId: ID\n  stops: [ShipmentLoadingStopInput!]\n}"
+    },
+    "ShipmentPreviousRatesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "customerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "destinationLocationId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "excludeShipmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "originLocationId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "serviceTypeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentTypeId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentPreviousRatesInput {\n  customerId: ID\n  destinationLocationId: ID!\n  excludeShipmentId: ID\n  originLocationId: ID!\n  serviceTypeId: ID!\n  shipmentTypeId: ID!\n}"
+    },
+    "ShipmentsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "activityWindowEnd",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "activityWindowStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "expandShipmentDetails",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentsInput {\n  activityWindowEnd: Int\n  activityWindowStart: Int\n  after: String\n  expandShipmentDetails: Boolean = false\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  query: String\n  sort: [SortFieldInput!]\n  status: String\n}"
+    },
+    "ShipmentTransferOwnershipInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "ownerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentTransferOwnershipInput {\n  ownerId: ID!\n}"
+    },
+    "ShipmentTransferToBillingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "billType",
+          "type": "BillType",
+          "defaultValue": "Invoice",
+          "defaultJson": "Invoice"
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentTransferToBillingInput {\n  billType: BillType = Invoice\n  shipmentId: ID!\n}"
+    },
+    "SidebarPreferencesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "activity",
+          "type": "SidebarActivityPreferenceInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "attentionMetrics",
+          "type": "[String!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "quickActionIds",
+          "type": "[String!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "sections",
+          "type": "[SidebarSectionPreferenceInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SidebarPreferencesInput {\n  activity: SidebarActivityPreferenceInput!\n  attentionMetrics: [String!]!\n  quickActionIds: [String!]!\n  sections: [SidebarSectionPreferenceInput!]!\n  version: Int!\n}"
+    },
+    "TableConfigurationInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "isDefault",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "resource",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "tableConfig",
+          "type": "JSON!",
+          "defaultValue": null
+        },
+        {
+          "name": "visibility",
+          "type": "ConfigurationVisibility",
+          "defaultValue": "Private",
+          "defaultJson": "Private"
+        }
+      ],
+      "sdl": "input TableConfigurationInput {\n  description: String\n  isDefault: Boolean\n  name: String!\n  resource: String!\n  tableConfig: JSON!\n  visibility: ConfigurationVisibility = Private\n}"
+    },
+    "UpcomingWorkerPTOInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "endDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "fleetCodeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "PTOStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "timezone",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "PTOType",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpcomingWorkerPTOInput {\n  after: String\n  endDate: Int\n  first: Int = 20\n  fleetCodeId: ID\n  startDate: Int\n  status: PTOStatus\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
+    },
+    "UpdateFuelIndexPriceInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "price",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "priceDate",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateFuelIndexPriceInput {\n  id: ID!\n  price: String!\n  priceDate: String!\n}"
+    },
+    "UpdateOrderChargeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amount",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "chargeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "orderId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateOrderChargeInput {\n  amount: String!\n  chargeId: ID!\n  description: String!\n  orderId: ID!\n  version: Int!\n}"
+    },
+    "UpdateReportDefinitionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "category",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultFormat",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "definition",
+          "type": "ReportIRInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "tags",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "visibility",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateReportDefinitionInput {\n  category: String\n  defaultFormat: String\n  definition: ReportIRInput!\n  description: String\n  id: ID!\n  name: String!\n  status: String\n  tags: [String!]\n  version: Int!\n  visibility: String\n}"
+    },
+    "UpdateReportScheduleInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cronExpression",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "definitionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "emailAttach",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "emailRecipients",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "formats",
+          "type": "[String!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "notifyUserIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "timezone",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateReportScheduleInput {\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  id: ID!\n  notifyUserIds: [ID!]\n  timezone: String\n  version: Int!\n}"
+    },
+    "WorkerPatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "driverType",
+          "type": "DriverType",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "WorkerType",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input WorkerPatchInput {\n  driverType: DriverType\n  status: EntityStatus\n  type: WorkerType\n}"
+    },
+    "WorkerPTOChartInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "startDateFrom",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDateTo",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "timezone",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "PTOType",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input WorkerPTOChartInput {\n  startDateFrom: Int!\n  startDateTo: Int!\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
+    },
+    "WorkerPTOEntriesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "includeWorker",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "startDateFrom",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "startDateTo",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "PTOStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "PTOType",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input WorkerPTOEntriesInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  includeWorker: Boolean = false\n  query: String\n  sort: [SortFieldInput!]\n  startDateFrom: Int\n  startDateTo: Int\n  status: PTOStatus\n  type: PTOType\n  workerId: ID\n}"
+    },
+    "CustomerPaymentApplicationInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "appliedAmountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "invoiceId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "shortPayAmountMinor",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CustomerPaymentApplicationInput {\n  appliedAmountMinor: Int!\n  invoiceId: ID!\n  shortPayAmountMinor: Int\n}"
+    },
+    "BillingQueueExceptionReasonCode": {
+      "kind": "enum",
+      "values": [
+        "AccessorialDispute",
+        "CustomerInformationError",
+        "DuplicateCharge",
+        "IncorrectRates",
+        "MissingDocumentation",
+        "MissingReferenceNumber",
+        "Other",
+        "RateNotOnFile",
+        "ServiceFailure",
+        "WeightDiscrepancy"
+      ],
+      "sdl": "enum BillingQueueExceptionReasonCode {\n  AccessorialDispute\n  CustomerInformationError\n  DuplicateCharge\n  IncorrectRates\n  MissingDocumentation\n  MissingReferenceNumber\n  Other\n  RateNotOnFile\n  ServiceFailure\n  WeightDiscrepancy\n}"
+    },
+    "BillingQueueStatus": {
+      "kind": "enum",
+      "values": [
+        "Approved",
+        "Canceled",
+        "Exception",
+        "InReview",
+        "OnHold",
+        "Posted",
+        "ReadyForReview",
+        "SentBackToOps"
+      ],
+      "sdl": "enum BillingQueueStatus {\n  Approved\n  Canceled\n  Exception\n  InReview\n  OnHold\n  Posted\n  ReadyForReview\n  SentBackToOps\n}"
+    },
+    "EntityStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "sdl": "enum EntityStatus {\n  Active\n  Inactive\n}"
+    },
+    "CostRateSource": {
+      "kind": "enum",
+      "values": [
+        "Benchmark",
+        "GLActual",
+        "Override"
+      ],
+      "sdl": "enum CostRateSource {\n  Benchmark\n  GLActual\n  Override\n}"
+    },
+    "FieldFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "field",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "operator",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "Any",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FieldFilterInput {\n  field: String!\n  operator: String!\n  value: Any\n}"
+    },
+    "FilterGroupInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "filters",
+          "type": "[FieldFilterInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FilterGroupInput {\n  filters: [FieldFilterInput!]!\n}"
+    },
+    "SortFieldInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "direction",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "field",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SortFieldInput {\n  direction: String!\n  field: String!\n}"
+    },
+    "FuelType": {
+      "kind": "enum",
+      "values": [
+        "Diesel",
+        "Gasoline"
+      ],
+      "sdl": "enum FuelType {\n  Diesel\n  Gasoline\n}"
+    },
+    "FuelIndexSource": {
+      "kind": "enum",
+      "values": [
+        "Custom",
+        "EIA"
+      ],
+      "sdl": "enum FuelIndexSource {\n  Custom\n  EIA\n}"
+    },
+    "FuelSurchargeDateBasis": {
+      "kind": "enum",
+      "values": [
+        "PickupDate",
+        "TenderDate"
+      ],
+      "sdl": "enum FuelSurchargeDateBasis {\n  PickupDate\n  TenderDate\n}"
+    },
+    "FuelSurchargeProgramMethod": {
+      "kind": "enum",
+      "values": [
+        "PerMileMPG",
+        "PerMileStep",
+        "TableFlat",
+        "TablePerMile",
+        "TablePercent"
+      ],
+      "sdl": "enum FuelSurchargeProgramMethod {\n  PerMileMPG\n  PerMileStep\n  TableFlat\n  TablePerMile\n  TablePercent\n}"
+    },
+    "FuelSurchargeMissingPriceFallback": {
+      "kind": "enum",
+      "values": [
+        "Skip",
+        "UseLatestAvailable"
+      ],
+      "sdl": "enum FuelSurchargeMissingPriceFallback {\n  Skip\n  UseLatestAvailable\n}"
+    },
+    "FuelSurchargePercentBasis": {
+      "kind": "enum",
+      "values": [
+        "Linehaul",
+        "LinehaulPlusAccessorials"
+      ],
+      "sdl": "enum FuelSurchargePercentBasis {\n  Linehaul\n  LinehaulPlusAccessorials\n}"
+    },
+    "FuelSurchargeRateRounding": {
+      "kind": "enum",
+      "values": [
+        "Down",
+        "HalfUp",
+        "Up"
+      ],
+      "sdl": "enum FuelSurchargeRateRounding {\n  Down\n  HalfUp\n  Up\n}"
+    },
+    "FuelSurchargeProgramStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "sdl": "enum FuelSurchargeProgramStatus {\n  Active\n  Inactive\n}"
+    },
+    "FuelSurchargeStepRounding": {
+      "kind": "enum",
+      "values": [
+        "Down",
+        "Nearest",
+        "Up"
+      ],
+      "sdl": "enum FuelSurchargeStepRounding {\n  Down\n  Nearest\n  Up\n}"
+    },
+    "FuelSurchargeTableRowInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "priceMax",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "priceMin",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FuelSurchargeTableRowInput {\n  priceMax: String\n  priceMin: String\n  sortOrder: Int\n  value: String!\n}"
+    },
+    "NotificationState": {
+      "kind": "enum",
+      "values": [
+        "archived",
+        "inbox"
+      ],
+      "sdl": "enum NotificationState {\n  archived\n  inbox\n}"
+    },
+    "CustomerPaymentMethod": {
+      "kind": "enum",
+      "values": [
+        "ACH",
+        "Card",
+        "Cash",
+        "Check",
+        "Other",
+        "Wire"
+      ],
+      "sdl": "enum CustomerPaymentMethod {\n  ACH\n  Card\n  Cash\n  Check\n  Other\n  Wire\n}"
+    },
+    "ReportColumnInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "agg",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "bucket",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "computed",
+          "type": "ReportComputedInput",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "kind",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "ref",
+          "type": "ReportFieldRefInput",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportColumnInput {\n  agg: String\n  bucket: String\n  computed: ReportComputedInput\n  id: String!\n  kind: String!\n  label: String\n  ref: ReportFieldRefInput\n}"
+    },
+    "ReportFilterGroupInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "filters",
+          "type": "[ReportFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "groups",
+          "type": "[ReportFilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "op",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportFilterGroupInput {\n  filters: [ReportFilterInput!]\n  groups: [ReportFilterGroupInput!]\n  op: String!\n}"
+    },
+    "ReportParameterDefInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "allowedValues",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "default",
+          "type": "Any",
+          "defaultValue": null
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "multi",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "refEntity",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "required",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportParameterDefInput {\n  allowedValues: [String!]\n  default: Any\n  label: String\n  multi: Boolean\n  name: String!\n  refEntity: String\n  required: Boolean\n  type: String!\n}"
+    },
+    "ReportPivotInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "includeOther",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "measureIds",
+          "type": "[String!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "ref",
+          "type": "ReportFieldRefInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "values",
+          "type": "[String!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportPivotInput {\n  includeOther: Boolean\n  measureIds: [String!]!\n  ref: ReportFieldRefInput!\n  values: [String!]!\n}"
+    },
+    "ReportSortInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "columnId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "direction",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportSortInput {\n  columnId: String!\n  direction: String!\n}"
+    },
+    "SelectOptionResource": {
+      "kind": "enum",
+      "values": [
+        "CUSTOMER",
+        "EDI_TRANSFER",
+        "EQUIPMENT_MANUFACTURER",
+        "EQUIPMENT_TYPE",
+        "FISCAL_PERIOD",
+        "FISCAL_YEAR",
+        "FUEL_INDEX",
+        "FUEL_SURCHARGE_PROGRAM",
+        "GL_ACCOUNT",
+        "ORDER",
+        "SHIPMENT",
+        "TRACTOR",
+        "TRAILER",
+        "US_STATE",
+        "WORKER"
+      ],
+      "sdl": "enum SelectOptionResource {\n  CUSTOMER\n  EDI_TRANSFER\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  ORDER\n  SHIPMENT\n  TRACTOR\n  TRAILER\n  US_STATE\n  WORKER\n}"
+    },
+    "BillType": {
+      "kind": "enum",
+      "values": [
+        "CreditMemo",
+        "DebitMemo",
+        "Invoice"
+      ],
+      "sdl": "enum BillType {\n  CreditMemo\n  DebitMemo\n  Invoice\n}"
+    },
+    "ShipmentCommentPriority": {
+      "kind": "enum",
+      "values": [
+        "High",
+        "Low",
+        "Normal",
+        "Urgent"
+      ],
+      "sdl": "enum ShipmentCommentPriority {\n  High\n  Low\n  Normal\n  Urgent\n}"
+    },
+    "ShipmentCommentType": {
+      "kind": "enum",
+      "values": [
+        "Appointment",
+        "Billing",
+        "Compliance",
+        "CustomerUpdate",
+        "DeliveryInstruction",
+        "Dispatch",
+        "Document",
+        "DriverUpdate",
+        "Exception",
+        "Internal",
+        "PickupInstruction",
+        "StatusUpdate"
+      ],
+      "sdl": "enum ShipmentCommentType {\n  Appointment\n  Billing\n  Compliance\n  CustomerUpdate\n  DeliveryInstruction\n  Dispatch\n  Document\n  DriverUpdate\n  Exception\n  Internal\n  PickupInstruction\n  StatusUpdate\n}"
+    },
+    "ShipmentCommentVisibility": {
+      "kind": "enum",
+      "values": [
+        "Accounting",
+        "Customer",
+        "Driver",
+        "Internal",
+        "Operations"
+      ],
+      "sdl": "enum ShipmentCommentVisibility {\n  Accounting\n  Customer\n  Driver\n  Internal\n  Operations\n}"
+    },
+    "ShipmentEventType": {
+      "kind": "enum",
+      "values": [
+        "CommentPosted",
+        "DriverAssigned",
+        "DriverReassigned",
+        "DriverUnassigned",
+        "HoldPlaced",
+        "HoldReleased",
+        "HoldUpdated",
+        "MoveArrived",
+        "MoveDeparted",
+        "MoveStatusChanged",
+        "OwnershipTransferred",
+        "ShipmentCanceled",
+        "ShipmentCreated",
+        "ShipmentUncanceled",
+        "ShipmentUpdated",
+        "StatusChanged",
+        "StopCompleted"
+      ],
+      "sdl": "enum ShipmentEventType {\n  CommentPosted\n  DriverAssigned\n  DriverReassigned\n  DriverUnassigned\n  HoldPlaced\n  HoldReleased\n  HoldUpdated\n  MoveArrived\n  MoveDeparted\n  MoveStatusChanged\n  OwnershipTransferred\n  ShipmentCanceled\n  ShipmentCreated\n  ShipmentUncanceled\n  ShipmentUpdated\n  StatusChanged\n  StopCompleted\n}"
+    },
+    "ShipmentAdditionalChargeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accessorialChargeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "amount",
+          "type": "String",
+          "defaultValue": "\"0\"",
+          "defaultJson": "0"
+        },
+        {
+          "name": "fuelSurchargeProgramId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "isSystemGenerated",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "method",
+          "type": "String",
+          "defaultValue": "\"Flat\"",
+          "defaultJson": "Flat"
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "unit",
+          "type": "Int",
+          "defaultValue": "1",
+          "defaultJson": 1
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentAdditionalChargeInput {\n  accessorialChargeId: ID!\n  amount: String = \"0\"\n  fuelSurchargeProgramId: ID\n  id: ID\n  isSystemGenerated: Boolean = false\n  method: String = \"Flat\"\n  shipmentId: ID\n  unit: Int = 1\n  version: Int\n}"
+    },
+    "ShipmentCommodityInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "commodityId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "pieces",
+          "type": "Int",
+          "defaultValue": "1",
+          "defaultJson": 1
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "weight",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        }
+      ],
+      "sdl": "input ShipmentCommodityInput {\n  commodityId: ID!\n  id: ID\n  pieces: Int = 1\n  shipmentId: ID\n  version: Int\n  weight: Int = 0\n}"
+    },
+    "ShipmentEntryMethod": {
+      "kind": "enum",
+      "values": [
+        "EDI",
+        "Manual"
+      ],
+      "sdl": "enum ShipmentEntryMethod {\n  EDI\n  Manual\n}"
+    },
+    "ShipmentMoveInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "distance",
+          "type": "Float",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceCalculatedAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceDataVersion",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceMetadata",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceProvider",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceRouteSignature",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceRoutingType",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceSource",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "distanceUnits",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "loaded",
+          "type": "Boolean",
+          "defaultValue": "true",
+          "defaultJson": true
+        },
+        {
+          "name": "sequence",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "MoveStatus",
+          "defaultValue": "New",
+          "defaultJson": "New"
+        },
+        {
+          "name": "stops",
+          "type": "[ShipmentStopInput!]",
+          "defaultValue": "[]",
+          "defaultJson": []
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentMoveInput {\n  distance: Float\n  distanceCalculatedAt: Int\n  distanceDataVersion: String\n  distanceMetadata: JSON\n  distanceProvider: String\n  distanceRouteSignature: String\n  distanceRoutingType: String\n  distanceSource: String\n  distanceUnits: String\n  id: ID\n  loaded: Boolean = true\n  sequence: Int = 0\n  shipmentId: ID\n  status: MoveStatus = New\n  stops: [ShipmentStopInput!] = []\n  version: Int\n}"
+    },
+    "ShipmentRatingDetailInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "expression",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "formulaTemplateId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "formulaTemplateName",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "ratedAt",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "resolvedVariables",
+          "type": "JSON!",
+          "defaultValue": null
+        },
+        {
+          "name": "result",
+          "type": "Float!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentRatingDetailInput {\n  expression: String!\n  formulaTemplateId: String!\n  formulaTemplateName: String!\n  ratedAt: Int!\n  resolvedVariables: JSON!\n  result: Float!\n}"
+    },
+    "ShipmentStatus": {
+      "kind": "enum",
+      "values": [
+        "Assigned",
+        "Canceled",
+        "Completed",
+        "Delayed",
+        "InTransit",
+        "Invoiced",
+        "New",
+        "PartiallyAssigned",
+        "PartiallyCompleted",
+        "ReadyToInvoice"
+      ],
+      "sdl": "enum ShipmentStatus {\n  Assigned\n  Canceled\n  Completed\n  Delayed\n  InTransit\n  Invoiced\n  New\n  PartiallyAssigned\n  PartiallyCompleted\n  ReadyToInvoice\n}"
+    },
+    "ShipmentTenderStatus": {
+      "kind": "enum",
+      "values": [
+        "Accepted",
+        "Canceled",
+        "Expired",
+        "Rejected",
+        "Tendered"
+      ],
+      "sdl": "enum ShipmentTenderStatus {\n  Accepted\n  Canceled\n  Expired\n  Rejected\n  Tendered\n}"
+    },
+    "ShipmentLoadingCommodityInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "commodityId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "pieces",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "weight",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentLoadingCommodityInput {\n  commodityId: ID!\n  pieces: Int!\n  weight: Int!\n}"
+    },
+    "ShipmentLoadingStopInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "locationCity",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "locationName",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "sequence",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentLoadingStopInput {\n  locationCity: String!\n  locationName: String!\n  sequence: Int!\n}"
+    },
+    "SidebarActivityPreferenceInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "defaultOpen",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "pageSize",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SidebarActivityPreferenceInput {\n  defaultOpen: Boolean!\n  pageSize: Int!\n}"
+    },
+    "SidebarSectionPreferenceInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "hidden",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "key",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SidebarSectionPreferenceInput {\n  hidden: Boolean!\n  key: String!\n}"
+    },
+    "PTOStatus": {
+      "kind": "enum",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Rejected",
+        "Requested"
+      ],
+      "sdl": "enum PTOStatus {\n  Approved\n  Cancelled\n  Rejected\n  Requested\n}"
+    },
+    "PTOType": {
+      "kind": "enum",
+      "values": [
+        "Bereavement",
+        "Holiday",
+        "Maternity",
+        "Paternity",
+        "Personal",
+        "Sick",
+        "Vacation"
+      ],
+      "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
+    },
+    "DriverType": {
+      "kind": "enum",
+      "values": [
+        "Local",
+        "OTR",
+        "Regional",
+        "Team"
+      ],
+      "sdl": "enum DriverType {\n  Local\n  OTR\n  Regional\n  Team\n}"
+    },
+    "WorkerType": {
+      "kind": "enum",
+      "values": [
+        "Contractor",
+        "Employee"
+      ],
+      "sdl": "enum WorkerType {\n  Contractor\n  Employee\n}"
+    },
+    "Any": {
+      "kind": "scalar",
+      "sdl": "scalar Any"
+    },
+    "ReportComputedInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "format",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "leftId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "op",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "rightId",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportComputedInput {\n  format: String\n  leftId: String!\n  op: String!\n  rightId: String!\n}"
+    },
+    "ReportFieldRefInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "field",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "path",
+          "type": "[String!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportFieldRefInput {\n  field: String!\n  path: [String!]\n}"
+    },
+    "ReportFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "agg",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "operator",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "param",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "ref",
+          "type": "ReportFieldRefInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "Any",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportFilterInput {\n  agg: String\n  operator: String!\n  param: String\n  ref: ReportFieldRefInput!\n  value: Any\n}"
+    },
+    "MoveStatus": {
+      "kind": "enum",
+      "values": [
+        "Assigned",
+        "Canceled",
+        "Completed",
+        "InTransit",
+        "New"
+      ],
+      "sdl": "enum MoveStatus {\n  Assigned\n  Canceled\n  Completed\n  InTransit\n  New\n}"
+    },
+    "ShipmentStopInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "actualArrival",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "actualDeparture",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "addressLine",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "countDetentionOverride",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "countLateOverride",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "locationId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "pieces",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "scheduleType",
+          "type": "StopScheduleType",
+          "defaultValue": "Open",
+          "defaultJson": "Open"
+        },
+        {
+          "name": "scheduledWindowEnd",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "scheduledWindowStart",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "sequence",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "shipmentMoveId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "StopStatus",
+          "defaultValue": "New",
+          "defaultJson": "New"
+        },
+        {
+          "name": "type",
+          "type": "StopType",
+          "defaultValue": "Pickup",
+          "defaultJson": "Pickup"
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "weight",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentStopInput {\n  actualArrival: Int\n  actualDeparture: Int\n  addressLine: String\n  countDetentionOverride: Boolean\n  countLateOverride: Boolean\n  id: ID\n  locationId: ID!\n  pieces: Int\n  scheduleType: StopScheduleType = Open\n  scheduledWindowEnd: Int\n  scheduledWindowStart: Int = 0\n  sequence: Int = 0\n  shipmentMoveId: ID\n  status: StopStatus = New\n  type: StopType = Pickup\n  version: Int\n  weight: Int\n}"
+    },
+    "StopScheduleType": {
+      "kind": "enum",
+      "values": [
+        "Appointment",
+        "Open"
+      ],
+      "sdl": "enum StopScheduleType {\n  Appointment\n  Open\n}"
+    },
+    "StopStatus": {
+      "kind": "enum",
+      "values": [
+        "Canceled",
+        "Completed",
+        "InTransit",
+        "New"
+      ],
+      "sdl": "enum StopStatus {\n  Canceled\n  Completed\n  InTransit\n  New\n}"
+    },
+    "StopType": {
+      "kind": "enum",
+      "values": [
+        "Delivery",
+        "Pickup",
+        "SplitDelivery",
+        "SplitPickup"
+      ],
+      "sdl": "enum StopType {\n  Delivery\n  Pickup\n  SplitDelivery\n  SplitPickup\n}"
+    }
+  }
 }
