@@ -1,15 +1,22 @@
 "use no memo";
 import { DataTableProvider } from "@/contexts/data-table-context";
+import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDebounce } from "@/hooks/use-debounce";
 import { usePermissions } from "@/hooks/use-permission";
 import {
+  columnPinOffsetVar,
+  columnSizeVar,
+  compileFormatRules,
   initializeFilterItemsFromFieldFilters,
   initializeFilterItemsFromFilterGroups,
+  isTableConfigEqual,
   updateSortField,
 } from "@/lib/data-table";
+import { fetchAllRows } from "@/lib/data-table-export";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import type {
   DataTableProps,
   FilterGroupItem,
@@ -19,10 +26,26 @@ import type {
   SortDirection,
   SortField,
 } from "@/types/data-table";
-import type { TableConfig } from "@/types/table-configuration";
+import type {
+  ActiveTableView,
+  TableConfig,
+  TableConfiguration,
+  TableDensity,
+  TableFormatRule,
+  TableViewSource,
+} from "@/types/table-configuration";
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import {
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -33,14 +56,21 @@ import {
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Table, TableHead, TableHeader, TableRow } from "../ui/table";
+import { toast } from "sonner";
+import { Table, TableHeader, TableRow } from "../ui/table";
 import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
-import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableDock } from "./data-table-dock";
+import DataTableFilterChips from "./data-table-filter-chips";
+import { DataTableHeaderCell } from "./data-table-header-cell";
 import { DataTablePanelContent, DataTablePanelWrapper } from "./data-table-panel";
+import { DataTableRefreshPill } from "./data-table-refresh-pill";
+import { DataTableSelectionBanner } from "./data-table-selection-banner";
 import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
+
+const BULK_SELECT_MAX = 1000;
+const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -73,7 +103,12 @@ export function DataTable<TData extends Record<string, any>>({
     scopeKey: string;
     cursors: Record<number, string | null>;
   }>({ scopeKey: "", cursors: { 0: null } });
+  const [activeView, setActiveView] = useState<ActiveTableView | null>(null);
+  const [density, setDensity] = useState<TableDensity>("comfortable");
+  const [formatRules, setFormatRules] = useState<TableFormatRule[]>([]);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
   const defaultConfigAppliedRef = useRef(false);
+  const selectedRowsMapRef = useRef(new Map<string, TData>());
 
   const { data: defaultConfig } = useQuery({
     ...queries.tableConfiguration.default(name),
@@ -150,6 +185,8 @@ export function DataTable<TData extends Record<string, any>>({
   ]);
 
   const debouncedFilters = useDebounce(filterItems, 300);
+  const urlFiltersRef = useRef({ fieldFilters, filterGroups });
+  urlFiltersRef.current = { fieldFilters, filterGroups };
 
   useEffect(() => {
     const singles = debouncedFilters.filter((f) => f.type === "filter") as SingleFilterItem[];
@@ -160,16 +197,25 @@ export function DataTable<TData extends Record<string, any>>({
       operator: f.operator,
       value: f.value,
     }));
+    const newFilterGroups = groups.map((g) => ({
+      filters: g.items.map((i) => ({
+        field: i.apiField,
+        operator: i.operator,
+        value: i.value,
+      })),
+    }));
+
+    const { fieldFilters: urlFieldFilters, filterGroups: urlFilterGroups } = urlFiltersRef.current;
+    if (
+      JSON.stringify(newFieldFilters) === JSON.stringify(urlFieldFilters) &&
+      JSON.stringify(newFilterGroups) === JSON.stringify(urlFilterGroups)
+    ) {
+      return;
+    }
 
     void setSearchParams({
       fieldFilters: newFieldFilters,
-      filterGroups: groups.map((g) => ({
-        filters: g.items.map((i) => ({
-          field: i.apiField,
-          operator: i.operator,
-          value: i.value,
-        })),
-      })),
+      filterGroups: newFilterGroups,
       pageIndex: 1,
     });
   }, [debouncedFilters, setSearchParams]);
@@ -254,20 +300,46 @@ export function DataTable<TData extends Record<string, any>>({
   const currentCursor = pageCursors[zeroBasedPageIndex];
   const canFetchPage = zeroBasedPageIndex === 0 || currentCursor !== undefined;
 
-  const dataQuery = useDataTableQuery<TData>(
-    queryKey,
-    graphql,
-    { pageIndex: zeroBasedPageIndex, pageSize },
-    {
+  const baseQueryOptions = useMemo(
+    () => ({
       query,
       fieldFilters,
       filterGroups,
       sort: effectiveSort,
-      cursor: currentCursor,
-    },
-    canFetchPage,
-    refetchIntervalMs,
+    }),
+    [query, fieldFilters, filterGroups, effectiveSort],
   );
+
+  const queryOptions = useMemo(
+    () => ({
+      ...baseQueryOptions,
+      cursor: currentCursor,
+    }),
+    [baseQueryOptions, currentCursor],
+  );
+
+  const pagination = useMemo(
+    () => ({ pageIndex: zeroBasedPageIndex, pageSize }),
+    [zeroBasedPageIndex, pageSize],
+  );
+
+  const dataQuery = useDataTableQuery<TData>(
+    queryKey,
+    graphql,
+    pagination,
+    queryOptions,
+    canFetchPage,
+  );
+
+  const liveRefresh = useDataTableLiveRefresh<TData>({
+    intervalMs: refetchIntervalMs,
+    enabled: !!refetchIntervalMs && canFetchPage,
+    queryKey,
+    graphql,
+    pagination,
+    options: queryOptions,
+    currentResults: dataQuery.data?.results,
+  });
 
   useEffect(() => {
     const pageInfo = dataQuery.data?.pageInfo;
@@ -301,15 +373,22 @@ export function DataTable<TData extends Record<string, any>>({
   }, [canFetchPage, pageIndex, setSearchParams]);
 
   const cursorPageInfo = dataQuery.data?.pageInfo ?? null;
-  const currentPageRowCount = dataQuery.data?.results.length ?? 0;
-  const rowCount = cursorPageInfo
-    ? zeroBasedPageIndex * pageSize +
-      currentPageRowCount +
-      (cursorPageInfo.hasNextPage ? pageSize : 0)
-    : (dataQuery.data?.count ?? 0);
-  const pageCount = cursorPageInfo
-    ? zeroBasedPageIndex + 1 + (cursorPageInfo.hasNextPage ? 1 : 0)
-    : 1;
+  const currentPageResults = dataQuery.data?.results;
+  const currentPageRowCount = currentPageResults?.length ?? 0;
+  const totalCount = cursorPageInfo
+    ? (cursorPageInfo.totalCount ?? null)
+    : (dataQuery.data?.count ?? null);
+  const rowCount =
+    totalCount ??
+    (cursorPageInfo
+      ? zeroBasedPageIndex * pageSize +
+        currentPageRowCount +
+        (cursorPageInfo.hasNextPage ? pageSize : 0)
+      : 0);
+  const pageCount =
+    totalCount != null
+      ? Math.max(1, Math.ceil(totalCount / pageSize))
+      : zeroBasedPageIndex + 1 + (cursorPageInfo?.hasNextPage ? 1 : 0);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -317,13 +396,14 @@ export function DataTable<TData extends Record<string, any>>({
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    data: dataQuery.data?.results || [],
+    data: currentPageResults || [],
     columns: tableColumns,
     pageCount,
     rowCount,
     manualPagination: true,
     manualFiltering: true,
     columnResizeMode: "onChange",
+    enableColumnPinning: true,
     getRowId: (row) => row.id,
     manualSorting: true,
     enableRowSelection,
@@ -333,10 +413,7 @@ export function DataTable<TData extends Record<string, any>>({
       ? { columnVisibility: initialColumnVisibility }
       : undefined,
     state: {
-      pagination: {
-        pageIndex: zeroBasedPageIndex,
-        pageSize,
-      },
+      pagination,
       rowSelection,
     },
     onPaginationChange: (updater) => {
@@ -351,48 +428,145 @@ export function DataTable<TData extends Record<string, any>>({
     },
   });
 
+  useEffect(() => {
+    const map = selectedRowsMapRef.current;
+    for (const id of map.keys()) {
+      if (!rowSelection[id]) map.delete(id);
+    }
+    if (currentPageResults) {
+      for (const row of currentPageResults) {
+        const id = (row as { id?: string }).id;
+        if (id && rowSelection[id]) map.set(id, row);
+      }
+    }
+  }, [rowSelection, currentPageResults]);
+
+  const selectedCount = useMemo(
+    () => Object.values(rowSelection).filter(Boolean).length,
+    [rowSelection],
+  );
+
+  const getSelectedRows = useCallback(() => Array.from(selectedRowsMapRef.current.values()), []);
+
+  const allPageRowsSelected =
+    currentPageRowCount > 0 &&
+    (currentPageResults?.every((row) => rowSelection[(row as { id?: string }).id ?? ""]) ?? false);
+
+  const handleSelectAllMatching = useCallback(async () => {
+    setIsSelectingAll(true);
+    try {
+      const rows = await fetchAllRows<TData>({
+        graphql,
+        options: baseQueryOptions,
+        maxRows: BULK_SELECT_MAX,
+      });
+      const map = selectedRowsMapRef.current;
+      const selection: RowSelectionState = {};
+      for (const row of rows) {
+        const id = (row as { id?: string }).id;
+        if (id) {
+          selection[id] = true;
+          map.set(id, row);
+        }
+      }
+      setRowSelection(selection);
+    } catch (error) {
+      toast.error("Selection failed", {
+        description:
+          error instanceof Error ? error.message : "Could not load all matching rows.",
+      });
+    } finally {
+      setIsSelectingAll(false);
+    }
+  }, [graphql, baseQueryOptions]);
+
+  const handleClearSelection = useCallback(() => {
+    setRowSelection({});
+  }, []);
+
   const handleApplyConfig = useCallback(
-    (config: TableConfig) => {
+    (config: TableConfig, source?: TableViewSource) => {
       const newFieldFilters = config.fieldFilters ?? [];
       const newFilterGroups = (config.filterGroups ?? []).filter((g) => g.filters?.length > 0);
-
-      const filterItemsFromFields = initializeFilterItemsFromFieldFilters(newFieldFilters, columns);
-      const filterItemsFromGroups = initializeFilterItemsFromFilterGroups(newFilterGroups, columns);
+      const newSort = config.sort ?? [];
+      const newPageSize = config.pageSize ?? pageSize;
+      const newColumnVisibility = config.columnVisibility ?? {};
+      const newColumnOrder = config.columnOrder ?? [];
+      const newColumnSizing = config.columnSizing ?? {};
+      const newColumnPinning = config.columnPinning ?? EMPTY_PINNING;
+      const newDensity = config.density ?? "comfortable";
+      const newFormatRules = config.formatRules ?? [];
 
       void setSearchParams({
         fieldFilters: newFieldFilters,
         filterGroups: newFilterGroups,
-        sort: config.sort,
-        pageSize: config.pageSize,
+        sort: newSort,
+        pageSize: newPageSize,
         pageIndex: 1,
       });
 
-      setFilterItems([...filterItemsFromFields, ...filterItemsFromGroups]);
+      setFilterItems([
+        ...initializeFilterItemsFromFieldFilters(newFieldFilters, columns),
+        ...initializeFilterItemsFromFilterGroups(newFilterGroups, columns),
+      ]);
 
-      if (config.columnVisibility) {
-        table.setColumnVisibility(config.columnVisibility);
-      }
-      if (config.columnOrder && config.columnOrder.length > 0) {
-        table.setColumnOrder(config.columnOrder);
-      }
+      table.setColumnVisibility(newColumnVisibility);
+      table.setColumnOrder(newColumnOrder);
+      table.setColumnSizing(newColumnSizing);
+      table.setColumnPinning({
+        left: newColumnPinning.left ?? [],
+        right: newColumnPinning.right ?? [],
+      });
+      setDensity(newDensity);
+      setFormatRules(newFormatRules);
+
+      setActiveView(
+        source
+          ? {
+              id: source.id,
+              name: source.name,
+              config: {
+                fieldFilters: newFieldFilters,
+                filterGroups: newFilterGroups,
+                joinOperator: config.joinOperator ?? "and",
+                sort: newSort,
+                pageSize: newPageSize,
+                columnVisibility: newColumnVisibility,
+                columnOrder: newColumnOrder,
+                columnSizing: newColumnSizing,
+                columnPinning: {
+                  left: newColumnPinning.left ?? [],
+                  right: newColumnPinning.right ?? [],
+                },
+                density: newDensity,
+                formatRules: newFormatRules,
+              },
+            }
+          : null,
+      );
     },
-    [setSearchParams, columns, table],
+    [setSearchParams, columns, pageSize, table],
   );
 
   useEffect(() => {
     if (
       defaultConfig?.tableConfig &&
       !defaultConfigAppliedRef.current &&
+      pageIndex === 1 &&
       fieldFilters.length === 0 &&
       filterGroups.length === 0 &&
       sort.length === 0 &&
       query === ""
     ) {
       defaultConfigAppliedRef.current = true;
-      handleApplyConfig(defaultConfig.tableConfig);
+      handleApplyConfig(defaultConfig.tableConfig, {
+        id: defaultConfig.id,
+        name: defaultConfig.name,
+      });
     }
   }, [
     defaultConfig,
+    pageIndex,
     fieldFilters.length,
     filterGroups.length,
     sort.length,
@@ -400,10 +574,17 @@ export function DataTable<TData extends Record<string, any>>({
     handleApplyConfig,
   ]);
 
+  const {
+    columnVisibility: liveColumnVisibility,
+    columnOrder: liveColumnOrder,
+    columnSizing: liveColumnSizing,
+    columnPinning: liveColumnPinning,
+  } = table.getState();
+
   const currentConfig = useMemo<TableConfig>(() => {
     const columnVisibility: Record<string, boolean> = {};
-    for (const col of table.getAllColumns()) {
-      columnVisibility[col.id] = col.getIsVisible();
+    for (const col of table.getAllLeafColumns()) {
+      columnVisibility[col.id] = liveColumnVisibility[col.id] ?? true;
     }
 
     return {
@@ -413,29 +594,93 @@ export function DataTable<TData extends Record<string, any>>({
       sort: effectiveSort,
       pageSize,
       columnVisibility,
-      columnOrder: table.getState().columnOrder,
+      columnOrder: liveColumnOrder,
+      columnSizing: liveColumnSizing,
+      columnPinning: {
+        left: liveColumnPinning.left ?? [],
+        right: liveColumnPinning.right ?? [],
+      },
+      density,
+      formatRules,
     };
-  }, [fieldFilters, filterGroups, effectiveSort, pageSize, table]);
+  }, [
+    fieldFilters,
+    filterGroups,
+    effectiveSort,
+    pageSize,
+    liveColumnVisibility,
+    liveColumnOrder,
+    liveColumnSizing,
+    liveColumnPinning,
+    density,
+    formatRules,
+    table,
+  ]);
+
+  const isViewDirty = useMemo(
+    () => (activeView ? !isTableConfigEqual(currentConfig, activeView.config) : false),
+    [activeView, currentConfig],
+  );
+
+  const handleViewPersisted = useCallback((config: TableConfiguration) => {
+    setActiveView({ id: config.id, name: config.name, config: config.tableConfig });
+  }, []);
+
+  const handleViewDeleted = useCallback((id: string) => {
+    setActiveView((current) => (current?.id === id ? null : current));
+  }, []);
+
+  const compiledFormatRules = useMemo(
+    () => compileFormatRules<TData>(formatRules, table.getAllLeafColumns()),
+    [formatRules, table],
+  );
+
+  const hasActiveFilters = filterItems.length > 0 || query !== "";
+  const handleClearFilters = useCallback(() => {
+    setFilterItems([]);
+    void setSearchParams({ query: "", pageIndex: 1 });
+  }, [setSearchParams]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleColumnDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const ids = table.getAllLeafColumns().map((col) => col.id);
+      const oldIndex = ids.indexOf(String(active.id));
+      const newIndex = ids.indexOf(String(over.id));
+      if (oldIndex < 0 || newIndex < 0) return;
+      table.setColumnOrder(arrayMove(ids, oldIndex, newIndex));
+    },
+    [table],
+  );
 
   const listRow = useMemo(() => {
     if (!panelEntityId || panelMode !== "edit") return null;
-    const results = dataQuery.data?.results || [];
+    const results = currentPageResults || [];
     return results.find((row: TData) => (row as { id?: string }).id === panelEntityId) ?? null;
-  }, [panelEntityId, panelMode, dataQuery.data?.results]);
+  }, [panelEntityId, panelMode, currentPageResults]);
 
   const panelRow = listRow;
 
-  const { columnSizeVars, totalSize } = useMemo(() => {
-    const headers = table.getFlatHeaders();
-    const vars: Record<string, string> = {};
-    let total = 0;
-    for (const header of headers) {
-      const size = header.getSize();
-      vars[`--col-${header.column.id.replace(".", "-")}-size`] = `${size}px`;
-      total += size;
+  const columnSizeVars: Record<string, string> = {};
+  let totalSize = 0;
+  for (const header of table.getFlatHeaders()) {
+    const { column } = header;
+    const size = header.getSize();
+    columnSizeVars[columnSizeVar(column.id)] = `${size}px`;
+    totalSize += size;
+
+    const pinned = column.getIsPinned();
+    if (pinned === "left") {
+      columnSizeVars[columnPinOffsetVar(column.id, "left")] = `${column.getStart("left")}px`;
+    } else if (pinned === "right") {
+      columnSizeVars[columnPinOffsetVar(column.id, "right")] = `${column.getAfter("right")}px`;
     }
-    return { columnSizeVars: vars, totalSize: total };
-  }, [table]);
+  }
+
+  const reorderableIds = table.getVisibleLeafColumns().map((col) => col.id);
 
   return (
     <DataTableProvider
@@ -446,6 +691,8 @@ export function DataTable<TData extends Record<string, any>>({
       panelMode={panelMode}
       panelRow={panelRow}
       rowSelection={rowSelection}
+      selectedCount={selectedCount}
+      getSelectedRows={getSelectedRows}
       openPanelCreate={openPanelCreate}
       openPanelEdit={openPanelEdit}
       closePanel={closePanel}
@@ -454,10 +701,7 @@ export function DataTable<TData extends Record<string, any>>({
       canCreate={canCreate}
       canUpdate={canUpdate}
       canExport={canExport}
-      pagination={{
-        pageIndex: pageIndex - 1,
-        pageSize: pageSize,
-      }}
+      pagination={pagination}
     >
       <DataTablePanelWrapper>
         <DataTablePanelContent>
@@ -475,54 +719,91 @@ export function DataTable<TData extends Record<string, any>>({
               resource={name}
               currentConfig={currentConfig}
               onApplyConfig={handleApplyConfig}
+              activeView={activeView}
+              isViewDirty={isViewDirty}
+              onViewPersisted={handleViewPersisted}
+              onViewDeleted={handleViewDeleted}
+              formatRules={formatRules}
+              onFormatRulesChange={setFormatRules}
+              density={density}
+              onDensityChange={setDensity}
+              exportContext={{
+                graphql,
+                queryOptions: baseQueryOptions,
+                currentPageRows: currentPageResults ?? [],
+                totalCount,
+              }}
             />
-            <Table
-              className="border-separate border-spacing-0"
-              containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-md border border-border"
-              style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
-            >
-              <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                    {headerGroup.headers.map((header) => {
-                      const meta = header.column.columnDef.meta;
-                      const isSortable = meta?.sortable !== false;
-                      return (
-                        <TableHead
-                          key={header.id}
-                          className="border-b border-border"
-                          style={{
-                            width: `var(--col-${header.column.id.replace(".", "-")}-size)`,
-                          }}
+            <DataTableFilterChips
+              filters={filterItems}
+              onFiltersChange={handleFiltersChange}
+              query={query}
+              onClearQuery={() => handleSearchChange("")}
+            />
+            {enableRowSelection && totalCount != null && (
+              <DataTableSelectionBanner
+                visible={allPageRowsSelected && totalCount > currentPageRowCount}
+                selectedCount={selectedCount}
+                totalCount={totalCount}
+                maxSelectable={BULK_SELECT_MAX}
+                isSelectingAll={isSelectingAll}
+                onSelectAllMatching={handleSelectAllMatching}
+                onClearSelection={handleClearSelection}
+              />
+            )}
+            <div className="relative min-w-0">
+              <DataTableRefreshPill
+                visible={liveRefresh.hasPendingUpdate}
+                onRefresh={liveRefresh.applyStaged}
+                onDismiss={liveRefresh.dismissStaged}
+              />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToHorizontalAxis]}
+                onDragEnd={handleColumnDragEnd}
+              >
+                <Table
+                  data-density={density}
+                  className={cn(
+                    "border-separate border-spacing-0",
+                    density === "compact" && "[&_td]:py-1 [&_td]:text-xs [&_th]:h-8",
+                  )}
+                  containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-md border border-border"
+                  style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
+                >
+                  <TableHeader className="sticky top-0 z-20 bg-muted backdrop-blur-sm">
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                        <SortableContext
+                          items={reorderableIds}
+                          strategy={horizontalListSortingStrategy}
                         >
-                          {header.isPlaceholder ? null : isSortable ? (
-                            <DataTableColumnHeader
-                              column={header.column}
-                              title={
-                                typeof header.column.columnDef.header === "string"
-                                  ? header.column.columnDef.header
-                                  : meta?.label || header.column.id
-                              }
-                              currentSort={sort}
+                          {headerGroup.headers.map((header) => (
+                            <DataTableHeaderCell
+                              key={header.id}
+                              header={header}
+                              sort={sort}
                               onSort={handleSortChange}
                             />
-                          ) : (
-                            flexRender(header.column.columnDef.header, header.getContext())
-                          )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <DataTableBody
-                table={table}
-                columns={tableColumns}
-                isLoading={dataQuery.isLoading}
-                contextMenuActions={contextMenuActions}
-                onRowClick={onRowClick}
-              />
-            </Table>
+                          ))}
+                        </SortableContext>
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <DataTableBody
+                    table={table}
+                    columns={tableColumns}
+                    isLoading={dataQuery.isLoading}
+                    contextMenuActions={contextMenuActions}
+                    onRowClick={onRowClick}
+                    getFormatClass={compiledFormatRules}
+                    hasActiveFilters={hasActiveFilters}
+                    onClearFilters={handleClearFilters}
+                  />
+                </Table>
+              </DndContext>
+            </div>
             <DataTablePagination
               table={table}
               onPageChange={handlePageChange}
@@ -530,6 +811,7 @@ export function DataTable<TData extends Record<string, any>>({
               mode="cursor"
               hasNextPage={cursorPageInfo?.hasNextPage}
               currentPageRowCount={currentPageRowCount}
+              totalCount={totalCount}
             />
           </div>
         </DataTablePanelContent>

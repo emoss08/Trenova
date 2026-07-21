@@ -25,6 +25,8 @@ interface DataTablePanelContextType<TData = unknown> {
   panelMode: PanelMode;
   panelRow: TData | null;
   rowSelection: RowSelectionState;
+  selectedCount: number;
+  getSelectedRows: () => TData[];
   openPanelCreate: () => void;
   openPanelEdit: (row: Row<TData>) => void;
   closePanel: () => void;
@@ -48,6 +50,7 @@ interface DataTableContextType<TData = unknown, TValue = unknown>
 const DataTableContext = createContext<DataTableContextType<any, any> | null>(null);
 
 const noopFn = () => {};
+const emptyRows = () => [];
 
 export function DataTableProvider<TData, TValue>({
   children,
@@ -65,6 +68,8 @@ export function DataTableProvider<TData, TValue>({
       isLoading: props.isLoading,
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
       rowSelection: props.rowSelection ?? {},
+      selectedCount: props.selectedCount ?? 0,
+      getSelectedRows: props.getSelectedRows ?? emptyRows,
       isPanelOpen: props.isPanelOpen ?? false,
       panelMode: props.panelMode ?? "create",
       panelRow: props.panelRow ?? null,
@@ -83,6 +88,8 @@ export function DataTableProvider<TData, TValue>({
       props.isLoading,
       props.pagination,
       props.rowSelection,
+      props.selectedCount,
+      props.getSelectedRows,
       props.isPanelOpen,
       props.panelMode,
       props.panelRow,

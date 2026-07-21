@@ -1,6 +1,7 @@
 "use no memo";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { useDataTable } from "@/contexts/data-table-context";
 import { cn } from "@/lib/utils";
 import type { DockAction } from "@/types/data-table";
 import type { Table } from "@tanstack/react-table";
@@ -22,16 +23,15 @@ export function DataTableDock<TData>({
 }: DataTableDockProps<TData>) {
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const [openSelectId, setOpenSelectId] = useState<string | null>(null);
-  const selectedRows = table.getFilteredSelectedRowModel().rows;
-  const selectedCount = selectedRows.length;
+  const { selectedCount, getSelectedRows } = useDataTable<TData, unknown>();
 
   const handleClearSelection = useCallback(() => {
-    table.toggleAllRowsSelected(false);
+    table.setRowSelection({});
   }, [table]);
 
   const getSelectedData = useCallback((): TData[] => {
-    return selectedRows.map((row) => row.original);
-  }, [selectedRows]);
+    return getSelectedRows();
+  }, [getSelectedRows]);
 
   const handleSimpleActionClick = useCallback(
     async (action: DockAction<TData>) => {

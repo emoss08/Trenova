@@ -130,29 +130,35 @@ export async function fetchDataTablePage<TData extends Record<string, unknown>>(
   return fetchGraphQLData(pageSize, graphql, options);
 }
 
+export function buildDataTableQueryKey<TData extends Record<string, unknown>>(
+  queryKey: string,
+  graphql: DataTableGraphQLConfig<TData>,
+  pagination: PaginationState,
+  options?: DataTableQueryOptions,
+) {
+  return [
+    queryKey,
+    pagination,
+    options,
+    {
+      connectionKey: graphql.connectionKey,
+      operationName: graphql.operationName,
+      extraVariables: resolveExtraVariables(graphql, pagination.pageSize, options),
+      inputExtraVariables: resolveInputExtraVariables(graphql, pagination.pageSize, options),
+    },
+  ] as const;
+}
+
 export function useDataTableQuery<TData extends Record<string, unknown>>(
   queryKey: string,
   graphql: DataTableGraphQLConfig<TData>,
   pagination: PaginationState,
   options?: DataTableQueryOptions,
   enabled = true,
-  refetchIntervalMs?: number,
 ) {
-  const extraVariables = resolveExtraVariables(graphql, pagination.pageSize, options);
-
+  // oxlint-disable-next-line @tanstack/query/exhaustive-deps
   return useQuery<GenericLimitOffsetResponse<TData>, Error>({
-    queryKey: [
-      queryKey,
-      pagination,
-      options,
-      {
-        connectionKey: graphql.connectionKey,
-        document: graphql.document.toString(),
-        graphql,
-        operationName: graphql.operationName,
-        extraVariables,
-      },
-    ],
+    queryKey: buildDataTableQueryKey(queryKey, graphql, pagination, options),
     queryFn: async () =>
       fetchDataTablePage<TData>({
         pageSize: pagination.pageSize,
@@ -160,6 +166,5 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
         graphql,
       }),
     enabled,
-    refetchInterval: refetchIntervalMs,
   });
 }

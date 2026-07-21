@@ -75,6 +75,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *tableconfiguration.TableConfiguration,
+	tenantInfo pagination.TenantInfo,
 ) (*tableconfiguration.TableConfiguration, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
@@ -87,6 +88,25 @@ func (s *Service) Update(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
+
+	existing, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: entity.ID,
+		TenantInfo:      tenantInfo,
+	})
+	if err != nil {
+		log.Error("failed to get table configuration", zap.Error(err))
+		return nil, err
+	}
+
+	if existing.UserID != tenantInfo.UserID {
+		return nil, errortypes.NewAuthorizationError(
+			"Only the owner can modify this view. Duplicate it to make changes.",
+		)
+	}
+
+	entity.UserID = existing.UserID
+	entity.Version = existing.Version
+	entity.IsOrgDefault = existing.IsOrgDefault
 
 	if entity.IsDefault {
 		if err := s.repo.ClearDefaultForResource(
@@ -144,7 +164,20 @@ func (s *Service) Delete(
 		zap.String("id", id.String()),
 	)
 
-	if err := s.repo.Delete(ctx, id, tenantInfo); err != nil {
+	existing, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: id,
+		TenantInfo:      tenantInfo,
+	})
+	if err != nil {
+		log.Error("failed to get table configuration", zap.Error(err))
+		return err
+	}
+
+	if existing.UserID != tenantInfo.UserID {
+		return errortypes.NewAuthorizationError("Only the owner can delete this view.")
+	}
+
+	if err = s.repo.Delete(ctx, id, tenantInfo); err != nil {
 		log.Error("failed to delete table configuration", zap.Error(err))
 		return err
 	}
@@ -178,6 +211,12 @@ func (s *Service) SetDefault(
 		return nil, err
 	}
 
+	if entity.UserID != tenantInfo.UserID {
+		return nil, errortypes.NewAuthorizationError(
+			"Only your own views can be set as your default. Duplicate this view first.",
+		)
+	}
+
 	if err = s.repo.ClearDefaultForResource(
 		ctx,
 		entity.UserID,
@@ -193,6 +232,54 @@ func (s *Service) SetDefault(
 	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
 		log.Error("failed to set table configuration as default", zap.Error(err))
+		return nil, err
+	}
+
+	return updated, nil
+}
+
+func (s *Service) SetOrgDefault(
+	ctx context.Context,
+	id pulid.ID,
+	enabled bool,
+	tenantInfo pagination.TenantInfo,
+) (*tableconfiguration.TableConfiguration, error) {
+	log := s.l.With(
+		zap.String("operation", "SetOrgDefault"),
+		zap.String("id", id.String()),
+		zap.Bool("enabled", enabled),
+	)
+
+	entity, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: id,
+		TenantInfo:      tenantInfo,
+	})
+	if err != nil {
+		log.Error("failed to get table configuration", zap.Error(err))
+		return nil, err
+	}
+
+	if enabled && entity.Visibility != tableconfiguration.VisibilityPublic {
+		return nil, errortypes.NewBusinessError(
+			"Only public views can be set as the organization default.",
+		)
+	}
+
+	if err = s.repo.ClearOrgDefaultForResource(ctx, entity.Resource, tenantInfo); err != nil {
+		log.Error("failed to clear existing org default", zap.Error(err))
+		return nil, err
+	}
+
+	if !enabled {
+		entity.IsOrgDefault = false
+		return entity, nil
+	}
+
+	entity.IsOrgDefault = true
+
+	updated, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		log.Error("failed to set org default table configuration", zap.Error(err))
 		return nil, err
 	}
 

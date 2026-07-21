@@ -5,13 +5,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { AddRecordAction, FilterItem, SortField } from "@/types/data-table";
-import type { TableConfig } from "@/types/table-configuration";
+import { useDataTable } from "@/contexts/data-table-context";
+import type {
+  AddRecordAction,
+  DataTableGraphQLConfig,
+  DataTableQueryOptions,
+  FilterItem,
+  SortField,
+} from "@/types/data-table";
+import type {
+  ActiveTableView,
+  TableConfig,
+  TableConfiguration,
+  TableDensity,
+  TableFormatRule,
+  TableViewSource,
+} from "@/types/table-configuration";
 import type { ColumnDef, Table } from "@tanstack/react-table";
-import { ChevronDownIcon, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 
 const DataTableSearch = lazy(
@@ -26,12 +41,20 @@ const DataTableSortBuilder = lazy(
   () => import("@/components/data-table/data-table-sort-builder"),
 );
 
-const DataTableViewOptions = lazy(
-  () => import("@/components/data-table/data-table-view-options"),
+const DataTableFormatBuilder = lazy(
+  () => import("@/components/data-table/data-table-format-builder"),
+);
+
+const DataTableDisplayMenu = lazy(
+  () => import("@/components/data-table/data-table-display-menu"),
 );
 
 const DataTableConfigManager = lazy(
   () => import("@/components/data-table/data-table-config-manager"),
+);
+
+const DataTableExportDialog = lazy(
+  () => import("@/components/data-table/data-table-export-dialog"),
 );
 
 function ToolbarButtonSkeleton() {
@@ -42,7 +65,14 @@ function SearchSkeleton() {
   return <Skeleton className="h-7 w-48" />;
 }
 
-type DataTableToolbarProps<TData> = {
+type DataTableExportContext<TData extends Record<string, any>> = {
+  graphql: DataTableGraphQLConfig<TData>;
+  queryOptions: Omit<DataTableQueryOptions, "cursor">;
+  currentPageRows: TData[];
+  totalCount: number | null;
+};
+
+type DataTableToolbarProps<TData extends Record<string, any>> = {
   table: Table<TData>;
   columns: ColumnDef<TData>[];
   query: string;
@@ -54,10 +84,19 @@ type DataTableToolbarProps<TData> = {
   addRecordActions?: AddRecordAction[];
   resource?: string;
   currentConfig: TableConfig;
-  onApplyConfig?: (config: TableConfig) => void;
+  onApplyConfig?: (config: TableConfig, source?: TableViewSource) => void;
+  activeView?: ActiveTableView | null;
+  isViewDirty?: boolean;
+  onViewPersisted?: (config: TableConfiguration) => void;
+  onViewDeleted?: (id: string) => void;
+  formatRules?: TableFormatRule[];
+  onFormatRulesChange?: (rules: TableFormatRule[]) => void;
+  density?: TableDensity;
+  onDensityChange?: (density: TableDensity) => void;
+  exportContext?: DataTableExportContext<TData>;
 };
 
-export function DataTableToolbar<TData>({
+export function DataTableToolbar<TData extends Record<string, any>>({
   table,
   columns,
   query,
@@ -70,10 +109,23 @@ export function DataTableToolbar<TData>({
   resource,
   currentConfig,
   onApplyConfig,
+  activeView,
+  isViewDirty = false,
+  onViewPersisted,
+  onViewDeleted,
+  formatRules = [],
+  onFormatRulesChange,
+  density = "comfortable",
+  onDensityChange,
+  exportContext,
 }: DataTableToolbarProps<TData>) {
+  const { canExport } = useDataTable<TData, unknown>();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
   const hasAddRecordActions = addRecordActions.length > 0;
   const hasSingleAddRecordAction = addRecordActions.length === 1;
+  const showExport = !!exportContext && !!resource && canExport;
 
   return (
     <>
@@ -84,14 +136,14 @@ export function DataTableToolbar<TData>({
           </Suspense>
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableFilterBuilder
-              columns={columns as ColumnDef<unknown>[]}
+              columns={columns as unknown as ColumnDef<unknown>[]}
               filters={filters}
               onFiltersChange={onFiltersChange}
             />
           </Suspense>
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableSortBuilder
-              columns={columns as ColumnDef<unknown>[]}
+              columns={columns as unknown as ColumnDef<unknown>[]}
               sort={sort}
               onSortChange={onSortChange}
             />
@@ -100,14 +152,45 @@ export function DataTableToolbar<TData>({
 
         <div className="flex items-center gap-2">
           <Suspense fallback={<ToolbarButtonSkeleton />}>
-            <DataTableViewOptions table={table as Table<unknown>} />
+            <DataTableDisplayMenu
+              table={table as Table<unknown>}
+              density={density}
+              onDensityChange={onDensityChange}
+              formatRuleCount={formatRules.length}
+              onEditFormatRules={
+                onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined
+              }
+            />
           </Suspense>
+          {showExport && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label="Export to CSV"
+                    onClick={() => setExportDialogOpen(true)}
+                  >
+                    <DownloadIcon className="size-4" />
+                  </Button>
+                }
+              />
+              <TooltipContent>Export to CSV</TooltipContent>
+            </Tooltip>
+          )}
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             {resource && onApplyConfig && (
               <DataTableConfigManager
                 resource={resource}
                 onApplyConfig={onApplyConfig}
                 onSaveConfig={() => setSaveDialogOpen(true)}
+                currentConfig={currentConfig}
+                activeViewId={activeView?.id ?? null}
+                activeViewName={activeView?.name ?? null}
+                isViewDirty={isViewDirty}
+                onViewPersisted={onViewPersisted}
+                onViewDeleted={onViewDeleted}
               />
             )}
           </Suspense>
@@ -150,7 +233,33 @@ export function DataTableToolbar<TData>({
           onOpenChange={setSaveDialogOpen}
           resource={resource}
           currentConfig={currentConfig}
+          onSaved={onViewPersisted}
         />
+      )}
+      {onFormatRulesChange && formatDialogOpen && (
+        <Suspense fallback={null}>
+          <DataTableFormatBuilder
+            open={formatDialogOpen}
+            onOpenChange={setFormatDialogOpen}
+            columns={columns as unknown as ColumnDef<unknown>[]}
+            rules={formatRules}
+            onRulesChange={onFormatRulesChange}
+          />
+        </Suspense>
+      )}
+      {showExport && exportDialogOpen && (
+        <Suspense fallback={null}>
+          <DataTableExportDialog
+            open={exportDialogOpen}
+            onOpenChange={setExportDialogOpen}
+            resource={resource}
+            table={table}
+            graphql={exportContext.graphql}
+            queryOptions={exportContext.queryOptions}
+            currentPageRows={exportContext.currentPageRows}
+            totalCount={exportContext.totalCount}
+          />
+        </Suspense>
       )}
     </>
   );

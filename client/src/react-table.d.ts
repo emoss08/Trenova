@@ -21,6 +21,8 @@ declare module "@tanstack/react-table" {
     filterType?: FilterVariant;
     filterOptions?: SelectOption[];
     defaultFilterOperator?: FilterOperator;
+    exportable?: boolean;
+    exportValue?: (row: any) => unknown;
     [key: string]: any;
   }
 

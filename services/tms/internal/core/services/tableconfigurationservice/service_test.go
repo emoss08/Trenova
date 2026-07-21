@@ -111,6 +111,15 @@ func (m *mockRepository) ClearDefaultForResource(
 	return args.Error(0)
 }
 
+func (m *mockRepository) ClearOrgDefaultForResource(
+	ctx context.Context,
+	resource string,
+	tenantInfo pagination.TenantInfo,
+) error {
+	args := m.Called(ctx, resource, tenantInfo)
+	return args.Error(0)
+}
+
 func setupTestService(repo repositories.TableConfigurationRepository) *tc.Service {
 	return tc.New(tc.Params{
 		Logger: zap.NewNop(),
@@ -215,6 +224,26 @@ func TestCreate_RepositoryError(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func tenantInfoFor(entity *tableconfiguration.TableConfiguration) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID:  entity.OrganizationID,
+		BuID:   entity.BusinessUnitID,
+		UserID: entity.UserID,
+	}
+}
+
+func expectGetByID(
+	repo *mockRepository,
+	ctx context.Context,
+	entity *tableconfiguration.TableConfiguration,
+	tenantInfo pagination.TenantInfo,
+) {
+	repo.On("GetByID", ctx, repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: entity.ID,
+		TenantInfo:      tenantInfo,
+	}).Return(entity, nil)
+}
+
 func TestUpdate_Success(t *testing.T) {
 	repo := new(mockRepository)
 	service := setupTestService(repo)
@@ -222,9 +251,12 @@ func TestUpdate_Success(t *testing.T) {
 
 	entity := createValidEntity()
 	entity.Name = "Updated Config"
+	tenantInfo := tenantInfoFor(entity)
+
+	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("Update", ctx, entity).Return(entity, nil)
 
-	result, err := service.Update(ctx, entity)
+	result, err := service.Update(ctx, entity, tenantInfo)
 
 	require.NoError(t, err)
 	assert.Equal(t, "Updated Config", result.Name)
@@ -238,20 +270,76 @@ func TestUpdate_WithIsDefault_ClearsExisting(t *testing.T) {
 
 	entity := createValidEntity()
 	entity.IsDefault = true
+	tenantInfo := tenantInfoFor(entity)
 
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  entity.OrganizationID,
-		BuID:   entity.BusinessUnitID,
-		UserID: entity.UserID,
-	}
-
+	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("ClearDefaultForResource", ctx, entity.UserID, entity.Resource, tenantInfo).Return(nil)
 	repo.On("Update", ctx, entity).Return(entity, nil)
 
-	result, err := service.Update(ctx, entity)
+	result, err := service.Update(ctx, entity, tenantInfo)
 
 	require.NoError(t, err)
 	assert.True(t, result.IsDefault)
+	repo.AssertExpectations(t)
+}
+
+func TestUpdate_NotOwned(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := setupTestService(repo)
+	ctx := t.Context()
+
+	owner := createValidEntity()
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  owner.OrganizationID,
+		BuID:   owner.BusinessUnitID,
+		UserID: pulid.MustNew("usr_"),
+	}
+
+	incoming := *owner
+	incoming.UserID = tenantInfo.UserID
+
+	repo.On("GetByID", ctx, repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: owner.ID,
+		TenantInfo:      tenantInfo,
+	}).Return(owner, nil)
+
+	result, err := service.Update(ctx, &incoming, tenantInfo)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+
+	var authErr *errortypes.AuthorizationError
+	assert.True(t, errors.As(err, &authErr))
+	repo.AssertNotCalled(t, "Update")
+	repo.AssertExpectations(t)
+}
+
+func TestDelete_NotOwned(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := setupTestService(repo)
+	ctx := t.Context()
+
+	owner := createValidEntity()
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  owner.OrganizationID,
+		BuID:   owner.BusinessUnitID,
+		UserID: pulid.MustNew("usr_"),
+	}
+
+	repo.On("GetByID", ctx, repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: owner.ID,
+		TenantInfo:      tenantInfo,
+	}).Return(owner, nil)
+
+	err := service.Delete(ctx, owner.ID, tenantInfo)
+
+	require.Error(t, err)
+
+	var authErr *errortypes.AuthorizationError
+	assert.True(t, errors.As(err, &authErr))
+	repo.AssertNotCalled(t, "Delete")
 	repo.AssertExpectations(t)
 }
 
@@ -309,12 +397,9 @@ func TestDelete_Success(t *testing.T) {
 	ctx := t.Context()
 
 	entity := createValidEntity()
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  entity.OrganizationID,
-		BuID:   entity.BusinessUnitID,
-		UserID: entity.UserID,
-	}
+	tenantInfo := tenantInfoFor(entity)
 
+	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("Delete", ctx, entity.ID, tenantInfo).Return(nil)
 
 	err := service.Delete(ctx, entity.ID, tenantInfo)
@@ -385,6 +470,140 @@ func TestSetDefault_GetByIDError(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestSetDefault_NotOwned(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := setupTestService(repo)
+	ctx := t.Context()
+
+	entity := createValidEntity()
+	entity.Visibility = tableconfiguration.VisibilityPublic
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  entity.OrganizationID,
+		BuID:   entity.BusinessUnitID,
+		UserID: pulid.MustNew("usr_"),
+	}
+
+	req := repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: entity.ID,
+		TenantInfo:      tenantInfo,
+	}
+
+	repo.On("GetByID", ctx, req).Return(entity, nil)
+
+	result, err := service.SetDefault(ctx, entity.ID, tenantInfo)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+
+	var authErr *errortypes.AuthorizationError
+	assert.True(t, errors.As(err, &authErr))
+	repo.AssertNotCalled(t, "ClearDefaultForResource")
+	repo.AssertNotCalled(t, "Update")
+	repo.AssertExpectations(t)
+}
+
+func TestSetOrgDefault_Success(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := setupTestService(repo)
+	ctx := t.Context()
+
+	entity := createValidEntity()
+	entity.Visibility = tableconfiguration.VisibilityPublic
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  entity.OrganizationID,
+		BuID:   entity.BusinessUnitID,
+		UserID: entity.UserID,
+	}
+
+	req := repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: entity.ID,
+		TenantInfo:      tenantInfo,
+	}
+
+	updatedEntity := *entity
+	updatedEntity.IsOrgDefault = true
+
+	repo.On("GetByID", ctx, req).Return(entity, nil)
+	repo.On("ClearOrgDefaultForResource", ctx, entity.Resource, tenantInfo).Return(nil)
+	repo.On("Update", ctx, mock.AnythingOfType("*tableconfiguration.TableConfiguration")).
+		Return(&updatedEntity, nil)
+
+	result, err := service.SetOrgDefault(ctx, entity.ID, true, tenantInfo)
+
+	require.NoError(t, err)
+	assert.True(t, result.IsOrgDefault)
+	repo.AssertExpectations(t)
+}
+
+func TestSetOrgDefault_RequiresPublicVisibility(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := setupTestService(repo)
+	ctx := t.Context()
+
+	entity := createValidEntity()
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  entity.OrganizationID,
+		BuID:   entity.BusinessUnitID,
+		UserID: entity.UserID,
+	}
+
+	req := repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: entity.ID,
+		TenantInfo:      tenantInfo,
+	}
+
+	repo.On("GetByID", ctx, req).Return(entity, nil)
+
+	result, err := service.SetOrgDefault(ctx, entity.ID, true, tenantInfo)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+
+	var bizErr *errortypes.BusinessError
+	assert.True(t, errors.As(err, &bizErr))
+	repo.AssertNotCalled(t, "ClearOrgDefaultForResource")
+	repo.AssertNotCalled(t, "Update")
+	repo.AssertExpectations(t)
+}
+
+func TestSetOrgDefault_Disable(t *testing.T) {
+	t.Parallel()
+	repo := new(mockRepository)
+	service := setupTestService(repo)
+	ctx := t.Context()
+
+	entity := createValidEntity()
+	entity.Visibility = tableconfiguration.VisibilityPublic
+	entity.IsOrgDefault = true
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  entity.OrganizationID,
+		BuID:   entity.BusinessUnitID,
+		UserID: entity.UserID,
+	}
+
+	req := repositories.GetTableConfigurationByIDRequest{
+		ConfigurationID: entity.ID,
+		TenantInfo:      tenantInfo,
+	}
+
+	repo.On("GetByID", ctx, req).Return(entity, nil)
+	repo.On("ClearOrgDefaultForResource", ctx, entity.Resource, tenantInfo).Return(nil)
+
+	result, err := service.SetOrgDefault(ctx, entity.ID, false, tenantInfo)
+
+	require.NoError(t, err)
+	assert.False(t, result.IsOrgDefault)
+	repo.AssertNotCalled(t, "Update")
+	repo.AssertExpectations(t)
+}
+
 func TestGetDefaultForResource_Success(t *testing.T) {
 	repo := new(mockRepository)
 	service := setupTestService(repo)
@@ -419,13 +638,10 @@ func TestDelete_Error(t *testing.T) {
 	ctx := t.Context()
 
 	entity := createValidEntity()
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  entity.OrganizationID,
-		BuID:   entity.BusinessUnitID,
-		UserID: entity.UserID,
-	}
+	tenantInfo := tenantInfoFor(entity)
 	deleteErr := errors.New("delete failed")
 
+	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("Delete", ctx, entity.ID, tenantInfo).Return(deleteErr)
 
 	err := service.Delete(ctx, entity.ID, tenantInfo)
@@ -444,7 +660,7 @@ func TestUpdate_ValidationError(t *testing.T) {
 	entity := createValidEntity()
 	entity.Name = ""
 
-	result, err := service.Update(ctx, entity)
+	result, err := service.Update(ctx, entity, tenantInfoFor(entity))
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -463,11 +679,13 @@ func TestUpdate_RepositoryError(t *testing.T) {
 
 	entity := createValidEntity()
 	entity.Name = "Updated Config"
+	tenantInfo := tenantInfoFor(entity)
 	expectedErr := errors.New("database error")
 
+	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("Update", ctx, entity).Return(nil, expectedErr)
 
-	result, err := service.Update(ctx, entity)
+	result, err := service.Update(ctx, entity, tenantInfo)
 
 	assert.Nil(t, result)
 	assert.Error(t, err)
@@ -512,17 +730,14 @@ func TestUpdate_ClearDefaultError(t *testing.T) {
 	entity := createValidEntity()
 	entity.IsDefault = true
 
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  entity.OrganizationID,
-		BuID:   entity.BusinessUnitID,
-		UserID: entity.UserID,
-	}
+	tenantInfo := tenantInfoFor(entity)
 	clearErr := errors.New("clear default failed")
 
+	expectGetByID(repo, ctx, entity, tenantInfo)
 	repo.On("ClearDefaultForResource", ctx, entity.UserID, entity.Resource, tenantInfo).
 		Return(clearErr)
 
-	result, err := service.Update(ctx, entity)
+	result, err := service.Update(ctx, entity, tenantInfo)
 
 	assert.Nil(t, result)
 	assert.Error(t, err)

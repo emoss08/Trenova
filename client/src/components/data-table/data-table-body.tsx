@@ -1,10 +1,17 @@
 "use no memo";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useDataTable } from "@/contexts/data-table-context";
+import {
+  columnSizeVar,
+  pinnedCellClass,
+  pinnedCellStyle,
+  type CompiledFormatRules,
+} from "@/lib/data-table";
 import { cn } from "@/lib/utils";
 import type { DataTableBodyProps, RowAction } from "@/types/data-table";
+import type { ColumnPinningState } from "@tanstack/react-table";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
-import { useCallback } from "react";
+import { memo, useCallback, useRef } from "react";
 import { Spinner } from "../ui/spinner";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
 import { DataTableEmptyState } from "./data-table-empty-state";
@@ -12,25 +19,30 @@ import { DataTableEmptyState } from "./data-table-empty-state";
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]';
 
-function DataTableRow<TData>({
-  row,
-  selected,
-  table,
-  // We don't actually use columnVisibility in the component,
-  // but we need it for the memo comparison
-  // @ts-expect-error - This is a temporary solution to avoid the memo comparison
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  columnVisibility,
-  contextMenuActions,
-  onRowClick,
-}: {
+type DataTableRowProps<TData> = {
   row: Row<TData>;
+  rowIndex: number;
   selected?: boolean;
+  isLastRow: boolean;
   columnVisibility: Record<string, boolean>;
+  columnOrder: string[];
+  columnPinning: ColumnPinningState;
+  formatClass?: string;
   table: Table<TData>;
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
-}) {
+};
+
+function DataTableRowInner<TData>({
+  row,
+  rowIndex,
+  selected,
+  isLastRow,
+  formatClass,
+  table,
+  contextMenuActions,
+  onRowClick,
+}: DataTableRowProps<TData>) {
   const { openPanelEdit, hasPanel, canOpenPanel } = useDataTable<TData, unknown>();
 
   const isClickable = !!(onRowClick || (hasPanel && canOpenPanel));
@@ -39,6 +51,7 @@ function DataTableRow<TData>({
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>) => {
+      if (e.shiftKey) return;
       const target = e.target as HTMLElement;
 
       if (target.closest(INTERACTIVE_SELECTOR)) return;
@@ -65,30 +78,40 @@ function DataTableRow<TData>({
   const tableRow = (
     <TableRow
       id={row.id}
+      data-row-index={rowIndex}
+      tabIndex={-1}
       data-state={selected && "selected"}
       onClick={isClickable ? handleRowClick : undefined}
       className={cn(
-        "-outline-offset-2 outline-brand transition-colors data-[state=selected]:outline",
+        "group/row -outline-offset-2 outline-brand transition-colors focus-visible:outline data-[state=selected]:outline",
         isClickable && "cursor-pointer",
+        formatClass,
         table.options.meta?.getRowClassName?.(row),
       )}
     >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell
-          className={cn("truncate border-b border-border font-sans", {
-            "border-b-0": row.index === table.getRowModel().rows.length - 1,
-          })}
-          key={cell.id}
-          role="cell"
-          aria-label={`${cell.column.id} cell`}
-          style={{
-            width: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
-            maxWidth: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
-          }}
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell) => {
+        const pinned = cell.column.getIsPinned();
+        return (
+          <TableCell
+            className={cn(
+              "truncate border-b border-border font-sans",
+              isLastRow && "border-b-0",
+              pinned && pinnedCellClass(cell.column),
+              pinned && "group-hover/row:bg-muted",
+            )}
+            key={cell.id}
+            role="cell"
+            aria-label={`${cell.column.id} cell`}
+            style={{
+              width: `var(${columnSizeVar(cell.column.id)})`,
+              maxWidth: `var(${columnSizeVar(cell.column.id)})`,
+              ...pinnedCellStyle(cell.column),
+            }}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 
@@ -103,38 +126,145 @@ function DataTableRow<TData>({
   return tableRow;
 }
 
+const DataTableRow = memo(DataTableRowInner) as typeof DataTableRowInner;
+
 export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
   isLoading,
   contextMenuActions,
   onRowClick,
+  getFormatClass,
+  hasActiveFilters,
+  onClearFilters,
 }: DataTableBodyProps<TData> & {
   isLoading?: boolean;
+  getFormatClass?: CompiledFormatRules<TData> | null;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }) {
+  const rows = table.getRowModel().rows;
+  const { columnVisibility, columnOrder, columnPinning } = table.getState();
+  const enableSelection = table.options.enableRowSelection === true;
+  const selectionAnchorRef = useRef<number | null>(null);
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+
+  const focusRowAt = useCallback((index: number) => {
+    const target = bodyRef.current?.querySelector<HTMLTableRowElement>(
+      `tr[data-row-index="${index}"]`,
+    );
+    target?.focus();
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTableSectionElement>) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("input, textarea, select, [contenteditable=true]")) return;
+
+      const focusedRow = target.closest<HTMLTableRowElement>("tr[data-row-index]");
+      const rowCount = table.getRowModel().rows.length;
+      if (rowCount === 0) return;
+      const currentIndex = focusedRow ? Number(focusedRow.dataset.rowIndex) : -1;
+
+      switch (e.key) {
+        case "ArrowDown":
+        case "j":
+          e.preventDefault();
+          focusRowAt(Math.min(currentIndex + 1, rowCount - 1));
+          break;
+        case "ArrowUp":
+        case "k":
+          e.preventDefault();
+          focusRowAt(Math.max(currentIndex - 1, 0));
+          break;
+        case "Home":
+          e.preventDefault();
+          focusRowAt(0);
+          break;
+        case "End":
+          e.preventDefault();
+          focusRowAt(rowCount - 1);
+          break;
+        case "Enter": {
+          if (!focusedRow || focusedRow !== target) return;
+          e.preventDefault();
+          focusedRow.click();
+          break;
+        }
+        case " ": {
+          if (!enableSelection || !focusedRow || currentIndex < 0) return;
+          e.preventDefault();
+          const row = table.getRowModel().rows[currentIndex];
+          row?.toggleSelected();
+          selectionAnchorRef.current = currentIndex;
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [table, enableSelection, focusRowAt],
+  );
+
+  const handleClickCapture = useCallback(
+    (e: React.MouseEvent<HTMLTableSectionElement>) => {
+      if (!enableSelection) return;
+      const target = e.target as HTMLElement;
+      const rowEl = target.closest<HTMLTableRowElement>("tr[data-row-index]");
+      if (!rowEl) return;
+      const rowIndex = Number(rowEl.dataset.rowIndex);
+
+      if (e.shiftKey && selectionAnchorRef.current !== null) {
+        e.preventDefault();
+        e.stopPropagation();
+        const start = Math.min(selectionAnchorRef.current, rowIndex);
+        const end = Math.max(selectionAnchorRef.current, rowIndex);
+        const pageRows = table.getRowModel().rows;
+        const rangeSelection: Record<string, boolean> = {};
+        for (let i = start; i <= end; i++) {
+          const row = pageRows[i];
+          if (row?.getCanSelect()) rangeSelection[row.id] = true;
+        }
+        table.setRowSelection((current) => ({ ...current, ...rangeSelection }));
+        return;
+      }
+
+      if (target.closest('[role="checkbox"]')) {
+        selectionAnchorRef.current = rowIndex;
+      }
+    },
+    [table, enableSelection],
+  );
+
   return (
     <TableBody
+      ref={bodyRef}
       id="content"
       tabIndex={-1}
+      onKeyDown={handleKeyDown}
+      onClickCapture={handleClickCapture}
       // REMINDER: avoids scroll (skipping the table header) when using skip to content
       style={{
         scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
       }}
     >
-      {table.getRowModel().rows?.length ? (
-        table.getRowModel().rows.map((row) => {
-          return (
-            <DataTableRow
-              key={row.id}
-              row={row}
-              selected={row.getIsSelected()}
-              columnVisibility={table.getState().columnVisibility}
-              table={table}
-              contextMenuActions={contextMenuActions}
-              onRowClick={onRowClick}
-            />
-          );
-        })
+      {rows.length ? (
+        rows.map((row, index) => (
+          <DataTableRow
+            key={row.id}
+            row={row}
+            rowIndex={index}
+            selected={row.getIsSelected()}
+            isLastRow={index === rows.length - 1}
+            columnVisibility={columnVisibility}
+            columnOrder={columnOrder}
+            columnPinning={columnPinning}
+            formatClass={getFormatClass?.(row)}
+            table={table}
+            contextMenuActions={contextMenuActions}
+            onRowClick={onRowClick}
+          />
+        ))
       ) : isLoading ? (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-24 rounded-b-md border-b text-center">
@@ -147,7 +277,10 @@ export function DataTableBody<TData extends Record<string, any>>({
       ) : (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-[300px] p-0">
-            <DataTableEmptyState />
+            <DataTableEmptyState
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={onClearFilters}
+            />
           </TableCell>
         </TableRow>
       )}

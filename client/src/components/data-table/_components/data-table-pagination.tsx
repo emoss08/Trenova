@@ -16,6 +16,7 @@ type DataTablePaginationProps<TData> = {
   mode?: "offset" | "cursor";
   hasNextPage?: boolean;
   currentPageRowCount?: number;
+  totalCount?: number | null;
   pageSizeOptions?: readonly number[];
   onPageChange?: (pageIndex: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
@@ -28,6 +29,7 @@ export function DataTablePagination<TData>({
   mode = "offset",
   hasNextPage,
   currentPageRowCount,
+  totalCount = null,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   onPageChange,
   onPageSizeChange,
@@ -55,21 +57,38 @@ export function DataTablePagination<TData>({
     ? pageIndex * pageSize + visibleRowCount
     : Math.min((pageIndex + 1) * pageSize, rowCount);
 
-  if (visibleRowCount < 1) {
+  if (visibleRowCount < 1 && pageIndex === 0) {
     return null;
   }
 
   return (
     <div className="flex items-center justify-between gap-4 px-2">
       <div className="text-sm text-muted-foreground">
-        Showing <span className="font-medium text-foreground">{startRow}</span> to{" "}
-        <span className="font-medium text-foreground">{endRow}</span>
-        {cursorMode ? (
-          <> results</>
+        {visibleRowCount < 1 ? (
+          <>No results on this page</>
         ) : (
           <>
-            {" "}
-            of <span className="font-medium text-foreground">{rowCount}</span> results
+            Showing <span className="font-medium text-foreground">{startRow}</span> to{" "}
+            <span className="font-medium text-foreground">{endRow}</span>
+            {cursorMode ? (
+              totalCount != null ? (
+                <>
+                  {" "}
+                  of{" "}
+                  <span className="font-medium text-foreground">
+                    {totalCount.toLocaleString()}
+                  </span>{" "}
+                  results
+                </>
+              ) : (
+                <> results</>
+              )
+            ) : (
+              <>
+                {" "}
+                of <span className="font-medium text-foreground">{rowCount}</span> results
+              </>
+            )}
           </>
         )}
       </div>
@@ -120,7 +139,7 @@ export function DataTablePagination<TData>({
           <div className="flex items-center gap-1 px-2 text-sm">
             <span className="text-muted-foreground">Page</span>
             <span className="font-medium">{pageIndex + 1}</span>
-            {!cursorMode && (
+            {(!cursorMode || totalCount != null) && (
               <>
                 <span className="text-muted-foreground">of</span>
                 <span className="font-medium">{pageCount || 1}</span>

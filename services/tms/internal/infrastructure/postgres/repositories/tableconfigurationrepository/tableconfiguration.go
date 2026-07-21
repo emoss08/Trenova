@@ -160,10 +160,17 @@ func (r *repository) scopeQuery(
 
 func applyTableConfigurationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.TableConfigurationTable.All())
+		q = q.ColumnExpr(buncolgen.TableConfigurationTable.All())
+	} else {
+		q = q.Column(columns...)
 	}
 
-	return q.Column(columns...)
+	return q.Relation(
+		buncolgen.TableConfigurationRelations.User,
+		func(uq *bun.SelectQuery) *bun.SelectQuery {
+			return uq.Column("id", "name", "email_address", "profile_pic_url")
+		},
+	)
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -364,12 +371,58 @@ func (r *repository) GetDefaultForResource(
 				Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
 		}).
 		Scan(ctx)
+	if err == nil {
+		return entity, nil
+	}
+
+	orgDefault := new(tableconfiguration.TableConfiguration)
+	err = r.db.DB().
+		NewSelect().
+		Model(orgDefault).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("tc.resource = ?", req.Resource).
+				Where("tc.is_org_default = ?", true).
+				Where("tc.visibility = ?", tableconfiguration.VisibilityPublic).
+				Where("tc.organization_id = ?", req.TenantInfo.OrgID).
+				Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
+		}).
+		Scan(ctx)
 	if err != nil {
 		log.Debug("no default table configuration found", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
 	}
 
-	return entity, nil
+	return orgDefault, nil
+}
+
+func (r *repository) ClearOrgDefaultForResource(
+	ctx context.Context,
+	resource string,
+	tenantInfo pagination.TenantInfo,
+) error {
+	log := r.l.With(
+		zap.String("operation", "ClearOrgDefaultForResource"),
+		zap.String("resource", resource),
+	)
+
+	_, err := r.db.DB().
+		NewUpdate().
+		Model((*tableconfiguration.TableConfiguration)(nil)).
+		Set("is_org_default = ?", false).
+		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.Where("tc.resource = ?", resource).
+				Where("tc.is_org_default = ?", true).
+				Where("tc.organization_id = ?", tenantInfo.OrgID).
+				Where("tc.business_unit_id = ?", tenantInfo.BuID)
+		}).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to clear org default table configuration", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (r *repository) ClearDefaultForResource(

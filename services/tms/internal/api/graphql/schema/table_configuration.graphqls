@@ -15,6 +15,7 @@ type TableConfiguration {
   tableConfig: JSON!
   visibility: ConfigurationVisibility!
   isDefault: Boolean!
+  isOrgDefault: Boolean!
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -68,4 +69,5 @@ extend type Mutation {
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
   deleteTableConfiguration(id: ID!): Boolean!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
+  setOrgDefaultTableConfiguration(id: ID!, enabled: Boolean!): TableConfiguration!
 }

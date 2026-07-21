@@ -9,9 +9,15 @@ fragment TableConfigurationFields on TableConfiguration {
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
+  user {
+    id
+    name
+    profilePicUrl
+  }
 }
 
 query TableConfigurationTable(
@@ -62,6 +68,12 @@ mutation DeleteTableConfiguration($id: ID!) {
 
 mutation SetDefaultTableConfiguration($id: ID!) {
   setDefaultTableConfiguration(id: $id) {
+    ...TableConfigurationFields
+  }
+}
+
+mutation SetOrgDefaultTableConfiguration($id: ID!, $enabled: Boolean!) {
+  setOrgDefaultTableConfiguration(id: $id, enabled: $enabled) {
     ...TableConfigurationFields
   }
 }

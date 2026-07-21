@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,7 +50,7 @@ func (r *mutationResolver) UpdateTableConfiguration(ctx context.Context, id stri
 		return nil, err
 	}
 
-	return r.tableConfigurationService.Update(ctx, entity)
+	return r.tableConfigurationService.Update(ctx, entity, tenantInfo(authCtx))
 }
 
 // PatchTableConfiguration is the resolver for the patchTableConfiguration field.
@@ -79,7 +80,7 @@ func (r *mutationResolver) PatchTableConfiguration(ctx context.Context, id strin
 		return nil, err
 	}
 
-	return r.tableConfigurationService.Update(ctx, existing)
+	return r.tableConfigurationService.Update(ctx, existing, tenantInfo(authCtx))
 }
 
 // DeleteTableConfiguration is the resolver for the deleteTableConfiguration field.
@@ -114,6 +115,21 @@ func (r *mutationResolver) SetDefaultTableConfiguration(ctx context.Context, id 
 	}
 
 	return r.tableConfigurationService.SetDefault(ctx, configurationID, tenantInfo(authCtx))
+}
+
+// SetOrgDefaultTableConfiguration is the resolver for the setOrgDefaultTableConfiguration field.
+func (r *mutationResolver) SetOrgDefaultTableConfiguration(ctx context.Context, id string, enabled bool) (*tableconfiguration.TableConfiguration, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrganization, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	configurationID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.tableConfigurationService.SetOrgDefault(ctx, configurationID, enabled, tenantInfo(authCtx))
 }
 
 // TableConfigurations is the resolver for the tableConfigurations field.

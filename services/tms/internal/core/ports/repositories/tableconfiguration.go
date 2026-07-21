@@ -75,4 +75,10 @@ type TableConfigurationRepository interface {
 		resource string,
 		tenantInfo pagination.TenantInfo,
 	) error
+
+	ClearOrgDefaultForResource(
+		ctx context.Context,
+		resource string,
+		tenantInfo pagination.TenantInfo,
+	) error
 }

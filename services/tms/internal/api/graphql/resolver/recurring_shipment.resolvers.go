@@ -61,7 +61,7 @@ func (r *queryResolver) RecurringShipment(ctx context.Context, id string) (*recu
 }
 
 // LeadTimeDays is the resolver for the leadTimeDays field.
-func (r *recurringShipmentResolver) LeadTimeDays(_ context.Context, obj *recurringshipment.RecurringShipment) (int, error) {
+func (r *recurringShipmentResolver) LeadTimeDays(ctx context.Context, obj *recurringshipment.RecurringShipment) (int, error) {
 	return int(obj.LeadTimeDays), nil
 }
 

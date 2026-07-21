@@ -22,7 +22,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { GlobeIcon, LockIcon } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { SwitchField } from "../fields/switch-field";
@@ -33,6 +33,7 @@ type DataTableSaveConfigDialogProps = {
   onOpenChange: (open: boolean) => void;
   resource: string;
   currentConfig: TableConfig;
+  onSaved?: (config: TableConfiguration) => void;
 };
 
 export function useVisibilityOptions() {
@@ -57,6 +58,7 @@ export function DataTableSaveConfigDialog({
   onOpenChange,
   resource,
   currentConfig,
+  onSaved,
 }: DataTableSaveConfigDialogProps) {
   const queryClient = useQueryClient();
   const visibilityOptions = useVisibilityOptions();
@@ -78,9 +80,23 @@ export function DataTableSaveConfigDialog({
     handleSubmit,
     reset,
     setError,
-    setValue,
     formState: { isSubmitting },
   } = form;
+
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      reset({
+        name: "",
+        description: "",
+        resource,
+        tableConfig: currentConfig,
+        visibility: "Private",
+        isDefault: false,
+      });
+    }
+    wasOpenRef.current = open;
+  }, [open, reset, resource, currentConfig]);
 
   const { mutateAsync } = useApiMutation<
     TableConfiguration,
@@ -92,13 +108,15 @@ export function DataTableSaveConfigDialog({
       apiService.tableConfigurationService.create(data),
     resourceName: "Table Configuration",
     setFormError: setError,
-    onSuccess: () => {
+    onSuccess: (created) => {
       void queryClient.invalidateQueries({
         queryKey: ["tableConfiguration"],
       });
 
-      toast.success("Table Configuration created", {
-        description: "Table Configuration created successfully",
+      onSaved?.(created);
+
+      toast.success("View saved", {
+        description: `"${created.name}" has been saved.`,
       });
     },
   });
@@ -107,17 +125,6 @@ export function DataTableSaveConfigDialog({
     onOpenChange(false);
     reset();
   }, [onOpenChange, reset]);
-
-  const handleDialogOpenChange = useCallback(
-    (nextOpen: boolean) => {
-      if (nextOpen) {
-        setValue("tableConfig", currentConfig);
-        setValue("resource", resource);
-      }
-      onOpenChange(nextOpen);
-    },
-    [currentConfig, onOpenChange, resource, setValue],
-  );
 
   const onSubmit = useCallback(
     async (values: TableConfigurationFormValues) => {
@@ -128,8 +135,8 @@ export function DataTableSaveConfigDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-w-[400px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle>Save View</DialogTitle>
           <DialogDescription>

@@ -21,6 +21,19 @@ var (
 	_ domaintypes.PostgresSearchable     = (*TableConfiguration)(nil)
 )
 
+type ColumnPinning struct {
+	Left  []string `json:"left"`
+	Right []string `json:"right"`
+}
+
+type FormatRule struct {
+	ID       string `json:"id"`
+	Field    string `json:"field"`
+	Operator string `json:"operator"`
+	Value    any    `json:"value"`
+	Color    string `json:"color"`
+}
+
 type TableConfig struct {
 	FilterGroups     []domaintypes.FilterGroup `json:"filterGroups"`
 	FieldFilters     []domaintypes.FieldFilter `json:"fieldFilters"`
@@ -29,6 +42,10 @@ type TableConfig struct {
 	PageSize         int                       `json:"pageSize"`
 	ColumnVisibility map[string]bool           `json:"columnVisibility"`
 	ColumnOrder      []string                  `json:"columnOrder"`
+	ColumnSizing     map[string]float64        `json:"columnSizing"`
+	ColumnPinning    *ColumnPinning            `json:"columnPinning"`
+	Density          string                    `json:"density"`
+	FormatRules      []FormatRule              `json:"formatRules"`
 }
 
 type TableConfiguration struct {
@@ -47,6 +64,7 @@ type TableConfiguration struct {
 	SearchVector   string       `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank           string       `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
 	IsDefault      bool         `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull,default:false"`
+	IsOrgDefault   bool         `json:"isOrgDefault"   bun:"is_org_default,type:BOOLEAN,notnull,default:false"`
 	Version        int64        `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -68,8 +86,7 @@ func (tc *TableConfiguration) Validate(multiErr *errortypes.MultiError) {
 		)),
 	)
 	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
+		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}

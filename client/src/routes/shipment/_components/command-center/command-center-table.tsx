@@ -300,7 +300,9 @@ export function CommandCenterTable({
 
   const currentConfig = useMemo<TableConfig>(() => {
     const visibility: Record<string, boolean> = {};
-    for (const col of table.getAllColumns()) visibility[col.id] = col.getIsVisible();
+    for (const col of table.getAllLeafColumns()) {
+      visibility[col.id] = columnVisibility[col.id] ?? true;
+    }
     return {
       fieldFilters: userFieldFilters,
       filterGroups: userFilterGroups,
@@ -308,9 +310,13 @@ export function CommandCenterTable({
       sort: [],
       pageSize,
       columnVisibility: visibility,
-      columnOrder: table.getState().columnOrder,
+      columnOrder,
+      columnSizing: {},
+      columnPinning: { left: [], right: [] },
+      density: "comfortable",
+      formatRules: [],
     };
-  }, [userFieldFilters, userFilterGroups, pageSize, table]);
+  }, [userFieldFilters, userFilterGroups, pageSize, table, columnVisibility, columnOrder]);
 
   const handleRowClick = (row: Row<Shipment>) => {
     if (row.original.id) toggleExpandedId(row.original.id);

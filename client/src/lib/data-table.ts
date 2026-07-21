@@ -11,7 +11,14 @@ import type {
   SortField,
 } from "@/types/data-table";
 import type { SelectOption } from "@/types/fields";
-import type { ColumnDef } from "@tanstack/react-table";
+import type {
+  FormatRuleColor,
+  TableColumnPinning,
+  TableConfig,
+  TableFormatRule,
+} from "@/types/table-configuration";
+import type { Column, ColumnDef, Row } from "@tanstack/react-table";
+import type { CSSProperties } from "react";
 
 export const FILTER_OPERATORS: Record<FilterVariant, FilterOperator[]> = {
   text: [
@@ -323,6 +330,213 @@ export function convertFilterItemsToFieldFilters(
     operator: item.operator,
     value: item.value,
   }));
+}
+
+export function columnSizeVar(columnId: string): string {
+  return `--col-${columnId.replaceAll(".", "-")}-size`;
+}
+
+export function columnPinOffsetVar(columnId: string, side: "left" | "right"): string {
+  return `--col-${columnId.replaceAll(".", "-")}-${side}`;
+}
+
+export function pinnedCellStyle(column: Column<any, unknown>): CSSProperties | undefined {
+  const pinned = column.getIsPinned();
+  if (!pinned) return undefined;
+  return pinned === "left"
+    ? { left: `var(${columnPinOffsetVar(column.id, "left")})` }
+    : { right: `var(${columnPinOffsetVar(column.id, "right")})` };
+}
+
+export function pinnedCellClass(column: Column<any, unknown>): string | undefined {
+  const pinned = column.getIsPinned();
+  if (!pinned) return undefined;
+  const isBoundary =
+    pinned === "left" ? column.getIsLastColumn("left") : column.getIsFirstColumn("right");
+  if (pinned === "left") {
+    return isBoundary
+      ? "sticky z-10 bg-background shadow-[inset_-1px_0_0_0_var(--border)]"
+      : "sticky z-10 bg-background";
+  }
+  return isBoundary
+    ? "sticky z-10 bg-background shadow-[inset_1px_0_0_0_var(--border)]"
+    : "sticky z-10 bg-background";
+}
+
+function areVisibilityMapsEqual(
+  a: Record<string, boolean> | undefined,
+  b: Record<string, boolean> | undefined,
+): boolean {
+  const keys = new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})]);
+  for (const key of keys) {
+    if ((a?.[key] ?? true) !== (b?.[key] ?? true)) return false;
+  }
+  return true;
+}
+
+function areSizingMapsEqual(
+  a: Record<string, number> | undefined,
+  b: Record<string, number> | undefined,
+): boolean {
+  const keys = new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})]);
+  for (const key of keys) {
+    if (a?.[key] !== b?.[key]) return false;
+  }
+  return true;
+}
+
+const EMPTY_PINNING: TableColumnPinning = { left: [], right: [] };
+
+export function isTableConfigEqual(a: TableConfig, b: TableConfig): boolean {
+  return (
+    a.pageSize === b.pageSize &&
+    (a.density ?? "comfortable") === (b.density ?? "comfortable") &&
+    JSON.stringify(a.fieldFilters ?? []) === JSON.stringify(b.fieldFilters ?? []) &&
+    JSON.stringify(a.filterGroups ?? []) === JSON.stringify(b.filterGroups ?? []) &&
+    JSON.stringify(a.sort ?? []) === JSON.stringify(b.sort ?? []) &&
+    JSON.stringify(a.columnOrder ?? []) === JSON.stringify(b.columnOrder ?? []) &&
+    JSON.stringify(a.columnPinning ?? EMPTY_PINNING) ===
+      JSON.stringify(b.columnPinning ?? EMPTY_PINNING) &&
+    JSON.stringify(a.formatRules ?? []) === JSON.stringify(b.formatRules ?? []) &&
+    areVisibilityMapsEqual(a.columnVisibility, b.columnVisibility) &&
+    areSizingMapsEqual(a.columnSizing, b.columnSizing)
+  );
+}
+
+export const FORMAT_RULE_COLOR_CLASSES: Record<FormatRuleColor, string> = {
+  red: "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-500/15 dark:hover:bg-red-500/20",
+  amber: "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-500/15 dark:hover:bg-amber-500/20",
+  green:
+    "bg-emerald-500/10 hover:bg-emerald-500/15 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/20",
+  blue: "bg-sky-500/10 hover:bg-sky-500/15 dark:bg-sky-500/15 dark:hover:bg-sky-500/20",
+  purple:
+    "bg-violet-500/10 hover:bg-violet-500/15 dark:bg-violet-500/15 dark:hover:bg-violet-500/20",
+  gray: "bg-muted-foreground/10 hover:bg-muted-foreground/15",
+};
+
+export const FORMAT_RULE_COLOR_SWATCHES: Record<FormatRuleColor, string> = {
+  red: "bg-red-500",
+  amber: "bg-amber-500",
+  green: "bg-emerald-500",
+  blue: "bg-sky-500",
+  purple: "bg-violet-500",
+  gray: "bg-muted-foreground",
+};
+
+function isEmptyRuleValue(value: unknown): boolean {
+  return value === null || value === undefined || value === "";
+}
+
+export function stringifyUnknown(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "bigint" || typeof value === "boolean") {
+    return value.toString();
+  }
+  return JSON.stringify(value) ?? "";
+}
+
+function formatRulePredicate(rule: TableFormatRule): (value: unknown) => boolean {
+  const target = rule.value;
+
+  switch (rule.operator) {
+    case "isnull":
+      return isEmptyRuleValue;
+    case "isnotnull":
+      return (value) => !isEmptyRuleValue(value);
+    case "contains": {
+      const needle = stringifyUnknown(target).toLowerCase();
+      return (value) =>
+        !isEmptyRuleValue(value) && stringifyUnknown(value).toLowerCase().includes(needle);
+    }
+    case "eq":
+    case "ne": {
+      const wantEqual = rule.operator === "eq";
+      const targetString = stringifyUnknown(target).toLowerCase();
+      return (value) => {
+        if (isEmptyRuleValue(value)) return !wantEqual;
+        const equal =
+          typeof value === "number" && typeof target === "number"
+            ? value === target
+            : stringifyUnknown(value).toLowerCase() === targetString;
+        return equal === wantEqual;
+      };
+    }
+    case "gt":
+    case "gte":
+    case "lt":
+    case "lte": {
+      const targetNumber = Number(target);
+      if (Number.isNaN(targetNumber)) return () => false;
+      return (value) => {
+        const valueNumber = Number(value);
+        if (isEmptyRuleValue(value) || Number.isNaN(valueNumber)) return false;
+        switch (rule.operator) {
+          case "gt":
+            return valueNumber > targetNumber;
+          case "gte":
+            return valueNumber >= targetNumber;
+          case "lt":
+            return valueNumber < targetNumber;
+          default:
+            return valueNumber <= targetNumber;
+        }
+      };
+    }
+    default:
+      return () => false;
+  }
+}
+
+export type CompiledFormatRules<TData> = (row: Row<TData>) => string | undefined;
+
+export function findColumnIdForField<TData>(
+  field: string,
+  leafColumns: Column<TData, unknown>[],
+): string | null {
+  const column = leafColumns.find((col) => {
+    const def = col.columnDef;
+    return (
+      def.meta?.apiField === field ||
+      ("accessorKey" in def && def.accessorKey === field) ||
+      col.id === field
+    );
+  });
+  return column?.id ?? null;
+}
+
+export function compileFormatRules<TData>(
+  rules: TableFormatRule[],
+  leafColumns: Column<TData, unknown>[],
+): CompiledFormatRules<TData> | null {
+  if (rules.length === 0) return null;
+
+  const compiled: {
+    columnId: string;
+    predicate: (value: unknown) => boolean;
+    className: string;
+  }[] = [];
+
+  for (const rule of rules) {
+    const columnId = findColumnIdForField(rule.field, leafColumns);
+    if (!columnId) continue;
+    compiled.push({
+      columnId,
+      predicate: formatRulePredicate(rule),
+      className: FORMAT_RULE_COLOR_CLASSES[rule.color],
+    });
+  }
+
+  if (compiled.length === 0) return null;
+
+  return (row) => {
+    for (const rule of compiled) {
+      if (rule.predicate(row.getValue(rule.columnId))) {
+        return rule.className;
+      }
+    }
+    return undefined;
+  };
 }
 
 export function initializeFilterItemsFromFieldFilters<TData>(

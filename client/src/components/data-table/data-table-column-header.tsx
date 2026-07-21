@@ -15,6 +15,8 @@ import {
   ArrowUpDownIcon,
   ArrowUpIcon,
   EyeOffIcon,
+  PinIcon,
+  PinOffIcon,
 } from "lucide-react";
 
 type DataTableColumnHeaderProps<TData, TValue> = {
@@ -108,6 +110,41 @@ export function DataTableColumnHeader<TData, TValue>({
                   label="Clear sort"
                   onClick={() => handleSort(null)}
                 />
+              </>
+            )}
+            {column.getCanPin() && (
+              <>
+                <DropdownMenuSeparator />
+                {column.getIsPinned() !== "left" && (
+                  <DropdownMenuItem
+                    onClick={() => column.pin("left")}
+                    startContent={
+                      <PinIcon className="size-3.5 -rotate-45 text-muted-foreground/70" />
+                    }
+                    title="Pin left"
+                    label="Pin left"
+                  />
+                )}
+                {column.getIsPinned() !== "right" && (
+                  <DropdownMenuItem
+                    onClick={() => column.pin("right")}
+                    startContent={
+                      <PinIcon className="size-3.5 rotate-45 text-muted-foreground/70" />
+                    }
+                    title="Pin right"
+                    label="Pin right"
+                  />
+                )}
+                {column.getIsPinned() && (
+                  <DropdownMenuItem
+                    onClick={() => column.pin(false)}
+                    startContent={
+                      <PinOffIcon className="size-3.5 text-muted-foreground/70" />
+                    }
+                    title="Unpin"
+                    label="Unpin"
+                  />
+                )}
               </>
             )}
             {column.getCanHide() && (

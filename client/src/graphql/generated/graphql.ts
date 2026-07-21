@@ -2829,7 +2829,7 @@ export type TcaSubscriptionTableQueryVariables = Exact<{
 
 export type TcaSubscriptionTableQuery = { tcaSubscriptions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TcaSubscriptionTableRowFieldsFragment': TcaSubscriptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type TableConfigurationFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, description: string, resource: string, tableConfig: unknown, visibility: ConfigurationVisibility, isDefault: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TableConfigurationFieldsFragment' };
+export type TableConfigurationFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, description: string, resource: string, tableConfig: unknown, visibility: ConfigurationVisibility, isDefault: boolean, isOrgDefault: boolean, version: number, createdAt: number, updatedAt: number, user: { id: string, name: string, profilePicUrl: string } | null } & { ' $fragmentName'?: 'TableConfigurationFieldsFragment' };
 
 export type TableConfigurationTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -2882,6 +2882,14 @@ export type SetDefaultTableConfigurationMutationVariables = Exact<{
 
 
 export type SetDefaultTableConfigurationMutation = { setDefaultTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
+
+export type SetOrgDefaultTableConfigurationMutationVariables = Exact<{
+  id: string | number;
+  enabled: boolean;
+}>;
+
+
+export type SetOrgDefaultTableConfigurationMutation = { setOrgDefaultTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
 
 export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
 
@@ -5496,9 +5504,15 @@ export const TableConfigurationFieldsFragmentDoc = new TypedDocumentString(`
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
+  user {
+    id
+    name
+    profilePicUrl
+  }
 }
     `, {"fragmentName":"TableConfigurationFields"}) as unknown as TypedDocumentString<TableConfigurationFieldsFragment, unknown>;
 export const UserTableRowFieldsFragmentDoc = new TypedDocumentString(`
@@ -13916,10 +13930,16 @@ fragment TableConfigurationFields on TableConfiguration {
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:021fa0f568747a3357e4b59ba635e5c80bdc5dc0ce28118e04e13d31c02931d4"}) as unknown as TypedDocumentString<TableConfigurationTableQuery, TableConfigurationTableQueryVariables>;
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:552aa20a98ddbbc40843b9a6743488d395872e70590701a81aa5b3480cf1d7df"}) as unknown as TypedDocumentString<TableConfigurationTableQuery, TableConfigurationTableQueryVariables>;
 export const DefaultTableConfigurationDocument = new TypedDocumentString(`
     query DefaultTableConfiguration($resource: String!) {
   defaultTableConfiguration(resource: $resource) {
@@ -13937,10 +13957,16 @@ export const DefaultTableConfigurationDocument = new TypedDocumentString(`
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:f5455dd64d6ae87c336154b63560ddd2f1a985d4eadfa843bcd18851517be0e5"}) as unknown as TypedDocumentString<DefaultTableConfigurationQuery, DefaultTableConfigurationQueryVariables>;
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:44172e730a5efee17642504f34cd054b9dacd048e99f174d4678866c287d99a5"}) as unknown as TypedDocumentString<DefaultTableConfigurationQuery, DefaultTableConfigurationQueryVariables>;
 export const TableConfigurationDetailDocument = new TypedDocumentString(`
     query TableConfigurationDetail($id: ID!) {
   tableConfiguration(id: $id) {
@@ -13958,10 +13984,16 @@ export const TableConfigurationDetailDocument = new TypedDocumentString(`
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:8b96b72329790f8c9ac9ad3392ff7e757e40951be3454e0a3bbf9635105fa359"}) as unknown as TypedDocumentString<TableConfigurationDetailQuery, TableConfigurationDetailQueryVariables>;
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:d3517c4942a70bd816f40494468ad1aef6af9f5b261fe2da3a1f6d7308f61b0e"}) as unknown as TypedDocumentString<TableConfigurationDetailQuery, TableConfigurationDetailQueryVariables>;
 export const CreateTableConfigurationDocument = new TypedDocumentString(`
     mutation CreateTableConfiguration($input: TableConfigurationInput!) {
   createTableConfiguration(input: $input) {
@@ -13979,10 +14011,16 @@ export const CreateTableConfigurationDocument = new TypedDocumentString(`
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:086f96a9688283d2b9077f23d851257bca7c1bb7718c7dee67e567d38c56aa74"}) as unknown as TypedDocumentString<CreateTableConfigurationMutation, CreateTableConfigurationMutationVariables>;
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:9da2c2f361a87c5bef4f0cb0beae047cf548a74b5c389efdf63ccd4adb0e8625"}) as unknown as TypedDocumentString<CreateTableConfigurationMutation, CreateTableConfigurationMutationVariables>;
 export const UpdateTableConfigurationDocument = new TypedDocumentString(`
     mutation UpdateTableConfiguration($id: ID!, $input: TableConfigurationInput!) {
   updateTableConfiguration(id: $id, input: $input) {
@@ -14000,10 +14038,16 @@ export const UpdateTableConfigurationDocument = new TypedDocumentString(`
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:d031325d006875d779bce3b042ab8ae49adc6b7a35e7a31ee0208c2bcb829a8b"}) as unknown as TypedDocumentString<UpdateTableConfigurationMutation, UpdateTableConfigurationMutationVariables>;
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:4c1284c544aa1e09687d7ae906b44f39a035adef42ec417d124be8e5fc9946eb"}) as unknown as TypedDocumentString<UpdateTableConfigurationMutation, UpdateTableConfigurationMutationVariables>;
 export const DeleteTableConfigurationDocument = new TypedDocumentString(`
     mutation DeleteTableConfiguration($id: ID!) {
   deleteTableConfiguration(id: $id)
@@ -14026,10 +14070,43 @@ export const SetDefaultTableConfigurationDocument = new TypedDocumentString(`
   tableConfig
   visibility
   isDefault
+  isOrgDefault
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:66c7e28c908e27654cc05dea05d78d7eab9c14ded06a12228376670fc3f80d8b"}) as unknown as TypedDocumentString<SetDefaultTableConfigurationMutation, SetDefaultTableConfigurationMutationVariables>;
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:d186244dea4960f7116982c1281aa7b3daec229ba06143417bbd3064d746340b"}) as unknown as TypedDocumentString<SetDefaultTableConfigurationMutation, SetDefaultTableConfigurationMutationVariables>;
+export const SetOrgDefaultTableConfigurationDocument = new TypedDocumentString(`
+    mutation SetOrgDefaultTableConfiguration($id: ID!, $enabled: Boolean!) {
+  setOrgDefaultTableConfiguration(id: $id, enabled: $enabled) {
+    ...TableConfigurationFields
+  }
+}
+    fragment TableConfigurationFields on TableConfiguration {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  description
+  resource
+  tableConfig
+  visibility
+  isDefault
+  isOrgDefault
+  version
+  createdAt
+  updatedAt
+  user {
+    id
+    name
+    profilePicUrl
+  }
+}`, {"hash":"sha256:739270b19dc50a3d42f57caf1791f4dc556c4b51547b84eef44000bceb25aadc"}) as unknown as TypedDocumentString<SetOrgDefaultTableConfigurationMutation, SetOrgDefaultTableConfigurationMutationVariables>;
 export const UserTableDocument = new TypedDocumentString(`
     query UserTable($input: DataTableConnectionInput!) {
   users(input: $input) {

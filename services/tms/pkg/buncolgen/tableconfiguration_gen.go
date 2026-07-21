@@ -61,6 +61,7 @@ var TableConfigurationColumns = struct {
 	SearchVector   Column // "search_vector" → qualified: "tc.search_vector"
 	Rank           Column // "rank" → qualified: "tc.rank"
 	IsDefault      Column // "is_default" → qualified: "tc.is_default"
+	IsOrgDefault   Column // "is_org_default" → qualified: "tc.is_org_default"
 	Version        Column // "version" → qualified: "tc.version"
 	CreatedAt      Column // "created_at" → qualified: "tc.created_at"
 	UpdatedAt      Column // "updated_at" → qualified: "tc.updated_at"
@@ -77,6 +78,7 @@ var TableConfigurationColumns = struct {
 	SearchVector:   NewColumn("search_vector", "tc"),
 	Rank:           NewColumn("rank", "tc"),
 	IsDefault:      NewColumn("is_default", "tc"),
+	IsOrgDefault:   NewColumn("is_org_default", "tc"),
 	Version:        NewColumn("version", "tc"),
 	CreatedAt:      NewColumn("created_at", "tc"),
 	UpdatedAt:      NewColumn("updated_at", "tc"),
@@ -97,6 +99,7 @@ var TableConfigurationFieldMap = map[string]string{
 	"tableConfig":    "table_config",
 	"visibility":     "visibility",
 	"isDefault":      "is_default",
+	"isOrgDefault":   "is_org_default",
 	"version":        "version",
 	"createdAt":      "created_at",
 	"updatedAt":      "updated_at",
@@ -115,6 +118,7 @@ var TableConfigurationInsertableColumns = []string{
 	"table_config",
 	"visibility",
 	"is_default",
+	"is_org_default",
 	"version",
 	"created_at",
 	"updated_at",
@@ -195,6 +199,7 @@ var TableConfigurationFilter = struct {
 	TableConfig    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tableConfig" → DB: "table_config"
 	Visibility     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "visibility" → DB: "visibility"
 	IsDefault      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isDefault" → DB: "is_default"
+	IsOrgDefault   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isOrgDefault" → DB: "is_org_default"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -228,6 +233,9 @@ var TableConfigurationFilter = struct {
 	},
 	IsDefault: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isDefault", op, value)
+	},
+	IsOrgDefault: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isOrgDefault", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

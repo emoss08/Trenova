@@ -2830,6 +2830,7 @@ type Mutation {
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   runReport(input: RunReportInput!): ReportRun!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
+  setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
@@ -5198,6 +5199,7 @@ type TableConfiguration {
   description: String!
   id: ID!
   isDefault: Boolean!
+  isOrgDefault: Boolean!
   name: String!
   organization: Organization
   organizationId: ID!

@@ -65,7 +65,8 @@ vi.mock("@/hooks/use-debounce", () => ({
   useDebounce: <T,>(value: T): T => value,
 }));
 
-vi.mock("@/lib/data-table", () => ({
+vi.mock("@/lib/data-table", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/data-table")>()),
   initializeFilterItemsFromFieldFilters: () => [],
   initializeFilterItemsFromFilterGroups: () => [],
   updateSortField: (_sort: unknown, field: string, direction: unknown) => [{ field, direction }],
@@ -142,7 +143,6 @@ describe("DataTable", () => {
         sort: [],
       }),
       true,
-      undefined,
     ]);
   });
 

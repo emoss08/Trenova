@@ -3,12 +3,14 @@ import {
   DefaultTableConfigurationDocument,
   DeleteTableConfigurationDocument,
   SetDefaultTableConfigurationDocument,
+  SetOrgDefaultTableConfigurationDocument,
   TableConfigurationDetailDocument,
   TableConfigurationTableDocument,
   UpdateTableConfigurationDocument,
   type CreateTableConfigurationMutation,
   type DefaultTableConfigurationQuery,
   type SetDefaultTableConfigurationMutation,
+  type SetOrgDefaultTableConfigurationMutation,
   type TableConfigurationDetailQuery,
   type TableConfigurationInput,
   type TableConfigurationTableQuery,
@@ -156,5 +158,30 @@ export class TableConfigurationService {
       response.setDefaultTableConfiguration,
       "Table Configuration",
     );
+  }
+
+  public async setOrgDefault(id: TableConfiguration["id"], enabled: boolean) {
+    const response = (await requestGraphQL({
+      document: SetOrgDefaultTableConfigurationDocument,
+      operationName: "SetOrgDefaultTableConfiguration",
+      variables: { id, enabled },
+    })) as SetOrgDefaultTableConfigurationMutation;
+
+    return safeParse(
+      tableConfigurationSchema,
+      response.setOrgDefaultTableConfiguration,
+      "Table Configuration",
+    );
+  }
+
+  public async duplicate(config: TableConfiguration) {
+    return this.create({
+      name: `${config.name} (copy)`,
+      description: config.description,
+      resource: config.resource,
+      tableConfig: config.tableConfig,
+      visibility: "Private",
+      isDefault: false,
+    });
   }
 }

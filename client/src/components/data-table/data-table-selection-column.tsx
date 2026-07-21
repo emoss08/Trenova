@@ -28,6 +28,7 @@ export function createSelectionColumn<
     ),
     enableSorting: false,
     enableHiding: false,
+    enableResizing: false,
     size: 40,
     meta: {
       sortable: false,
