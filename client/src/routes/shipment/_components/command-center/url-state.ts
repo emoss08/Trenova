@@ -19,6 +19,8 @@ const VIEW_MODES = ["table", "timeline"] as const;
 export type CommandCenterViewMode = (typeof VIEW_MODES)[number];
 const TIMELINE_ZOOMS = ["day", "3day", "week"] as const;
 export type TimelineZoom = (typeof TIMELINE_ZOOMS)[number];
+const TIMELINE_SORTS = ["name", "exceptions", "loads"] as const;
+export type TimelineSort = (typeof TIMELINE_SORTS)[number];
 
 /**
  * URL state for the Shipments Command Center. Backing every cross-cutting bit
@@ -38,6 +40,7 @@ export const commandCenterParser = {
   q: parseAsString.withDefault(""),
   at: parseAsString,
   zoom: parseAsStringLiteral(TIMELINE_ZOOMS).withDefault("day"),
+  tsort: parseAsStringLiteral(TIMELINE_SORTS).withDefault("name"),
 };
 
 export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
