@@ -137,7 +137,7 @@ export function buildTimelineData(
       if (!row) {
         row = {
           key,
-          workerName: worker?.wholeName?.trim() || "Unassigned",
+          workerName: getWorkerDisplayName(worker),
           workerProfilePicUrl: worker?.profilePicUrl ?? null,
           equipmentCodes: [],
           bars: [],
@@ -189,6 +189,17 @@ export function buildTimelineData(
     totalCount,
     truncated: totalCount > shipments.length,
   };
+}
+
+function getWorkerDisplayName(
+  worker: Assignment["primaryWorker"] | undefined,
+): string {
+  // wholeName is a scanonly generated column the server doesn't always select
+  // on nested assignment loads — fall back to composing it, like DriverCell.
+  const wholeName = worker?.wholeName?.trim();
+  if (wholeName) return wholeName;
+  const composed = [worker?.firstName, worker?.lastName].filter(Boolean).join(" ").trim();
+  return composed || "Unassigned";
 }
 
 type MoveSpan = {

@@ -16,6 +16,8 @@ type MoveSeed = {
   status?: string;
   workerId?: string;
   workerName?: string;
+  workerFirstName?: string;
+  workerLastName?: string;
   tractorCode?: string;
   stops: StopSeed[];
 };
@@ -50,7 +52,9 @@ function makeShipment(id: string, status: string, moves: MoveSeed[]): Shipment {
             primaryWorkerId: move.workerId,
             primaryWorker: {
               id: move.workerId,
-              wholeName: move.workerName ?? move.workerId,
+              wholeName: move.workerName ?? null,
+              firstName: move.workerFirstName ?? null,
+              lastName: move.workerLastName ?? null,
               profilePicUrl: null,
             },
             tractor: move.tractorCode ? { id: "trk_1", code: move.tractorCode } : null,
@@ -118,6 +122,25 @@ describe("buildTimelineData", () => {
     expect(data.rows).toHaveLength(1);
     expect(data.rows[0].laneCount).toBe(2);
     expect(new Set(data.rows[0].bars.map((b) => b.laneIndex))).toEqual(new Set([0, 1]));
+  });
+
+  it("composes the driver name from first/last when wholeName is missing", () => {
+    const shipments = [
+      makeShipment("shp_1", "InTransit", [
+        {
+          id: "mov_1",
+          workerId: "wkr_a",
+          workerFirstName: "Alice",
+          workerLastName: "Driver",
+          stops: [{ start: RANGE.start + 3600, end: RANGE.start + 7200 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 1, RANGE);
+
+    expect(data.rows).toHaveLength(1);
+    expect(data.rows[0].workerName).toBe("Alice Driver");
   });
 
   it("prefers actuals over scheduled windows for the span", () => {
