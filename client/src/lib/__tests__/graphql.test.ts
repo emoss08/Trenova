@@ -52,7 +52,7 @@ describe("requestGraphQL", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("/graphql");
+    expect(url).toBe("/graphql?op=Test");
     expect(init.method).toBe("POST");
     expect(init.credentials).toBe("include");
 
@@ -65,6 +65,18 @@ describe("requestGraphQL", () => {
       operationName: "Test",
       variables: { first: 10 },
     });
+  });
+
+  it("labels the request URL with the operation name derived from the document", async () => {
+    setCsrfToken("graphql-token");
+
+    await requestGraphQL({
+      document: TractorTableDocument,
+      variables: { first: 10 },
+    });
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/graphql?op=TractorTable");
   });
 
   it("posts generated typed documents as GraphQL strings", async () => {
