@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
+    "test": "vitest run --passWithNoTests",
     "build": "tsc -b && vite build",
     "preview": "pnpm run build && wrangler dev",
     "lint": "oxlint",
@@ -30,10 +31,12 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "happy-dom": "^20.10.6",
     "oxlint": "^1.73.0",
     "typescript": "~7.0.2",
     "vite": "^8.1.4",
     "vite-plugin-compression2": "^2.5.3",
+    "vitest": "^4.1.10",
     "wrangler": "^4.110.0"
   }
 }

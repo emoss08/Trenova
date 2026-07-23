@@ -8,16 +8,17 @@ import { defineConfig } from "vitest/config";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcAlias = path.resolve(dirname, "./src");
+const sharedAlias = path.resolve(dirname, "../../packages/shared/src");
 
 export default defineConfig({
   resolve: {
-    alias: { "@": srcAlias },
+    alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
   },
   test: {
     projects: [
       {
         resolve: {
-          alias: { "@": srcAlias },
+          alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
         },
         test: {
           name: "unit",
@@ -37,7 +38,7 @@ export default defineConfig({
           }),
         ],
         resolve: {
-          alias: { "@": srcAlias },
+          alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
         },
         optimizeDeps: {
           include: [
