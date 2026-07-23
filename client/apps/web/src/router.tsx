@@ -1,0 +1,1107 @@
+import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { combineLoaders, createPermissionLoader } from "@/lib/route-permission";
+import { AppLayout } from "@/routes/app-layout";
+import { RootLayout } from "@/routes/root-layout";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
+import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
+import { AdminLayout } from "./routes/admin-layout";
+
+const protectedLoader: LoaderFunction = async () => {
+  const { checkAuth } = useAuthStore.getState();
+  const isAuthenticated = await checkAuth();
+
+  if (!isAuthenticated) {
+    return redirect("/login");
+  }
+
+  return null;
+};
+
+const guestLoader: LoaderFunction = async () => {
+  const { checkAuth } = useAuthStore.getState();
+
+  const isAuthenticated = await checkAuth();
+  if (isAuthenticated) {
+    return redirect("/");
+  }
+
+  return null;
+};
+
+const routes: RouteObject[] = [
+  {
+    element: <RootLayout />,
+    errorElement: <RouteErrorBoundary />,
+    HydrateFallback: LoadingSkeleton,
+    children: [
+      {
+        element: <AppLayout />,
+        loader: protectedLoader,
+        children: [
+          {
+            path: "/",
+            async lazy() {
+              const { Home } = await import("@/routes/home");
+              return { Component: Home };
+            },
+          },
+          {
+            path: "/organization/data-retention",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
+            async lazy() {
+              const { DataRetentionPage } =
+                await import("@/routes/organization/data-retention/page");
+              return { Component: DataRetentionPage };
+            },
+          },
+          {
+            path: "/organization/email-profiles",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailProfile)),
+            async lazy() {
+              const { EmailProfilesPage } =
+                await import("@/routes/organization/email-profiles/page");
+              return { Component: EmailProfilesPage };
+            },
+          },
+          {
+            path: "/organization/email-logs",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailLog)),
+            async lazy() {
+              const { EmailLogsPage } = await import("@/routes/organization/email-logs/page");
+              return { Component: EmailLogsPage };
+            },
+          },
+          {
+            path: "/shipment-management/shipments",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Shipment)),
+            async lazy() {
+              const { ShipmentsPage } = await import("@/routes/shipment/page");
+              return { Component: ShipmentsPage };
+            },
+          },
+          {
+            path: "/shipment-management/recurring-shipments",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.RecurringShipment),
+            ),
+            async lazy() {
+              const { RecurringShipmentsPage } = await import("@/routes/recurring-shipment/page");
+              return { Component: RecurringShipmentsPage };
+            },
+          },
+          {
+            path: "/shipment-management/orders",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Order)),
+            async lazy() {
+              const { OrdersPage } = await import("@/routes/order/page");
+              return { Component: OrdersPage };
+            },
+          },
+          {
+            path: "/shipment-management/service-failures",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.ServiceFailure),
+            ),
+            async lazy() {
+              const { ServiceFailuresPage } = await import("@/routes/service-failure/page");
+              return { Component: ServiceFailuresPage };
+            },
+          },
+          {
+            path: "/shipment-management/shipments/import",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Shipment, Operation.Create),
+            ),
+            async lazy() {
+              const { ShipmentImportPage } = await import("@/routes/shipment/import-page");
+              return { Component: ShipmentImportPage };
+            },
+          },
+          {
+            path: "/shipment-management/configuration-files/shipment-types",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentType)),
+            async lazy() {
+              const { ShipmentTypesPage } = await import("@/routes/shipment-type/page");
+              return { Component: ShipmentTypesPage };
+            },
+          },
+          {
+            path: "/shipment-management/configuration-files/service-types",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ServiceType)),
+            async lazy() {
+              const { ServiceTypesPage } = await import("@/routes/service-type/page");
+              return { Component: ServiceTypesPage };
+            },
+          },
+          {
+            path: "/shipment-management/configuration-files/hazardous-materials",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.HazardousMaterial),
+            ),
+            async lazy() {
+              const { HazardousMaterialsPage } = await import("@/routes/hazardous-material/page");
+              return { Component: HazardousMaterialsPage };
+            },
+          },
+          {
+            path: "/shipment-management/configuration-files/commodities",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Commodity)),
+            async lazy() {
+              const { CommoditiesPage } = await import("@/routes/commodity/page");
+              return { Component: CommoditiesPage };
+            },
+          },
+          {
+            path: "/edi/overview",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIOverviewPage } = await import("@/routes/edi/page");
+              return { Component: EDIOverviewPage };
+            },
+          },
+          {
+            path: "/edi/partners",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIPartnersPage } = await import("@/routes/edi/page");
+              return { Component: EDIPartnersPage };
+            },
+          },
+          {
+            path: "/edi/communication-profiles",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDICommunicationProfilesPage } = await import("@/routes/edi/page");
+              return { Component: EDICommunicationProfilesPage };
+            },
+          },
+          {
+            path: "/edi/mapping-profiles",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIMappingProfilesPage } = await import("@/routes/edi/page");
+              return { Component: EDIMappingProfilesPage };
+            },
+          },
+          {
+            path: "/edi/designer",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIDesignerPage } = await import("@/routes/edi/page");
+              return { Component: EDIDesignerPage };
+            },
+          },
+          {
+            path: "/edi/transfers/inbound",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIInboundTransfersPage } = await import("@/routes/edi/page");
+              return { Component: EDIInboundTransfersPage };
+            },
+          },
+          {
+            path: "/edi/transfers/outbound",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIOutboundTransfersPage } = await import("@/routes/edi/page");
+              return { Component: EDIOutboundTransfersPage };
+            },
+          },
+          {
+            path: "/edi/messages",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIMessagesPage } = await import("@/routes/edi/page");
+              return { Component: EDIMessagesPage };
+            },
+          },
+          {
+            path: "/edi/inbound-files",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIInboundFilesPage } = await import("@/routes/edi/page");
+              return { Component: EDIInboundFilesPage };
+            },
+          },
+          {
+            path: "/edi/test-cases",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDITestCasesPage } = await import("@/routes/edi/page");
+              return { Component: EDITestCasesPage };
+            },
+          },
+          {
+            path: "/billing/queue",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BillingQueue)),
+            async lazy() {
+              const { BillingQueuePage } = await import("@/routes/billing-queue/page");
+              return { Component: BillingQueuePage };
+            },
+          },
+          {
+            path: "/payroll/workspace",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { SettlementWorkspacePage } =
+                await import("@/routes/settlement-workspace/page");
+              return { Component: SettlementWorkspacePage };
+            },
+          },
+          {
+            path: "/payroll/settlements",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { DriverSettlementsPage } = await import("@/routes/driver-settlement/page");
+              return { Component: DriverSettlementsPage };
+            },
+          },
+          {
+            path: "/payroll/disputes",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.SettlementDispute),
+            ),
+            async lazy() {
+              const { SettlementDisputesPage } = await import("@/routes/settlement-dispute/page");
+              return { Component: SettlementDisputesPage };
+            },
+          },
+          {
+            path: "/payroll/expenses",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DriverExpense)),
+            async lazy() {
+              const { DriverExpensesPage } = await import("@/routes/driver-expense/page");
+              return { Component: DriverExpensesPage };
+            },
+          },
+          {
+            path: "/payroll/settlement-batches",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { SettlementBatchesPage } = await import("@/routes/settlement-batch/page");
+              return { Component: SettlementBatchesPage };
+            },
+          },
+          {
+            path: "/payroll/pay-events",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { DriverPayEventsPage } = await import("@/routes/driver-pay-event/page");
+              return { Component: DriverPayEventsPage };
+            },
+          },
+          {
+            path: "/payroll/pay-profiles",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverPayProfile),
+            ),
+            async lazy() {
+              const { PayProfilesPage } = await import("@/routes/pay-profile/page");
+              return { Component: PayProfilesPage };
+            },
+          },
+          {
+            path: "/payroll/deductions",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.RecurringDeduction),
+            ),
+            async lazy() {
+              const { RecurringDeductionsPage } = await import("@/routes/recurring-deduction/page");
+              return { Component: RecurringDeductionsPage };
+            },
+          },
+          {
+            path: "/payroll/earnings",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.RecurringEarning),
+            ),
+            async lazy() {
+              const { RecurringEarningsPage } = await import("@/routes/recurring-earning/page");
+              return { Component: RecurringEarningsPage };
+            },
+          },
+          {
+            path: "/payroll/pay-codes",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayCode)),
+            async lazy() {
+              const { PayCodesPage } = await import("@/routes/pay-code/page");
+              return { Component: PayCodesPage };
+            },
+          },
+          {
+            path: "/payroll/advances",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayAdvance)),
+            async lazy() {
+              const { PayAdvancesPage } = await import("@/routes/pay-advance/page");
+              return { Component: PayAdvancesPage };
+            },
+          },
+          {
+            path: "/payroll/escrow-accounts",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EscrowAccount)),
+            async lazy() {
+              const { EscrowAccountsPage } = await import("@/routes/escrow-account/page");
+              return { Component: EscrowAccountsPage };
+            },
+          },
+          {
+            path: "/billing/invoices",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoicesPage } = await import("@/routes/invoice/page");
+              return { Component: InvoicesPage };
+            },
+          },
+          {
+            path: "/billing/pending-approvals",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceApprovalPage } = await import("@/routes/invoice-approval/page");
+              return { Component: InvoiceApprovalPage };
+            },
+          },
+          {
+            path: "/billing/reconciliation-exceptions",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceReconciliationPage } =
+                await import("@/routes/invoice-reconciliation/page");
+              return { Component: InvoiceReconciliationPage };
+            },
+          },
+          {
+            path: "/billing/adjustment-batches",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceAdjustmentBatchPage } =
+                await import("@/routes/invoice-adjustment-batch/page");
+              return { Component: InvoiceAdjustmentBatchPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/charge-types",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ChargeType)),
+            async lazy() {
+              const { PlaceholderPage } = await import("@/routes/placeholder-page");
+              return { Component: PlaceholderPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/accessorial-charges",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccessorialCharge),
+            ),
+            async lazy() {
+              const { AccessorialChargesPage } = await import("@/routes/accessorial-charge/page");
+              return { Component: AccessorialChargesPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/customers",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Customer)),
+            async lazy() {
+              const { CustomersPage } = await import("@/routes/customer/page");
+              return { Component: CustomersPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/document-types",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
+            async lazy() {
+              const { DocumentTypesPage } = await import("@/routes/document-type/page");
+              return { Component: DocumentTypesPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/document-packet-rules",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
+            async lazy() {
+              const { DocumentPacketRulesPage } =
+                await import("@/routes/document-packet-rule/page");
+              return { Component: DocumentPacketRulesPage };
+            },
+          },
+
+          {
+            path: "/accounting",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
+            async lazy() {
+              const { AccountingDashboardPage } =
+                await import("@/routes/accounting-dashboard/page");
+              return { Component: AccountingDashboardPage };
+            },
+          },
+          {
+            path: "/accounting/manual-journals",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ManualJournal)),
+            async lazy() {
+              const { ManualJournalsPage } = await import("@/routes/manual-journal/page");
+              return { Component: ManualJournalsPage };
+            },
+          },
+          {
+            path: "/accounting/journal-reversals",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.JournalReversal),
+            ),
+            async lazy() {
+              const { JournalReversalsPage } = await import("@/routes/journal-reversal/page");
+              return { Component: JournalReversalsPage };
+            },
+          },
+          {
+            path: "/accounting/journal-entries/:id",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
+            async lazy() {
+              const { JournalEntryDetailPage } = await import("@/routes/journal-entry/page");
+              return { Component: JournalEntryDetailPage };
+            },
+          },
+          {
+            path: "/accounting/journal-entries/source/:type/:sourceId",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
+            async lazy() {
+              const { SourceDrillDownPage } =
+                await import("@/routes/journal-entry/_components/source-drill-down-page");
+              return { Component: SourceDrillDownPage };
+            },
+          },
+          {
+            path: "/accounting/reports/trial-balance",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingReport),
+            ),
+            async lazy() {
+              const { TrialBalancePage } = await import("@/routes/trial-balance/page");
+              return { Component: TrialBalancePage };
+            },
+          },
+          {
+            path: "/accounting/reports/income-statement",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingReport),
+            ),
+            async lazy() {
+              const { IncomeStatementPage } = await import("@/routes/income-statement/page");
+              return { Component: IncomeStatementPage };
+            },
+          },
+          {
+            path: "/accounting/reports/balance-sheet",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingReport),
+            ),
+            async lazy() {
+              const { BalanceSheetPage } = await import("@/routes/balance-sheet/page");
+              return { Component: BalanceSheetPage };
+            },
+          },
+          {
+            path: "/accounting/ar/aging",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
+            async lazy() {
+              const { ARAgingPage } = await import("@/routes/ar-aging/page");
+              return { Component: ARAgingPage };
+            },
+          },
+          {
+            path: "/accounting/ar/customer-ledger",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
+            async lazy() {
+              const { CustomerLedgerPage } = await import("@/routes/customer-ledger/page");
+              return { Component: CustomerLedgerPage };
+            },
+          },
+          {
+            path: "/accounting/ar/open-items",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
+            async lazy() {
+              const { AROpenItemsPage } = await import("@/routes/ar-open-items/page");
+              return { Component: AROpenItemsPage };
+            },
+          },
+          {
+            path: "/accounting/ar/payments",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CustomerPayment),
+            ),
+            async lazy() {
+              const { CustomerPaymentsPage } = await import("@/routes/customer-payments/page");
+              return { Component: CustomerPaymentsPage };
+            },
+          },
+          {
+            path: "/accounting/ar/customer-statement/:customerId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+            ),
+            async lazy() {
+              const { CustomerStatementPage } = await import("@/routes/customer-statement/page");
+              return { Component: CustomerStatementPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/bank-receipts",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
+            async lazy() {
+              const { BankReceiptPage } = await import("@/routes/bank-receipt/page");
+              return { Component: BankReceiptPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/work-queue",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BankReceiptWorkItem),
+            ),
+            async lazy() {
+              const { BankReceiptQueuePage: BankReceiptWorkQueuePage } =
+                await import("@/routes/bank-receipt-queue/page");
+              return { Component: BankReceiptWorkQueuePage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/summary",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
+            async lazy() {
+              const { ReconciliationSummaryPage } =
+                await import("@/routes/reconciliation-summary/page");
+              return { Component: ReconciliationSummaryPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/import-batches",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
+            async lazy() {
+              const { BankReceiptBatchPage } = await import("@/routes/bank-receipt-batch/page");
+              return { Component: BankReceiptBatchPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/import-batches/:batchId",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
+            async lazy() {
+              const { BankReceiptBatchDetailPage } =
+                await import("@/routes/bank-receipt-batch/detail-page");
+              return { Component: BankReceiptBatchDetailPage };
+            },
+          },
+          {
+            path: "/accounting/configuration-files/account-types",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.AccountType)),
+            async lazy() {
+              const { AccountTypesPage } = await import("@/routes/account-type/page");
+              return { Component: AccountTypesPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-templates",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaTemplate),
+            ),
+            async lazy() {
+              const { FormulaTemplatesPage } = await import("@/routes/formula-template/page");
+              return { Component: FormulaTemplatesPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/rate-tables",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateTable)),
+            async lazy() {
+              const { RateTablesPage } = await import("@/routes/rate-table/page");
+              return { Component: RateTablesPage };
+            },
+          },
+          {
+            path: "/billing/fuel-management",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FuelSurchargeProgram),
+            ),
+            async lazy() {
+              const { FuelManagementPage } = await import("@/routes/fuel-management/page");
+              return { Component: FuelManagementPage };
+            },
+          },
+          {
+            path: "/equipment/tractors",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Tractor)),
+            async lazy() {
+              const { TractorsPage } = await import("@/routes/tractor/page");
+              return { Component: TractorsPage };
+            },
+          },
+          {
+            path: "/equipment/trailers",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Trailer)),
+            async lazy() {
+              const { TrailersPage } = await import("@/routes/trailer/page");
+              return { Component: TrailersPage };
+            },
+          },
+          {
+            path: "/equipment/configuration-files/equipment-types",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EquipmentType)),
+            async lazy() {
+              const { EquipmentTypesPage } = await import("@/routes/equipment-type/page");
+              return { Component: EquipmentTypesPage };
+            },
+          },
+
+          {
+            path: "/equipment/configuration-files/equipment-manufacturers",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.EquipmentManufacturer),
+            ),
+            async lazy() {
+              const { EquipmentManufacturersPage } =
+                await import("@/routes/equipment-manufacturer/page");
+              return { Component: EquipmentManufacturersPage };
+            },
+          },
+          {
+            path: "/dispatch/configuration-files/location-categories",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.LocationCategory),
+            ),
+            async lazy() {
+              const { LocationCategoriesPage } = await import("@/routes/location-category/page");
+              return { Component: LocationCategoriesPage };
+            },
+          },
+          {
+            path: "/dispatch/configuration-files/fleet-codes",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FleetCode, Operation.Read),
+            ),
+            async lazy() {
+              const { FleetCodesPage } = await import("@/routes/fleet-code/page");
+              return { Component: FleetCodesPage };
+            },
+          },
+          {
+            path: "/reports",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportsPage } = await import("@/routes/reports/page");
+              return { Component: ReportsPage };
+            },
+          },
+          {
+            path: "/reports/runs",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportRunsPage } = await import("@/routes/reports/runs/page");
+              return { Component: ReportRunsPage };
+            },
+          },
+          {
+            path: "/reports/builder",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Create),
+            ),
+            async lazy() {
+              const { ReportBuilderPage } = await import("@/routes/reports/builder/page");
+              return { Component: ReportBuilderPage };
+            },
+          },
+          {
+            path: "/reports/builder/:definitionId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportBuilderPage } = await import("@/routes/reports/builder/page");
+              return { Component: ReportBuilderPage };
+            },
+          },
+          {
+            path: "/dispatch/locations",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Location)),
+            async lazy() {
+              const { LocationsPage } = await import("@/routes/location/page");
+              return { Component: LocationsPage };
+            },
+          },
+          {
+            path: "/dispatch/workers",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Worker)),
+            async lazy() {
+              const { WorkersPage } = await import("@/routes/worker/page");
+              return { Component: WorkersPage };
+            },
+          },
+          {
+            path: "/accounting/configuration-files/fiscal-years",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FiscalYear)),
+            async lazy() {
+              const { FiscalYearsPage } = await import("@/routes/fiscal-year/page");
+              return { Component: FiscalYearsPage };
+            },
+          },
+
+          {
+            path: "admin",
+            Component: AdminLayout,
+            HydrateFallback: LoadingSkeleton,
+            loader: protectedLoader,
+            children: [
+              {
+                path: "billing-controls",
+                loader: createPermissionLoader(Resource.BillingControl),
+                async lazy() {
+                  const { BillingControlPage } = await import("@/routes/billing-control/page");
+                  return { Component: BillingControlPage };
+                },
+              },
+              {
+                path: "organization-settings",
+                loader: createPermissionLoader(Resource.Organization, Operation.Read),
+                async lazy() {
+                  const { OrganizationSettingsPage } =
+                    await import("@/routes/admin/organization-settings/page");
+                  return { Component: OrganizationSettingsPage };
+                },
+              },
+              {
+                path: "accounting-control",
+                loader: createPermissionLoader(Resource.AccountingControl),
+                async lazy() {
+                  const { AccountingControlPage } =
+                    await import("@/routes/accounting-control/page");
+                  return { Component: AccountingControlPage };
+                },
+              },
+              {
+                path: "cost-control",
+                loader: createPermissionLoader(Resource.CostingControl),
+                async lazy() {
+                  const { CostControlPage } = await import("@/routes/cost-control/page");
+                  return { Component: CostControlPage };
+                },
+              },
+              {
+                path: "invoice-adjustment-controls",
+                loader: createPermissionLoader(Resource.InvoiceAdjustmentControl, Operation.Read),
+                async lazy() {
+                  const { InvoiceAdjustmentControlPage } =
+                    await import("@/routes/invoice-adjustment-control/page");
+                  return { Component: InvoiceAdjustmentControlPage };
+                },
+              },
+              {
+                path: "table-change-alerts",
+                loader: createPermissionLoader(Resource.TableChangeAlert, Operation.Read),
+                async lazy() {
+                  const { TableChangeAlertPage } = await import("@/routes/table-change-alert/page");
+                  return { Component: TableChangeAlertPage };
+                },
+              },
+              {
+                path: "data-entry-controls",
+                loader: createPermissionLoader(Resource.DataEntryControl, Operation.Read),
+                async lazy() {
+                  const { DataEntryControlPage } = await import("@/routes/data-entry-control/page");
+                  return { Component: DataEntryControlPage };
+                },
+              },
+              {
+                path: "dispatch-controls",
+                loader: createPermissionLoader(Resource.DispatchControl, Operation.Read),
+                async lazy() {
+                  const { DispatchControlPage } = await import("@/routes/dispatch-control/page");
+                  return { Component: DispatchControlPage };
+                },
+              },
+              {
+                path: "settlement-control",
+                loader: createPermissionLoader(Resource.SettlementControl, Operation.Read),
+                async lazy() {
+                  const { SettlementControlPage } =
+                    await import("@/routes/settlement-control/page");
+                  return { Component: SettlementControlPage };
+                },
+              },
+              {
+                path: "dash-control",
+                loader: createPermissionLoader(Resource.DashControl, Operation.Read),
+                async lazy() {
+                  const { DashControlPage } = await import("@/routes/dash-control/page");
+                  return { Component: DashControlPage };
+                },
+              },
+              {
+                path: "distance-controls",
+                loader: createPermissionLoader(Resource.DistanceControl),
+                async lazy() {
+                  const { DistanceControlsPage } =
+                    await import("@/routes/admin/distance-controls/page");
+                  return { Component: DistanceControlsPage };
+                },
+              },
+              {
+                path: "distance-overrides",
+                loader: createPermissionLoader(Resource.DistanceOverride),
+                async lazy() {
+                  const { DistanceOverridesPage } = await import("@/routes/distance-override/page");
+                  return { Component: DistanceOverridesPage };
+                },
+              },
+              {
+                path: "distance-profiles",
+                loader: createPermissionLoader(Resource.DistanceProfile),
+                async lazy() {
+                  const { DistanceProfilesPage } =
+                    await import("@/routes/admin/distance-profiles/page");
+                  return { Component: DistanceProfilesPage };
+                },
+              },
+              {
+                path: "stored-mileages",
+                loader: createPermissionLoader(Resource.StoredMileage),
+                async lazy() {
+                  const { StoredMileagesPage } =
+                    await import("@/routes/admin/stored-mileages/page");
+                  return { Component: StoredMileagesPage };
+                },
+              },
+              {
+                path: "shipment-controls",
+                loader: createPermissionLoader(Resource.ShipmentControl, Operation.Read),
+                async lazy() {
+                  const { ShipmentControlPage } = await import("@/routes/shipment-control/page");
+                  return { Component: ShipmentControlPage };
+                },
+              },
+              {
+                path: "document-intelligence",
+                loader: createPermissionLoader(Resource.DocumentControl, Operation.Read),
+                async lazy() {
+                  const { DocumentIntelligencePage } =
+                    await import("@/routes/admin/document-intelligence/page");
+                  return { Component: DocumentIntelligencePage };
+                },
+              },
+              {
+                path: "document-parsing-rules",
+                loader: createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
+                async lazy() {
+                  const { DocumentParsingRulesPage } =
+                    await import("@/routes/admin/document-parsing-rules/page");
+                  return { Component: DocumentParsingRulesPage };
+                },
+              },
+              {
+                path: "sequence-configs",
+                loader: createPermissionLoader(Resource.SequenceConfig, Operation.Read),
+                async lazy() {
+                  const { SequenceConfigPage } =
+                    await import("@/routes/admin/sequence-config/page");
+                  return { Component: SequenceConfigPage };
+                },
+              },
+              {
+                path: "hold-reasons",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.HoldReason),
+                ),
+                async lazy() {
+                  const { HoldReasonsPage } = await import("@/routes/hold-reason/page");
+                  return { Component: HoldReasonsPage };
+                },
+              },
+              {
+                path: "service-failure-reason-codes",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.ServiceFailureReasonCode),
+                ),
+                async lazy() {
+                  const { ServiceFailureReasonCodesPage } =
+                    await import("@/routes/service-failure-reason-code/page");
+                  return { Component: ServiceFailureReasonCodesPage };
+                },
+              },
+              {
+                path: "hazmat-segregation-rules",
+                loader: createPermissionLoader(Resource.HazmatSegregationRule),
+                async lazy() {
+                  const { HazmatSegregationRulesPage } =
+                    await import("@/routes/hazmat-segregation-rule/page");
+                  return { Component: HazmatSegregationRulesPage };
+                },
+              },
+              {
+                path: "roles",
+                loader: createPermissionLoader(Resource.Role, Operation.Read),
+                async lazy() {
+                  const { RolesPage } = await import("@/routes/admin/roles/page");
+                  return { Component: RolesPage };
+                },
+              },
+              {
+                path: "roles/new",
+                loader: createPermissionLoader(Resource.Role, Operation.Create),
+                async lazy() {
+                  const { RoleCreatePage } = await import("@/routes/admin/roles/new/page");
+                  return { Component: RoleCreatePage };
+                },
+              },
+              {
+                path: "roles/:id/edit",
+                loader: createPermissionLoader(Resource.Role, Operation.Update),
+                async lazy() {
+                  const { RoleEditPage } = await import("@/routes/admin/roles/[id]/edit/page");
+                  return { Component: RoleEditPage };
+                },
+              },
+              {
+                path: "users",
+                loader: createPermissionLoader(Resource.User, Operation.Read),
+                async lazy() {
+                  const { UsersPage } = await import("@/routes/admin/users/page");
+                  return { Component: UsersPage };
+                },
+              },
+              {
+                path: "audit-logs",
+                loader: createPermissionLoader(Resource.AuditLog, Operation.Read),
+                async lazy() {
+                  const { AuditLogsPage } = await import("@/routes/admin/audit-logs/page");
+                  return { Component: AuditLogsPage };
+                },
+              },
+              {
+                path: "database-sessions",
+                loader: createPermissionLoader(Resource.DatabaseSession, Operation.Read),
+                async lazy() {
+                  const { DatabaseSessionsPage } =
+                    await import("@/routes/admin/database-sessions/page");
+                  return { Component: DatabaseSessionsPage };
+                },
+              },
+              {
+                path: "graphql-explorer",
+                loader: createPermissionLoader(Resource.Organization, Operation.Read),
+                async lazy() {
+                  const { GraphQLExplorerPage } =
+                    await import("@/routes/admin/graphql-explorer/page");
+                  return { Component: GraphQLExplorerPage };
+                },
+              },
+              {
+                path: "integrations",
+                loader: createPermissionLoader(Resource.Integration, Operation.Read),
+                async lazy() {
+                  const { IntegrationsPage } = await import("@/routes/admin/integrations/page");
+                  return { Component: IntegrationsPage };
+                },
+              },
+              {
+                path: "api-keys",
+                loader: createPermissionLoader(Resource.ApiKey, Operation.Read),
+                async lazy() {
+                  const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
+                  return { Component: APIKeysPage };
+                },
+              },
+              {
+                path: "document-operations",
+                loader: createPermissionLoader(Resource.DocumentOperation, Operation.Read),
+                async lazy() {
+                  const { DocumentOperationsPage } =
+                    await import("@/routes/admin/document-operations/page");
+                  return { Component: DocumentOperationsPage };
+                },
+              },
+              {
+                path: "custom-fields",
+                loader: createPermissionLoader(Resource.CustomFieldDefinition, Operation.Read),
+                async lazy() {
+                  const { CustomFieldDefinitionsPage } =
+                    await import("@/routes/admin/custom-fields/page");
+                  return { Component: CustomFieldDefinitionsPage };
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        loader: guestLoader,
+        children: [
+          {
+            path: "/login",
+            async lazy() {
+              const { AuthPage } = await import("@/routes/auth/page");
+              return { Component: AuthPage };
+            },
+          },
+          {
+            path: "/login/:orgSlug",
+            async lazy() {
+              const { AuthPage } = await import("@/routes/auth/page");
+              return { Component: AuthPage };
+            },
+          },
+        ],
+      },
+    ],
+  },
+];
+
+export const router = createBrowserRouter(routes);

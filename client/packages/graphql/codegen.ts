@@ -1,0 +1,39 @@
+import type { CodegenConfig } from "@graphql-codegen/cli";
+
+const config: CodegenConfig = {
+  schema: "../../../services/tms/internal/api/graphql/schema/*.graphqls",
+  documents: "src/operations/**/*.graphql",
+  hooks: {
+    afterAllFileWrite: [
+      "node scripts/sync-graphql-persisted-documents.mjs",
+      "node scripts/generate-graphql-catalog.mjs",
+    ],
+  },
+  generates: {
+    "src/generated/": {
+      preset: "client",
+      presetConfig: {
+        persistedDocuments: true,
+        fragmentMasking: { unmaskFunctionName: "getFragmentData" },
+      },
+      config: {
+        documentMode: "string",
+        enumsAsTypes: true,
+        useTypeImports: true,
+        scalars: {
+          Any: "unknown",
+          JSON: "unknown",
+        },
+      },
+    },
+    "src/schema.graphql": {
+      plugins: ["schema-ast"],
+      config: {
+        includeDirectives: true,
+        sort: true,
+      },
+    },
+  },
+};
+
+export default config;

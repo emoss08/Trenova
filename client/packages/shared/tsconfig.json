@@ -1,0 +1,14 @@
+{
+  "extends": "@trenova/config/tsconfig.lib.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "types": ["vite/client"],
+    "paths": {
+      "@trenova/shared/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}

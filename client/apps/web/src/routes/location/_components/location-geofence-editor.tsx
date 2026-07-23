@@ -1,0 +1,539 @@
+import googleMapsEmptyState from "@/assets/integrations/empty-state/map-preview.webp";
+import { Button } from "@trenova/shared/components/ui/button";
+import { useMapId } from "@/hooks/use-map-id";
+import { locationGeofenceTypeChoices } from "@/lib/choices";
+import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
+import { queries } from "@/lib/queries";
+import { cn } from "@trenova/shared/lib/utils";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@trenova/shared/types/location";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useQuery } from "@tanstack/react-query";
+import {
+  AdvancedMarker,
+  APIProvider,
+  Circle,
+  Map,
+  Polygon,
+  Rectangle,
+  useMap,
+} from "@vis.gl/react-google-maps";
+import { Circle as CircleIcon, PenTool, PlusIcon, Sparkles, Square } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
+import { useNavigate } from "react-router";
+
+const DEFAULT_GEOFENCE_RADIUS_METERS = 50;
+const LOCATION_ZOOM = 18;
+const GEOFENCE_TYPE_ICONS: Record<LocationGeofenceType, typeof CircleIcon> = {
+  auto: Sparkles,
+  circle: CircleIcon,
+  rectangle: Square,
+  draw: PenTool,
+};
+const SHAPE_COLORS = {
+  stroke: "#2563eb",
+  fill: "#3b82f6",
+  center: "#1d4ed8",
+} as const;
+
+function useLocationGeofence() {
+  const { control, setValue } = useFormContext<Location>();
+  const { errors } = useFormState<Location>({
+    control,
+    name: ["geofenceType", "geofenceRadiusMeters", "geofenceVertices", "latitude", "longitude"],
+  });
+  const [geofenceType, geofenceRadiusMeters, geofenceVertices, latitude, longitude] = useWatch({
+    control,
+    name: ["geofenceType", "geofenceRadiusMeters", "geofenceVertices", "latitude", "longitude"],
+  });
+  const placeId = useWatch({
+    control,
+    name: "placeId",
+  });
+  const previousPlaceIdRef = useRef(placeId);
+
+  const center = useMemo(
+    () => resolveCenter(latitude ?? null, longitude ?? null, geofenceVertices ?? []),
+    [geofenceVertices, latitude, longitude],
+  );
+  const rectangleBounds = useMemo(
+    () => (geofenceType === "rectangle" ? toBounds(geofenceVertices ?? []) : null),
+    [geofenceType, geofenceVertices],
+  );
+  const polygonPaths = useMemo(
+    () => (geofenceType === "draw" ? (geofenceVertices ?? []).map(toLatLng) : []),
+    [geofenceType, geofenceVertices],
+  );
+  const errorMessages = useMemo(
+    () =>
+      [
+        readFieldError(errors.geofenceType),
+        readFieldError(errors.geofenceRadiusMeters),
+        readFieldError(errors.geofenceVertices),
+        readFieldError(errors.latitude),
+        readFieldError(errors.longitude),
+      ].filter((message): message is string => Boolean(message)),
+    [errors],
+  );
+
+  const setFieldValue = useCallback(
+    <TField extends Path<Location>>(field: TField, value: PathValue<Location, TField>) => {
+      setValue(field, value, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue],
+  );
+
+  const updateCenter = useCallback(
+    (nextCenter: google.maps.LatLngLiteral) => {
+      setFieldValue("latitude", nextCenter.lat);
+      setFieldValue("longitude", nextCenter.lng);
+    },
+    [setFieldValue],
+  );
+
+  const updateVertices = useCallback(
+    (nextVertices: LocationGeofenceVertex[]) => {
+      const normalized = normalizeVertices(nextVertices);
+      setFieldValue("geofenceVertices", normalized);
+
+      const nextCenter = toBoundsCenter(normalized);
+      if (nextCenter) {
+        updateCenter(nextCenter);
+      }
+    },
+    [setFieldValue, updateCenter],
+  );
+
+  const handleTypeChange = useCallback(
+    (value: string) => {
+      const nextType = value as LocationGeofenceType;
+      setFieldValue("geofenceType", nextType);
+
+      switch (nextType) {
+        case "auto":
+          setFieldValue("geofenceRadiusMeters", DEFAULT_GEOFENCE_RADIUS_METERS);
+          setFieldValue("geofenceVertices", []);
+          break;
+        case "circle":
+          setFieldValue(
+            "geofenceRadiusMeters",
+            geofenceRadiusMeters ?? DEFAULT_GEOFENCE_RADIUS_METERS,
+          );
+          setFieldValue("geofenceVertices", []);
+          break;
+        case "rectangle":
+          setFieldValue("geofenceRadiusMeters", null);
+          updateVertices(
+            toBoundsVertices(geofenceVertices ?? []) ?? buildRectangleVertices(center),
+          );
+          break;
+        case "draw":
+          setFieldValue("geofenceRadiusMeters", null);
+          updateVertices(
+            (geofenceVertices?.length ?? 0) >= 3
+              ? (geofenceVertices ?? [])
+              : buildPolygonVertices(center),
+          );
+          break;
+      }
+    },
+    [center, geofenceRadiusMeters, geofenceVertices, setFieldValue, updateVertices],
+  );
+
+  useEffect(() => {
+    if (geofenceType === "rectangle" && (geofenceVertices?.length ?? 0) === 0) {
+      updateVertices(buildRectangleVertices(center));
+    }
+
+    if (geofenceType === "draw" && (geofenceVertices?.length ?? 0) === 0) {
+      updateVertices(buildPolygonVertices(center));
+    }
+  }, [center, geofenceType, geofenceVertices, updateVertices]);
+
+  useEffect(() => {
+    const previousPlaceId = previousPlaceIdRef.current;
+    previousPlaceIdRef.current = placeId;
+
+    if (!placeId || placeId === previousPlaceId || latitude == null || longitude == null) {
+      return;
+    }
+
+    setFieldValue("geofenceType", "auto");
+    setFieldValue("geofenceRadiusMeters", DEFAULT_GEOFENCE_RADIUS_METERS);
+    setFieldValue("geofenceVertices", []);
+  }, [latitude, longitude, placeId, setFieldValue]);
+
+  return {
+    geofenceType,
+    geofenceRadiusMeters,
+    latitude,
+    longitude,
+    center,
+    rectangleBounds,
+    polygonPaths,
+    errorMessages,
+    setFieldValue,
+    updateCenter,
+    updateVertices,
+    handleTypeChange,
+  };
+}
+
+export function LocationGeofenceControls({ className }: { className?: string }) {
+  const { geofenceType, handleTypeChange } = useLocationGeofence();
+
+  return (
+    <div className={cn("grid grid-cols-2 gap-2 md:grid-cols-4", className)}>
+      {locationGeofenceTypeChoices.map((choice) => {
+        const isActive = choice.value === geofenceType;
+        const Icon = GEOFENCE_TYPE_ICONS[choice.value];
+        return (
+          <button
+            key={choice.value}
+            type="button"
+            onClick={() => handleTypeChange(choice.value)}
+            aria-pressed={isActive}
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+              isActive
+                ? "border-blue-500/40 bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                : "border-border bg-background text-foreground hover:bg-muted",
+            )}
+          >
+            <Icon className="size-4 shrink-0" aria-hidden />
+            {choice.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function LocationGeofenceMap({ className }: { className?: string }) {
+  const navigate = useNavigate();
+  const canCreateIntegrations = usePermissionStore((state) =>
+    state.hasPermission(Resource.Integration, Operation.Create),
+  );
+
+  const mapId = useMapId();
+  const {
+    geofenceType,
+    geofenceRadiusMeters,
+    latitude,
+    longitude,
+    center,
+    rectangleBounds,
+    polygonPaths,
+    errorMessages,
+    setFieldValue,
+    updateCenter,
+    updateVertices,
+  } = useLocationGeofence();
+
+  const googleMapsQuery = useQuery({
+    ...queries.integration.runtimeConfig("GoogleMaps"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return (
+    <div className={cn("relative h-full w-full overflow-hidden bg-background", className)}>
+      {googleMapsQuery.isLoading ? (
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          Loading map editor...
+        </div>
+      ) : !googleMapsQuery.data?.config.apiKey ? (
+        <div className="relative flex h-full flex-col items-center justify-center gap-4 px-6">
+          <img
+            src={googleMapsEmptyState}
+            alt="Google Maps Empty State"
+            className="pointer-events-none absolute inset-0 size-full object-cover opacity-50 blur-sm select-none"
+          />
+          <div className="relative z-10 flex flex-col items-center gap-4 text-center text-sm text-foreground">
+            <span>
+              Google Maps is not configured for this environment, so the geofence editor cannot be
+              displayed.
+            </span>
+            {canCreateIntegrations ? (
+              <Button onClick={() => navigate("/admin/integrations?type=GoogleMaps")}>
+                <PlusIcon className="size-4 shrink-0" aria-hidden />
+                Configure Google Maps
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <APIProvider apiKey={googleMapsQuery.data.config.apiKey}>
+          <Map
+            mapId={mapId}
+            defaultCenter={center}
+            defaultZoom={latitude != null && longitude != null ? LOCATION_ZOOM : DEFAULT_ZOOM}
+            gestureHandling="greedy"
+            disableDefaultUI
+            onClick={({ detail }) => {
+              if (!detail.latLng) {
+                return;
+              }
+
+              if (geofenceType === "auto" || geofenceType === "circle") {
+                updateCenter(detail.latLng);
+              }
+            }}
+            className="h-full w-full"
+          >
+            <MapCenterSync center={center} hasLocation={latitude != null && longitude != null} />
+            {(geofenceType === "auto" || geofenceType === "circle") && (
+              <>
+                <AdvancedMarker
+                  position={center}
+                  draggable
+                  onDragEnd={(event) => {
+                    if (event.latLng) {
+                      updateCenter({
+                        lat: event.latLng.lat(),
+                        lng: event.latLng.lng(),
+                      });
+                    }
+                  }}
+                >
+                  <div
+                    className="size-3 rounded-full border-2 border-white shadow-md ring-1 ring-black/20"
+                    style={{ backgroundColor: SHAPE_COLORS.center }}
+                  />
+                </AdvancedMarker>
+                <Circle
+                  center={center}
+                  radius={geofenceRadiusMeters ?? DEFAULT_GEOFENCE_RADIUS_METERS}
+                  editable={geofenceType === "circle"}
+                  draggable={geofenceType === "circle"}
+                  onCenterChanged={(nextCenter) => {
+                    if (nextCenter) {
+                      updateCenter({ lat: nextCenter.lat(), lng: nextCenter.lng() });
+                    }
+                  }}
+                  onRadiusChanged={(nextRadius) => {
+                    if (geofenceType === "circle") {
+                      setFieldValue("geofenceRadiusMeters", Math.max(1, Math.round(nextRadius)));
+                    }
+                  }}
+                  strokeColor={SHAPE_COLORS.stroke}
+                  strokeOpacity={0.95}
+                  strokeWeight={2}
+                  fillColor={SHAPE_COLORS.fill}
+                  fillOpacity={0.24}
+                />
+              </>
+            )}
+            {geofenceType === "rectangle" && rectangleBounds && (
+              <Rectangle
+                bounds={rectangleBounds}
+                editable
+                draggable
+                onBoundsChanged={(bounds) => {
+                  if (!bounds) {
+                    return;
+                  }
+
+                  updateVertices(boundsToVertices(bounds));
+                }}
+                strokeColor={SHAPE_COLORS.stroke}
+                strokeOpacity={0.95}
+                strokeWeight={2}
+                fillColor={SHAPE_COLORS.fill}
+                fillOpacity={0.18}
+              />
+            )}
+            {geofenceType === "draw" && polygonPaths.length >= 3 && (
+              <Polygon
+                paths={polygonPaths}
+                editable
+                draggable
+                onPathsChanged={(paths) => {
+                  const nextPath = paths[0] ?? [];
+                  updateVertices(
+                    nextPath.map((point) => ({
+                      latitude: point.lat(),
+                      longitude: point.lng(),
+                    })),
+                  );
+                }}
+                strokeColor={SHAPE_COLORS.stroke}
+                strokeOpacity={0.95}
+                strokeWeight={2}
+                fillColor={SHAPE_COLORS.fill}
+                fillOpacity={0.18}
+              />
+            )}
+          </Map>
+        </APIProvider>
+      )}
+
+      {errorMessages.length > 0 && (
+        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600 shadow-sm backdrop-blur">
+          {errorMessages[0]}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MapCenterSync({
+  center,
+  hasLocation,
+}: {
+  center: google.maps.LatLngLiteral;
+  hasLocation: boolean;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    map.panTo(center);
+
+    if (hasLocation && (map.getZoom() ?? 0) < LOCATION_ZOOM) {
+      map.setZoom(LOCATION_ZOOM);
+    }
+  }, [center, hasLocation, map]);
+
+  return null;
+}
+
+function resolveCenter(
+  latitude: number | null,
+  longitude: number | null,
+  vertices: LocationGeofenceVertex[],
+): google.maps.LatLngLiteral {
+  if (latitude != null && longitude != null) {
+    return { lat: latitude, lng: longitude };
+  }
+
+  return toBoundsCenter(vertices) ?? US_CENTER;
+}
+
+function buildRectangleVertices(
+  center: google.maps.LatLngLiteral,
+  sizeMeters = DEFAULT_GEOFENCE_RADIUS_METERS,
+): LocationGeofenceVertex[] {
+  const latDelta = metersToLatitude(sizeMeters);
+  const lngDelta = metersToLongitude(sizeMeters, center.lat);
+
+  return [
+    { latitude: center.lat - latDelta, longitude: center.lng - lngDelta },
+    { latitude: center.lat - latDelta, longitude: center.lng + lngDelta },
+    { latitude: center.lat + latDelta, longitude: center.lng + lngDelta },
+    { latitude: center.lat + latDelta, longitude: center.lng - lngDelta },
+  ];
+}
+
+function buildPolygonVertices(
+  center: google.maps.LatLngLiteral,
+  sizeMeters = DEFAULT_GEOFENCE_RADIUS_METERS,
+): LocationGeofenceVertex[] {
+  return buildRectangleVertices(center, sizeMeters);
+}
+
+function normalizeVertices(vertices: LocationGeofenceVertex[]): LocationGeofenceVertex[] {
+  if (vertices.length <= 1) {
+    return vertices;
+  }
+
+  const normalized = [...vertices];
+  const first = normalized[0];
+  const last = normalized.at(-1);
+
+  if (last && first.latitude === last.latitude && first.longitude === last.longitude) {
+    normalized.pop();
+  }
+
+  return normalized;
+}
+
+function toLatLng(vertex: LocationGeofenceVertex): google.maps.LatLngLiteral {
+  return { lat: vertex.latitude, lng: vertex.longitude };
+}
+
+function toBounds(vertices: LocationGeofenceVertex[]): google.maps.LatLngBoundsLiteral | null {
+  const normalized = normalizeVertices(vertices);
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  let north = normalized[0].latitude;
+  let south = normalized[0].latitude;
+  let east = normalized[0].longitude;
+  let west = normalized[0].longitude;
+
+  for (const vertex of normalized.slice(1)) {
+    north = Math.max(north, vertex.latitude);
+    south = Math.min(south, vertex.latitude);
+    east = Math.max(east, vertex.longitude);
+    west = Math.min(west, vertex.longitude);
+  }
+
+  return { north, south, east, west };
+}
+
+function toBoundsCenter(vertices: LocationGeofenceVertex[]): google.maps.LatLngLiteral | null {
+  const bounds = toBounds(vertices);
+  if (!bounds) {
+    return null;
+  }
+
+  return {
+    lat: (bounds.north + bounds.south) / 2,
+    lng: (bounds.east + bounds.west) / 2,
+  };
+}
+
+function toBoundsVertices(vertices: LocationGeofenceVertex[]): LocationGeofenceVertex[] | null {
+  const bounds = toBounds(vertices);
+  if (!bounds) {
+    return null;
+  }
+
+  return [
+    { latitude: bounds.south, longitude: bounds.west },
+    { latitude: bounds.south, longitude: bounds.east },
+    { latitude: bounds.north, longitude: bounds.east },
+    { latitude: bounds.north, longitude: bounds.west },
+  ];
+}
+
+function boundsToVertices(bounds: google.maps.LatLngBounds): LocationGeofenceVertex[] {
+  const northEast = bounds.getNorthEast();
+  const southWest = bounds.getSouthWest();
+
+  return [
+    { latitude: southWest.lat(), longitude: southWest.lng() },
+    { latitude: southWest.lat(), longitude: northEast.lng() },
+    { latitude: northEast.lat(), longitude: northEast.lng() },
+    { latitude: northEast.lat(), longitude: southWest.lng() },
+  ];
+}
+
+function metersToLatitude(meters: number) {
+  return meters / 111_320;
+}
+
+function metersToLongitude(meters: number, latitude: number) {
+  const cosLatitude = Math.cos((latitude * Math.PI) / 180);
+  return meters / (111_320 * Math.max(Math.abs(cosLatitude), 0.0001));
+}
+
+function readFieldError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return null;
+  }
+
+  if ("message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+
+  return null;
+}

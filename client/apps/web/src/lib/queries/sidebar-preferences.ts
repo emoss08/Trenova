@@ -1,0 +1,25 @@
+import {
+  SidebarCustomizationOptionsDocument,
+  SidebarPreferencesDocument,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { createQueryKeys } from "@lukemorales/query-key-factory";
+
+export const sidebarPreferences = createQueryKeys("sidebarPreferences", {
+  effective: () => ({
+    queryKey: ["effective"],
+    queryFn: async () =>
+      requestGraphQL({
+        document: SidebarPreferencesDocument,
+        operationName: "SidebarPreferences",
+      }),
+  }),
+  options: () => ({
+    queryKey: ["options"],
+    queryFn: async () =>
+      requestGraphQL({
+        document: SidebarCustomizationOptionsDocument,
+        operationName: "SidebarCustomizationOptions",
+      }),
+  }),
+});

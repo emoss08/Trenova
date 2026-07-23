@@ -1,0 +1,85 @@
+import { BillingRecordCard } from "@/components/billing/billing-record-card";
+import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@trenova/shared/components/ui/context-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
+import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
+import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react";
+
+export function InvoiceItemCard({
+  invoice,
+  isSelected,
+  onClick,
+  onPost,
+}: {
+  invoice: InvoiceTableRowFieldsFragment;
+  isSelected: boolean;
+  onClick: () => void;
+  onPost: () => void;
+}) {
+  const age = formatDistanceToNowStrict(fromUnixTime(invoice.createdAt), { addSuffix: true });
+  const customerName = invoice.customer?.name ?? invoice.billToName;
+  const totalAmount = Number(invoice.totalAmount ?? 0);
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <BillingRecordCard
+          title={invoice.number}
+          auxiliary={
+            <span className="font-mono text-[10px] text-muted-foreground">{invoice.billType}</span>
+          }
+          amount={formatCurrency(totalAmount, invoice.currencyCode)}
+          subtitle={customerName || "Unknown bill-to"}
+          meta={
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <PlainInvoiceStatusBadge status={invoice.status} />
+                <PlainSettlementStatusBadge status={invoice.settlementStatus} />
+              </div>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <span className="text-[11px] text-muted-foreground/70">{age}</span>
+                  }
+                />
+                <TooltipContent side="left" sideOffset={10}>
+                  {generateDateTimeStringFromUnixTimestamp(invoice.createdAt)}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          }
+          isSelected={isSelected}
+          onClick={onClick}
+        />
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onClick={() =>
+            window.open(`/shipment-management/shipments?item=${invoice.shipmentId}`, "_blank")
+          }
+        >
+          <ExternalLinkIcon className="size-3.5" />
+          View Shipment
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => window.open(`/billing/queue?item=${invoice.billingQueueItemId}`, "_blank")}
+        >
+          <FileTextIcon className="size-3.5" />
+          View Billing Queue Item
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onPost} disabled={invoice.status === "Posted"}>
+          <SendIcon className="size-3.5" />
+          Post Invoice
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}

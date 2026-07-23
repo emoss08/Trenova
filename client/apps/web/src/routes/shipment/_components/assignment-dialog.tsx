@@ -1,0 +1,287 @@
+import {
+  TractorAutocompleteField,
+  TrailerAutocompleteField,
+  WorkerAutocompleteField,
+} from "@/components/autocomplete-fields";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { handleMutationError } from "@/hooks/use-api-mutation";
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import type { SelectOption } from "@/lib/graphql/select-options";
+import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
+import { apiService } from "@/services/api";
+import type { Assignment, AssignmentPayload } from "@trenova/shared/types/shipment";
+import { assignmentPayloadSchema } from "@trenova/shared/types/shipment";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { TriangleAlertIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+
+type AssignmentDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  moveId: string;
+  existingAssignment?: Assignment | null;
+  /**
+   * Field values that take precedence over the existing assignment when the
+   * dialog opens — e.g. the target driver after a drag-to-reassign on the
+   * dispatch timeline. Must be referentially stable while the dialog is open.
+   */
+  prefill?: Partial<AssignmentPayload> | null;
+  onAssigned?: (assignment: Assignment) => void;
+};
+
+export function AssignmentDialog({
+  open,
+  onOpenChange,
+  moveId,
+  existingAssignment,
+  prefill,
+  onAssigned,
+}: AssignmentDialogProps) {
+  const queryClient = useQueryClient();
+  const isEditing = !!existingAssignment?.id;
+
+  const [continuityError, setContinuityError] = useState<{
+    message: string;
+    trailerId: string;
+    pickupLocationId: string;
+  } | null>(null);
+  const [complianceViolations, setComplianceViolations] = useState<string[]>([]);
+  const [locateDialogOpen, setLocateDialogOpen] = useState(false);
+
+  const form = useForm({
+    resolver: zodResolver(assignmentPayloadSchema),
+    defaultValues: {
+      tractorId: "",
+      trailerId: null,
+      primaryWorkerId: "",
+      secondaryWorkerId: null,
+    },
+  });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    setValue,
+    getValues,
+    formState: { isSubmitting },
+  } = form;
+
+  useEffect(() => {
+    if (!open) return;
+    reset({
+      tractorId: existingAssignment?.tractorId ?? "",
+      trailerId: existingAssignment?.trailerId ?? null,
+      primaryWorkerId: existingAssignment?.primaryWorkerId ?? "",
+      secondaryWorkerId: existingAssignment?.secondaryWorkerId ?? null,
+      ...prefill,
+    });
+  }, [open, existingAssignment, prefill, reset]);
+
+  const watchedTrailerId = useWatch({ control, name: "trailerId" });
+  useEffect(() => {
+    setContinuityError(null);
+  }, [watchedTrailerId]);
+
+  const watchedPrimaryWorker = useWatch({ control, name: "primaryWorkerId" });
+  const watchedSecondaryWorker = useWatch({ control, name: "secondaryWorkerId" });
+  useEffect(() => {
+    setComplianceViolations([]);
+  }, [watchedPrimaryWorker, watchedSecondaryWorker]);
+
+  const { mutateAsync } = useMutation({
+    mutationFn: (payload: AssignmentPayload) =>
+      isEditing
+        ? apiService.assignmentService.reassign(moveId, payload)
+        : apiService.assignmentService.assignToMove(moveId, payload),
+    onSuccess: (data: Assignment) => {
+      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      onAssigned?.(data);
+      toast.success(isEditing ? "Reassigned successfully" : "Assigned successfully");
+    },
+    onError: (error: ApiRequestError) => {
+      if (error.isBusinessError()) {
+        const params = error.getParams();
+        if (params.trailerId && params.pickupLocationId) {
+          setContinuityError({
+            message: error.data.detail || error.data.title,
+            trailerId: params.trailerId,
+            pickupLocationId: params.pickupLocationId,
+          });
+          return;
+        }
+      }
+      handleMutationError({ error, setFormError: setError, resourceName: "Assignment" });
+    },
+  });
+
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+    reset();
+    setContinuityError(null);
+    setComplianceViolations([]);
+  }, [onOpenChange, reset]);
+
+  const onSubmit = useCallback(
+    async (values: AssignmentPayload) => {
+      setComplianceViolations([]);
+      try {
+        await apiService.assignmentService.checkWorkerCompliance(moveId, {
+          primaryWorkerId: values.primaryWorkerId,
+          secondaryWorkerId: values.secondaryWorkerId,
+        });
+      } catch (err) {
+        if (err instanceof ApiRequestError && err.isValidationError()) {
+          const errors = err.getFieldErrors();
+          setComplianceViolations(errors.map((e) => e.message));
+          return;
+        }
+      }
+      await mutateAsync(values);
+      handleClose();
+    },
+    [mutateAsync, handleClose, moveId],
+  );
+
+  const handleTractorChange = useCallback(
+    (tractor: SelectOption | null) => {
+      if (tractor?.meta) {
+        const currentPrimary = getValues("primaryWorkerId");
+        const currentSecondary = getValues("secondaryWorkerId");
+        const primaryWorkerId = tractor.meta.primaryWorkerId;
+        const secondaryWorkerId = tractor.meta.secondaryWorkerId;
+
+        if (!currentPrimary && typeof primaryWorkerId === "string") {
+          setValue("primaryWorkerId", primaryWorkerId);
+        }
+        if (!currentSecondary && typeof secondaryWorkerId === "string") {
+          setValue("secondaryWorkerId", secondaryWorkerId);
+        }
+      }
+    },
+    [setValue, getValues],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Reassign Move" : "Assign Move"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update the tractor, trailer, and worker assignments for this move."
+              : "Assign a tractor, trailer, and workers to this move."}
+          </DialogDescription>
+        </DialogHeader>
+        {complianceViolations.length > 0 && (
+          <Alert variant="destructive">
+            <TriangleAlertIcon />
+            <AlertTitle>Compliance Violations</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc pl-4">
+                {complianceViolations.map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+        {continuityError && (
+          <Alert variant="default">
+            <TriangleAlertIcon />
+            <AlertTitle>Trailer Location Mismatch</AlertTitle>
+            <AlertDescription>{continuityError.message}</AlertDescription>
+            <AlertAction>
+              <Button
+                type="button"
+                size="xs"
+                variant="outline"
+                onClick={() => setLocateDialogOpen(true)}
+              >
+                Locate Trailer
+              </Button>
+            </AlertAction>
+          </Alert>
+        )}
+        <Form
+          onSubmit={(e) => {
+            e.stopPropagation();
+            void handleSubmit(onSubmit)(e);
+          }}
+        >
+          <FormGroup cols={2} className="pb-4">
+            <FormControl>
+              <TractorAutocompleteField
+                control={control}
+                name="tractorId"
+                label="Tractor"
+                placeholder="Select tractor"
+                rules={{ required: true }}
+                onOptionChange={handleTractorChange}
+              />
+            </FormControl>
+            <FormControl>
+              <TrailerAutocompleteField
+                control={control}
+                name="trailerId"
+                label="Trailer"
+                placeholder="Select trailer"
+                clearable
+              />
+            </FormControl>
+            <FormControl>
+              <WorkerAutocompleteField
+                control={control}
+                name="primaryWorkerId"
+                label="Primary Worker"
+                placeholder="Select primary worker"
+                rules={{ required: true }}
+                clearable
+              />
+            </FormControl>
+            <FormControl>
+              <WorkerAutocompleteField
+                control={control}
+                name="secondaryWorkerId"
+                label="Secondary Worker"
+                placeholder="Select secondary worker"
+                clearable
+              />
+            </FormControl>
+          </FormGroup>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
+              {isEditing ? "Reassign" : "Assign"}
+            </Button>
+          </DialogFooter>
+        </Form>
+      </DialogContent>
+      {continuityError && (
+        <LocateTrailerDialog
+          open={locateDialogOpen}
+          onOpenChange={setLocateDialogOpen}
+          trailerId={continuityError.trailerId}
+          targetLocationId={continuityError.pickupLocationId}
+          onLocated={() => setContinuityError(null)}
+        />
+      )}
+    </Dialog>
+  );
+}

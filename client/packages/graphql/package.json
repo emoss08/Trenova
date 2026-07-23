@@ -1,0 +1,31 @@
+{
+  "name": "@trenova/graphql",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./generated": "./src/generated/index.ts",
+    "./generated/operation-catalog.json": "./src/generated/operation-catalog.json",
+    "./generated/graphql": "./src/generated/graphql.ts",
+    "./generated/gql": "./src/generated/gql.ts",
+    "./generated/fragment-masking": "./src/generated/fragment-masking.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:watch": "graphql-codegen --config codegen.ts --watch",
+    "catalog": "node scripts/generate-graphql-catalog.mjs",
+    "codegen:check": "pnpm codegen && git diff --exit-code -- src/generated src/schema.graphql ../../../services/tms/internal/api/graphql/persisted-documents.json"
+  },
+  "dependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^7.2.0",
+    "@graphql-codegen/client-preset": "^6.1.0",
+    "@graphql-codegen/schema-ast": "^6.1.0",
+    "@trenova/config": "workspace:*",
+    "graphql": "^17.0.2",
+    "typescript": "~7.0.2"
+  }
+}

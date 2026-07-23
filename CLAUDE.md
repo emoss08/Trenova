@@ -15,7 +15,7 @@ trenova-2/
 │   ├── gtc/                    # CDC pipeline (Postgres → Redis/Meilisearch)
 │   └── samsara-sim/            # Samsara simulator service
 ├── shared/                     # Shared Go packages across services
-├── client/                     # React + TypeScript frontend (Vite, pnpm)
+├── client/                     # Frontend Turborepo (apps/* + packages/*, pnpm)
 ├── go.work                     # Go workspace configuration
 └── docker-compose-local.yml    # Local development infrastructure
 ```
@@ -37,16 +37,42 @@ task docker-down        # Stop infrastructure
 task quick-start        # Full setup for new developers
 ```
 
-### Client (from `client/`)
+### Client (pnpm workspace + Turborepo, from `client/`)
+
+The client is a Turborepo monorepo. `apps/*` are deployable applications and
+`packages/*` are shared libraries consumed by name (`@trenova/*`).
+
+```
+client/
+├── apps/
+│   ├── web/          # @trenova/web  — main TMS application
+│   └── dash/         # @trenova/dash — driver portal
+└── packages/
+    ├── shared/       # @trenova/shared  — design system (components/ui) + shared
+    │                 #   lib/types/services/stores/hooks/styles used by both apps
+    ├── graphql/      # @trenova/graphql — generated GraphQL client + codegen
+    └── config/       # @trenova/config  — shared base tsconfigs
+```
 
 ```bash
-pnpm dev              # Vite dev server
-pnpm build            # TypeScript compile + Vite build
-pnpm lint             # Run oxlint
-pnpm lint:fix         # Run oxlint with --fix
-pnpm test             # Run vitest
-pnpm test:watch       # Run vitest in watch mode
+# From client/ — Turborepo runs the task across every app/package
+pnpm dev              # turbo run dev (all apps)
+pnpm build            # turbo run build
+pnpm lint             # turbo run lint (oxlint)
+pnpm typecheck        # turbo run typecheck (tsc -b)
+pnpm test             # turbo run test (vitest)
+
+# Scope to one project
+pnpm --filter @trenova/dash dev        # run only the Dash dev server
+pnpm --filter @trenova/web build       # build only the TMS app
 ```
+
+GraphQL codegen lives in `@trenova/graphql` (`pnpm --filter @trenova/graphql codegen`).
+
+**Shared code rule:** anything imported by more than one app — UI components,
+utilities, types, base services — belongs in `packages/shared` and is imported
+as `@trenova/shared/...`. App-specific (TMS-only) code stays in `apps/web`.
+Never reach across apps or import an app package from another app.
 
 ### Running a Single Test
 
@@ -154,7 +180,7 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - **DRY**: Do not repeat yourself — extract shared logic rather than duplicating code
 - **SOLID**: Follow SOLID principles strictly (single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion)
 - **Performance**: Write the most efficient and performant code possible — avoid unnecessary allocations, prefer stack over heap, minimize copies, use appropriate data structures
-- **Utility functions**: Never duplicate a utility — if a function that does the same thing already exists, reuse it. Backend: place reusable utilities in the `shared/` package (e.g., `shared/stringutils`, `shared/sliceutils`, `shared/intutils`); do NOT scatter utility/helper functions in domain or service files; if a utility package doesn't exist for the category, create one in `shared/`. Frontend: place reusable utilities in `client/src/lib/` (`utils.ts`, `date.ts`, etc.); do NOT define them inline in components, hooks, or routes
+- **Utility functions**: Never duplicate a utility — if a function that does the same thing already exists, reuse it. Backend: place reusable utilities in the `shared/` package (e.g., `shared/stringutils`, `shared/sliceutils`, `shared/intutils`); do NOT scatter utility/helper functions in domain or service files; if a utility package doesn't exist for the category, create one in `shared/`. Frontend: utilities shared across apps go in `client/packages/shared/src/lib/` (`utils.ts`, `date.ts`, etc.) and are imported as `@trenova/shared/lib/*`; app-only utilities go in that app's `src/lib/`. Do NOT define them inline in components, hooks, or routes, and do NOT duplicate a utility that already exists in `@trenova/shared`
 
 ### Go
 - Follow the [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md) as the baseline for all Go code
