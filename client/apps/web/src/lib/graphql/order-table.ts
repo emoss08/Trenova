@@ -1,7 +1,7 @@
 import {
   OrderTableDocument,
   type OrderTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { Order } from "@/types/order";
 

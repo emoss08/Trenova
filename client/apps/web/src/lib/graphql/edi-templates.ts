@@ -2,7 +2,7 @@ import {
   EdiTemplateListDocument,
   type EdiDocumentDirection,
   type EdiTemplateStatus,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { safeParse } from "@/lib/parse";
 import { ediTemplateSchema, type EDITemplate } from "@/types/edi";

@@ -44,7 +44,7 @@ import {
 	type ShipmentLoadingOptimizationInput,
 	type ShipmentMoveInput,
 	type ShipmentPreviousRatesInput,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { GraphQLExecutableDocument } from "@/types/graphql";

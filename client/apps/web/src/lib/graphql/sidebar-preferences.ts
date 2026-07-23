@@ -3,7 +3,7 @@ import {
   type SidebarCustomizationOptionsQuery,
   type SidebarPreferencesInput,
   type SidebarPreferencesQuery,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 
 export type EffectiveSidebarPreferences = SidebarPreferencesQuery["sidebarPreferences"];

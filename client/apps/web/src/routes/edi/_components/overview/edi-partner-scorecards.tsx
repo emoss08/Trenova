@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { EdiPartnerScorecardsDocument } from "@/graphql/generated/graphql";
+import type { EdiPartnerScorecardsDocument } from "@trenova/graphql/generated/graphql";
 import { formatDurationFromSeconds } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { ResultOf } from "@graphql-typed-document-node/core";

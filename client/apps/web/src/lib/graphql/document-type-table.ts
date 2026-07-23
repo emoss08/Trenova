@@ -1,7 +1,7 @@
 import {
   DocumentTypeTableDocument,
   type DocumentTypeTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { DocumentType } from "@/types/document-type";
 

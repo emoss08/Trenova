@@ -1,7 +1,7 @@
 import {
   CommodityTableDocument,
   type CommodityTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { Commodity } from "@/types/commodity";
 

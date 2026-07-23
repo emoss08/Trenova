@@ -1,7 +1,7 @@
 import {
   FormulaTemplateTableDocument,
   type FormulaTemplateTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { FormulaTemplate } from "@/types/formula-template";
 

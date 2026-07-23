@@ -1,7 +1,7 @@
 import {
   CustomerTableDocument,
   type CustomerTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { Customer } from "@/types/customer";
 

@@ -6,7 +6,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import type { EdiVolumeSeriesDocument } from "@/graphql/generated/graphql";
+import type { EdiVolumeSeriesDocument } from "@trenova/graphql/generated/graphql";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";

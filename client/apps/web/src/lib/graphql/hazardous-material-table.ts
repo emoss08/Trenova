@@ -1,7 +1,7 @@
 import {
   HazardousMaterialTableDocument,
   type HazardousMaterialTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 

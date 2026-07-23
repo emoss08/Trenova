@@ -1,7 +1,7 @@
 import {
   AccessorialChargeTableDocument,
   type AccessorialChargeTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { AccessorialCharge } from "@/types/accessorial-charge";
 

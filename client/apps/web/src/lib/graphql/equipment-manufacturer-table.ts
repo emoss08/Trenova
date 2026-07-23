@@ -1,7 +1,7 @@
 import {
   EquipmentManufacturerTableDocument,
   type EquipmentManufacturerTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 

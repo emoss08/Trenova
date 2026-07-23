@@ -6,7 +6,7 @@ import {
   fetchFuelSurchargeProgramDetail,
   generateFuelSurchargeTable,
 } from "@/lib/graphql/fuel-surcharge";
-import type { GenerateFuelTableInput } from "@/graphql/generated/graphql";
+import type { GenerateFuelTableInput } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const fuelSurcharge = createQueryKeys("fuelSurcharge", {

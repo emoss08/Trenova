@@ -1,7 +1,7 @@
 import {
   AccountTypeTableDocument,
   type AccountTypeTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { AccountType } from "@/types/account-type";
 

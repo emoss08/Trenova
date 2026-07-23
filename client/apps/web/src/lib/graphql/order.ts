@@ -20,7 +20,7 @@ import {
   type OrderInput,
   type RemoveOrderChargeMutation,
   type UpdateOrderChargeMutation,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import type { OrderFormValues } from "@/types/order";
 

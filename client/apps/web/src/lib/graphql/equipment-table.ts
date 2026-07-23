@@ -5,7 +5,7 @@ import {
   type EquipmentTypeTableQueryVariables,
   type TractorTableQueryVariables,
   type TrailerTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { EquipmentType } from "@/types/equipment-type";
 import type { Tractor } from "@/types/tractor";

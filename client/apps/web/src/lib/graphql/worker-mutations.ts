@@ -3,7 +3,7 @@ import {
   PatchWorkerDocument,
   RejectWorkerPtoDocument,
   type WorkerPatchInput,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import type { Worker, WorkerPTO } from "@/types/worker";
 

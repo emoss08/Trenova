@@ -12,12 +12,12 @@ import {
   valueFromASTUntyped,
 } from "graphql";
 
-const clientRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const operationsDir = resolve(clientRoot, "src/graphql/operations");
-const srcDir = resolve(clientRoot, "src");
-const generatedDir = resolve(clientRoot, "src/graphql/generated");
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const operationsDir = resolve(packageRoot, "src/operations");
+const srcDir = resolve(packageRoot, "src");
+const generatedDir = resolve(packageRoot, "src/generated");
 const persistedDocumentsPath = resolve(generatedDir, "persisted-documents.json");
-const schemaFile = resolve(clientRoot, "src/graphql/schema.graphql");
+const schemaFile = resolve(packageRoot, "src/schema.graphql");
 const outputFile = resolve(generatedDir, "operation-catalog.json");
 
 function toPosix(absolutePath) {

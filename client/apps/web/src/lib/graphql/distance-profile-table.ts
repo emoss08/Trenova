@@ -1,7 +1,7 @@
 import {
   DistanceProfileTableDocument,
   type DistanceProfileTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { DistanceProfile } from "@/types/distance-profile";
 

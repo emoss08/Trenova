@@ -1,8 +1,8 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {
-  schema: "../services/tms/internal/api/graphql/schema/*.graphqls",
-  documents: "src/graphql/operations/**/*.graphql",
+  schema: "../../../services/tms/internal/api/graphql/schema/*.graphqls",
+  documents: "src/operations/**/*.graphql",
   hooks: {
     afterAllFileWrite: [
       "node scripts/sync-graphql-persisted-documents.mjs",
@@ -10,7 +10,7 @@ const config: CodegenConfig = {
     ],
   },
   generates: {
-    "src/graphql/generated/": {
+    "src/generated/": {
       preset: "client",
       presetConfig: {
         persistedDocuments: true,
@@ -26,7 +26,7 @@ const config: CodegenConfig = {
         },
       },
     },
-    "src/graphql/schema.graphql": {
+    "src/schema.graphql": {
       plugins: ["schema-ast"],
       config: {
         includeDirectives: true,

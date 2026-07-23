@@ -1,10 +1,10 @@
-import { getFragmentData } from "@/graphql/generated";
+import { getFragmentData } from "@trenova/graphql/generated";
 import {
   ReportDefinitionFieldsFragmentDoc,
   ReportRunFieldsFragmentDoc,
   ReportScheduleFieldsFragmentDoc,
   type ReportIrInput,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import {
   cancelReportRun,
   createReportDefinition,

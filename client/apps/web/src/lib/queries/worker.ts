@@ -5,7 +5,7 @@ import {
   type UpcomingWorkerPtoQueryVariables,
   type WorkerPtoChartDataQuery,
   type WorkerPtoChartDataQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import type { GenericLimitOffsetResponse } from "@/types/server";
 import type {

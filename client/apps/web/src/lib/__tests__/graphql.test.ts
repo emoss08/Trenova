@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TractorTableDocument } from "@/graphql/generated/graphql";
+import { TractorTableDocument } from "@trenova/graphql/generated/graphql";
 import { clearCsrfToken, setCsrfToken } from "../api";
 import { GraphQLRequestError, requestGraphQL, resolveGraphQLURL } from "../graphql";
 import { fetchGraphQLSelectOptions } from "../graphql/select-options";

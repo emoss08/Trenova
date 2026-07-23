@@ -1,4 +1,4 @@
-import { RecentActivityDocument, type RecentActivityQuery } from "@/graphql/generated/graphql";
+import { RecentActivityDocument, type RecentActivityQuery } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { queries } from "@/lib/queries";
 import { usePermissionStore } from "@/stores/permission-store";

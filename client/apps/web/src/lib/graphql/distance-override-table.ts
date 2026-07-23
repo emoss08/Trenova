@@ -1,7 +1,7 @@
 import {
   DistanceOverrideTableDocument,
   type DistanceOverrideTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { DistanceOverride } from "@/types/distance-override";
 

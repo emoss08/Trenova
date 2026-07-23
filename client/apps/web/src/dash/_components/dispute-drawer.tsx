@@ -10,7 +10,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createSettlementDispute, type PortalSettlementLine } from "@/lib/graphql/driver-portal";
 import { cn } from "@/lib/utils";
-import type { SettlementDisputeCategory } from "@/graphql/generated/graphql";
+import type { SettlementDisputeCategory } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";

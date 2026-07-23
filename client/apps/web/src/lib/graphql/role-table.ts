@@ -1,7 +1,7 @@
 import {
   RoleTableDocument,
   type RoleTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { Role } from "@/types/role";
 

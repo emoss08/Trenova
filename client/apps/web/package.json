@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
-    "build": "pnpm graphql:codegen && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "preview": "pnpm run build && wrangler dev",
@@ -19,13 +19,10 @@
     "b:dev": "bunx --bun vite",
     "b:build": "bunx --bun vite build",
     "deploy": "pnpm run build && wrangler deploy",
-    "doctor": "npx react-doctor@latest",
-    "graphql:catalog": "node scripts/generate-graphql-catalog.mjs",
-    "graphql:codegen": "graphql-codegen --config codegen.ts",
-    "graphql:codegen:check": "pnpm graphql:codegen && git diff --exit-code -- src/graphql/generated src/graphql/schema.graphql ../services/tms/internal/api/graphql/persisted-documents.json",
-    "graphql:codegen:watch": "graphql-codegen --config codegen.ts --watch"
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
+    "@trenova/graphql": "workspace:*",
     "@base-ui/react": "^1.6.0",
     "@codemirror/autocomplete": "^6.20.3",
     "@codemirror/lang-json": "^6.0.2",

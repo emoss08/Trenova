@@ -3,7 +3,7 @@ import {
   type SelectOptionResource,
   type SelectOptionsInput,
   type SelectOptionsQuery,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import type { GenericLimitOffsetResponse } from "@/types/server";
 

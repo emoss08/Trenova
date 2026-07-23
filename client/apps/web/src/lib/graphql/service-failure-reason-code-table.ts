@@ -1,7 +1,7 @@
 import {
   ServiceFailureReasonCodeTableDocument,
   type ServiceFailureReasonCodeTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 

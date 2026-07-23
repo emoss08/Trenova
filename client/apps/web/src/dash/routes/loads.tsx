@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
-import type { PortalLoadScope } from "@/graphql/generated/graphql";
+import type { PortalLoadScope } from "@trenova/graphql/generated/graphql";
 import { TruckIcon } from "lucide-react";
 import { useState } from "react";
 import { LoadCard } from "../_components/load-card";

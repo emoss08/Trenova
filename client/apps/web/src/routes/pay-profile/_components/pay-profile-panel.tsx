@@ -14,7 +14,7 @@ import {
   type PayProfileComponentFormValues,
   type PayProfileFormValues,
 } from "@/types/driver-pay";
-import type { CreatePayProfileInput, PayProfileComponentInput } from "@/graphql/generated/graphql";
+import type { CreatePayProfileInput, PayProfileComponentInput } from "@trenova/graphql/generated/graphql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { UserPlus, UsersIcon, WalletIcon } from "lucide-react";

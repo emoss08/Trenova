@@ -16,7 +16,7 @@
     "plugins": [
       {
         "name": "@0no-co/graphqlsp",
-        "schema": "./src/graphql/schema.graphql"
+        "schema": "../../packages/graphql/src/schema.graphql"
       }
     ],
     "skipLibCheck": true,

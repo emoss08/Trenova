@@ -31,8 +31,8 @@ import {
   type SaveReportDefinitionInput,
   type UpdateReportDefinitionInput,
   type UpdateReportScheduleInput,
-} from "@/graphql/generated/graphql";
-import { getFragmentData } from "@/graphql/generated";
+} from "@trenova/graphql/generated/graphql";
+import { getFragmentData } from "@trenova/graphql/generated";
 import { API_BASE_URL } from "@/lib/constants";
 import { requestGraphQL } from "@/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";

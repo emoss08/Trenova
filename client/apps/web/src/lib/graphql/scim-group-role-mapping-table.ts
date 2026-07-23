@@ -1,7 +1,7 @@
 import {
   ScimGroupRoleMappingsTableDocument,
   type ScimGroupRoleMappingsTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { SCIMGroupRoleMapping } from "@/types/iam";
 

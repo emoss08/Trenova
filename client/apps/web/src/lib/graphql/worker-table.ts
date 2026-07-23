@@ -3,7 +3,7 @@ import {
   WorkerTableDocument,
   type WorkerPtoTableQueryVariables,
   type WorkerTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { Worker, WorkerPTO } from "@/types/worker";
 

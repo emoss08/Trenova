@@ -10,7 +10,7 @@ import {
   driverSettlementTableGraphQLConfig,
   type DriverSettlementRow,
 } from "@/lib/graphql/driver-settlement";
-import type { BulkSettlementActionType } from "@/graphql/generated/graphql";
+import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphql";
 import type { DockAction } from "@/types/data-table";
 import { Resource } from "@/types/permission";
 import { useQueryClient } from "@tanstack/react-query";

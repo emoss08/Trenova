@@ -1,4 +1,4 @@
-import type { ShipmentProfitabilityQuery } from "@/graphql/generated/graphql";
+import type { ShipmentProfitabilityQuery } from "@trenova/graphql/generated/graphql";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";

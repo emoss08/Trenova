@@ -14,7 +14,7 @@ import {
   type DataTablePageInfoFieldsFragment,
   type InvoiceTableQueryVariables,
   type InvoiceTableRowFieldsFragment,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
 import { billTypeChoices, invoiceStatusChoices } from "@/lib/choices";
 import { requestGraphQL } from "@/lib/graphql";

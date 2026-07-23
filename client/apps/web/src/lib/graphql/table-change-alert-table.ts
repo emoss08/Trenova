@@ -1,7 +1,7 @@
 import {
   TcaSubscriptionTableDocument,
   type TcaSubscriptionTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { TCASubscription } from "@/types/table-change-alert";
 

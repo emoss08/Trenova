@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { dateToUnixTimestamp, formatRange, generateDateOnly } from "@/lib/date";
 import { cancelMyPto, fetchMyPto, requestMyPto } from "@/lib/graphql/driver-portal";
 import { cn } from "@/lib/utils";
-import type { PortalPtoType } from "@/graphql/generated/graphql";
+import type { PortalPtoType } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDaysIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";

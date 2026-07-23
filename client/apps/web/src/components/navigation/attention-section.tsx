@@ -1,7 +1,7 @@
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { AttentionSummaryQuery } from "@/graphql/generated/graphql";
+import type { AttentionSummaryQuery } from "@trenova/graphql/generated/graphql";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { isRouteActive } from "@/lib/route-utils";

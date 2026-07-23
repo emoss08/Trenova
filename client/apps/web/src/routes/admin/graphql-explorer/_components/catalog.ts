@@ -1,4 +1,4 @@
-import catalogData from "@/graphql/generated/operation-catalog.json";
+import catalogData from "@trenova/graphql/generated/operation-catalog.json";
 import type {
   CatalogFragment,
   CatalogOperation,

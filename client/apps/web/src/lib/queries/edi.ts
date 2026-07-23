@@ -2,7 +2,7 @@ import {
   EdiPartnerScorecardsDocument,
   EdiSummaryDocument,
   EdiVolumeSeriesDocument,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { listEdiTemplatesGraphQL, type ListEdiTemplatesParams } from "@/lib/graphql/edi-templates";
 import { apiService } from "@/services/api";

@@ -1,7 +1,7 @@
 import {
   JournalReversalTableDocument,
   type JournalReversalTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { JournalReversal } from "@/types/journal-reversal";
 

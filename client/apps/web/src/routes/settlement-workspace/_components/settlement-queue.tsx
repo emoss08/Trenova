@@ -13,7 +13,7 @@ import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dial
 import { bulkActionEligibility, bulkActionVerbs } from "@/lib/settlement-lifecycle";
 import { cn } from "@/lib/utils";
 import type { DriverSettlementStatus } from "@/types/driver-pay";
-import type { BulkSettlementActionType } from "@/graphql/generated/graphql";
+import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphql";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCheck, CircleDollarSign, Search, Send, TriangleAlert } from "lucide-react";
 import { useMemo, useState } from "react";

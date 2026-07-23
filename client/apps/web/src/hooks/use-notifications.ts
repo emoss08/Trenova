@@ -1,4 +1,4 @@
-import { CreateShipmentCommentDocument } from "@/graphql/generated/graphql";
+import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";

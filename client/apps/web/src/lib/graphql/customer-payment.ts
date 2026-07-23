@@ -10,7 +10,7 @@ import {
   type CustomerPaymentTableQueryVariables,
   type PostCustomerPaymentInput,
   type ReverseCustomerPaymentInput,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 

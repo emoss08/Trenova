@@ -4,7 +4,7 @@ import {
   ShipmentCommandCenterTableDocument,
   ShipmentEventsDocument,
   ShipmentSavedViewCountsDocument,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import {
   getShipmentSavedViewCountsGraphQL,
   listShipmentCommentsGraphQL,

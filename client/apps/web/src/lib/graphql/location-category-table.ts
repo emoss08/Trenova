@@ -1,7 +1,7 @@
 import {
   LocationCategoryTableDocument,
   type LocationCategoryTableQueryVariables,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
 import type { LocationCategory } from "@/types/location-category";
 

@@ -14,7 +14,7 @@ import {
   type SettlementBatchRow,
 } from "@/lib/graphql/driver-settlement";
 import { requestGraphQL } from "@/lib/graphql";
-import { SettlementBatchDetailDocument } from "@/graphql/generated/graphql";
+import { SettlementBatchDetailDocument } from "@trenova/graphql/generated/graphql";
 import type { DataTablePanelProps } from "@/types/data-table";
 import type { DriverSettlementStatus, SettlementBatchStatus } from "@/types/driver-pay";
 import { generateBatchFormSchema, type GenerateBatchFormValues } from "@/types/driver-pay";

@@ -1,4 +1,4 @@
-import { getFragmentData } from "@/graphql/generated";
+import { getFragmentData } from "@trenova/graphql/generated";
 import {
   DataTablePageInfoFieldsFragmentDoc,
   DismissNotificationsDocument,
@@ -10,7 +10,7 @@ import {
   RestoreNotificationsDocument,
   type NotificationListQuery,
   type NotificationUnreadCountQuery,
-} from "@/graphql/generated/graphql";
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { safeParse } from "@/lib/parse";
 import {

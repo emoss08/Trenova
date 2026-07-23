@@ -1,4 +1,4 @@
-import type { BulkSettlementActionType } from "@/graphql/generated/graphql";
+import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphql";
 import type { DriverSettlementStatus } from "@/types/driver-pay";
 
 export const bulkActionEligibility: Record<BulkSettlementActionType, DriverSettlementStatus[]> = {

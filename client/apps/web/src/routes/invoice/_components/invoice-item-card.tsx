@@ -7,7 +7,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { InvoiceTableRowFieldsFragment } from "@/graphql/generated/graphql";
+import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { formatCurrency } from "@/lib/utils";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
