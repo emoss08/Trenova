@@ -7,7 +7,7 @@ import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { dashRouter } from "./router";
-import "@/styles/app.css";
+import "@trenova/shared/styles/app.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
