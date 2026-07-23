@@ -15,6 +15,7 @@ const proxyConfig = {
 };
 
 export default defineConfig({
+  envDir: path.resolve(__dirname, "../.."),
   plugins: [
     react(),
     tailwindcss(),
@@ -29,7 +30,15 @@ export default defineConfig({
       "@trenova/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
   },
+  optimizeDeps: {
+    // @foony/realtime builds its Node-only `ws` fallback specifier at runtime
+    // (with @vite-ignore) so browser bundlers skip it. Excluding it from
+    // pre-bundling keeps esbuild from trying to resolve `ws`.
+    exclude: ["@foony/realtime"],
+  },
   server: {
+    port: 5174,
+    strictPort: true,
     proxy: {
       "/api": proxyConfig,
       "/graphql": proxyConfig,

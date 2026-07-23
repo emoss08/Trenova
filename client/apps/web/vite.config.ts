@@ -14,6 +14,7 @@ const pdfjsDistPath = path.dirname(require.resolve("pdfjs-dist/package.json"));
 const cMapsDir = normalizePath(path.join(pdfjsDistPath, "cmaps"));
 
 export default defineConfig({
+  envDir: path.resolve(__dirname, "../.."),
   environments: {
     client: {
       build: {
@@ -60,6 +61,8 @@ export default defineConfig({
     exclude: ["@foony/realtime"],
   },
   server: {
+    port: 5173,
+    strictPort: true,
     proxy: {
       "/api": {
         target: "http://localhost:8080",
@@ -85,7 +88,11 @@ export default defineConfig({
       overlay: true,
     },
     warmup: {
-      clientFiles: ["./src/lib/utils.ts", "./src/lib/api.ts", "./src/services/api.ts"],
+      clientFiles: [
+        "../../packages/shared/src/lib/utils.ts",
+        "../../packages/shared/src/lib/api.ts",
+        "./src/services/api.ts",
+      ],
     },
   },
   build: {

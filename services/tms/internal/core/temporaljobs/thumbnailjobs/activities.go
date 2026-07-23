@@ -222,7 +222,11 @@ func (a *Activities) generateThumbnail(
 	logger := activity.GetLogger(ctx)
 	activity.RecordHeartbeat(ctx, "generating thumbnail")
 
-	thumbData, err := a.thumbnailGenerator.Generate(bytes.NewReader(fileData), payload.ContentType)
+	thumbData, err := a.thumbnailGenerator.Generate(
+		ctx,
+		bytes.NewReader(fileData),
+		payload.ContentType,
+	)
 	if err != nil {
 		logger.Warn("Thumbnail generation failed", "error", err)
 
@@ -234,6 +238,21 @@ func (a *Activities) generateThumbnail(
 				), temporaltype.NewDataIntegrityError(
 					"PDF has no pages for thumbnail generation",
 					map[string]any{"documentId": payload.DocumentID.String()},
+				).
+					ToTemporalError()
+		}
+
+		if errors.Is(err, thumbnailservice.ErrRendererCrashed) {
+			return nil, a.failure(
+					payload,
+					"thumbnail generation failed: %v",
+					err,
+				), temporaltype.NewDataIntegrityError(
+					"PDF renderer crashed while generating thumbnail",
+					map[string]any{
+						"documentId": payload.DocumentID.String(),
+						"error":      err.Error(),
+					},
 				).
 					ToTemporalError()
 		}
