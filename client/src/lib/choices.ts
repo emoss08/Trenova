@@ -17,6 +17,20 @@ import type {
   RevenueRecognitionPolicy,
 } from "@/types/accounting-control";
 import type { BankReceiptStatus } from "@/types/bank-receipt";
+import type {
+  PayAdvanceSource,
+  PayCalcMethod,
+  PayComponentKind,
+  PayPeriodFrequency,
+  PayRevenueBasis,
+  PayeeClassification,
+  PayCodeDirection,
+  RecurringDeductionFrequency,
+  RecurringDeductionStatus,
+  RecurringEarningFrequency,
+  RecurringEarningStatus,
+  SettlementPayTrigger,
+} from "@/types/driver-pay";
 import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
 import type { ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
 import type {
@@ -199,7 +213,8 @@ export const fuelSurchargePercentBasisChoices = [
   {
     label: "Linehaul only",
     value: "Linehaul",
-    description: "Percentage applies to the base freight charge only — the most common contract term.",
+    description:
+      "Percentage applies to the base freight charge only — the most common contract term.",
   },
   {
     label: "Linehaul + accessorials",
@@ -1379,3 +1394,403 @@ export const ediDocumentDirectionChoices = [
   { label: "Inbound", value: "Inbound" },
   { label: "Outbound", value: "Outbound" },
 ];
+
+export const payeeClassificationChoices = [
+  {
+    label: "Company Driver",
+    value: "CompanyDriver",
+    color: "#2563eb",
+    description: "W-2 employee paid through driver pay expense.",
+  },
+  {
+    label: "Owner-Operator",
+    value: "OwnerOperator",
+    color: "#9333ea",
+    description: "1099 contractor paid through purchased transportation.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayeeClassification>>;
+
+export const payComponentKindChoices = [
+  {
+    label: "Linehaul",
+    value: "Linehaul",
+    color: "#2563eb",
+    description: "Base haul pay — per-mile or percent-of-revenue.",
+  },
+  {
+    label: "Fuel Surcharge",
+    value: "FuelSurcharge",
+    color: "#ea580c",
+    description: "Passes a share of the shipment's fuel surcharge to the driver.",
+  },
+  {
+    label: "Stop Pay",
+    value: "StopPay",
+    color: "#0891b2",
+    description: "Pays for each extra stop beyond pickup and delivery.",
+  },
+  {
+    label: "Detention",
+    value: "Detention",
+    color: "#d97706",
+    description: "Hourly pay for dwell time beyond the free-time allowance.",
+  },
+  {
+    label: "Layover",
+    value: "Layover",
+    color: "#7c3aed",
+    description: "Per-day pay when the driver is held over away from home.",
+  },
+  {
+    label: "Breakdown",
+    value: "Breakdown",
+    color: "#dc2626",
+    description: "Pay while the truck is down for repairs.",
+  },
+  {
+    label: "Tarp",
+    value: "Tarp",
+    color: "#4f46e5",
+    description: "Flat pay for tarping flatbed loads.",
+  },
+  {
+    label: "Hazmat",
+    value: "Hazmat",
+    color: "#c026d3",
+    description: "Premium applied when the shipment carries hazardous materials.",
+  },
+  {
+    label: "Bonus",
+    value: "Bonus",
+    color: "#15803d",
+    description: "Discretionary or program bonus tied to the move.",
+  },
+  {
+    label: "Custom",
+    value: "Custom",
+    color: "#a3a3a3",
+    description: "Carrier-defined component — describe it so drivers recognize it.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayComponentKind>>;
+
+export const payCalcMethodChoices = [
+  {
+    label: "Per Loaded Mile",
+    value: "PerLoadedMile",
+    color: "#2563eb",
+    description: "Rate × the move's loaded miles; supports mileage bands.",
+  },
+  {
+    label: "Per Empty Mile",
+    value: "PerEmptyMile",
+    color: "#0891b2",
+    description: "Rate × the move's empty (deadhead) miles.",
+  },
+  {
+    label: "Per Total Mile",
+    value: "PerTotalMile",
+    color: "#4f46e5",
+    description: "Rate × all dispatched miles, loaded or empty.",
+  },
+  {
+    label: "Percent of Revenue",
+    value: "PercentOfRevenue",
+    color: "#9333ea",
+    description: "Share of shipment revenue, allocated to the move by distance.",
+  },
+  {
+    label: "Flat per Shipment",
+    value: "FlatPerShipment",
+    color: "#15803d",
+    description: "Fixed amount for each shipment regardless of miles.",
+  },
+  {
+    label: "Per Stop",
+    value: "PerStop",
+    color: "#ea580c",
+    description: "Rate × extra stops beyond pickup and delivery.",
+  },
+  {
+    label: "Per Hour",
+    value: "PerHour",
+    color: "#d97706",
+    description: "Rate × hours — used for detention beyond free time.",
+  },
+  {
+    label: "Per Day",
+    value: "PerDay",
+    color: "#c026d3",
+    description: "Rate × days — used for layover and similar daily pay.",
+  },
+  {
+    label: "Per Event",
+    value: "PerEvent",
+    color: "#a3a3a3",
+    description: "Fixed amount per occurrence (breakdown, tarp, etc.).",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayCalcMethod>>;
+
+export const payRevenueBasisChoices = [
+  {
+    label: "Linehaul",
+    value: "Linehaul",
+    color: "#2563eb",
+    description: "Percentage applies to freight charges only.",
+  },
+  {
+    label: "Linehaul + Fuel Surcharge",
+    value: "LinehaulPlusFuelSurcharge",
+    color: "#ea580c",
+    description: "Percentage applies to freight charges plus fuel surcharge.",
+  },
+  {
+    label: "Total Revenue",
+    value: "TotalRevenue",
+    color: "#15803d",
+    description: "Percentage applies to every charge on the shipment.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayRevenueBasis>>;
+
+export const payCodeDirectionChoices = [
+  {
+    label: "Earning",
+    value: "Earning",
+    color: "#15803d",
+    description: "Adds pay to settlements — bonuses, per diem, stipends.",
+  },
+  {
+    label: "Deduction",
+    value: "Deduction",
+    color: "#dc2626",
+    description: "Withholds pay from settlements — leases, insurance, repayments.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayCodeDirection>>;
+
+export const recurringDeductionFrequencyChoices = [
+  {
+    label: "Every Settlement",
+    value: "EverySettlement",
+    color: "#2563eb",
+    description: "Withheld from every qualifying settlement.",
+  },
+  {
+    label: "Monthly",
+    value: "Monthly",
+    color: "#9333ea",
+    description: "Withheld only from the first settlement of each month.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RecurringDeductionFrequency>>;
+
+export const recurringDeductionStatusChoices = [
+  {
+    label: "Active",
+    value: "Active",
+    color: "#15803d",
+    description: "Withheld automatically from each qualifying settlement.",
+  },
+  {
+    label: "Paused",
+    value: "Paused",
+    color: "#d97706",
+    description: "Temporarily skipped; history is kept and it can resume anytime.",
+  },
+  {
+    label: "Completed",
+    value: "Completed",
+    color: "#a3a3a3",
+    description: "Reached its lifetime cap and stopped permanently.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RecurringDeductionStatus>>;
+
+export const recurringEarningFrequencyChoices = [
+  {
+    label: "Every Settlement",
+    value: "EverySettlement",
+    color: "#2563eb",
+    description: "Added to every qualifying settlement.",
+  },
+  {
+    label: "Monthly",
+    value: "Monthly",
+    color: "#9333ea",
+    description: "Added only to the first settlement of each month.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RecurringEarningFrequency>>;
+
+export const recurringEarningStatusChoices = [
+  {
+    label: "Active",
+    value: "Active",
+    color: "#15803d",
+    description: "Added automatically to each qualifying settlement.",
+  },
+  {
+    label: "Paused",
+    value: "Paused",
+    color: "#d97706",
+    description: "Temporarily skipped; history is kept and it can resume anytime.",
+  },
+  {
+    label: "Completed",
+    value: "Completed",
+    color: "#a3a3a3",
+    description: "Reached its lifetime cap and stopped permanently.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RecurringEarningStatus>>;
+
+export const payAdvanceSourceChoices = [
+  {
+    label: "Cash",
+    value: "Cash",
+    color: "#15803d",
+    description: "Cash handed to the driver directly.",
+  },
+  {
+    label: "EFS Money Code",
+    value: "EFSMoneyCode",
+    color: "#2563eb",
+    description: "EFS code the driver cashes at a truck stop.",
+  },
+  {
+    label: "Comdata Code",
+    value: "ComdataCode",
+    color: "#4f46e5",
+    description: "Comdata Comchek code issued to the driver.",
+  },
+  {
+    label: "Fuel Card",
+    value: "FuelCard",
+    color: "#ea580c",
+    description: "Cash advance drawn on the driver's fuel card.",
+  },
+  {
+    label: "Other",
+    value: "Other",
+    color: "#a3a3a3",
+    description: "Any other advance mechanism — note the details on the record.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayAdvanceSource>>;
+
+export const payPeriodFrequencyChoices = [
+  {
+    label: "Weekly",
+    value: "Weekly",
+    color: "#2563eb",
+    description: "Settlements cover one week, ending on the configured weekday.",
+  },
+  {
+    label: "Biweekly",
+    value: "Biweekly",
+    color: "#4f46e5",
+    description: "Settlements cover two weeks, ending on the configured weekday.",
+  },
+  {
+    label: "Monthly",
+    value: "Monthly",
+    color: "#9333ea",
+    description: "Settlements cover one month, ending on the configured weekday.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<PayPeriodFrequency>>;
+
+export const settlementPayTriggerChoices = [
+  {
+    label: "Move Completed",
+    value: "MoveCompleted",
+    color: "#15803d",
+    description: "Pay accrues the moment a driver finishes their own move — best for split loads.",
+  },
+  {
+    label: "Shipment Delivered",
+    value: "ShipmentDelivered",
+    color: "#2563eb",
+    description: "Pay accrues when the whole shipment reaches Completed.",
+  },
+  {
+    label: "POD Received (Ready to Invoice)",
+    value: "PODReceived",
+    color: "#d97706",
+    description: "Pay accrues once paperwork is in and the shipment is ready to invoice.",
+  },
+  {
+    label: "Shipment Invoiced",
+    value: "ShipmentInvoiced",
+    color: "#9333ea",
+    description: "Pay accrues only after the customer has been invoiced.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<SettlementPayTrigger>>;
+
+export const settlementDisputeStatusChoices = [
+  {
+    label: "Open",
+    value: "Open",
+    color: "#2563eb",
+    description: "Newly submitted by the driver and waiting for a first look.",
+  },
+  {
+    label: "In Review",
+    value: "InReview",
+    color: "#d97706",
+    description: "Being investigated by payroll or the fleet manager.",
+  },
+  {
+    label: "Resolved",
+    value: "Resolved",
+    color: "#15803d",
+    description: "Closed in the driver's favor, optionally with a correcting adjustment.",
+  },
+  {
+    label: "Denied",
+    value: "Denied",
+    color: "#dc2626",
+    description: "Closed with an explanation; the original settlement stands.",
+  },
+  {
+    label: "Withdrawn",
+    value: "Withdrawn",
+    color: "#a3a3a3",
+    description: "Pulled back by the driver before a decision was made.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const settlementDisputeCategoryChoices = [
+  {
+    label: "Missing Pay",
+    value: "MissingPay",
+    color: "#dc2626",
+    description: "A load or accessorial the driver ran isn't on the statement.",
+  },
+  {
+    label: "Incorrect Rate",
+    value: "IncorrectRate",
+    color: "#d97706",
+    description: "Pay was calculated with the wrong rate or mileage.",
+  },
+  {
+    label: "Incorrect Deduction",
+    value: "IncorrectDeduction",
+    color: "#9333ea",
+    description: "A deduction is wrong, duplicated, or shouldn't apply.",
+  },
+  {
+    label: "Missing Reimbursement",
+    value: "MissingReimbursement",
+    color: "#2563eb",
+    description: "An expense the carrier owes back wasn't reimbursed.",
+  },
+  {
+    label: "Other",
+    value: "Other",
+    color: "#a3a3a3",
+    description: "Anything else about the statement that looks off.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const weekdayChoices = [
+  { label: "Sunday", value: 0 },
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+] satisfies ReadonlyArray<GenericSelectOption<number>>;

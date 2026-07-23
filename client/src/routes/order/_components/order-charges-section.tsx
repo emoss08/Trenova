@@ -90,7 +90,7 @@ export function OrderChargesSection() {
     >
       {charges.length > 0 ? (
         <div className="rounded-lg border">
-          <div className="grid grid-cols-12 gap-2 border-b border-border px-4 py-2 text-2xs uppercase text-muted-foreground">
+          <div className="grid grid-cols-12 gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
             <span className="col-span-7">Description</span>
             <span className="col-span-3 text-right">Amount</span>
             <span className="col-span-2" />

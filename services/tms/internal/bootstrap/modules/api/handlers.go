@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
@@ -65,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -100,6 +102,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	iamhandler.New,
 	userhandler.New,
 	authhandler.New,
+	driverportalhandler.New,
+	pushhandler.New,
 	formulatemplatehandler.New,
 	pagefavoritehandler.New,
 	equipmenttypehandler.New,

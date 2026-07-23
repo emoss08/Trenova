@@ -682,6 +682,219 @@ models:
   Notification:
     model:
       - github.com/emoss08/trenova/internal/core/domain/notification.Notification
+  PayeeClassification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.PayeeClassification
+  PayComponentKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.ComponentKind
+  PayCalcMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.CalcMethod
+  PayRevenueBasis:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.RevenueBasis
+  PayCodeDirection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.PayCodeDirection
+  PayCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.PayCode
+    fields:
+      glAccount:
+        resolver: true
+  RecurringDeductionFrequency:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.DeductionFrequency
+  RecurringDeductionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.DeductionStatus
+  RecurringEarningFrequency:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.EarningFrequency
+  RecurringEarningStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.EarningStatus
+  PayAdvanceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.AdvanceStatus
+  PayAdvanceSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.AdvanceSource
+  EscrowAccountStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.EscrowAccountStatus
+  EscrowTransactionType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.EscrowTransactionType
+  DriverSettlementStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.Status
+  PortalInvitationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PortalInvitationStatus
+  PortalInvitation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PortalInvitation
+  WorkerPortalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalStatus
+  InviteWorkerToPortalResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.InviteWorkerResult
+  SettlementDisputeStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.DisputeStatus
+  SettlementDisputeCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.DisputeCategory
+  SettlementDispute:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.Dispute
+  PortalLoadScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.LoadScope
+  PortalProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalProfile
+  PortalStop:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalStop
+  PortalLoad:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalLoad
+  PortalComment:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalComment
+  PortalStopAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.StopActualAction
+  PortalComplianceProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalComplianceProfile
+  PortalPtoStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOStatus
+  PortalPtoType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOType
+  PortalPto:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPTO
+  DriverExpenseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.ExpenseStatus
+  DriverExpense:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.Expense
+  PortalPayEstimate:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.MovePayEstimate
+  DashControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.DashControl
+  PortalFeatures:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalFeatures
+  PortalPeriodSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalPeriodSummary
+  PortalEscrowSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalEscrowSummary
+  SettlementLineCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.LineCategory
+  SettlementBatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.BatchStatus
+  DriverPayEventStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.PayEventStatus
+  PayPeriodFrequency:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.PayPeriodFrequency
+  SettlementPayTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.PayTrigger
+  PayMileageBand:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.MileageBand
+  PayProfileComponent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.PayProfileComponent
+  PayProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.PayProfile
+    fields:
+      activeAssignmentCount:
+        resolver: true
+  PayRateOverride:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.RateOverride
+  WorkerPayAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.WorkerPayAssignment
+  RecurringDeduction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.RecurringDeduction
+  RecurringEarning:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.RecurringEarning
+  PayAdvance:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.PayAdvance
+  EscrowTransaction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.EscrowTransaction
+  EscrowAccount:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driverpay.EscrowAccount
+  SettlementException:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.Exception
+  DriverSettlementLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.SettlementLine
+  DriverSettlement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.Settlement
+  SettlementBatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.SettlementBatch
+  DriverPayEventComponent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.PayEventComponent
+  DriverPayEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/driversettlement.PayEvent
+  SettlementControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.SettlementControl
+  WorkerEarningsSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.WorkerEarningsSummary
+  WorkerYTDPaySummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.WorkerYTDPaySummary
+  SettlementPeriodBounds:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.PeriodBounds
+  SettlementWorkspaceSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.WorkspaceSummary
+  UnsettledWorkerSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.UnsettledWorkerSummary
+  BulkSettlementActionType:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.BulkActionType
+  BulkSettlementActionResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.BulkActionResult
+  BulkSettlementActionPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/driversettlementservice.BulkActionPayload
   CustomerPaymentStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customerpayment.Status

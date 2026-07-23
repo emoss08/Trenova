@@ -209,6 +209,7 @@ func (r *Registry) registerAll() {
 	r.registerLocationResources()
 	r.registerCommodityResources()
 	r.registerAccountingResources()
+	r.registerSettlementResources()
 	r.registerComplianceResources()
 	r.registerReferenceDataResources()
 	r.registerReportingResources()
@@ -1539,6 +1540,181 @@ func (r *Registry) registerAccountingResources() {
 				Description: "Assign and resolve bank receipt work items",
 			},
 		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+}
+
+//nolint:funlen // Permission registry setup is intentionally grouped by payroll resource.
+func (r *Registry) registerSettlementResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDriverPayProfile.String(),
+		DisplayName: "Driver Pay Profile",
+		Description: "Driver pay package configuration and worker pay assignments",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOpsWithDelete),
+			OperationDefinition{
+				Operation:   OpAssign,
+				DisplayName: "Assign",
+				Description: "Assign pay profiles to workers",
+			},
+		),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRecurringDeduction.String(),
+		DisplayName:        "Recurring Deduction",
+		Description:        "Recurring driver deduction schedules",
+		Category:           "Payroll",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	r.registerRecurringEarningResource()
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourcePayAdvance.String(),
+		DisplayName: "Pay Advance",
+		Description: "Driver cash and money-code advances",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpCancel,
+				DisplayName: "Write Off",
+				Description: "Write off unrecoverable advances",
+			},
+		),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceEscrowAccount.String(),
+		DisplayName: "Escrow Account",
+		Description: "Owner-operator escrow accounts and ledgers",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpClose,
+				DisplayName: "Close",
+				Description: "Close escrow accounts and refund balances",
+			},
+		),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDriverSettlement.String(),
+		DisplayName: "Driver Settlement",
+		Description: "Driver and owner-operator settlement statements and batches",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Submit settlements for approval",
+			},
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve and post settlements",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Send settlements back to draft",
+			},
+			OperationDefinition{
+				Operation:   OpCancel,
+				DisplayName: "Void",
+				Description: "Void settlements",
+			},
+		),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceSettlementControl.String(),
+		DisplayName:        "Settlement Control",
+		Description:        "Settlement pay period, trigger, and exception policy configuration",
+		Category:           "Payroll",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceSettlementDispute.String(),
+		DisplayName: "Settlement Dispute",
+		Description: "Driver-submitted settlement disputes and their resolution",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Resolve",
+				Description: "Resolve or deny settlement disputes",
+			},
+		),
+		ParentResource:     ResourceDriverSettlement.String(),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDriverExpense.String(),
+		DisplayName: "Driver Expense",
+		Description: "Driver-submitted expenses pending reimbursement review",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Review",
+				Description: "Approve or reject driver expenses",
+			},
+		),
+		ParentResource:     ResourceDriverSettlement.String(),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDashControl.String(),
+		DisplayName:        "Dash Control",
+		Description:        "Driver portal (Dash) feature toggles — what drivers can see and do",
+		Category:           "Payroll",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDriverPortal.String(),
+		DisplayName: "Driver Portal",
+		Description: "Driver portal (Dash) access management and invitations",
+		Category:    "Payroll",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpCancel,
+				DisplayName: "Revoke",
+				Description: "Revoke a driver's portal access",
+			},
+		),
+		ParentResource:     ResourceWorker.String(),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+}
+
+func (r *Registry) registerRecurringEarningResource() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRecurringEarning.String(),
+		DisplayName:        "Recurring Earning",
+		Description:        "Recurring driver earning schedules such as per diem and bonuses",
+		Category:           "Payroll",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourcePayCode.String(),
+		DisplayName:        "Pay Code",
+		Description:        "Carrier-defined earning and deduction codes with GL account mappings",
+		Category:           "Payroll",
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 }

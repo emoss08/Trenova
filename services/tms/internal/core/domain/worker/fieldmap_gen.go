@@ -4,6 +4,13 @@ package worker
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PortalInvitation].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PortalInvitationFieldMap] instead of parsing struct tags via reflection.
+func (e *PortalInvitation) GetStaticFieldMap() map[string]string {
+	return buncolgen.PortalInvitationFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Worker].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.WorkerFieldMap] instead of parsing struct tags via reflection.

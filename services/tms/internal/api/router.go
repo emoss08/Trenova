@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/driverportalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
@@ -68,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -126,6 +128,8 @@ type RouterParams struct {
 	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
+	DriverPortalHandler             *driverportalhandler.Handler
+	PushHandler                     *pushhandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -227,6 +231,8 @@ type Router struct {
 	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
+	driverPortalHandler             *driverportalhandler.Handler
+	pushHandler                     *pushhandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
@@ -330,6 +336,8 @@ func NewRouter(p RouterParams) *Router {
 		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
+		driverPortalHandler:             p.DriverPortalHandler,
+		pushHandler:                     p.PushHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
@@ -486,6 +494,7 @@ func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {
 func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.docsHandler.RegisterRoutes(rg)
 	r.authHandler.RegisterRoutes(rg)
+	r.driverPortalHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
@@ -497,6 +506,8 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	protected := r.protectedGroup(rg)
 
+	r.driverPortalHandler.RegisterProtectedRoutes(protected)
+	r.pushHandler.RegisterRoutes(protected)
 	r.organizationHandler.RegisterRoutes(protected)
 	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)

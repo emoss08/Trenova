@@ -49,6 +49,11 @@ type Trailer struct {
 	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
 	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
 	MaxLoadWeight           *int                        `json:"maxLoadWeight"           bun:"max_load_weight,type:INT,nullzero"`
+	OwnershipType           domaintypes.OwnershipType   `json:"ownershipType"           bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`
+	OwnerWorkerID           *pulid.ID                   `json:"ownerWorkerId"           bun:"owner_worker_id,type:VARCHAR(100),nullzero"`
+	LessorName              string                      `json:"lessorName"              bun:"lessor_name,type:VARCHAR(150),nullzero"`
+	LeaseReference          string                      `json:"leaseReference"          bun:"lease_reference,type:VARCHAR(100),nullzero"`
+	LeaseEndDate            *int64                      `json:"leaseEndDate"            bun:"lease_end_date,type:BIGINT,nullzero"`
 	LastInspectionDate      *int64                      `json:"lastInspectionDate"      bun:"last_inspection_date,type:BIGINT,nullzero"`
 	RegistrationExpiry      *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
 	LastKnownLocationID     pulid.ID                    `json:"lastKnownLocationId"     bun:"last_known_location_id,type:VARCHAR(100),scanonly"`
@@ -108,6 +113,33 @@ func (t *Trailer) Validate(multiErr *errortypes.MultiError) {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
+
+	if t.OwnershipType != "" && !t.OwnershipType.IsValid() {
+		multiErr.Add("ownershipType", errortypes.ErrInvalid, "Ownership type is invalid")
+	}
+	if t.OwnershipType == domaintypes.OwnershipTypeOwnerOperator &&
+		(t.OwnerWorkerID == nil || t.OwnerWorkerID.IsNil()) {
+		multiErr.Add(
+			"ownerWorkerId",
+			errortypes.ErrRequired,
+			"Owner is required for owner-operator equipment",
+		)
+	}
+	if t.OwnershipType != domaintypes.OwnershipTypeOwnerOperator && t.OwnerWorkerID != nil &&
+		!t.OwnerWorkerID.IsNil() {
+		multiErr.Add(
+			"ownerWorkerId",
+			errortypes.ErrInvalid,
+			"Owner may only be set on owner-operator equipment",
+		)
+	}
+	if t.OwnershipType == domaintypes.OwnershipTypeLeased && t.LessorName == "" {
+		multiErr.Add(
+			"lessorName",
+			errortypes.ErrRequired,
+			"Lessor name is required for leased equipment",
+		)
+	}
 }
 
 func (t *Trailer) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -115,6 +147,9 @@ func (t *Trailer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	switch query.(type) {
 	case *bun.InsertQuery:
+		if t.OwnershipType == "" {
+			t.OwnershipType = domaintypes.OwnershipTypeCompanyOwned
+		}
 		if t.ID.IsNil() {
 			t.ID = pulid.MustNew("tr_")
 		}

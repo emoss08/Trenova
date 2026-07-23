@@ -1,0 +1,622 @@
+enum PortalInvitationStatus {
+  Pending
+  Accepted
+  Revoked
+}
+
+enum SettlementDisputeStatus {
+  Open
+  InReview
+  Resolved
+  Denied
+  Withdrawn
+}
+
+enum SettlementDisputeCategory {
+  MissingPay
+  IncorrectRate
+  IncorrectDeduction
+  MissingReimbursement
+  Other
+}
+
+enum PortalLoadScope {
+  Active
+  History
+}
+
+enum PortalStopAction {
+  Arrive
+  Depart
+}
+
+"""
+An invitation for a driver to create a Dash (driver portal) account. The token
+itself is never stored or exposed; only its hash is persisted.
+"""
+type PortalInvitation {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  email: String!
+  status: PortalInvitationStatus!
+  expiresAt: Int!
+  invitedById: ID!
+  acceptedAt: Int
+  acceptedUserId: ID
+  createdAt: Int!
+  updatedAt: Int!
+  invitedBy: User
+  worker: Worker
+}
+
+"""
+Portal access state for one worker: whether they have a linked portal login,
+the linked user if so, and their invitation history.
+"""
+type WorkerPortalStatus {
+  linked: Boolean!
+  portalUser: User
+  pendingInvitation: PortalInvitation
+  invitations: [PortalInvitation!]!
+}
+
+type InviteWorkerToPortalResult {
+  invitation: PortalInvitation!
+  """
+  Shareable invitation link. Also emailed to the driver when an email provider
+  is configured; surface this so dispatch can text it manually if needed.
+  """
+  inviteUrl: String!
+  emailSent: Boolean!
+}
+
+"""
+A driver-submitted question or challenge against an issued settlement or one of
+its lines, tracked through review to resolution or denial.
+"""
+type SettlementDispute {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  settlementId: ID!
+  settlementLineId: ID
+  workerId: ID!
+  status: SettlementDisputeStatus!
+  category: SettlementDisputeCategory!
+  description: String!
+  submittedByUserId: ID!
+  resolutionNote: String!
+  resolutionLineId: ID
+  resolvedById: ID
+  resolvedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  settlement: DriverSettlement
+  settlementLine: DriverSettlementLine
+  worker: Worker
+  resolvedBy: User
+}
+
+type SettlementDisputeEdge {
+  node: SettlementDispute!
+  cursor: String!
+}
+
+type SettlementDisputeConnection {
+  edges: [SettlementDisputeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+The signed-in driver's profile as shown in Dash.
+"""
+type PortalProfile {
+  workerId: ID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phoneNumber: String!
+  workerType: String!
+  driverType: String!
+  fleetCodeName: String!
+  organizationName: String!
+}
+
+type PortalStop {
+  id: ID!
+  type: String!
+  status: String!
+  sequence: Int!
+  locationName: String!
+  addressLine: String!
+  scheduledWindowStart: Int!
+  scheduledWindowEnd: Int
+  actualArrival: Int
+  actualDeparture: Int
+}
+
+"""
+A load as the assigned driver sees it: the move, its stops, and the equipment,
+without any customer billing or rate detail.
+"""
+type PortalLoad {
+  assignmentId: ID!
+  moveId: ID!
+  shipmentId: ID!
+  proNumber: String!
+  bol: String!
+  status: String!
+  isPrimary: Boolean!
+  tractorCode: String!
+  trailerCode: String!
+  pieces: Int
+  weight: Int
+  distanceMiles: Float
+  """
+  What this load pays the signed-in driver, summed across their pay events for
+  the move. Null until pay accrues.
+  """
+  payGrossMinor: Int
+  payStatus: String!
+  payOnHold: Boolean!
+  """
+  Driver acknowledgment of the assignment: Pending, Accepted, or Declined.
+  """
+  ackStatus: String!
+  stops: [PortalStop!]!
+}
+
+"""
+A dispatch note on one of the driver's loads. Only comments explicitly marked
+with Driver visibility are ever returned.
+"""
+type PortalComment {
+  id: ID!
+  type: String!
+  priority: String!
+  comment: String!
+  authorName: String!
+  createdAt: Int!
+}
+
+"""
+The signed-in driver's qualification-file view: license, medical, and other
+FMCSA compliance dates, plus their contact details. Compliance fields are
+read-only for drivers — only contact details are self-serviceable.
+"""
+type PortalComplianceProfile {
+  workerId: ID!
+  licenseNumber: String!
+  licenseState: String!
+  cdlClass: String!
+  endorsement: String!
+  licenseExpiry: Int!
+  hazmatExpiry: Int
+  medicalCardExpiry: Int
+  physicalDueDate: Int
+  mvrDueDate: Int
+  twicExpiry: Int
+  complianceStatus: String!
+  isQualified: Boolean!
+  hireDate: Int!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  stateAbbreviation: String!
+  postalCode: String!
+  phoneNumber: String!
+  emergencyContactName: String!
+  emergencyContactPhone: String!
+}
+
+input UpdateMyContactInfoInput {
+  phoneNumber: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  postalCode: String!
+  emergencyContactName: String
+  emergencyContactPhone: String
+}
+
+"""
+Live pay accrued in the driver's current open pay period.
+"""
+type PortalPeriodSummary {
+  periodStart: Int!
+  periodEnd: Int!
+  payDate: Int!
+  accruedGrossMinor: Int!
+  eventCount: Int!
+}
+
+type PortalEscrowSummary {
+  account: EscrowAccount
+  transactions: [EscrowTransaction!]!
+}
+
+type MySettlementList {
+  items: [DriverSettlement!]!
+  total: Int!
+}
+
+input InviteWorkerToPortalInput {
+  workerId: ID!
+  """
+  Overrides the email on the worker record when provided.
+  """
+  email: String
+}
+
+input CreateMyLoadCommentInput {
+  shipmentId: ID!
+  comment: String!
+}
+
+input RecordMyStopActionInput {
+  moveId: ID!
+  stopId: ID!
+  action: PortalStopAction!
+}
+
+input CreateSettlementDisputeInput {
+  settlementId: ID!
+  settlementLineId: ID
+  category: SettlementDisputeCategory!
+  description: String!
+}
+
+input DisputeAdjustmentInput {
+  description: String!
+  amountMinor: Int!
+  payCodeId: ID
+}
+
+input ResolveSettlementDisputeInput {
+  disputeId: ID!
+  approve: Boolean!
+  resolutionNote: String!
+  """
+  Optional correcting adjustment applied to the driver's open settlement (one is
+  generated off-cycle when none exists). Only valid when approving.
+  """
+  adjustment: DisputeAdjustmentInput
+}
+
+enum PortalPtoStatus {
+  Requested
+  Approved
+  Rejected
+  Cancelled
+}
+
+enum PortalPtoType {
+  Personal
+  Vacation
+  Sick
+  Holiday
+  Bereavement
+  Maternity
+  Paternity
+}
+
+"""
+A driver's time-off request, self-serviced from Dash and approved by the back
+office through the existing worker PTO workflow.
+"""
+type PortalPto {
+  id: ID!
+  workerId: ID!
+  status: PortalPtoStatus!
+  type: PortalPtoType!
+  startDate: Int!
+  endDate: Int!
+  reason: String!
+  createdAt: Int!
+}
+
+input RequestMyPtoInput {
+  type: PortalPtoType!
+  startDate: Int!
+  endDate: Int!
+  reason: String!
+}
+
+enum DriverExpenseStatus {
+  Pending
+  Approved
+  Rejected
+  Reimbursed
+  Cancelled
+}
+
+"""
+A driver-submitted out-of-pocket expense (lumper, tolls, supplies). Approval
+immediately applies a reimbursement adjustment to the driver's open settlement.
+"""
+type DriverExpense {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  workerId: ID!
+  shipmentId: ID
+  payCodeId: ID
+  status: DriverExpenseStatus!
+  amountMinor: Int!
+  currencyCode: String!
+  description: String!
+  incurredDate: Int!
+  receiptDocumentId: ID
+  reviewNote: String!
+  reviewedById: ID
+  reviewedAt: Int
+  settlementLineId: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  worker: Worker
+  payCode: PayCode
+  reviewedBy: User
+}
+
+type DriverExpenseEdge {
+  node: DriverExpense!
+  cursor: String!
+}
+
+type DriverExpenseConnection {
+  edges: [DriverExpenseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input SubmitMyExpenseInput {
+  shipmentId: ID
+  payCodeId: ID
+  amountMinor: Int!
+  description: String!
+  incurredDate: Int
+}
+
+input ReviewDriverExpenseInput {
+  expenseId: ID!
+  approve: Boolean!
+  note: String
+}
+
+input RespondToMyAssignmentInput {
+  assignmentId: ID!
+  accept: Boolean!
+  reason: String
+}
+
+"""
+A read-only estimate of what a load pays the signed-in driver under their
+current pay assignment. Nothing is persisted.
+"""
+type PortalPayEstimate {
+  grossMinor: Int!
+  currencyCode: String!
+}
+
+"""
+Org-level feature toggles for the Dash driver portal — what drivers can see
+and do. One row per organization, created on first read.
+"""
+type DashControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  "Show the accept/decline card when a driver is assigned a load."
+  requireLoadAcknowledgment: Boolean!
+  "Allow drivers to decline an assigned load (requires acknowledgment)."
+  allowLoadRefusals: Boolean!
+  "Allow drivers to record their own arrivals and departures at stops."
+  allowStopActions: Boolean!
+  "Allow POD/BOL photo uploads on loads."
+  allowLoadDocumentUpload: Boolean!
+  "Allow drivers to send messages on load chat (reading is always allowed)."
+  allowLoadComments: Boolean!
+  "Show per-load pay amounts and recent pay events in Dash."
+  showLoadPay: Boolean!
+  "Show estimated pay on loads before pay accrues (requires per-load pay)."
+  showPayEstimates: Boolean!
+  "Allow drivers to submit out-of-pocket expenses for reimbursement."
+  allowExpenseSubmission: Boolean!
+  "Block expense approval until a receipt is attached."
+  requireExpenseReceipt: Boolean!
+  "Allow drivers to dispute settlement statements from Dash."
+  allowSettlementDisputes: Boolean!
+  "Allow drivers to upload qualification-file documents (CDL, medical card)."
+  allowProfileDocumentUpload: Boolean!
+  "Allow drivers to edit their own contact details and emergency contact."
+  allowContactInfoEdit: Boolean!
+  "Allow drivers to request time off from Dash."
+  allowPtoRequests: Boolean!
+  "Send drivers push reminders as their credentials approach expiry."
+  sendCredentialReminders: Boolean!
+  "Alert dispatch when a driver dwells at a stop beyond the threshold."
+  enableDetentionAlerts: Boolean!
+  detentionAlertThresholdMinutes: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input UpdateDashControlInput {
+  version: Int!
+  requireLoadAcknowledgment: Boolean!
+  allowLoadRefusals: Boolean!
+  allowStopActions: Boolean!
+  allowLoadDocumentUpload: Boolean!
+  allowLoadComments: Boolean!
+  showLoadPay: Boolean!
+  showPayEstimates: Boolean!
+  allowExpenseSubmission: Boolean!
+  requireExpenseReceipt: Boolean!
+  allowSettlementDisputes: Boolean!
+  allowProfileDocumentUpload: Boolean!
+  allowContactInfoEdit: Boolean!
+  allowPtoRequests: Boolean!
+  sendCredentialReminders: Boolean!
+  enableDetentionAlerts: Boolean!
+  detentionAlertThresholdMinutes: Int!
+}
+
+"""
+The signed-in driver's view of what their carrier has enabled in Dash. The
+server enforces every one of these — the client uses them only to hide UI.
+"""
+type PortalFeatures {
+  requireLoadAcknowledgment: Boolean!
+  allowLoadRefusals: Boolean!
+  allowStopActions: Boolean!
+  allowLoadDocumentUpload: Boolean!
+  allowLoadComments: Boolean!
+  showLoadPay: Boolean!
+  showPayEstimates: Boolean!
+  allowExpenseSubmission: Boolean!
+  requireExpenseReceipt: Boolean!
+  allowSettlementDisputes: Boolean!
+  allowProfileDocumentUpload: Boolean!
+  allowContactInfoEdit: Boolean!
+  allowPtoRequests: Boolean!
+}
+
+extend type Query {
+  """
+  Portal access state for a worker (back office).
+  """
+  workerPortalStatus(workerId: ID!): WorkerPortalStatus!
+  """
+  Settlement dispute queue (back office).
+  """
+  settlementDisputes(input: DataTableConnectionInput!): SettlementDisputeConnection!
+  settlementDispute(id: ID!): SettlementDispute!
+  """
+  Count of open or in-review disputes for workspace badges.
+  """
+  openSettlementDisputeCount: Int!
+
+  """
+  The signed-in driver's profile. All my* queries resolve the worker from the
+  session user and never accept a worker ID.
+  """
+  myPortalProfile: PortalProfile!
+  myLoads(scope: PortalLoadScope!, limit: Int): [PortalLoad!]!
+  """
+  The signed-in driver's qualification-file view (license, medical, contact).
+  """
+  myComplianceProfile: PortalComplianceProfile!
+  """
+  Driver-visible dispatch notes for one of the signed-in driver's loads.
+  """
+  myLoadComments(shipmentId: ID!): [PortalComment!]!
+  myPeriodSummary: PortalPeriodSummary!
+  myRecentPayEvents(limit: Int): [DriverPayEvent!]!
+  mySettlements(limit: Int, offset: Int): MySettlementList!
+  mySettlement(id: ID!): DriverSettlement!
+  myEscrow: PortalEscrowSummary!
+  myAdvances: [PayAdvance!]!
+  myDisputes: [SettlementDispute!]!
+  """
+  Feature toggles for the signed-in driver's carrier.
+  """
+  myPortalFeatures: PortalFeatures!
+  myPto: [PortalPto!]!
+  myExpenses: [DriverExpense!]!
+  """
+  Estimated driver pay for one of the signed-in driver's own moves.
+  """
+  myLoadPayEstimate(shipmentId: ID!, moveId: ID!): PortalPayEstimate!
+  """
+  The signed-in driver's year-to-date pay summary.
+  """
+  myYtdPay(year: Int!): WorkerYTDPaySummary!
+
+  """
+  Driver expense review queue (back office).
+  """
+  driverExpenses(input: DataTableConnectionInput!): DriverExpenseConnection!
+  driverExpense(id: ID!): DriverExpense!
+  pendingDriverExpenseCount: Int!
+
+  """
+  Dash feature toggles for this organization (back office).
+  """
+  dashControl: DashControl!
+}
+
+extend type Mutation {
+  """
+  Invites a worker to the driver portal (back office).
+  """
+  inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
+  """
+  Revokes portal access: deactivates the linked login and voids pending invitations.
+  """
+  revokeWorkerPortalAccess(workerId: ID!): Boolean!
+
+  """
+  Updates the signed-in driver's own contact details (phone, address,
+  emergency contact). Compliance fields are carrier-controlled.
+  """
+  updateMyContactInfo(input: UpdateMyContactInfoInput!): PortalComplianceProfile!
+
+  """
+  Posts a driver update on one of the signed-in driver's loads. Recorded as a
+  DriverUpdate comment with Driver visibility so dispatch sees it on the shipment.
+  """
+  createMyLoadComment(input: CreateMyLoadCommentInput!): PortalComment!
+
+  """
+  Records the signed-in driver's arrival at or departure from a stop on their
+  own load. Timestamps are server-side; stop, move, and shipment statuses
+  cascade, and pay accrues when the move completes.
+  """
+  recordMyStopAction(input: RecordMyStopActionInput!): Boolean!
+
+  """
+  Files a dispute against one of the signed-in driver's issued settlements.
+  """
+  createSettlementDispute(input: CreateSettlementDisputeInput!): SettlementDispute!
+  """
+  Withdraws one of the signed-in driver's own open disputes.
+  """
+  withdrawSettlementDispute(id: ID!): SettlementDispute!
+
+  """
+  Moves an open dispute into review (back office).
+  """
+  startSettlementDisputeReview(id: ID!): SettlementDispute!
+  """
+  Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
+  """
+  resolveSettlementDispute(input: ResolveSettlementDisputeInput!): SettlementDispute!
+
+  requestMyPto(input: RequestMyPtoInput!): PortalPto!
+  cancelMyPto(id: ID!): PortalPto!
+
+  submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
+  cancelMyExpense(id: ID!): DriverExpense!
+  """
+  Approves or rejects a driver expense (back office). Approval applies the
+  reimbursement to the driver's open settlement immediately.
+  """
+  reviewDriverExpense(input: ReviewDriverExpenseInput!): DriverExpense!
+
+  """
+  Accept or decline one of the signed-in driver's load assignments. Declining
+  requires a reason and alerts dispatch.
+  """
+  respondToMyAssignment(input: RespondToMyAssignmentInput!): Boolean!
+
+  """
+  Updates the org's Dash feature toggles (back office).
+  """
+  updateDashControl(input: UpdateDashControlInput!): DashControl!
+}

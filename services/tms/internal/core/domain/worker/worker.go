@@ -43,6 +43,7 @@ type Worker struct {
 	StateID               pulid.ID           `json:"stateId"                     bun:"state_id,type:VARCHAR(100),notnull"`
 	FleetCodeID           pulid.ID           `json:"fleetCodeId"                 bun:"fleet_code_id,type:VARCHAR(100),nullzero"`
 	ManagerID             pulid.ID           `json:"managerId"                   bun:"manager_id,type:VARCHAR(100),nullzero"`
+	UserID                pulid.ID           `json:"userId"                      bun:"user_id,type:VARCHAR(100),nullzero"`
 	Status                domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"`
 	Type                  WorkerType         `json:"type"                        bun:"type,type:worker_type_enum,notnull,default:'Employee'"`
 	DriverType            DriverType         `json:"driverType"                  bun:"driver_type,type:driver_type_enum,notnull,default:'OTR'"`
@@ -75,6 +76,7 @@ type Worker struct {
 	State        *usstate.UsState     `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"`
 	FleetCode    *fleetcode.FleetCode `json:"fleetCode,omitempty"    bun:"rel:belongs-to,join:fleet_code_id=id"`
 	Manager      *tenant.User         `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"`
+	PortalUser   *tenant.User         `json:"portalUser,omitempty"   bun:"rel:belongs-to,join:user_id=id"`
 	Profile      *WorkerProfile       `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	PTO          []*WorkerPTO         `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }

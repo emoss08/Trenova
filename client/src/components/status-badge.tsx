@@ -2,6 +2,16 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BillingQueueStatus } from "@/types/billing-queue";
 import type { CustomerPaymentStatus } from "@/types/customer-payment";
+import type {
+  DriverPayEventStatus,
+  DriverSettlementStatus,
+  EscrowAccountStatus,
+  PayAdvanceStatus,
+  PayeeClassification,
+  RecurringDeductionStatus,
+  RecurringEarningStatus,
+  SettlementBatchStatus,
+} from "@/types/driver-pay";
 import type { InvoiceStatus, SettlementStatus } from "@/types/invoice";
 import type { OrderStatus } from "@/types/order";
 import {
@@ -807,6 +817,268 @@ export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileS
   return (
     <Badge variant={attr.variant} className="max-h-5" title={attr.description}>
       {attr.text}
+    </Badge>
+  );
+}
+
+export function DriverSettlementStatusBadge({
+  status,
+  className,
+}: {
+  status: DriverSettlementStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<DriverSettlementStatus, BadgeAttrProps> = {
+    Draft: {
+      variant: "secondary",
+      text: "Draft",
+      description:
+        "Settlement is being assembled — pay, earnings, and deductions can still change.",
+    },
+    PendingApproval: {
+      variant: "warning",
+      text: "Pending Approval",
+      description: "Submitted for review and waiting on an approver.",
+    },
+    Approved: {
+      variant: "info",
+      text: "Approved",
+      description: "Approved and locked; deduction side effects have been applied.",
+    },
+    Posted: {
+      variant: "purple",
+      text: "Posted",
+      description: "Journalized to the general ledger and awaiting payment.",
+    },
+    Paid: {
+      variant: "active",
+      text: "Paid",
+      description: "Paid out to the driver; the settlement is final.",
+    },
+    Voided: {
+      variant: "inactive",
+      text: "Voided",
+      description: "Reversed — pay events returned to the pool and side effects were undone.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function SettlementBatchStatusBadge({ status }: { status: SettlementBatchStatus }) {
+  const statusAttributes: Record<SettlementBatchStatus, BadgeAttrProps> = {
+    Open: {
+      variant: "info",
+      text: "Open",
+      description: "Batch is accepting settlements; generation tops it up as pay accrues.",
+    },
+    Completed: {
+      variant: "active",
+      text: "Completed",
+      description: "Batch is closed; late accruals settle individually or in the next period.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "Batch was canceled and no longer collects settlements.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) {
+  const statusAttributes: Record<PayAdvanceStatus, BadgeAttrProps> = {
+    Outstanding: {
+      variant: "warning",
+      text: "Outstanding",
+      description: "Nothing recovered yet — the full amount comes out of upcoming settlements.",
+    },
+    PartiallyRecovered: {
+      variant: "info",
+      text: "Partially Recovered",
+      description:
+        "Some of the advance has been recovered; the rest is withheld from future settlements.",
+    },
+    Recovered: {
+      variant: "active",
+      text: "Recovered",
+      description: "Fully recovered from the driver's settlements.",
+    },
+    WrittenOff: {
+      variant: "inactive",
+      text: "Written Off",
+      description: "Remaining balance was written off and will not be recovered.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function RecurringEarningStatusBadge({ status }: { status: RecurringEarningStatus }) {
+  const statusAttributes: Record<RecurringEarningStatus, BadgeAttrProps> = {
+    Active: {
+      variant: "active",
+      text: "Active",
+      description: "Added automatically to each qualifying settlement.",
+    },
+    Paused: {
+      variant: "warning",
+      text: "Paused",
+      description: "Temporarily skipped by settlements; resume to start paying again.",
+    },
+    Completed: {
+      variant: "secondary",
+      text: "Completed",
+      description: "Reached its lifetime cap and stopped permanently.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function RecurringDeductionStatusBadge({ status }: { status: RecurringDeductionStatus }) {
+  const statusAttributes: Record<RecurringDeductionStatus, BadgeAttrProps> = {
+    Active: {
+      variant: "active",
+      text: "Active",
+      description: "Withheld automatically from each qualifying settlement.",
+    },
+    Paused: {
+      variant: "warning",
+      text: "Paused",
+      description: "Temporarily skipped by settlements; resume to start withholding again.",
+    },
+    Completed: {
+      variant: "secondary",
+      text: "Completed",
+      description: "Reached its lifetime cap and stopped permanently.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStatus }) {
+  const statusAttributes: Record<EscrowAccountStatus, BadgeAttrProps> = {
+    Active: {
+      variant: "active",
+      text: "Active",
+      description: "Accepting contributions and accruing interest per 49 CFR 376.12(k).",
+    },
+    Closed: {
+      variant: "secondary",
+      text: "Closed",
+      description: "Closed out — the balance was refunded or applied.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function DriverPayEventStatusBadge({ status }: { status: DriverPayEventStatus }) {
+  const statusAttributes: Record<DriverPayEventStatus, BadgeAttrProps> = {
+    Accrued: {
+      variant: "info",
+      text: "Accrued",
+      description: "Earned but not yet on a settlement — waiting in the unsettled pool.",
+    },
+    Settled: {
+      variant: "active",
+      text: "Settled",
+      description: "Attached to a settlement as earning lines.",
+    },
+    Voided: {
+      variant: "inactive",
+      text: "Voided",
+      description: "Canceled (move canceled or reverted) and excluded from pay.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function PayeeClassificationBadge({
+  classification,
+}: {
+  classification: PayeeClassification;
+}) {
+  const attributes: Record<PayeeClassification, BadgeAttrProps> = {
+    CompanyDriver: {
+      variant: "info",
+      text: "Company Driver",
+      description: "W-2 employee — settlements post to the driver pay expense account.",
+    },
+    OwnerOperator: {
+      variant: "purple",
+      text: "Owner-Operator",
+      description: "1099 contractor — settlements post to the purchased transportation account.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={attributes[classification].variant}
+      className="max-h-5"
+      title={attributes[classification].description}
+    >
+      {attributes[classification].text}
     </Badge>
   );
 }

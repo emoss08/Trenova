@@ -65,6 +65,11 @@ var TrailerColumns = struct {
 	Vin                     Column // "vin" → qualified: "tr.vin"
 	RegistrationNumber      Column // "registration_number" → qualified: "tr.registration_number"
 	MaxLoadWeight           Column // "max_load_weight" → qualified: "tr.max_load_weight"
+	OwnershipType           Column // "ownership_type" → qualified: "tr.ownership_type"
+	OwnerWorkerID           Column // "owner_worker_id" → qualified: "tr.owner_worker_id"
+	LessorName              Column // "lessor_name" → qualified: "tr.lessor_name"
+	LeaseReference          Column // "lease_reference" → qualified: "tr.lease_reference"
+	LeaseEndDate            Column // "lease_end_date" → qualified: "tr.lease_end_date"
 	LastInspectionDate      Column // "last_inspection_date" → qualified: "tr.last_inspection_date"
 	RegistrationExpiry      Column // "registration_expiry" → qualified: "tr.registration_expiry"
 	LastKnownLocationID     Column // "last_known_location_id" → qualified: "tr.last_known_location_id"
@@ -91,6 +96,11 @@ var TrailerColumns = struct {
 	Vin:                     NewColumn("vin", "tr"),
 	RegistrationNumber:      NewColumn("registration_number", "tr"),
 	MaxLoadWeight:           NewColumn("max_load_weight", "tr"),
+	OwnershipType:           NewColumn("ownership_type", "tr"),
+	OwnerWorkerID:           NewColumn("owner_worker_id", "tr"),
+	LessorName:              NewColumn("lessor_name", "tr"),
+	LeaseReference:          NewColumn("lease_reference", "tr"),
+	LeaseEndDate:            NewColumn("lease_end_date", "tr"),
 	LastInspectionDate:      NewColumn("last_inspection_date", "tr"),
 	RegistrationExpiry:      NewColumn("registration_expiry", "tr"),
 	LastKnownLocationID:     NewColumn("last_known_location_id", "tr"),
@@ -123,6 +133,11 @@ var TrailerFieldMap = map[string]string{
 	"vin":                     "vin",
 	"registrationNumber":      "registration_number",
 	"maxLoadWeight":           "max_load_weight",
+	"ownershipType":           "ownership_type",
+	"ownerWorkerId":           "owner_worker_id",
+	"lessorName":              "lessor_name",
+	"leaseReference":          "lease_reference",
+	"leaseEndDate":            "lease_end_date",
 	"lastInspectionDate":      "last_inspection_date",
 	"registrationExpiry":      "registration_expiry",
 	"lastKnownLocationId":     "last_known_location_id",
@@ -151,6 +166,11 @@ var TrailerInsertableColumns = []string{
 	"vin",
 	"registration_number",
 	"max_load_weight",
+	"ownership_type",
+	"owner_worker_id",
+	"lessor_name",
+	"lease_reference",
+	"lease_end_date",
 	"last_inspection_date",
 	"registration_expiry",
 	"version",
@@ -245,6 +265,11 @@ var TrailerFilter = struct {
 	Vin                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vin" → DB: "vin"
 	RegistrationNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationNumber" → DB: "registration_number"
 	MaxLoadWeight           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxLoadWeight" → DB: "max_load_weight"
+	OwnershipType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownershipType" → DB: "ownership_type"
+	OwnerWorkerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerWorkerId" → DB: "owner_worker_id"
+	LessorName              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lessorName" → DB: "lessor_name"
+	LeaseReference          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "leaseReference" → DB: "lease_reference"
+	LeaseEndDate            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "leaseEndDate" → DB: "lease_end_date"
 	LastInspectionDate      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastInspectionDate" → DB: "last_inspection_date"
 	RegistrationExpiry      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationExpiry" → DB: "registration_expiry"
 	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -298,6 +323,21 @@ var TrailerFilter = struct {
 	},
 	MaxLoadWeight: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxLoadWeight", op, value)
+	},
+	OwnershipType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownershipType", op, value)
+	},
+	OwnerWorkerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerWorkerId", op, value)
+	},
+	LessorName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lessorName", op, value)
+	},
+	LeaseReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("leaseReference", op, value)
+	},
+	LeaseEndDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("leaseEndDate", op, value)
 	},
 	LastInspectionDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastInspectionDate", op, value)

@@ -150,6 +150,18 @@ export const Resource = {
   CustomerPayment: "customer_payment",
   BankReceipt: "bank_receipt",
   BankReceiptWorkItem: "bank_receipt_work_item",
+  DriverPayProfile: "driver_pay_profile",
+  RecurringDeduction: "recurring_deduction",
+  RecurringEarning: "recurring_earning",
+  PayCode: "pay_code",
+  PayAdvance: "pay_advance",
+  EscrowAccount: "escrow_account",
+  DriverSettlement: "driver_settlement",
+  SettlementDispute: "settlement_dispute",
+  DriverExpense: "driver_expense",
+  SettlementControl: "settlement_control",
+  DashControl: "dash_control",
+  DriverPortal: "driver_portal",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

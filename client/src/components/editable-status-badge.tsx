@@ -20,6 +20,13 @@ const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   cancelled: "inactive",
   processing: "secondary",
   inreview: "warning",
+  paused: "warning",
+  outstanding: "warning",
+  posted: "purple",
+  paid: "active",
+  voided: "inactive",
+  open: "info",
+  closed: "secondary",
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
@@ -37,7 +44,9 @@ type EditableStatusBadgeProps<T extends string> = {
   status: T;
   options: SelectOption[];
   onStatusChange: (newStatus: T) => Promise<void>;
+  variants?: Partial<Record<T, BadgeVariant>>;
   disabled?: boolean;
+  disabledReason?: string;
   className?: string;
 };
 
@@ -45,7 +54,9 @@ export function EditableStatusBadge<T extends string>({
   status,
   options,
   onStatusChange,
+  variants,
   disabled = false,
+  disabledReason,
   className,
 }: EditableStatusBadgeProps<T>) {
   const [open, setOpen] = useState(false);
@@ -73,10 +84,18 @@ export function EditableStatusBadge<T extends string>({
   );
 
   const normalizedStatus = status.toLowerCase();
-  const variant = STATUS_VARIANTS[normalizedStatus] || "outline";
+  const variant = variants?.[status] ?? STATUS_VARIANTS[normalizedStatus] ?? "outline";
   const icon = STATUS_ICONS[normalizedStatus];
+  const label = options.find((option) => option.value === status)?.label ?? status;
 
   if (disabled) {
+    if (variants?.[status]) {
+      return (
+        <Badge variant={variant} className={cn("max-h-5", className)} title={disabledReason}>
+          {label}
+        </Badge>
+      );
+    }
     return <StatusBadge status={status} className={className} />;
   }
 
@@ -90,7 +109,7 @@ export function EditableStatusBadge<T extends string>({
             render={<button type="button" disabled={isLoading} />}
           >
             {icon}
-            {status}
+            {label}
             {isLoading ? <Spinner className="size-3" /> : <ChevronDownIcon className="size-3" />}
           </Badge>
         }

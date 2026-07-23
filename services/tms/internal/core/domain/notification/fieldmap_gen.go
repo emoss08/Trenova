@@ -10,3 +10,10 @@ import "github.com/emoss08/trenova/pkg/buncolgen"
 func (e *Notification) GetStaticFieldMap() map[string]string {
 	return buncolgen.NotificationFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PushSubscription].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.PushSubscriptionFieldMap] instead of parsing struct tags via reflection.
+func (e *PushSubscription) GetStaticFieldMap() map[string]string {
+	return buncolgen.PushSubscriptionFieldMap
+}

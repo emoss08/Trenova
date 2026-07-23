@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldvaluerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dashcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/databasesessionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dataentrycontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
@@ -42,6 +43,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentuploadrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dothazmatreferencerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/driverpayrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/driverportalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/driversettlementrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ediconnectionrepository"
@@ -94,6 +98,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
@@ -104,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicetyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/settlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
@@ -231,6 +237,22 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	commodityrepository.New,
 	customerpaymentrepository.New,
 	customerledgerrepository.New,
+	driverpayrepository.NewPayProfile,
+	driverpayrepository.NewWorkerPayAssignment,
+	driverpayrepository.NewPayCode,
+	driverpayrepository.NewRecurringDeduction,
+	driverpayrepository.NewRecurringEarning,
+	driverpayrepository.NewPayAdvance,
+	driverpayrepository.NewEscrowAccount,
+	driverpayrepository.NewDriverExpense,
+	driversettlementrepository.NewSettlement,
+	driversettlementrepository.NewBatch,
+	driversettlementrepository.NewPayEvent,
+	driversettlementrepository.NewDispute,
+	driverportalrepository.New,
+	pushsubscriptionrepository.New,
+	settlementcontrolrepository.New,
+	dashcontrolrepository.New,
 	customerrepository.New,
 	accountingcontrolrepository.New,
 	accountsreceivablerepository.New,

@@ -1,5 +1,5 @@
 {
-  "operationCount": 192,
+  "operationCount": 293,
   "fragmentCount": 93,
   "operations": [
     {
@@ -51,6 +51,28 @@
         "src/lib/graphql/account-type-table.ts"
       ],
       "sdl": "query AccountTypeTable($input: DataTableConnectionInput!) {\n  accountTypes(input: $input) {\n    edges {\n      node {\n        ...AccountTypeTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AccountTypeTableRowFields on AccountType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  name\n  description\n  category\n  color\n  isSystem\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AddDriverSettlementAdjustment",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:847f907ae868014335a3a237a6ce3f3b7a0a0b56eea44d3b8e278bdc7b3fe2cb",
+      "rootFields": [
+        "addDriverSettlementAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AddSettlementAdjustmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation AddDriverSettlementAdjustment($input: AddSettlementAdjustmentInput!) {\n  addDriverSettlementAdjustment(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "AddFuelIndexPrice",
@@ -109,6 +131,28 @@
       "sdl": "mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: String!) {\n  addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {\n    ...OrderMutationResult\n  }\n}\n\nfragment OrderMutationResult on Order {\n  id\n  orderNumber\n  status\n  totalAmount\n  version\n}"
     },
     {
+      "name": "AdjustEscrowAccount",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:67d1baa098e04646476ef4bec1bb7633ac6caac81c71f4b71b7b54b539c60a21",
+      "rootFields": [
+        "adjustEscrowAccount"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AdjustEscrowAccountInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation AdjustEscrowAccount($input: AdjustEscrowAccountInput!) {\n  adjustEscrowAccount(input: $input) {\n    id\n    balanceMinor\n    version\n  }\n}"
+    },
+    {
       "name": "ApiKeyTable",
       "kind": "query",
       "domain": "api-key",
@@ -154,6 +198,28 @@
         "src/lib/graphql/customer-payment.ts"
       ],
       "sdl": "mutation ApplyUnappliedCustomerPayment($input: ApplyCustomerPaymentInput!) {\n  applyUnappliedCustomerPayment(input: $input) {\n    id\n    customerId\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    updatedAt\n    applications {\n      id\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "ApproveDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:8256dbbc6c4af57dfaafe586fbc3cbc789baaa24e23ff173c0251b0ad208d7c0",
+      "rootFields": [
+        "approveDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DriverSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation ApproveDriverSettlement($input: DriverSettlementActionInput!) {\n  approveDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
     },
     {
       "name": "ApproveWorkerPto",
@@ -504,6 +570,28 @@
       "sdl": "mutation AssignBillingQueueBiller($id: ID!, $input: BillingQueueAssignInput!) {\n  assignBillingQueueBiller(id: $id, input: $input) {\n    ...BillingQueueActionFields\n  }\n}\n\nfragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AssignPayProfileToWorker",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:81e72cc2a26f0710b7df1d899b7ff8e97f26b9ab1d5f37d8c99876073c9f5bf0",
+      "rootFields": [
+        "assignPayProfileToWorker"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AssignPayProfileInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation AssignPayProfileToWorker($input: AssignPayProfileInput!) {\n  assignPayProfileToWorker(input: $input) {\n    id\n    workerId\n    payProfileId\n    effectiveFrom\n    effectiveTo\n  }\n}"
+    },
+    {
       "name": "AttachOrderShipments",
       "kind": "mutation",
       "domain": "order",
@@ -531,6 +619,28 @@
         "src/lib/graphql/order.ts"
       ],
       "sdl": "mutation AttachOrderShipments($orderId: ID!, $shipmentIds: [ID!]!) {\n  attachOrderShipments(orderId: $orderId, shipmentIds: $shipmentIds) {\n    ...OrderMutationResult\n  }\n}\n\nfragment OrderMutationResult on Order {\n  id\n  orderNumber\n  status\n  totalAmount\n  version\n}"
+    },
+    {
+      "name": "AttachPayEventsToSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:ce8dcbcff0fbfc094af72f65403e51dd3e05b3e66be8f6e093daf7020d5647e6",
+      "rootFields": [
+        "attachPayEventsToSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AttachPayEventsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation AttachPayEventsToSettlement($input: AttachPayEventsInput!) {\n  attachPayEventsToSettlement(input: $input) {\n    id\n    status\n    grossEarningsMinor\n    netPayMinor\n    version\n  }\n}"
     },
     {
       "name": "AttentionSummary",
@@ -572,6 +682,28 @@
         "src/lib/graphql/audit-log-table.ts"
       ],
       "sdl": "query AuditLogTable($input: DataTableConnectionInput!) {\n  auditEntries(input: $input) {\n    edges {\n      node {\n        ...AuditLogTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AuditLogTableRowFields on AuditEntry {\n  id\n  userId\n  businessUnitId\n  organizationId\n  timestamp\n  changes\n  previousState\n  currentState\n  metadata\n  resource\n  operation\n  resourceId\n  correlationId\n  userAgent\n  comment\n  ipAddress\n  category\n  sensitiveData\n  critical\n  user {\n    id\n    name\n    username\n    emailAddress\n    profilePicUrl\n    thumbnailUrl\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "BulkDriverSettlementAction",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:400632fe9026dfd69abf6dfee45c166104d0d028b6c3f13ab32b90a73da8eda6",
+      "rootFields": [
+        "bulkDriverSettlementAction"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "BulkSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation BulkDriverSettlementAction($input: BulkSettlementActionInput!) {\n  bulkDriverSettlementAction(input: $input) {\n    results {\n      settlementId\n      success\n      error\n    }\n    successCount\n    failureCount\n  }\n}"
     },
     {
       "name": "BulkTransferShipmentsToBilling",
@@ -684,6 +816,50 @@
         "src/lib/graphql/shipment.ts"
       ],
       "sdl": "mutation CalculateShipmentTotals($input: ShipmentInput!) {\n  calculateShipmentTotals(input: $input) {\n    freightChargeAmount\n    otherChargeAmount\n    totalChargeAmount\n    fuelSurcharge {\n      accessorialChargeId\n      isSystemGenerated\n      method\n      amount\n      unit\n      fuelSurchargeProgramId\n      fuelSurchargeDetail\n    }\n  }\n}"
+    },
+    {
+      "name": "CancelMyExpense",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:ff0f019a13713002ba005dabcfbaaf348ab036dbb4461aa7f8ad6393d208cb3a",
+      "rootFields": [
+        "cancelMyExpense"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation CancelMyExpense($id: ID!) {\n  cancelMyExpense(id: $id) {\n    id\n    status\n  }\n}"
+    },
+    {
+      "name": "CancelMyPto",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:f6bff19ede90794d5d921c0277bb7254497e80ce7fb32e10870af9dffc87759c",
+      "rootFields": [
+        "cancelMyPto"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation CancelMyPto($id: ID!) {\n  cancelMyPto(id: $id) {\n    id\n    status\n  }\n}"
     },
     {
       "name": "CancelOrder",
@@ -837,6 +1013,28 @@
         "src/lib/graphql/shipment.ts"
       ],
       "sdl": "mutation CheckShipmentHazmatSegregation($input: ShipmentHazmatInput!) {\n  checkShipmentHazmatSegregation(input: $input) {\n    valid\n  }\n}"
+    },
+    {
+      "name": "CloseEscrowAccount",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:4058437f8024641e9e3da7a2d98b8655beb6dee382b4b9c3e77f255c6da27328",
+      "rootFields": [
+        "closeEscrowAccount"
+      ],
+      "variables": [
+        {
+          "name": "accountId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation CloseEscrowAccount($accountId: ID!) {\n  closeEscrowAccount(accountId: $accountId) {\n    id\n    status\n    version\n  }\n}"
     },
     {
       "name": "CloseOrder",
@@ -994,6 +1192,28 @@
       "sdl": "mutation CreateInvoiceFromOrder($orderId: ID!) {\n  createInvoiceFromOrder(orderId: $orderId) {\n    id\n    number\n  }\n}"
     },
     {
+      "name": "CreateMyLoadComment",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:d1ae76e14b0a4562299fb803f6445db0ba915c29e9de6be29855c42edf501d17",
+      "rootFields": [
+        "createMyLoadComment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateMyLoadCommentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation CreateMyLoadComment($input: CreateMyLoadCommentInput!) {\n  createMyLoadComment(input: $input) {\n    id\n    type\n    priority\n    comment\n    authorName\n    createdAt\n  }\n}"
+    },
+    {
       "name": "CreateOrder",
       "kind": "mutation",
       "domain": "order",
@@ -1014,6 +1234,94 @@
         "src/lib/graphql/order.ts"
       ],
       "sdl": "mutation CreateOrder($input: OrderInput!) {\n  createOrder(input: $input) {\n    id\n    orderNumber\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "CreatePayCode",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:aa0e0bad8977697bc927a0e8dc931a1e29d5699e278af3e61a2b70feb5ea08ee",
+      "rootFields": [
+        "createPayCode"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreatePayCodeInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation CreatePayCode($input: CreatePayCodeInput!) {\n  createPayCode(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "CreatePayProfile",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:057e95826edc7c7f2e812cc37894744703aee39c278c09bde038098c6dc7e632",
+      "rootFields": [
+        "createPayProfile"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreatePayProfileInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation CreatePayProfile($input: CreatePayProfileInput!) {\n  createPayProfile(input: $input) {\n    id\n    name\n    version\n  }\n}"
+    },
+    {
+      "name": "CreateRecurringDeduction",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:27048f4cb91e9ceb4cc32391c58f7012d07253930cd32f1377de5a33a5eb6c67",
+      "rootFields": [
+        "createRecurringDeduction"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateRecurringDeductionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation CreateRecurringDeduction($input: CreateRecurringDeductionInput!) {\n  createRecurringDeduction(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "CreateRecurringEarning",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:f92e8c58da59d89b21355bb1378503a710fccf747afea2987da9b5c11ea5aaab",
+      "rootFields": [
+        "createRecurringEarning"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateRecurringEarningInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation CreateRecurringEarning($input: CreateRecurringEarningInput!) {\n  createRecurringEarning(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "CreateReportDefinition",
@@ -1062,6 +1370,28 @@
         "src/lib/graphql/reports.ts"
       ],
       "sdl": "mutation CreateReportSchedule($input: CreateReportScheduleInput!) {\n  createReportSchedule(input: $input) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CreateSettlementDispute",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:369c2c8a4105f0c1c8e19d5e899d99997ba5449ea24316561c28e415cc008123",
+      "rootFields": [
+        "createSettlementDispute"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateSettlementDisputeInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation CreateSettlementDispute($input: CreateSettlementDisputeInput!) {\n  createSettlementDispute(input: $input) {\n    id\n    status\n    category\n    description\n    createdAt\n  }\n}"
     },
     {
       "name": "CreateShipment",
@@ -1153,6 +1483,22 @@
         "src/services/table-configuration.ts"
       ],
       "sdl": "mutation CreateTableConfiguration($input: TableConfigurationInput!) {\n  createTableConfiguration(input: $input) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
+    },
+    {
+      "name": "CurrentSettlementPeriod",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:18a696ad99213f20822751f7dd47c0e146724a9a15cd4acbf0725a1964074680",
+      "rootFields": [
+        "currentSettlementPeriod"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query CurrentSettlementPeriod {\n  currentSettlementPeriod {\n    periodStart\n    periodEnd\n    payDate\n  }\n}"
     },
     {
       "name": "CustomerPaymentDetail",
@@ -1251,6 +1597,22 @@
         "src/lib/graphql/custom-field-definition-table.ts"
       ],
       "sdl": "query CustomFieldDefinitionTable($input: DataTableConnectionInput!) {\n  customFieldDefinitions(input: $input) {\n    edges {\n      node {\n        ...CustomFieldDefinitionTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CustomFieldDefinitionTableRowFields on CustomFieldDefinition {\n  id\n  businessUnitId\n  organizationId\n  resourceType\n  name\n  label\n  description\n  fieldType\n  isRequired\n  isActive\n  displayOrder\n  color\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "DashControl",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:a7fa2c52c009be34795526a62d7bd524f6238be8da67be763802bcbaad6ac77a",
+      "rootFields": [
+        "dashControl"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query DashControl {\n  dashControl {\n    id\n    requireLoadAcknowledgment\n    allowLoadRefusals\n    allowStopActions\n    allowLoadDocumentUpload\n    allowLoadComments\n    showLoadPay\n    showPayEstimates\n    allowExpenseSubmission\n    requireExpenseReceipt\n    allowSettlementDisputes\n    allowProfileDocumentUpload\n    allowContactInfoEdit\n    allowPtoRequests\n    sendCredentialReminders\n    enableDetentionAlerts\n    detentionAlertThresholdMinutes\n    version\n  }\n}"
     },
     {
       "name": "DefaultTableConfiguration",
@@ -1465,6 +1827,28 @@
       "sdl": "mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {\n  detachOrderShipment(orderId: $orderId, shipmentId: $shipmentId) {\n    ...OrderMutationResult\n  }\n}\n\nfragment OrderMutationResult on Order {\n  id\n  orderNumber\n  status\n  totalAmount\n  version\n}"
     },
     {
+      "name": "DetachPayEventFromSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:30116a97824390c55a39f8976f0816dda38f06d8e92b2d06a87d7fb8c697672c",
+      "rootFields": [
+        "detachPayEventFromSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetachPayEventInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation DetachPayEventFromSettlement($input: DetachPayEventInput!) {\n  detachPayEventFromSettlement(input: $input) {\n    id\n    status\n    grossEarningsMinor\n    netPayMinor\n    version\n  }\n}"
+    },
+    {
       "name": "DismissNotifications",
       "kind": "mutation",
       "domain": "notification",
@@ -1586,6 +1970,122 @@
         "src/lib/graphql/document-type-table.ts"
       ],
       "sdl": "query DocumentTypeTable($input: DataTableConnectionInput!) {\n  documentTypes(input: $input) {\n    edges {\n      node {\n        ...DocumentTypeTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment DocumentTypeTableRowFields on DocumentType {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  color\n  documentClassification\n  documentCategory\n  isSystem\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DriverExpenseDetail",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:b6dfe3c16c23e841da42029ab4276a328018d85777371bfc36808ae4868cee2d",
+      "rootFields": [
+        "driverExpense"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query DriverExpenseDetail($id: ID!) {\n  driverExpense(id: $id) {\n    id\n    workerId\n    shipmentId\n    payCodeId\n    status\n    amountMinor\n    currencyCode\n    description\n    incurredDate\n    receiptDocumentId\n    reviewNote\n    reviewedById\n    reviewedAt\n    settlementLineId\n    version\n    createdAt\n    updatedAt\n    worker {\n      id\n      firstName\n      lastName\n      email\n      phoneNumber\n    }\n    payCode {\n      id\n      code\n      description\n    }\n    reviewedBy {\n      id\n      name\n    }\n  }\n}"
+    },
+    {
+      "name": "DriverExpenseTable",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:871d4b9aaf068f47c56778c4af2cb6063c875805bc156d90119fca05a718da58",
+      "rootFields": [
+        "driverExpenses"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query DriverExpenseTable($input: DataTableConnectionInput!) {\n  driverExpenses(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        shipmentId\n        status\n        amountMinor\n        currencyCode\n        description\n        incurredDate\n        receiptDocumentId\n        reviewNote\n        reviewedAt\n        settlementLineId\n        createdAt\n        version\n        worker {\n          id\n          firstName\n          lastName\n        }\n        payCode {\n          id\n          code\n          description\n        }\n        reviewedBy {\n          id\n          name\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "DriverPayEventTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:45a28f87675baa79d6a95a77ba6f7f23c9aac18453cb78d5ac2586cc79bc30fa",
+      "rootFields": [
+        "driverPayEvents"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query DriverPayEventTable($input: DataTableConnectionInput!) {\n  driverPayEvents(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        shipmentId\n        moveId\n        settlementId\n        status\n        eventDate\n        grossAmountMinor\n        totalMiles\n        currencyCode\n        proNumber\n        onHold\n        holdReason\n        voidedAt\n        voidReason\n        version\n        createdAt\n        updatedAt\n        components {\n          kind\n          method\n          description\n          quantity\n          rate\n          amountMinor\n        }\n        worker {\n          id\n          firstName\n          lastName\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "DriverSettlementDetail",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:0f96d6515e17c15b83b8b0e56cf436a5626dd09d6bbb87efbcfbdbddcf0bf68b",
+      "rootFields": [
+        "driverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query DriverSettlementDetail($id: ID!) {\n  driverSettlement(id: $id) {\n    id\n    workerId\n    batchId\n    payProfileId\n    settlementNumber\n    status\n    classification\n    payProfileName\n    periodStart\n    periodEnd\n    payDate\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    carryForwardInMinor\n    carryForwardOutMinor\n    netPayMinor\n    totalMiles\n    shipmentCount\n    currencyCode\n    hasExceptions\n    exceptions {\n      code\n      severity\n      message\n    }\n    notes\n    submittedById\n    submittedAt\n    approvedById\n    approvedAt\n    postedById\n    postedAt\n    paidAt\n    paymentMethod\n    paymentReference\n    voidedById\n    voidedAt\n    voidReason\n    version\n    createdAt\n    updatedAt\n    worker {\n      id\n      firstName\n      lastName\n    }\n    lines {\n      id\n      lineNumber\n      category\n      componentKind\n      method\n      description\n      quantity\n      rate\n      amountMinor\n      shipmentId\n      moveId\n      payEventId\n      recurringDeductionId\n      advanceId\n      escrowAccountId\n      proNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "DriverSettlementTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:a5b74fc45a1800bf202a35cef1731d1c2edb39f201dadc92d0171276cadeee6c",
+      "rootFields": [
+        "driverSettlements"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query DriverSettlementTable($input: DataTableConnectionInput!) {\n  driverSettlements(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        batchId\n        settlementNumber\n        status\n        classification\n        payProfileName\n        periodStart\n        periodEnd\n        payDate\n        grossEarningsMinor\n        reimbursementsMinor\n        deductionsMinor\n        carryForwardInMinor\n        carryForwardOutMinor\n        netPayMinor\n        totalMiles\n        shipmentCount\n        currencyCode\n        hasExceptions\n        version\n        createdAt\n        updatedAt\n        worker {\n          id\n          firstName\n          lastName\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "DuplicateShipment",
@@ -1919,6 +2419,28 @@
       "sdl": "query EdiVolumeSeries($sinceHours: Int) {\n  ediVolumeSeries(sinceHours: $sinceHours) {\n    bucketStart\n    bucketSeconds\n    outboundCount\n    sentCount\n    failedCount\n    receivedCount\n  }\n}"
     },
     {
+      "name": "EffectiveWorkerPayAssignment",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:2249cf1dac4bf029650c70b40a3b51522bdfb085d8d4b0783a8e58b649b5524b",
+      "rootFields": [
+        "effectiveWorkerPayAssignment"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query EffectiveWorkerPayAssignment($workerId: ID!) {\n  effectiveWorkerPayAssignment(workerId: $workerId) {\n    id\n    workerId\n    payProfileId\n    effectiveFrom\n    effectiveTo\n    splitPercent\n    rateOverrides {\n      componentId\n      rate\n    }\n    notes\n    payProfile {\n      id\n      name\n      classification\n      guaranteedPeriodMinimumMinor\n      components {\n        id\n        kind\n        method\n        description\n        rate\n        revenueBasis\n        bands {\n          minMiles\n          maxMiles\n          rate\n        }\n        isActive\n      }\n    }\n  }\n}"
+    },
+    {
       "name": "EIASeriesOptions",
       "kind": "query",
       "domain": "fuel-surcharge",
@@ -1956,6 +2478,28 @@
         "src/lib/graphql/email-profile-table.ts"
       ],
       "sdl": "query EmailProfileTable($input: DataTableConnectionInput!) {\n  emailProfiles(input: $input) {\n    edges {\n      node {\n        ...EmailProfileTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment EmailProfileTableRowFields on EmailProfile {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  senderName\n  senderEmail\n  replyToEmail\n  provider\n  status\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "EndWorkerPayAssignment",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:971182611f2f9ad0a2c0ee7a12060d646bce07472d790f6d363790dedb7ae52a",
+      "rootFields": [
+        "endWorkerPayAssignment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "EndWorkerPayAssignmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation EndWorkerPayAssignment($input: EndWorkerPayAssignmentInput!) {\n  endWorkerPayAssignment(input: $input) {\n    id\n    effectiveTo\n  }\n}"
     },
     {
       "name": "EquipmentManufacturerTable",
@@ -2035,6 +2579,52 @@
       "sdl": "query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {\n  equipmentTypes(input: $input, classes: $classes) {\n    edges {\n      node {\n        ...EquipmentTypeConfigurationRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment EquipmentTypeConfigurationRowFields on EquipmentType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  class\n  color\n  interiorLength\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "EscrowAccountDetail",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:57e8a0b5d1c97b85fcb0dc2aa0b40ffaec3b9fbfaf20e3d00e4983912db939b9",
+      "rootFields": [
+        "escrowAccount"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query EscrowAccountDetail($id: ID!) {\n  escrowAccount(id: $id) {\n    id\n    workerId\n    status\n    targetAmountMinor\n    balanceMinor\n    annualInterestRate\n    lastInterestAccrualDate\n    openedDate\n    closedDate\n    currencyCode\n    version\n    worker {\n      id\n      firstName\n      lastName\n    }\n    transactions {\n      id\n      type\n      amountMinor\n      balanceAfterMinor\n      occurredDate\n      description\n      settlementId\n      createdAt\n    }\n  }\n}"
+    },
+    {
+      "name": "EscrowAccountTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:1c0df4bc500406a888b423333eb4e66c48185efcc23a8d73fc55a3171d3a8a63",
+      "rootFields": [
+        "escrowAccounts"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query EscrowAccountTable($input: DataTableConnectionInput!) {\n  escrowAccounts(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        status\n        targetAmountMinor\n        balanceMinor\n        annualInterestRate\n        lastInterestAccrualDate\n        openedDate\n        closedDate\n        currencyCode\n        version\n        createdAt\n        updatedAt\n        worker {\n          id\n          firstName\n          lastName\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "ExceptionShipments",
       "kind": "query",
       "domain": "shipment",
@@ -2069,6 +2659,28 @@
         "src/lib/graphql/shipment.ts"
       ],
       "sdl": "query ExceptionShipments($input: ShipmentsInput!) {\n  shipments(input: $input) {\n    edges {\n      node {\n        ...ShipmentFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...ShipmentPageInfoFields\n    }\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n}\n\nfragment ShipmentPageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
+    },
+    {
+      "name": "ExportSettlementBatchCsv",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:09b35d0d3a76868967b6a609edee59aab83a14a47829d873be063ad8bafd1dd4",
+      "rootFields": [
+        "exportSettlementBatchCsv"
+      ],
+      "variables": [
+        {
+          "name": "batchId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query ExportSettlementBatchCsv($batchId: ID!) {\n  exportSettlementBatchCsv(batchId: $batchId)\n}"
     },
     {
       "name": "FiscalYearTable",
@@ -2312,6 +2924,28 @@
       "sdl": "query FuelSurchargeProgramTable($input: DataTableConnectionInput!) {\n  fuelSurchargePrograms(input: $input) {\n    edges {\n      node {\n        ...FuelSurchargeProgramFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FuelSurchargeProgramFields on FuelSurchargeProgram {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  fuelIndexId\n  accessorialChargeId\n  method\n  pegPrice\n  increment\n  incrementRate\n  milesPerGallon\n  percentBasis\n  stepRounding\n  rateRounding\n  ratePrecision\n  minAmount\n  maxAmount\n  dateBasis\n  priceEffectiveDay\n  missingPriceFallback\n  effectiveStartDate\n  effectiveEndDate\n  shipmentTypeIds\n  serviceTypeIds\n  tractorTypeIds\n  trailerTypeIds\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "GenerateDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:0d8cbbe97e9f00c3c4c3e36e9bcc4c027760a26fc34c241cc15df6742056a4a2",
+      "rootFields": [
+        "generateDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "GenerateDriverSettlementInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation GenerateDriverSettlement($input: GenerateDriverSettlementInput!) {\n  generateDriverSettlement(input: $input) {\n    id\n    settlementNumber\n  }\n}"
+    },
+    {
       "name": "GenerateFuelSurchargeTable",
       "kind": "query",
       "domain": "fuel-surcharge",
@@ -2332,6 +2966,28 @@
         "src/lib/graphql/fuel-surcharge.ts"
       ],
       "sdl": "query GenerateFuelSurchargeTable($input: GenerateFuelTableInput!) {\n  generateFuelSurchargeTable(input: $input) {\n    priceMin\n    priceMax\n    value\n  }\n}"
+    },
+    {
+      "name": "GenerateSettlementBatch",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:08e2f9acd12b2117789bfffc7bc36d074c3c14ae66935f1953cd371093439277",
+      "rootFields": [
+        "generateSettlementBatch"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "GenerateSettlementBatchInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation GenerateSettlementBatch($input: GenerateSettlementBatchInput!) {\n  generateSettlementBatch(input: $input) {\n    id\n    name\n    settlementCount\n    exceptionCount\n    totalGrossMinor\n    totalNetMinor\n  }\n}"
     },
     {
       "name": "HazardousMaterialTable",
@@ -2384,6 +3040,28 @@
       "sdl": "query HazmatSegregationRuleTable($input: DataTableConnectionInput!) {\n  hazmatSegregationRules(input: $input) {\n    edges {\n      node {\n        ...HazmatSegregationRuleTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment HazmatSegregationRuleTableRowFields on HazmatSegregationRule {\n  id\n  businessUnitId\n  organizationId\n  status\n  name\n  description\n  exceptionNotes\n  referenceCode\n  regulationSource\n  distanceUnit\n  classA\n  classB\n  segregationType\n  hasExceptions\n  hazmatAId\n  hazmatBId\n  minimumDistance\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "HoldDriverPayEvent",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:19b550da25ad6ee05d644fc426fb0cb4eed437c28373ed7a55847e5218753a97",
+      "rootFields": [
+        "holdDriverPayEvent"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "HoldPayEventInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation HoldDriverPayEvent($input: HoldPayEventInput!) {\n  holdDriverPayEvent(input: $input) {\n    id\n    status\n    onHold\n    holdReason\n    version\n  }\n}"
+    },
+    {
       "name": "HoldReasonTable",
       "kind": "query",
       "domain": "hold-reason",
@@ -2409,6 +3087,28 @@
       "sdl": "query HoldReasonTable($input: DataTableConnectionInput!) {\n  holdReasons(input: $input) {\n    edges {\n      node {\n        ...HoldReasonTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment HoldReasonTableRowFields on HoldReason {\n  id\n  businessUnitId\n  organizationId\n  type\n  code\n  label\n  description\n  active\n  defaultSeverity\n  defaultBlocksDispatch\n  defaultBlocksDelivery\n  defaultBlocksBilling\n  defaultVisibleToCustomer\n  sortOrder\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "InviteWorkerToPortal",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:aca1f784efb7ea2322d18e6ef69d1981810ffac214ea568ae44b56a0cf721a48",
+      "rootFields": [
+        "inviteWorkerToPortal"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "InviteWorkerToPortalInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation InviteWorkerToPortal($input: InviteWorkerToPortalInput!) {\n  inviteWorkerToPortal(input: $input) {\n    invitation {\n      id\n      email\n      status\n      expiresAt\n    }\n    inviteUrl\n    emailSent\n  }\n}"
+    },
+    {
       "name": "InvoiceTable",
       "kind": "query",
       "domain": "invoice",
@@ -2432,6 +3132,28 @@
         "src/routes/invoice/_components/invoice-sidebar.tsx"
       ],
       "sdl": "query InvoiceTable($input: DataTableConnectionInput!) {\n  invoices(input: $input) {\n    edges {\n      node {\n        ...InvoiceTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment InvoiceTableRowFields on Invoice {\n  id\n  billingQueueItemId\n  shipmentId\n  customerId\n  number\n  billType\n  status\n  paymentTerm\n  currencyCode\n  invoiceDate\n  dueDate\n  billToName\n  subtotalAmount\n  otherAmount\n  totalAmount\n  appliedAmount\n  settlementStatus\n  disputeStatus\n  sendStatus\n  isAdjustmentArtifact\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n}"
+    },
+    {
+      "name": "IssuePayAdvance",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:a473c5b8196a7a4b792c124cd2f065f1361bf5327ff39363222ead87010fd6f5",
+      "rootFields": [
+        "issuePayAdvance"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "IssuePayAdvanceInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation IssuePayAdvance($input: IssuePayAdvanceInput!) {\n  issuePayAdvance(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "JournalEntriesBySource",
@@ -2662,6 +3384,28 @@
       "sdl": "mutation MarkAllNotificationsRead {\n  markAllNotificationsRead\n}"
     },
     {
+      "name": "MarkDriverSettlementPaid",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:52293ccd71fa3f9f752a2c6ee79ece56b5b121240379e0a777dbf2dd1b11788e",
+      "rootFields": [
+        "markDriverSettlementPaid"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "MarkDriverSettlementPaidInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation MarkDriverSettlementPaid($input: MarkDriverSettlementPaidInput!) {\n  markDriverSettlementPaid(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
       "name": "MarkNotificationsRead",
       "kind": "mutation",
       "domain": "notification",
@@ -2704,6 +3448,319 @@
         "src/services/notification.ts"
       ],
       "sdl": "mutation MarkNotificationsUnread($ids: [ID!]!) {\n  markNotificationsUnread(ids: $ids)\n}"
+    },
+    {
+      "name": "MyAdvances",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:4ad05d0be74ab6dec588aa0b7db8ab77d9cd5d605096e13a97cb20bce852f47f",
+      "rootFields": [
+        "myAdvances"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyAdvances {\n  myAdvances {\n    id\n    status\n    source\n    reference\n    amountMinor\n    recoveredMinor\n    outstandingMinor\n    currencyCode\n    issuedDate\n  }\n}"
+    },
+    {
+      "name": "MyComplianceProfile",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:ac5af8e8d15be26168448355e9771b11417890d634039dbdf7f39317d739b532",
+      "rootFields": [
+        "myComplianceProfile"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyComplianceProfile {\n  myComplianceProfile {\n    workerId\n    licenseNumber\n    licenseState\n    cdlClass\n    endorsement\n    licenseExpiry\n    hazmatExpiry\n    medicalCardExpiry\n    physicalDueDate\n    mvrDueDate\n    twicExpiry\n    complianceStatus\n    isQualified\n    hireDate\n    addressLine1\n    addressLine2\n    city\n    stateAbbreviation\n    postalCode\n    phoneNumber\n    emergencyContactName\n    emergencyContactPhone\n  }\n}"
+    },
+    {
+      "name": "MyDisputes",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:ce60a2cceb081d891881972f30a664ff30829c3bee0d0ea86b2d4bb9214d78f6",
+      "rootFields": [
+        "myDisputes"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyDisputes {\n  myDisputes {\n    id\n    settlementId\n    settlementLineId\n    status\n    category\n    description\n    resolutionNote\n    resolvedAt\n    createdAt\n    settlement {\n      id\n      settlementNumber\n      periodStart\n      periodEnd\n    }\n    settlementLine {\n      id\n      description\n      amountMinor\n      category\n    }\n  }\n}"
+    },
+    {
+      "name": "MyEscrow",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:d6e92e5dd91225da94c876899ec76b6539d6b200adc66d8f5c9f16743631c4e7",
+      "rootFields": [
+        "myEscrow"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyEscrow {\n  myEscrow {\n    account {\n      id\n      status\n      targetAmountMinor\n      balanceMinor\n      currencyCode\n      createdAt\n    }\n    transactions {\n      id\n      type\n      amountMinor\n      balanceAfterMinor\n      description\n      occurredDate\n      createdAt\n    }\n  }\n}"
+    },
+    {
+      "name": "MyExpenses",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:a37af7272e3a8791c6ea1257e9786bfdb352b5c0c58e29ff8cb01fb72de1145f",
+      "rootFields": [
+        "myExpenses"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyExpenses {\n  myExpenses {\n    id\n    shipmentId\n    payCodeId\n    status\n    amountMinor\n    currencyCode\n    description\n    incurredDate\n    receiptDocumentId\n    reviewNote\n    reviewedAt\n    createdAt\n    payCode {\n      id\n      code\n      description\n    }\n  }\n}"
+    },
+    {
+      "name": "MyLoadComments",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:bb8f38084baf00216f6da811c1d01e04b2dfdcf4ac579b48771e2c0103e3e490",
+      "rootFields": [
+        "myLoadComments"
+      ],
+      "variables": [
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyLoadComments($shipmentId: ID!) {\n  myLoadComments(shipmentId: $shipmentId) {\n    id\n    type\n    priority\n    comment\n    authorName\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "MyLoadPayEstimate",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:153135d927a73aaa32b52850ee67d3f02242447d08c58e4f0058d052f85f32b2",
+      "rootFields": [
+        "myLoadPayEstimate"
+      ],
+      "variables": [
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "moveId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyLoadPayEstimate($shipmentId: ID!, $moveId: ID!) {\n  myLoadPayEstimate(shipmentId: $shipmentId, moveId: $moveId) {\n    grossMinor\n    currencyCode\n  }\n}"
+    },
+    {
+      "name": "MyLoads",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:234ab5affc2ec541d377704704289944b19ac2f12553fdb404bce4323e11ba7c",
+      "rootFields": [
+        "myLoads"
+      ],
+      "variables": [
+        {
+          "name": "scope",
+          "type": "PortalLoadScope!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyLoads($scope: PortalLoadScope!, $limit: Int) {\n  myLoads(scope: $scope, limit: $limit) {\n    assignmentId\n    moveId\n    shipmentId\n    proNumber\n    bol\n    status\n    isPrimary\n    tractorCode\n    trailerCode\n    pieces\n    weight\n    distanceMiles\n    payGrossMinor\n    payStatus\n    payOnHold\n    ackStatus\n    stops {\n      id\n      type\n      status\n      sequence\n      locationName\n      addressLine\n      scheduledWindowStart\n      scheduledWindowEnd\n      actualArrival\n      actualDeparture\n    }\n  }\n}"
+    },
+    {
+      "name": "MyPeriodSummary",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:300c67ba34b8708f1e1352f6bf455729f24ad3f18ba8f7a97d2886d2ba12e382",
+      "rootFields": [
+        "myPeriodSummary"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyPeriodSummary {\n  myPeriodSummary {\n    periodStart\n    periodEnd\n    payDate\n    accruedGrossMinor\n    eventCount\n  }\n}"
+    },
+    {
+      "name": "MyPortalFeatures",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:dce4827f759a822d4b074209578feb2d3f12294a2fb26e9d0184fd89c8183571",
+      "rootFields": [
+        "myPortalFeatures"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyPortalFeatures {\n  myPortalFeatures {\n    requireLoadAcknowledgment\n    allowLoadRefusals\n    allowStopActions\n    allowLoadDocumentUpload\n    allowLoadComments\n    showLoadPay\n    showPayEstimates\n    allowExpenseSubmission\n    requireExpenseReceipt\n    allowSettlementDisputes\n    allowProfileDocumentUpload\n    allowContactInfoEdit\n    allowPtoRequests\n  }\n}"
+    },
+    {
+      "name": "MyPortalProfile",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:d9f1923f100755639ac4dcb381b4d12d4ec966896dc62f6feeace051bbb313f8",
+      "rootFields": [
+        "myPortalProfile"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyPortalProfile {\n  myPortalProfile {\n    workerId\n    firstName\n    lastName\n    email\n    phoneNumber\n    workerType\n    driverType\n    fleetCodeName\n    organizationName\n  }\n}"
+    },
+    {
+      "name": "MyPto",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:9fcfb3c6f94692c333a8f9b3f6074f033ace1ec340b3c7ffc601c00618a7e264",
+      "rootFields": [
+        "myPto"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyPto {\n  myPto {\n    id\n    status\n    type\n    startDate\n    endDate\n    reason\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "MyRecentPayEvents",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:b21ae5d25eaa70e20606dd2bc6decf9b6be568727a1fd3069ffcd9e43a2ffc1b",
+      "rootFields": [
+        "myRecentPayEvents"
+      ],
+      "variables": [
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyRecentPayEvents($limit: Int) {\n  myRecentPayEvents(limit: $limit) {\n    id\n    status\n    eventDate\n    proNumber\n    grossAmountMinor\n    totalMiles\n    currencyCode\n    onHold\n    holdReason\n  }\n}"
+    },
+    {
+      "name": "MySettlement",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:13d06f21c46b4eeeb624270d875cdccc3574ce029799208b15d05c3cc38e499d",
+      "rootFields": [
+        "mySettlement"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MySettlement($id: ID!) {\n  mySettlement(id: $id) {\n    id\n    settlementNumber\n    status\n    classification\n    payProfileName\n    periodStart\n    periodEnd\n    payDate\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    carryForwardInMinor\n    carryForwardOutMinor\n    netPayMinor\n    totalMiles\n    shipmentCount\n    currencyCode\n    paidAt\n    paymentMethod\n    paymentReference\n    createdAt\n    lines {\n      id\n      lineNumber\n      category\n      componentKind\n      method\n      description\n      quantity\n      rate\n      amountMinor\n      proNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "MySettlements",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:2ee91e8c25e4027169a740ef45aaf59ebab0fdba2f9fe2c1616d4a5f6a5bb491",
+      "rootFields": [
+        "mySettlements"
+      ],
+      "variables": [
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MySettlements($limit: Int, $offset: Int) {\n  mySettlements(limit: $limit, offset: $offset) {\n    items {\n      id\n      settlementNumber\n      status\n      periodStart\n      periodEnd\n      payDate\n      grossEarningsMinor\n      reimbursementsMinor\n      deductionsMinor\n      netPayMinor\n      currencyCode\n      paidAt\n      paymentMethod\n      paymentReference\n    }\n    total\n  }\n}"
+    },
+    {
+      "name": "MyYtdPay",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:3020bc2943b245e09336415b3901f2c59161751172c3a12e1b721972bb8ed133",
+      "rootFields": [
+        "myYtdPay"
+      ],
+      "variables": [
+        {
+          "name": "year",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query MyYtdPay($year: Int!) {\n  myYtdPay(year: $year) {\n    workerId\n    year\n    settlementCount\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    netPayMinor\n  }\n}"
     },
     {
       "name": "NotificationList",
@@ -2750,6 +3807,44 @@
         "src/services/notification.ts"
       ],
       "sdl": "query NotificationUnreadCount {\n  notificationUnreadCount\n}"
+    },
+    {
+      "name": "OpenEscrowAccount",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:44f99ba015deaaba7ba8a36c235f1b9cd31960106e649665df8597d4104f2646",
+      "rootFields": [
+        "openEscrowAccount"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "OpenEscrowAccountInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation OpenEscrowAccount($input: OpenEscrowAccountInput!) {\n  openEscrowAccount(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "OpenSettlementDisputeCount",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:d8f8fb203d4850d7671c64c9b442e243f87771ccdb245289725411c8fc1bbbbe",
+      "rootFields": [
+        "openSettlementDisputeCount"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query OpenSettlementDisputeCount {\n  openSettlementDisputeCount\n}"
     },
     {
       "name": "OrderDetail",
@@ -2896,6 +3991,204 @@
       "sdl": "mutation PatchWorker($id: ID!, $input: WorkerPatchInput!) {\n  patchWorker(id: $id, input: $input) {\n    ...WorkerTableRowFields\n  }\n}\n\nfragment WorkerFleetCodeFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment WorkerProfileTableFields on WorkerProfile {\n  id\n  workerId\n  businessUnitId\n  organizationId\n  licenseStateId\n  dob\n  licenseNumber\n  cdlClass\n  cdlRestrictions\n  endorsement\n  hazmatExpiry\n  licenseExpiry\n  medicalCardExpiry\n  medicalExaminerName\n  medicalExaminerNpi\n  twicCardNumber\n  twicExpiry\n  hireDate\n  terminationDate\n  physicalDueDate\n  mvrDueDate\n  complianceStatus\n  isQualified\n  disqualificationReason\n  lastComplianceCheck\n  lastMvrCheck\n  lastDrugTest\n  eldExempt\n  shortHaulExempt\n  version\n  createdAt\n  updatedAt\n  licenseState {\n    ...WorkerUsStateFields\n  }\n}\n\nfragment WorkerTableRowFields on Worker {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  fleetCodeId\n  managerId\n  status\n  type\n  driverType\n  profilePicUrl\n  firstName\n  lastName\n  wholeName\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  email\n  phoneNumber\n  emergencyContactName\n  emergencyContactPhone\n  externalId\n  assignmentBlocked\n  gender\n  canBeAssigned\n  availableForDispatch\n  version\n  createdAt\n  updatedAt\n  customFields\n  fleetCode {\n    ...WorkerFleetCodeFields\n  }\n  state {\n    ...WorkerUsStateFields\n  }\n  profile {\n    ...WorkerProfileTableFields\n  }\n}\n\nfragment WorkerUsStateFields on UsState {\n  id\n  name\n  abbreviation\n}"
     },
     {
+      "name": "PayAdvanceTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:72e0fa0b3fc41df7a92208a1575f5a3242fa80666502710659439dc96338d8dd",
+      "rootFields": [
+        "payAdvances"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayAdvanceTable($input: DataTableConnectionInput!) {\n  payAdvances(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        status\n        source\n        reference\n        issuedDate\n        amountMinor\n        recoveredMinor\n        writtenOffMinor\n        outstandingMinor\n        writeOffReason\n        notes\n        currencyCode\n        version\n        createdAt\n        updatedAt\n        worker {\n          id\n          firstName\n          lastName\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "PayCodeOptions",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:936a60ce21a22bf3cb1ec09b8e12a1d12b6cffb98550835e69d0255f713dfd72",
+      "rootFields": [
+        "payCodeOptions"
+      ],
+      "variables": [
+        {
+          "name": "direction",
+          "type": "PayCodeDirection",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayCodeOptions($direction: PayCodeDirection) {\n  payCodeOptions(direction: $direction) {\n    id\n    direction\n    code\n    name\n    taxable\n    defaultAmountMinor\n  }\n}"
+    },
+    {
+      "name": "PayCodeTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:1cd027118971feb07a21cdf553bb50a716510e6882471adf6031858296275211",
+      "rootFields": [
+        "payCodes"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayCodeTable($input: DataTableConnectionInput!) {\n  payCodes(input: $input) {\n    edges {\n      node {\n        id\n        status\n        direction\n        code\n        name\n        description\n        taxable\n        countsTowardGuarantee\n        glAccountId\n        defaultAmountMinor\n        isSystem\n        version\n        createdAt\n        updatedAt\n        glAccount {\n          id\n          accountCode\n          name\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "PayProfileAssignments",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:a5cd25fafd7706fafd7a770aec517285d5ed7b8ab090cbd5756fb66f7e528221",
+      "rootFields": [
+        "payProfileAssignments"
+      ],
+      "variables": [
+        {
+          "name": "payProfileId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayProfileAssignments($payProfileId: ID!) {\n  payProfileAssignments(payProfileId: $payProfileId) {\n    id\n    workerId\n    effectiveFrom\n    effectiveTo\n    splitPercent\n    rateOverrides {\n      componentId\n      rate\n    }\n    worker {\n      id\n      firstName\n      lastName\n    }\n  }\n}"
+    },
+    {
+      "name": "PayProfileDetail",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:7c7934aa1908ddd5d2d39e488200ef13338e7cdbd5eb59f8a8489cb7a835be3b",
+      "rootFields": [
+        "payProfile"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayProfileDetail($id: ID!) {\n  payProfile(id: $id) {\n    id\n    name\n    classification\n    currencyCode\n    components {\n      id\n      kind\n      method\n      description\n      rate\n      revenueBasis\n      isActive\n    }\n  }\n}"
+    },
+    {
+      "name": "PayProfileOptions",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:0f1fc94a1c413422c5dea0282e0cc1a022769625469f09634c7ad5051cf29790",
+      "rootFields": [
+        "payProfiles"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayProfileOptions($input: DataTableConnectionInput!) {\n  payProfiles(input: $input) {\n    edges {\n      node {\n        id\n        name\n        classification\n        status\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "PayProfileTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:1e5c03f4818797042043e0fb555d6554e4651086b3312226c4981f680c5995fe",
+      "rootFields": [
+        "payProfiles"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PayProfileTable($input: DataTableConnectionInput!) {\n  payProfiles(input: $input) {\n    edges {\n      node {\n        id\n        organizationId\n        businessUnitId\n        status\n        name\n        description\n        classification\n        currencyCode\n        guaranteedPeriodMinimumMinor\n        perDiemRatePerMile\n        perDiemDailyCapMinor\n        version\n        createdAt\n        updatedAt\n        activeAssignmentCount\n        components {\n          id\n          kind\n          method\n          description\n          rate\n          revenueBasis\n          bands {\n            minMiles\n            maxMiles\n            rate\n          }\n          freeTimeMinutes\n          minAmountMinor\n          maxAmountMinor\n          sequence\n          isActive\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "PayWorkerNow",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:db65206e7e8cc3bd6558487534d20c043d05e59b9bbef71d89b006fd38580973",
+      "rootFields": [
+        "payWorkerNow"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "PayWorkerNowInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation PayWorkerNow($input: PayWorkerNowInput!) {\n  payWorkerNow(input: $input) {\n    id\n    settlementNumber\n    status\n    netPayMinor\n    currencyCode\n    paidAt\n    paymentMethod\n    paymentReference\n  }\n}"
+    },
+    {
+      "name": "PendingDriverExpenseCount",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:ea576d13a22021a5d5e9559b60c5a2082502418662f1ab9e11591b1a0af0e4de",
+      "rootFields": [
+        "pendingDriverExpenseCount"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query PendingDriverExpenseCount {\n  pendingDriverExpenseCount\n}"
+    },
+    {
       "name": "PostAndApplyCustomerPayment",
       "kind": "mutation",
       "domain": "customer-payment",
@@ -2916,6 +4209,60 @@
         "src/lib/graphql/customer-payment.ts"
       ],
       "sdl": "mutation PostAndApplyCustomerPayment($input: PostCustomerPaymentInput!) {\n  postAndApplyCustomerPayment(input: $input) {\n    id\n    customerId\n    paymentDate\n    accountingDate\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    paymentMethod\n    referenceNumber\n    memo\n    currencyCode\n    postedBatchId\n    createdAt\n    updatedAt\n    applications {\n      id\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "PostDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:528e783cf5406e6b3c351f88e4deb5941a3bfc5b90c5d547e7c8e07b28ba136c",
+      "rootFields": [
+        "postDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DriverSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation PostDriverSettlement($input: DriverSettlementActionInput!) {\n  postDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "PreviewDriverSettlement",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:c3cea3211e8cdd412f9df5f2ec682195587c30756286ccaba39b69e7f65b7660",
+      "rootFields": [
+        "previewDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "periodStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query PreviewDriverSettlement($workerId: ID!, $periodStart: Int, $periodEnd: Int) {\n  previewDriverSettlement(\n    workerId: $workerId\n    periodStart: $periodStart\n    periodEnd: $periodEnd\n  ) {\n    id\n    workerId\n    settlementNumber\n    status\n    classification\n    payProfileName\n    periodStart\n    periodEnd\n    payDate\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    carryForwardInMinor\n    carryForwardOutMinor\n    netPayMinor\n    totalMiles\n    shipmentCount\n    currencyCode\n    hasExceptions\n    exceptions {\n      code\n      severity\n      message\n    }\n    lines {\n      lineNumber\n      category\n      componentKind\n      method\n      description\n      quantity\n      rate\n      amountMinor\n      proNumber\n    }\n  }\n}"
     },
     {
       "name": "PreviewReport",
@@ -2970,6 +4317,28 @@
       "sdl": "query RateTableTable($input: DataTableConnectionInput!) {\n  rateTables(input: $input) {\n    edges {\n      node {\n        ...RateTableTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RateTableTableRowFields on RateTable {\n  id\n  businessUnitId\n  organizationId\n  name\n  key\n  description\n  lookupType\n  active\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "RecalculateDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:527b34093726f31a9b0c76a39a26b9776e811990ecdf563159d42623c9947350",
+      "rootFields": [
+        "recalculateDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DriverSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation RecalculateDriverSettlement($input: DriverSettlementActionInput!) {\n  recalculateDriverSettlement(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
       "name": "RecalculateShipmentDistance",
       "kind": "mutation",
       "domain": "shipment",
@@ -3019,6 +4388,76 @@
       "sdl": "query RecentActivity($first: Int!, $after: String) {\n  auditEntries(input: { first: $first, after: $after }) {\n    edges {\n      node {\n        id\n        resource\n        operation\n        resourceId\n        timestamp\n        comment\n        entityRef\n        user {\n          id\n          name\n          username\n          profilePicUrl\n          thumbnailUrl\n        }\n      }\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}"
     },
     {
+      "name": "RecordMyStopAction",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:2e9bf84e0ce7dbfd352cba8d60db65f4912a71052aff8f90c7ef530277a91e24",
+      "rootFields": [
+        "recordMyStopAction"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RecordMyStopActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation RecordMyStopAction($input: RecordMyStopActionInput!) {\n  recordMyStopAction(input: $input)\n}"
+    },
+    {
+      "name": "RecurringDeductionTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:b08b1dd23e5a56af87307e351290b4c8e611b257939e1e5fe3eadc77d6331cb8",
+      "rootFields": [
+        "recurringDeductions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query RecurringDeductionTable($input: DataTableConnectionInput!) {\n  recurringDeductions(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        payCodeId\n        escrowAccountId\n        status\n        frequency\n        description\n        amountMinor\n        totalCapMinor\n        deductedToDateMinor\n        startDate\n        endDate\n        currencyCode\n        version\n        createdAt\n        updatedAt\n        worker {\n          id\n          firstName\n          lastName\n        }\n        payCode {\n          id\n          code\n          name\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "RecurringEarningTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:fedf545334de1148057d2bde0e8a58f94e3c6b9ad09a4a29bcd17c1cb68a2272",
+      "rootFields": [
+        "recurringEarnings"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query RecurringEarningTable($input: DataTableConnectionInput!) {\n  recurringEarnings(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        payCodeId\n        status\n        frequency\n        description\n        amountMinor\n        totalCapMinor\n        paidToDateMinor\n        startDate\n        endDate\n        currencyCode\n        version\n        createdAt\n        updatedAt\n        worker {\n          id\n          firstName\n          lastName\n        }\n        payCode {\n          id\n          code\n          name\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "RecurringShipmentTable",
       "kind": "query",
       "domain": "recurring-shipment",
@@ -3042,6 +4481,28 @@
         "src/lib/graphql/recurring-shipment-table.ts"
       ],
       "sdl": "query RecurringShipmentTable($input: DataTableConnectionInput!) {\n  recurringShipments(input: $input) {\n    edges {\n      node {\n        ...RecurringShipmentTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
+    },
+    {
+      "name": "RejectDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:655f7d88cbe5f76b89bc3ec04a1dde34465fefbdf00304559620b0b20dcc64f2",
+      "rootFields": [
+        "rejectDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DriverSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation RejectDriverSettlement($input: DriverSettlementActionInput!) {\n  rejectDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
     },
     {
       "name": "RejectWorkerPto",
@@ -3072,6 +4533,50 @@
         "src/lib/graphql/worker-mutations.ts"
       ],
       "sdl": "mutation RejectWorkerPto($id: ID!, $reason: String!) {\n  rejectWorkerPTO(id: $id, reason: $reason) {\n    ...WorkerPtoRowFields\n  }\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  status\n  type\n  startDate\n  endDate\n  reason\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
+    },
+    {
+      "name": "ReleaseDriverPayEvent",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:74e127862ab228018eb6817bcf2dfe47df3616ff045b776f9ceb7fb7768f8875",
+      "rootFields": [
+        "releaseDriverPayEvent"
+      ],
+      "variables": [
+        {
+          "name": "payEventId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation ReleaseDriverPayEvent($payEventId: ID!) {\n  releaseDriverPayEvent(payEventId: $payEventId) {\n    id\n    status\n    onHold\n    holdReason\n    version\n  }\n}"
+    },
+    {
+      "name": "RemoveDriverSettlementAdjustment",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:fa1ff7af4e0d35dbb7c44913e146dbfa4c122f02807028dfb69ce7d2710bee46",
+      "rootFields": [
+        "removeDriverSettlementAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RemoveSettlementAdjustmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation RemoveDriverSettlementAdjustment($input: RemoveSettlementAdjustmentInput!) {\n  removeDriverSettlementAdjustment(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "RemoveOrderCharge",
@@ -3269,6 +4774,28 @@
       "sdl": "query ReportSchedules($definitionId: ID) {\n  reportSchedules(definitionId: $definitionId) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "RequestMyPto",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:b1ad80c4985bc9a0b66fe33cb36e37d957a107db4c25fe06a4154b0e76ed7be6",
+      "rootFields": [
+        "requestMyPto"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RequestMyPtoInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation RequestMyPto($input: RequestMyPtoInput!) {\n  requestMyPto(input: $input) {\n    id\n    status\n    type\n    startDate\n    endDate\n    reason\n    createdAt\n  }\n}"
+    },
+    {
       "name": "ResetCannedFork",
       "kind": "mutation",
       "domain": "reports",
@@ -3315,6 +4842,50 @@
       "sdl": "query ResolvedCostProfilePage($asOfDate: String) {\n  resolvedCostProfile(asOfDate: $asOfDate) {\n    totalCpm\n    variableCpm\n    fixedCpm\n    targetMarginPercent\n    includeDeadheadMiles\n    asOfDate\n    fuel {\n      pricePerGallon\n      priceDate\n      fuelIndexId\n      milesPerGallon\n      source\n    }\n    categories {\n      category\n      name\n      costBehavior\n      ratePerMile\n      effectiveSource\n    }\n    glWindow {\n      fromDate\n      toDate\n      fleetMiles\n      hasPostings\n    }\n  }\n}"
     },
     {
+      "name": "ResolveSettlementDispute",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:0a9ff3966e92976c95b3815f2820954520d283fd44748dceeb18629e05758401",
+      "rootFields": [
+        "resolveSettlementDispute"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ResolveSettlementDisputeInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation ResolveSettlementDispute($input: ResolveSettlementDisputeInput!) {\n  resolveSettlementDispute(input: $input) {\n    id\n    status\n    resolutionNote\n    resolutionLineId\n    resolvedAt\n    version\n  }\n}"
+    },
+    {
+      "name": "RespondToMyAssignment",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:211393bb6c83113d7199803c0c269021ebfac1ecf2a65eb46143051c7e3fb3f2",
+      "rootFields": [
+        "respondToMyAssignment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RespondToMyAssignmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation RespondToMyAssignment($input: RespondToMyAssignmentInput!) {\n  respondToMyAssignment(input: $input)\n}"
+    },
+    {
       "name": "RestoreNotifications",
       "kind": "mutation",
       "domain": "notification",
@@ -3357,6 +4928,50 @@
         "src/lib/graphql/customer-payment.ts"
       ],
       "sdl": "mutation ReverseCustomerPayment($input: ReverseCustomerPaymentInput!) {\n  reverseCustomerPayment(input: $input) {\n    id\n    customerId\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    reversalBatchId\n    reversedById\n    reversedAt\n    reversalReason\n    updatedAt\n    applications {\n      id\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "ReviewDriverExpense",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:a7977fe40219d006a216e85a7db70e407be08880a8b5b0fd602d53c4603f6bef",
+      "rootFields": [
+        "reviewDriverExpense"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ReviewDriverExpenseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation ReviewDriverExpense($input: ReviewDriverExpenseInput!) {\n  reviewDriverExpense(input: $input) {\n    id\n    status\n    reviewNote\n    reviewedAt\n    settlementLineId\n    version\n  }\n}"
+    },
+    {
+      "name": "RevokeWorkerPortalAccess",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:f155b1032fe0e180152934a5fb457e75109136e2ffbde362d474828e42dabd7b",
+      "rootFields": [
+        "revokeWorkerPortalAccess"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation RevokeWorkerPortalAccess($workerId: ID!) {\n  revokeWorkerPortalAccess(workerId: $workerId)\n}"
     },
     {
       "name": "RoleTable",
@@ -3585,8 +5200,145 @@
       "fragments": [
         "TableConfigurationFields"
       ],
-      "usages": [],
+      "usages": [
+        "src/services/table-configuration.ts"
+      ],
       "sdl": "mutation SetOrgDefaultTableConfiguration($id: ID!, $enabled: Boolean!) {\n  setOrgDefaultTableConfiguration(id: $id, enabled: $enabled) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
+    },
+    {
+      "name": "SettlementBatchDetail",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:f417f184b9f58856ebe25866495f696c2fa0cc4b56bf14615f9c74ed3a5d3250",
+      "rootFields": [
+        "settlementBatch"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/routes/settlement-batch/_components/batch-panel.tsx"
+      ],
+      "sdl": "query SettlementBatchDetail($id: ID!) {\n  settlementBatch(id: $id) {\n    id\n    status\n    name\n    periodStart\n    periodEnd\n    payDate\n    settlementCount\n    exceptionCount\n    totalGrossMinor\n    totalNetMinor\n    currencyCode\n    notes\n    version\n    settlements {\n      id\n      settlementNumber\n      status\n      classification\n      grossEarningsMinor\n      deductionsMinor\n      netPayMinor\n      currencyCode\n      hasExceptions\n      worker {\n        id\n        firstName\n        lastName\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "SettlementBatchTable",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:dba0d6a1fc477db6f5c73a71fda39edbabffa3e00b3be0d7acce5e330ee540eb",
+      "rootFields": [
+        "settlementBatches"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query SettlementBatchTable($input: DataTableConnectionInput!) {\n  settlementBatches(input: $input) {\n    edges {\n      node {\n        id\n        status\n        name\n        periodStart\n        periodEnd\n        payDate\n        settlementCount\n        exceptionCount\n        totalGrossMinor\n        totalNetMinor\n        currencyCode\n        notes\n        generatedById\n        generatedAt\n        completedAt\n        canceledAt\n        version\n        createdAt\n        updatedAt\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "SettlementControl",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:000046c1cbdafc864b73f222fca8fad96ed5a4ff21e87d5807bae7f56f070673",
+      "rootFields": [
+        "settlementControl"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query SettlementControl {\n  settlementControl {\n    id\n    organizationId\n    businessUnitId\n    payPeriodFrequency\n    periodEndDayOfWeek\n    payDelayDays\n    payTrigger\n    autoGenerateBatches\n    autoApproveClean\n    autoAttachAccruals\n    autoPostOnApprove\n    allowNegativeNet\n    varianceThresholdPct\n    varianceLookbackWeeks\n    defaultEscrowInterestRate\n    escrowInterestFrequencyMonths\n    version\n  }\n}"
+    },
+    {
+      "name": "SettlementDisputeDetail",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:ccd8fbb15a3ec77478291e05d6dd931d3c71923ffea585cd51b02ecc3964cd26",
+      "rootFields": [
+        "settlementDispute"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query SettlementDisputeDetail($id: ID!) {\n  settlementDispute(id: $id) {\n    id\n    settlementId\n    settlementLineId\n    workerId\n    status\n    category\n    description\n    submittedByUserId\n    resolutionNote\n    resolutionLineId\n    resolvedById\n    resolvedAt\n    version\n    createdAt\n    updatedAt\n    worker {\n      id\n      firstName\n      lastName\n    }\n    settlement {\n      id\n      settlementNumber\n      status\n      periodStart\n      periodEnd\n      netPayMinor\n      grossEarningsMinor\n      deductionsMinor\n      currencyCode\n    }\n    settlementLine {\n      id\n      lineNumber\n      category\n      description\n      amountMinor\n      proNumber\n    }\n    resolvedBy {\n      id\n      name\n    }\n  }\n}"
+    },
+    {
+      "name": "SettlementDisputeTable",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:33d72f67dfa456db1b8de861e84b3e16173a8ba5f5fea3cf7a71bf3f9ddaef93",
+      "rootFields": [
+        "settlementDisputes"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query SettlementDisputeTable($input: DataTableConnectionInput!) {\n  settlementDisputes(input: $input) {\n    edges {\n      node {\n        id\n        settlementId\n        settlementLineId\n        workerId\n        status\n        category\n        description\n        resolutionNote\n        resolvedAt\n        createdAt\n        updatedAt\n        version\n        worker {\n          id\n          firstName\n          lastName\n        }\n        settlement {\n          id\n          settlementNumber\n          netPayMinor\n          currencyCode\n          status\n        }\n        resolvedBy {\n          id\n          name\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "SettlementWorkspaceSummary",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:c557e4cfa2aec767c55a4a6eb7a14fd4a506c9d1808bd909a714beee10e5a731",
+      "rootFields": [
+        "settlementWorkspaceSummary"
+      ],
+      "variables": [
+        {
+          "name": "periodStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query SettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {\n  settlementWorkspaceSummary(periodStart: $periodStart, periodEnd: $periodEnd) {\n    periodStart\n    periodEnd\n    payDate\n    draftCount\n    pendingApprovalCount\n    approvedCount\n    postedCount\n    paidCount\n    exceptionCount\n    totalNetMinor\n    totalGrossMinor\n    unsettledEventCount\n    unsettledGrossMinor\n    heldEventCount\n    heldGrossMinor\n    unsettledWorkerCount\n    openBatchId\n  }\n}"
     },
     {
       "name": "ShipmentBillingReadiness",
@@ -3963,6 +5715,28 @@
       "sdl": "query SidebarPreferences {\n  sidebarPreferences {\n    schemaVersion\n    version\n    sections {\n      key\n      hidden\n    }\n    attentionMetrics\n    quickActionIds\n    activity {\n      pageSize\n      defaultOpen\n    }\n  }\n}"
     },
     {
+      "name": "StartSettlementDisputeReview",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:d9763f9364a8c8ffb2df5481c6da57a9824953a6f9e7fcca26cde2d132c12028",
+      "rootFields": [
+        "startSettlementDisputeReview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation StartSettlementDisputeReview($id: ID!) {\n  startSettlementDisputeReview(id: $id) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
       "name": "StoredMileageTable",
       "kind": "query",
       "domain": "stored-mileage",
@@ -3987,6 +5761,50 @@
         "src/lib/graphql/stored-mileage-table.ts"
       ],
       "sdl": "query StoredMileageTable($input: DataTableConnectionInput!) {\n  storedMileages(input: $input) {\n    edges {\n      node {\n        ...StoredMileageTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment StoredMileageStopKeyFields on StopKey {\n  method\n  key\n  city\n  state\n  postalCode\n  placeId\n  coordinates\n}\n\nfragment StoredMileageTableRowFields on StoredMileage {\n  id\n  businessUnitId\n  organizationId\n  status\n  originKey {\n    ...StoredMileageStopKeyFields\n  }\n  destinationKey {\n    ...StoredMileageStopKeyFields\n  }\n  intermediateKeys {\n    ...StoredMileageStopKeyFields\n  }\n  routeSignature\n  routeHash\n  distance\n  distanceUnits\n  provider\n  source\n  routingType\n  method\n  distanceProfileId\n  distanceProfileName\n  hitCount\n  lastCalculatedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "SubmitDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:690603bb04ff7ceab1c1ac6949e3e5f932152daab6396a7f36fa8d72396e4aaf",
+      "rootFields": [
+        "submitDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DriverSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation SubmitDriverSettlement($input: DriverSettlementActionInput!) {\n  submitDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "SubmitMyExpense",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:a7598d8fcd7abe6245cd2dfa7858051fc11048da1632d7f04fbf0914e4dc5ebc",
+      "rootFields": [
+        "submitMyExpense"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SubmitMyExpenseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation SubmitMyExpense($input: SubmitMyExpenseInput!) {\n  submitMyExpense(input: $input) {\n    id\n    status\n    amountMinor\n    description\n    incurredDate\n    createdAt\n  }\n}"
     },
     {
       "name": "TableConfigurationDetail",
@@ -4294,6 +6112,53 @@
       "sdl": "mutation UncancelShipment($id: ID!) {\n  uncancelShipment(id: $id) {\n    ...ShipmentFields\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "UnsettledPayEvents",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:f9b3d5579995e1ea62171d1cd9c081bd5018e816c58f119b94589db91905ef98",
+      "rootFields": [
+        "unsettledPayEvents"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query UnsettledPayEvents($workerId: ID!) {\n  unsettledPayEvents(workerId: $workerId) {\n    id\n    shipmentId\n    moveId\n    eventDate\n    grossAmountMinor\n    totalMiles\n    currencyCode\n    proNumber\n  }\n}"
+    },
+    {
+      "name": "UnsettledWorkerSummaries",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:5f51e5c0fc01343e23452380d8711b2fb47fe90d380317889a987f512d8c023a",
+      "rootFields": [
+        "unsettledWorkerSummaries"
+      ],
+      "variables": [
+        {
+          "name": "periodStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query UnsettledWorkerSummaries($periodStart: Int, $periodEnd: Int) {\n  unsettledWorkerSummaries(periodStart: $periodStart, periodEnd: $periodEnd) {\n    workerId\n    workerName\n    eventCount\n    grossAmountMinor\n    heldCount\n    heldGrossMinor\n    hasSettlement\n  }\n}"
+    },
+    {
       "name": "UpcomingWorkerPto",
       "kind": "query",
       "domain": "worker",
@@ -4393,6 +6258,28 @@
       "sdl": "mutation UpdateCostingControl($input: CostingControlInput!) {\n  updateCostingControl(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
+      "name": "UpdateDashControl",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:6240832c7e2db613007b7c3e093f36d779100155ba80adc5a2df5c2c6e6c4e74",
+      "rootFields": [
+        "updateDashControl"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateDashControlInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation UpdateDashControl($input: UpdateDashControlInput!) {\n  updateDashControl(input: $input) {\n    id\n    requireLoadAcknowledgment\n    allowLoadRefusals\n    allowStopActions\n    allowLoadDocumentUpload\n    allowLoadComments\n    showLoadPay\n    showPayEstimates\n    allowExpenseSubmission\n    requireExpenseReceipt\n    allowSettlementDisputes\n    allowProfileDocumentUpload\n    allowContactInfoEdit\n    allowPtoRequests\n    sendCredentialReminders\n    enableDetentionAlerts\n    detentionAlertThresholdMinutes\n    version\n  }\n}"
+    },
+    {
       "name": "UpdateEquipmentType",
       "kind": "mutation",
       "domain": "equipment",
@@ -4420,6 +6307,26 @@
         "src/services/equipment-type.ts"
       ],
       "sdl": "mutation UpdateEquipmentType($id: ID!, $input: EquipmentTypeInput!) {\n  updateEquipmentType(id: $id, input: $input) {\n    ...EquipmentTypeConfigurationRowFields\n  }\n}\n\nfragment EquipmentTypeConfigurationRowFields on EquipmentType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  class\n  color\n  interiorLength\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateEscrowAccount",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:7c8e094b2dff1858e448e77b9315e02eabe34847e1c4bb36aaaa9da9afb8b791",
+      "rootFields": [
+        "updateEscrowAccount"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateEscrowAccountInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation UpdateEscrowAccount($input: UpdateEscrowAccountInput!) {\n  updateEscrowAccount(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "UpdateFuelIndex",
@@ -4496,6 +6403,28 @@
         "src/lib/graphql/fuel-surcharge.ts"
       ],
       "sdl": "mutation UpdateFuelSurchargeProgram($id: ID!, $input: FuelSurchargeProgramInput!) {\n  updateFuelSurchargeProgram(id: $id, input: $input) {\n    id\n    name\n    code\n  }\n}"
+    },
+    {
+      "name": "UpdateMyContactInfo",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:e81e7bb10b0ba505ac01858582f241192fb8f9552a6ea9ef910afba79ff73f1d",
+      "rootFields": [
+        "updateMyContactInfo"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateMyContactInfoInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation UpdateMyContactInfo($input: UpdateMyContactInfoInput!) {\n  updateMyContactInfo(input: $input) {\n    workerId\n    addressLine1\n    addressLine2\n    city\n    stateAbbreviation\n    postalCode\n    phoneNumber\n    emergencyContactName\n    emergencyContactPhone\n  }\n}"
     },
     {
       "name": "UpdateOrder",
@@ -4580,6 +6509,94 @@
       "sdl": "mutation UpdateOrganizationSettings($id: ID!, $input: OrganizationInput!) {\n  updateOrganization(id: $id, input: $input) {\n    ...OrganizationSettingsFields\n  }\n}\n\nfragment OrganizationSettingsFields on Organization {\n  id\n  version\n  createdAt\n  updatedAt\n  bucketName\n  businessUnitId\n  loginSlug\n  name\n  scacCode\n  dotNumber\n  logoUrl\n  addressLine1\n  addressLine2\n  city\n  stateId\n  postalCode\n  timezone\n  taxId\n  state {\n    ...OrganizationSettingsStateFields\n  }\n}\n\nfragment OrganizationSettingsStateFields on UsState {\n  id\n  name\n  abbreviation\n}"
     },
     {
+      "name": "UpdatePayCode",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:54054095fdcf12e64ef6dd8c31e280536a250d01bca95292636c708c73cbfd4e",
+      "rootFields": [
+        "updatePayCode"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdatePayCodeInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation UpdatePayCode($input: UpdatePayCodeInput!) {\n  updatePayCode(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "UpdatePayProfile",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:2aa4747470ca1fb5b86dfdf513276a06a579f785fb0ffc605e38f60feca010c7",
+      "rootFields": [
+        "updatePayProfile"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdatePayProfileInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation UpdatePayProfile($input: UpdatePayProfileInput!) {\n  updatePayProfile(input: $input) {\n    id\n    name\n    version\n  }\n}"
+    },
+    {
+      "name": "UpdateRecurringDeduction",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:60ff79afe87b8907fa14e6470065770f4022043a122db9866b9138d2b42ca15a",
+      "rootFields": [
+        "updateRecurringDeduction"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateRecurringDeductionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation UpdateRecurringDeduction($input: UpdateRecurringDeductionInput!) {\n  updateRecurringDeduction(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "UpdateRecurringEarning",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:15d49ce8f2769edc8dc6c562aef844ce80a3c2fb015a337f1a57bf16b2377ffc",
+      "rootFields": [
+        "updateRecurringEarning"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateRecurringEarningInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation UpdateRecurringEarning($input: UpdateRecurringEarningInput!) {\n  updateRecurringEarning(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
       "name": "UpdateReportDefinition",
       "kind": "mutation",
       "domain": "reports",
@@ -4626,6 +6643,28 @@
         "src/lib/graphql/reports.ts"
       ],
       "sdl": "mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {\n  updateReportSchedule(input: $input) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateSettlementControl",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:d1cd27e9fd5f72b0c09c7000850c3749c37cdb3b1e2eefa5ec9244a59b47d002",
+      "rootFields": [
+        "updateSettlementControl"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateSettlementControlInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation UpdateSettlementControl($input: UpdateSettlementControlInput!) {\n  updateSettlementControl(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "UpdateShipment",
@@ -4780,6 +6819,116 @@
       "sdl": "query UserTable($input: DataTableConnectionInput!) {\n  users(input: $input) {\n    edges {\n      node {\n        ...UserTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment UserTableRowFields on User {\n  id\n  businessUnitId\n  currentOrganizationId\n  status\n  name\n  username\n  emailAddress\n  profilePicUrl\n  thumbnailUrl\n  timezone\n  isLocked\n  mustChangePassword\n  version\n  lastLoginAt\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "VoidDriverSettlement",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:f5a663c3939fddfbe2d23987cad6a6ca7fd8a03df0e933270cfe021136c166e8",
+      "rootFields": [
+        "voidDriverSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DriverSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation VoidDriverSettlement($input: DriverSettlementActionInput!) {\n  voidDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "WithdrawSettlementDispute",
+      "kind": "mutation",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:8ac805417a3dde06fdd223772563f68688bdb73966c0424fcfc441df9db0c205",
+      "rootFields": [
+        "withdrawSettlementDispute"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "mutation WithdrawSettlementDispute($id: ID!) {\n  withdrawSettlementDispute(id: $id) {\n    id\n    status\n  }\n}"
+    },
+    {
+      "name": "WorkerEarningsSummary",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:604360bedc59b36d762fa6780dbfe073bfbfeb71015006a8a74717663ea17f9a",
+      "rootFields": [
+        "workerEarningsSummary"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query WorkerEarningsSummary($workerId: ID!) {\n  workerEarningsSummary(workerId: $workerId) {\n    workerId\n    accruedEventCount\n    accruedGrossMinor\n    outstandingAdvances\n    escrowBalanceMinor\n  }\n}"
+    },
+    {
+      "name": "WorkerPayAssignments",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:1bf635cd5fa402d1768672762dcc0cca45e44bfd28abb08b7c7caa1a7efc6528",
+      "rootFields": [
+        "workerPayAssignments"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query WorkerPayAssignments($workerId: ID!) {\n  workerPayAssignments(workerId: $workerId) {\n    id\n    workerId\n    payProfileId\n    effectiveFrom\n    effectiveTo\n    splitPercent\n    rateOverrides {\n      componentId\n      rate\n    }\n    notes\n    version\n    createdAt\n    payProfile {\n      id\n      name\n      classification\n      components {\n        id\n        kind\n        method\n        description\n        rate\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "WorkerPortalStatus",
+      "kind": "query",
+      "domain": "driver-portal",
+      "sourceFile": "src/graphql/operations/driver-portal/operations.graphql",
+      "hash": "sha256:747e063d2865387a9bfee8d33322637bfb155421a1605b8b7bee154804b3c4a1",
+      "rootFields": [
+        "workerPortalStatus"
+      ],
+      "variables": [
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-portal.ts"
+      ],
+      "sdl": "query WorkerPortalStatus($workerId: ID!) {\n  workerPortalStatus(workerId: $workerId) {\n    linked\n    portalUser {\n      id\n      name\n      emailAddress\n      status\n      lastLoginAt\n    }\n    pendingInvitation {\n      id\n      email\n      status\n      expiresAt\n      createdAt\n    }\n    invitations {\n      id\n      email\n      status\n      expiresAt\n      acceptedAt\n      createdAt\n      invitedBy {\n        id\n        name\n      }\n    }\n  }\n}"
+    },
+    {
       "name": "WorkerPtoChartData",
       "kind": "query",
       "domain": "worker",
@@ -4854,6 +7003,55 @@
         "src/lib/graphql/worker-table.ts"
       ],
       "sdl": "query WorkerTable($input: DataTableConnectionInput!) {\n  workers(input: $input) {\n    edges {\n      node {\n        ...WorkerTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...WorkerDataTablePageInfoFields\n    }\n  }\n}\n\nfragment WorkerDataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment WorkerFleetCodeFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment WorkerProfileTableFields on WorkerProfile {\n  id\n  workerId\n  businessUnitId\n  organizationId\n  licenseStateId\n  dob\n  licenseNumber\n  cdlClass\n  cdlRestrictions\n  endorsement\n  hazmatExpiry\n  licenseExpiry\n  medicalCardExpiry\n  medicalExaminerName\n  medicalExaminerNpi\n  twicCardNumber\n  twicExpiry\n  hireDate\n  terminationDate\n  physicalDueDate\n  mvrDueDate\n  complianceStatus\n  isQualified\n  disqualificationReason\n  lastComplianceCheck\n  lastMvrCheck\n  lastDrugTest\n  eldExempt\n  shortHaulExempt\n  version\n  createdAt\n  updatedAt\n  licenseState {\n    ...WorkerUsStateFields\n  }\n}\n\nfragment WorkerTableRowFields on Worker {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  fleetCodeId\n  managerId\n  status\n  type\n  driverType\n  profilePicUrl\n  firstName\n  lastName\n  wholeName\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  email\n  phoneNumber\n  emergencyContactName\n  emergencyContactPhone\n  externalId\n  assignmentBlocked\n  gender\n  canBeAssigned\n  availableForDispatch\n  version\n  createdAt\n  updatedAt\n  customFields\n  fleetCode {\n    ...WorkerFleetCodeFields\n  }\n  state {\n    ...WorkerUsStateFields\n  }\n  profile {\n    ...WorkerProfileTableFields\n  }\n}\n\nfragment WorkerUsStateFields on UsState {\n  id\n  name\n  abbreviation\n}"
+    },
+    {
+      "name": "WorkerYtdPaySummaries",
+      "kind": "query",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:f7d96ae4a669343c9c3f27a40e57063c9565295d8c2fa4924e44a2643b5ae67b",
+      "rootFields": [
+        "workerYtdPaySummaries"
+      ],
+      "variables": [
+        {
+          "name": "year",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "classification",
+          "type": "PayeeClassification",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "query WorkerYtdPaySummaries($year: Int!, $classification: PayeeClassification) {\n  workerYtdPaySummaries(year: $year, classification: $classification) {\n    workerId\n    workerName\n    classification\n    year\n    settlementCount\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    netPayMinor\n  }\n}"
+    },
+    {
+      "name": "WriteOffPayAdvance",
+      "kind": "mutation",
+      "domain": "driver-settlement",
+      "sourceFile": "src/graphql/operations/driver-settlement/operations.graphql",
+      "hash": "sha256:1e61ca8e3b303b5eeede39215a299509c6d83213342e1d13138c19d24c4c09f2",
+      "rootFields": [
+        "writeOffPayAdvance"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "WriteOffPayAdvanceInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [
+        "src/lib/graphql/driver-settlement.ts"
+      ],
+      "sdl": "mutation WriteOffPayAdvance($input: WriteOffPayAdvanceInput!) {\n  writeOffPayAdvance(input: $input) {\n    id\n    status\n    version\n  }\n}"
     }
   ],
   "fragments": [
@@ -5000,9 +7198,13 @@
         "DistanceProfileTable",
         "DocumentPacketRuleTable",
         "DocumentTypeTable",
+        "DriverExpenseTable",
+        "DriverPayEventTable",
+        "DriverSettlementTable",
         "EmailProfileTable",
         "EquipmentManufacturerTable",
         "EquipmentTypeTable",
+        "EscrowAccountTable",
         "FiscalYearTable",
         "FleetCodeTable",
         "FormulaTemplateTable",
@@ -5018,7 +7220,13 @@
         "ManualJournalTable",
         "NotificationList",
         "OrderTable",
+        "PayAdvanceTable",
+        "PayCodeTable",
+        "PayProfileOptions",
+        "PayProfileTable",
         "RateTableTable",
+        "RecurringDeductionTable",
+        "RecurringEarningTable",
         "RecurringShipmentTable",
         "ReportDefinitionsTable",
         "ReportRunsTable",
@@ -5027,6 +7235,8 @@
         "ServiceFailureReasonCodeTable",
         "ServiceFailureTable",
         "ServiceTypeTable",
+        "SettlementBatchTable",
+        "SettlementDisputeTable",
         "ShipmentTypeTable",
         "StoredMileageTable",
         "TableConfigurationTable",
@@ -6258,6 +8468,68 @@
     }
   ],
   "types": {
+    "AddSettlementAdjustmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "quantity",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rate",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AddSettlementAdjustmentInput {\n  amountMinor: Int!\n  description: String!\n  \"\"\"\n  Optional pay code — the adjustment posts to the code's GL account when mapped.\n  \"\"\"\n  payCodeId: ID\n  quantity: String\n  rate: String\n  settlementId: ID!\n}"
+    },
+    "AdjustEscrowAccountInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accountId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "occurredDate",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AdjustEscrowAccountInput {\n  accountId: ID!\n  amountMinor: Int!\n  description: String!\n  occurredDate: Int\n}"
+    },
     "ApplyCustomerPaymentInput": {
       "kind": "input",
       "fields": [
@@ -6278,6 +8550,63 @@
         }
       ],
       "sdl": "input ApplyCustomerPaymentInput {\n  accountingDate: Int!\n  applications: [CustomerPaymentApplicationInput!]!\n  paymentId: ID!\n}"
+    },
+    "AssignPayProfileInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "effectiveFrom",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "effectiveTo",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "payProfileId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "rateOverrides",
+          "type": "[PayRateOverrideInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "splitPercent",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nAssigns a pay profile to a worker. Any currently-open assignment for the worker\nis automatically ended on the new effective date — no manual cleanup needed.\n\"\"\"\ninput AssignPayProfileInput {\n  effectiveFrom: Int!\n  effectiveTo: Int\n  notes: String\n  payProfileId: ID!\n  \"\"\"Optional per-component rate overrides for this driver.\"\"\"\n  rateOverrides: [PayRateOverrideInput!]\n  \"\"\"Defaults to 100. Use 50 for an even team split.\"\"\"\n  splitPercent: String\n  workerId: ID!\n}"
+    },
+    "AttachPayEventsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "payEventIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AttachPayEventsInput {\n  payEventIds: [ID!]!\n  settlementId: ID!\n}"
     },
     "BillingQueueAssignInput": {
       "kind": "input",
@@ -6320,6 +8649,32 @@
         }
       ],
       "sdl": "input BillingQueueUpdateStatusInput {\n  cancelReason: String\n  exceptionNotes: String\n  exceptionReasonCode: BillingQueueExceptionReasonCode\n  reviewNotes: String\n  status: BillingQueueStatus!\n}"
+    },
+    "BulkSettlementActionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "action",
+          "type": "BulkSettlementActionType!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentMethod",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentReference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input BulkSettlementActionInput {\n  action: BulkSettlementActionType!\n  \"\"\"Required when action is MarkPaid.\"\"\"\n  paymentMethod: String\n  paymentReference: String\n  settlementIds: [ID!]!\n}"
     },
     "BulkUpdateEquipmentTypeStatusInput": {
       "kind": "input",
@@ -6433,6 +8788,231 @@
       ],
       "sdl": "input CostingControlInput {\n  fuelIndexId: ID\n  glActualsEnabled: Boolean!\n  glRollingMonths: Int!\n  includeDeadheadMiles: Boolean!\n  milesPerGallon: String!\n  plannedMonthlyMiles: Int\n  targetMarginPercent: String\n  useLiveFuelPrice: Boolean!\n  version: Int!\n}"
     },
+    "CreateMyLoadCommentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "comment",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateMyLoadCommentInput {\n  comment: String!\n  shipmentId: ID!\n}"
+    },
+    "CreatePayCodeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "countsTowardGuarantee",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultAmountMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "direction",
+          "type": "PayCodeDirection!",
+          "defaultValue": null
+        },
+        {
+          "name": "glAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "taxable",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreatePayCodeInput {\n  code: String!\n  countsTowardGuarantee: Boolean\n  defaultAmountMinor: Int\n  description: String\n  direction: PayCodeDirection!\n  glAccountId: ID\n  name: String!\n  taxable: Boolean\n}"
+    },
+    "CreatePayProfileInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "classification",
+          "type": "PayeeClassification!",
+          "defaultValue": null
+        },
+        {
+          "name": "components",
+          "type": "[PayProfileComponentInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "guaranteedPeriodMinimumMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "perDiemDailyCapMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "perDiemRatePerMile",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreatePayProfileInput {\n  classification: PayeeClassification!\n  components: [PayProfileComponentInput!]!\n  currencyCode: String\n  description: String\n  guaranteedPeriodMinimumMinor: Int\n  name: String!\n  perDiemDailyCapMinor: Int\n  perDiemRatePerMile: String\n  status: EntityStatus\n}"
+    },
+    "CreateRecurringDeductionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "endDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "escrowAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "escrowContribution",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "frequency",
+          "type": "RecurringDeductionFrequency",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "totalCapMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateRecurringDeductionInput {\n  amountMinor: Int!\n  currencyCode: String\n  description: String!\n  endDate: Int\n  escrowAccountId: ID\n  \"\"\"\n  When true and no escrow account is given, the deduction links to the driver's\n  active escrow account and posts as an escrow contribution.\n  \"\"\"\n  escrowContribution: Boolean\n  frequency: RecurringDeductionFrequency\n  payCodeId: ID!\n  startDate: Int!\n  totalCapMinor: Int\n  workerId: ID!\n}"
+    },
+    "CreateRecurringEarningInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "endDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "frequency",
+          "type": "RecurringEarningFrequency",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "totalCapMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateRecurringEarningInput {\n  amountMinor: Int!\n  currencyCode: String\n  description: String!\n  endDate: Int\n  frequency: RecurringEarningFrequency\n  payCodeId: ID!\n  startDate: Int!\n  totalCapMinor: Int\n  workerId: ID!\n}"
+    },
     "CreateReportScheduleInput": {
       "kind": "input",
       "fields": [
@@ -6479,6 +9059,32 @@
       ],
       "sdl": "input CreateReportScheduleInput {\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  notifyUserIds: [ID!]\n  timezone: String\n}"
     },
+    "CreateSettlementDisputeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "category",
+          "type": "SettlementDisputeCategory!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementLineId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateSettlementDisputeInput {\n  category: SettlementDisputeCategory!\n  description: String!\n  settlementId: ID!\n  settlementLineId: ID\n}"
+    },
     "DataTableConnectionInput": {
       "kind": "input",
       "fields": [
@@ -6516,6 +9122,38 @@
       ],
       "sdl": "input DataTableConnectionInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  query: String\n  sort: [SortFieldInput!]\n}"
     },
+    "DetachPayEventInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "payEventId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetachPayEventInput {\n  payEventId: ID!\n  settlementId: ID!\n}"
+    },
+    "DriverSettlementActionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DriverSettlementActionInput {\n  reason: String\n  settlementId: ID!\n}"
+    },
     "EdiDocumentDirection": {
       "kind": "enum",
       "values": [
@@ -6543,6 +9181,22 @@
         "Outbound"
       ],
       "sdl": "enum EdiTransferDirection {\n  Inbound\n  Outbound\n}"
+    },
+    "EndWorkerPayAssignmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "assignmentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "endDate",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input EndWorkerPayAssignmentInput {\n  assignmentId: ID!\n  endDate: Int!\n}"
     },
     "EquipmentClass": {
       "kind": "enum",
@@ -6866,6 +9520,37 @@
       ],
       "sdl": "input FuelSurchargeProgramInput {\n  accessorialChargeId: ID!\n  code: String!\n  dateBasis: FuelSurchargeDateBasis\n  description: String\n  effectiveEndDate: Int\n  effectiveStartDate: Int\n  fuelIndexId: ID!\n  increment: String\n  incrementRate: String\n  maxAmount: String\n  method: FuelSurchargeProgramMethod!\n  milesPerGallon: String\n  minAmount: String\n  missingPriceFallback: FuelSurchargeMissingPriceFallback\n  name: String!\n  pegPrice: String\n  percentBasis: FuelSurchargePercentBasis\n  priceEffectiveDay: Int\n  ratePrecision: Int\n  rateRounding: FuelSurchargeRateRounding\n  serviceTypeIds: [ID!]\n  shipmentTypeIds: [ID!]\n  status: FuelSurchargeProgramStatus\n  stepRounding: FuelSurchargeStepRounding\n  tableRows: [FuelSurchargeTableRowInput!]\n  tractorTypeIds: [ID!]\n  trailerTypeIds: [ID!]\n}"
     },
+    "GenerateDriverSettlementInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "batchId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "payDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "periodStart",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input GenerateDriverSettlementInput {\n  batchId: ID\n  payDate: Int!\n  periodEnd: Int!\n  periodStart: Int!\n  workerId: ID!\n}"
+    },
     "GenerateFuelTableInput": {
       "kind": "input",
       "fields": [
@@ -6902,9 +9587,129 @@
       ],
       "sdl": "input GenerateFuelTableInput {\n  increment: String!\n  maxPrice: String!\n  minPrice: String!\n  openEnded: Boolean\n  startValue: String!\n  valueStep: String!\n}"
     },
+    "GenerateSettlementBatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "name",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodStart",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input GenerateSettlementBatchInput {\n  name: String\n  notes: String\n  periodEnd: Int\n  periodStart: Int\n}"
+    },
+    "HoldPayEventInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "payEventId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input HoldPayEventInput {\n  payEventId: ID!\n  \"\"\"Why pay is being deferred — shown to whoever reviews the held event.\"\"\"\n  reason: String!\n}"
+    },
+    "InviteWorkerToPortalInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "email",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input InviteWorkerToPortalInput {\n  \"\"\"Overrides the email on the worker record when provided.\"\"\"\n  email: String\n  workerId: ID!\n}"
+    },
+    "IssuePayAdvanceInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "issuedDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "reference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "source",
+          "type": "PayAdvanceSource!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input IssuePayAdvanceInput {\n  amountMinor: Int!\n  currencyCode: String\n  issuedDate: Int!\n  notes: String\n  reference: String\n  source: PayAdvanceSource!\n  workerId: ID!\n}"
+    },
     "JSON": {
       "kind": "scalar",
       "sdl": "scalar JSON"
+    },
+    "MarkDriverSettlementPaidInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "paymentMethod",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentReference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input MarkDriverSettlementPaidInput {\n  paymentMethod: String!\n  paymentReference: String\n  settlementId: ID!\n}"
     },
     "NotificationFilterInput": {
       "kind": "input",
@@ -6921,6 +9726,37 @@
         }
       ],
       "sdl": "input NotificationFilterInput {\n  state: NotificationState\n  unreadOnly: Boolean\n}"
+    },
+    "OpenEscrowAccountInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "annualInterestRate",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "openedDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "targetAmountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input OpenEscrowAccountInput {\n  annualInterestRate: String\n  currencyCode: String\n  openedDate: Int\n  targetAmountMinor: Int!\n  workerId: ID!\n}"
     },
     "OrderInput": {
       "kind": "input",
@@ -7044,6 +9880,61 @@
       ],
       "sdl": "input OrganizationInput {\n  addressLine1: String!\n  addressLine2: String\n  bucketName: String\n  city: String!\n  dotNumber: String!\n  loginSlug: String\n  logoUrl: String\n  name: String!\n  postalCode: String!\n  scacCode: String!\n  stateId: ID!\n  taxId: String\n  timezone: String!\n  version: Int!\n}"
     },
+    "PayCodeDirection": {
+      "kind": "enum",
+      "values": [
+        "Deduction",
+        "Earning"
+      ],
+      "sdl": "enum PayCodeDirection {\n  Deduction\n  Earning\n}"
+    },
+    "PayeeClassification": {
+      "kind": "enum",
+      "values": [
+        "CompanyDriver",
+        "OwnerOperator"
+      ],
+      "sdl": "enum PayeeClassification {\n  CompanyDriver\n  OwnerOperator\n}"
+    },
+    "PayWorkerNowInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "applyRecurring",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "payEventIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentMethod",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentReference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PayWorkerNowInput {\n  \"\"\"\n  Also apply recurring deductions, escrow, advance recovery, and carry-forward.\n  Off by default so the instant payout doesn't double-dip items the regular\n  period settlement will take.\n  \"\"\"\n  applyRecurring: Boolean\n  \"\"\"\n  Specific accrued events to pay; omit to pay everything accrued and unheld.\n  \"\"\"\n  payEventIds: [ID!]\n  paymentMethod: String!\n  paymentReference: String\n  workerId: ID!\n}"
+    },
+    "PortalLoadScope": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "History"
+      ],
+      "sdl": "enum PortalLoadScope {\n  Active\n  History\n}"
+    },
     "PostCustomerPaymentInput": {
       "kind": "input",
       "fields": [
@@ -7095,6 +9986,27 @@
       ],
       "sdl": "input PostCustomerPaymentInput {\n  accountingDate: Int!\n  amountMinor: Int!\n  applications: [CustomerPaymentApplicationInput!]\n  currencyCode: String\n  customerId: ID!\n  memo: String\n  paymentDate: Int!\n  paymentMethod: CustomerPaymentMethod!\n  referenceNumber: String\n}"
     },
+    "RecordMyStopActionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "action",
+          "type": "PortalStopAction!",
+          "defaultValue": null
+        },
+        {
+          "name": "moveId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "stopId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RecordMyStopActionInput {\n  action: PortalStopAction!\n  moveId: ID!\n  stopId: ID!\n}"
+    },
     "RemoveOrderChargeInput": {
       "kind": "input",
       "fields": [
@@ -7110,6 +10022,22 @@
         }
       ],
       "sdl": "input RemoveOrderChargeInput {\n  chargeId: ID!\n  orderId: ID!\n}"
+    },
+    "RemoveSettlementAdjustmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "lineId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RemoveSettlementAdjustmentInput {\n  lineId: ID!\n  settlementId: ID!\n}"
     },
     "ReportIRInput": {
       "kind": "input",
@@ -7178,6 +10106,79 @@
       ],
       "sdl": "input ReportRunsFilterInput {\n  definitionId: ID\n  mineOnly: Boolean\n  statuses: [String!]\n}"
     },
+    "RequestMyPtoInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "endDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "PortalPtoType!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RequestMyPtoInput {\n  endDate: Int!\n  reason: String!\n  startDate: Int!\n  type: PortalPtoType!\n}"
+    },
+    "ResolveSettlementDisputeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "adjustment",
+          "type": "DisputeAdjustmentInput",
+          "defaultValue": null
+        },
+        {
+          "name": "approve",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "disputeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "resolutionNote",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ResolveSettlementDisputeInput {\n  \"\"\"\n  Optional correcting adjustment applied to the driver's open settlement (one is\n  generated off-cycle when none exists). Only valid when approving.\n  \"\"\"\n  adjustment: DisputeAdjustmentInput\n  approve: Boolean!\n  disputeId: ID!\n  resolutionNote: String!\n}"
+    },
+    "RespondToMyAssignmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accept",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "assignmentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RespondToMyAssignmentInput {\n  accept: Boolean!\n  assignmentId: ID!\n  reason: String\n}"
+    },
     "ReverseCustomerPaymentInput": {
       "kind": "input",
       "fields": [
@@ -7198,6 +10199,27 @@
         }
       ],
       "sdl": "input ReverseCustomerPaymentInput {\n  accountingDate: Int!\n  paymentId: ID!\n  reason: String\n}"
+    },
+    "ReviewDriverExpenseInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "approve",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "expenseId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReviewDriverExpenseInput {\n  approve: Boolean!\n  expenseId: ID!\n  note: String\n}"
     },
     "RunReportInput": {
       "kind": "input",
@@ -7925,6 +10947,37 @@
       ],
       "sdl": "input SidebarPreferencesInput {\n  activity: SidebarActivityPreferenceInput!\n  attentionMetrics: [String!]!\n  quickActionIds: [String!]!\n  sections: [SidebarSectionPreferenceInput!]!\n  version: Int!\n}"
     },
+    "SubmitMyExpenseInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "incurredDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SubmitMyExpenseInput {\n  amountMinor: Int!\n  description: String!\n  incurredDate: Int\n  payCodeId: ID\n  shipmentId: ID\n}"
+    },
     "TableConfigurationInput": {
       "kind": "input",
       "fields": [
@@ -8014,6 +11067,128 @@
       ],
       "sdl": "input UpcomingWorkerPTOInput {\n  after: String\n  endDate: Int\n  first: Int = 20\n  fleetCodeId: ID\n  startDate: Int\n  status: PTOStatus\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
     },
+    "UpdateDashControlInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "allowContactInfoEdit",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowExpenseSubmission",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowLoadComments",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowLoadDocumentUpload",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowLoadRefusals",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowProfileDocumentUpload",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowPtoRequests",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowSettlementDisputes",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "allowStopActions",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "detentionAlertThresholdMinutes",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "enableDetentionAlerts",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "requireExpenseReceipt",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "requireLoadAcknowledgment",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "sendCredentialReminders",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "showLoadPay",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "showPayEstimates",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateDashControlInput {\n  allowContactInfoEdit: Boolean!\n  allowExpenseSubmission: Boolean!\n  allowLoadComments: Boolean!\n  allowLoadDocumentUpload: Boolean!\n  allowLoadRefusals: Boolean!\n  allowProfileDocumentUpload: Boolean!\n  allowPtoRequests: Boolean!\n  allowSettlementDisputes: Boolean!\n  allowStopActions: Boolean!\n  detentionAlertThresholdMinutes: Int!\n  enableDetentionAlerts: Boolean!\n  requireExpenseReceipt: Boolean!\n  requireLoadAcknowledgment: Boolean!\n  sendCredentialReminders: Boolean!\n  showLoadPay: Boolean!\n  showPayEstimates: Boolean!\n  version: Int!\n}"
+    },
+    "UpdateEscrowAccountInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "annualInterestRate",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetAmountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateEscrowAccountInput {\n  annualInterestRate: String!\n  id: ID!\n  targetAmountMinor: Int!\n  version: Int!\n  workerId: ID!\n}"
+    },
     "UpdateFuelIndexPriceInput": {
       "kind": "input",
       "fields": [
@@ -8034,6 +11209,47 @@
         }
       ],
       "sdl": "input UpdateFuelIndexPriceInput {\n  id: ID!\n  price: String!\n  priceDate: String!\n}"
+    },
+    "UpdateMyContactInfoInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "addressLine1",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "addressLine2",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "city",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "emergencyContactName",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "emergencyContactPhone",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "phoneNumber",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "postalCode",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateMyContactInfoInput {\n  addressLine1: String!\n  addressLine2: String\n  city: String!\n  emergencyContactName: String\n  emergencyContactPhone: String\n  phoneNumber: String!\n  postalCode: String!\n}"
     },
     "UpdateOrderChargeInput": {
       "kind": "input",
@@ -8065,6 +11281,260 @@
         }
       ],
       "sdl": "input UpdateOrderChargeInput {\n  amount: String!\n  chargeId: ID!\n  description: String!\n  orderId: ID!\n  version: Int!\n}"
+    },
+    "UpdatePayCodeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "countsTowardGuarantee",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultAmountMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "glAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus!",
+          "defaultValue": null
+        },
+        {
+          "name": "taxable",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdatePayCodeInput {\n  code: String!\n  countsTowardGuarantee: Boolean!\n  defaultAmountMinor: Int\n  description: String\n  glAccountId: ID\n  id: ID!\n  name: String!\n  status: EntityStatus!\n  taxable: Boolean!\n  version: Int!\n}"
+    },
+    "UpdatePayProfileInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "classification",
+          "type": "PayeeClassification!",
+          "defaultValue": null
+        },
+        {
+          "name": "components",
+          "type": "[PayProfileComponentInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "guaranteedPeriodMinimumMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "perDiemDailyCapMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "perDiemRatePerMile",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "EntityStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdatePayProfileInput {\n  classification: PayeeClassification!\n  components: [PayProfileComponentInput!]!\n  currencyCode: String\n  description: String\n  guaranteedPeriodMinimumMinor: Int\n  id: ID!\n  name: String!\n  perDiemDailyCapMinor: Int\n  perDiemRatePerMile: String\n  status: EntityStatus\n  version: Int!\n}"
+    },
+    "UpdateRecurringDeductionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "endDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "escrowAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "frequency",
+          "type": "RecurringDeductionFrequency!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "RecurringDeductionStatus!",
+          "defaultValue": null
+        },
+        {
+          "name": "totalCapMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateRecurringDeductionInput {\n  amountMinor: Int!\n  currencyCode: String\n  description: String!\n  endDate: Int\n  escrowAccountId: ID\n  frequency: RecurringDeductionFrequency!\n  id: ID!\n  payCodeId: ID!\n  startDate: Int!\n  status: RecurringDeductionStatus!\n  totalCapMinor: Int\n  version: Int!\n  workerId: ID!\n}"
+    },
+    "UpdateRecurringEarningInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "currencyCode",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "endDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "frequency",
+          "type": "RecurringEarningFrequency!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "RecurringEarningStatus!",
+          "defaultValue": null
+        },
+        {
+          "name": "totalCapMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateRecurringEarningInput {\n  amountMinor: Int!\n  currencyCode: String\n  description: String!\n  endDate: Int\n  frequency: RecurringEarningFrequency!\n  id: ID!\n  payCodeId: ID!\n  startDate: Int!\n  status: RecurringEarningStatus!\n  totalCapMinor: Int\n  version: Int!\n  workerId: ID!\n}"
     },
     "UpdateReportDefinitionInput": {
       "kind": "input",
@@ -8177,6 +11647,82 @@
         }
       ],
       "sdl": "input UpdateReportScheduleInput {\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  id: ID!\n  notifyUserIds: [ID!]\n  timezone: String\n  version: Int!\n}"
+    },
+    "UpdateSettlementControlInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "allowNegativeNet",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "autoApproveClean",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "autoAttachAccruals",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "autoGenerateBatches",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "autoPostOnApprove",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultEscrowInterestRate",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "escrowInterestFrequencyMonths",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "payDelayDays",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "payPeriodFrequency",
+          "type": "PayPeriodFrequency!",
+          "defaultValue": null
+        },
+        {
+          "name": "payTrigger",
+          "type": "SettlementPayTrigger!",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEndDayOfWeek",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "varianceLookbackWeeks",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "varianceThresholdPct",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateSettlementControlInput {\n  allowNegativeNet: Boolean!\n  autoApproveClean: Boolean!\n  autoAttachAccruals: Boolean!\n  autoGenerateBatches: Boolean!\n  autoPostOnApprove: Boolean!\n  defaultEscrowInterestRate: String!\n  escrowInterestFrequencyMonths: Int!\n  payDelayDays: Int!\n  payPeriodFrequency: PayPeriodFrequency!\n  payTrigger: SettlementPayTrigger!\n  periodEndDayOfWeek: Int!\n  varianceLookbackWeeks: Int!\n  varianceThresholdPct: String!\n  version: Int!\n}"
     },
     "WorkerPatchInput": {
       "kind": "input",
@@ -8298,6 +11844,22 @@
       ],
       "sdl": "input WorkerPTOEntriesInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  includeWorker: Boolean = false\n  query: String\n  sort: [SortFieldInput!]\n  startDateFrom: Int\n  startDateTo: Int\n  status: PTOStatus\n  type: PTOType\n  workerId: ID\n}"
     },
+    "WriteOffPayAdvanceInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "advanceId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input WriteOffPayAdvanceInput {\n  advanceId: ID!\n  reason: String!\n}"
+    },
     "CustomerPaymentApplicationInput": {
       "kind": "input",
       "fields": [
@@ -8318,6 +11880,22 @@
         }
       ],
       "sdl": "input CustomerPaymentApplicationInput {\n  appliedAmountMinor: Int!\n  invoiceId: ID!\n  shortPayAmountMinor: Int\n}"
+    },
+    "PayRateOverrideInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "componentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "rate",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PayRateOverrideInput {\n  componentId: ID!\n  rate: String!\n}"
     },
     "BillingQueueExceptionReasonCode": {
       "kind": "enum",
@@ -8349,6 +11927,16 @@
       ],
       "sdl": "enum BillingQueueStatus {\n  Approved\n  Canceled\n  Exception\n  InReview\n  OnHold\n  Posted\n  ReadyForReview\n  SentBackToOps\n}"
     },
+    "BulkSettlementActionType": {
+      "kind": "enum",
+      "values": [
+        "Approve",
+        "MarkPaid",
+        "Post",
+        "Submit"
+      ],
+      "sdl": "enum BulkSettlementActionType {\n  Approve\n  MarkPaid\n  Post\n  Submit\n}"
+    },
     "EntityStatus": {
       "kind": "enum",
       "values": [
@@ -8365,6 +11953,89 @@
         "Override"
       ],
       "sdl": "enum CostRateSource {\n  Benchmark\n  GLActual\n  Override\n}"
+    },
+    "PayProfileComponentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "bands",
+          "type": "[PayMileageBandInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "freeTimeMinutes",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "isActive",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "kind",
+          "type": "PayComponentKind!",
+          "defaultValue": null
+        },
+        {
+          "name": "maxAmountMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "method",
+          "type": "PayCalcMethod!",
+          "defaultValue": null
+        },
+        {
+          "name": "minAmountMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "rate",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "revenueBasis",
+          "type": "PayRevenueBasis",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PayProfileComponentInput {\n  bands: [PayMileageBandInput!]\n  description: String\n  freeTimeMinutes: Int\n  isActive: Boolean\n  kind: PayComponentKind!\n  maxAmountMinor: Int\n  method: PayCalcMethod!\n  minAmountMinor: Int\n  rate: String!\n  revenueBasis: PayRevenueBasis\n}"
+    },
+    "RecurringDeductionFrequency": {
+      "kind": "enum",
+      "values": [
+        "EverySettlement",
+        "Monthly"
+      ],
+      "sdl": "enum RecurringDeductionFrequency {\n  EverySettlement\n  Monthly\n}"
+    },
+    "RecurringEarningFrequency": {
+      "kind": "enum",
+      "values": [
+        "EverySettlement",
+        "Monthly"
+      ],
+      "sdl": "enum RecurringEarningFrequency {\n  EverySettlement\n  Monthly\n}"
+    },
+    "SettlementDisputeCategory": {
+      "kind": "enum",
+      "values": [
+        "IncorrectDeduction",
+        "IncorrectRate",
+        "MissingPay",
+        "MissingReimbursement",
+        "Other"
+      ],
+      "sdl": "enum SettlementDisputeCategory {\n  IncorrectDeduction\n  IncorrectRate\n  MissingPay\n  MissingReimbursement\n  Other\n}"
     },
     "FieldFilterInput": {
       "kind": "input",
@@ -8517,6 +12188,17 @@
       ],
       "sdl": "input FuelSurchargeTableRowInput {\n  priceMax: String\n  priceMin: String\n  sortOrder: Int\n  value: String!\n}"
     },
+    "PayAdvanceSource": {
+      "kind": "enum",
+      "values": [
+        "Cash",
+        "ComdataCode",
+        "EFSMoneyCode",
+        "FuelCard",
+        "Other"
+      ],
+      "sdl": "enum PayAdvanceSource {\n  Cash\n  ComdataCode\n  EFSMoneyCode\n  FuelCard\n  Other\n}"
+    },
     "NotificationState": {
       "kind": "enum",
       "values": [
@@ -8536,6 +12218,14 @@
         "Wire"
       ],
       "sdl": "enum CustomerPaymentMethod {\n  ACH\n  Card\n  Cash\n  Check\n  Other\n  Wire\n}"
+    },
+    "PortalStopAction": {
+      "kind": "enum",
+      "values": [
+        "Arrive",
+        "Depart"
+      ],
+      "sdl": "enum PortalStopAction {\n  Arrive\n  Depart\n}"
     },
     "ReportColumnInput": {
       "kind": "input",
@@ -8686,6 +12376,40 @@
         }
       ],
       "sdl": "input ReportSortInput {\n  columnId: String!\n  direction: String!\n}"
+    },
+    "PortalPtoType": {
+      "kind": "enum",
+      "values": [
+        "Bereavement",
+        "Holiday",
+        "Maternity",
+        "Paternity",
+        "Personal",
+        "Sick",
+        "Vacation"
+      ],
+      "sdl": "enum PortalPtoType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
+    },
+    "DisputeAdjustmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "payCodeId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DisputeAdjustmentInput {\n  amountMinor: Int!\n  description: String!\n  payCodeId: ID\n}"
     },
     "SelectOptionResource": {
       "kind": "enum",
@@ -9130,6 +12854,43 @@
       ],
       "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
     },
+    "RecurringDeductionStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Completed",
+        "Paused"
+      ],
+      "sdl": "enum RecurringDeductionStatus {\n  Active\n  Completed\n  Paused\n}"
+    },
+    "RecurringEarningStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Completed",
+        "Paused"
+      ],
+      "sdl": "enum RecurringEarningStatus {\n  Active\n  Completed\n  Paused\n}"
+    },
+    "PayPeriodFrequency": {
+      "kind": "enum",
+      "values": [
+        "Biweekly",
+        "Monthly",
+        "Weekly"
+      ],
+      "sdl": "enum PayPeriodFrequency {\n  Biweekly\n  Monthly\n  Weekly\n}"
+    },
+    "SettlementPayTrigger": {
+      "kind": "enum",
+      "values": [
+        "MoveCompleted",
+        "PODReceived",
+        "ShipmentDelivered",
+        "ShipmentInvoiced"
+      ],
+      "sdl": "enum SettlementPayTrigger {\n  \"\"\"\n  Pay accrues the moment a driver completes their move — even before the full shipment delivers.\n  \"\"\"\n  MoveCompleted\n  PODReceived\n  ShipmentDelivered\n  ShipmentInvoiced\n}"
+    },
     "DriverType": {
       "kind": "enum",
       "values": [
@@ -9147,6 +12908,67 @@
         "Employee"
       ],
       "sdl": "enum WorkerType {\n  Contractor\n  Employee\n}"
+    },
+    "PayMileageBandInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "maxMiles",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "minMiles",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "rate",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PayMileageBandInput {\n  maxMiles: Int!\n  minMiles: Int!\n  rate: String!\n}"
+    },
+    "PayComponentKind": {
+      "kind": "enum",
+      "values": [
+        "Bonus",
+        "Breakdown",
+        "Custom",
+        "Detention",
+        "FuelSurcharge",
+        "Hazmat",
+        "Layover",
+        "Linehaul",
+        "StopPay",
+        "Tarp"
+      ],
+      "sdl": "enum PayComponentKind {\n  Bonus\n  Breakdown\n  Custom\n  Detention\n  FuelSurcharge\n  Hazmat\n  Layover\n  Linehaul\n  StopPay\n  Tarp\n}"
+    },
+    "PayCalcMethod": {
+      "kind": "enum",
+      "values": [
+        "FlatPerShipment",
+        "PerDay",
+        "PerEmptyMile",
+        "PerEvent",
+        "PerHour",
+        "PerLoadedMile",
+        "PerStop",
+        "PerTotalMile",
+        "PercentOfRevenue"
+      ],
+      "sdl": "enum PayCalcMethod {\n  FlatPerShipment\n  PerDay\n  PerEmptyMile\n  PerEvent\n  PerHour\n  PerLoadedMile\n  PerStop\n  PerTotalMile\n  PercentOfRevenue\n}"
+    },
+    "PayRevenueBasis": {
+      "kind": "enum",
+      "values": [
+        "Linehaul",
+        "LinehaulPlusFuelSurcharge",
+        "TotalRevenue"
+      ],
+      "sdl": "enum PayRevenueBasis {\n  Linehaul\n  LinehaulPlusFuelSurcharge\n  TotalRevenue\n}"
     },
     "Any": {
       "kind": "scalar",

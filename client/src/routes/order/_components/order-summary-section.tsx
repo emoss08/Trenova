@@ -28,7 +28,7 @@ const CANCELABLE_STATUSES = new Set(["Draft", "Confirmed", "InProgress", "Comple
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col rounded-lg border px-3 py-2">
-      <span className="text-2xs uppercase text-muted-foreground">{label}</span>
+      <span className="text-2xs text-muted-foreground uppercase">{label}</span>
       <span className="text-sm font-medium tabular-nums">{value}</span>
     </div>
   );
@@ -125,7 +125,7 @@ export function OrderSummarySection() {
     >
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="flex flex-col rounded-lg border px-3 py-2">
-          <span className="text-2xs uppercase text-muted-foreground">Status</span>
+          <span className="text-2xs text-muted-foreground uppercase">Status</span>
           <span className="pt-0.5">
             <OrderStatusBadge status={order.status} />
           </span>

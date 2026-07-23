@@ -562,12 +562,24 @@ export function ServiceTypeAutocompleteField<T extends FieldValues>({
 }
 
 export function WorkerAutocompleteField<T extends FieldValues>({
+  ownerOperatorsOnly,
   ...props
-}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
+  /**
+   * Narrows the picker to owner-operators: Contractor-type workers, plus any
+   * driver whose effective pay profile carries the OwnerOperator
+   * classification.
+   */
+  ownerOperatorsOnly?: boolean;
+}) {
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       link="/workers/select-options/"
-      graphql={workerSelectOptionsGraphQL}
+      graphql={
+        ownerOperatorsOnly
+          ? { ...workerSelectOptionsGraphQL, filters: { ownerOperatorsOnly: true } }
+          : workerSelectOptionsGraphQL
+      }
       popoutLink="/workers"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}
@@ -1039,7 +1051,9 @@ export function ControlledShipmentAutocompleteField({
       renderOption={(option) => (
         <EDIOptionStack
           primary={option.label}
-          secondary={selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")}
+          secondary={
+            selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")
+          }
         />
       )}
       {...props}

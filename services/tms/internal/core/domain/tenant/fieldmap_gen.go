@@ -81,6 +81,13 @@ func (e *SequenceConfig) GetStaticFieldMap() map[string]string {
 	return buncolgen.SequenceConfigFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettlementControl].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.SettlementControlFieldMap] instead of parsing struct tags via reflection.
+func (e *SettlementControl) GetStaticFieldMap() map[string]string {
+	return buncolgen.SettlementControlFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShipmentControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ShipmentControlFieldMap] instead of parsing struct tags via reflection.

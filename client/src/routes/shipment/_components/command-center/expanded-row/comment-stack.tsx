@@ -93,7 +93,7 @@ function EmptyState({ onAddComment }: { onAddComment: () => void }) {
       </p>
       <button
         type="button"
-        className="flex flex-row h-3 px-0 py-0 text-xs text-brand hover:underline cursor-pointer"
+        className="flex h-3 cursor-pointer flex-row px-0 py-0 text-xs text-brand hover:underline"
         onClick={onAddComment}
       >
         <PlusIcon className="size-3" />

@@ -31,6 +31,51 @@ type UpdateMoveStatusRequest struct {
 	Status     shipment.MoveStatus   `json:"status"`
 }
 
+type StopActualAction string
+
+const (
+	StopActualActionArrive = StopActualAction("Arrive")
+	StopActualActionDepart = StopActualAction("Depart")
+)
+
+func (a StopActualAction) IsValid() bool {
+	return a == StopActualActionArrive || a == StopActualActionDepart
+}
+
+type RecordStopActualRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	MoveID     pulid.ID              `json:"moveId"`
+	StopID     pulid.ID              `json:"stopId"`
+	Action     StopActualAction      `json:"action"`
+}
+
+func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
+		return multiErr
+	}
+	if r.TenantInfo.OrgID.IsNil() {
+		multiErr.Add("tenantInfo.orgId", errortypes.ErrRequired, "Organization ID is required")
+	}
+	if r.TenantInfo.BuID.IsNil() {
+		multiErr.Add("tenantInfo.buId", errortypes.ErrRequired, "Business unit ID is required")
+	}
+	if r.MoveID.IsNil() {
+		multiErr.Add("moveId", errortypes.ErrRequired, "Move ID is required")
+	}
+	if r.StopID.IsNil() {
+		multiErr.Add("stopId", errortypes.ErrRequired, "Stop ID is required")
+	}
+	if !r.Action.IsValid() {
+		multiErr.Add("action", errortypes.ErrInvalid, "Action must be Arrive or Depart")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
 func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
@@ -219,6 +264,11 @@ type ShipmentMoveRepository interface {
 		ctx context.Context,
 		req *UpdateMoveStatusRequest,
 	) (*shipment.ShipmentMove, error)
+	UpdateStopActuals(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		stop *shipment.Stop,
+	) (*shipment.Stop, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *BulkUpdateMoveStatusRequest,

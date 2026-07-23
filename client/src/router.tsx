@@ -246,6 +246,127 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/payroll/workspace",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { SettlementWorkspacePage } =
+                await import("@/routes/settlement-workspace/page");
+              return { Component: SettlementWorkspacePage };
+            },
+          },
+          {
+            path: "/payroll/settlements",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { DriverSettlementsPage } = await import("@/routes/driver-settlement/page");
+              return { Component: DriverSettlementsPage };
+            },
+          },
+          {
+            path: "/payroll/disputes",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.SettlementDispute),
+            ),
+            async lazy() {
+              const { SettlementDisputesPage } = await import("@/routes/settlement-dispute/page");
+              return { Component: SettlementDisputesPage };
+            },
+          },
+          {
+            path: "/payroll/expenses",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DriverExpense)),
+            async lazy() {
+              const { DriverExpensesPage } = await import("@/routes/driver-expense/page");
+              return { Component: DriverExpensesPage };
+            },
+          },
+          {
+            path: "/payroll/settlement-batches",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { SettlementBatchesPage } = await import("@/routes/settlement-batch/page");
+              return { Component: SettlementBatchesPage };
+            },
+          },
+          {
+            path: "/payroll/pay-events",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverSettlement),
+            ),
+            async lazy() {
+              const { DriverPayEventsPage } = await import("@/routes/driver-pay-event/page");
+              return { Component: DriverPayEventsPage };
+            },
+          },
+          {
+            path: "/payroll/pay-profiles",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DriverPayProfile),
+            ),
+            async lazy() {
+              const { PayProfilesPage } = await import("@/routes/pay-profile/page");
+              return { Component: PayProfilesPage };
+            },
+          },
+          {
+            path: "/payroll/deductions",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.RecurringDeduction),
+            ),
+            async lazy() {
+              const { RecurringDeductionsPage } = await import("@/routes/recurring-deduction/page");
+              return { Component: RecurringDeductionsPage };
+            },
+          },
+          {
+            path: "/payroll/earnings",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.RecurringEarning),
+            ),
+            async lazy() {
+              const { RecurringEarningsPage } = await import("@/routes/recurring-earning/page");
+              return { Component: RecurringEarningsPage };
+            },
+          },
+          {
+            path: "/payroll/pay-codes",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayCode)),
+            async lazy() {
+              const { PayCodesPage } = await import("@/routes/pay-code/page");
+              return { Component: PayCodesPage };
+            },
+          },
+          {
+            path: "/payroll/advances",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayAdvance)),
+            async lazy() {
+              const { PayAdvancesPage } = await import("@/routes/pay-advance/page");
+              return { Component: PayAdvancesPage };
+            },
+          },
+          {
+            path: "/payroll/escrow-accounts",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EscrowAccount)),
+            async lazy() {
+              const { EscrowAccountsPage } = await import("@/routes/escrow-account/page");
+              return { Component: EscrowAccountsPage };
+            },
+          },
+          {
             path: "/billing/invoices",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {
@@ -743,6 +864,23 @@ const routes: RouteObject[] = [
                 async lazy() {
                   const { DispatchControlPage } = await import("@/routes/dispatch-control/page");
                   return { Component: DispatchControlPage };
+                },
+              },
+              {
+                path: "settlement-control",
+                loader: createPermissionLoader(Resource.SettlementControl, Operation.Read),
+                async lazy() {
+                  const { SettlementControlPage } =
+                    await import("@/routes/settlement-control/page");
+                  return { Component: SettlementControlPage };
+                },
+              },
+              {
+                path: "dash-control",
+                loader: createPermissionLoader(Resource.DashControl, Operation.Read),
+                async lazy() {
+                  const { DashControlPage } = await import("@/routes/dash-control/page");
+                  return { Component: DashControlPage };
                 },
               },
               {

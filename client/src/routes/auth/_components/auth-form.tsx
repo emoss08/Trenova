@@ -1,8 +1,11 @@
 import { Metadata } from "@/components/metadata";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
 import { PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import type { TenantLoginMetadata, UserOrganization } from "@/types/organization";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { ArrowRightIcon, BuildingIcon, TruckIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -11,6 +14,55 @@ import { OrganizationSelection } from "./organization-selection";
 
 type AuthFormType = "LOGIN" | "FORGOT_PASSWORD";
 type AuthStep = "LOGIN" | "ORGANIZATION";
+type AuthAudience = "office" | "driver";
+
+const audienceOptions = [
+  { value: "office", label: "Office", icon: BuildingIcon },
+  { value: "driver", label: "Driver", icon: TruckIcon },
+] as const;
+
+function AudienceToggle({
+  audience,
+  onChange,
+}: {
+  audience: AuthAudience;
+  onChange: (audience: AuthAudience) => void;
+}) {
+  return (
+    <Tabs
+      value={audience}
+      onValueChange={(value) => onChange(value as AuthAudience)}
+      className="border-b border-border"
+    >
+      <TabsList variant="underline" className="w-full justify-start py-0">
+        {audienceOptions.map((option) => (
+          <TabsTab key={option.value} value={option.value}>
+            <option.icon className="size-4" />
+            {option.label}
+          </TabsTab>
+        ))}
+      </TabsList>
+    </Tabs>
+  );
+}
+
+function DriverGateway() {
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Drivers sign in to <span className="font-medium text-foreground">Dash</span> — your loads,
+        settlement statements, and pay, built for your phone.
+      </p>
+      <Button className="h-11 w-full" render={<a href="/dash/login" />}>
+        Continue to Dash
+        <ArrowRightIcon className="size-4" />
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        First time here? Use the invitation link your carrier sent you to set up your account.
+      </p>
+    </div>
+  );
+}
 
 function renderForm({
   authStep,
@@ -62,21 +114,28 @@ export function AuthForm({
 }) {
   const [formType] = useState<AuthFormType>("LOGIN");
   const [authStep, setAuthStep] = useState<AuthStep>("LOGIN");
+  const [audience, setAudience] = useState<AuthAudience>("office");
   const [selectableOrganizations, setSelectableOrganizations] = useState<UserOrganization[]>([]);
   const tenantMetadata = tenantQuery?.data;
   const isOrganizationStep = authStep === "ORGANIZATION";
+  const showAudienceToggle = !tenantMetadata && !isOrganizationStep && formType === "LOGIN";
+  const isDriverAudience = showAudienceToggle && audience === "driver";
   const title = isOrganizationStep
     ? "Select organization"
     : formType === "FORGOT_PASSWORD"
       ? "Reset Password"
-      : tenantMetadata
-        ? tenantMetadata.organizationName
-        : "Welcome back!";
+      : isDriverAudience
+        ? "Driver sign-in"
+        : tenantMetadata
+          ? tenantMetadata.organizationName
+          : "Welcome back!";
   const subtitle = isOrganizationStep
     ? "Choose the workspace for this session."
-    : tenantMetadata
-      ? `Sign in to ${tenantMetadata.organizationName}`
-      : "Don't have an account yet?";
+    : isDriverAudience
+      ? "Dash is where drivers see their loads and pay."
+      : tenantMetadata
+        ? `Sign in to ${tenantMetadata.organizationName}`
+        : "Don't have an account yet?";
 
   const handleOrganizationSelectionRequired = (organizations: UserOrganization[]) => {
     setSelectableOrganizations(organizations);
@@ -90,7 +149,7 @@ export function AuthForm({
         <Card className="rounded-2xl border-border bg-background backdrop-blur-md">
           <CardHeader className="text-left">
             <m.div
-              key={`${authStep}-${formType}`}
+              key={`${authStep}-${formType}-${audience}`}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
@@ -99,7 +158,7 @@ export function AuthForm({
               <CardTitle>{title}</CardTitle>
               <CardDescription className="mt-1 flex space-x-1 text-sm">
                 <span className="text-muted-foreground">{subtitle}</span>
-                {!tenantMetadata && !isOrganizationStep && (
+                {!tenantMetadata && !isOrganizationStep && !isDriverAudience && (
                   <Link className="text-primary underline" to="#">
                     Create an Account
                   </Link>
@@ -107,7 +166,10 @@ export function AuthForm({
               </CardDescription>
             </m.div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
+            {showAudienceToggle ? (
+              <AudienceToggle audience={audience} onChange={setAudience} />
+            ) : null}
             {tenantQuery?.isLoading ? (
               <div className="text-sm text-muted-foreground">Loading organization sign-in...</div>
             ) : tenantQuery?.isError ? (
@@ -117,20 +179,24 @@ export function AuthForm({
             ) : (
               <AnimatePresence mode="wait">
                 <m.div
-                  key={`${authStep}-${formType}`}
+                  key={`${authStep}-${formType}-${audience}`}
                   initial={{ opacity: 0, y: 8, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.22, ease: "easeOut" }}
                 >
-                  {renderForm({
-                    authStep,
-                    formType,
-                    organizationSlug,
-                    tenantMetadata,
-                    selectableOrganizations,
-                    onOrganizationSelectionRequired: handleOrganizationSelectionRequired,
-                  })}
+                  {isDriverAudience ? (
+                    <DriverGateway />
+                  ) : (
+                    renderForm({
+                      authStep,
+                      formType,
+                      organizationSlug,
+                      tenantMetadata,
+                      selectableOrganizations,
+                      onOrganizationSelectionRequired: handleOrganizationSelectionRequired,
+                    })
+                  )}
                 </m.div>
               </AnimatePresence>
             )}

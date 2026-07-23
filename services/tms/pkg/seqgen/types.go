@@ -104,4 +104,9 @@ type Generator interface {
 		orgID, buID pulid.ID,
 		locationCode, businessUnitCode string,
 	) (string, error)
+	GenerateDriverSettlementNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
 }

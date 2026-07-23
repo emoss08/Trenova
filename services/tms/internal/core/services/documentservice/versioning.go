@@ -380,7 +380,7 @@ func (s *Service) AttachLineageToResource(
 	}
 
 	var shipmentID pulid.ID
-	if resourceType == "shipment" { //nolint:goconst // local literal
+	if resourceType == "shipment" {
 		shipmentID, err = pulid.MustParse(resourceID)
 		if err != nil {
 			return nil, errortypes.NewValidationError(

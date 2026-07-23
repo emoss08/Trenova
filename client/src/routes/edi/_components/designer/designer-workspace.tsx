@@ -30,12 +30,12 @@ export function DesignerWorkspace() {
           Document Preview & Archive
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="templates" className="m-0 min-h-0 overflow-hidden pt-3 px-3">
+      <TabsContent value="templates" className="m-0 min-h-0 overflow-hidden px-3 pt-3">
         <Suspense fallback={<DesignerLoadingBlock />}>
           <TemplateDesignerTab />
         </Suspense>
       </TabsContent>
-      <TabsContent value="documents" className="m-0 min-h-0 overflow-hidden pt-3 px-3">
+      <TabsContent value="documents" className="m-0 min-h-0 overflow-hidden px-3 pt-3">
         <Suspense fallback={<DesignerLoadingBlock />}>
           <DocumentPreviewArchiveTab />
         </Suspense>

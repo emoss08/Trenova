@@ -24,6 +24,220 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// PortalInvitation — table "worker_portal_invitations", alias "wpi"
+// ---------------------------------------------------------------------------
+
+// PortalInvitationTable holds the table name, alias, and primary key columns
+// for the "worker_portal_invitations" table. The alias "wpi" is used in all generated
+// SQL fragments (e.g. "wpi.id = ?").
+var PortalInvitationTable = TableInfo{
+	Name:       "worker_portal_invitations",
+	Alias:      "wpi",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// PortalInvitationColumns provides type-safe column references for the "worker_portal_invitations" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PortalInvitationColumns.ID.String())
+//	// SELECT wpi.id FROM worker_portal_invitations AS wpi
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PortalInvitationColumns.ID.Eq(), id)           // WHERE wpi.id = ?
+//	q.Order(PortalInvitationColumns.CreatedAt.OrderDesc())  // ORDER BY wpi.created_at DESC
+var PortalInvitationColumns = struct {
+	ID             Column // "id" → qualified: "wpi.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "wpi.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "wpi.organization_id"
+	WorkerID       Column // "worker_id" → qualified: "wpi.worker_id"
+	Email          Column // "email" → qualified: "wpi.email"
+	TokenHash      Column // "token_hash" → qualified: "wpi.token_hash"
+	Status         Column // "status" → qualified: "wpi.status"
+	ExpiresAt      Column // "expires_at" → qualified: "wpi.expires_at"
+	InvitedByID    Column // "invited_by_id" → qualified: "wpi.invited_by_id"
+	AcceptedAt     Column // "accepted_at" → qualified: "wpi.accepted_at"
+	AcceptedUserID Column // "accepted_user_id" → qualified: "wpi.accepted_user_id"
+	Version        Column // "version" → qualified: "wpi.version"
+	CreatedAt      Column // "created_at" → qualified: "wpi.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "wpi.updated_at"
+}{
+	ID:             NewColumn("id", "wpi"),
+	BusinessUnitID: NewColumn("business_unit_id", "wpi"),
+	OrganizationID: NewColumn("organization_id", "wpi"),
+	WorkerID:       NewColumn("worker_id", "wpi"),
+	Email:          NewColumn("email", "wpi"),
+	TokenHash:      NewColumn("token_hash", "wpi"),
+	Status:         NewColumn("status", "wpi"),
+	ExpiresAt:      NewColumn("expires_at", "wpi"),
+	InvitedByID:    NewColumn("invited_by_id", "wpi"),
+	AcceptedAt:     NewColumn("accepted_at", "wpi"),
+	AcceptedUserID: NewColumn("accepted_user_id", "wpi"),
+	Version:        NewColumn("version", "wpi"),
+	CreatedAt:      NewColumn("created_at", "wpi"),
+	UpdatedAt:      NewColumn("updated_at", "wpi"),
+}
+
+// PortalInvitationFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by PortalInvitation.GetStaticFieldMap().
+var PortalInvitationFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"workerId":       "worker_id",
+	"email":          "email",
+	"status":         "status",
+	"expiresAt":      "expires_at",
+	"invitedById":    "invited_by_id",
+	"acceptedAt":     "accepted_at",
+	"acceptedUserId": "accepted_user_id",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// PortalInvitationInsertableColumns lists column names suitable for INSERT statements on the "worker_portal_invitations" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PortalInvitationInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"worker_id",
+	"email",
+	"token_hash",
+	"status",
+	"expires_at",
+	"invited_by_id",
+	"accepted_at",
+	"accepted_user_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// PortalInvitationRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(PortalInvitationRelations.Worker)
+//	// Bun eager-loads the Worker association via a separate query
+var PortalInvitationRelations = struct {
+	Worker    string
+	InvitedBy string
+}{
+	Worker:    "Worker",
+	InvitedBy: "InvitedBy",
+}
+
+// PortalInvitationScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE wpi.organization_id = ? AND wpi.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.PortalInvitationScopeTenant(sq, ti).
+//		Where(buncolgen.PortalInvitationColumns.ID.Eq(), id)
+func PortalInvitationScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, PortalInvitationColumns.OrganizationID, PortalInvitationColumns.BusinessUnitID, ti)
+}
+
+// PortalInvitationScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.PortalInvitationScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.PortalInvitationColumns.ID.In(), bun.List(ids))
+//	})
+func PortalInvitationScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, PortalInvitationColumns.OrganizationID, PortalInvitationColumns.BusinessUnitID, ti)
+}
+
+// PortalInvitationScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.PortalInvitationScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.PortalInvitationColumns.ID.Eq(), id)
+//	})
+func PortalInvitationScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, PortalInvitationColumns.OrganizationID, PortalInvitationColumns.BusinessUnitID, ti)
+}
+
+// PortalInvitationApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.PortalInvitationApplyTenant(tenantInfo))
+func PortalInvitationApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(PortalInvitationColumns.OrganizationID, PortalInvitationColumns.BusinessUnitID, ti)
+}
+
+// PortalInvitationFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "worker_portal_invitations" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PortalInvitationFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PortalInvitationFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	WorkerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
+	Email          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "email" → DB: "email"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ExpiresAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	InvitedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invitedById" → DB: "invited_by_id"
+	AcceptedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acceptedAt" → DB: "accepted_at"
+	AcceptedUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acceptedUserId" → DB: "accepted_user_id"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	WorkerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workerId", op, value)
+	},
+	Email: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("email", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	InvitedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invitedById", op, value)
+	},
+	AcceptedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("acceptedAt", op, value)
+	},
+	AcceptedUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("acceptedUserId", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Worker — table "workers", alias "wrk"
 // ---------------------------------------------------------------------------
 
@@ -55,6 +269,7 @@ var WorkerColumns = struct {
 	StateID               Column // "state_id" → qualified: "wrk.state_id"
 	FleetCodeID           Column // "fleet_code_id" → qualified: "wrk.fleet_code_id"
 	ManagerID             Column // "manager_id" → qualified: "wrk.manager_id"
+	UserID                Column // "user_id" → qualified: "wrk.user_id"
 	Status                Column // "status" → qualified: "wrk.status"
 	Type                  Column // "type" → qualified: "wrk.type"
 	DriverType            Column // "driver_type" → qualified: "wrk.driver_type"
@@ -87,6 +302,7 @@ var WorkerColumns = struct {
 	StateID:               NewColumn("state_id", "wrk"),
 	FleetCodeID:           NewColumn("fleet_code_id", "wrk"),
 	ManagerID:             NewColumn("manager_id", "wrk"),
+	UserID:                NewColumn("user_id", "wrk"),
 	Status:                NewColumn("status", "wrk"),
 	Type:                  NewColumn("type", "wrk"),
 	DriverType:            NewColumn("driver_type", "wrk"),
@@ -125,6 +341,7 @@ var WorkerFieldMap = map[string]string{
 	"stateId":               "state_id",
 	"fleetCodeId":           "fleet_code_id",
 	"managerId":             "manager_id",
+	"userId":                "user_id",
 	"status":                "status",
 	"type":                  "type",
 	"driverType":            "driver_type",
@@ -159,6 +376,7 @@ var WorkerInsertableColumns = []string{
 	"state_id",
 	"fleet_code_id",
 	"manager_id",
+	"user_id",
 	"status",
 	"type",
 	"driver_type",
@@ -194,6 +412,7 @@ var WorkerRelations = struct {
 	State        string
 	FleetCode    string
 	Manager      string
+	PortalUser   string
 	Profile      string
 	PTO          string
 }{
@@ -202,6 +421,7 @@ var WorkerRelations = struct {
 	State:        "State",
 	FleetCode:    "FleetCode",
 	Manager:      "Manager",
+	PortalUser:   "PortalUser",
 	Profile:      "Profile",
 	PTO:          "PTO",
 }
@@ -262,6 +482,7 @@ var WorkerFilter = struct {
 	StateID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
 	FleetCodeID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fleetCodeId" → DB: "fleet_code_id"
 	ManagerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "managerId" → DB: "manager_id"
+	UserID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
 	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	Type                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
 	DriverType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverType" → DB: "driver_type"
@@ -302,6 +523,9 @@ var WorkerFilter = struct {
 	},
 	ManagerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("managerId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)

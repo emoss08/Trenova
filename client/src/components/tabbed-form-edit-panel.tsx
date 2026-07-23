@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { OverflowTabsList } from "@/components/ui/overflow-tabs-list";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
@@ -294,15 +295,16 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               onValueChange={(value) => setActiveTab(value as string)}
               className="flex flex-1 flex-col overflow-hidden"
             >
-              <div className="no-scrollbar overflow-x-auto border-b border-border px-4 pt-2">
-                <TabsList variant="underline">
-                  {formTabs.map((tab) => (
-                    <TabsTab key={tab.value} value={tab.value} className="hover:text-foreground">
-                      {tab.icon && <tab.icon className="mr-1 size-4" />}
-                      {tab.label}
-                    </TabsTab>
-                  ))}
-                </TabsList>
+              <div className="border-b border-border px-4 pt-2">
+                <OverflowTabsList
+                  items={formTabs.map((tab) => ({
+                    value: tab.value,
+                    label: tab.label,
+                    icon: tab.icon,
+                  }))}
+                  activeValue={activeTab}
+                  onSelect={(value) => void setActiveTab(value)}
+                />
               </div>
 
               <ScrollArea className="flex-1">
@@ -331,16 +333,19 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               onValueChange={(value) => setActiveTab(value as string)}
               className="flex flex-1 flex-col overflow-hidden"
             >
-              <div className="no-scrollbar overflow-x-auto border-b border-border px-4 pt-2">
-                <TabsList variant="underline">
-                  <TabsTab value="details">Details</TabsTab>
-                  {tabs.map((tab) => (
-                    <TabsTab key={tab.value} value={tab.value} className="hover:text-foreground">
-                      {tab.icon && <tab.icon className="mr-1 size-4" />}
-                      {tab.label}
-                    </TabsTab>
-                  ))}
-                </TabsList>
+              <div className="border-b border-border px-4 pt-2">
+                <OverflowTabsList
+                  items={[
+                    { value: "details", label: "Details" },
+                    ...tabs.map((tab) => ({
+                      value: tab.value,
+                      label: tab.label,
+                      icon: tab.icon,
+                    })),
+                  ]}
+                  activeValue={activeTab}
+                  onSelect={(value) => void setActiveTab(value)}
+                />
               </div>
 
               <ScrollArea className={cn("flex-1", activeTabManagesScroll && "hidden")}>

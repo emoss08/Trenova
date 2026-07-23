@@ -219,7 +219,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
 
   return (
     <Card className="gap-0 p-0">
-      <CardHeader className="border-b pt-3 gap-0">
+      <CardHeader className="gap-0 border-b pt-3">
         <CardTitle className="text-sm font-medium">Week Resolution & Rounding</CardTitle>
         <p className="text-xs text-muted-foreground">
           Pins exactly which week&apos;s price applies and how rates round — the two most common
@@ -326,8 +326,8 @@ function ApplicabilitySection() {
 
   return (
     <Card className="gap-0">
-      <CardHeader className="border-b pb-3 gap-0">
-        <CardTitle className="text-sm font-medium gap-0">Applicability</CardTitle>
+      <CardHeader className="gap-0 border-b pb-3">
+        <CardTitle className="gap-0 text-sm font-medium">Applicability</CardTitle>
         <p className="text-xs text-muted-foreground">
           Leave a filter empty to apply to all — the surcharge only generates when the shipment
           matches every non-empty filter

@@ -49,81 +49,95 @@ var AccountingControlTable = TableInfo{
 //	q.Where(AccountingControlColumns.ID.Eq(), id)           // WHERE ac.id = ?
 //	q.Order(AccountingControlColumns.CreatedAt.OrderDesc())  // ORDER BY ac.created_at DESC
 var AccountingControlColumns = struct {
-	ID                               Column // "id" → qualified: "ac.id"
-	BusinessUnitID                   Column // "business_unit_id" → qualified: "ac.business_unit_id"
-	OrganizationID                   Column // "organization_id" → qualified: "ac.organization_id"
-	AccountingBasis                  Column // "accounting_basis" → qualified: "ac.accounting_basis"
-	RevenueRecognitionPolicy         Column // "revenue_recognition_policy" → qualified: "ac.revenue_recognition_policy"
-	ExpenseRecognitionPolicy         Column // "expense_recognition_policy" → qualified: "ac.expense_recognition_policy"
-	JournalPostingMode               Column // "journal_posting_mode" → qualified: "ac.journal_posting_mode"
-	AutoPostSourceEvents             Column // "auto_post_source_events" → qualified: "ac.auto_post_source_events"
-	ManualJournalEntryPolicy         Column // "manual_journal_entry_policy" → qualified: "ac.manual_journal_entry_policy"
-	RequireManualJEApproval          Column // "require_manual_je_approval" → qualified: "ac.require_manual_je_approval"
-	JournalReversalPolicy            Column // "journal_reversal_policy" → qualified: "ac.journal_reversal_policy"
-	PeriodCloseMode                  Column // "period_close_mode" → qualified: "ac.period_close_mode"
-	RequirePeriodCloseApproval       Column // "require_period_close_approval" → qualified: "ac.require_period_close_approval"
-	LockedPeriodPostingPolicy        Column // "locked_period_posting_policy" → qualified: "ac.locked_period_posting_policy"
-	ClosedPeriodPostingPolicy        Column // "closed_period_posting_policy" → qualified: "ac.closed_period_posting_policy"
-	RequireReconciliationToClose     Column // "require_reconciliation_to_close" → qualified: "ac.require_reconciliation_to_close"
-	ReconciliationMode               Column // "reconciliation_mode" → qualified: "ac.reconciliation_mode"
-	ReconciliationToleranceAmount    Column // "reconciliation_tolerance_amount" → qualified: "ac.reconciliation_tolerance_amount"
-	NotifyOnReconciliationException  Column // "notify_on_reconciliation_exception" → qualified: "ac.notify_on_reconciliation_exception"
-	CurrencyMode                     Column // "currency_mode" → qualified: "ac.currency_mode"
-	FunctionalCurrencyCode           Column // "functional_currency_code" → qualified: "ac.functional_currency_code"
-	ExchangeRateDatePolicy           Column // "exchange_rate_date_policy" → qualified: "ac.exchange_rate_date_policy"
-	ExchangeRateOverridePolicy       Column // "exchange_rate_override_policy" → qualified: "ac.exchange_rate_override_policy"
-	DefaultRevenueAccountID          Column // "default_revenue_account_id" → qualified: "ac.default_revenue_account_id"
-	DefaultCashAccountID             Column // "default_cash_account_id" → qualified: "ac.default_cash_account_id"
-	DefaultUnappliedCashAccountID    Column // "default_unapplied_cash_account_id" → qualified: "ac.default_unapplied_cash_account_id"
-	DefaultExpenseAccountID          Column // "default_expense_account_id" → qualified: "ac.default_expense_account_id"
-	DefaultARAccountID               Column // "default_ar_account_id" → qualified: "ac.default_ar_account_id"
-	DefaultAPAccountID               Column // "default_ap_account_id" → qualified: "ac.default_ap_account_id"
-	DefaultTaxLiabilityAccountID     Column // "default_tax_liability_account_id" → qualified: "ac.default_tax_liability_account_id"
-	DefaultWriteOffAccountID         Column // "default_write_off_account_id" → qualified: "ac.default_write_off_account_id"
-	DefaultRetainedEarningsAccountID Column // "default_retained_earnings_account_id" → qualified: "ac.default_retained_earnings_account_id"
-	RealizedFXGainAccountID          Column // "realized_fx_gain_account_id" → qualified: "ac.realized_fx_gain_account_id"
-	RealizedFXLossAccountID          Column // "realized_fx_loss_account_id" → qualified: "ac.realized_fx_loss_account_id"
-	Version                          Column // "version" → qualified: "ac.version"
-	CreatedAt                        Column // "created_at" → qualified: "ac.created_at"
-	UpdatedAt                        Column // "updated_at" → qualified: "ac.updated_at"
+	ID                                      Column // "id" → qualified: "ac.id"
+	BusinessUnitID                          Column // "business_unit_id" → qualified: "ac.business_unit_id"
+	OrganizationID                          Column // "organization_id" → qualified: "ac.organization_id"
+	AccountingBasis                         Column // "accounting_basis" → qualified: "ac.accounting_basis"
+	RevenueRecognitionPolicy                Column // "revenue_recognition_policy" → qualified: "ac.revenue_recognition_policy"
+	ExpenseRecognitionPolicy                Column // "expense_recognition_policy" → qualified: "ac.expense_recognition_policy"
+	JournalPostingMode                      Column // "journal_posting_mode" → qualified: "ac.journal_posting_mode"
+	AutoPostSourceEvents                    Column // "auto_post_source_events" → qualified: "ac.auto_post_source_events"
+	ManualJournalEntryPolicy                Column // "manual_journal_entry_policy" → qualified: "ac.manual_journal_entry_policy"
+	RequireManualJEApproval                 Column // "require_manual_je_approval" → qualified: "ac.require_manual_je_approval"
+	JournalReversalPolicy                   Column // "journal_reversal_policy" → qualified: "ac.journal_reversal_policy"
+	PeriodCloseMode                         Column // "period_close_mode" → qualified: "ac.period_close_mode"
+	RequirePeriodCloseApproval              Column // "require_period_close_approval" → qualified: "ac.require_period_close_approval"
+	LockedPeriodPostingPolicy               Column // "locked_period_posting_policy" → qualified: "ac.locked_period_posting_policy"
+	ClosedPeriodPostingPolicy               Column // "closed_period_posting_policy" → qualified: "ac.closed_period_posting_policy"
+	RequireReconciliationToClose            Column // "require_reconciliation_to_close" → qualified: "ac.require_reconciliation_to_close"
+	ReconciliationMode                      Column // "reconciliation_mode" → qualified: "ac.reconciliation_mode"
+	ReconciliationToleranceAmount           Column // "reconciliation_tolerance_amount" → qualified: "ac.reconciliation_tolerance_amount"
+	NotifyOnReconciliationException         Column // "notify_on_reconciliation_exception" → qualified: "ac.notify_on_reconciliation_exception"
+	CurrencyMode                            Column // "currency_mode" → qualified: "ac.currency_mode"
+	FunctionalCurrencyCode                  Column // "functional_currency_code" → qualified: "ac.functional_currency_code"
+	ExchangeRateDatePolicy                  Column // "exchange_rate_date_policy" → qualified: "ac.exchange_rate_date_policy"
+	ExchangeRateOverridePolicy              Column // "exchange_rate_override_policy" → qualified: "ac.exchange_rate_override_policy"
+	DefaultRevenueAccountID                 Column // "default_revenue_account_id" → qualified: "ac.default_revenue_account_id"
+	DefaultCashAccountID                    Column // "default_cash_account_id" → qualified: "ac.default_cash_account_id"
+	DefaultUnappliedCashAccountID           Column // "default_unapplied_cash_account_id" → qualified: "ac.default_unapplied_cash_account_id"
+	DefaultExpenseAccountID                 Column // "default_expense_account_id" → qualified: "ac.default_expense_account_id"
+	DefaultARAccountID                      Column // "default_ar_account_id" → qualified: "ac.default_ar_account_id"
+	DefaultAPAccountID                      Column // "default_ap_account_id" → qualified: "ac.default_ap_account_id"
+	DefaultTaxLiabilityAccountID            Column // "default_tax_liability_account_id" → qualified: "ac.default_tax_liability_account_id"
+	DefaultWriteOffAccountID                Column // "default_write_off_account_id" → qualified: "ac.default_write_off_account_id"
+	DefaultRetainedEarningsAccountID        Column // "default_retained_earnings_account_id" → qualified: "ac.default_retained_earnings_account_id"
+	RealizedFXGainAccountID                 Column // "realized_fx_gain_account_id" → qualified: "ac.realized_fx_gain_account_id"
+	RealizedFXLossAccountID                 Column // "realized_fx_loss_account_id" → qualified: "ac.realized_fx_loss_account_id"
+	DefaultDriverPayExpenseAccountID        Column // "default_driver_pay_expense_account_id" → qualified: "ac.default_driver_pay_expense_account_id"
+	DefaultPurchasedTransportationAccountID Column // "default_purchased_transportation_account_id" → qualified: "ac.default_purchased_transportation_account_id"
+	DefaultSettlementsPayableAccountID      Column // "default_settlements_payable_account_id" → qualified: "ac.default_settlements_payable_account_id"
+	DefaultDriverAdvanceAccountID           Column // "default_driver_advance_account_id" → qualified: "ac.default_driver_advance_account_id"
+	DefaultEscrowLiabilityAccountID         Column // "default_escrow_liability_account_id" → qualified: "ac.default_escrow_liability_account_id"
+	DefaultDriverReimbursementAccountID     Column // "default_driver_reimbursement_account_id" → qualified: "ac.default_driver_reimbursement_account_id"
+	DefaultEscrowInterestExpenseAccountID   Column // "default_escrow_interest_expense_account_id" → qualified: "ac.default_escrow_interest_expense_account_id"
+	Version                                 Column // "version" → qualified: "ac.version"
+	CreatedAt                               Column // "created_at" → qualified: "ac.created_at"
+	UpdatedAt                               Column // "updated_at" → qualified: "ac.updated_at"
 }{
-	ID:                               NewColumn("id", "ac"),
-	BusinessUnitID:                   NewColumn("business_unit_id", "ac"),
-	OrganizationID:                   NewColumn("organization_id", "ac"),
-	AccountingBasis:                  NewColumn("accounting_basis", "ac"),
-	RevenueRecognitionPolicy:         NewColumn("revenue_recognition_policy", "ac"),
-	ExpenseRecognitionPolicy:         NewColumn("expense_recognition_policy", "ac"),
-	JournalPostingMode:               NewColumn("journal_posting_mode", "ac"),
-	AutoPostSourceEvents:             NewColumn("auto_post_source_events", "ac"),
-	ManualJournalEntryPolicy:         NewColumn("manual_journal_entry_policy", "ac"),
-	RequireManualJEApproval:          NewColumn("require_manual_je_approval", "ac"),
-	JournalReversalPolicy:            NewColumn("journal_reversal_policy", "ac"),
-	PeriodCloseMode:                  NewColumn("period_close_mode", "ac"),
-	RequirePeriodCloseApproval:       NewColumn("require_period_close_approval", "ac"),
-	LockedPeriodPostingPolicy:        NewColumn("locked_period_posting_policy", "ac"),
-	ClosedPeriodPostingPolicy:        NewColumn("closed_period_posting_policy", "ac"),
-	RequireReconciliationToClose:     NewColumn("require_reconciliation_to_close", "ac"),
-	ReconciliationMode:               NewColumn("reconciliation_mode", "ac"),
-	ReconciliationToleranceAmount:    NewColumn("reconciliation_tolerance_amount", "ac"),
-	NotifyOnReconciliationException:  NewColumn("notify_on_reconciliation_exception", "ac"),
-	CurrencyMode:                     NewColumn("currency_mode", "ac"),
-	FunctionalCurrencyCode:           NewColumn("functional_currency_code", "ac"),
-	ExchangeRateDatePolicy:           NewColumn("exchange_rate_date_policy", "ac"),
-	ExchangeRateOverridePolicy:       NewColumn("exchange_rate_override_policy", "ac"),
-	DefaultRevenueAccountID:          NewColumn("default_revenue_account_id", "ac"),
-	DefaultCashAccountID:             NewColumn("default_cash_account_id", "ac"),
-	DefaultUnappliedCashAccountID:    NewColumn("default_unapplied_cash_account_id", "ac"),
-	DefaultExpenseAccountID:          NewColumn("default_expense_account_id", "ac"),
-	DefaultARAccountID:               NewColumn("default_ar_account_id", "ac"),
-	DefaultAPAccountID:               NewColumn("default_ap_account_id", "ac"),
-	DefaultTaxLiabilityAccountID:     NewColumn("default_tax_liability_account_id", "ac"),
-	DefaultWriteOffAccountID:         NewColumn("default_write_off_account_id", "ac"),
-	DefaultRetainedEarningsAccountID: NewColumn("default_retained_earnings_account_id", "ac"),
-	RealizedFXGainAccountID:          NewColumn("realized_fx_gain_account_id", "ac"),
-	RealizedFXLossAccountID:          NewColumn("realized_fx_loss_account_id", "ac"),
-	Version:                          NewColumn("version", "ac"),
-	CreatedAt:                        NewColumn("created_at", "ac"),
-	UpdatedAt:                        NewColumn("updated_at", "ac"),
+	ID:                                      NewColumn("id", "ac"),
+	BusinessUnitID:                          NewColumn("business_unit_id", "ac"),
+	OrganizationID:                          NewColumn("organization_id", "ac"),
+	AccountingBasis:                         NewColumn("accounting_basis", "ac"),
+	RevenueRecognitionPolicy:                NewColumn("revenue_recognition_policy", "ac"),
+	ExpenseRecognitionPolicy:                NewColumn("expense_recognition_policy", "ac"),
+	JournalPostingMode:                      NewColumn("journal_posting_mode", "ac"),
+	AutoPostSourceEvents:                    NewColumn("auto_post_source_events", "ac"),
+	ManualJournalEntryPolicy:                NewColumn("manual_journal_entry_policy", "ac"),
+	RequireManualJEApproval:                 NewColumn("require_manual_je_approval", "ac"),
+	JournalReversalPolicy:                   NewColumn("journal_reversal_policy", "ac"),
+	PeriodCloseMode:                         NewColumn("period_close_mode", "ac"),
+	RequirePeriodCloseApproval:              NewColumn("require_period_close_approval", "ac"),
+	LockedPeriodPostingPolicy:               NewColumn("locked_period_posting_policy", "ac"),
+	ClosedPeriodPostingPolicy:               NewColumn("closed_period_posting_policy", "ac"),
+	RequireReconciliationToClose:            NewColumn("require_reconciliation_to_close", "ac"),
+	ReconciliationMode:                      NewColumn("reconciliation_mode", "ac"),
+	ReconciliationToleranceAmount:           NewColumn("reconciliation_tolerance_amount", "ac"),
+	NotifyOnReconciliationException:         NewColumn("notify_on_reconciliation_exception", "ac"),
+	CurrencyMode:                            NewColumn("currency_mode", "ac"),
+	FunctionalCurrencyCode:                  NewColumn("functional_currency_code", "ac"),
+	ExchangeRateDatePolicy:                  NewColumn("exchange_rate_date_policy", "ac"),
+	ExchangeRateOverridePolicy:              NewColumn("exchange_rate_override_policy", "ac"),
+	DefaultRevenueAccountID:                 NewColumn("default_revenue_account_id", "ac"),
+	DefaultCashAccountID:                    NewColumn("default_cash_account_id", "ac"),
+	DefaultUnappliedCashAccountID:           NewColumn("default_unapplied_cash_account_id", "ac"),
+	DefaultExpenseAccountID:                 NewColumn("default_expense_account_id", "ac"),
+	DefaultARAccountID:                      NewColumn("default_ar_account_id", "ac"),
+	DefaultAPAccountID:                      NewColumn("default_ap_account_id", "ac"),
+	DefaultTaxLiabilityAccountID:            NewColumn("default_tax_liability_account_id", "ac"),
+	DefaultWriteOffAccountID:                NewColumn("default_write_off_account_id", "ac"),
+	DefaultRetainedEarningsAccountID:        NewColumn("default_retained_earnings_account_id", "ac"),
+	RealizedFXGainAccountID:                 NewColumn("realized_fx_gain_account_id", "ac"),
+	RealizedFXLossAccountID:                 NewColumn("realized_fx_loss_account_id", "ac"),
+	DefaultDriverPayExpenseAccountID:        NewColumn("default_driver_pay_expense_account_id", "ac"),
+	DefaultPurchasedTransportationAccountID: NewColumn("default_purchased_transportation_account_id", "ac"),
+	DefaultSettlementsPayableAccountID:      NewColumn("default_settlements_payable_account_id", "ac"),
+	DefaultDriverAdvanceAccountID:           NewColumn("default_driver_advance_account_id", "ac"),
+	DefaultEscrowLiabilityAccountID:         NewColumn("default_escrow_liability_account_id", "ac"),
+	DefaultDriverReimbursementAccountID:     NewColumn("default_driver_reimbursement_account_id", "ac"),
+	DefaultEscrowInterestExpenseAccountID:   NewColumn("default_escrow_interest_expense_account_id", "ac"),
+	Version:                                 NewColumn("version", "ac"),
+	CreatedAt:                               NewColumn("created_at", "ac"),
+	UpdatedAt:                               NewColumn("updated_at", "ac"),
 }
 
 // AccountingControlFieldMap maps JSON API field names to database column names.
@@ -131,43 +145,50 @@ var AccountingControlColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AccountingControl.GetStaticFieldMap().
 var AccountingControlFieldMap = map[string]string{
-	"id":                               "id",
-	"businessUnitId":                   "business_unit_id",
-	"organizationId":                   "organization_id",
-	"accountingBasis":                  "accounting_basis",
-	"revenueRecognitionPolicy":         "revenue_recognition_policy",
-	"expenseRecognitionPolicy":         "expense_recognition_policy",
-	"journalPostingMode":               "journal_posting_mode",
-	"autoPostSourceEvents":             "auto_post_source_events",
-	"manualJournalEntryPolicy":         "manual_journal_entry_policy",
-	"requireManualJeApproval":          "require_manual_je_approval",
-	"journalReversalPolicy":            "journal_reversal_policy",
-	"periodCloseMode":                  "period_close_mode",
-	"requirePeriodCloseApproval":       "require_period_close_approval",
-	"lockedPeriodPostingPolicy":        "locked_period_posting_policy",
-	"closedPeriodPostingPolicy":        "closed_period_posting_policy",
-	"requireReconciliationToClose":     "require_reconciliation_to_close",
-	"reconciliationMode":               "reconciliation_mode",
-	"reconciliationToleranceAmount":    "reconciliation_tolerance_amount",
-	"notifyOnReconciliationException":  "notify_on_reconciliation_exception",
-	"currencyMode":                     "currency_mode",
-	"functionalCurrencyCode":           "functional_currency_code",
-	"exchangeRateDatePolicy":           "exchange_rate_date_policy",
-	"exchangeRateOverridePolicy":       "exchange_rate_override_policy",
-	"defaultRevenueAccountId":          "default_revenue_account_id",
-	"defaultCashAccountId":             "default_cash_account_id",
-	"defaultUnappliedCashAccountId":    "default_unapplied_cash_account_id",
-	"defaultExpenseAccountId":          "default_expense_account_id",
-	"defaultArAccountId":               "default_ar_account_id",
-	"defaultApAccountId":               "default_ap_account_id",
-	"defaultTaxLiabilityAccountId":     "default_tax_liability_account_id",
-	"defaultWriteOffAccountId":         "default_write_off_account_id",
-	"defaultRetainedEarningsAccountId": "default_retained_earnings_account_id",
-	"realizedFxGainAccountId":          "realized_fx_gain_account_id",
-	"realizedFxLossAccountId":          "realized_fx_loss_account_id",
-	"version":                          "version",
-	"createdAt":                        "created_at",
-	"updatedAt":                        "updated_at",
+	"id":                                      "id",
+	"businessUnitId":                          "business_unit_id",
+	"organizationId":                          "organization_id",
+	"accountingBasis":                         "accounting_basis",
+	"revenueRecognitionPolicy":                "revenue_recognition_policy",
+	"expenseRecognitionPolicy":                "expense_recognition_policy",
+	"journalPostingMode":                      "journal_posting_mode",
+	"autoPostSourceEvents":                    "auto_post_source_events",
+	"manualJournalEntryPolicy":                "manual_journal_entry_policy",
+	"requireManualJeApproval":                 "require_manual_je_approval",
+	"journalReversalPolicy":                   "journal_reversal_policy",
+	"periodCloseMode":                         "period_close_mode",
+	"requirePeriodCloseApproval":              "require_period_close_approval",
+	"lockedPeriodPostingPolicy":               "locked_period_posting_policy",
+	"closedPeriodPostingPolicy":               "closed_period_posting_policy",
+	"requireReconciliationToClose":            "require_reconciliation_to_close",
+	"reconciliationMode":                      "reconciliation_mode",
+	"reconciliationToleranceAmount":           "reconciliation_tolerance_amount",
+	"notifyOnReconciliationException":         "notify_on_reconciliation_exception",
+	"currencyMode":                            "currency_mode",
+	"functionalCurrencyCode":                  "functional_currency_code",
+	"exchangeRateDatePolicy":                  "exchange_rate_date_policy",
+	"exchangeRateOverridePolicy":              "exchange_rate_override_policy",
+	"defaultRevenueAccountId":                 "default_revenue_account_id",
+	"defaultCashAccountId":                    "default_cash_account_id",
+	"defaultUnappliedCashAccountId":           "default_unapplied_cash_account_id",
+	"defaultExpenseAccountId":                 "default_expense_account_id",
+	"defaultArAccountId":                      "default_ar_account_id",
+	"defaultApAccountId":                      "default_ap_account_id",
+	"defaultTaxLiabilityAccountId":            "default_tax_liability_account_id",
+	"defaultWriteOffAccountId":                "default_write_off_account_id",
+	"defaultRetainedEarningsAccountId":        "default_retained_earnings_account_id",
+	"realizedFxGainAccountId":                 "realized_fx_gain_account_id",
+	"realizedFxLossAccountId":                 "realized_fx_loss_account_id",
+	"defaultDriverPayExpenseAccountId":        "default_driver_pay_expense_account_id",
+	"defaultPurchasedTransportationAccountId": "default_purchased_transportation_account_id",
+	"defaultSettlementsPayableAccountId":      "default_settlements_payable_account_id",
+	"defaultDriverAdvanceAccountId":           "default_driver_advance_account_id",
+	"defaultEscrowLiabilityAccountId":         "default_escrow_liability_account_id",
+	"defaultDriverReimbursementAccountId":     "default_driver_reimbursement_account_id",
+	"defaultEscrowInterestExpenseAccountId":   "default_escrow_interest_expense_account_id",
+	"version":                                 "version",
+	"createdAt":                               "created_at",
+	"updatedAt":                               "updated_at",
 }
 
 // AccountingControlInsertableColumns lists column names suitable for INSERT statements on the "accounting_controls" table.
@@ -207,6 +228,13 @@ var AccountingControlInsertableColumns = []string{
 	"default_retained_earnings_account_id",
 	"realized_fx_gain_account_id",
 	"realized_fx_loss_account_id",
+	"default_driver_pay_expense_account_id",
+	"default_purchased_transportation_account_id",
+	"default_settlements_payable_account_id",
+	"default_driver_advance_account_id",
+	"default_escrow_liability_account_id",
+	"default_driver_reimbursement_account_id",
+	"default_escrow_interest_expense_account_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -275,43 +303,50 @@ func AccountingControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuer
 //	AccountingControlFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AccountingControlFilter = struct {
-	ID                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	AccountingBasis                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountingBasis" → DB: "accounting_basis"
-	RevenueRecognitionPolicy         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revenueRecognitionPolicy" → DB: "revenue_recognition_policy"
-	ExpenseRecognitionPolicy         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expenseRecognitionPolicy" → DB: "expense_recognition_policy"
-	JournalPostingMode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "journalPostingMode" → DB: "journal_posting_mode"
-	AutoPostSourceEvents             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoPostSourceEvents" → DB: "auto_post_source_events"
-	ManualJournalEntryPolicy         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "manualJournalEntryPolicy" → DB: "manual_journal_entry_policy"
-	RequireManualJEApproval          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireManualJeApproval" → DB: "require_manual_je_approval"
-	JournalReversalPolicy            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "journalReversalPolicy" → DB: "journal_reversal_policy"
-	PeriodCloseMode                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodCloseMode" → DB: "period_close_mode"
-	RequirePeriodCloseApproval       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requirePeriodCloseApproval" → DB: "require_period_close_approval"
-	LockedPeriodPostingPolicy        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lockedPeriodPostingPolicy" → DB: "locked_period_posting_policy"
-	ClosedPeriodPostingPolicy        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "closedPeriodPostingPolicy" → DB: "closed_period_posting_policy"
-	RequireReconciliationToClose     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireReconciliationToClose" → DB: "require_reconciliation_to_close"
-	ReconciliationMode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reconciliationMode" → DB: "reconciliation_mode"
-	ReconciliationToleranceAmount    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reconciliationToleranceAmount" → DB: "reconciliation_tolerance_amount"
-	NotifyOnReconciliationException  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notifyOnReconciliationException" → DB: "notify_on_reconciliation_exception"
-	CurrencyMode                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyMode" → DB: "currency_mode"
-	FunctionalCurrencyCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "functionalCurrencyCode" → DB: "functional_currency_code"
-	ExchangeRateDatePolicy           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateDatePolicy" → DB: "exchange_rate_date_policy"
-	ExchangeRateOverridePolicy       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateOverridePolicy" → DB: "exchange_rate_override_policy"
-	DefaultRevenueAccountID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultRevenueAccountId" → DB: "default_revenue_account_id"
-	DefaultCashAccountID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultCashAccountId" → DB: "default_cash_account_id"
-	DefaultUnappliedCashAccountID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultUnappliedCashAccountId" → DB: "default_unapplied_cash_account_id"
-	DefaultExpenseAccountID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultExpenseAccountId" → DB: "default_expense_account_id"
-	DefaultARAccountID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultArAccountId" → DB: "default_ar_account_id"
-	DefaultAPAccountID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultApAccountId" → DB: "default_ap_account_id"
-	DefaultTaxLiabilityAccountID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultTaxLiabilityAccountId" → DB: "default_tax_liability_account_id"
-	DefaultWriteOffAccountID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultWriteOffAccountId" → DB: "default_write_off_account_id"
-	DefaultRetainedEarningsAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultRetainedEarningsAccountId" → DB: "default_retained_earnings_account_id"
-	RealizedFXGainAccountID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "realizedFxGainAccountId" → DB: "realized_fx_gain_account_id"
-	RealizedFXLossAccountID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "realizedFxLossAccountId" → DB: "realized_fx_loss_account_id"
-	Version                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AccountingBasis                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountingBasis" → DB: "accounting_basis"
+	RevenueRecognitionPolicy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revenueRecognitionPolicy" → DB: "revenue_recognition_policy"
+	ExpenseRecognitionPolicy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expenseRecognitionPolicy" → DB: "expense_recognition_policy"
+	JournalPostingMode                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "journalPostingMode" → DB: "journal_posting_mode"
+	AutoPostSourceEvents                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoPostSourceEvents" → DB: "auto_post_source_events"
+	ManualJournalEntryPolicy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "manualJournalEntryPolicy" → DB: "manual_journal_entry_policy"
+	RequireManualJEApproval                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireManualJeApproval" → DB: "require_manual_je_approval"
+	JournalReversalPolicy                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "journalReversalPolicy" → DB: "journal_reversal_policy"
+	PeriodCloseMode                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodCloseMode" → DB: "period_close_mode"
+	RequirePeriodCloseApproval              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requirePeriodCloseApproval" → DB: "require_period_close_approval"
+	LockedPeriodPostingPolicy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lockedPeriodPostingPolicy" → DB: "locked_period_posting_policy"
+	ClosedPeriodPostingPolicy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "closedPeriodPostingPolicy" → DB: "closed_period_posting_policy"
+	RequireReconciliationToClose            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireReconciliationToClose" → DB: "require_reconciliation_to_close"
+	ReconciliationMode                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reconciliationMode" → DB: "reconciliation_mode"
+	ReconciliationToleranceAmount           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reconciliationToleranceAmount" → DB: "reconciliation_tolerance_amount"
+	NotifyOnReconciliationException         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notifyOnReconciliationException" → DB: "notify_on_reconciliation_exception"
+	CurrencyMode                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyMode" → DB: "currency_mode"
+	FunctionalCurrencyCode                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "functionalCurrencyCode" → DB: "functional_currency_code"
+	ExchangeRateDatePolicy                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateDatePolicy" → DB: "exchange_rate_date_policy"
+	ExchangeRateOverridePolicy              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateOverridePolicy" → DB: "exchange_rate_override_policy"
+	DefaultRevenueAccountID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultRevenueAccountId" → DB: "default_revenue_account_id"
+	DefaultCashAccountID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultCashAccountId" → DB: "default_cash_account_id"
+	DefaultUnappliedCashAccountID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultUnappliedCashAccountId" → DB: "default_unapplied_cash_account_id"
+	DefaultExpenseAccountID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultExpenseAccountId" → DB: "default_expense_account_id"
+	DefaultARAccountID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultArAccountId" → DB: "default_ar_account_id"
+	DefaultAPAccountID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultApAccountId" → DB: "default_ap_account_id"
+	DefaultTaxLiabilityAccountID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultTaxLiabilityAccountId" → DB: "default_tax_liability_account_id"
+	DefaultWriteOffAccountID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultWriteOffAccountId" → DB: "default_write_off_account_id"
+	DefaultRetainedEarningsAccountID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultRetainedEarningsAccountId" → DB: "default_retained_earnings_account_id"
+	RealizedFXGainAccountID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "realizedFxGainAccountId" → DB: "realized_fx_gain_account_id"
+	RealizedFXLossAccountID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "realizedFxLossAccountId" → DB: "realized_fx_loss_account_id"
+	DefaultDriverPayExpenseAccountID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultDriverPayExpenseAccountId" → DB: "default_driver_pay_expense_account_id"
+	DefaultPurchasedTransportationAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultPurchasedTransportationAccountId" → DB: "default_purchased_transportation_account_id"
+	DefaultSettlementsPayableAccountID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultSettlementsPayableAccountId" → DB: "default_settlements_payable_account_id"
+	DefaultDriverAdvanceAccountID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultDriverAdvanceAccountId" → DB: "default_driver_advance_account_id"
+	DefaultEscrowLiabilityAccountID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultEscrowLiabilityAccountId" → DB: "default_escrow_liability_account_id"
+	DefaultDriverReimbursementAccountID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultDriverReimbursementAccountId" → DB: "default_driver_reimbursement_account_id"
+	DefaultEscrowInterestExpenseAccountID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultEscrowInterestExpenseAccountId" → DB: "default_escrow_interest_expense_account_id"
+	Version                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -414,6 +449,27 @@ var AccountingControlFilter = struct {
 	},
 	RealizedFXLossAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("realizedFxLossAccountId", op, value)
+	},
+	DefaultDriverPayExpenseAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultDriverPayExpenseAccountId", op, value)
+	},
+	DefaultPurchasedTransportationAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultPurchasedTransportationAccountId", op, value)
+	},
+	DefaultSettlementsPayableAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultSettlementsPayableAccountId", op, value)
+	},
+	DefaultDriverAdvanceAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultDriverAdvanceAccountId", op, value)
+	},
+	DefaultEscrowLiabilityAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultEscrowLiabilityAccountId", op, value)
+	},
+	DefaultDriverReimbursementAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultDriverReimbursementAccountId", op, value)
+	},
+	DefaultEscrowInterestExpenseAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultEscrowInterestExpenseAccountId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -2545,6 +2601,265 @@ var SequenceConfigFilter = struct {
 	},
 	LocationCodeStrategy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("locationCodeStrategy", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// SettlementControl — table "settlement_controls", alias "stlc"
+// ---------------------------------------------------------------------------
+
+// SettlementControlTable holds the table name, alias, and primary key columns
+// for the "settlement_controls" table. The alias "stlc" is used in all generated
+// SQL fragments (e.g. "stlc.id = ?").
+var SettlementControlTable = TableInfo{
+	Name:       "settlement_controls",
+	Alias:      "stlc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// SettlementControlColumns provides type-safe column references for the "settlement_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SettlementControlColumns.ID.String())
+//	// SELECT stlc.id FROM settlement_controls AS stlc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SettlementControlColumns.ID.Eq(), id)           // WHERE stlc.id = ?
+//	q.Order(SettlementControlColumns.CreatedAt.OrderDesc())  // ORDER BY stlc.created_at DESC
+var SettlementControlColumns = struct {
+	ID                            Column // "id" → qualified: "stlc.id"
+	BusinessUnitID                Column // "business_unit_id" → qualified: "stlc.business_unit_id"
+	OrganizationID                Column // "organization_id" → qualified: "stlc.organization_id"
+	PayPeriodFrequency            Column // "pay_period_frequency" → qualified: "stlc.pay_period_frequency"
+	PeriodEndDayOfWeek            Column // "period_end_day_of_week" → qualified: "stlc.period_end_day_of_week"
+	PayDelayDays                  Column // "pay_delay_days" → qualified: "stlc.pay_delay_days"
+	PayTrigger                    Column // "pay_trigger" → qualified: "stlc.pay_trigger"
+	AutoGenerateBatches           Column // "auto_generate_batches" → qualified: "stlc.auto_generate_batches"
+	AutoApproveClean              Column // "auto_approve_clean" → qualified: "stlc.auto_approve_clean"
+	AutoAttachAccruals            Column // "auto_attach_accruals" → qualified: "stlc.auto_attach_accruals"
+	AutoPostOnApprove             Column // "auto_post_on_approve" → qualified: "stlc.auto_post_on_approve"
+	AllowNegativeNet              Column // "allow_negative_net" → qualified: "stlc.allow_negative_net"
+	VarianceThresholdPct          Column // "variance_threshold_pct" → qualified: "stlc.variance_threshold_pct"
+	VarianceLookbackWeeks         Column // "variance_lookback_weeks" → qualified: "stlc.variance_lookback_weeks"
+	DefaultEscrowInterestRate     Column // "default_escrow_interest_rate" → qualified: "stlc.default_escrow_interest_rate"
+	EscrowInterestFrequencyMonths Column // "escrow_interest_frequency_months" → qualified: "stlc.escrow_interest_frequency_months"
+	Version                       Column // "version" → qualified: "stlc.version"
+	CreatedAt                     Column // "created_at" → qualified: "stlc.created_at"
+	UpdatedAt                     Column // "updated_at" → qualified: "stlc.updated_at"
+}{
+	ID:                            NewColumn("id", "stlc"),
+	BusinessUnitID:                NewColumn("business_unit_id", "stlc"),
+	OrganizationID:                NewColumn("organization_id", "stlc"),
+	PayPeriodFrequency:            NewColumn("pay_period_frequency", "stlc"),
+	PeriodEndDayOfWeek:            NewColumn("period_end_day_of_week", "stlc"),
+	PayDelayDays:                  NewColumn("pay_delay_days", "stlc"),
+	PayTrigger:                    NewColumn("pay_trigger", "stlc"),
+	AutoGenerateBatches:           NewColumn("auto_generate_batches", "stlc"),
+	AutoApproveClean:              NewColumn("auto_approve_clean", "stlc"),
+	AutoAttachAccruals:            NewColumn("auto_attach_accruals", "stlc"),
+	AutoPostOnApprove:             NewColumn("auto_post_on_approve", "stlc"),
+	AllowNegativeNet:              NewColumn("allow_negative_net", "stlc"),
+	VarianceThresholdPct:          NewColumn("variance_threshold_pct", "stlc"),
+	VarianceLookbackWeeks:         NewColumn("variance_lookback_weeks", "stlc"),
+	DefaultEscrowInterestRate:     NewColumn("default_escrow_interest_rate", "stlc"),
+	EscrowInterestFrequencyMonths: NewColumn("escrow_interest_frequency_months", "stlc"),
+	Version:                       NewColumn("version", "stlc"),
+	CreatedAt:                     NewColumn("created_at", "stlc"),
+	UpdatedAt:                     NewColumn("updated_at", "stlc"),
+}
+
+// SettlementControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by SettlementControl.GetStaticFieldMap().
+var SettlementControlFieldMap = map[string]string{
+	"id":                            "id",
+	"businessUnitId":                "business_unit_id",
+	"organizationId":                "organization_id",
+	"payPeriodFrequency":            "pay_period_frequency",
+	"periodEndDayOfWeek":            "period_end_day_of_week",
+	"payDelayDays":                  "pay_delay_days",
+	"payTrigger":                    "pay_trigger",
+	"autoGenerateBatches":           "auto_generate_batches",
+	"autoApproveClean":              "auto_approve_clean",
+	"autoAttachAccruals":            "auto_attach_accruals",
+	"autoPostOnApprove":             "auto_post_on_approve",
+	"allowNegativeNet":              "allow_negative_net",
+	"varianceThresholdPct":          "variance_threshold_pct",
+	"varianceLookbackWeeks":         "variance_lookback_weeks",
+	"defaultEscrowInterestRate":     "default_escrow_interest_rate",
+	"escrowInterestFrequencyMonths": "escrow_interest_frequency_months",
+	"version":                       "version",
+	"createdAt":                     "created_at",
+	"updatedAt":                     "updated_at",
+}
+
+// SettlementControlInsertableColumns lists column names suitable for INSERT statements on the "settlement_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SettlementControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"pay_period_frequency",
+	"period_end_day_of_week",
+	"pay_delay_days",
+	"pay_trigger",
+	"auto_generate_batches",
+	"auto_approve_clean",
+	"auto_attach_accruals",
+	"auto_post_on_approve",
+	"allow_negative_net",
+	"variance_threshold_pct",
+	"variance_lookback_weeks",
+	"default_escrow_interest_rate",
+	"escrow_interest_frequency_months",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// SettlementControlRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(SettlementControlRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var SettlementControlRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// SettlementControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE stlc.organization_id = ? AND stlc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.SettlementControlScopeTenant(sq, ti).
+//		Where(buncolgen.SettlementControlColumns.ID.Eq(), id)
+func SettlementControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, SettlementControlColumns.OrganizationID, SettlementControlColumns.BusinessUnitID, ti)
+}
+
+// SettlementControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.SettlementControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.SettlementControlColumns.ID.In(), bun.List(ids))
+//	})
+func SettlementControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, SettlementControlColumns.OrganizationID, SettlementControlColumns.BusinessUnitID, ti)
+}
+
+// SettlementControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.SettlementControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.SettlementControlColumns.ID.Eq(), id)
+//	})
+func SettlementControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, SettlementControlColumns.OrganizationID, SettlementControlColumns.BusinessUnitID, ti)
+}
+
+// SettlementControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.SettlementControlApplyTenant(tenantInfo))
+func SettlementControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(SettlementControlColumns.OrganizationID, SettlementControlColumns.BusinessUnitID, ti)
+}
+
+// SettlementControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "settlement_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SettlementControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SettlementControlFilter = struct {
+	ID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	PayPeriodFrequency            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payPeriodFrequency" → DB: "pay_period_frequency"
+	PeriodEndDayOfWeek            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEndDayOfWeek" → DB: "period_end_day_of_week"
+	PayDelayDays                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDelayDays" → DB: "pay_delay_days"
+	PayTrigger                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payTrigger" → DB: "pay_trigger"
+	AutoGenerateBatches           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoGenerateBatches" → DB: "auto_generate_batches"
+	AutoApproveClean              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApproveClean" → DB: "auto_approve_clean"
+	AutoAttachAccruals            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAttachAccruals" → DB: "auto_attach_accruals"
+	AutoPostOnApprove             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoPostOnApprove" → DB: "auto_post_on_approve"
+	AllowNegativeNet              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowNegativeNet" → DB: "allow_negative_net"
+	VarianceThresholdPct          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceThresholdPct" → DB: "variance_threshold_pct"
+	VarianceLookbackWeeks         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceLookbackWeeks" → DB: "variance_lookback_weeks"
+	DefaultEscrowInterestRate     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultEscrowInterestRate" → DB: "default_escrow_interest_rate"
+	EscrowInterestFrequencyMonths func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "escrowInterestFrequencyMonths" → DB: "escrow_interest_frequency_months"
+	Version                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	PayPeriodFrequency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payPeriodFrequency", op, value)
+	},
+	PeriodEndDayOfWeek: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("periodEndDayOfWeek", op, value)
+	},
+	PayDelayDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payDelayDays", op, value)
+	},
+	PayTrigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payTrigger", op, value)
+	},
+	AutoGenerateBatches: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoGenerateBatches", op, value)
+	},
+	AutoApproveClean: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoApproveClean", op, value)
+	},
+	AutoAttachAccruals: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoAttachAccruals", op, value)
+	},
+	AutoPostOnApprove: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoPostOnApprove", op, value)
+	},
+	AllowNegativeNet: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowNegativeNet", op, value)
+	},
+	VarianceThresholdPct: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("varianceThresholdPct", op, value)
+	},
+	VarianceLookbackWeeks: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("varianceLookbackWeeks", op, value)
+	},
+	DefaultEscrowInterestRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultEscrowInterestRate", op, value)
+	},
+	EscrowInterestFrequencyMonths: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("escrowInterestFrequencyMonths", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

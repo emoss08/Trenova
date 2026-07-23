@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
@@ -45,6 +46,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
+	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
+	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
@@ -93,6 +98,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
@@ -115,6 +121,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/usstateservice"
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
 	"github.com/emoss08/trenova/internal/core/services/weatheralertservice"
+	"github.com/emoss08/trenova/internal/core/services/webpushservice"
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
@@ -254,6 +261,21 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	fx.Annotate(
 		customerpaymentservice.New,
 		fx.As(new(services.CustomerPaymentService)),
+	),
+	driverpayservice.New,
+	settlementcontrolservice.New,
+	dashcontrolservice.New,
+	drivernotificationservice.New,
+	webpushservice.New,
+	driversettlementservice.New,
+	driverportalservice.New,
+	fx.Annotate(
+		func(s *driversettlementservice.Service) services.ShipmentMutationObserver { return s },
+		fx.ResultTags(`group:"shipment_mutation_observers"`),
+	),
+	fx.Annotate(
+		func(s *driversettlementservice.Service) services.MoveStatusObserver { return s },
+		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,

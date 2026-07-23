@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/uptrace/bun"
 )
@@ -401,6 +402,80 @@ func (_mock *MockShipmentMoveRepository) UpdateStatus(ctx context.Context, req *
 		r1 = ret.Error(1)
 	}
 	return r0, r1
+}
+
+// UpdateStopActuals provides a mock function for the type MockShipmentMoveRepository
+func (_mock *MockShipmentMoveRepository) UpdateStopActuals(ctx context.Context, tenantInfo pagination.TenantInfo, stop *shipment.Stop) (*shipment.Stop, error) {
+	ret := _mock.Called(ctx, tenantInfo, stop)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateStopActuals")
+	}
+
+	var r0 *shipment.Stop
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *shipment.Stop) (*shipment.Stop, error)); ok {
+		return returnFunc(ctx, tenantInfo, stop)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *shipment.Stop) *shipment.Stop); ok {
+		r0 = returnFunc(ctx, tenantInfo, stop)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Stop)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, *shipment.Stop) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, stop)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentMoveRepository_UpdateStopActuals_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStopActuals'
+type MockShipmentMoveRepository_UpdateStopActuals_Call struct {
+	*mock.Call
+}
+
+// UpdateStopActuals is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - stop *shipment.Stop
+func (_e *MockShipmentMoveRepository_Expecter) UpdateStopActuals(ctx any, tenantInfo any, stop any) *MockShipmentMoveRepository_UpdateStopActuals_Call {
+	return &MockShipmentMoveRepository_UpdateStopActuals_Call{Call: _e.mock.On("UpdateStopActuals", ctx, tenantInfo, stop)}
+}
+
+func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, stop *shipment.Stop)) *MockShipmentMoveRepository_UpdateStopActuals_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 *shipment.Stop
+		if args[2] != nil {
+			arg2 = args[2].(*shipment.Stop)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) Return(stop *shipment.Stop, err error) *MockShipmentMoveRepository_UpdateStopActuals_Call {
+	_c.Call.Return(stop, err)
+	return _c
+}
+
+func (_c *MockShipmentMoveRepository_UpdateStopActuals_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, stop *shipment.Stop) (*shipment.Stop, error)) *MockShipmentMoveRepository_UpdateStopActuals_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // MockShipmentMoveRepository_UpdateStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStatus'

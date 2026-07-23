@@ -44,12 +44,15 @@ virtuals:
     - notifyUserIds
   Location:
     - geofenceVertices
+  PayCode:
+    - glAccount
   Shipment:
     - customer
     - formulaTemplate
     - sourceDocumentId
     - orderNumber
     - orderStatus
+    - profitabilityEstimate
   ShipmentAdditionalCharge:
     - accessorialCharge
   ShipmentCommodity:
@@ -64,6 +67,18 @@ virtuals:
     - customFields
   Worker:
     - customFields
+  PayProfile:
+    - activeAssignmentCount
+  PayAdvance:
+    - outstandingMinor
+  CostCategory:
+    - glAccounts
+  CustomerBillingProfile:
+    - documentTypes
+  CustomerPayment:
+    - customer
+  CustomerPaymentApplication:
+    - invoice
 
 specials:
   Tractor:

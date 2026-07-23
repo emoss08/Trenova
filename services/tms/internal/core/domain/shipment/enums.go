@@ -67,6 +67,25 @@ const (
 	MoveStatusCanceled  = MoveStatus("Canceled")
 )
 
+type AssignmentAck string
+
+const (
+	AssignmentAckPending  = AssignmentAck("Pending")
+	AssignmentAckAccepted = AssignmentAck("Accepted")
+	AssignmentAckDeclined = AssignmentAck("Declined")
+)
+
+func (a AssignmentAck) String() string { return string(a) }
+
+func (a AssignmentAck) IsValid() bool {
+	switch a {
+	case AssignmentAckPending, AssignmentAckAccepted, AssignmentAckDeclined:
+		return true
+	default:
+		return false
+	}
+}
+
 type AssignmentStatus string
 
 const (

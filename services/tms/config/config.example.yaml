@@ -177,3 +177,15 @@ samsara:
 reporting:
   deliveryLinkBaseUrl: "" # Public app URL used in scheduled-report emails, e.g. https://app.example.com
   emailMaxAttachmentBytes: 10485760 # Max artifact size attached to scheduled-report emails (10 MiB)
+
+# Driver portal (Dash) settings
+portal:
+    # Absolute base URL of the client app; used to build portal invitation links in emails
+    baseUrl: http://localhost:5173
+
+# Web push (VAPID) for driver portal notifications. Generate keys with
+# github.com/SherClockHolmes/webpush-go GenerateVAPIDKeys; empty keys disable push.
+push:
+    vapidPublicKey: ""
+    vapidPrivateKey: ""
+    subject: mailto:admin@example.com

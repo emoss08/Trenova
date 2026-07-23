@@ -1,0 +1,1026 @@
+query PayProfileTable($input: DataTableConnectionInput!) {
+  payProfiles(input: $input) {
+    edges {
+      node {
+        id
+        organizationId
+        businessUnitId
+        status
+        name
+        description
+        classification
+        currencyCode
+        guaranteedPeriodMinimumMinor
+        perDiemRatePerMile
+        perDiemDailyCapMinor
+        version
+        createdAt
+        updatedAt
+        activeAssignmentCount
+        components {
+          id
+          kind
+          method
+          description
+          rate
+          revenueBasis
+          bands {
+            minMiles
+            maxMiles
+            rate
+          }
+          freeTimeMinutes
+          minAmountMinor
+          maxAmountMinor
+          sequence
+          isActive
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query PayProfileOptions($input: DataTableConnectionInput!) {
+  payProfiles(input: $input) {
+    edges {
+      node {
+        id
+        name
+        classification
+        status
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query WorkerPayAssignments($workerId: ID!) {
+  workerPayAssignments(workerId: $workerId) {
+    id
+    workerId
+    payProfileId
+    effectiveFrom
+    effectiveTo
+    splitPercent
+    rateOverrides {
+      componentId
+      rate
+    }
+    notes
+    version
+    createdAt
+    payProfile {
+      id
+      name
+      classification
+      components {
+        id
+        kind
+        method
+        description
+        rate
+      }
+    }
+  }
+}
+
+query EffectiveWorkerPayAssignment($workerId: ID!) {
+  effectiveWorkerPayAssignment(workerId: $workerId) {
+    id
+    workerId
+    payProfileId
+    effectiveFrom
+    effectiveTo
+    splitPercent
+    rateOverrides {
+      componentId
+      rate
+    }
+    notes
+    payProfile {
+      id
+      name
+      classification
+      guaranteedPeriodMinimumMinor
+      components {
+        id
+        kind
+        method
+        description
+        rate
+        revenueBasis
+        bands {
+          minMiles
+          maxMiles
+          rate
+        }
+        isActive
+      }
+    }
+  }
+}
+
+query PayProfileAssignments($payProfileId: ID!) {
+  payProfileAssignments(payProfileId: $payProfileId) {
+    id
+    workerId
+    effectiveFrom
+    effectiveTo
+    splitPercent
+    rateOverrides {
+      componentId
+      rate
+    }
+    worker {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+
+query PayProfileDetail($id: ID!) {
+  payProfile(id: $id) {
+    id
+    name
+    classification
+    currencyCode
+    components {
+      id
+      kind
+      method
+      description
+      rate
+      revenueBasis
+      isActive
+    }
+  }
+}
+
+query RecurringDeductionTable($input: DataTableConnectionInput!) {
+  recurringDeductions(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        payCodeId
+        escrowAccountId
+        status
+        frequency
+        description
+        amountMinor
+        totalCapMinor
+        deductedToDateMinor
+        startDate
+        endDate
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+        payCode {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query RecurringEarningTable($input: DataTableConnectionInput!) {
+  recurringEarnings(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        payCodeId
+        status
+        frequency
+        description
+        amountMinor
+        totalCapMinor
+        paidToDateMinor
+        startDate
+        endDate
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+        payCode {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query PayCodeTable($input: DataTableConnectionInput!) {
+  payCodes(input: $input) {
+    edges {
+      node {
+        id
+        status
+        direction
+        code
+        name
+        description
+        taxable
+        countsTowardGuarantee
+        glAccountId
+        defaultAmountMinor
+        isSystem
+        version
+        createdAt
+        updatedAt
+        glAccount {
+          id
+          accountCode
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query PayCodeOptions($direction: PayCodeDirection) {
+  payCodeOptions(direction: $direction) {
+    id
+    direction
+    code
+    name
+    taxable
+    defaultAmountMinor
+  }
+}
+
+query PayAdvanceTable($input: DataTableConnectionInput!) {
+  payAdvances(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        status
+        source
+        reference
+        issuedDate
+        amountMinor
+        recoveredMinor
+        writtenOffMinor
+        outstandingMinor
+        writeOffReason
+        notes
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query EscrowAccountTable($input: DataTableConnectionInput!) {
+  escrowAccounts(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        status
+        targetAmountMinor
+        balanceMinor
+        annualInterestRate
+        lastInterestAccrualDate
+        openedDate
+        closedDate
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query EscrowAccountDetail($id: ID!) {
+  escrowAccount(id: $id) {
+    id
+    workerId
+    status
+    targetAmountMinor
+    balanceMinor
+    annualInterestRate
+    lastInterestAccrualDate
+    openedDate
+    closedDate
+    currencyCode
+    version
+    worker {
+      id
+      firstName
+      lastName
+    }
+    transactions {
+      id
+      type
+      amountMinor
+      balanceAfterMinor
+      occurredDate
+      description
+      settlementId
+      createdAt
+    }
+  }
+}
+
+query DriverSettlementTable($input: DataTableConnectionInput!) {
+  driverSettlements(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        batchId
+        settlementNumber
+        status
+        classification
+        payProfileName
+        periodStart
+        periodEnd
+        payDate
+        grossEarningsMinor
+        reimbursementsMinor
+        deductionsMinor
+        carryForwardInMinor
+        carryForwardOutMinor
+        netPayMinor
+        totalMiles
+        shipmentCount
+        currencyCode
+        hasExceptions
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DriverSettlementDetail($id: ID!) {
+  driverSettlement(id: $id) {
+    id
+    workerId
+    batchId
+    payProfileId
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    hasExceptions
+    exceptions {
+      code
+      severity
+      message
+    }
+    notes
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    postedById
+    postedAt
+    paidAt
+    paymentMethod
+    paymentReference
+    voidedById
+    voidedAt
+    voidReason
+    version
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+    }
+    lines {
+      id
+      lineNumber
+      category
+      componentKind
+      method
+      description
+      quantity
+      rate
+      amountMinor
+      shipmentId
+      moveId
+      payEventId
+      recurringDeductionId
+      advanceId
+      escrowAccountId
+      proNumber
+    }
+  }
+}
+
+query SettlementBatchTable($input: DataTableConnectionInput!) {
+  settlementBatches(input: $input) {
+    edges {
+      node {
+        id
+        status
+        name
+        periodStart
+        periodEnd
+        payDate
+        settlementCount
+        exceptionCount
+        totalGrossMinor
+        totalNetMinor
+        currencyCode
+        notes
+        generatedById
+        generatedAt
+        completedAt
+        canceledAt
+        version
+        createdAt
+        updatedAt
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DriverPayEventTable($input: DataTableConnectionInput!) {
+  driverPayEvents(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        shipmentId
+        moveId
+        settlementId
+        status
+        eventDate
+        grossAmountMinor
+        totalMiles
+        currencyCode
+        proNumber
+        onHold
+        holdReason
+        voidedAt
+        voidReason
+        version
+        createdAt
+        updatedAt
+        components {
+          kind
+          method
+          description
+          quantity
+          rate
+          amountMinor
+        }
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query WorkerEarningsSummary($workerId: ID!) {
+  workerEarningsSummary(workerId: $workerId) {
+    workerId
+    accruedEventCount
+    accruedGrossMinor
+    outstandingAdvances
+    escrowBalanceMinor
+  }
+}
+
+query WorkerYtdPaySummaries($year: Int!, $classification: PayeeClassification) {
+  workerYtdPaySummaries(year: $year, classification: $classification) {
+    workerId
+    workerName
+    classification
+    year
+    settlementCount
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    netPayMinor
+  }
+}
+
+query SettlementControl {
+  settlementControl {
+    id
+    organizationId
+    businessUnitId
+    payPeriodFrequency
+    periodEndDayOfWeek
+    payDelayDays
+    payTrigger
+    autoGenerateBatches
+    autoApproveClean
+    autoAttachAccruals
+    autoPostOnApprove
+    allowNegativeNet
+    varianceThresholdPct
+    varianceLookbackWeeks
+    defaultEscrowInterestRate
+    escrowInterestFrequencyMonths
+    version
+  }
+}
+
+query SettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
+  settlementWorkspaceSummary(periodStart: $periodStart, periodEnd: $periodEnd) {
+    periodStart
+    periodEnd
+    payDate
+    draftCount
+    pendingApprovalCount
+    approvedCount
+    postedCount
+    paidCount
+    exceptionCount
+    totalNetMinor
+    totalGrossMinor
+    unsettledEventCount
+    unsettledGrossMinor
+    heldEventCount
+    heldGrossMinor
+    unsettledWorkerCount
+    openBatchId
+  }
+}
+
+query UnsettledWorkerSummaries($periodStart: Int, $periodEnd: Int) {
+  unsettledWorkerSummaries(periodStart: $periodStart, periodEnd: $periodEnd) {
+    workerId
+    workerName
+    eventCount
+    grossAmountMinor
+    heldCount
+    heldGrossMinor
+    hasSettlement
+  }
+}
+
+query CurrentSettlementPeriod {
+  currentSettlementPeriod {
+    periodStart
+    periodEnd
+    payDate
+  }
+}
+
+query PreviewDriverSettlement($workerId: ID!, $periodStart: Int, $periodEnd: Int) {
+  previewDriverSettlement(workerId: $workerId, periodStart: $periodStart, periodEnd: $periodEnd) {
+    id
+    workerId
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    hasExceptions
+    exceptions {
+      code
+      severity
+      message
+    }
+    lines {
+      lineNumber
+      category
+      componentKind
+      method
+      description
+      quantity
+      rate
+      amountMinor
+      proNumber
+    }
+  }
+}
+
+query ExportSettlementBatchCsv($batchId: ID!) {
+  exportSettlementBatchCsv(batchId: $batchId)
+}
+
+mutation CreatePayProfile($input: CreatePayProfileInput!) {
+  createPayProfile(input: $input) {
+    id
+    name
+    version
+  }
+}
+
+mutation UpdatePayProfile($input: UpdatePayProfileInput!) {
+  updatePayProfile(input: $input) {
+    id
+    name
+    version
+  }
+}
+
+mutation AssignPayProfileToWorker($input: AssignPayProfileInput!) {
+  assignPayProfileToWorker(input: $input) {
+    id
+    workerId
+    payProfileId
+    effectiveFrom
+    effectiveTo
+  }
+}
+
+mutation EndWorkerPayAssignment($input: EndWorkerPayAssignmentInput!) {
+  endWorkerPayAssignment(input: $input) {
+    id
+    effectiveTo
+  }
+}
+
+mutation CreateRecurringDeduction($input: CreateRecurringDeductionInput!) {
+  createRecurringDeduction(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateRecurringDeduction($input: UpdateRecurringDeductionInput!) {
+  updateRecurringDeduction(input: $input) {
+    id
+    version
+  }
+}
+
+mutation CreatePayCode($input: CreatePayCodeInput!) {
+  createPayCode(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdatePayCode($input: UpdatePayCodeInput!) {
+  updatePayCode(input: $input) {
+    id
+    version
+  }
+}
+
+mutation CreateRecurringEarning($input: CreateRecurringEarningInput!) {
+  createRecurringEarning(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateRecurringEarning($input: UpdateRecurringEarningInput!) {
+  updateRecurringEarning(input: $input) {
+    id
+    version
+  }
+}
+
+mutation IssuePayAdvance($input: IssuePayAdvanceInput!) {
+  issuePayAdvance(input: $input) {
+    id
+    version
+  }
+}
+
+mutation WriteOffPayAdvance($input: WriteOffPayAdvanceInput!) {
+  writeOffPayAdvance(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation OpenEscrowAccount($input: OpenEscrowAccountInput!) {
+  openEscrowAccount(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateEscrowAccount($input: UpdateEscrowAccountInput!) {
+  updateEscrowAccount(input: $input) {
+    id
+    version
+  }
+}
+
+mutation AdjustEscrowAccount($input: AdjustEscrowAccountInput!) {
+  adjustEscrowAccount(input: $input) {
+    id
+    balanceMinor
+    version
+  }
+}
+
+mutation CloseEscrowAccount($accountId: ID!) {
+  closeEscrowAccount(accountId: $accountId) {
+    id
+    status
+    version
+  }
+}
+
+mutation GenerateSettlementBatch($input: GenerateSettlementBatchInput!) {
+  generateSettlementBatch(input: $input) {
+    id
+    name
+    settlementCount
+    exceptionCount
+    totalGrossMinor
+    totalNetMinor
+  }
+}
+
+mutation GenerateDriverSettlement($input: GenerateDriverSettlementInput!) {
+  generateDriverSettlement(input: $input) {
+    id
+    settlementNumber
+  }
+}
+
+mutation SubmitDriverSettlement($input: DriverSettlementActionInput!) {
+  submitDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation ApproveDriverSettlement($input: DriverSettlementActionInput!) {
+  approveDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation RejectDriverSettlement($input: DriverSettlementActionInput!) {
+  rejectDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation PostDriverSettlement($input: DriverSettlementActionInput!) {
+  postDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation MarkDriverSettlementPaid($input: MarkDriverSettlementPaidInput!) {
+  markDriverSettlementPaid(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation VoidDriverSettlement($input: DriverSettlementActionInput!) {
+  voidDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation RecalculateDriverSettlement($input: DriverSettlementActionInput!) {
+  recalculateDriverSettlement(input: $input) {
+    id
+    version
+  }
+}
+
+mutation AddDriverSettlementAdjustment($input: AddSettlementAdjustmentInput!) {
+  addDriverSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+
+mutation RemoveDriverSettlementAdjustment($input: RemoveSettlementAdjustmentInput!) {
+  removeDriverSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+
+mutation HoldDriverPayEvent($input: HoldPayEventInput!) {
+  holdDriverPayEvent(input: $input) {
+    id
+    status
+    onHold
+    holdReason
+    version
+  }
+}
+
+mutation ReleaseDriverPayEvent($payEventId: ID!) {
+  releaseDriverPayEvent(payEventId: $payEventId) {
+    id
+    status
+    onHold
+    holdReason
+    version
+  }
+}
+
+mutation AttachPayEventsToSettlement($input: AttachPayEventsInput!) {
+  attachPayEventsToSettlement(input: $input) {
+    id
+    status
+    grossEarningsMinor
+    netPayMinor
+    version
+  }
+}
+
+mutation DetachPayEventFromSettlement($input: DetachPayEventInput!) {
+  detachPayEventFromSettlement(input: $input) {
+    id
+    status
+    grossEarningsMinor
+    netPayMinor
+    version
+  }
+}
+
+mutation BulkDriverSettlementAction($input: BulkSettlementActionInput!) {
+  bulkDriverSettlementAction(input: $input) {
+    results {
+      settlementId
+      success
+      error
+    }
+    successCount
+    failureCount
+  }
+}
+
+mutation UpdateSettlementControl($input: UpdateSettlementControlInput!) {
+  updateSettlementControl(input: $input) {
+    id
+    version
+  }
+}
+
+query SettlementBatchDetail($id: ID!) {
+  settlementBatch(id: $id) {
+    id
+    status
+    name
+    periodStart
+    periodEnd
+    payDate
+    settlementCount
+    exceptionCount
+    totalGrossMinor
+    totalNetMinor
+    currencyCode
+    notes
+    version
+    settlements {
+      id
+      settlementNumber
+      status
+      classification
+      grossEarningsMinor
+      deductionsMinor
+      netPayMinor
+      currencyCode
+      hasExceptions
+      worker {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}
+
+query UnsettledPayEvents($workerId: ID!) {
+  unsettledPayEvents(workerId: $workerId) {
+    id
+    shipmentId
+    moveId
+    eventDate
+    grossAmountMinor
+    totalMiles
+    currencyCode
+    proNumber
+  }
+}
+
+mutation PayWorkerNow($input: PayWorkerNowInput!) {
+  payWorkerNow(input: $input) {
+    id
+    settlementNumber
+    status
+    netPayMinor
+    currencyCode
+    paidAt
+    paymentMethod
+    paymentReference
+  }
+}

@@ -14,6 +14,8 @@ const (
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
 	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
 	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
+	SeedDriverPay SeedID = "DriverPay" // from 11_driverpay.go
+	SeedDriverPayLedger SeedID = "DriverPayLedger" // from 12_driverpay_ledger.go
 	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
 	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
@@ -38,6 +40,8 @@ var AllSeedIDs = []SeedID{
 	SeedDocumentParsingRuleExample,
 	SeedDocumentType,
 	SeedDotHazmatReferences,
+	SeedDriverPay,
+	SeedDriverPayLedger,
 	SeedFormulaTemplate,
 	SeedFuelSurcharge,
 	SeedGLAccount,
@@ -72,6 +76,8 @@ var BaseSeedIDs = []SeedID{
 
 var DevelopmentSeedIDs = []SeedID{
 	SeedDocumentParsingRuleExample,
+	SeedDriverPay,
+	SeedDriverPayLedger,
 	SeedFormulaTemplate,
 	SeedFuelSurcharge,
 	SeedLocation,

@@ -285,6 +285,25 @@ type AccountTypeEdge {
   node: AccountType!
 }
 
+input AddSettlementAdjustmentInput {
+  amountMinor: Int!
+  description: String!
+  """
+  Optional pay code — the adjustment posts to the code's GL account when mapped.
+  """
+  payCodeId: ID
+  quantity: String
+  rate: String
+  settlementId: ID!
+}
+
+input AdjustEscrowAccountInput {
+  accountId: ID!
+  amountMinor: Int!
+  description: String!
+  occurredDate: Int
+}
+
 scalar Any
 
 type ApiKey {
@@ -324,11 +343,32 @@ input ApplyCustomerPaymentInput {
   paymentId: ID!
 }
 
+"""
+Assigns a pay profile to a worker. Any currently-open assignment for the worker
+is automatically ended on the new effective date — no manual cleanup needed.
+"""
+input AssignPayProfileInput {
+  effectiveFrom: Int!
+  effectiveTo: Int
+  notes: String
+  payProfileId: ID!
+  """Optional per-component rate overrides for this driver."""
+  rateOverrides: [PayRateOverrideInput!]
+  """Defaults to 100. Use 50 for an even team split."""
+  splitPercent: String
+  workerId: ID!
+}
+
 enum AssignmentStatus {
   Canceled
   Completed
   InProgress
   New
+}
+
+input AttachPayEventsInput {
+  payEventIds: [ID!]!
+  settlementId: ID!
 }
 
 type AttentionSummary {
@@ -460,6 +500,33 @@ input BillingQueueUpdateStatusInput {
   exceptionReasonCode: BillingQueueExceptionReasonCode
   reviewNotes: String
   status: BillingQueueStatus!
+}
+
+input BulkSettlementActionInput {
+  action: BulkSettlementActionType!
+  """Required when action is MarkPaid."""
+  paymentMethod: String
+  paymentReference: String
+  settlementIds: [ID!]!
+}
+
+type BulkSettlementActionPayload {
+  failureCount: Int!
+  results: [BulkSettlementActionResult!]!
+  successCount: Int!
+}
+
+type BulkSettlementActionResult {
+  error: String!
+  settlementId: ID!
+  success: Boolean!
+}
+
+enum BulkSettlementActionType {
+  Approve
+  MarkPaid
+  Post
+  Submit
 }
 
 input BulkUpdateEquipmentManufacturerStatusInput {
@@ -650,6 +717,64 @@ input CostingControlInput {
   version: Int!
 }
 
+input CreateMyLoadCommentInput {
+  comment: String!
+  shipmentId: ID!
+}
+
+input CreatePayCodeInput {
+  code: String!
+  countsTowardGuarantee: Boolean
+  defaultAmountMinor: Int
+  description: String
+  direction: PayCodeDirection!
+  glAccountId: ID
+  name: String!
+  taxable: Boolean
+}
+
+input CreatePayProfileInput {
+  classification: PayeeClassification!
+  components: [PayProfileComponentInput!]!
+  currencyCode: String
+  description: String
+  guaranteedPeriodMinimumMinor: Int
+  name: String!
+  perDiemDailyCapMinor: Int
+  perDiemRatePerMile: String
+  status: EntityStatus
+}
+
+input CreateRecurringDeductionInput {
+  amountMinor: Int!
+  currencyCode: String
+  description: String!
+  endDate: Int
+  escrowAccountId: ID
+  """
+  When true and no escrow account is given, the deduction links to the driver's
+  active escrow account and posts as an escrow contribution.
+  """
+  escrowContribution: Boolean
+  frequency: RecurringDeductionFrequency
+  payCodeId: ID!
+  startDate: Int!
+  totalCapMinor: Int
+  workerId: ID!
+}
+
+input CreateRecurringEarningInput {
+  amountMinor: Int!
+  currencyCode: String
+  description: String!
+  endDate: Int
+  frequency: RecurringEarningFrequency
+  payCodeId: ID!
+  startDate: Int!
+  totalCapMinor: Int
+  workerId: ID!
+}
+
 input CreateReportScheduleInput {
   cronExpression: String!
   definitionId: ID!
@@ -659,6 +784,13 @@ input CreateReportScheduleInput {
   formats: [String!]!
   notifyUserIds: [ID!]
   timezone: String
+}
+
+input CreateSettlementDisputeInput {
+  category: SettlementDisputeCategory!
+  description: String!
+  settlementId: ID!
+  settlementLineId: ID
 }
 
 type CustomFieldDefinition {
@@ -940,6 +1072,56 @@ enum CustomerPaymentTerm {
   Net90
 }
 
+"""
+Org-level feature toggles for the Dash driver portal — what drivers can see
+and do. One row per organization, created on first read.
+"""
+type DashControl {
+  """Allow drivers to edit their own contact details and emergency contact."""
+  allowContactInfoEdit: Boolean!
+  """Allow drivers to submit out-of-pocket expenses for reimbursement."""
+  allowExpenseSubmission: Boolean!
+  """
+  Allow drivers to send messages on load chat (reading is always allowed).
+  """
+  allowLoadComments: Boolean!
+  """Allow POD/BOL photo uploads on loads."""
+  allowLoadDocumentUpload: Boolean!
+  """Allow drivers to decline an assigned load (requires acknowledgment)."""
+  allowLoadRefusals: Boolean!
+  """
+  Allow drivers to upload qualification-file documents (CDL, medical card).
+  """
+  allowProfileDocumentUpload: Boolean!
+  """Allow drivers to request time off from Dash."""
+  allowPtoRequests: Boolean!
+  """Allow drivers to dispute settlement statements from Dash."""
+  allowSettlementDisputes: Boolean!
+  """Allow drivers to record their own arrivals and departures at stops."""
+  allowStopActions: Boolean!
+  businessUnitId: ID!
+  createdAt: Int!
+  detentionAlertThresholdMinutes: Int!
+  """Alert dispatch when a driver dwells at a stop beyond the threshold."""
+  enableDetentionAlerts: Boolean!
+  id: ID!
+  organizationId: ID!
+  """Block expense approval until a receipt is attached."""
+  requireExpenseReceipt: Boolean!
+  """Show the accept/decline card when a driver is assigned a load."""
+  requireLoadAcknowledgment: Boolean!
+  """Send drivers push reminders as their credentials approach expiry."""
+  sendCredentialReminders: Boolean!
+  """Show per-load pay amounts and recent pay events in Dash."""
+  showLoadPay: Boolean!
+  """
+  Show estimated pay on loads before pay accrues (requires per-load pay).
+  """
+  showPayEstimates: Boolean!
+  updatedAt: Int!
+  version: Int!
+}
+
 input DataTableConnectionInput {
   after: String
   fieldFilters: [FieldFilterInput!]
@@ -947,6 +1129,17 @@ input DataTableConnectionInput {
   first: Int = 20
   query: String
   sort: [SortFieldInput!]
+}
+
+input DetachPayEventInput {
+  payEventId: ID!
+  settlementId: ID!
+}
+
+input DisputeAdjustmentInput {
+  amountMinor: Int!
+  description: String!
+  payCodeId: ID
 }
 
 type DistanceOverride {
@@ -1090,6 +1283,225 @@ type DocumentTypeConnection {
 type DocumentTypeEdge {
   cursor: String!
   node: DocumentType!
+}
+
+"""
+A driver-submitted out-of-pocket expense (lumper, tolls, supplies). Approval
+immediately applies a reimbursement adjustment to the driver's open settlement.
+"""
+type DriverExpense {
+  amountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  description: String!
+  id: ID!
+  incurredDate: Int!
+  organizationId: ID!
+  payCode: PayCode
+  payCodeId: ID
+  receiptDocumentId: ID
+  reviewNote: String!
+  reviewedAt: Int
+  reviewedBy: User
+  reviewedById: ID
+  settlementLineId: ID
+  shipmentId: ID
+  status: DriverExpenseStatus!
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+type DriverExpenseConnection {
+  edges: [DriverExpenseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DriverExpenseEdge {
+  cursor: String!
+  node: DriverExpense!
+}
+
+enum DriverExpenseStatus {
+  Approved
+  Cancelled
+  Pending
+  Reimbursed
+  Rejected
+}
+
+"""
+The accrual ledger behind settlements: one pay event per driver per move,
+created automatically when a shipment reaches the organization's pay trigger.
+Events are recomputed while Accrued (e.g. if charges change), locked once
+Settled, and Voided if the shipment cancels. This is what powers real-time
+"earned so far this period" visibility.
+"""
+type DriverPayEvent {
+  businessUnitId: ID!
+  components: [DriverPayEventComponent!]
+  createdAt: Int!
+  currencyCode: String!
+  eventDate: Int!
+  grossAmountMinor: Int!
+  holdReason: String!
+  id: ID!
+  moveId: ID
+  """
+  Held events are skipped by settlement generation until released or manually attached.
+  """
+  onHold: Boolean!
+  organizationId: ID!
+  payProfileId: ID
+  proNumber: String!
+  settlementId: ID
+  shipmentId: ID!
+  status: DriverPayEventStatus!
+  totalMiles: String!
+  updatedAt: Int!
+  version: Int!
+  voidReason: String!
+  voidedAt: Int
+  worker: Worker
+  workerId: ID!
+}
+
+"""
+A single earning component captured on a pay event, frozen at accrual time.
+"""
+type DriverPayEventComponent {
+  amountMinor: Int!
+  description: String!
+  kind: PayComponentKind!
+  method: PayCalcMethod!
+  quantity: String!
+  rate: String!
+}
+
+type DriverPayEventConnection {
+  edges: [DriverPayEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DriverPayEventEdge {
+  cursor: String!
+  node: DriverPayEvent!
+}
+
+enum DriverPayEventStatus {
+  Accrued
+  Settled
+  Voided
+}
+
+"""
+A driver's pay statement for one period. Lifecycle: Draft -> PendingApproval ->
+Approved -> Posted -> Paid, with Void available before payment. Deduction side
+effects (caps, escrow balances, advance recovery) apply at approval and reverse
+on void; posting writes a balanced journal entry to the GL. Net pay never goes
+negative — shortfalls carry forward to the next settlement instead.
+"""
+type DriverSettlement {
+  approvedAt: Int
+  approvedById: ID
+  batchId: ID
+  businessUnitId: ID!
+  carryForwardInMinor: Int!
+  carryForwardOutMinor: Int!
+  classification: PayeeClassification!
+  createdAt: Int!
+  currencyCode: String!
+  deductionsMinor: Int!
+  exceptions: [SettlementException!]
+  grossEarningsMinor: Int!
+  hasExceptions: Boolean!
+  id: ID!
+  lines: [DriverSettlementLine!]
+  netPayMinor: Int!
+  notes: String!
+  organizationId: ID!
+  paidAt: Int
+  paidById: ID
+  payDate: Int!
+  payProfileId: ID
+  payProfileName: String!
+  paymentMethod: String!
+  paymentReference: String!
+  periodEnd: Int!
+  periodStart: Int!
+  postedAt: Int
+  postedById: ID
+  reimbursementsMinor: Int!
+  settlementNumber: String!
+  shipmentCount: Int!
+  status: DriverSettlementStatus!
+  submittedAt: Int
+  submittedById: ID
+  totalMiles: String!
+  updatedAt: Int!
+  version: Int!
+  voidReason: String!
+  voidedAt: Int
+  voidedById: ID
+  worker: Worker
+  workerId: ID!
+}
+
+input DriverSettlementActionInput {
+  reason: String
+  settlementId: ID!
+}
+
+type DriverSettlementConnection {
+  edges: [DriverSettlementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DriverSettlementEdge {
+  cursor: String!
+  node: DriverSettlement!
+}
+
+"""
+One line on a settlement statement. Earning lines trace back to the pay event,
+shipment, and move that produced them; deduction lines link to their recurring
+deduction, advance, or escrow account. Amounts are signed: earnings positive,
+deductions negative.
+"""
+type DriverSettlementLine {
+  advanceId: ID
+  amountMinor: Int!
+  category: SettlementLineCategory!
+  componentKind: PayComponentKind
+  description: String!
+  escrowAccountId: ID
+  id: ID!
+  lineNumber: Int!
+  method: PayCalcMethod
+  moveId: ID
+  payCodeId: ID
+  payEventId: ID
+  proNumber: String!
+  quantity: String!
+  rate: String!
+  recurringDeductionId: ID
+  recurringEarningId: ID
+  settlementId: ID!
+  shipmentId: ID
+}
+
+enum DriverSettlementStatus {
+  Approved
+  Draft
+  Paid
+  PendingApproval
+  Posted
+  Voided
 }
 
 enum DriverType {
@@ -1644,6 +2056,11 @@ enum EmailProvider {
   Resend
 }
 
+input EndWorkerPayAssignmentInput {
+  assignmentId: ID!
+  endDate: Int!
+}
+
 enum EndorsementType {
   H
   N
@@ -1773,6 +2190,75 @@ input EquipmentTypePatchInput {
   interiorLength: Float @goField(omittable: true)
   status: EntityStatus
   version: Int
+}
+
+"""
+An owner-operator's escrow (maintenance reserve) account. Contributions flow in
+from settlements via an EscrowContribution recurring deduction and stop at the
+funding target. Interest accrues automatically at least quarterly per
+49 CFR 376.12(k); closing the account refunds the remaining balance.
+"""
+type EscrowAccount {
+  annualInterestRate: String!
+  balanceMinor: Int!
+  businessUnitId: ID!
+  closedDate: Int
+  createdAt: Int!
+  currencyCode: String!
+  id: ID!
+  lastInterestAccrualDate: Int
+  openedDate: Int!
+  organizationId: ID!
+  status: EscrowAccountStatus!
+  targetAmountMinor: Int!
+  transactions: [EscrowTransaction!]
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+type EscrowAccountConnection {
+  edges: [EscrowAccountEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EscrowAccountEdge {
+  cursor: String!
+  node: EscrowAccount!
+}
+
+enum EscrowAccountStatus {
+  Active
+  Closed
+}
+
+"""
+One immutable entry in an escrow account's ledger. Every contribution, interest
+accrual, application, refund, and adjustment is recorded with its running
+balance — the transaction-level accounting 49 CFR 376.12(k) requires carriers to
+provide to owner-operators.
+"""
+type EscrowTransaction {
+  amountMinor: Int!
+  balanceAfterMinor: Int!
+  createdAt: Int!
+  createdById: ID
+  description: String!
+  escrowAccountId: ID!
+  id: ID!
+  occurredDate: Int!
+  settlementId: ID
+  type: EscrowTransactionType!
+}
+
+enum EscrowTransactionType {
+  Adjustment
+  Application
+  Contribution
+  InterestAccrual
+  Refund
 }
 
 enum FacilityType {
@@ -2220,6 +2706,14 @@ type GLActualsWindow {
   toDate: Int!
 }
 
+input GenerateDriverSettlementInput {
+  batchId: ID
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  workerId: ID!
+}
+
 input GenerateFuelTableInput {
   increment: String!
   maxPrice: String!
@@ -2227,6 +2721,13 @@ input GenerateFuelTableInput {
   openEnded: Boolean
   startValue: String!
   valueStep: String!
+}
+
+input GenerateSettlementBatchInput {
+  name: String
+  notes: String
+  periodEnd: Int
+  periodStart: Int
 }
 
 type GeneratedFuelTableRow {
@@ -2342,6 +2843,12 @@ type HazmatSegregationRuleEdge {
   node: HazmatSegregationRule!
 }
 
+input HoldPayEventInput {
+  payEventId: ID!
+  """Why pay is being deferred — shown to whoever reviews the held event."""
+  reason: String!
+}
+
 type HoldReason {
   active: Boolean!
   businessUnit: BusinessUnit
@@ -2387,6 +2894,22 @@ enum HoldType {
   CustomerHold
   FinanceHold
   OperationalHold
+}
+
+input InviteWorkerToPortalInput {
+  """Overrides the email on the worker record when provided."""
+  email: String
+  workerId: ID!
+}
+
+type InviteWorkerToPortalResult {
+  emailSent: Boolean!
+  invitation: PortalInvitation!
+  """
+  Shareable invitation link. Also emailed to the driver when an email provider
+  is configured; surface this so dispatch can text it manually if needed.
+  """
+  inviteUrl: String!
 }
 
 type Invoice {
@@ -2493,6 +3016,16 @@ enum InvoiceSettlementStatus {
 enum InvoiceStatus {
   Draft
   Posted
+}
+
+input IssuePayAdvanceInput {
+  amountMinor: Int!
+  currencyCode: String
+  issuedDate: Int!
+  notes: String
+  reference: String
+  source: PayAdvanceSource!
+  workerId: ID!
 }
 
 scalar JSON
@@ -2756,6 +3289,12 @@ enum ManualJournalStatus {
   Rejected
 }
 
+input MarkDriverSettlementPaidInput {
+  paymentMethod: String!
+  paymentReference: String
+  settlementId: ID!
+}
+
 enum MoveStatus {
   Assigned
   Canceled
@@ -2765,12 +3304,22 @@ enum MoveStatus {
 }
 
 type Mutation {
+  addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
+  adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
+  approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   approveWorkerPTO(id: ID!): WorkerPTO!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+  assignPayProfileToWorker(input: AssignPayProfileInput!): WorkerPayAssignment!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
+  """Transfer accrued pay events onto a draft settlement."""
+  attachPayEventsToSettlement(input: AttachPayEventsInput!): DriverSettlement!
+  """
+  Run one lifecycle action across many settlements; per-settlement failures don't abort the rest.
+  """
+  bulkDriverSettlementAction(input: BulkSettlementActionInput!): BulkSettlementActionPayload!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
@@ -2779,11 +3328,14 @@ type Mutation {
   calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
   calculateShipmentLoadingOptimization(input: ShipmentLoadingOptimizationInput!): ShipmentLoadingOptimizationResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
+  cancelMyExpense(id: ID!): DriverExpense!
+  cancelMyPto(id: ID!): PortalPto!
   cancelOrder(cancelReason: String!, id: ID!): Order!
   cancelReportRun(id: ID!): ReportRun!
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  closeEscrowAccount(accountId: ID!): EscrowAccount!
   closeOrder(id: ID!): Order!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
@@ -2791,9 +3343,22 @@ type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createInvoiceFromOrder(orderId: ID!): Invoice!
   createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
+  """
+  Posts a driver update on one of the signed-in driver's loads. Recorded as a
+  DriverUpdate comment with Driver visibility so dispatch sees it on the shipment.
+  """
+  createMyLoadComment(input: CreateMyLoadCommentInput!): PortalComment!
   createOrder(input: OrderInput!): Order!
+  createPayCode(input: CreatePayCodeInput!): PayCode!
+  createPayProfile(input: CreatePayProfileInput!): PayProfile!
+  createRecurringDeduction(input: CreateRecurringDeductionInput!): RecurringDeduction!
+  createRecurringEarning(input: CreateRecurringEarningInput!): RecurringEarning!
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
   createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
+  """
+  Files a dispute against one of the signed-in driver's issued settlements.
+  """
+  createSettlementDispute(input: CreateSettlementDisputeInput!): SettlementDispute!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
@@ -2807,52 +3372,132 @@ type Mutation {
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
+  """
+  Remove a pay event from a draft settlement, returning it to the unsettled pool.
+  """
+  detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
   dismissNotifications(ids: [ID!]!): Boolean!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
+  endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
+  generateDriverSettlement(input: GenerateDriverSettlementInput!): DriverSettlement
+  generateSettlementBatch(input: GenerateSettlementBatchInput!): SettlementBatch!
+  """
+  Defer an accrued pay event so it skips settlement generation until released.
+  """
+  holdDriverPayEvent(input: HoldPayEventInput!): DriverPayEvent!
+  """Invites a worker to the driver portal (back office)."""
+  inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
+  issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
   markAllNotificationsRead: Boolean!
+  markDriverSettlementPaid(input: MarkDriverSettlementPaidInput!): DriverSettlement!
   markNotificationsRead(ids: [ID!]!): Boolean!
   markNotificationsUnread(ids: [ID!]!): Boolean!
+  openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  """
+  Pays a driver immediately: builds an off-cycle settlement from the selected
+  accrued events (or everything accrued), then approves, posts, and marks it
+  paid in one pass. If a later step fails the settlement is left in its last
+  good state for manual follow-up.
+  """
+  payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
+  postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
+  """
+  Records the signed-in driver's arrival at or departure from a stop on their
+  own load. Timestamps are server-side; stop, move, and shipment statuses
+  cascade, and pay accrues when the move completes.
+  """
+  recordMyStopAction(input: RecordMyStopActionInput!): Boolean!
+  rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+  """Release a held pay event back into the settlement pool."""
+  releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
+  requestMyPto(input: RequestMyPtoInput!): PortalPto!
   resetCannedFork(id: ID!): ReportDefinition!
+  """
+  Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
+  """
+  resolveSettlementDispute(input: ResolveSettlementDisputeInput!): SettlementDispute!
+  """
+  Accept or decline one of the signed-in driver's load assignments. Declining
+  requires a reason and alerts dispatch.
+  """
+  respondToMyAssignment(input: RespondToMyAssignmentInput!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+  """
+  Approves or rejects a driver expense (back office). Approval applies the
+  reimbursement to the driver's open settlement immediately.
+  """
+  reviewDriverExpense(input: ReviewDriverExpenseInput!): DriverExpense!
+  """
+  Revokes portal access: deactivates the linked login and voids pending invitations.
+  """
+  revokeWorkerPortalAccess(workerId: ID!): Boolean!
   runReport(input: RunReportInput!): ReportRun!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
+  """Moves an open dispute into review (back office)."""
+  startSettlementDisputeReview(id: ID!): SettlementDispute!
+  submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
+  """Updates the org's Dash feature toggles (back office)."""
+  updateDashControl(input: UpdateDashControlInput!): DashControl!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
+  updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
   updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  """
+  Updates the signed-in driver's own contact details (phone, address,
+  emergency contact). Compliance fields are carrier-controlled.
+  """
+  updateMyContactInfo(input: UpdateMyContactInfoInput!): PortalComplianceProfile!
   updateOrder(id: ID!, input: OrderInput!): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
+  updatePayCode(input: UpdatePayCodeInput!): PayCode!
+  updatePayProfile(input: UpdatePayProfileInput!): PayProfile!
+  updateRecurringDeduction(input: UpdateRecurringDeductionInput!): RecurringDeduction!
+  updateRecurringEarning(input: UpdateRecurringEarningInput!): RecurringEarning!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
+  updateSettlementControl(input: UpdateSettlementControlInput!): SettlementControl!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
   updateSidebarPreferences(input: SidebarPreferencesInput!): SidebarPreferences!
   updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+  voidDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """Withdraws one of the signed-in driver's own open disputes."""
+  withdrawSettlementDispute(id: ID!): SettlementDispute!
+  writeOffPayAdvance(input: WriteOffPayAdvanceInput!): PayAdvance!
+}
+
+type MySettlementList {
+  items: [DriverSettlement!]!
+  total: Int!
 }
 
 type Notification {
@@ -2921,6 +3566,14 @@ enum NotificationPriority {
 enum NotificationState {
   archived
   inbox
+}
+
+input OpenEscrowAccountInput {
+  annualInterestRate: String
+  currencyCode: String
+  openedDate: Int
+  targetAmountMinor: Int!
+  workerId: ID!
 }
 
 type Order {
@@ -3079,11 +3732,518 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+"""
+A cash or money-code advance issued to a driver mid-trip. Advances are recovered
+automatically from the driver's next settlement(s); if the settlement control
+allows negative net, unrecovered balances carry forward. Unrecoverable advances
+can be written off with a reason.
+"""
+type PayAdvance {
+  amountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  id: ID!
+  issuedDate: Int!
+  notes: String!
+  organizationId: ID!
+  outstandingMinor: Int!
+  recoveredMinor: Int!
+  reference: String!
+  source: PayAdvanceSource!
+  status: PayAdvanceStatus!
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+  writeOffReason: String!
+  writtenOffMinor: Int!
+}
+
+type PayAdvanceConnection {
+  edges: [PayAdvanceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type PayAdvanceEdge {
+  cursor: String!
+  node: PayAdvance!
+}
+
+enum PayAdvanceSource {
+  Cash
+  ComdataCode
+  EFSMoneyCode
+  FuelCard
+  Other
+}
+
+enum PayAdvanceStatus {
+  Outstanding
+  PartiallyRecovered
+  Recovered
+  WrittenOff
+}
+
+enum PayCalcMethod {
+  FlatPerShipment
+  PerDay
+  PerEmptyMile
+  PerEvent
+  PerHour
+  PerLoadedMile
+  PerStop
+  PerTotalMile
+  PercentOfRevenue
+}
+
+"""
+A carrier-defined earning or deduction code. Codes replace hard-coded pay types:
+each carrier builds its own catalog (chain pay, union dues, truck washes, ...)
+on top of the seeded system codes. Behavior flags drive settlement treatment —
+non-taxable earning codes post as reimbursements and are excluded from
+guaranteed-minimum checks — and the optional GL account routes every settlement
+line carrying the code to its own ledger account (falling back to the accounting
+control defaults when unset), which is what feeds cost-per-mile categories in
+Cost Control.
+"""
+type PayCode {
+  businessUnitId: ID!
+  """
+  Short unique identifier per direction, e.g. PERDIEM, TRKLEASE, CHAINPAY.
+  """
+  code: String!
+  """
+  Earnings only: whether amounts under this code count toward the guaranteed period minimum.
+  """
+  countsTowardGuarantee: Boolean!
+  createdAt: Int!
+  """
+  Prefills the amount when creating recurring earnings/deductions with this code.
+  """
+  defaultAmountMinor: Int
+  description: String!
+  direction: PayCodeDirection!
+  glAccount: PayCodeGLAccount
+  """
+  GL account settlement lines with this code post to; falls back to accounting control defaults.
+  """
+  glAccountId: ID
+  id: ID!
+  """
+  Seeded codes: direction and code are fixed, everything else is editable.
+  """
+  isSystem: Boolean!
+  name: String!
+  organizationId: ID!
+  status: EntityStatus!
+  """
+  Earnings only: taxable codes post as earnings; non-taxable as reimbursements.
+  """
+  taxable: Boolean!
+  updatedAt: Int!
+  version: Int!
+}
+
+type PayCodeConnection {
+  edges: [PayCodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum PayCodeDirection {
+  Deduction
+  Earning
+}
+
+type PayCodeEdge {
+  cursor: String!
+  node: PayCode!
+}
+
+"""Slim GL account reference shown alongside a pay code."""
+type PayCodeGLAccount {
+  accountCode: String!
+  id: ID!
+  name: String!
+}
+
+enum PayComponentKind {
+  Bonus
+  Breakdown
+  Custom
+  Detention
+  FuelSurcharge
+  Hazmat
+  Layover
+  Linehaul
+  StopPay
+  Tarp
+}
+
+"""
+One tier of a sliding mileage scale. Rate applies when the move's total miles
+fall within [minMiles, maxMiles); a maxMiles of 0 means open-ended. Carriers use
+bands to pay a higher per-mile rate on short hauls.
+"""
+type PayMileageBand {
+  maxMiles: Int!
+  minMiles: Int!
+  rate: String!
+}
+
+input PayMileageBandInput {
+  maxMiles: Int!
+  minMiles: Int!
+  rate: String!
+}
+
+enum PayPeriodFrequency {
+  Biweekly
+  Monthly
+  Weekly
+}
+
+"""
+A reusable pay package (e.g. "OTR Company Standard", "O-O 72% of Linehaul").
+Profiles are shared: assign one profile to many drivers, then use per-driver
+rate overrides on the assignment when individual drivers earn different rates.
+The classification drives W-2 vs 1099 treatment and which GL expense account
+settlements post to.
+"""
+type PayProfile {
+  activeAssignmentCount: Int!
+  businessUnitId: ID!
+  classification: PayeeClassification!
+  components: [PayProfileComponent!]
+  createdAt: Int!
+  currencyCode: String!
+  description: String!
+  guaranteedPeriodMinimumMinor: Int!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  perDiemDailyCapMinor: Int!
+  perDiemRatePerMile: String!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+"""
+A single earning rule inside a pay profile. Each active component is evaluated
+against every completed move: per-mile methods multiply the move's miles by the
+rate (or band rate), PercentOfRevenue takes a share of the shipment's revenue
+allocated to the move by distance, Detention pays hourly dwell beyond free time,
+and Hazmat pays when the shipment carries a hazmat commodity. PerDay/PerEvent
+components (layover, breakdown, tarp) are added as manual adjustments during
+settlement review since they have no automatic data source yet.
+"""
+type PayProfileComponent {
+  bands: [PayMileageBand!]
+  description: String!
+  freeTimeMinutes: Int!
+  id: ID!
+  isActive: Boolean!
+  kind: PayComponentKind!
+  maxAmountMinor: Int
+  method: PayCalcMethod!
+  minAmountMinor: Int
+  payProfileId: ID!
+  rate: String!
+  revenueBasis: PayRevenueBasis
+  sequence: Int!
+}
+
+input PayProfileComponentInput {
+  bands: [PayMileageBandInput!]
+  description: String
+  freeTimeMinutes: Int
+  isActive: Boolean
+  kind: PayComponentKind!
+  maxAmountMinor: Int
+  method: PayCalcMethod!
+  minAmountMinor: Int
+  rate: String!
+  revenueBasis: PayRevenueBasis
+}
+
+type PayProfileConnection {
+  edges: [PayProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type PayProfileEdge {
+  cursor: String!
+  node: PayProfile!
+}
+
+"""
+A driver-specific rate override on one pay profile component. Overrides let many
+drivers share the same profile structure at different rates — e.g. the same
+"OTR Company Standard" profile with one driver at $0.52/mile and another at $0.58.
+An override replaces the component's base rate and any mileage bands.
+"""
+type PayRateOverride {
+  """The pay profile component being overridden."""
+  componentId: ID!
+  """
+  The driver-specific rate that replaces the component's base rate (and bands).
+  """
+  rate: String!
+}
+
+input PayRateOverrideInput {
+  componentId: ID!
+  rate: String!
+}
+
+enum PayRevenueBasis {
+  Linehaul
+  LinehaulPlusFuelSurcharge
+  TotalRevenue
+}
+
+input PayWorkerNowInput {
+  """
+  Also apply recurring deductions, escrow, advance recovery, and carry-forward.
+  Off by default so the instant payout doesn't double-dip items the regular
+  period settlement will take.
+  """
+  applyRecurring: Boolean
+  """
+  Specific accrued events to pay; omit to pay everything accrued and unheld.
+  """
+  payEventIds: [ID!]
+  paymentMethod: String!
+  paymentReference: String
+  workerId: ID!
+}
+
+enum PayeeClassification {
+  CompanyDriver
+  OwnerOperator
+}
+
 enum PeriodType {
   Adjusting
   Month
   Quarter
   Week
+}
+
+"""
+A dispatch note on one of the driver's loads. Only comments explicitly marked
+with Driver visibility are ever returned.
+"""
+type PortalComment {
+  authorName: String!
+  comment: String!
+  createdAt: Int!
+  id: ID!
+  priority: String!
+  type: String!
+}
+
+"""
+The signed-in driver's qualification-file view: license, medical, and other
+FMCSA compliance dates, plus their contact details. Compliance fields are
+read-only for drivers — only contact details are self-serviceable.
+"""
+type PortalComplianceProfile {
+  addressLine1: String!
+  addressLine2: String!
+  cdlClass: String!
+  city: String!
+  complianceStatus: String!
+  emergencyContactName: String!
+  emergencyContactPhone: String!
+  endorsement: String!
+  hazmatExpiry: Int
+  hireDate: Int!
+  isQualified: Boolean!
+  licenseExpiry: Int!
+  licenseNumber: String!
+  licenseState: String!
+  medicalCardExpiry: Int
+  mvrDueDate: Int
+  phoneNumber: String!
+  physicalDueDate: Int
+  postalCode: String!
+  stateAbbreviation: String!
+  twicExpiry: Int
+  workerId: ID!
+}
+
+type PortalEscrowSummary {
+  account: EscrowAccount
+  transactions: [EscrowTransaction!]!
+}
+
+"""
+The signed-in driver's view of what their carrier has enabled in Dash. The
+server enforces every one of these — the client uses them only to hide UI.
+"""
+type PortalFeatures {
+  allowContactInfoEdit: Boolean!
+  allowExpenseSubmission: Boolean!
+  allowLoadComments: Boolean!
+  allowLoadDocumentUpload: Boolean!
+  allowLoadRefusals: Boolean!
+  allowProfileDocumentUpload: Boolean!
+  allowPtoRequests: Boolean!
+  allowSettlementDisputes: Boolean!
+  allowStopActions: Boolean!
+  requireExpenseReceipt: Boolean!
+  requireLoadAcknowledgment: Boolean!
+  showLoadPay: Boolean!
+  showPayEstimates: Boolean!
+}
+
+"""
+An invitation for a driver to create a Dash (driver portal) account. The token
+itself is never stored or exposed; only its hash is persisted.
+"""
+type PortalInvitation {
+  acceptedAt: Int
+  acceptedUserId: ID
+  businessUnitId: ID!
+  createdAt: Int!
+  email: String!
+  expiresAt: Int!
+  id: ID!
+  invitedBy: User
+  invitedById: ID!
+  organizationId: ID!
+  status: PortalInvitationStatus!
+  updatedAt: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+enum PortalInvitationStatus {
+  Accepted
+  Pending
+  Revoked
+}
+
+"""
+A load as the assigned driver sees it: the move, its stops, and the equipment,
+without any customer billing or rate detail.
+"""
+type PortalLoad {
+  """
+  Driver acknowledgment of the assignment: Pending, Accepted, or Declined.
+  """
+  ackStatus: String!
+  assignmentId: ID!
+  bol: String!
+  distanceMiles: Float
+  isPrimary: Boolean!
+  moveId: ID!
+  """
+  What this load pays the signed-in driver, summed across their pay events for
+  the move. Null until pay accrues.
+  """
+  payGrossMinor: Int
+  payOnHold: Boolean!
+  payStatus: String!
+  pieces: Int
+  proNumber: String!
+  shipmentId: ID!
+  status: String!
+  stops: [PortalStop!]!
+  tractorCode: String!
+  trailerCode: String!
+  weight: Int
+}
+
+enum PortalLoadScope {
+  Active
+  History
+}
+
+"""
+A read-only estimate of what a load pays the signed-in driver under their
+current pay assignment. Nothing is persisted.
+"""
+type PortalPayEstimate {
+  currencyCode: String!
+  grossMinor: Int!
+}
+
+"""Live pay accrued in the driver's current open pay period."""
+type PortalPeriodSummary {
+  accruedGrossMinor: Int!
+  eventCount: Int!
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+}
+
+"""The signed-in driver's profile as shown in Dash."""
+type PortalProfile {
+  driverType: String!
+  email: String!
+  firstName: String!
+  fleetCodeName: String!
+  lastName: String!
+  organizationName: String!
+  phoneNumber: String!
+  workerId: ID!
+  workerType: String!
+}
+
+"""
+A driver's time-off request, self-serviced from Dash and approved by the back
+office through the existing worker PTO workflow.
+"""
+type PortalPto {
+  createdAt: Int!
+  endDate: Int!
+  id: ID!
+  reason: String!
+  startDate: Int!
+  status: PortalPtoStatus!
+  type: PortalPtoType!
+  workerId: ID!
+}
+
+enum PortalPtoStatus {
+  Approved
+  Cancelled
+  Rejected
+  Requested
+}
+
+enum PortalPtoType {
+  Bereavement
+  Holiday
+  Maternity
+  Paternity
+  Personal
+  Sick
+  Vacation
+}
+
+type PortalStop {
+  actualArrival: Int
+  actualDeparture: Int
+  addressLine: String!
+  id: ID!
+  locationName: String!
+  scheduledWindowEnd: Int
+  scheduledWindowStart: Int!
+  sequence: Int!
+  status: String!
+  type: String!
+}
+
+enum PortalStopAction {
+  Arrive
+  Depart
 }
 
 input PostCustomerPaymentInput {
@@ -3126,12 +4286,15 @@ type Query {
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
   costingControl: CostingControl!
+  currentSettlementPeriod: SettlementPeriodBounds!
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
   customer(id: ID!): Customer
   customerPayment(id: ID!): CustomerPayment
   customerPayments(input: DataTableConnectionInput!): CustomerPaymentConnection!
   customers(input: DataTableConnectionInput!): CustomerConnection!
+  """Dash feature toggles for this organization (back office)."""
+  dashControl: DashControl!
   defaultTableConfiguration(resource: String!): TableConfiguration
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
@@ -3141,6 +4304,12 @@ type Query {
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
+  driverExpense(id: ID!): DriverExpense!
+  """Driver expense review queue (back office)."""
+  driverExpenses(input: DataTableConnectionInput!): DriverExpenseConnection!
+  driverPayEvents(input: DataTableConnectionInput!): DriverPayEventConnection!
+  driverSettlement(id: ID!): DriverSettlement
+  driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
@@ -3153,6 +4322,8 @@ type Query {
   ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
   ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
+  """The assignment governing the worker's pay right now, if any."""
+  effectiveWorkerPayAssignment(workerId: ID!): WorkerPayAssignment
   eiaSeriesOptions: [EIASeriesOption!]!
   emailProfile(id: ID!): EmailProfile
   emailProfiles(input: DataTableConnectionInput!): EmailProfileConnection!
@@ -3160,6 +4331,9 @@ type Query {
   equipmentManufacturers(input: DataTableConnectionInput!): EquipmentManufacturerConnection!
   equipmentType(id: ID!): EquipmentType
   equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
+  escrowAccount(id: ID!): EscrowAccount
+  escrowAccounts(input: DataTableConnectionInput!): EscrowAccountConnection!
+  exportSettlementBatchCsv(batchId: ID!): String!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -3194,14 +4368,62 @@ type Query {
   locations(input: DataTableConnectionInput!): LocationConnection!
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
+  myAdvances: [PayAdvance!]!
+  """
+  The signed-in driver's qualification-file view (license, medical, contact).
+  """
+  myComplianceProfile: PortalComplianceProfile!
+  myDisputes: [SettlementDispute!]!
+  myEscrow: PortalEscrowSummary!
+  myExpenses: [DriverExpense!]!
+  """Driver-visible dispatch notes for one of the signed-in driver's loads."""
+  myLoadComments(shipmentId: ID!): [PortalComment!]!
+  """Estimated driver pay for one of the signed-in driver's own moves."""
+  myLoadPayEstimate(moveId: ID!, shipmentId: ID!): PortalPayEstimate!
+  myLoads(limit: Int, scope: PortalLoadScope!): [PortalLoad!]!
+  myPeriodSummary: PortalPeriodSummary!
+  """Feature toggles for the signed-in driver's carrier."""
+  myPortalFeatures: PortalFeatures!
+  """
+  The signed-in driver's profile. All my* queries resolve the worker from the
+  session user and never accept a worker ID.
+  """
+  myPortalProfile: PortalProfile!
+  myPto: [PortalPto!]!
+  myRecentPayEvents(limit: Int): [DriverPayEvent!]!
+  mySettlement(id: ID!): DriverSettlement!
+  mySettlements(limit: Int, offset: Int): MySettlementList!
+  """The signed-in driver's year-to-date pay summary."""
+  myYtdPay(year: Int!): WorkerYTDPaySummary!
   notificationUnreadCount: Int!
   notifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
+  """Count of open or in-review disputes for workspace badges."""
+  openSettlementDisputeCount: Int!
   order(id: ID!): Order
   orders(input: DataTableConnectionInput!): OrderConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
+  payAdvance(id: ID!): PayAdvance
+  payAdvances(input: DataTableConnectionInput!): PayAdvanceConnection!
+  payCode(id: ID!): PayCode
+  """
+  Active pay codes for dropdowns, optionally filtered to one direction. System
+  defaults are provisioned automatically on first read.
+  """
+  payCodeOptions(direction: PayCodeDirection): [PayCode!]!
+  payCodes(input: DataTableConnectionInput!): PayCodeConnection!
+  payProfile(id: ID!): PayProfile
+  """Open assignments on a profile — every driver currently paid under it."""
+  payProfileAssignments(payProfileId: ID!): [WorkerPayAssignment!]!
+  payProfiles(input: DataTableConnectionInput!): PayProfileConnection!
+  pendingDriverExpenseCount: Int!
+  previewDriverSettlement(periodEnd: Int, periodStart: Int, workerId: ID!): DriverSettlement!
   previewReport(definition: ReportIRInput!, params: JSON): ReportPreview!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
+  recurringDeduction(id: ID!): RecurringDeduction
+  recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
+  recurringEarning(id: ID!): RecurringEarning
+  recurringEarnings(input: DataTableConnectionInput!): RecurringEarningConnection!
   recurringShipment(id: ID!): RecurringShipment
   recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
   reportCatalog: ReportCatalog!
@@ -3222,6 +4444,16 @@ type Query {
   serviceFailures(input: DataTableConnectionInput!, shipmentId: ID): ServiceFailureConnection!
   serviceType(id: ID!): ServiceType
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
+  settlementBatch(id: ID!): SettlementBatch
+  settlementBatches(input: DataTableConnectionInput!): SettlementBatchConnection!
+  settlementControl: SettlementControl!
+  settlementDispute(id: ID!): SettlementDispute!
+  """Settlement dispute queue (back office)."""
+  settlementDisputes(input: DataTableConnectionInput!): SettlementDisputeConnection!
+  """
+  Workspace snapshot for a pay period; omit bounds to use the current period.
+  """
+  settlementWorkspaceSummary(periodEnd: Int, periodStart: Int): SettlementWorkspaceSummary!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -3247,11 +4479,27 @@ type Query {
   trailer(id: ID!): Trailer
   trailers(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TrailerConnection!
   unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
+  """
+  A worker's accrued, unheld, unsettled pay events — the pool an instant
+  payout can draw from.
+  """
+  unsettledPayEvents(workerId: ID!): [DriverPayEvent!]!
+  """
+  Per-driver breakdown of the unsettled pay pool for a period (defaults to the
+  current period). Drives off-cycle "settle now" workflows and exception review.
+  """
+  unsettledWorkerSummaries(periodEnd: Int, periodStart: Int): [UnsettledWorkerSummary!]!
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
   users(input: DataTableConnectionInput!): UserConnection!
+  workerEarningsSummary(workerId: ID!): WorkerEarningsSummary!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
+  """Full assignment history for a worker, newest first."""
+  workerPayAssignments(workerId: ID!): [WorkerPayAssignment!]!
+  """Portal access state for a worker (back office)."""
+  workerPortalStatus(workerId: ID!): WorkerPortalStatus!
+  workerYtdPaySummaries(classification: PayeeClassification, year: Int!): [WorkerYTDPaySummary!]!
   workers(input: DataTableConnectionInput!): WorkerConnection!
 }
 
@@ -3292,6 +4540,117 @@ enum RateUnit {
   Hour
   Mile
   Stop
+}
+
+input RecordMyStopActionInput {
+  action: PortalStopAction!
+  moveId: ID!
+  stopId: ID!
+}
+
+"""
+A standing deduction taken from each qualifying settlement — insurance, lease
+payments, ELD fees, escrow contributions, or loan repayments. A total cap stops
+the deduction automatically once its lifetime total is reached (the deduction
+flips to Completed). Monthly-frequency deductions apply only to the first
+settlement of each month.
+"""
+type RecurringDeduction {
+  amountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  deductedToDateMinor: Int!
+  description: String!
+  endDate: Int
+  escrowAccountId: ID
+  frequency: RecurringDeductionFrequency!
+  id: ID!
+  organizationId: ID!
+  payCode: PayCode
+  payCodeId: ID!
+  startDate: Int!
+  status: RecurringDeductionStatus!
+  totalCapMinor: Int
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+type RecurringDeductionConnection {
+  edges: [RecurringDeductionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RecurringDeductionEdge {
+  cursor: String!
+  node: RecurringDeduction!
+}
+
+enum RecurringDeductionFrequency {
+  EverySettlement
+  Monthly
+}
+
+enum RecurringDeductionStatus {
+  Active
+  Completed
+  Paused
+}
+
+"""
+A standing earning added to each qualifying settlement — per diem, safety or
+performance bonuses, stipends, or equipment rental payments. Per diem and
+stipends post as non-taxable reimbursements; all other types post as taxable
+earnings that count toward guaranteed-minimum checks. A total cap stops the
+earning automatically once its lifetime total is reached (the earning flips to
+Completed). Monthly-frequency earnings apply only to the first settlement of
+each month.
+"""
+type RecurringEarning {
+  amountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  description: String!
+  endDate: Int
+  frequency: RecurringEarningFrequency!
+  id: ID!
+  organizationId: ID!
+  paidToDateMinor: Int!
+  payCode: PayCode
+  payCodeId: ID!
+  startDate: Int!
+  status: RecurringEarningStatus!
+  totalCapMinor: Int
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+type RecurringEarningConnection {
+  edges: [RecurringEarningEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RecurringEarningEdge {
+  cursor: String!
+  node: RecurringEarning!
+}
+
+enum RecurringEarningFrequency {
+  EverySettlement
+  Monthly
+}
+
+enum RecurringEarningStatus {
+  Active
+  Completed
+  Paused
 }
 
 type RecurringShipment {
@@ -3358,6 +4717,11 @@ enum RecurringShipmentStatus {
 input RemoveOrderChargeInput {
   chargeId: ID!
   orderId: ID!
+}
+
+input RemoveSettlementAdjustmentInput {
+  lineId: ID!
+  settlementId: ID!
 }
 
 type ReportCatalog {
@@ -3599,6 +4963,24 @@ input ReportSortInput {
   direction: String!
 }
 
+input RequestMyPtoInput {
+  endDate: Int!
+  reason: String!
+  startDate: Int!
+  type: PortalPtoType!
+}
+
+input ResolveSettlementDisputeInput {
+  """
+  Optional correcting adjustment applied to the driver's open settlement (one is
+  generated off-cycle when none exists). Only valid when approving.
+  """
+  adjustment: DisputeAdjustmentInput
+  approve: Boolean!
+  disputeId: ID!
+  resolutionNote: String!
+}
+
 type ResolvedCategoryRate {
   category: CostCategoryType!
   costBehavior: CostBehavior!
@@ -3619,10 +5001,22 @@ type ResolvedCostProfile {
   variableCpm: String!
 }
 
+input RespondToMyAssignmentInput {
+  accept: Boolean!
+  assignmentId: ID!
+  reason: String
+}
+
 input ReverseCustomerPaymentInput {
   accountingDate: Int!
   paymentId: ID!
   reason: String
+}
+
+input ReviewDriverExpenseInput {
+  approve: Boolean!
+  expenseId: ID!
+  note: String
 }
 
 type Role {
@@ -3900,6 +5294,207 @@ type ServiceTypeConnection {
 type ServiceTypeEdge {
   cursor: String!
   node: ServiceType!
+}
+
+"""
+Groups every settlement generated for one pay period so a payroll run can be
+reviewed, exported, and reconciled as a unit. Batches can be generated manually
+or automatically when the period closes (settlement control).
+"""
+type SettlementBatch {
+  businessUnitId: ID!
+  canceledAt: Int
+  canceledById: ID
+  completedAt: Int
+  createdAt: Int!
+  currencyCode: String!
+  exceptionCount: Int!
+  generatedAt: Int
+  generatedById: ID
+  id: ID!
+  name: String!
+  notes: String!
+  organizationId: ID!
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  settlementCount: Int!
+  settlements: [DriverSettlement!]
+  status: SettlementBatchStatus!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+type SettlementBatchConnection {
+  edges: [SettlementBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SettlementBatchEdge {
+  cursor: String!
+  node: SettlementBatch!
+}
+
+enum SettlementBatchStatus {
+  Canceled
+  Completed
+  Open
+}
+
+"""
+Organization-wide settlement policy: pay period cadence, the shipment milestone
+at which pay accrues, workflow automation (auto-generate batches, auto-approve
+clean settlements), exception thresholds, and escrow interest defaults.
+"""
+type SettlementControl {
+  allowNegativeNet: Boolean!
+  autoApproveClean: Boolean!
+  """
+  When on, newly accrued pay events flow into the driver's open draft settlement automatically.
+  """
+  autoAttachAccruals: Boolean!
+  autoGenerateBatches: Boolean!
+  """
+  When on, approving a settlement immediately posts it to the general ledger.
+  """
+  autoPostOnApprove: Boolean!
+  businessUnitId: ID!
+  createdAt: Int!
+  defaultEscrowInterestRate: String!
+  escrowInterestFrequencyMonths: Int!
+  id: ID!
+  organizationId: ID!
+  payDelayDays: Int!
+  payPeriodFrequency: PayPeriodFrequency!
+  payTrigger: SettlementPayTrigger!
+  periodEndDayOfWeek: Int!
+  updatedAt: Int!
+  varianceLookbackWeeks: Int!
+  varianceThresholdPct: String!
+  version: Int!
+}
+
+"""
+A driver-submitted question or challenge against an issued settlement or one of
+its lines, tracked through review to resolution or denial.
+"""
+type SettlementDispute {
+  businessUnitId: ID!
+  category: SettlementDisputeCategory!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  organizationId: ID!
+  resolutionLineId: ID
+  resolutionNote: String!
+  resolvedAt: Int
+  resolvedBy: User
+  resolvedById: ID
+  settlement: DriverSettlement
+  settlementId: ID!
+  settlementLine: DriverSettlementLine
+  settlementLineId: ID
+  status: SettlementDisputeStatus!
+  submittedByUserId: ID!
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+enum SettlementDisputeCategory {
+  IncorrectDeduction
+  IncorrectRate
+  MissingPay
+  MissingReimbursement
+  Other
+}
+
+type SettlementDisputeConnection {
+  edges: [SettlementDisputeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SettlementDisputeEdge {
+  cursor: String!
+  node: SettlementDispute!
+}
+
+enum SettlementDisputeStatus {
+  Denied
+  InReview
+  Open
+  Resolved
+  Withdrawn
+}
+
+"""
+A review flag raised during settlement generation. Critical exceptions (negative
+net, missing pay profile) should block approval; warnings (guarantee applied,
+high variance vs the driver's trailing average, capped deduction, manual
+adjustments) highlight what a reviewer should look at. Settlements without
+exceptions can auto-approve when the settlement control allows it.
+"""
+type SettlementException {
+  code: String!
+  message: String!
+  severity: String!
+}
+
+enum SettlementLineCategory {
+  Adjustment
+  AdvanceRecovery
+  CarryForward
+  Deduction
+  Earning
+  EscrowContribution
+  GuaranteeTopUp
+  Reimbursement
+}
+
+enum SettlementPayTrigger {
+  """
+  Pay accrues the moment a driver completes their move — even before the full shipment delivers.
+  """
+  MoveCompleted
+  PODReceived
+  ShipmentDelivered
+  ShipmentInvoiced
+}
+
+type SettlementPeriodBounds {
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+}
+
+"""
+One-call snapshot powering the settlement workspace: settlement counts by
+status for the pay period, exception totals, and the org-wide pool of
+unsettled pay events waiting to be transferred into settlements.
+"""
+type SettlementWorkspaceSummary {
+  approvedCount: Int!
+  draftCount: Int!
+  exceptionCount: Int!
+  heldEventCount: Int!
+  heldGrossMinor: Int!
+  openBatchId: ID
+  paidCount: Int!
+  payDate: Int!
+  pendingApprovalCount: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  postedCount: Int!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
+  unsettledEventCount: Int!
+  unsettledGrossMinor: Int!
+  unsettledWorkerCount: Int!
 }
 
 type Shipment {
@@ -5159,6 +6754,14 @@ type StoredMileageEdge {
   node: StoredMileage!
 }
 
+input SubmitMyExpenseInput {
+  amountMinor: Int!
+  description: String!
+  incurredDate: Int
+  payCodeId: ID
+  shipmentId: ID
+}
+
 type TCASubscription {
   businessUnitId: ID!
   conditionMatch: String!
@@ -5420,6 +7023,27 @@ input TrailerPatchInput {
   year: Int
 }
 
+"""
+A driver holding accrued, unsettled pay for the current period — one row per
+driver in the unsettled pool. Drivers without a settlement for the period can
+be settled off-cycle individually; drivers who already have one collect new
+accruals on their open draft automatically.
+"""
+type UnsettledWorkerSummary {
+  """Accrued events that are ready to settle (held events are excluded)."""
+  eventCount: Int!
+  grossAmountMinor: Int!
+  """
+  True when the driver already has a non-voided settlement for the period.
+  """
+  hasSettlement: Boolean!
+  """Events deferred with a hold reason; released events rejoin the pool."""
+  heldCount: Int!
+  heldGrossMinor: Int!
+  workerId: ID!
+  workerName: String!
+}
+
 input UpcomingWorkerPTOInput {
   after: String
   endDate: Int
@@ -5432,10 +7056,48 @@ input UpcomingWorkerPTOInput {
   workerId: ID
 }
 
+input UpdateDashControlInput {
+  allowContactInfoEdit: Boolean!
+  allowExpenseSubmission: Boolean!
+  allowLoadComments: Boolean!
+  allowLoadDocumentUpload: Boolean!
+  allowLoadRefusals: Boolean!
+  allowProfileDocumentUpload: Boolean!
+  allowPtoRequests: Boolean!
+  allowSettlementDisputes: Boolean!
+  allowStopActions: Boolean!
+  detentionAlertThresholdMinutes: Int!
+  enableDetentionAlerts: Boolean!
+  requireExpenseReceipt: Boolean!
+  requireLoadAcknowledgment: Boolean!
+  sendCredentialReminders: Boolean!
+  showLoadPay: Boolean!
+  showPayEstimates: Boolean!
+  version: Int!
+}
+
+input UpdateEscrowAccountInput {
+  annualInterestRate: String!
+  id: ID!
+  targetAmountMinor: Int!
+  version: Int!
+  workerId: ID!
+}
+
 input UpdateFuelIndexPriceInput {
   id: ID!
   price: String!
   priceDate: String!
+}
+
+input UpdateMyContactInfoInput {
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  emergencyContactName: String
+  emergencyContactPhone: String
+  phoneNumber: String!
+  postalCode: String!
 }
 
 input UpdateOrderChargeInput {
@@ -5444,6 +7106,64 @@ input UpdateOrderChargeInput {
   description: String!
   orderId: ID!
   version: Int!
+}
+
+input UpdatePayCodeInput {
+  code: String!
+  countsTowardGuarantee: Boolean!
+  defaultAmountMinor: Int
+  description: String
+  glAccountId: ID
+  id: ID!
+  name: String!
+  status: EntityStatus!
+  taxable: Boolean!
+  version: Int!
+}
+
+input UpdatePayProfileInput {
+  classification: PayeeClassification!
+  components: [PayProfileComponentInput!]!
+  currencyCode: String
+  description: String
+  guaranteedPeriodMinimumMinor: Int
+  id: ID!
+  name: String!
+  perDiemDailyCapMinor: Int
+  perDiemRatePerMile: String
+  status: EntityStatus
+  version: Int!
+}
+
+input UpdateRecurringDeductionInput {
+  amountMinor: Int!
+  currencyCode: String
+  description: String!
+  endDate: Int
+  escrowAccountId: ID
+  frequency: RecurringDeductionFrequency!
+  id: ID!
+  payCodeId: ID!
+  startDate: Int!
+  status: RecurringDeductionStatus!
+  totalCapMinor: Int
+  version: Int!
+  workerId: ID!
+}
+
+input UpdateRecurringEarningInput {
+  amountMinor: Int!
+  currencyCode: String
+  description: String!
+  endDate: Int
+  frequency: RecurringEarningFrequency!
+  id: ID!
+  payCodeId: ID!
+  startDate: Int!
+  status: RecurringEarningStatus!
+  totalCapMinor: Int
+  version: Int!
+  workerId: ID!
 }
 
 input UpdateReportDefinitionInput {
@@ -5469,6 +7189,23 @@ input UpdateReportScheduleInput {
   id: ID!
   notifyUserIds: [ID!]
   timezone: String
+  version: Int!
+}
+
+input UpdateSettlementControlInput {
+  allowNegativeNet: Boolean!
+  autoApproveClean: Boolean!
+  autoAttachAccruals: Boolean!
+  autoGenerateBatches: Boolean!
+  autoPostOnApprove: Boolean!
+  defaultEscrowInterestRate: String!
+  escrowInterestFrequencyMonths: Int!
+  payDelayDays: Int!
+  payPeriodFrequency: PayPeriodFrequency!
+  payTrigger: SettlementPayTrigger!
+  periodEndDayOfWeek: Int!
+  varianceLookbackWeeks: Int!
+  varianceThresholdPct: String!
   version: Int!
 }
 
@@ -5561,6 +7298,18 @@ type WorkerConnection {
   totalCount: Int
 }
 
+"""
+Live pay position for one driver: unsettled earnings accrued to date,
+outstanding advances, and escrow balance.
+"""
+type WorkerEarningsSummary {
+  accruedEventCount: Int!
+  accruedGrossMinor: Int!
+  escrowBalanceMinor: Int!
+  outstandingAdvances: Int!
+  workerId: ID!
+}
+
 type WorkerEdge {
   cursor: String!
   node: Worker!
@@ -5631,6 +7380,50 @@ input WorkerPatchInput {
   type: WorkerType
 }
 
+"""
+Links a worker to a pay profile for a date range. A worker's pay is always
+resolved through their assignment effective on the shipment's delivery date.
+Assigning a new profile automatically ends the previous open assignment, so the
+history is a contiguous, auditable record of how the driver was paid over time.
+"""
+type WorkerPayAssignment {
+  businessUnitId: ID!
+  createdAt: Int!
+  createdById: ID
+  """Unix date the assignment starts applying (inclusive)."""
+  effectiveFrom: Int!
+  """
+  Unix date the assignment stops applying (exclusive). Null while current.
+  """
+  effectiveTo: Int
+  id: ID!
+  notes: String!
+  organizationId: ID!
+  payProfile: PayProfile
+  payProfileId: ID!
+  """Driver-specific rate overrides applied on top of the shared profile."""
+  rateOverrides: [PayRateOverride!]
+  """
+  Share of computed pay this worker receives (100 = full pay; 50/50 for teams).
+  """
+  splitPercent: String!
+  updatedAt: Int!
+  version: Int!
+  worker: Worker
+  workerId: ID!
+}
+
+"""
+Portal access state for one worker: whether they have a linked portal login,
+the linked user if so, and their invitation history.
+"""
+type WorkerPortalStatus {
+  invitations: [PortalInvitation!]!
+  linked: Boolean!
+  pendingInvitation: PortalInvitation
+  portalUser: User
+}
+
 type WorkerProfile {
   businessUnitId: ID!
   cdlClass: CDLClass!
@@ -5670,4 +7463,26 @@ type WorkerProfile {
 enum WorkerType {
   Contractor
   Employee
+}
+
+"""
+Year-to-date pay totals per driver. Gross and deductions are accumulated
+independently so owner-operator 1099-NEC reporting uses true gross (before
+chargebacks), not net.
+"""
+type WorkerYTDPaySummary {
+  classification: PayeeClassification!
+  deductionsMinor: Int!
+  grossEarningsMinor: Int!
+  netPayMinor: Int!
+  reimbursementsMinor: Int!
+  settlementCount: Int!
+  workerId: ID!
+  workerName: String!
+  year: Int!
+}
+
+input WriteOffPayAdvanceInput {
+  advanceId: ID!
+  reason: String!
 }

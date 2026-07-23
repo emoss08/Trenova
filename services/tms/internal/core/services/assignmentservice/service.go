@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -15,12 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -46,6 +49,8 @@ type Params struct {
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
 	EventService        portservices.ShipmentEventService
+	Realtime            portservices.RealtimeService
+	DriverNotify        *drivernotificationservice.Service
 }
 
 type service struct {
@@ -65,6 +70,8 @@ type service struct {
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
 	eventService        portservices.ShipmentEventService
+	realtime            portservices.RealtimeService
+	driverNotify        *drivernotificationservice.Service
 }
 
 func New(p Params) portservices.AssignmentService {
@@ -85,6 +92,108 @@ func New(p Params) portservices.AssignmentService {
 		coordinator:         p.Coordinator,
 		commercial:          p.Commercial,
 		eventService:        p.EventService,
+		realtime:            p.Realtime,
+		driverNotify:        p.DriverNotify,
+	}
+}
+
+func (s *service) notifyAssignedWorkers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignment *shipment.Assignment,
+	skip map[pulid.ID]struct{},
+) {
+	if s.driverNotify == nil || assignment == nil {
+		return
+	}
+	link := "/dash/loads/" + assignment.ID.String()
+	for _, workerID := range assignmentWorkerIDs(assignment) {
+		if _, ok := skip[workerID]; ok {
+			continue
+		}
+		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+			TenantInfo: tenantInfo,
+			WorkerID:   workerID,
+			EventType:  "dash.load_assigned",
+			Priority:   notification.PriorityHigh,
+			Title:      "New load assigned",
+			Message:    "You've been assigned a load. Open Dash to see the stops and details.",
+			Link:       link,
+			RelatedEntities: map[string]any{
+				"assignmentId": assignment.ID.String(),
+			},
+		})
+	}
+}
+
+func (s *service) notifyUnassignedWorkers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerIDs []pulid.ID,
+	keep map[pulid.ID]struct{},
+) {
+	if s.driverNotify == nil {
+		return
+	}
+	for _, workerID := range workerIDs {
+		if _, ok := keep[workerID]; ok {
+			continue
+		}
+		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+			TenantInfo: tenantInfo,
+			WorkerID:   workerID,
+			EventType:  "dash.load_unassigned",
+			Priority:   notification.PriorityMedium,
+			Title:      "Load removed",
+			Message:    "A load was taken off your schedule. Check Dash for your current loads.",
+			Link:       "/dash/loads",
+		})
+	}
+}
+
+func assignmentWorkerIDs(assignment *shipment.Assignment) []pulid.ID {
+	if assignment == nil {
+		return nil
+	}
+	ids := make([]pulid.ID, 0, 2)
+	if assignment.PrimaryWorkerID != nil && !assignment.PrimaryWorkerID.IsNil() {
+		ids = append(ids, *assignment.PrimaryWorkerID)
+	}
+	if assignment.SecondaryWorkerID != nil && !assignment.SecondaryWorkerID.IsNil() {
+		ids = append(ids, *assignment.SecondaryWorkerID)
+	}
+	return ids
+}
+
+func workerIDSet(ids []pulid.ID) map[pulid.ID]struct{} {
+	set := make(map[pulid.ID]struct{}, len(ids))
+	for _, id := range ids {
+		set[id] = struct{}{}
+	}
+	return set
+}
+
+func (s *service) publishAssignmentInvalidation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+	action string,
+) {
+	if s.realtime == nil || shipmentID.IsNil() {
+		return
+	}
+	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ActorUserID:    tenantInfo.UserID,
+		ActorType:      portservices.PrincipalTypeUser,
+		ActorID:        tenantInfo.UserID,
+		Resource:       "shipments",
+		Action:         action,
+		RecordID:       shipmentID,
+	})
+	if err != nil {
+		s.l.Warn("failed to publish assignment invalidation", zap.Error(err))
 	}
 }
 
@@ -206,6 +315,8 @@ func (s *service) AssignToMove(
 			driverDisplayName(result),
 			actorFromTenant(req.TenantInfo),
 		))
+		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "assigned")
+		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, nil)
 	}
 
 	return result, nil
@@ -219,6 +330,7 @@ func (s *service) Reassign(
 		return nil, multiErr
 	}
 
+	var previousWorkers []pulid.ID
 	result, err := s.upsertAssignment(
 		ctx,
 		req.TenantInfo,
@@ -230,6 +342,7 @@ func (s *service) Reassign(
 				)
 			}
 
+			previousWorkers = assignmentWorkerIDs(existing)
 			updated := *existing
 			updated.PrimaryWorkerID = &req.PrimaryWorkerID
 			updated.TractorID = &req.TractorID
@@ -255,6 +368,10 @@ func (s *service) Reassign(
 			driverDisplayName(result),
 			actorFromTenant(req.TenantInfo),
 		))
+		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "reassigned")
+		currentWorkers := assignmentWorkerIDs(result)
+		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, workerIDSet(previousWorkers))
+		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, workerIDSet(currentWorkers))
 	}
 
 	return result, nil
@@ -268,7 +385,7 @@ func (s *service) Unassign(
 		return multiErr
 	}
 
-	ref, err := s.unassignWithinTx(ctx, req)
+	ref, previousWorkers, err := s.unassignWithinTx(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -279,6 +396,8 @@ func (s *service) Unassign(
 			*ref,
 			actorFromTenant(req.TenantInfo),
 		))
+		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "unassigned")
+		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
 	}
 
 	return nil
@@ -287,8 +406,9 @@ func (s *service) Unassign(
 func (s *service) unassignWithinTx(
 	ctx context.Context,
 	req *repositories.UnassignShipmentMoveRequest,
-) (*shipmenteventservice.AssignmentRef, error) {
+) (*shipmenteventservice.AssignmentRef, []pulid.ID, error) {
 	var ref *shipmenteventservice.AssignmentRef
+	var previousWorkers []pulid.ID
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		move, err := s.repo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
@@ -327,6 +447,7 @@ func (s *service) unassignWithinTx(
 				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 		}
 
+		previousWorkers = assignmentWorkerIDs(existing)
 		if _, err = s.repo.Unassign(txCtx, existing); err != nil {
 			return err
 		}
@@ -375,13 +496,13 @@ func (s *service) unassignWithinTx(
 		return err
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(
+		return nil, nil, dberror.MapRetryableTransactionError(
 			err,
 			"Assignment is busy. Retry the request.",
 		)
 	}
 
-	return ref, nil
+	return ref, previousWorkers, nil
 }
 
 func (s *service) CheckWorkerCompliance(

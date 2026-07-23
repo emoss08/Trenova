@@ -89,6 +89,7 @@ export default function AccountingControlForm() {
         <div className="flex flex-col gap-4 pb-14">
           <RecognitionPolicyCard />
           <JournalPolicyCard />
+          <DriverSettlementPostingCard />
           <PeriodAndReconciliationCard />
           <CurrencyAndAccountsCard />
           <FormSaveDock saveButtonContent="Save Changes" />
@@ -327,6 +328,87 @@ function JournalPolicyCard() {
               label="Default Retained Earnings Account"
               placeholder="Select retained earnings account"
               description="Default retained earnings account used by closing and equity-related accounting processes."
+              clearable
+            />
+          </FormControl>
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DriverSettlementPostingCard() {
+  const { control } = useFormContext<AccountingControl>();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Driver Settlement Posting</CardTitle>
+        <CardDescription>
+          GL accounts used when driver settlements post to the ledger. These allocations feed the
+          DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects
+          actual driver pay.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultDriverPayExpenseAccountId"
+              label="Driver Pay Expense Account"
+              placeholder="Select driver pay expense account"
+              description="Expense account debited for company-driver earnings when a settlement posts. Required to post settlements."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultPurchasedTransportationAccountId"
+              label="Purchased Transportation Account"
+              placeholder="Select purchased transportation account"
+              description="Expense account debited for owner-operator earnings instead of driver pay expense. Required to post owner-operator settlements."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultDriverReimbursementAccountId"
+              label="Driver Reimbursement Account"
+              placeholder="Select reimbursement account"
+              description="Expense account debited for non-taxable reimbursements such as per diem and stipends; falls back to the driver pay expense account when unset."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultSettlementsPayableAccountId"
+              label="Settlements Payable Account"
+              placeholder="Select settlements payable account"
+              description="Liability account credited for the net pay owed to the driver until the settlement is paid. Required to post settlements."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultDriverAdvanceAccountId"
+              label="Driver Advance Receivable Account"
+              placeholder="Select advance receivable account"
+              description="Asset account tracking outstanding driver advances; credited when advances are recovered and debited for negative-balance carry-forwards."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultEscrowLiabilityAccountId"
+              label="Escrow Liability Account"
+              placeholder="Select escrow liability account"
+              description="Liability account credited for driver escrow contributions withheld from settlements."
               clearable
             />
           </FormControl>

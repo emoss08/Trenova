@@ -267,16 +267,6 @@ export default function ShipmentBillingDetails() {
       {shipmentId && <ProfitabilitySummary shipmentId={shipmentId} />}
       <FormGroup cols={2}>
         <FormControl>
-          <CustomerAutocompleteField
-            control={control}
-            name="customerId"
-            rules={{ required: true }}
-            label="Customer"
-            placeholder="Select Customer"
-            description="Choose the customer who requested this shipment."
-          />
-        </FormControl>
-        <FormControl>
           <OrderAutocompleteField
             control={control}
             name="orderId"
@@ -288,6 +278,16 @@ export default function ShipmentBillingDetails() {
           />
         </FormControl>
         <FormControl>
+          <CustomerAutocompleteField
+            control={control}
+            name="customerId"
+            rules={{ required: true }}
+            label="Customer"
+            placeholder="Select Customer"
+            description="Choose the customer who requested this shipment."
+          />
+        </FormControl>
+        <FormControl cols="full">
           <FormulaTemplateAutocompleteField
             control={control}
             name="formulaTemplateId"

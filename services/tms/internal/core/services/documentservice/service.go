@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -62,6 +63,7 @@ type Params struct {
 	Config               *config.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
 	Encryption           *encryptionservice.Service
+	Realtime             services.RealtimeService
 }
 
 type Service struct {
@@ -83,6 +85,7 @@ type Service struct {
 	config               *config.StorageConfig
 	thumbnailGenerator   *thumbnailservice.Generator
 	encryption           *encryptionservice.Service
+	realtime             services.RealtimeService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -120,6 +123,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		config:               p.Config.GetStorageConfig(),
 		thumbnailGenerator:   p.ThumbnailGenerator,
 		encryption:           p.Encryption,
+		realtime:             p.Realtime,
 	}
 }
 
@@ -357,8 +361,39 @@ func (s *Service) Upload(
 		_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
 	}
 	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, &req.Actor)
+	s.publishDocumentInvalidation(ctx, createdDoc, &req.Actor)
 
 	return &UploadResult{Document: createdDoc}, nil
+}
+
+func (s *Service) publishDocumentInvalidation(
+	ctx context.Context,
+	doc *document.Document,
+	actor *services.RequestActor,
+) {
+	if s.realtime == nil || doc == nil {
+		return
+	}
+	params := &realtimeinvalidation.PublishParams{
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		Resource:       permission.ResourceDocument.String(),
+		Action:         string(permission.OpCreate),
+		RecordID:       doc.ID,
+		Entity: map[string]string{
+			"resourceId":   doc.ResourceID,
+			"resourceType": doc.ResourceType,
+		},
+	}
+	if actor != nil {
+		params.ActorUserID = actor.UserID
+		params.ActorType = actor.PrincipalType
+		params.ActorID = actor.PrincipalID
+		params.ActorAPIKeyID = actor.APIKeyID
+	}
+	if err := realtimeinvalidation.Publish(ctx, s.realtime, params); err != nil {
+		s.l.Warn("failed to publish document invalidation", zap.Error(err))
+	}
 }
 
 func (s *Service) prepareUploadLineage(

@@ -12,6 +12,10 @@ type ShipmentMoveService interface {
 		ctx context.Context,
 		req *repositories.UpdateMoveStatusRequest,
 	) (*shipment.ShipmentMove, error)
+	RecordStopActual(
+		ctx context.Context,
+		req *repositories.RecordStopActualRequest,
+	) (*shipment.ShipmentMove, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *repositories.BulkUpdateMoveStatusRequest,

@@ -176,6 +176,20 @@ func (g *generator) GenerateManualJournalRequestNumber(
 	})
 }
 
+func (g *generator) GenerateDriverSettlementNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeDriverSettlement,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
 func (g *generator) Generate(ctx context.Context, req *GenerateRequest) (string, error) {
 	if req == nil {
 		return "", ErrSequenceRequestRequired

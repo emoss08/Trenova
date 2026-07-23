@@ -8,6 +8,7 @@ import {
   HomeIcon,
   Package,
   ReceiptTextIcon,
+  WalletIcon,
   SettingsIcon,
   TruckIcon,
   UsersIcon,
@@ -285,6 +286,95 @@ const billingModule: NavModule = {
   ],
 };
 
+const payrollModule: NavModule = {
+  id: "payroll",
+  label: "Payroll & Settlements",
+  icon: WalletIcon,
+  description: "Driver and owner-operator pay",
+  basePath: "/payroll",
+  navigation: [
+    {
+      id: "settlement-workspace",
+      label: "Workspace",
+      path: "/payroll/workspace",
+      resource: Resource.DriverSettlement,
+    },
+    {
+      id: "driver-settlements",
+      label: "Settlement History",
+      path: "/payroll/settlements",
+      resource: Resource.DriverSettlement,
+    },
+    {
+      id: "settlement-disputes",
+      label: "Disputes",
+      path: "/payroll/disputes",
+      resource: Resource.SettlementDispute,
+    },
+    {
+      id: "driver-expenses",
+      label: "Driver Expenses",
+      path: "/payroll/expenses",
+      resource: Resource.DriverExpense,
+    },
+    {
+      id: "settlement-batches",
+      label: "Settlement Batches",
+      path: "/payroll/settlement-batches",
+      resource: Resource.DriverSettlement,
+    },
+    {
+      id: "pay-events",
+      label: "Pay Events",
+      path: "/payroll/pay-events",
+      resource: Resource.DriverSettlement,
+    },
+    {
+      id: "payroll-config-group",
+      label: "Configuration Files",
+      defaultOpen: false,
+      items: [
+        {
+          id: "pay-profiles",
+          label: "Pay Profiles",
+          path: "/payroll/pay-profiles",
+          resource: Resource.DriverPayProfile,
+        },
+        {
+          id: "recurring-deductions",
+          label: "Recurring Deductions",
+          path: "/payroll/deductions",
+          resource: Resource.RecurringDeduction,
+        },
+        {
+          id: "recurring-earnings",
+          label: "Recurring Earnings",
+          path: "/payroll/earnings",
+          resource: Resource.RecurringEarning,
+        },
+        {
+          id: "pay-codes",
+          label: "Pay Codes",
+          path: "/payroll/pay-codes",
+          resource: Resource.PayCode,
+        },
+        {
+          id: "pay-advances",
+          label: "Pay Advances",
+          path: "/payroll/advances",
+          resource: Resource.PayAdvance,
+        },
+        {
+          id: "escrow-accounts",
+          label: "Escrow Accounts",
+          path: "/payroll/escrow-accounts",
+          resource: Resource.EscrowAccount,
+        },
+      ],
+    },
+  ],
+};
+
 const ediModule: NavModule = {
   id: "edi",
   label: "EDI",
@@ -521,6 +611,7 @@ export const navigationConfig: NavigationConfig = {
     dispatchModule,
     equipmentModule,
     billingModule,
+    payrollModule,
     ediModule,
     reportsModule,
     accountingModule,
@@ -833,7 +924,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "financial",
     label: "Financial",
-    moduleIds: ["billing", "reports", "accounting"],
+    moduleIds: ["billing", "payroll", "reports", "accounting"],
   },
   {
     id: "admin",
@@ -855,6 +946,20 @@ export const adminLinks: SidebarLink[] = [
     title: "Accounting Controls",
     group: "Organization",
     resource: Resource.AccountingControl,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/settlement-control",
+    title: "Settlement Control",
+    group: "Organization",
+    resource: Resource.SettlementControl,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/dash-control",
+    title: "Dash Control",
+    group: "Organization",
+    resource: Resource.DashControl,
     requiredOperation: Operation.Read,
   },
   {

@@ -45,12 +45,19 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	svc, shipmentRepo, _, tenantInfo, fixture := newIntegrationService(t, ctx, db)
-	graph := testutil.CreateShipmentGraph(t, ctx, db, fixture, tenantInfo, testutil.ShipmentGraphParams{
-		BOL:          "BOL-UPD-001",
-		ProNumber:    "PRO-UPD-001",
-		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
-	})
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-UPD-001",
+			ProNumber:    "PRO-UPD-001",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		},
+	)
 
 	updated, err := svc.UpdateStatus(ctx, &repositories.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
@@ -81,12 +88,22 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	svc, _, moveRepo, tenantInfo, fixture := newIntegrationService(t, ctx, db)
-	graph := testutil.CreateShipmentGraph(t, ctx, db, fixture, tenantInfo, testutil.ShipmentGraphParams{
-		BOL:          "BOL-BULK-001",
-		ProNumber:    "PRO-BULK-001",
-		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew, shipment.MoveStatusCompleted},
-	})
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:        "BOL-BULK-001",
+			ProNumber:  "PRO-BULK-001",
+			ShipmentID: pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{
+				shipment.MoveStatusNew,
+				shipment.MoveStatusCompleted,
+			},
+		},
+	)
 
 	updated, err := svc.BulkUpdateStatus(ctx, &repositories.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
@@ -97,11 +114,14 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
-	persistedMoves, err := moveRepo.GetMovesByShipmentID(ctx, &repositories.GetMovesByShipmentIDRequest{
-		ShipmentID:        graph.Shipment.ID,
-		TenantInfo:        tenantInfo,
-		ExpandMoveDetails: true,
-	})
+	persistedMoves, err := moveRepo.GetMovesByShipmentID(
+		ctx,
+		&repositories.GetMovesByShipmentIDRequest{
+			ShipmentID:        graph.Shipment.ID,
+			TenantInfo:        tenantInfo,
+			ExpandMoveDetails: true,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, persistedMoves, 2)
 	assert.Equal(t, shipment.MoveStatusNew, persistedMoves[0].Status)
@@ -115,12 +135,19 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	svc, shipmentRepo, _, tenantInfo, fixture := newIntegrationService(t, ctx, db)
-	graph := testutil.CreateShipmentGraph(t, ctx, db, fixture, tenantInfo, testutil.ShipmentGraphParams{
-		BOL:          "BOL-SPLIT-001",
-		ProNumber:    "PRO-SPLIT-001",
-		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
-	})
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-SPLIT-001",
+			ProNumber:    "PRO-SPLIT-001",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		},
+	)
 	newDestination := testutil.MustCreateLocation(
 		t,
 		ctx,
@@ -138,11 +165,15 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 		NewDeliveryLocationID: newDestination.ID,
 		SplitPickupTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 1_800,
-			ScheduledWindowEnd:   integrationInt64Ptr(originalDelivery.EffectiveScheduledWindowEnd() + 3_600),
+			ScheduledWindowEnd: integrationInt64Ptr(
+				originalDelivery.EffectiveScheduledWindowEnd() + 3_600,
+			),
 		},
 		NewDeliveryTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 7_200,
-			ScheduledWindowEnd:   integrationInt64Ptr(originalDelivery.EffectiveScheduledWindowEnd() + 9_000),
+			ScheduledWindowEnd: integrationInt64Ptr(
+				originalDelivery.EffectiveScheduledWindowEnd() + 9_000,
+			),
 		},
 	})
 	require.NoError(t, err)

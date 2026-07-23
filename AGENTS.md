@@ -29,8 +29,9 @@ Use service-local commands from each module.
 - Naming: use descriptive domain-based names (`userservice`, `locationcategory`, `formula_template`); keep files/packages lower-case.
 - Keep functions small and explicit; avoid introducing `encoding/json` in Go where project lint rules disallow it.
 - Bun ORM: use the [docs](docs/bun/) for help.
+- **Repositories**: When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/bun/buncolgen.md](docs/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
 - **Function signatures**: When a Go function has more than ~3-4 parameters, define a params struct instead of a long parameter list.
-- **Utility functions go in `shared/`**: Do NOT place generic utility/helper functions inside domain, service, or handler files. The `shared/` directory (`shared/stringutils`, `shared/sliceutils`, `shared/intutils`, etc.) is the home for all reusable utilities. Create new sub-packages there if needed.
+- **Utility functions go in `shared/` (backend) and `client/src/lib/` (frontend)**: Do NOT place generic utility/helper functions inside domain, service, or handler files, nor inline in React components/hooks/routes. Backend utilities live in `shared/` (`shared/stringutils`, `shared/sliceutils`, `shared/intutils`, etc.) — create new sub-packages there if needed. Frontend utilities live in `client/src/lib/` (`utils.ts`, `date.ts`, etc.). If a utility that does the same thing already exists, reuse it — never write a duplicate.
 - **Performance**: Write efficient, allocation-conscious code. Preallocate slices/maps when sizes are known. Avoid unnecessary copies. Use appropriate data structures for the problem.
 - **Code quality**: Prefer clarity and correctness. No dead code, no unused imports, no TODO placeholders left behind. Every function should have a single clear responsibility.
 
@@ -65,9 +66,15 @@ Use service-local commands from each module.
 
 ## Code Quality Non-Negotiables
 
-- **No "v1" or placeholder code**: This is an enterprise TMS application. Implement features fully and completely on the first pass. No stubs, no TODO comments, no "we can improve this later" shortcuts, no simplified versions of what was asked. Handle all edge cases, error states, validation, and integration points. If the feature is complex, that's fine — implement the full complexity.
+- **No "v1", "MVP", or placeholder code**: This is an enterprise TMS application. Never write a "v1", "MVP", or simplified version of what was asked. Implement features fully and completely on the first pass. No stubs, no TODO comments, no "we can improve this later" shortcuts. Handle all edge cases, error states, validation, and integration points. If the feature is complex, that's fine — implement the full complexity.
+- **Secure and bug-free**: All code must be secure — no injection vectors, no unvalidated input, no leaked secrets, proper authorization checks — and free of bugs. Follow DRY & SOLID principles in every implementation.
 - Never deviate from the established code style in the repository. Match the patterns already in use.
 - Do not introduce new dependencies without justification.
 - Do not leave commented-out code, TODO comments, or placeholder implementations.
 - Prefer the simplest correct solution. Do not over-engineer.
 - All error paths must be handled explicitly — no swallowed errors.
+
+## Do Not
+
+- Do not run high usage tasks that will max out CPU, Disk and/or memory usage.
+- Do not run mockery against the entire codebase — manually adjust mocks in the codebase.

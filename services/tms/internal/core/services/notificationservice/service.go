@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/webpushservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -18,12 +19,14 @@ type Params struct {
 	Logger   *zap.Logger
 	Repo     repositories.NotificationRepository
 	Realtime servicesport.RealtimeService
+	WebPush  *webpushservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l        *zap.Logger
 	repo     repositories.NotificationRepository
 	realtime servicesport.RealtimeService
+	webPush  *webpushservice.Service
 }
 
 func New(p Params) *Service {
@@ -31,6 +34,7 @@ func New(p Params) *Service {
 		l:        p.Logger.Named("service.notification"),
 		repo:     p.Repo,
 		realtime: p.Realtime,
+		webPush:  p.WebPush,
 	}
 }
 
@@ -72,7 +76,36 @@ func (s *Service) Create(
 		log.Warn("failed to publish realtime notification", zap.Error(pubErr))
 	}
 
+	s.sendWebPush(ctx, created)
+
 	return created, nil
+}
+
+// sendWebPush delivers a targeted notification to the user's registered web
+// push subscriptions in the background so it reaches drivers with the app
+// closed. Global/role notifications are intentionally not pushed.
+func (s *Service) sendWebPush(ctx context.Context, created *notification.Notification) {
+	if s.webPush == nil || !s.webPush.Enabled() {
+		return
+	}
+	if created.TargetUserID == nil || created.TargetUserID.IsNil() {
+		return
+	}
+
+	link := ""
+	if raw, ok := created.Data["link"].(string); ok {
+		link = raw
+	}
+	targetUserID := *created.TargetUserID
+	payload := &webpushservice.PushPayload{
+		Title:   created.Title,
+		Body:    created.Message,
+		Link:    link,
+		EventID: created.ID.String(),
+	}
+
+	background := context.WithoutCancel(ctx)
+	go s.webPush.SendToUser(background, targetUserID, payload)
 }
 
 func (s *Service) List(

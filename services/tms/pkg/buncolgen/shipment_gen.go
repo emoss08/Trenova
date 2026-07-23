@@ -281,6 +281,9 @@ var AssignmentColumns = struct {
 	TrailerID         Column // "trailer_id" → qualified: "a.trailer_id"
 	SecondaryWorkerID Column // "secondary_worker_id" → qualified: "a.secondary_worker_id"
 	Status            Column // "status" → qualified: "a.status"
+	AckStatus         Column // "ack_status" → qualified: "a.ack_status"
+	AckAt             Column // "ack_at" → qualified: "a.ack_at"
+	AckReason         Column // "ack_reason" → qualified: "a.ack_reason"
 	ArchivedAt        Column // "archived_at" → qualified: "a.archived_at"
 	Version           Column // "version" → qualified: "a.version"
 	CreatedAt         Column // "created_at" → qualified: "a.created_at"
@@ -295,6 +298,9 @@ var AssignmentColumns = struct {
 	TrailerID:         NewColumn("trailer_id", "a"),
 	SecondaryWorkerID: NewColumn("secondary_worker_id", "a"),
 	Status:            NewColumn("status", "a"),
+	AckStatus:         NewColumn("ack_status", "a"),
+	AckAt:             NewColumn("ack_at", "a"),
+	AckReason:         NewColumn("ack_reason", "a"),
 	ArchivedAt:        NewColumn("archived_at", "a"),
 	Version:           NewColumn("version", "a"),
 	CreatedAt:         NewColumn("created_at", "a"),
@@ -315,6 +321,9 @@ var AssignmentFieldMap = map[string]string{
 	"trailerId":         "trailer_id",
 	"secondaryWorkerId": "secondary_worker_id",
 	"status":            "status",
+	"ackStatus":         "ack_status",
+	"ackAt":             "ack_at",
+	"ackReason":         "ack_reason",
 	"archivedAt":        "archived_at",
 	"version":           "version",
 	"createdAt":         "created_at",
@@ -333,6 +342,9 @@ var AssignmentInsertableColumns = []string{
 	"trailer_id",
 	"secondary_worker_id",
 	"status",
+	"ack_status",
+	"ack_at",
+	"ack_reason",
 	"archived_at",
 	"version",
 	"created_at",
@@ -417,6 +429,9 @@ var AssignmentFilter = struct {
 	TrailerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trailerId" → DB: "trailer_id"
 	SecondaryWorkerID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "secondaryWorkerId" → DB: "secondary_worker_id"
 	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	AckStatus         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ackStatus" → DB: "ack_status"
+	AckAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ackAt" → DB: "ack_at"
+	AckReason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ackReason" → DB: "ack_reason"
 	ArchivedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "archivedAt" → DB: "archived_at"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -448,6 +463,15 @@ var AssignmentFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
+	},
+	AckStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ackStatus", op, value)
+	},
+	AckAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ackAt", op, value)
+	},
+	AckReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ackReason", op, value)
 	},
 	ArchivedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("archivedAt", op, value)

@@ -113,7 +113,7 @@ export function ReportsPage() {
 
   return (
     <PageLayout
-      className="p-0"
+      className="gap-y-0 p-0"
       pageHeaderProps={{
         title: "Reports",
         description: "Build, run, and share reports over your organization's data",

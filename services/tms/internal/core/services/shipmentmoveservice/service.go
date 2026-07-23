@@ -12,6 +12,7 @@ import (
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/equipmentavailabilityhelper"
 	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -39,6 +40,9 @@ type Params struct {
 	EventService    portservices.ShipmentEventService
 	OrderDerivation portservices.OrderDerivationService
 	ServiceFailures portservices.ServiceFailureEvaluator `optional:"true"`
+	Notifications   *notificationservice.Service         `optional:"true"`
+	DashControlRepo repositories.DashControlRepository   `optional:"true"`
+	MoveObservers   []portservices.MoveStatusObserver    `                group:"move_status_observers"`
 }
 
 type service struct {
@@ -55,6 +59,9 @@ type service struct {
 	eventService    portservices.ShipmentEventService
 	orderDerivation portservices.OrderDerivationService
 	serviceFailures portservices.ServiceFailureEvaluator
+	notifications   *notificationservice.Service
+	dashControlRepo repositories.DashControlRepository
+	moveObservers   []portservices.MoveStatusObserver
 }
 
 //nolint:gocritic // service constructor
@@ -73,6 +80,30 @@ func New(p Params) portservices.ShipmentMoveService {
 		eventService:    p.EventService,
 		orderDerivation: p.OrderDerivation,
 		serviceFailures: p.ServiceFailures,
+		notifications:   p.Notifications,
+		dashControlRepo: p.DashControlRepo,
+		moveObservers:   p.MoveObservers,
+	}
+}
+
+func (s *service) notifyMoveObservers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	move *shipment.ShipmentMove,
+	previous shipment.MoveStatus,
+) {
+	if move == nil || previous == move.Status {
+		return
+	}
+	for _, observer := range s.moveObservers {
+		if observer == nil {
+			continue
+		}
+		if err := observer.AfterMoveStatusChange(ctx, tenantInfo, move, previous); err != nil {
+			s.l.Error("move status observer failed",
+				zap.String("moveId", move.ID.String()),
+				zap.Error(err))
+		}
 	}
 }
 
@@ -184,12 +215,12 @@ func (s *service) UpdateStatus(
 	}
 	if updatedMove != nil {
 		s.evaluateServiceFailuresAfterMoveStatus(ctx, updatedMove.ShipmentID, req.TenantInfo)
+		s.notifyMoveObservers(ctx, req.TenantInfo, updatedMove, previousStatus)
 	}
 
 	return updatedMove, nil
 }
 
-//nolint:gocognit // existing domain workflow is intentionally branch-heavy
 func (s *service) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateMoveStatusRequest,
@@ -198,13 +229,8 @@ func (s *service) BulkUpdateStatus(
 		return nil, multiErr
 	}
 
-	seen := make(map[pulid.ID]struct{}, len(req.MoveIDs))
-	for _, moveID := range req.MoveIDs {
-		if _, ok := seen[moveID]; ok {
-			return nil, errortypes.NewBusinessError("Move IDs must be unique").
-				WithParam("moveId", moveID.String())
-		}
-		seen[moveID] = struct{}{}
+	if err := validateUniqueMoveIDs(req.MoveIDs); err != nil {
+		return nil, err
 	}
 
 	var updatedMoves []*shipment.ShipmentMove
@@ -289,8 +315,35 @@ func (s *service) BulkUpdateStatus(
 	for shipmentID := range shipmentIDs {
 		s.evaluateServiceFailuresAfterMoveStatus(ctx, shipmentID, req.TenantInfo)
 	}
+	s.notifyBulkMoveObservers(ctx, req.TenantInfo, updatedMoves, previousStatuses)
 
 	return updatedMoves, nil
+}
+
+func validateUniqueMoveIDs(moveIDs []pulid.ID) error {
+	seen := make(map[pulid.ID]struct{}, len(moveIDs))
+	for _, moveID := range moveIDs {
+		if _, ok := seen[moveID]; ok {
+			return errortypes.NewBusinessError("Move IDs must be unique").
+				WithParam("moveId", moveID.String())
+		}
+		seen[moveID] = struct{}{}
+	}
+	return nil
+}
+
+func (s *service) notifyBulkMoveObservers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moves []*shipment.ShipmentMove,
+	previousStatuses map[pulid.ID]shipment.MoveStatus,
+) {
+	for _, m := range moves {
+		if m == nil {
+			continue
+		}
+		s.notifyMoveObservers(ctx, tenantInfo, m, previousStatuses[m.ID])
+	}
 }
 
 func (s *service) evaluateServiceFailuresAfterMoveStatus(

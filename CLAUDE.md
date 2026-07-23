@@ -149,11 +149,12 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 ## Code Style
 
 ### General Principles
-- **Production-grade, fully featured code**: This is an enterprise application. Every feature must be implemented completely — no stubs, no "v1" shortcuts, no "can be improved later" placeholders. If a feature needs error handling, edge cases, validation, proper UX states, or integration with existing systems, implement all of it in the first pass. Do not simplify or reduce scope unless explicitly told to.
+- **Production-grade, fully featured code**: This is an enterprise application. Never write "v1", "MVP", or simplified versions of a feature. Every feature must be implemented completely — no stubs, no shortcuts, no "can be improved later" placeholders. If a feature needs error handling, edge cases, validation, proper UX states, or integration with existing systems, implement all of it in the first pass. Do not simplify or reduce scope unless explicitly told to.
+- **Secure and correct**: All code must be secure (no injection vectors, no unvalidated input, no leaked secrets, proper authz checks) and free of bugs — handle every error path and edge case explicitly.
 - **DRY**: Do not repeat yourself — extract shared logic rather than duplicating code
 - **SOLID**: Follow SOLID principles strictly (single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion)
 - **Performance**: Write the most efficient and performant code possible — avoid unnecessary allocations, prefer stack over heap, minimize copies, use appropriate data structures
-- **Utility functions**: Place reusable utility functions in the `shared/` package (e.g., `shared/stringutils`, `shared/sliceutils`, `shared/intutils`). Do NOT scatter utility/helper functions in domain or service files. If a utility package doesn't exist for the category, create one in `shared/`
+- **Utility functions**: Never duplicate a utility — if a function that does the same thing already exists, reuse it. Backend: place reusable utilities in the `shared/` package (e.g., `shared/stringutils`, `shared/sliceutils`, `shared/intutils`); do NOT scatter utility/helper functions in domain or service files; if a utility package doesn't exist for the category, create one in `shared/`. Frontend: place reusable utilities in `client/src/lib/` (`utils.ts`, `date.ts`, etc.); do NOT define them inline in components, hooks, or routes
 
 ### Go
 - Follow the [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md) as the baseline for all Go code
@@ -179,3 +180,9 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 ## Bun ORM
 
 For help with Bun ORM, look in the [docs](docs/bun/).
+When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/bun/buncolgen.md](docs/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
+
+## DO NOT
+- **Processes**: Do not run high usage tasks that will max out CPU, Disk and/or memory usage.
+- **Mockery**: Do not run mockery against the entire codebase — manually adjust mocks in the codebase.
+

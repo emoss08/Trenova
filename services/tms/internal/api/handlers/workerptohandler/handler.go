@@ -226,6 +226,13 @@ func (h *Handler) create(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+
+	created, err := h.service.Create(c.Request.Context(), entity, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, created)
 }
 
 // @Summary Approve a worker PTO entry
@@ -253,9 +260,11 @@ func (h *Handler) approve(c *gin.Context) {
 		&repositories.UpdatePTOStatusRequest{
 			ID:     ptoID,
 			Status: worker.PTOStatusApproved,
+			UserID: authCtx.UserID,
 			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
 			},
 		},
 	)
@@ -292,9 +301,11 @@ func (h *Handler) reject(c *gin.Context) {
 		&repositories.UpdatePTOStatusRequest{
 			ID:     ptoID,
 			Status: worker.PTOStatusRejected,
+			UserID: authCtx.UserID,
 			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
 			},
 		},
 	)

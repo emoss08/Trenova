@@ -285,6 +285,11 @@ export function formatDurationFromSeconds(durationInSeconds: number): string {
 
 const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
+export const daysUntil = (unixSeconds: number) => {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.ceil((unixSeconds * 1000 - Date.now()) / msPerDay);
+};
+
 export const inclusiveDays = (startUnix: number, endUnix: number) => {
   const s = startOfLocalDay(toDateFromUnixSeconds(startUnix));
   const e = startOfLocalDay(toDateFromUnixSeconds(endUnix));

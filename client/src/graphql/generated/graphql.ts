@@ -17,10 +17,43 @@ export type AccountCategory =
   | 'Liability'
   | 'Revenue';
 
+export type AddSettlementAdjustmentInput = {
+  amountMinor: number;
+  description: string;
+  /** Optional pay code — the adjustment posts to the code's GL account when mapped. */
+  payCodeId?: string | number | null | undefined;
+  quantity?: string | null | undefined;
+  rate?: string | null | undefined;
+  settlementId: string | number;
+};
+
+export type AdjustEscrowAccountInput = {
+  accountId: string | number;
+  amountMinor: number;
+  description: string;
+  occurredDate?: number | null | undefined;
+};
+
 export type ApplyCustomerPaymentInput = {
   accountingDate: number;
   applications: Array<CustomerPaymentApplicationInput>;
   paymentId: string | number;
+};
+
+/**
+ * Assigns a pay profile to a worker. Any currently-open assignment for the worker
+ * is automatically ended on the new effective date — no manual cleanup needed.
+ */
+export type AssignPayProfileInput = {
+  effectiveFrom: number;
+  effectiveTo?: number | null | undefined;
+  notes?: string | null | undefined;
+  payProfileId: string | number;
+  /** Optional per-component rate overrides for this driver. */
+  rateOverrides?: Array<PayRateOverrideInput> | null | undefined;
+  /** Defaults to 100. Use 50 for an even team split. */
+  splitPercent?: string | null | undefined;
+  workerId: string | number;
 };
 
 export type AssignmentStatus =
@@ -28,6 +61,11 @@ export type AssignmentStatus =
   | 'Completed'
   | 'InProgress'
   | 'New';
+
+export type AttachPayEventsInput = {
+  payEventIds: Array<string | number>;
+  settlementId: string | number;
+};
 
 export type AuditCategory =
   | 'System'
@@ -71,6 +109,20 @@ export type BillingQueueUpdateStatusInput = {
   reviewNotes?: string | null | undefined;
   status: BillingQueueStatus;
 };
+
+export type BulkSettlementActionInput = {
+  action: BulkSettlementActionType;
+  /** Required when action is MarkPaid. */
+  paymentMethod?: string | null | undefined;
+  paymentReference?: string | null | undefined;
+  settlementIds: Array<string | number>;
+};
+
+export type BulkSettlementActionType =
+  | 'Approve'
+  | 'MarkPaid'
+  | 'Post'
+  | 'Submit';
 
 export type BulkUpdateEquipmentTypeStatusInput = {
   equipmentTypeIds: Array<string | number>;
@@ -135,6 +187,64 @@ export type CostingControlInput = {
   version: number;
 };
 
+export type CreateMyLoadCommentInput = {
+  comment: string;
+  shipmentId: string | number;
+};
+
+export type CreatePayCodeInput = {
+  code: string;
+  countsTowardGuarantee?: boolean | null | undefined;
+  defaultAmountMinor?: number | null | undefined;
+  description?: string | null | undefined;
+  direction: PayCodeDirection;
+  glAccountId?: string | number | null | undefined;
+  name: string;
+  taxable?: boolean | null | undefined;
+};
+
+export type CreatePayProfileInput = {
+  classification: PayeeClassification;
+  components: Array<PayProfileComponentInput>;
+  currencyCode?: string | null | undefined;
+  description?: string | null | undefined;
+  guaranteedPeriodMinimumMinor?: number | null | undefined;
+  name: string;
+  perDiemDailyCapMinor?: number | null | undefined;
+  perDiemRatePerMile?: string | null | undefined;
+  status?: EntityStatus | null | undefined;
+};
+
+export type CreateRecurringDeductionInput = {
+  amountMinor: number;
+  currencyCode?: string | null | undefined;
+  description: string;
+  endDate?: number | null | undefined;
+  escrowAccountId?: string | number | null | undefined;
+  /**
+   * When true and no escrow account is given, the deduction links to the driver's
+   * active escrow account and posts as an escrow contribution.
+   */
+  escrowContribution?: boolean | null | undefined;
+  frequency?: RecurringDeductionFrequency | null | undefined;
+  payCodeId: string | number;
+  startDate: number;
+  totalCapMinor?: number | null | undefined;
+  workerId: string | number;
+};
+
+export type CreateRecurringEarningInput = {
+  amountMinor: number;
+  currencyCode?: string | null | undefined;
+  description: string;
+  endDate?: number | null | undefined;
+  frequency?: RecurringEarningFrequency | null | undefined;
+  payCodeId: string | number;
+  startDate: number;
+  totalCapMinor?: number | null | undefined;
+  workerId: string | number;
+};
+
 export type CreateReportScheduleInput = {
   cronExpression: string;
   definitionId: string | number;
@@ -144,6 +254,13 @@ export type CreateReportScheduleInput = {
   formats: Array<string>;
   notifyUserIds?: Array<string | number> | null | undefined;
   timezone?: string | null | undefined;
+};
+
+export type CreateSettlementDisputeInput = {
+  category: SettlementDisputeCategory;
+  description: string;
+  settlementId: string | number;
+  settlementLineId?: string | number | null | undefined;
 };
 
 export type CustomerBillingCycleType =
@@ -225,6 +342,17 @@ export type DataTableConnectionInput = {
   sort?: Array<SortFieldInput> | null | undefined;
 };
 
+export type DetachPayEventInput = {
+  payEventId: string | number;
+  settlementId: string | number;
+};
+
+export type DisputeAdjustmentInput = {
+  amountMinor: number;
+  description: string;
+  payCodeId?: string | number | null | undefined;
+};
+
 export type DocumentCategory =
   | 'Branding'
   | 'Contract'
@@ -240,6 +368,31 @@ export type DocumentClassification =
   | 'Public'
   | 'Regulatory'
   | 'Sensitive';
+
+export type DriverExpenseStatus =
+  | 'Approved'
+  | 'Cancelled'
+  | 'Pending'
+  | 'Reimbursed'
+  | 'Rejected';
+
+export type DriverPayEventStatus =
+  | 'Accrued'
+  | 'Settled'
+  | 'Voided';
+
+export type DriverSettlementActionInput = {
+  reason?: string | null | undefined;
+  settlementId: string | number;
+};
+
+export type DriverSettlementStatus =
+  | 'Approved'
+  | 'Draft'
+  | 'Paid'
+  | 'PendingApproval'
+  | 'Posted'
+  | 'Voided';
 
 export type DriverType =
   | 'Local'
@@ -348,6 +501,11 @@ export type EmailProvider =
   | 'Postmark'
   | 'Resend';
 
+export type EndWorkerPayAssignmentInput = {
+  assignmentId: string | number;
+  endDate: number;
+};
+
 export type EndorsementType =
   | 'H'
   | 'N'
@@ -391,6 +549,17 @@ export type EquipmentTypePatchInput = {
   status?: EntityStatus | null | undefined;
   version?: number | null | undefined;
 };
+
+export type EscrowAccountStatus =
+  | 'Active'
+  | 'Closed';
+
+export type EscrowTransactionType =
+  | 'Adjustment'
+  | 'Application'
+  | 'Contribution'
+  | 'InterestAccrual'
+  | 'Refund';
 
 export type FacilityType =
   | 'ColdStorage'
@@ -560,6 +729,14 @@ export type FuelType =
   | 'Diesel'
   | 'Gasoline';
 
+export type GenerateDriverSettlementInput = {
+  batchId?: string | number | null | undefined;
+  payDate: number;
+  periodEnd: number;
+  periodStart: number;
+  workerId: string | number;
+};
+
 export type GenerateFuelTableInput = {
   increment: string;
   maxPrice: string;
@@ -567,6 +744,13 @@ export type GenerateFuelTableInput = {
   openEnded?: boolean | null | undefined;
   startValue: string;
   valueStep: string;
+};
+
+export type GenerateSettlementBatchInput = {
+  name?: string | null | undefined;
+  notes?: string | null | undefined;
+  periodEnd?: number | null | undefined;
+  periodStart?: number | null | undefined;
 };
 
 export type HazardousClass =
@@ -592,6 +776,12 @@ export type HazardousClass =
   | 'HazardClass8'
   | 'HazardClass9';
 
+export type HoldPayEventInput = {
+  payEventId: string | number;
+  /** Why pay is being deferred — shown to whoever reviews the held event. */
+  reason: string;
+};
+
 export type HoldSeverity =
   | 'Advisory'
   | 'Blocking'
@@ -602,6 +792,12 @@ export type HoldType =
   | 'CustomerHold'
   | 'FinanceHold'
   | 'OperationalHold';
+
+export type InviteWorkerToPortalInput = {
+  /** Overrides the email on the worker record when provided. */
+  email?: string | null | undefined;
+  workerId: string | number;
+};
 
 export type InvoiceDisputeStatus =
   | 'Disputed'
@@ -632,6 +828,16 @@ export type InvoiceStatus =
   | 'Draft'
   | 'Posted';
 
+export type IssuePayAdvanceInput = {
+  amountMinor: number;
+  currencyCode?: string | null | undefined;
+  issuedDate: number;
+  notes?: string | null | undefined;
+  reference?: string | null | undefined;
+  source: PayAdvanceSource;
+  workerId: string | number;
+};
+
 export type JournalReversalStatus =
   | 'Approved'
   | 'Cancelled'
@@ -659,6 +865,12 @@ export type ManualJournalStatus =
   | 'Posted'
   | 'Rejected';
 
+export type MarkDriverSettlementPaidInput = {
+  paymentMethod: string;
+  paymentReference?: string | null | undefined;
+  settlementId: string | number;
+};
+
 export type MoveStatus =
   | 'Assigned'
   | 'Canceled'
@@ -685,6 +897,14 @@ export type NotificationPriority =
 export type NotificationState =
   | 'archived'
   | 'inbox';
+
+export type OpenEscrowAccountInput = {
+  annualInterestRate?: string | null | undefined;
+  currencyCode?: string | null | undefined;
+  openedDate?: number | null | undefined;
+  targetAmountMinor: number;
+  workerId: string | number;
+};
 
 export type OrderInput = {
   baseAmount?: string | null | undefined;
@@ -743,11 +963,131 @@ export type PackingGroup =
   | 'II'
   | 'III';
 
+export type PayAdvanceSource =
+  | 'Cash'
+  | 'ComdataCode'
+  | 'EFSMoneyCode'
+  | 'FuelCard'
+  | 'Other';
+
+export type PayAdvanceStatus =
+  | 'Outstanding'
+  | 'PartiallyRecovered'
+  | 'Recovered'
+  | 'WrittenOff';
+
+export type PayCalcMethod =
+  | 'FlatPerShipment'
+  | 'PerDay'
+  | 'PerEmptyMile'
+  | 'PerEvent'
+  | 'PerHour'
+  | 'PerLoadedMile'
+  | 'PerStop'
+  | 'PerTotalMile'
+  | 'PercentOfRevenue';
+
+export type PayCodeDirection =
+  | 'Deduction'
+  | 'Earning';
+
+export type PayComponentKind =
+  | 'Bonus'
+  | 'Breakdown'
+  | 'Custom'
+  | 'Detention'
+  | 'FuelSurcharge'
+  | 'Hazmat'
+  | 'Layover'
+  | 'Linehaul'
+  | 'StopPay'
+  | 'Tarp';
+
+export type PayMileageBandInput = {
+  maxMiles: number;
+  minMiles: number;
+  rate: string;
+};
+
+export type PayPeriodFrequency =
+  | 'Biweekly'
+  | 'Monthly'
+  | 'Weekly';
+
+export type PayProfileComponentInput = {
+  bands?: Array<PayMileageBandInput> | null | undefined;
+  description?: string | null | undefined;
+  freeTimeMinutes?: number | null | undefined;
+  isActive?: boolean | null | undefined;
+  kind: PayComponentKind;
+  maxAmountMinor?: number | null | undefined;
+  method: PayCalcMethod;
+  minAmountMinor?: number | null | undefined;
+  rate: string;
+  revenueBasis?: PayRevenueBasis | null | undefined;
+};
+
+export type PayRateOverrideInput = {
+  componentId: string | number;
+  rate: string;
+};
+
+export type PayRevenueBasis =
+  | 'Linehaul'
+  | 'LinehaulPlusFuelSurcharge'
+  | 'TotalRevenue';
+
+export type PayWorkerNowInput = {
+  /**
+   * Also apply recurring deductions, escrow, advance recovery, and carry-forward.
+   * Off by default so the instant payout doesn't double-dip items the regular
+   * period settlement will take.
+   */
+  applyRecurring?: boolean | null | undefined;
+  /** Specific accrued events to pay; omit to pay everything accrued and unheld. */
+  payEventIds?: Array<string | number> | null | undefined;
+  paymentMethod: string;
+  paymentReference?: string | null | undefined;
+  workerId: string | number;
+};
+
+export type PayeeClassification =
+  | 'CompanyDriver'
+  | 'OwnerOperator';
+
 export type PeriodType =
   | 'Adjusting'
   | 'Month'
   | 'Quarter'
   | 'Week';
+
+export type PortalInvitationStatus =
+  | 'Accepted'
+  | 'Pending'
+  | 'Revoked';
+
+export type PortalLoadScope =
+  | 'Active'
+  | 'History';
+
+export type PortalPtoStatus =
+  | 'Approved'
+  | 'Cancelled'
+  | 'Rejected'
+  | 'Requested';
+
+export type PortalPtoType =
+  | 'Bereavement'
+  | 'Holiday'
+  | 'Maternity'
+  | 'Paternity'
+  | 'Personal'
+  | 'Sick'
+  | 'Vacation';
+
+export type PortalStopAction =
+  | 'Arrive'
+  | 'Depart';
 
 export type PostCustomerPaymentInput = {
   accountingDate: number;
@@ -771,6 +1111,30 @@ export type RateUnit =
   | 'Mile'
   | 'Stop';
 
+export type RecordMyStopActionInput = {
+  action: PortalStopAction;
+  moveId: string | number;
+  stopId: string | number;
+};
+
+export type RecurringDeductionFrequency =
+  | 'EverySettlement'
+  | 'Monthly';
+
+export type RecurringDeductionStatus =
+  | 'Active'
+  | 'Completed'
+  | 'Paused';
+
+export type RecurringEarningFrequency =
+  | 'EverySettlement'
+  | 'Monthly';
+
+export type RecurringEarningStatus =
+  | 'Active'
+  | 'Completed'
+  | 'Paused';
+
 export type RecurringShipmentExceptionPolicy =
   | 'NextBusinessDay'
   | 'PreviousBusinessDay'
@@ -784,6 +1148,11 @@ export type RecurringShipmentStatus =
 export type RemoveOrderChargeInput = {
   chargeId: string | number;
   orderId: string | number;
+};
+
+export type RemoveSettlementAdjustmentInput = {
+  lineId: string | number;
+  settlementId: string | number;
 };
 
 export type ReportColumnInput = {
@@ -862,10 +1231,40 @@ export type ReportSortInput = {
   direction: string;
 };
 
+export type RequestMyPtoInput = {
+  endDate: number;
+  reason: string;
+  startDate: number;
+  type: PortalPtoType;
+};
+
+export type ResolveSettlementDisputeInput = {
+  /**
+   * Optional correcting adjustment applied to the driver's open settlement (one is
+   * generated off-cycle when none exists). Only valid when approving.
+   */
+  adjustment?: DisputeAdjustmentInput | null | undefined;
+  approve: boolean;
+  disputeId: string | number;
+  resolutionNote: string;
+};
+
+export type RespondToMyAssignmentInput = {
+  accept: boolean;
+  assignmentId: string | number;
+  reason?: string | null | undefined;
+};
+
 export type ReverseCustomerPaymentInput = {
   accountingDate: number;
   paymentId: string | number;
   reason?: string | null | undefined;
+};
+
+export type ReviewDriverExpenseInput = {
+  approve: boolean;
+  expenseId: string | number;
+  note?: string | null | undefined;
 };
 
 export type RunReportInput = {
@@ -956,6 +1355,42 @@ export type ServiceFailureType =
   | 'MissedDelivery'
   | 'MissedPickup'
   | 'Other';
+
+export type SettlementBatchStatus =
+  | 'Canceled'
+  | 'Completed'
+  | 'Open';
+
+export type SettlementDisputeCategory =
+  | 'IncorrectDeduction'
+  | 'IncorrectRate'
+  | 'MissingPay'
+  | 'MissingReimbursement'
+  | 'Other';
+
+export type SettlementDisputeStatus =
+  | 'Denied'
+  | 'InReview'
+  | 'Open'
+  | 'Resolved'
+  | 'Withdrawn';
+
+export type SettlementLineCategory =
+  | 'Adjustment'
+  | 'AdvanceRecovery'
+  | 'CarryForward'
+  | 'Deduction'
+  | 'Earning'
+  | 'EscrowContribution'
+  | 'GuaranteeTopUp'
+  | 'Reimbursement';
+
+export type SettlementPayTrigger =
+  /** Pay accrues the moment a driver completes their move — even before the full shipment delivers. */
+  | 'MoveCompleted'
+  | 'PODReceived'
+  | 'ShipmentDelivered'
+  | 'ShipmentInvoiced';
 
 export type ShipmentAdditionalChargeInput = {
   accessorialChargeId: string | number;
@@ -1304,6 +1739,14 @@ export type StopType =
   | 'SplitDelivery'
   | 'SplitPickup';
 
+export type SubmitMyExpenseInput = {
+  amountMinor: number;
+  description: string;
+  incurredDate?: number | null | undefined;
+  payCodeId?: string | number | null | undefined;
+  shipmentId?: string | number | null | undefined;
+};
+
 export type TableConfigurationInput = {
   description?: string | null | undefined;
   isDefault?: boolean | null | undefined;
@@ -1325,10 +1768,48 @@ export type UpcomingWorkerPtoInput = {
   workerId?: string | number | null | undefined;
 };
 
+export type UpdateDashControlInput = {
+  allowContactInfoEdit: boolean;
+  allowExpenseSubmission: boolean;
+  allowLoadComments: boolean;
+  allowLoadDocumentUpload: boolean;
+  allowLoadRefusals: boolean;
+  allowProfileDocumentUpload: boolean;
+  allowPtoRequests: boolean;
+  allowSettlementDisputes: boolean;
+  allowStopActions: boolean;
+  detentionAlertThresholdMinutes: number;
+  enableDetentionAlerts: boolean;
+  requireExpenseReceipt: boolean;
+  requireLoadAcknowledgment: boolean;
+  sendCredentialReminders: boolean;
+  showLoadPay: boolean;
+  showPayEstimates: boolean;
+  version: number;
+};
+
+export type UpdateEscrowAccountInput = {
+  annualInterestRate: string;
+  id: string | number;
+  targetAmountMinor: number;
+  version: number;
+  workerId: string | number;
+};
+
 export type UpdateFuelIndexPriceInput = {
   id: string | number;
   price: string;
   priceDate: string;
+};
+
+export type UpdateMyContactInfoInput = {
+  addressLine1: string;
+  addressLine2?: string | null | undefined;
+  city: string;
+  emergencyContactName?: string | null | undefined;
+  emergencyContactPhone?: string | null | undefined;
+  phoneNumber: string;
+  postalCode: string;
 };
 
 export type UpdateOrderChargeInput = {
@@ -1337,6 +1818,64 @@ export type UpdateOrderChargeInput = {
   description: string;
   orderId: string | number;
   version: number;
+};
+
+export type UpdatePayCodeInput = {
+  code: string;
+  countsTowardGuarantee: boolean;
+  defaultAmountMinor?: number | null | undefined;
+  description?: string | null | undefined;
+  glAccountId?: string | number | null | undefined;
+  id: string | number;
+  name: string;
+  status: EntityStatus;
+  taxable: boolean;
+  version: number;
+};
+
+export type UpdatePayProfileInput = {
+  classification: PayeeClassification;
+  components: Array<PayProfileComponentInput>;
+  currencyCode?: string | null | undefined;
+  description?: string | null | undefined;
+  guaranteedPeriodMinimumMinor?: number | null | undefined;
+  id: string | number;
+  name: string;
+  perDiemDailyCapMinor?: number | null | undefined;
+  perDiemRatePerMile?: string | null | undefined;
+  status?: EntityStatus | null | undefined;
+  version: number;
+};
+
+export type UpdateRecurringDeductionInput = {
+  amountMinor: number;
+  currencyCode?: string | null | undefined;
+  description: string;
+  endDate?: number | null | undefined;
+  escrowAccountId?: string | number | null | undefined;
+  frequency: RecurringDeductionFrequency;
+  id: string | number;
+  payCodeId: string | number;
+  startDate: number;
+  status: RecurringDeductionStatus;
+  totalCapMinor?: number | null | undefined;
+  version: number;
+  workerId: string | number;
+};
+
+export type UpdateRecurringEarningInput = {
+  amountMinor: number;
+  currencyCode?: string | null | undefined;
+  description: string;
+  endDate?: number | null | undefined;
+  frequency: RecurringEarningFrequency;
+  id: string | number;
+  payCodeId: string | number;
+  startDate: number;
+  status: RecurringEarningStatus;
+  totalCapMinor?: number | null | undefined;
+  version: number;
+  workerId: string | number;
 };
 
 export type UpdateReportDefinitionInput = {
@@ -1362,6 +1901,23 @@ export type UpdateReportScheduleInput = {
   id: string | number;
   notifyUserIds?: Array<string | number> | null | undefined;
   timezone?: string | null | undefined;
+  version: number;
+};
+
+export type UpdateSettlementControlInput = {
+  allowNegativeNet: boolean;
+  autoApproveClean: boolean;
+  autoAttachAccruals: boolean;
+  autoGenerateBatches: boolean;
+  autoPostOnApprove: boolean;
+  defaultEscrowInterestRate: string;
+  escrowInterestFrequencyMonths: number;
+  payDelayDays: number;
+  payPeriodFrequency: PayPeriodFrequency;
+  payTrigger: SettlementPayTrigger;
+  periodEndDayOfWeek: number;
+  varianceLookbackWeeks: number;
+  varianceThresholdPct: string;
   version: number;
 };
 
@@ -1401,6 +1957,11 @@ export type WorkerPatchInput = {
 export type WorkerType =
   | 'Contractor'
   | 'Employee';
+
+export type WriteOffPayAdvanceInput = {
+  advanceId: string | number;
+  reason: string;
+};
 
 export type AccessorialChargeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string, method: AccessorialMethod, rateUnit: RateUnit | null, amount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccessorialChargeTableRowFieldsFragment' };
 
@@ -1689,6 +2250,693 @@ export type DocumentTypeTableQueryVariables = Exact<{
 
 
 export type DocumentTypeTableQuery = { documentTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DocumentTypeTableRowFieldsFragment': DocumentTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type WorkerPortalStatusQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type WorkerPortalStatusQuery = { workerPortalStatus: { linked: boolean, portalUser: { id: string, name: string, emailAddress: string, status: EntityStatus, lastLoginAt: number | null } | null, pendingInvitation: { id: string, email: string, status: PortalInvitationStatus, expiresAt: number, createdAt: number } | null, invitations: Array<{ id: string, email: string, status: PortalInvitationStatus, expiresAt: number, acceptedAt: number | null, createdAt: number, invitedBy: { id: string, name: string } | null }> } };
+
+export type InviteWorkerToPortalMutationVariables = Exact<{
+  input: InviteWorkerToPortalInput;
+}>;
+
+
+export type InviteWorkerToPortalMutation = { inviteWorkerToPortal: { inviteUrl: string, emailSent: boolean, invitation: { id: string, email: string, status: PortalInvitationStatus, expiresAt: number } } };
+
+export type RevokeWorkerPortalAccessMutationVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type RevokeWorkerPortalAccessMutation = { revokeWorkerPortalAccess: boolean };
+
+export type SettlementDisputeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type SettlementDisputeTableQuery = { settlementDisputes: { totalCount: number | null, edges: Array<{ node: { id: string, settlementId: string, settlementLineId: string | null, workerId: string, status: SettlementDisputeStatus, category: SettlementDisputeCategory, description: string, resolutionNote: string, resolvedAt: number | null, createdAt: number, updatedAt: number, version: number, worker: { id: string, firstName: string, lastName: string } | null, settlement: { id: string, settlementNumber: string, netPayMinor: number, currencyCode: string, status: DriverSettlementStatus } | null, resolvedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type SettlementDisputeDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SettlementDisputeDetailQuery = { settlementDispute: { id: string, settlementId: string, settlementLineId: string | null, workerId: string, status: SettlementDisputeStatus, category: SettlementDisputeCategory, description: string, submittedByUserId: string, resolutionNote: string, resolutionLineId: string | null, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, settlement: { id: string, settlementNumber: string, status: DriverSettlementStatus, periodStart: number, periodEnd: number, netPayMinor: number, grossEarningsMinor: number, deductionsMinor: number, currencyCode: string } | null, settlementLine: { id: string, lineNumber: number, category: SettlementLineCategory, description: string, amountMinor: number, proNumber: string } | null, resolvedBy: { id: string, name: string } | null } };
+
+export type OpenSettlementDisputeCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OpenSettlementDisputeCountQuery = { openSettlementDisputeCount: number };
+
+export type StartSettlementDisputeReviewMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type StartSettlementDisputeReviewMutation = { startSettlementDisputeReview: { id: string, status: SettlementDisputeStatus, version: number } };
+
+export type ResolveSettlementDisputeMutationVariables = Exact<{
+  input: ResolveSettlementDisputeInput;
+}>;
+
+
+export type ResolveSettlementDisputeMutation = { resolveSettlementDispute: { id: string, status: SettlementDisputeStatus, resolutionNote: string, resolutionLineId: string | null, resolvedAt: number | null, version: number } };
+
+export type MyPortalProfileQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPortalProfileQuery = { myPortalProfile: { workerId: string, firstName: string, lastName: string, email: string, phoneNumber: string, workerType: string, driverType: string, fleetCodeName: string, organizationName: string } };
+
+export type MyLoadsQueryVariables = Exact<{
+  scope: PortalLoadScope;
+  limit?: number | null | undefined;
+}>;
+
+
+export type MyLoadsQuery = { myLoads: Array<{ assignmentId: string, moveId: string, shipmentId: string, proNumber: string, bol: string, status: string, isPrimary: boolean, tractorCode: string, trailerCode: string, pieces: number | null, weight: number | null, distanceMiles: number | null, payGrossMinor: number | null, payStatus: string, payOnHold: boolean, ackStatus: string, stops: Array<{ id: string, type: string, status: string, sequence: number, locationName: string, addressLine: string, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null }> }> };
+
+export type MyLoadCommentsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type MyLoadCommentsQuery = { myLoadComments: Array<{ id: string, type: string, priority: string, comment: string, authorName: string, createdAt: number }> };
+
+export type RecordMyStopActionMutationVariables = Exact<{
+  input: RecordMyStopActionInput;
+}>;
+
+
+export type RecordMyStopActionMutation = { recordMyStopAction: boolean };
+
+export type CreateMyLoadCommentMutationVariables = Exact<{
+  input: CreateMyLoadCommentInput;
+}>;
+
+
+export type CreateMyLoadCommentMutation = { createMyLoadComment: { id: string, type: string, priority: string, comment: string, authorName: string, createdAt: number } };
+
+export type MyPeriodSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPeriodSummaryQuery = { myPeriodSummary: { periodStart: number, periodEnd: number, payDate: number, accruedGrossMinor: number, eventCount: number } };
+
+export type MyRecentPayEventsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type MyRecentPayEventsQuery = { myRecentPayEvents: Array<{ id: string, status: DriverPayEventStatus, eventDate: number, proNumber: string, grossAmountMinor: number, totalMiles: string, currencyCode: string, onHold: boolean, holdReason: string }> };
+
+export type MySettlementsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type MySettlementsQuery = { mySettlements: { total: number, items: Array<{ id: string, settlementNumber: string, status: DriverSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, netPayMinor: number, currencyCode: string, paidAt: number | null, paymentMethod: string, paymentReference: string }> } };
+
+export type MySettlementQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MySettlementQuery = { mySettlement: { id: string, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number, totalMiles: string, shipmentCount: number, currencyCode: string, paidAt: number | null, paymentMethod: string, paymentReference: string, createdAt: number, lines: Array<{ id: string, lineNumber: number, category: SettlementLineCategory, componentKind: PayComponentKind | null, method: PayCalcMethod | null, description: string, quantity: string, rate: string, amountMinor: number, proNumber: string }> | null } };
+
+export type MyEscrowQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyEscrowQuery = { myEscrow: { account: { id: string, status: EscrowAccountStatus, targetAmountMinor: number, balanceMinor: number, currencyCode: string, createdAt: number } | null, transactions: Array<{ id: string, type: EscrowTransactionType, amountMinor: number, balanceAfterMinor: number, description: string, occurredDate: number, createdAt: number }> } };
+
+export type MyAdvancesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyAdvancesQuery = { myAdvances: Array<{ id: string, status: PayAdvanceStatus, source: PayAdvanceSource, reference: string, amountMinor: number, recoveredMinor: number, outstandingMinor: number, currencyCode: string, issuedDate: number }> };
+
+export type MyDisputesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyDisputesQuery = { myDisputes: Array<{ id: string, settlementId: string, settlementLineId: string | null, status: SettlementDisputeStatus, category: SettlementDisputeCategory, description: string, resolutionNote: string, resolvedAt: number | null, createdAt: number, settlement: { id: string, settlementNumber: string, periodStart: number, periodEnd: number } | null, settlementLine: { id: string, description: string, amountMinor: number, category: SettlementLineCategory } | null }> };
+
+export type CreateSettlementDisputeMutationVariables = Exact<{
+  input: CreateSettlementDisputeInput;
+}>;
+
+
+export type CreateSettlementDisputeMutation = { createSettlementDispute: { id: string, status: SettlementDisputeStatus, category: SettlementDisputeCategory, description: string, createdAt: number } };
+
+export type WithdrawSettlementDisputeMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WithdrawSettlementDisputeMutation = { withdrawSettlementDispute: { id: string, status: SettlementDisputeStatus } };
+
+export type MyComplianceProfileQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyComplianceProfileQuery = { myComplianceProfile: { workerId: string, licenseNumber: string, licenseState: string, cdlClass: string, endorsement: string, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, twicExpiry: number | null, complianceStatus: string, isQualified: boolean, hireDate: number, addressLine1: string, addressLine2: string, city: string, stateAbbreviation: string, postalCode: string, phoneNumber: string, emergencyContactName: string, emergencyContactPhone: string } };
+
+export type UpdateMyContactInfoMutationVariables = Exact<{
+  input: UpdateMyContactInfoInput;
+}>;
+
+
+export type UpdateMyContactInfoMutation = { updateMyContactInfo: { workerId: string, addressLine1: string, addressLine2: string, city: string, stateAbbreviation: string, postalCode: string, phoneNumber: string, emergencyContactName: string, emergencyContactPhone: string } };
+
+export type MyPtoQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPtoQuery = { myPto: Array<{ id: string, status: PortalPtoStatus, type: PortalPtoType, startDate: number, endDate: number, reason: string, createdAt: number }> };
+
+export type RequestMyPtoMutationVariables = Exact<{
+  input: RequestMyPtoInput;
+}>;
+
+
+export type RequestMyPtoMutation = { requestMyPto: { id: string, status: PortalPtoStatus, type: PortalPtoType, startDate: number, endDate: number, reason: string, createdAt: number } };
+
+export type CancelMyPtoMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelMyPtoMutation = { cancelMyPto: { id: string, status: PortalPtoStatus } };
+
+export type MyExpensesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyExpensesQuery = { myExpenses: Array<{ id: string, shipmentId: string | null, payCodeId: string | null, status: DriverExpenseStatus, amountMinor: number, currencyCode: string, description: string, incurredDate: number, receiptDocumentId: string | null, reviewNote: string, reviewedAt: number | null, createdAt: number, payCode: { id: string, code: string, description: string } | null }> };
+
+export type SubmitMyExpenseMutationVariables = Exact<{
+  input: SubmitMyExpenseInput;
+}>;
+
+
+export type SubmitMyExpenseMutation = { submitMyExpense: { id: string, status: DriverExpenseStatus, amountMinor: number, description: string, incurredDate: number, createdAt: number } };
+
+export type CancelMyExpenseMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelMyExpenseMutation = { cancelMyExpense: { id: string, status: DriverExpenseStatus } };
+
+export type RespondToMyAssignmentMutationVariables = Exact<{
+  input: RespondToMyAssignmentInput;
+}>;
+
+
+export type RespondToMyAssignmentMutation = { respondToMyAssignment: boolean };
+
+export type MyLoadPayEstimateQueryVariables = Exact<{
+  shipmentId: string | number;
+  moveId: string | number;
+}>;
+
+
+export type MyLoadPayEstimateQuery = { myLoadPayEstimate: { grossMinor: number, currencyCode: string } };
+
+export type MyYtdPayQueryVariables = Exact<{
+  year: number;
+}>;
+
+
+export type MyYtdPayQuery = { myYtdPay: { workerId: string, year: number, settlementCount: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, netPayMinor: number } };
+
+export type DriverExpenseTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DriverExpenseTableQuery = { driverExpenses: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, shipmentId: string | null, status: DriverExpenseStatus, amountMinor: number, currencyCode: string, description: string, incurredDate: number, receiptDocumentId: string | null, reviewNote: string, reviewedAt: number | null, settlementLineId: string | null, createdAt: number, version: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, description: string } | null, reviewedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DriverExpenseDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DriverExpenseDetailQuery = { driverExpense: { id: string, workerId: string, shipmentId: string | null, payCodeId: string | null, status: DriverExpenseStatus, amountMinor: number, currencyCode: string, description: string, incurredDate: number, receiptDocumentId: string | null, reviewNote: string, reviewedById: string | null, reviewedAt: number | null, settlementLineId: string | null, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string, email: string, phoneNumber: string } | null, payCode: { id: string, code: string, description: string } | null, reviewedBy: { id: string, name: string } | null } };
+
+export type PendingDriverExpenseCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PendingDriverExpenseCountQuery = { pendingDriverExpenseCount: number };
+
+export type ReviewDriverExpenseMutationVariables = Exact<{
+  input: ReviewDriverExpenseInput;
+}>;
+
+
+export type ReviewDriverExpenseMutation = { reviewDriverExpense: { id: string, status: DriverExpenseStatus, reviewNote: string, reviewedAt: number | null, settlementLineId: string | null, version: number } };
+
+export type DashControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DashControlQuery = { dashControl: { id: string, requireLoadAcknowledgment: boolean, allowLoadRefusals: boolean, allowStopActions: boolean, allowLoadDocumentUpload: boolean, allowLoadComments: boolean, showLoadPay: boolean, showPayEstimates: boolean, allowExpenseSubmission: boolean, requireExpenseReceipt: boolean, allowSettlementDisputes: boolean, allowProfileDocumentUpload: boolean, allowContactInfoEdit: boolean, allowPtoRequests: boolean, sendCredentialReminders: boolean, enableDetentionAlerts: boolean, detentionAlertThresholdMinutes: number, version: number } };
+
+export type UpdateDashControlMutationVariables = Exact<{
+  input: UpdateDashControlInput;
+}>;
+
+
+export type UpdateDashControlMutation = { updateDashControl: { id: string, requireLoadAcknowledgment: boolean, allowLoadRefusals: boolean, allowStopActions: boolean, allowLoadDocumentUpload: boolean, allowLoadComments: boolean, showLoadPay: boolean, showPayEstimates: boolean, allowExpenseSubmission: boolean, requireExpenseReceipt: boolean, allowSettlementDisputes: boolean, allowProfileDocumentUpload: boolean, allowContactInfoEdit: boolean, allowPtoRequests: boolean, sendCredentialReminders: boolean, enableDetentionAlerts: boolean, detentionAlertThresholdMinutes: number, version: number } };
+
+export type MyPortalFeaturesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPortalFeaturesQuery = { myPortalFeatures: { requireLoadAcknowledgment: boolean, allowLoadRefusals: boolean, allowStopActions: boolean, allowLoadDocumentUpload: boolean, allowLoadComments: boolean, showLoadPay: boolean, showPayEstimates: boolean, allowExpenseSubmission: boolean, requireExpenseReceipt: boolean, allowSettlementDisputes: boolean, allowProfileDocumentUpload: boolean, allowContactInfoEdit: boolean, allowPtoRequests: boolean } };
+
+export type PayProfileTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type PayProfileTableQuery = { payProfiles: { totalCount: number | null, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, status: EntityStatus, name: string, description: string, classification: PayeeClassification, currencyCode: string, guaranteedPeriodMinimumMinor: number, perDiemRatePerMile: string, perDiemDailyCapMinor: number, version: number, createdAt: number, updatedAt: number, activeAssignmentCount: number, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string, revenueBasis: PayRevenueBasis | null, freeTimeMinutes: number, minAmountMinor: number | null, maxAmountMinor: number | null, sequence: number, isActive: boolean, bands: Array<{ minMiles: number, maxMiles: number, rate: string }> | null }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type PayProfileOptionsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type PayProfileOptionsQuery = { payProfiles: { totalCount: number | null, edges: Array<{ node: { id: string, name: string, classification: PayeeClassification, status: EntityStatus } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type WorkerPayAssignmentsQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type WorkerPayAssignmentsQuery = { workerPayAssignments: Array<{ id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, notes: string, version: number, createdAt: number, rateOverrides: Array<{ componentId: string, rate: string }> | null, payProfile: { id: string, name: string, classification: PayeeClassification, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string }> | null } | null }> };
+
+export type EffectiveWorkerPayAssignmentQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type EffectiveWorkerPayAssignmentQuery = { effectiveWorkerPayAssignment: { id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, notes: string, rateOverrides: Array<{ componentId: string, rate: string }> | null, payProfile: { id: string, name: string, classification: PayeeClassification, guaranteedPeriodMinimumMinor: number, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string, revenueBasis: PayRevenueBasis | null, isActive: boolean, bands: Array<{ minMiles: number, maxMiles: number, rate: string }> | null }> | null } | null } | null };
+
+export type PayProfileAssignmentsQueryVariables = Exact<{
+  payProfileId: string | number;
+}>;
+
+
+export type PayProfileAssignmentsQuery = { payProfileAssignments: Array<{ id: string, workerId: string, effectiveFrom: number, effectiveTo: number | null, splitPercent: string, rateOverrides: Array<{ componentId: string, rate: string }> | null, worker: { id: string, firstName: string, lastName: string } | null }> };
+
+export type PayProfileDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type PayProfileDetailQuery = { payProfile: { id: string, name: string, classification: PayeeClassification, currencyCode: string, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string, revenueBasis: PayRevenueBasis | null, isActive: boolean }> | null } | null };
+
+export type RecurringDeductionTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RecurringDeductionTableQuery = { recurringDeductions: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, payCodeId: string, escrowAccountId: string | null, status: RecurringDeductionStatus, frequency: RecurringDeductionFrequency, description: string, amountMinor: number, totalCapMinor: number | null, deductedToDateMinor: number, startDate: number, endDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RecurringEarningTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RecurringEarningTableQuery = { recurringEarnings: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, payCodeId: string, status: RecurringEarningStatus, frequency: RecurringEarningFrequency, description: string, amountMinor: number, totalCapMinor: number | null, paidToDateMinor: number, startDate: number, endDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null, payCode: { id: string, code: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type PayCodeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type PayCodeTableQuery = { payCodes: { totalCount: number | null, edges: Array<{ node: { id: string, status: EntityStatus, direction: PayCodeDirection, code: string, name: string, description: string, taxable: boolean, countsTowardGuarantee: boolean, glAccountId: string | null, defaultAmountMinor: number | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number, glAccount: { id: string, accountCode: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type PayCodeOptionsQueryVariables = Exact<{
+  direction?: PayCodeDirection | null | undefined;
+}>;
+
+
+export type PayCodeOptionsQuery = { payCodeOptions: Array<{ id: string, direction: PayCodeDirection, code: string, name: string, taxable: boolean, defaultAmountMinor: number | null }> };
+
+export type PayAdvanceTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type PayAdvanceTableQuery = { payAdvances: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, status: PayAdvanceStatus, source: PayAdvanceSource, reference: string, issuedDate: number, amountMinor: number, recoveredMinor: number, writtenOffMinor: number, outstandingMinor: number, writeOffReason: string, notes: string, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type EscrowAccountTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EscrowAccountTableQuery = { escrowAccounts: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, status: EscrowAccountStatus, targetAmountMinor: number, balanceMinor: number, annualInterestRate: string, lastInterestAccrualDate: number | null, openedDate: number, closedDate: number | null, currencyCode: string, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type EscrowAccountDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EscrowAccountDetailQuery = { escrowAccount: { id: string, workerId: string, status: EscrowAccountStatus, targetAmountMinor: number, balanceMinor: number, annualInterestRate: string, lastInterestAccrualDate: number | null, openedDate: number, closedDate: number | null, currencyCode: string, version: number, worker: { id: string, firstName: string, lastName: string } | null, transactions: Array<{ id: string, type: EscrowTransactionType, amountMinor: number, balanceAfterMinor: number, occurredDate: number, description: string, settlementId: string | null, createdAt: number }> | null } | null };
+
+export type DriverSettlementTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DriverSettlementTableQuery = { driverSettlements: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, batchId: string | null, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number, totalMiles: string, shipmentCount: number, currencyCode: string, hasExceptions: boolean, version: number, createdAt: number, updatedAt: number, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DriverSettlementDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DriverSettlementDetailQuery = { driverSettlement: { id: string, workerId: string, batchId: string | null, payProfileId: string | null, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number, totalMiles: string, shipmentCount: number, currencyCode: string, hasExceptions: boolean, notes: string, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, postedById: string | null, postedAt: number | null, paidAt: number | null, paymentMethod: string, paymentReference: string, voidedById: string | null, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, exceptions: Array<{ code: string, severity: string, message: string }> | null, worker: { id: string, firstName: string, lastName: string } | null, lines: Array<{ id: string, lineNumber: number, category: SettlementLineCategory, componentKind: PayComponentKind | null, method: PayCalcMethod | null, description: string, quantity: string, rate: string, amountMinor: number, shipmentId: string | null, moveId: string | null, payEventId: string | null, recurringDeductionId: string | null, advanceId: string | null, escrowAccountId: string | null, proNumber: string }> | null } | null };
+
+export type SettlementBatchTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type SettlementBatchTableQuery = { settlementBatches: { totalCount: number | null, edges: Array<{ node: { id: string, status: SettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, exceptionCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, generatedById: string | null, generatedAt: number | null, completedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DriverPayEventTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DriverPayEventTableQuery = { driverPayEvents: { totalCount: number | null, edges: Array<{ node: { id: string, workerId: string, shipmentId: string, moveId: string | null, settlementId: string | null, status: DriverPayEventStatus, eventDate: number, grossAmountMinor: number, totalMiles: string, currencyCode: string, proNumber: string, onHold: boolean, holdReason: string, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, components: Array<{ kind: PayComponentKind, method: PayCalcMethod, description: string, quantity: string, rate: string, amountMinor: number }> | null, worker: { id: string, firstName: string, lastName: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type WorkerEarningsSummaryQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type WorkerEarningsSummaryQuery = { workerEarningsSummary: { workerId: string, accruedEventCount: number, accruedGrossMinor: number, outstandingAdvances: number, escrowBalanceMinor: number } };
+
+export type WorkerYtdPaySummariesQueryVariables = Exact<{
+  year: number;
+  classification?: PayeeClassification | null | undefined;
+}>;
+
+
+export type WorkerYtdPaySummariesQuery = { workerYtdPaySummaries: Array<{ workerId: string, workerName: string, classification: PayeeClassification, year: number, settlementCount: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, netPayMinor: number }> };
+
+export type SettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SettlementControlQuery = { settlementControl: { id: string, organizationId: string, businessUnitId: string, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, payTrigger: SettlementPayTrigger, autoGenerateBatches: boolean, autoApproveClean: boolean, autoAttachAccruals: boolean, autoPostOnApprove: boolean, allowNegativeNet: boolean, varianceThresholdPct: string, varianceLookbackWeeks: number, defaultEscrowInterestRate: string, escrowInterestFrequencyMonths: number, version: number } };
+
+export type SettlementWorkspaceSummaryQueryVariables = Exact<{
+  periodStart?: number | null | undefined;
+  periodEnd?: number | null | undefined;
+}>;
+
+
+export type SettlementWorkspaceSummaryQuery = { settlementWorkspaceSummary: { periodStart: number, periodEnd: number, payDate: number, draftCount: number, pendingApprovalCount: number, approvedCount: number, postedCount: number, paidCount: number, exceptionCount: number, totalNetMinor: number, totalGrossMinor: number, unsettledEventCount: number, unsettledGrossMinor: number, heldEventCount: number, heldGrossMinor: number, unsettledWorkerCount: number, openBatchId: string | null } };
+
+export type UnsettledWorkerSummariesQueryVariables = Exact<{
+  periodStart?: number | null | undefined;
+  periodEnd?: number | null | undefined;
+}>;
+
+
+export type UnsettledWorkerSummariesQuery = { unsettledWorkerSummaries: Array<{ workerId: string, workerName: string, eventCount: number, grossAmountMinor: number, heldCount: number, heldGrossMinor: number, hasSettlement: boolean }> };
+
+export type CurrentSettlementPeriodQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CurrentSettlementPeriodQuery = { currentSettlementPeriod: { periodStart: number, periodEnd: number, payDate: number } };
+
+export type PreviewDriverSettlementQueryVariables = Exact<{
+  workerId: string | number;
+  periodStart?: number | null | undefined;
+  periodEnd?: number | null | undefined;
+}>;
+
+
+export type PreviewDriverSettlementQuery = { previewDriverSettlement: { id: string, workerId: string, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number, totalMiles: string, shipmentCount: number, currencyCode: string, hasExceptions: boolean, exceptions: Array<{ code: string, severity: string, message: string }> | null, lines: Array<{ lineNumber: number, category: SettlementLineCategory, componentKind: PayComponentKind | null, method: PayCalcMethod | null, description: string, quantity: string, rate: string, amountMinor: number, proNumber: string }> | null } };
+
+export type ExportSettlementBatchCsvQueryVariables = Exact<{
+  batchId: string | number;
+}>;
+
+
+export type ExportSettlementBatchCsvQuery = { exportSettlementBatchCsv: string };
+
+export type CreatePayProfileMutationVariables = Exact<{
+  input: CreatePayProfileInput;
+}>;
+
+
+export type CreatePayProfileMutation = { createPayProfile: { id: string, name: string, version: number } };
+
+export type UpdatePayProfileMutationVariables = Exact<{
+  input: UpdatePayProfileInput;
+}>;
+
+
+export type UpdatePayProfileMutation = { updatePayProfile: { id: string, name: string, version: number } };
+
+export type AssignPayProfileToWorkerMutationVariables = Exact<{
+  input: AssignPayProfileInput;
+}>;
+
+
+export type AssignPayProfileToWorkerMutation = { assignPayProfileToWorker: { id: string, workerId: string, payProfileId: string, effectiveFrom: number, effectiveTo: number | null } };
+
+export type EndWorkerPayAssignmentMutationVariables = Exact<{
+  input: EndWorkerPayAssignmentInput;
+}>;
+
+
+export type EndWorkerPayAssignmentMutation = { endWorkerPayAssignment: { id: string, effectiveTo: number | null } };
+
+export type CreateRecurringDeductionMutationVariables = Exact<{
+  input: CreateRecurringDeductionInput;
+}>;
+
+
+export type CreateRecurringDeductionMutation = { createRecurringDeduction: { id: string, version: number } };
+
+export type UpdateRecurringDeductionMutationVariables = Exact<{
+  input: UpdateRecurringDeductionInput;
+}>;
+
+
+export type UpdateRecurringDeductionMutation = { updateRecurringDeduction: { id: string, version: number } };
+
+export type CreatePayCodeMutationVariables = Exact<{
+  input: CreatePayCodeInput;
+}>;
+
+
+export type CreatePayCodeMutation = { createPayCode: { id: string, version: number } };
+
+export type UpdatePayCodeMutationVariables = Exact<{
+  input: UpdatePayCodeInput;
+}>;
+
+
+export type UpdatePayCodeMutation = { updatePayCode: { id: string, version: number } };
+
+export type CreateRecurringEarningMutationVariables = Exact<{
+  input: CreateRecurringEarningInput;
+}>;
+
+
+export type CreateRecurringEarningMutation = { createRecurringEarning: { id: string, version: number } };
+
+export type UpdateRecurringEarningMutationVariables = Exact<{
+  input: UpdateRecurringEarningInput;
+}>;
+
+
+export type UpdateRecurringEarningMutation = { updateRecurringEarning: { id: string, version: number } };
+
+export type IssuePayAdvanceMutationVariables = Exact<{
+  input: IssuePayAdvanceInput;
+}>;
+
+
+export type IssuePayAdvanceMutation = { issuePayAdvance: { id: string, version: number } };
+
+export type WriteOffPayAdvanceMutationVariables = Exact<{
+  input: WriteOffPayAdvanceInput;
+}>;
+
+
+export type WriteOffPayAdvanceMutation = { writeOffPayAdvance: { id: string, status: PayAdvanceStatus, version: number } };
+
+export type OpenEscrowAccountMutationVariables = Exact<{
+  input: OpenEscrowAccountInput;
+}>;
+
+
+export type OpenEscrowAccountMutation = { openEscrowAccount: { id: string, version: number } };
+
+export type UpdateEscrowAccountMutationVariables = Exact<{
+  input: UpdateEscrowAccountInput;
+}>;
+
+
+export type UpdateEscrowAccountMutation = { updateEscrowAccount: { id: string, version: number } };
+
+export type AdjustEscrowAccountMutationVariables = Exact<{
+  input: AdjustEscrowAccountInput;
+}>;
+
+
+export type AdjustEscrowAccountMutation = { adjustEscrowAccount: { id: string, balanceMinor: number, version: number } };
+
+export type CloseEscrowAccountMutationVariables = Exact<{
+  accountId: string | number;
+}>;
+
+
+export type CloseEscrowAccountMutation = { closeEscrowAccount: { id: string, status: EscrowAccountStatus, version: number } };
+
+export type GenerateSettlementBatchMutationVariables = Exact<{
+  input: GenerateSettlementBatchInput;
+}>;
+
+
+export type GenerateSettlementBatchMutation = { generateSettlementBatch: { id: string, name: string, settlementCount: number, exceptionCount: number, totalGrossMinor: number, totalNetMinor: number } };
+
+export type GenerateDriverSettlementMutationVariables = Exact<{
+  input: GenerateDriverSettlementInput;
+}>;
+
+
+export type GenerateDriverSettlementMutation = { generateDriverSettlement: { id: string, settlementNumber: string } | null };
+
+export type SubmitDriverSettlementMutationVariables = Exact<{
+  input: DriverSettlementActionInput;
+}>;
+
+
+export type SubmitDriverSettlementMutation = { submitDriverSettlement: { id: string, status: DriverSettlementStatus, version: number } };
+
+export type ApproveDriverSettlementMutationVariables = Exact<{
+  input: DriverSettlementActionInput;
+}>;
+
+
+export type ApproveDriverSettlementMutation = { approveDriverSettlement: { id: string, status: DriverSettlementStatus, version: number } };
+
+export type RejectDriverSettlementMutationVariables = Exact<{
+  input: DriverSettlementActionInput;
+}>;
+
+
+export type RejectDriverSettlementMutation = { rejectDriverSettlement: { id: string, status: DriverSettlementStatus, version: number } };
+
+export type PostDriverSettlementMutationVariables = Exact<{
+  input: DriverSettlementActionInput;
+}>;
+
+
+export type PostDriverSettlementMutation = { postDriverSettlement: { id: string, status: DriverSettlementStatus, version: number } };
+
+export type MarkDriverSettlementPaidMutationVariables = Exact<{
+  input: MarkDriverSettlementPaidInput;
+}>;
+
+
+export type MarkDriverSettlementPaidMutation = { markDriverSettlementPaid: { id: string, status: DriverSettlementStatus, version: number } };
+
+export type VoidDriverSettlementMutationVariables = Exact<{
+  input: DriverSettlementActionInput;
+}>;
+
+
+export type VoidDriverSettlementMutation = { voidDriverSettlement: { id: string, status: DriverSettlementStatus, version: number } };
+
+export type RecalculateDriverSettlementMutationVariables = Exact<{
+  input: DriverSettlementActionInput;
+}>;
+
+
+export type RecalculateDriverSettlementMutation = { recalculateDriverSettlement: { id: string, version: number } };
+
+export type AddDriverSettlementAdjustmentMutationVariables = Exact<{
+  input: AddSettlementAdjustmentInput;
+}>;
+
+
+export type AddDriverSettlementAdjustmentMutation = { addDriverSettlementAdjustment: { id: string, version: number } };
+
+export type RemoveDriverSettlementAdjustmentMutationVariables = Exact<{
+  input: RemoveSettlementAdjustmentInput;
+}>;
+
+
+export type RemoveDriverSettlementAdjustmentMutation = { removeDriverSettlementAdjustment: { id: string, version: number } };
+
+export type HoldDriverPayEventMutationVariables = Exact<{
+  input: HoldPayEventInput;
+}>;
+
+
+export type HoldDriverPayEventMutation = { holdDriverPayEvent: { id: string, status: DriverPayEventStatus, onHold: boolean, holdReason: string, version: number } };
+
+export type ReleaseDriverPayEventMutationVariables = Exact<{
+  payEventId: string | number;
+}>;
+
+
+export type ReleaseDriverPayEventMutation = { releaseDriverPayEvent: { id: string, status: DriverPayEventStatus, onHold: boolean, holdReason: string, version: number } };
+
+export type AttachPayEventsToSettlementMutationVariables = Exact<{
+  input: AttachPayEventsInput;
+}>;
+
+
+export type AttachPayEventsToSettlementMutation = { attachPayEventsToSettlement: { id: string, status: DriverSettlementStatus, grossEarningsMinor: number, netPayMinor: number, version: number } };
+
+export type DetachPayEventFromSettlementMutationVariables = Exact<{
+  input: DetachPayEventInput;
+}>;
+
+
+export type DetachPayEventFromSettlementMutation = { detachPayEventFromSettlement: { id: string, status: DriverSettlementStatus, grossEarningsMinor: number, netPayMinor: number, version: number } };
+
+export type BulkDriverSettlementActionMutationVariables = Exact<{
+  input: BulkSettlementActionInput;
+}>;
+
+
+export type BulkDriverSettlementActionMutation = { bulkDriverSettlementAction: { successCount: number, failureCount: number, results: Array<{ settlementId: string, success: boolean, error: string }> } };
+
+export type UpdateSettlementControlMutationVariables = Exact<{
+  input: UpdateSettlementControlInput;
+}>;
+
+
+export type UpdateSettlementControlMutation = { updateSettlementControl: { id: string, version: number } };
+
+export type SettlementBatchDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SettlementBatchDetailQuery = { settlementBatch: { id: string, status: SettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, exceptionCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, version: number, settlements: Array<{ id: string, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, grossEarningsMinor: number, deductionsMinor: number, netPayMinor: number, currencyCode: string, hasExceptions: boolean, worker: { id: string, firstName: string, lastName: string } | null }> | null } | null };
+
+export type UnsettledPayEventsQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type UnsettledPayEventsQuery = { unsettledPayEvents: Array<{ id: string, shipmentId: string, moveId: string | null, eventDate: number, grossAmountMinor: number, totalMiles: string, currencyCode: string, proNumber: string }> };
+
+export type PayWorkerNowMutationVariables = Exact<{
+  input: PayWorkerNowInput;
+}>;
+
+
+export type PayWorkerNowMutation = { payWorkerNow: { id: string, settlementNumber: string, status: DriverSettlementStatus, netPayMinor: number, currencyCode: string, paidAt: number | null, paymentMethod: string, paymentReference: string } };
 
 export type EdiPartnerScorecardsQueryVariables = Exact<{
   sinceHours?: number | null | undefined;
@@ -6907,6 +8155,1864 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:ae55c419637d48ea77823cabaa483d3c741cc6b0bcc07b86e2bd25f4fce11b82"}) as unknown as TypedDocumentString<DocumentTypeTableQuery, DocumentTypeTableQueryVariables>;
+export const WorkerPortalStatusDocument = new TypedDocumentString(`
+    query WorkerPortalStatus($workerId: ID!) {
+  workerPortalStatus(workerId: $workerId) {
+    linked
+    portalUser {
+      id
+      name
+      emailAddress
+      status
+      lastLoginAt
+    }
+    pendingInvitation {
+      id
+      email
+      status
+      expiresAt
+      createdAt
+    }
+    invitations {
+      id
+      email
+      status
+      expiresAt
+      acceptedAt
+      createdAt
+      invitedBy {
+        id
+        name
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:747e063d2865387a9bfee8d33322637bfb155421a1605b8b7bee154804b3c4a1"}) as unknown as TypedDocumentString<WorkerPortalStatusQuery, WorkerPortalStatusQueryVariables>;
+export const InviteWorkerToPortalDocument = new TypedDocumentString(`
+    mutation InviteWorkerToPortal($input: InviteWorkerToPortalInput!) {
+  inviteWorkerToPortal(input: $input) {
+    invitation {
+      id
+      email
+      status
+      expiresAt
+    }
+    inviteUrl
+    emailSent
+  }
+}
+    `, {"hash":"sha256:aca1f784efb7ea2322d18e6ef69d1981810ffac214ea568ae44b56a0cf721a48"}) as unknown as TypedDocumentString<InviteWorkerToPortalMutation, InviteWorkerToPortalMutationVariables>;
+export const RevokeWorkerPortalAccessDocument = new TypedDocumentString(`
+    mutation RevokeWorkerPortalAccess($workerId: ID!) {
+  revokeWorkerPortalAccess(workerId: $workerId)
+}
+    `, {"hash":"sha256:f155b1032fe0e180152934a5fb457e75109136e2ffbde362d474828e42dabd7b"}) as unknown as TypedDocumentString<RevokeWorkerPortalAccessMutation, RevokeWorkerPortalAccessMutationVariables>;
+export const SettlementDisputeTableDocument = new TypedDocumentString(`
+    query SettlementDisputeTable($input: DataTableConnectionInput!) {
+  settlementDisputes(input: $input) {
+    edges {
+      node {
+        id
+        settlementId
+        settlementLineId
+        workerId
+        status
+        category
+        description
+        resolutionNote
+        resolvedAt
+        createdAt
+        updatedAt
+        version
+        worker {
+          id
+          firstName
+          lastName
+        }
+        settlement {
+          id
+          settlementNumber
+          netPayMinor
+          currencyCode
+          status
+        }
+        resolvedBy {
+          id
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:33d72f67dfa456db1b8de861e84b3e16173a8ba5f5fea3cf7a71bf3f9ddaef93"}) as unknown as TypedDocumentString<SettlementDisputeTableQuery, SettlementDisputeTableQueryVariables>;
+export const SettlementDisputeDetailDocument = new TypedDocumentString(`
+    query SettlementDisputeDetail($id: ID!) {
+  settlementDispute(id: $id) {
+    id
+    settlementId
+    settlementLineId
+    workerId
+    status
+    category
+    description
+    submittedByUserId
+    resolutionNote
+    resolutionLineId
+    resolvedById
+    resolvedAt
+    version
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+    }
+    settlement {
+      id
+      settlementNumber
+      status
+      periodStart
+      periodEnd
+      netPayMinor
+      grossEarningsMinor
+      deductionsMinor
+      currencyCode
+    }
+    settlementLine {
+      id
+      lineNumber
+      category
+      description
+      amountMinor
+      proNumber
+    }
+    resolvedBy {
+      id
+      name
+    }
+  }
+}
+    `, {"hash":"sha256:ccd8fbb15a3ec77478291e05d6dd931d3c71923ffea585cd51b02ecc3964cd26"}) as unknown as TypedDocumentString<SettlementDisputeDetailQuery, SettlementDisputeDetailQueryVariables>;
+export const OpenSettlementDisputeCountDocument = new TypedDocumentString(`
+    query OpenSettlementDisputeCount {
+  openSettlementDisputeCount
+}
+    `, {"hash":"sha256:d8f8fb203d4850d7671c64c9b442e243f87771ccdb245289725411c8fc1bbbbe"}) as unknown as TypedDocumentString<OpenSettlementDisputeCountQuery, OpenSettlementDisputeCountQueryVariables>;
+export const StartSettlementDisputeReviewDocument = new TypedDocumentString(`
+    mutation StartSettlementDisputeReview($id: ID!) {
+  startSettlementDisputeReview(id: $id) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:d9763f9364a8c8ffb2df5481c6da57a9824953a6f9e7fcca26cde2d132c12028"}) as unknown as TypedDocumentString<StartSettlementDisputeReviewMutation, StartSettlementDisputeReviewMutationVariables>;
+export const ResolveSettlementDisputeDocument = new TypedDocumentString(`
+    mutation ResolveSettlementDispute($input: ResolveSettlementDisputeInput!) {
+  resolveSettlementDispute(input: $input) {
+    id
+    status
+    resolutionNote
+    resolutionLineId
+    resolvedAt
+    version
+  }
+}
+    `, {"hash":"sha256:0a9ff3966e92976c95b3815f2820954520d283fd44748dceeb18629e05758401"}) as unknown as TypedDocumentString<ResolveSettlementDisputeMutation, ResolveSettlementDisputeMutationVariables>;
+export const MyPortalProfileDocument = new TypedDocumentString(`
+    query MyPortalProfile {
+  myPortalProfile {
+    workerId
+    firstName
+    lastName
+    email
+    phoneNumber
+    workerType
+    driverType
+    fleetCodeName
+    organizationName
+  }
+}
+    `, {"hash":"sha256:d9f1923f100755639ac4dcb381b4d12d4ec966896dc62f6feeace051bbb313f8"}) as unknown as TypedDocumentString<MyPortalProfileQuery, MyPortalProfileQueryVariables>;
+export const MyLoadsDocument = new TypedDocumentString(`
+    query MyLoads($scope: PortalLoadScope!, $limit: Int) {
+  myLoads(scope: $scope, limit: $limit) {
+    assignmentId
+    moveId
+    shipmentId
+    proNumber
+    bol
+    status
+    isPrimary
+    tractorCode
+    trailerCode
+    pieces
+    weight
+    distanceMiles
+    payGrossMinor
+    payStatus
+    payOnHold
+    ackStatus
+    stops {
+      id
+      type
+      status
+      sequence
+      locationName
+      addressLine
+      scheduledWindowStart
+      scheduledWindowEnd
+      actualArrival
+      actualDeparture
+    }
+  }
+}
+    `, {"hash":"sha256:234ab5affc2ec541d377704704289944b19ac2f12553fdb404bce4323e11ba7c"}) as unknown as TypedDocumentString<MyLoadsQuery, MyLoadsQueryVariables>;
+export const MyLoadCommentsDocument = new TypedDocumentString(`
+    query MyLoadComments($shipmentId: ID!) {
+  myLoadComments(shipmentId: $shipmentId) {
+    id
+    type
+    priority
+    comment
+    authorName
+    createdAt
+  }
+}
+    `, {"hash":"sha256:bb8f38084baf00216f6da811c1d01e04b2dfdcf4ac579b48771e2c0103e3e490"}) as unknown as TypedDocumentString<MyLoadCommentsQuery, MyLoadCommentsQueryVariables>;
+export const RecordMyStopActionDocument = new TypedDocumentString(`
+    mutation RecordMyStopAction($input: RecordMyStopActionInput!) {
+  recordMyStopAction(input: $input)
+}
+    `, {"hash":"sha256:2e9bf84e0ce7dbfd352cba8d60db65f4912a71052aff8f90c7ef530277a91e24"}) as unknown as TypedDocumentString<RecordMyStopActionMutation, RecordMyStopActionMutationVariables>;
+export const CreateMyLoadCommentDocument = new TypedDocumentString(`
+    mutation CreateMyLoadComment($input: CreateMyLoadCommentInput!) {
+  createMyLoadComment(input: $input) {
+    id
+    type
+    priority
+    comment
+    authorName
+    createdAt
+  }
+}
+    `, {"hash":"sha256:d1ae76e14b0a4562299fb803f6445db0ba915c29e9de6be29855c42edf501d17"}) as unknown as TypedDocumentString<CreateMyLoadCommentMutation, CreateMyLoadCommentMutationVariables>;
+export const MyPeriodSummaryDocument = new TypedDocumentString(`
+    query MyPeriodSummary {
+  myPeriodSummary {
+    periodStart
+    periodEnd
+    payDate
+    accruedGrossMinor
+    eventCount
+  }
+}
+    `, {"hash":"sha256:300c67ba34b8708f1e1352f6bf455729f24ad3f18ba8f7a97d2886d2ba12e382"}) as unknown as TypedDocumentString<MyPeriodSummaryQuery, MyPeriodSummaryQueryVariables>;
+export const MyRecentPayEventsDocument = new TypedDocumentString(`
+    query MyRecentPayEvents($limit: Int) {
+  myRecentPayEvents(limit: $limit) {
+    id
+    status
+    eventDate
+    proNumber
+    grossAmountMinor
+    totalMiles
+    currencyCode
+    onHold
+    holdReason
+  }
+}
+    `, {"hash":"sha256:b21ae5d25eaa70e20606dd2bc6decf9b6be568727a1fd3069ffcd9e43a2ffc1b"}) as unknown as TypedDocumentString<MyRecentPayEventsQuery, MyRecentPayEventsQueryVariables>;
+export const MySettlementsDocument = new TypedDocumentString(`
+    query MySettlements($limit: Int, $offset: Int) {
+  mySettlements(limit: $limit, offset: $offset) {
+    items {
+      id
+      settlementNumber
+      status
+      periodStart
+      periodEnd
+      payDate
+      grossEarningsMinor
+      reimbursementsMinor
+      deductionsMinor
+      netPayMinor
+      currencyCode
+      paidAt
+      paymentMethod
+      paymentReference
+    }
+    total
+  }
+}
+    `, {"hash":"sha256:2ee91e8c25e4027169a740ef45aaf59ebab0fdba2f9fe2c1616d4a5f6a5bb491"}) as unknown as TypedDocumentString<MySettlementsQuery, MySettlementsQueryVariables>;
+export const MySettlementDocument = new TypedDocumentString(`
+    query MySettlement($id: ID!) {
+  mySettlement(id: $id) {
+    id
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    paidAt
+    paymentMethod
+    paymentReference
+    createdAt
+    lines {
+      id
+      lineNumber
+      category
+      componentKind
+      method
+      description
+      quantity
+      rate
+      amountMinor
+      proNumber
+    }
+  }
+}
+    `, {"hash":"sha256:13d06f21c46b4eeeb624270d875cdccc3574ce029799208b15d05c3cc38e499d"}) as unknown as TypedDocumentString<MySettlementQuery, MySettlementQueryVariables>;
+export const MyEscrowDocument = new TypedDocumentString(`
+    query MyEscrow {
+  myEscrow {
+    account {
+      id
+      status
+      targetAmountMinor
+      balanceMinor
+      currencyCode
+      createdAt
+    }
+    transactions {
+      id
+      type
+      amountMinor
+      balanceAfterMinor
+      description
+      occurredDate
+      createdAt
+    }
+  }
+}
+    `, {"hash":"sha256:d6e92e5dd91225da94c876899ec76b6539d6b200adc66d8f5c9f16743631c4e7"}) as unknown as TypedDocumentString<MyEscrowQuery, MyEscrowQueryVariables>;
+export const MyAdvancesDocument = new TypedDocumentString(`
+    query MyAdvances {
+  myAdvances {
+    id
+    status
+    source
+    reference
+    amountMinor
+    recoveredMinor
+    outstandingMinor
+    currencyCode
+    issuedDate
+  }
+}
+    `, {"hash":"sha256:4ad05d0be74ab6dec588aa0b7db8ab77d9cd5d605096e13a97cb20bce852f47f"}) as unknown as TypedDocumentString<MyAdvancesQuery, MyAdvancesQueryVariables>;
+export const MyDisputesDocument = new TypedDocumentString(`
+    query MyDisputes {
+  myDisputes {
+    id
+    settlementId
+    settlementLineId
+    status
+    category
+    description
+    resolutionNote
+    resolvedAt
+    createdAt
+    settlement {
+      id
+      settlementNumber
+      periodStart
+      periodEnd
+    }
+    settlementLine {
+      id
+      description
+      amountMinor
+      category
+    }
+  }
+}
+    `, {"hash":"sha256:ce60a2cceb081d891881972f30a664ff30829c3bee0d0ea86b2d4bb9214d78f6"}) as unknown as TypedDocumentString<MyDisputesQuery, MyDisputesQueryVariables>;
+export const CreateSettlementDisputeDocument = new TypedDocumentString(`
+    mutation CreateSettlementDispute($input: CreateSettlementDisputeInput!) {
+  createSettlementDispute(input: $input) {
+    id
+    status
+    category
+    description
+    createdAt
+  }
+}
+    `, {"hash":"sha256:369c2c8a4105f0c1c8e19d5e899d99997ba5449ea24316561c28e415cc008123"}) as unknown as TypedDocumentString<CreateSettlementDisputeMutation, CreateSettlementDisputeMutationVariables>;
+export const WithdrawSettlementDisputeDocument = new TypedDocumentString(`
+    mutation WithdrawSettlementDispute($id: ID!) {
+  withdrawSettlementDispute(id: $id) {
+    id
+    status
+  }
+}
+    `, {"hash":"sha256:8ac805417a3dde06fdd223772563f68688bdb73966c0424fcfc441df9db0c205"}) as unknown as TypedDocumentString<WithdrawSettlementDisputeMutation, WithdrawSettlementDisputeMutationVariables>;
+export const MyComplianceProfileDocument = new TypedDocumentString(`
+    query MyComplianceProfile {
+  myComplianceProfile {
+    workerId
+    licenseNumber
+    licenseState
+    cdlClass
+    endorsement
+    licenseExpiry
+    hazmatExpiry
+    medicalCardExpiry
+    physicalDueDate
+    mvrDueDate
+    twicExpiry
+    complianceStatus
+    isQualified
+    hireDate
+    addressLine1
+    addressLine2
+    city
+    stateAbbreviation
+    postalCode
+    phoneNumber
+    emergencyContactName
+    emergencyContactPhone
+  }
+}
+    `, {"hash":"sha256:ac5af8e8d15be26168448355e9771b11417890d634039dbdf7f39317d739b532"}) as unknown as TypedDocumentString<MyComplianceProfileQuery, MyComplianceProfileQueryVariables>;
+export const UpdateMyContactInfoDocument = new TypedDocumentString(`
+    mutation UpdateMyContactInfo($input: UpdateMyContactInfoInput!) {
+  updateMyContactInfo(input: $input) {
+    workerId
+    addressLine1
+    addressLine2
+    city
+    stateAbbreviation
+    postalCode
+    phoneNumber
+    emergencyContactName
+    emergencyContactPhone
+  }
+}
+    `, {"hash":"sha256:e81e7bb10b0ba505ac01858582f241192fb8f9552a6ea9ef910afba79ff73f1d"}) as unknown as TypedDocumentString<UpdateMyContactInfoMutation, UpdateMyContactInfoMutationVariables>;
+export const MyPtoDocument = new TypedDocumentString(`
+    query MyPto {
+  myPto {
+    id
+    status
+    type
+    startDate
+    endDate
+    reason
+    createdAt
+  }
+}
+    `, {"hash":"sha256:9fcfb3c6f94692c333a8f9b3f6074f033ace1ec340b3c7ffc601c00618a7e264"}) as unknown as TypedDocumentString<MyPtoQuery, MyPtoQueryVariables>;
+export const RequestMyPtoDocument = new TypedDocumentString(`
+    mutation RequestMyPto($input: RequestMyPtoInput!) {
+  requestMyPto(input: $input) {
+    id
+    status
+    type
+    startDate
+    endDate
+    reason
+    createdAt
+  }
+}
+    `, {"hash":"sha256:b1ad80c4985bc9a0b66fe33cb36e37d957a107db4c25fe06a4154b0e76ed7be6"}) as unknown as TypedDocumentString<RequestMyPtoMutation, RequestMyPtoMutationVariables>;
+export const CancelMyPtoDocument = new TypedDocumentString(`
+    mutation CancelMyPto($id: ID!) {
+  cancelMyPto(id: $id) {
+    id
+    status
+  }
+}
+    `, {"hash":"sha256:f6bff19ede90794d5d921c0277bb7254497e80ce7fb32e10870af9dffc87759c"}) as unknown as TypedDocumentString<CancelMyPtoMutation, CancelMyPtoMutationVariables>;
+export const MyExpensesDocument = new TypedDocumentString(`
+    query MyExpenses {
+  myExpenses {
+    id
+    shipmentId
+    payCodeId
+    status
+    amountMinor
+    currencyCode
+    description
+    incurredDate
+    receiptDocumentId
+    reviewNote
+    reviewedAt
+    createdAt
+    payCode {
+      id
+      code
+      description
+    }
+  }
+}
+    `, {"hash":"sha256:a37af7272e3a8791c6ea1257e9786bfdb352b5c0c58e29ff8cb01fb72de1145f"}) as unknown as TypedDocumentString<MyExpensesQuery, MyExpensesQueryVariables>;
+export const SubmitMyExpenseDocument = new TypedDocumentString(`
+    mutation SubmitMyExpense($input: SubmitMyExpenseInput!) {
+  submitMyExpense(input: $input) {
+    id
+    status
+    amountMinor
+    description
+    incurredDate
+    createdAt
+  }
+}
+    `, {"hash":"sha256:a7598d8fcd7abe6245cd2dfa7858051fc11048da1632d7f04fbf0914e4dc5ebc"}) as unknown as TypedDocumentString<SubmitMyExpenseMutation, SubmitMyExpenseMutationVariables>;
+export const CancelMyExpenseDocument = new TypedDocumentString(`
+    mutation CancelMyExpense($id: ID!) {
+  cancelMyExpense(id: $id) {
+    id
+    status
+  }
+}
+    `, {"hash":"sha256:ff0f019a13713002ba005dabcfbaaf348ab036dbb4461aa7f8ad6393d208cb3a"}) as unknown as TypedDocumentString<CancelMyExpenseMutation, CancelMyExpenseMutationVariables>;
+export const RespondToMyAssignmentDocument = new TypedDocumentString(`
+    mutation RespondToMyAssignment($input: RespondToMyAssignmentInput!) {
+  respondToMyAssignment(input: $input)
+}
+    `, {"hash":"sha256:211393bb6c83113d7199803c0c269021ebfac1ecf2a65eb46143051c7e3fb3f2"}) as unknown as TypedDocumentString<RespondToMyAssignmentMutation, RespondToMyAssignmentMutationVariables>;
+export const MyLoadPayEstimateDocument = new TypedDocumentString(`
+    query MyLoadPayEstimate($shipmentId: ID!, $moveId: ID!) {
+  myLoadPayEstimate(shipmentId: $shipmentId, moveId: $moveId) {
+    grossMinor
+    currencyCode
+  }
+}
+    `, {"hash":"sha256:153135d927a73aaa32b52850ee67d3f02242447d08c58e4f0058d052f85f32b2"}) as unknown as TypedDocumentString<MyLoadPayEstimateQuery, MyLoadPayEstimateQueryVariables>;
+export const MyYtdPayDocument = new TypedDocumentString(`
+    query MyYtdPay($year: Int!) {
+  myYtdPay(year: $year) {
+    workerId
+    year
+    settlementCount
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    netPayMinor
+  }
+}
+    `, {"hash":"sha256:3020bc2943b245e09336415b3901f2c59161751172c3a12e1b721972bb8ed133"}) as unknown as TypedDocumentString<MyYtdPayQuery, MyYtdPayQueryVariables>;
+export const DriverExpenseTableDocument = new TypedDocumentString(`
+    query DriverExpenseTable($input: DataTableConnectionInput!) {
+  driverExpenses(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        shipmentId
+        status
+        amountMinor
+        currencyCode
+        description
+        incurredDate
+        receiptDocumentId
+        reviewNote
+        reviewedAt
+        settlementLineId
+        createdAt
+        version
+        worker {
+          id
+          firstName
+          lastName
+        }
+        payCode {
+          id
+          code
+          description
+        }
+        reviewedBy {
+          id
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:871d4b9aaf068f47c56778c4af2cb6063c875805bc156d90119fca05a718da58"}) as unknown as TypedDocumentString<DriverExpenseTableQuery, DriverExpenseTableQueryVariables>;
+export const DriverExpenseDetailDocument = new TypedDocumentString(`
+    query DriverExpenseDetail($id: ID!) {
+  driverExpense(id: $id) {
+    id
+    workerId
+    shipmentId
+    payCodeId
+    status
+    amountMinor
+    currencyCode
+    description
+    incurredDate
+    receiptDocumentId
+    reviewNote
+    reviewedById
+    reviewedAt
+    settlementLineId
+    version
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+      email
+      phoneNumber
+    }
+    payCode {
+      id
+      code
+      description
+    }
+    reviewedBy {
+      id
+      name
+    }
+  }
+}
+    `, {"hash":"sha256:b6dfe3c16c23e841da42029ab4276a328018d85777371bfc36808ae4868cee2d"}) as unknown as TypedDocumentString<DriverExpenseDetailQuery, DriverExpenseDetailQueryVariables>;
+export const PendingDriverExpenseCountDocument = new TypedDocumentString(`
+    query PendingDriverExpenseCount {
+  pendingDriverExpenseCount
+}
+    `, {"hash":"sha256:ea576d13a22021a5d5e9559b60c5a2082502418662f1ab9e11591b1a0af0e4de"}) as unknown as TypedDocumentString<PendingDriverExpenseCountQuery, PendingDriverExpenseCountQueryVariables>;
+export const ReviewDriverExpenseDocument = new TypedDocumentString(`
+    mutation ReviewDriverExpense($input: ReviewDriverExpenseInput!) {
+  reviewDriverExpense(input: $input) {
+    id
+    status
+    reviewNote
+    reviewedAt
+    settlementLineId
+    version
+  }
+}
+    `, {"hash":"sha256:a7977fe40219d006a216e85a7db70e407be08880a8b5b0fd602d53c4603f6bef"}) as unknown as TypedDocumentString<ReviewDriverExpenseMutation, ReviewDriverExpenseMutationVariables>;
+export const DashControlDocument = new TypedDocumentString(`
+    query DashControl {
+  dashControl {
+    id
+    requireLoadAcknowledgment
+    allowLoadRefusals
+    allowStopActions
+    allowLoadDocumentUpload
+    allowLoadComments
+    showLoadPay
+    showPayEstimates
+    allowExpenseSubmission
+    requireExpenseReceipt
+    allowSettlementDisputes
+    allowProfileDocumentUpload
+    allowContactInfoEdit
+    allowPtoRequests
+    sendCredentialReminders
+    enableDetentionAlerts
+    detentionAlertThresholdMinutes
+    version
+  }
+}
+    `, {"hash":"sha256:a7fa2c52c009be34795526a62d7bd524f6238be8da67be763802bcbaad6ac77a"}) as unknown as TypedDocumentString<DashControlQuery, DashControlQueryVariables>;
+export const UpdateDashControlDocument = new TypedDocumentString(`
+    mutation UpdateDashControl($input: UpdateDashControlInput!) {
+  updateDashControl(input: $input) {
+    id
+    requireLoadAcknowledgment
+    allowLoadRefusals
+    allowStopActions
+    allowLoadDocumentUpload
+    allowLoadComments
+    showLoadPay
+    showPayEstimates
+    allowExpenseSubmission
+    requireExpenseReceipt
+    allowSettlementDisputes
+    allowProfileDocumentUpload
+    allowContactInfoEdit
+    allowPtoRequests
+    sendCredentialReminders
+    enableDetentionAlerts
+    detentionAlertThresholdMinutes
+    version
+  }
+}
+    `, {"hash":"sha256:6240832c7e2db613007b7c3e093f36d779100155ba80adc5a2df5c2c6e6c4e74"}) as unknown as TypedDocumentString<UpdateDashControlMutation, UpdateDashControlMutationVariables>;
+export const MyPortalFeaturesDocument = new TypedDocumentString(`
+    query MyPortalFeatures {
+  myPortalFeatures {
+    requireLoadAcknowledgment
+    allowLoadRefusals
+    allowStopActions
+    allowLoadDocumentUpload
+    allowLoadComments
+    showLoadPay
+    showPayEstimates
+    allowExpenseSubmission
+    requireExpenseReceipt
+    allowSettlementDisputes
+    allowProfileDocumentUpload
+    allowContactInfoEdit
+    allowPtoRequests
+  }
+}
+    `, {"hash":"sha256:dce4827f759a822d4b074209578feb2d3f12294a2fb26e9d0184fd89c8183571"}) as unknown as TypedDocumentString<MyPortalFeaturesQuery, MyPortalFeaturesQueryVariables>;
+export const PayProfileTableDocument = new TypedDocumentString(`
+    query PayProfileTable($input: DataTableConnectionInput!) {
+  payProfiles(input: $input) {
+    edges {
+      node {
+        id
+        organizationId
+        businessUnitId
+        status
+        name
+        description
+        classification
+        currencyCode
+        guaranteedPeriodMinimumMinor
+        perDiemRatePerMile
+        perDiemDailyCapMinor
+        version
+        createdAt
+        updatedAt
+        activeAssignmentCount
+        components {
+          id
+          kind
+          method
+          description
+          rate
+          revenueBasis
+          bands {
+            minMiles
+            maxMiles
+            rate
+          }
+          freeTimeMinutes
+          minAmountMinor
+          maxAmountMinor
+          sequence
+          isActive
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:1e5c03f4818797042043e0fb555d6554e4651086b3312226c4981f680c5995fe"}) as unknown as TypedDocumentString<PayProfileTableQuery, PayProfileTableQueryVariables>;
+export const PayProfileOptionsDocument = new TypedDocumentString(`
+    query PayProfileOptions($input: DataTableConnectionInput!) {
+  payProfiles(input: $input) {
+    edges {
+      node {
+        id
+        name
+        classification
+        status
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:0f1fc94a1c413422c5dea0282e0cc1a022769625469f09634c7ad5051cf29790"}) as unknown as TypedDocumentString<PayProfileOptionsQuery, PayProfileOptionsQueryVariables>;
+export const WorkerPayAssignmentsDocument = new TypedDocumentString(`
+    query WorkerPayAssignments($workerId: ID!) {
+  workerPayAssignments(workerId: $workerId) {
+    id
+    workerId
+    payProfileId
+    effectiveFrom
+    effectiveTo
+    splitPercent
+    rateOverrides {
+      componentId
+      rate
+    }
+    notes
+    version
+    createdAt
+    payProfile {
+      id
+      name
+      classification
+      components {
+        id
+        kind
+        method
+        description
+        rate
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:1bf635cd5fa402d1768672762dcc0cca45e44bfd28abb08b7c7caa1a7efc6528"}) as unknown as TypedDocumentString<WorkerPayAssignmentsQuery, WorkerPayAssignmentsQueryVariables>;
+export const EffectiveWorkerPayAssignmentDocument = new TypedDocumentString(`
+    query EffectiveWorkerPayAssignment($workerId: ID!) {
+  effectiveWorkerPayAssignment(workerId: $workerId) {
+    id
+    workerId
+    payProfileId
+    effectiveFrom
+    effectiveTo
+    splitPercent
+    rateOverrides {
+      componentId
+      rate
+    }
+    notes
+    payProfile {
+      id
+      name
+      classification
+      guaranteedPeriodMinimumMinor
+      components {
+        id
+        kind
+        method
+        description
+        rate
+        revenueBasis
+        bands {
+          minMiles
+          maxMiles
+          rate
+        }
+        isActive
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:2249cf1dac4bf029650c70b40a3b51522bdfb085d8d4b0783a8e58b649b5524b"}) as unknown as TypedDocumentString<EffectiveWorkerPayAssignmentQuery, EffectiveWorkerPayAssignmentQueryVariables>;
+export const PayProfileAssignmentsDocument = new TypedDocumentString(`
+    query PayProfileAssignments($payProfileId: ID!) {
+  payProfileAssignments(payProfileId: $payProfileId) {
+    id
+    workerId
+    effectiveFrom
+    effectiveTo
+    splitPercent
+    rateOverrides {
+      componentId
+      rate
+    }
+    worker {
+      id
+      firstName
+      lastName
+    }
+  }
+}
+    `, {"hash":"sha256:a5cd25fafd7706fafd7a770aec517285d5ed7b8ab090cbd5756fb66f7e528221"}) as unknown as TypedDocumentString<PayProfileAssignmentsQuery, PayProfileAssignmentsQueryVariables>;
+export const PayProfileDetailDocument = new TypedDocumentString(`
+    query PayProfileDetail($id: ID!) {
+  payProfile(id: $id) {
+    id
+    name
+    classification
+    currencyCode
+    components {
+      id
+      kind
+      method
+      description
+      rate
+      revenueBasis
+      isActive
+    }
+  }
+}
+    `, {"hash":"sha256:7c7934aa1908ddd5d2d39e488200ef13338e7cdbd5eb59f8a8489cb7a835be3b"}) as unknown as TypedDocumentString<PayProfileDetailQuery, PayProfileDetailQueryVariables>;
+export const RecurringDeductionTableDocument = new TypedDocumentString(`
+    query RecurringDeductionTable($input: DataTableConnectionInput!) {
+  recurringDeductions(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        payCodeId
+        escrowAccountId
+        status
+        frequency
+        description
+        amountMinor
+        totalCapMinor
+        deductedToDateMinor
+        startDate
+        endDate
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+        payCode {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:b08b1dd23e5a56af87307e351290b4c8e611b257939e1e5fe3eadc77d6331cb8"}) as unknown as TypedDocumentString<RecurringDeductionTableQuery, RecurringDeductionTableQueryVariables>;
+export const RecurringEarningTableDocument = new TypedDocumentString(`
+    query RecurringEarningTable($input: DataTableConnectionInput!) {
+  recurringEarnings(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        payCodeId
+        status
+        frequency
+        description
+        amountMinor
+        totalCapMinor
+        paidToDateMinor
+        startDate
+        endDate
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+        payCode {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:fedf545334de1148057d2bde0e8a58f94e3c6b9ad09a4a29bcd17c1cb68a2272"}) as unknown as TypedDocumentString<RecurringEarningTableQuery, RecurringEarningTableQueryVariables>;
+export const PayCodeTableDocument = new TypedDocumentString(`
+    query PayCodeTable($input: DataTableConnectionInput!) {
+  payCodes(input: $input) {
+    edges {
+      node {
+        id
+        status
+        direction
+        code
+        name
+        description
+        taxable
+        countsTowardGuarantee
+        glAccountId
+        defaultAmountMinor
+        isSystem
+        version
+        createdAt
+        updatedAt
+        glAccount {
+          id
+          accountCode
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:1cd027118971feb07a21cdf553bb50a716510e6882471adf6031858296275211"}) as unknown as TypedDocumentString<PayCodeTableQuery, PayCodeTableQueryVariables>;
+export const PayCodeOptionsDocument = new TypedDocumentString(`
+    query PayCodeOptions($direction: PayCodeDirection) {
+  payCodeOptions(direction: $direction) {
+    id
+    direction
+    code
+    name
+    taxable
+    defaultAmountMinor
+  }
+}
+    `, {"hash":"sha256:936a60ce21a22bf3cb1ec09b8e12a1d12b6cffb98550835e69d0255f713dfd72"}) as unknown as TypedDocumentString<PayCodeOptionsQuery, PayCodeOptionsQueryVariables>;
+export const PayAdvanceTableDocument = new TypedDocumentString(`
+    query PayAdvanceTable($input: DataTableConnectionInput!) {
+  payAdvances(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        status
+        source
+        reference
+        issuedDate
+        amountMinor
+        recoveredMinor
+        writtenOffMinor
+        outstandingMinor
+        writeOffReason
+        notes
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:72e0fa0b3fc41df7a92208a1575f5a3242fa80666502710659439dc96338d8dd"}) as unknown as TypedDocumentString<PayAdvanceTableQuery, PayAdvanceTableQueryVariables>;
+export const EscrowAccountTableDocument = new TypedDocumentString(`
+    query EscrowAccountTable($input: DataTableConnectionInput!) {
+  escrowAccounts(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        status
+        targetAmountMinor
+        balanceMinor
+        annualInterestRate
+        lastInterestAccrualDate
+        openedDate
+        closedDate
+        currencyCode
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:1c0df4bc500406a888b423333eb4e66c48185efcc23a8d73fc55a3171d3a8a63"}) as unknown as TypedDocumentString<EscrowAccountTableQuery, EscrowAccountTableQueryVariables>;
+export const EscrowAccountDetailDocument = new TypedDocumentString(`
+    query EscrowAccountDetail($id: ID!) {
+  escrowAccount(id: $id) {
+    id
+    workerId
+    status
+    targetAmountMinor
+    balanceMinor
+    annualInterestRate
+    lastInterestAccrualDate
+    openedDate
+    closedDate
+    currencyCode
+    version
+    worker {
+      id
+      firstName
+      lastName
+    }
+    transactions {
+      id
+      type
+      amountMinor
+      balanceAfterMinor
+      occurredDate
+      description
+      settlementId
+      createdAt
+    }
+  }
+}
+    `, {"hash":"sha256:57e8a0b5d1c97b85fcb0dc2aa0b40ffaec3b9fbfaf20e3d00e4983912db939b9"}) as unknown as TypedDocumentString<EscrowAccountDetailQuery, EscrowAccountDetailQueryVariables>;
+export const DriverSettlementTableDocument = new TypedDocumentString(`
+    query DriverSettlementTable($input: DataTableConnectionInput!) {
+  driverSettlements(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        batchId
+        settlementNumber
+        status
+        classification
+        payProfileName
+        periodStart
+        periodEnd
+        payDate
+        grossEarningsMinor
+        reimbursementsMinor
+        deductionsMinor
+        carryForwardInMinor
+        carryForwardOutMinor
+        netPayMinor
+        totalMiles
+        shipmentCount
+        currencyCode
+        hasExceptions
+        version
+        createdAt
+        updatedAt
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:a5b74fc45a1800bf202a35cef1731d1c2edb39f201dadc92d0171276cadeee6c"}) as unknown as TypedDocumentString<DriverSettlementTableQuery, DriverSettlementTableQueryVariables>;
+export const DriverSettlementDetailDocument = new TypedDocumentString(`
+    query DriverSettlementDetail($id: ID!) {
+  driverSettlement(id: $id) {
+    id
+    workerId
+    batchId
+    payProfileId
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    hasExceptions
+    exceptions {
+      code
+      severity
+      message
+    }
+    notes
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    postedById
+    postedAt
+    paidAt
+    paymentMethod
+    paymentReference
+    voidedById
+    voidedAt
+    voidReason
+    version
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+    }
+    lines {
+      id
+      lineNumber
+      category
+      componentKind
+      method
+      description
+      quantity
+      rate
+      amountMinor
+      shipmentId
+      moveId
+      payEventId
+      recurringDeductionId
+      advanceId
+      escrowAccountId
+      proNumber
+    }
+  }
+}
+    `, {"hash":"sha256:0f96d6515e17c15b83b8b0e56cf436a5626dd09d6bbb87efbcfbdbddcf0bf68b"}) as unknown as TypedDocumentString<DriverSettlementDetailQuery, DriverSettlementDetailQueryVariables>;
+export const SettlementBatchTableDocument = new TypedDocumentString(`
+    query SettlementBatchTable($input: DataTableConnectionInput!) {
+  settlementBatches(input: $input) {
+    edges {
+      node {
+        id
+        status
+        name
+        periodStart
+        periodEnd
+        payDate
+        settlementCount
+        exceptionCount
+        totalGrossMinor
+        totalNetMinor
+        currencyCode
+        notes
+        generatedById
+        generatedAt
+        completedAt
+        canceledAt
+        version
+        createdAt
+        updatedAt
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:dba0d6a1fc477db6f5c73a71fda39edbabffa3e00b3be0d7acce5e330ee540eb"}) as unknown as TypedDocumentString<SettlementBatchTableQuery, SettlementBatchTableQueryVariables>;
+export const DriverPayEventTableDocument = new TypedDocumentString(`
+    query DriverPayEventTable($input: DataTableConnectionInput!) {
+  driverPayEvents(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        shipmentId
+        moveId
+        settlementId
+        status
+        eventDate
+        grossAmountMinor
+        totalMiles
+        currencyCode
+        proNumber
+        onHold
+        holdReason
+        voidedAt
+        voidReason
+        version
+        createdAt
+        updatedAt
+        components {
+          kind
+          method
+          description
+          quantity
+          rate
+          amountMinor
+        }
+        worker {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:45a28f87675baa79d6a95a77ba6f7f23c9aac18453cb78d5ac2586cc79bc30fa"}) as unknown as TypedDocumentString<DriverPayEventTableQuery, DriverPayEventTableQueryVariables>;
+export const WorkerEarningsSummaryDocument = new TypedDocumentString(`
+    query WorkerEarningsSummary($workerId: ID!) {
+  workerEarningsSummary(workerId: $workerId) {
+    workerId
+    accruedEventCount
+    accruedGrossMinor
+    outstandingAdvances
+    escrowBalanceMinor
+  }
+}
+    `, {"hash":"sha256:604360bedc59b36d762fa6780dbfe073bfbfeb71015006a8a74717663ea17f9a"}) as unknown as TypedDocumentString<WorkerEarningsSummaryQuery, WorkerEarningsSummaryQueryVariables>;
+export const WorkerYtdPaySummariesDocument = new TypedDocumentString(`
+    query WorkerYtdPaySummaries($year: Int!, $classification: PayeeClassification) {
+  workerYtdPaySummaries(year: $year, classification: $classification) {
+    workerId
+    workerName
+    classification
+    year
+    settlementCount
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    netPayMinor
+  }
+}
+    `, {"hash":"sha256:f7d96ae4a669343c9c3f27a40e57063c9565295d8c2fa4924e44a2643b5ae67b"}) as unknown as TypedDocumentString<WorkerYtdPaySummariesQuery, WorkerYtdPaySummariesQueryVariables>;
+export const SettlementControlDocument = new TypedDocumentString(`
+    query SettlementControl {
+  settlementControl {
+    id
+    organizationId
+    businessUnitId
+    payPeriodFrequency
+    periodEndDayOfWeek
+    payDelayDays
+    payTrigger
+    autoGenerateBatches
+    autoApproveClean
+    autoAttachAccruals
+    autoPostOnApprove
+    allowNegativeNet
+    varianceThresholdPct
+    varianceLookbackWeeks
+    defaultEscrowInterestRate
+    escrowInterestFrequencyMonths
+    version
+  }
+}
+    `, {"hash":"sha256:000046c1cbdafc864b73f222fca8fad96ed5a4ff21e87d5807bae7f56f070673"}) as unknown as TypedDocumentString<SettlementControlQuery, SettlementControlQueryVariables>;
+export const SettlementWorkspaceSummaryDocument = new TypedDocumentString(`
+    query SettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
+  settlementWorkspaceSummary(periodStart: $periodStart, periodEnd: $periodEnd) {
+    periodStart
+    periodEnd
+    payDate
+    draftCount
+    pendingApprovalCount
+    approvedCount
+    postedCount
+    paidCount
+    exceptionCount
+    totalNetMinor
+    totalGrossMinor
+    unsettledEventCount
+    unsettledGrossMinor
+    heldEventCount
+    heldGrossMinor
+    unsettledWorkerCount
+    openBatchId
+  }
+}
+    `, {"hash":"sha256:c557e4cfa2aec767c55a4a6eb7a14fd4a506c9d1808bd909a714beee10e5a731"}) as unknown as TypedDocumentString<SettlementWorkspaceSummaryQuery, SettlementWorkspaceSummaryQueryVariables>;
+export const UnsettledWorkerSummariesDocument = new TypedDocumentString(`
+    query UnsettledWorkerSummaries($periodStart: Int, $periodEnd: Int) {
+  unsettledWorkerSummaries(periodStart: $periodStart, periodEnd: $periodEnd) {
+    workerId
+    workerName
+    eventCount
+    grossAmountMinor
+    heldCount
+    heldGrossMinor
+    hasSettlement
+  }
+}
+    `, {"hash":"sha256:5f51e5c0fc01343e23452380d8711b2fb47fe90d380317889a987f512d8c023a"}) as unknown as TypedDocumentString<UnsettledWorkerSummariesQuery, UnsettledWorkerSummariesQueryVariables>;
+export const CurrentSettlementPeriodDocument = new TypedDocumentString(`
+    query CurrentSettlementPeriod {
+  currentSettlementPeriod {
+    periodStart
+    periodEnd
+    payDate
+  }
+}
+    `, {"hash":"sha256:18a696ad99213f20822751f7dd47c0e146724a9a15cd4acbf0725a1964074680"}) as unknown as TypedDocumentString<CurrentSettlementPeriodQuery, CurrentSettlementPeriodQueryVariables>;
+export const PreviewDriverSettlementDocument = new TypedDocumentString(`
+    query PreviewDriverSettlement($workerId: ID!, $periodStart: Int, $periodEnd: Int) {
+  previewDriverSettlement(
+    workerId: $workerId
+    periodStart: $periodStart
+    periodEnd: $periodEnd
+  ) {
+    id
+    workerId
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    hasExceptions
+    exceptions {
+      code
+      severity
+      message
+    }
+    lines {
+      lineNumber
+      category
+      componentKind
+      method
+      description
+      quantity
+      rate
+      amountMinor
+      proNumber
+    }
+  }
+}
+    `, {"hash":"sha256:c3cea3211e8cdd412f9df5f2ec682195587c30756286ccaba39b69e7f65b7660"}) as unknown as TypedDocumentString<PreviewDriverSettlementQuery, PreviewDriverSettlementQueryVariables>;
+export const ExportSettlementBatchCsvDocument = new TypedDocumentString(`
+    query ExportSettlementBatchCsv($batchId: ID!) {
+  exportSettlementBatchCsv(batchId: $batchId)
+}
+    `, {"hash":"sha256:09b35d0d3a76868967b6a609edee59aab83a14a47829d873be063ad8bafd1dd4"}) as unknown as TypedDocumentString<ExportSettlementBatchCsvQuery, ExportSettlementBatchCsvQueryVariables>;
+export const CreatePayProfileDocument = new TypedDocumentString(`
+    mutation CreatePayProfile($input: CreatePayProfileInput!) {
+  createPayProfile(input: $input) {
+    id
+    name
+    version
+  }
+}
+    `, {"hash":"sha256:057e95826edc7c7f2e812cc37894744703aee39c278c09bde038098c6dc7e632"}) as unknown as TypedDocumentString<CreatePayProfileMutation, CreatePayProfileMutationVariables>;
+export const UpdatePayProfileDocument = new TypedDocumentString(`
+    mutation UpdatePayProfile($input: UpdatePayProfileInput!) {
+  updatePayProfile(input: $input) {
+    id
+    name
+    version
+  }
+}
+    `, {"hash":"sha256:2aa4747470ca1fb5b86dfdf513276a06a579f785fb0ffc605e38f60feca010c7"}) as unknown as TypedDocumentString<UpdatePayProfileMutation, UpdatePayProfileMutationVariables>;
+export const AssignPayProfileToWorkerDocument = new TypedDocumentString(`
+    mutation AssignPayProfileToWorker($input: AssignPayProfileInput!) {
+  assignPayProfileToWorker(input: $input) {
+    id
+    workerId
+    payProfileId
+    effectiveFrom
+    effectiveTo
+  }
+}
+    `, {"hash":"sha256:81e72cc2a26f0710b7df1d899b7ff8e97f26b9ab1d5f37d8c99876073c9f5bf0"}) as unknown as TypedDocumentString<AssignPayProfileToWorkerMutation, AssignPayProfileToWorkerMutationVariables>;
+export const EndWorkerPayAssignmentDocument = new TypedDocumentString(`
+    mutation EndWorkerPayAssignment($input: EndWorkerPayAssignmentInput!) {
+  endWorkerPayAssignment(input: $input) {
+    id
+    effectiveTo
+  }
+}
+    `, {"hash":"sha256:971182611f2f9ad0a2c0ee7a12060d646bce07472d790f6d363790dedb7ae52a"}) as unknown as TypedDocumentString<EndWorkerPayAssignmentMutation, EndWorkerPayAssignmentMutationVariables>;
+export const CreateRecurringDeductionDocument = new TypedDocumentString(`
+    mutation CreateRecurringDeduction($input: CreateRecurringDeductionInput!) {
+  createRecurringDeduction(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:27048f4cb91e9ceb4cc32391c58f7012d07253930cd32f1377de5a33a5eb6c67"}) as unknown as TypedDocumentString<CreateRecurringDeductionMutation, CreateRecurringDeductionMutationVariables>;
+export const UpdateRecurringDeductionDocument = new TypedDocumentString(`
+    mutation UpdateRecurringDeduction($input: UpdateRecurringDeductionInput!) {
+  updateRecurringDeduction(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:60ff79afe87b8907fa14e6470065770f4022043a122db9866b9138d2b42ca15a"}) as unknown as TypedDocumentString<UpdateRecurringDeductionMutation, UpdateRecurringDeductionMutationVariables>;
+export const CreatePayCodeDocument = new TypedDocumentString(`
+    mutation CreatePayCode($input: CreatePayCodeInput!) {
+  createPayCode(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:aa0e0bad8977697bc927a0e8dc931a1e29d5699e278af3e61a2b70feb5ea08ee"}) as unknown as TypedDocumentString<CreatePayCodeMutation, CreatePayCodeMutationVariables>;
+export const UpdatePayCodeDocument = new TypedDocumentString(`
+    mutation UpdatePayCode($input: UpdatePayCodeInput!) {
+  updatePayCode(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:54054095fdcf12e64ef6dd8c31e280536a250d01bca95292636c708c73cbfd4e"}) as unknown as TypedDocumentString<UpdatePayCodeMutation, UpdatePayCodeMutationVariables>;
+export const CreateRecurringEarningDocument = new TypedDocumentString(`
+    mutation CreateRecurringEarning($input: CreateRecurringEarningInput!) {
+  createRecurringEarning(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:f92e8c58da59d89b21355bb1378503a710fccf747afea2987da9b5c11ea5aaab"}) as unknown as TypedDocumentString<CreateRecurringEarningMutation, CreateRecurringEarningMutationVariables>;
+export const UpdateRecurringEarningDocument = new TypedDocumentString(`
+    mutation UpdateRecurringEarning($input: UpdateRecurringEarningInput!) {
+  updateRecurringEarning(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:15d49ce8f2769edc8dc6c562aef844ce80a3c2fb015a337f1a57bf16b2377ffc"}) as unknown as TypedDocumentString<UpdateRecurringEarningMutation, UpdateRecurringEarningMutationVariables>;
+export const IssuePayAdvanceDocument = new TypedDocumentString(`
+    mutation IssuePayAdvance($input: IssuePayAdvanceInput!) {
+  issuePayAdvance(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:a473c5b8196a7a4b792c124cd2f065f1361bf5327ff39363222ead87010fd6f5"}) as unknown as TypedDocumentString<IssuePayAdvanceMutation, IssuePayAdvanceMutationVariables>;
+export const WriteOffPayAdvanceDocument = new TypedDocumentString(`
+    mutation WriteOffPayAdvance($input: WriteOffPayAdvanceInput!) {
+  writeOffPayAdvance(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:1e61ca8e3b303b5eeede39215a299509c6d83213342e1d13138c19d24c4c09f2"}) as unknown as TypedDocumentString<WriteOffPayAdvanceMutation, WriteOffPayAdvanceMutationVariables>;
+export const OpenEscrowAccountDocument = new TypedDocumentString(`
+    mutation OpenEscrowAccount($input: OpenEscrowAccountInput!) {
+  openEscrowAccount(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:44f99ba015deaaba7ba8a36c235f1b9cd31960106e649665df8597d4104f2646"}) as unknown as TypedDocumentString<OpenEscrowAccountMutation, OpenEscrowAccountMutationVariables>;
+export const UpdateEscrowAccountDocument = new TypedDocumentString(`
+    mutation UpdateEscrowAccount($input: UpdateEscrowAccountInput!) {
+  updateEscrowAccount(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:7c8e094b2dff1858e448e77b9315e02eabe34847e1c4bb36aaaa9da9afb8b791"}) as unknown as TypedDocumentString<UpdateEscrowAccountMutation, UpdateEscrowAccountMutationVariables>;
+export const AdjustEscrowAccountDocument = new TypedDocumentString(`
+    mutation AdjustEscrowAccount($input: AdjustEscrowAccountInput!) {
+  adjustEscrowAccount(input: $input) {
+    id
+    balanceMinor
+    version
+  }
+}
+    `, {"hash":"sha256:67d1baa098e04646476ef4bec1bb7633ac6caac81c71f4b71b7b54b539c60a21"}) as unknown as TypedDocumentString<AdjustEscrowAccountMutation, AdjustEscrowAccountMutationVariables>;
+export const CloseEscrowAccountDocument = new TypedDocumentString(`
+    mutation CloseEscrowAccount($accountId: ID!) {
+  closeEscrowAccount(accountId: $accountId) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:4058437f8024641e9e3da7a2d98b8655beb6dee382b4b9c3e77f255c6da27328"}) as unknown as TypedDocumentString<CloseEscrowAccountMutation, CloseEscrowAccountMutationVariables>;
+export const GenerateSettlementBatchDocument = new TypedDocumentString(`
+    mutation GenerateSettlementBatch($input: GenerateSettlementBatchInput!) {
+  generateSettlementBatch(input: $input) {
+    id
+    name
+    settlementCount
+    exceptionCount
+    totalGrossMinor
+    totalNetMinor
+  }
+}
+    `, {"hash":"sha256:08e2f9acd12b2117789bfffc7bc36d074c3c14ae66935f1953cd371093439277"}) as unknown as TypedDocumentString<GenerateSettlementBatchMutation, GenerateSettlementBatchMutationVariables>;
+export const GenerateDriverSettlementDocument = new TypedDocumentString(`
+    mutation GenerateDriverSettlement($input: GenerateDriverSettlementInput!) {
+  generateDriverSettlement(input: $input) {
+    id
+    settlementNumber
+  }
+}
+    `, {"hash":"sha256:0d8cbbe97e9f00c3c4c3e36e9bcc4c027760a26fc34c241cc15df6742056a4a2"}) as unknown as TypedDocumentString<GenerateDriverSettlementMutation, GenerateDriverSettlementMutationVariables>;
+export const SubmitDriverSettlementDocument = new TypedDocumentString(`
+    mutation SubmitDriverSettlement($input: DriverSettlementActionInput!) {
+  submitDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:690603bb04ff7ceab1c1ac6949e3e5f932152daab6396a7f36fa8d72396e4aaf"}) as unknown as TypedDocumentString<SubmitDriverSettlementMutation, SubmitDriverSettlementMutationVariables>;
+export const ApproveDriverSettlementDocument = new TypedDocumentString(`
+    mutation ApproveDriverSettlement($input: DriverSettlementActionInput!) {
+  approveDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:8256dbbc6c4af57dfaafe586fbc3cbc789baaa24e23ff173c0251b0ad208d7c0"}) as unknown as TypedDocumentString<ApproveDriverSettlementMutation, ApproveDriverSettlementMutationVariables>;
+export const RejectDriverSettlementDocument = new TypedDocumentString(`
+    mutation RejectDriverSettlement($input: DriverSettlementActionInput!) {
+  rejectDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:655f7d88cbe5f76b89bc3ec04a1dde34465fefbdf00304559620b0b20dcc64f2"}) as unknown as TypedDocumentString<RejectDriverSettlementMutation, RejectDriverSettlementMutationVariables>;
+export const PostDriverSettlementDocument = new TypedDocumentString(`
+    mutation PostDriverSettlement($input: DriverSettlementActionInput!) {
+  postDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:528e783cf5406e6b3c351f88e4deb5941a3bfc5b90c5d547e7c8e07b28ba136c"}) as unknown as TypedDocumentString<PostDriverSettlementMutation, PostDriverSettlementMutationVariables>;
+export const MarkDriverSettlementPaidDocument = new TypedDocumentString(`
+    mutation MarkDriverSettlementPaid($input: MarkDriverSettlementPaidInput!) {
+  markDriverSettlementPaid(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:52293ccd71fa3f9f752a2c6ee79ece56b5b121240379e0a777dbf2dd1b11788e"}) as unknown as TypedDocumentString<MarkDriverSettlementPaidMutation, MarkDriverSettlementPaidMutationVariables>;
+export const VoidDriverSettlementDocument = new TypedDocumentString(`
+    mutation VoidDriverSettlement($input: DriverSettlementActionInput!) {
+  voidDriverSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:f5a663c3939fddfbe2d23987cad6a6ca7fd8a03df0e933270cfe021136c166e8"}) as unknown as TypedDocumentString<VoidDriverSettlementMutation, VoidDriverSettlementMutationVariables>;
+export const RecalculateDriverSettlementDocument = new TypedDocumentString(`
+    mutation RecalculateDriverSettlement($input: DriverSettlementActionInput!) {
+  recalculateDriverSettlement(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:527b34093726f31a9b0c76a39a26b9776e811990ecdf563159d42623c9947350"}) as unknown as TypedDocumentString<RecalculateDriverSettlementMutation, RecalculateDriverSettlementMutationVariables>;
+export const AddDriverSettlementAdjustmentDocument = new TypedDocumentString(`
+    mutation AddDriverSettlementAdjustment($input: AddSettlementAdjustmentInput!) {
+  addDriverSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:847f907ae868014335a3a237a6ce3f3b7a0a0b56eea44d3b8e278bdc7b3fe2cb"}) as unknown as TypedDocumentString<AddDriverSettlementAdjustmentMutation, AddDriverSettlementAdjustmentMutationVariables>;
+export const RemoveDriverSettlementAdjustmentDocument = new TypedDocumentString(`
+    mutation RemoveDriverSettlementAdjustment($input: RemoveSettlementAdjustmentInput!) {
+  removeDriverSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:fa1ff7af4e0d35dbb7c44913e146dbfa4c122f02807028dfb69ce7d2710bee46"}) as unknown as TypedDocumentString<RemoveDriverSettlementAdjustmentMutation, RemoveDriverSettlementAdjustmentMutationVariables>;
+export const HoldDriverPayEventDocument = new TypedDocumentString(`
+    mutation HoldDriverPayEvent($input: HoldPayEventInput!) {
+  holdDriverPayEvent(input: $input) {
+    id
+    status
+    onHold
+    holdReason
+    version
+  }
+}
+    `, {"hash":"sha256:19b550da25ad6ee05d644fc426fb0cb4eed437c28373ed7a55847e5218753a97"}) as unknown as TypedDocumentString<HoldDriverPayEventMutation, HoldDriverPayEventMutationVariables>;
+export const ReleaseDriverPayEventDocument = new TypedDocumentString(`
+    mutation ReleaseDriverPayEvent($payEventId: ID!) {
+  releaseDriverPayEvent(payEventId: $payEventId) {
+    id
+    status
+    onHold
+    holdReason
+    version
+  }
+}
+    `, {"hash":"sha256:74e127862ab228018eb6817bcf2dfe47df3616ff045b776f9ceb7fb7768f8875"}) as unknown as TypedDocumentString<ReleaseDriverPayEventMutation, ReleaseDriverPayEventMutationVariables>;
+export const AttachPayEventsToSettlementDocument = new TypedDocumentString(`
+    mutation AttachPayEventsToSettlement($input: AttachPayEventsInput!) {
+  attachPayEventsToSettlement(input: $input) {
+    id
+    status
+    grossEarningsMinor
+    netPayMinor
+    version
+  }
+}
+    `, {"hash":"sha256:ce8dcbcff0fbfc094af72f65403e51dd3e05b3e66be8f6e093daf7020d5647e6"}) as unknown as TypedDocumentString<AttachPayEventsToSettlementMutation, AttachPayEventsToSettlementMutationVariables>;
+export const DetachPayEventFromSettlementDocument = new TypedDocumentString(`
+    mutation DetachPayEventFromSettlement($input: DetachPayEventInput!) {
+  detachPayEventFromSettlement(input: $input) {
+    id
+    status
+    grossEarningsMinor
+    netPayMinor
+    version
+  }
+}
+    `, {"hash":"sha256:30116a97824390c55a39f8976f0816dda38f06d8e92b2d06a87d7fb8c697672c"}) as unknown as TypedDocumentString<DetachPayEventFromSettlementMutation, DetachPayEventFromSettlementMutationVariables>;
+export const BulkDriverSettlementActionDocument = new TypedDocumentString(`
+    mutation BulkDriverSettlementAction($input: BulkSettlementActionInput!) {
+  bulkDriverSettlementAction(input: $input) {
+    results {
+      settlementId
+      success
+      error
+    }
+    successCount
+    failureCount
+  }
+}
+    `, {"hash":"sha256:400632fe9026dfd69abf6dfee45c166104d0d028b6c3f13ab32b90a73da8eda6"}) as unknown as TypedDocumentString<BulkDriverSettlementActionMutation, BulkDriverSettlementActionMutationVariables>;
+export const UpdateSettlementControlDocument = new TypedDocumentString(`
+    mutation UpdateSettlementControl($input: UpdateSettlementControlInput!) {
+  updateSettlementControl(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:d1cd27e9fd5f72b0c09c7000850c3749c37cdb3b1e2eefa5ec9244a59b47d002"}) as unknown as TypedDocumentString<UpdateSettlementControlMutation, UpdateSettlementControlMutationVariables>;
+export const SettlementBatchDetailDocument = new TypedDocumentString(`
+    query SettlementBatchDetail($id: ID!) {
+  settlementBatch(id: $id) {
+    id
+    status
+    name
+    periodStart
+    periodEnd
+    payDate
+    settlementCount
+    exceptionCount
+    totalGrossMinor
+    totalNetMinor
+    currencyCode
+    notes
+    version
+    settlements {
+      id
+      settlementNumber
+      status
+      classification
+      grossEarningsMinor
+      deductionsMinor
+      netPayMinor
+      currencyCode
+      hasExceptions
+      worker {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:f417f184b9f58856ebe25866495f696c2fa0cc4b56bf14615f9c74ed3a5d3250"}) as unknown as TypedDocumentString<SettlementBatchDetailQuery, SettlementBatchDetailQueryVariables>;
+export const UnsettledPayEventsDocument = new TypedDocumentString(`
+    query UnsettledPayEvents($workerId: ID!) {
+  unsettledPayEvents(workerId: $workerId) {
+    id
+    shipmentId
+    moveId
+    eventDate
+    grossAmountMinor
+    totalMiles
+    currencyCode
+    proNumber
+  }
+}
+    `, {"hash":"sha256:f9b3d5579995e1ea62171d1cd9c081bd5018e816c58f119b94589db91905ef98"}) as unknown as TypedDocumentString<UnsettledPayEventsQuery, UnsettledPayEventsQueryVariables>;
+export const PayWorkerNowDocument = new TypedDocumentString(`
+    mutation PayWorkerNow($input: PayWorkerNowInput!) {
+  payWorkerNow(input: $input) {
+    id
+    settlementNumber
+    status
+    netPayMinor
+    currencyCode
+    paidAt
+    paymentMethod
+    paymentReference
+  }
+}
+    `, {"hash":"sha256:db65206e7e8cc3bd6558487534d20c043d05e59b9bbef71d89b006fd38580973"}) as unknown as TypedDocumentString<PayWorkerNowMutation, PayWorkerNowMutationVariables>;
 export const EdiPartnerScorecardsDocument = new TypedDocumentString(`
     query EdiPartnerScorecards($sinceHours: Int) {
   ediPartnerScorecards(sinceHours: $sinceHours) {

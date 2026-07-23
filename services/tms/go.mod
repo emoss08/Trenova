@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	github.com/Foony-Limited/realtime-go v0.1.1
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/chromedp/cdproto v0.0.0-20260714215040-dc233986426f
 	github.com/chromedp/chromedp v0.16.0
 	github.com/emoss08/trenova/shared v0.0.0

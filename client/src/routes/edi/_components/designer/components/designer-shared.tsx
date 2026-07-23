@@ -74,8 +74,8 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
 
   return (
     <>
-      <div className="grid flex-1 grid-cols-[minmax(0,1fr)_300px] gap-2 h-full p-3">
-        <div className="grid grid-rows-[auto_minmax(0,1fr)] bg-foreground rounded-md">
+      <div className="grid h-full flex-1 grid-cols-[minmax(0,1fr)_300px] gap-2 p-3">
+        <div className="grid grid-rows-[auto_minmax(0,1fr)] rounded-md bg-foreground">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-background/10 px-3 py-2 text-xs text-background">
             <span>Preview render</span>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
@@ -140,7 +140,7 @@ function DiagnosticsList({
     Info: diagnostics.filter((diagnostic) => diagnostic.severity === "Info"),
   };
   return (
-    <div className="p-3 h-full">
+    <div className="h-full p-3">
       {diagnostics.length === 0 ? (
         <div className="text-sm text-muted-foreground">No diagnostics.</div>
       ) : (

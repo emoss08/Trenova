@@ -134,6 +134,15 @@ type ShipmentMutationObserver interface {
 	) error
 }
 
+type MoveStatusObserver interface {
+	AfterMoveStatusChange(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		move *shipment.ShipmentMove,
+		previous shipment.MoveStatus,
+	) error
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,

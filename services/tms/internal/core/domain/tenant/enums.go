@@ -14,6 +14,7 @@ const (
 	SequenceTypeJournalEntry         = SequenceType("journal_entry")
 	SequenceTypeManualJournalRequest = SequenceType("manual_journal_request")
 	SequenceTypeLocationCode         = SequenceType("location_code")
+	SequenceTypeDriverSettlement     = SequenceType("driver_settlement")
 )
 
 type AccountingBasisType string
@@ -152,6 +153,9 @@ const (
 	JournalSourceEventCustomerPaymentReversed = JournalSourceEventType("CustomerPaymentReversed")
 	JournalSourceEventVendorBillPosted        = JournalSourceEventType("VendorBillPosted")
 	JournalSourceEventVendorPaymentPosted     = JournalSourceEventType("VendorPaymentPosted")
+	JournalSourceEventDriverSettlementPosted  = JournalSourceEventType("DriverSettlementPosted")
+	JournalSourceEventDriverSettlementVoided  = JournalSourceEventType("DriverSettlementVoided")
+	JournalSourceEventEscrowInterestAccrued   = JournalSourceEventType("EscrowInterestAccrued")
 )
 
 func (j JournalSourceEventType) String() string {
@@ -167,7 +171,10 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventCustomerShortPayRecognized,
 		JournalSourceEventCustomerPaymentReversed,
 		JournalSourceEventVendorBillPosted,
-		JournalSourceEventVendorPaymentPosted:
+		JournalSourceEventVendorPaymentPosted,
+		JournalSourceEventDriverSettlementPosted,
+		JournalSourceEventDriverSettlementVoided,
+		JournalSourceEventEscrowInterestAccrued:
 		return true
 	}
 	return false
@@ -191,6 +198,12 @@ func (j JournalSourceEventType) GetDescription() string {
 		return "Trigger on posted vendor bill"
 	case JournalSourceEventVendorPaymentPosted:
 		return "Trigger on posted vendor payment"
+	case JournalSourceEventDriverSettlementPosted:
+		return "Trigger on posted driver settlement"
+	case JournalSourceEventDriverSettlementVoided:
+		return "Trigger on voided driver settlement"
+	case JournalSourceEventEscrowInterestAccrued:
+		return "Trigger on accrued escrow interest"
 	default:
 		return "Unknown journal source event"
 	}

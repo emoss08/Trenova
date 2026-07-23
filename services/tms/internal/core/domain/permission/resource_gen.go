@@ -103,6 +103,20 @@ const (
 	ResourceBankReceiptWorkItem      Resource = "bank_receipt_work_item"
 	ResourceAccountingReport         Resource = "accounting_report"
 
+	// Payroll & Settlements
+	ResourceDriverPayProfile   Resource = "driver_pay_profile"
+	ResourceRecurringDeduction Resource = "recurring_deduction"
+	ResourceRecurringEarning   Resource = "recurring_earning"
+	ResourcePayCode            Resource = "pay_code"
+	ResourcePayAdvance         Resource = "pay_advance"
+	ResourceEscrowAccount      Resource = "escrow_account"
+	ResourceDriverSettlement   Resource = "driver_settlement"
+	ResourceSettlementDispute  Resource = "settlement_dispute"
+	ResourceDriverExpense      Resource = "driver_expense"
+	ResourceSettlementControl  Resource = "settlement_control"
+	ResourceDashControl        Resource = "dash_control"
+	ResourceDriverPortal       Resource = "driver_portal"
+
 	// Compliance
 	ResourceQualification          Resource = "qualification"
 	ResourceDocumentClassification Resource = "document_classification"

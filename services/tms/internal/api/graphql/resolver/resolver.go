@@ -17,10 +17,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
+	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
+	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
@@ -33,7 +37,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
-	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
@@ -42,9 +45,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
+	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
@@ -137,6 +142,19 @@ type Params struct {
 	ReportingService             *reportingservice.Service
 	NotificationService          *notificationservice.Service
 	PermissionEngine             services.PermissionEngine
+	DriverPayService             *driverpayservice.Service
+	DriverSettlementService      *driversettlementservice.Service
+	DriverPortalService          *driverportalservice.Service
+	SettlementControlService     *settlementcontrolservice.Service
+	DashControlService           *dashcontrolservice.Service
+	PayProfileRepo               repositories.PayProfileRepository
+	RecurringDeductionRepo       repositories.RecurringDeductionRepository
+	RecurringEarningRepo         repositories.RecurringEarningRepository
+	PayAdvanceRepo               repositories.PayAdvanceRepository
+	EscrowAccountRepo            repositories.EscrowAccountRepository
+	DriverSettlementRepo         repositories.DriverSettlementRepository
+	SettlementBatchRepo          repositories.SettlementBatchRepository
+	PayEventRepo                 repositories.PayEventRepository
 }
 
 type Resolver struct {
@@ -209,6 +227,19 @@ type Resolver struct {
 	tableConfigurationService    *tableconfigurationservice.Service
 	sidebarPreferenceService     *sidebarpreferenceservice.Service
 	notificationService          *notificationservice.Service
+	driverPayService             *driverpayservice.Service
+	driverSettlementService      *driversettlementservice.Service
+	driverPortalService          *driverportalservice.Service
+	settlementControlService     *settlementcontrolservice.Service
+	dashControlService           *dashcontrolservice.Service
+	payProfileRepo               repositories.PayProfileRepository
+	recurringDeductionRepo       repositories.RecurringDeductionRepository
+	recurringEarningRepo         repositories.RecurringEarningRepository
+	payAdvanceRepo               repositories.PayAdvanceRepository
+	escrowAccountRepo            repositories.EscrowAccountRepository
+	driverSettlementRepo         repositories.DriverSettlementRepository
+	settlementBatchRepo          repositories.SettlementBatchRepository
+	payEventRepo                 repositories.PayEventRepository
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
@@ -286,6 +317,19 @@ func New(p Params) *Resolver {
 		notificationService:          p.NotificationService,
 		reportingService:             p.ReportingService,
 		permissionEngine:             p.PermissionEngine,
+		driverPayService:             p.DriverPayService,
+		driverSettlementService:      p.DriverSettlementService,
+		driverPortalService:          p.DriverPortalService,
+		settlementControlService:     p.SettlementControlService,
+		dashControlService:           p.DashControlService,
+		payProfileRepo:               p.PayProfileRepo,
+		recurringDeductionRepo:       p.RecurringDeductionRepo,
+		recurringEarningRepo:         p.RecurringEarningRepo,
+		payAdvanceRepo:               p.PayAdvanceRepo,
+		escrowAccountRepo:            p.EscrowAccountRepo,
+		driverSettlementRepo:         p.DriverSettlementRepo,
+		settlementBatchRepo:          p.SettlementBatchRepo,
+		payEventRepo:                 p.PayEventRepo,
 	}
 }
 

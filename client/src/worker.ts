@@ -79,7 +79,14 @@ const sensitivePathPrefixes = [
   "/openapi",
 ] as const;
 
-const sensitiveExactPaths = ["/api", "/graphql", "/auth", "/metrics", "/debug", "/swagger"] as const;
+const sensitiveExactPaths = [
+  "/api",
+  "/graphql",
+  "/auth",
+  "/metrics",
+  "/debug",
+  "/swagger",
+] as const;
 
 type StaticAssetBinding = {
   fetch(request: Request): Promise<Response>;
@@ -127,6 +134,13 @@ export const worker: WorkerModule = {
       }
 
       return withSecurityHeaders(request, response);
+    }
+
+    if (isDashPath(url.pathname) && url.pathname !== "/dash") {
+      const dashURL = new URL(request.url);
+      dashURL.pathname = "/dash";
+      dashURL.search = "";
+      return withSecurityHeaders(request, await env.ASSETS.fetch(new Request(dashURL, request)));
     }
 
     return withSecurityHeaders(request, await env.ASSETS.fetch(request));
@@ -202,6 +216,11 @@ function localDevelopmentAPIURL(request: Request): URL | null {
   } catch {
     return null;
   }
+}
+
+function isDashPath(pathname: string): boolean {
+  const normalizedPathname = pathname.toLowerCase();
+  return normalizedPathname === "/dash" || normalizedPathname.startsWith("/dash/");
 }
 
 function isFileLikePath(pathname: string): boolean {

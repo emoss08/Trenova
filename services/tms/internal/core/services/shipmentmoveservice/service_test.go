@@ -293,8 +293,16 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 	moveRepo.EXPECT().
 		SplitMove(mock.Anything, mock.AnythingOfType("*repositories.SplitMoveRequest")).
 		Return(&repositories.SplitMoveResponse{
-			OriginalMove: &shipment.ShipmentMove{ID: moveID, ShipmentID: shipmentID, Status: shipment.MoveStatusAssigned},
-			NewMove:      &shipment.ShipmentMove{ID: pulid.MustNew("sm_"), ShipmentID: shipmentID, Status: shipment.MoveStatusNew},
+			OriginalMove: &shipment.ShipmentMove{
+				ID:         moveID,
+				ShipmentID: shipmentID,
+				Status:     shipment.MoveStatusAssigned,
+			},
+			NewMove: &shipment.ShipmentMove{
+				ID:         pulid.MustNew("sm_"),
+				ShipmentID: shipmentID,
+				Status:     shipment.MoveStatusNew,
+			},
 		}, nil).
 		Once()
 
@@ -308,7 +316,12 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 			Status:         shipment.StatusAssigned,
 			Version:        2,
 			Moves: []*shipment.ShipmentMove{
-				{ID: moveID, ShipmentID: shipmentID, Status: shipment.MoveStatusAssigned, Assignment: &shipment.Assignment{ID: pulid.MustNew("asn_")}},
+				{
+					ID:         moveID,
+					ShipmentID: shipmentID,
+					Status:     shipment.MoveStatusAssigned,
+					Assignment: &shipment.Assignment{ID: pulid.MustNew("asn_")},
+				},
 				{ID: pulid.MustNew("sm_"), ShipmentID: shipmentID, Status: shipment.MoveStatusNew},
 			},
 		}, nil).

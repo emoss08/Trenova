@@ -2,7 +2,9 @@ package workerrepository
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -13,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -80,9 +83,31 @@ func (r *repository) SelectOptions(
 			},
 			EntityName: "Worker",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
+				q = q.
 					Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
 					Relation(buncolgen.WorkerRelations.FleetCode)
+				if req.OwnerOperatorsOnly {
+					now := timeutils.NowUnix()
+					q = q.Where(
+						`(wrk.type = ? OR EXISTS (
+							SELECT 1
+							FROM worker_pay_assignments wpa
+							JOIN driver_pay_profiles dpp
+								ON dpp.id = wpa.pay_profile_id
+								AND dpp.organization_id = wpa.organization_id
+								AND dpp.business_unit_id = wpa.business_unit_id
+							WHERE wpa.worker_id = wrk.id
+								AND wpa.organization_id = wrk.organization_id
+								AND wpa.business_unit_id = wrk.business_unit_id
+								AND wpa.effective_from <= ?
+								AND (wpa.effective_to IS NULL OR wpa.effective_to > ?)
+								AND dpp.classification = ?
+						))`,
+						worker.WorkerTypeContractor, now, now,
+						driverpay.PayeeClassificationOwnerOperator,
+					)
+				}
+				return q
 			},
 		},
 	)
@@ -391,4 +416,46 @@ func (r *repository) ListWorkerSyncDrifts(
 	}
 
 	return records, nil
+}
+
+func (r *repository) ListWorkersWithExpiringCredentials(
+	ctx context.Context,
+	req repositories.ListExpiringCredentialsRequest,
+) ([]*worker.Worker, error) {
+	now := timeutils.NowUnix()
+	horizon := now + int64(req.HorizonDays)*86400
+	grace := now - int64(req.GraceDays)*86400
+
+	wcols := buncolgen.WorkerColumns
+	profileAlias := "profile"
+	expiryColumns := []buncolgen.Column{
+		buncolgen.WorkerProfileColumns.LicenseExpiry.WithAlias(profileAlias),
+		buncolgen.WorkerProfileColumns.HazmatExpiry.WithAlias(profileAlias),
+		buncolgen.WorkerProfileColumns.MedicalCardExpiry.WithAlias(profileAlias),
+		buncolgen.WorkerProfileColumns.PhysicalDueDate.WithAlias(profileAlias),
+		buncolgen.WorkerProfileColumns.MVRDueDate.WithAlias(profileAlias),
+		buncolgen.WorkerProfileColumns.TWICExpiry.WithAlias(profileAlias),
+	}
+
+	items := make([]*worker.Worker, 0, 32)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&items).
+		Relation(buncolgen.WorkerRelations.Profile).
+		Where(wcols.Status.Eq(), domaintypes.StatusActive).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			for i := range expiryColumns {
+				predicate := expiryColumns[i].Between()
+				if i == 0 {
+					sq = sq.Where(predicate, grace, horizon)
+				} else {
+					sq = sq.WhereOr(predicate, grace, horizon)
+				}
+			}
+			return sq
+		})
+	if err := query.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list workers with expiring credentials: %w", err)
+	}
+	return items, nil
 }

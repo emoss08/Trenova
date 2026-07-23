@@ -51,6 +51,13 @@ var nonProjectionObjects = map[string]string{
 	"ShipmentLoadingCommodity":      "GraphQL shipment workflow DTO",
 	"ShipmentLoadingRecommendation": "GraphQL shipment workflow DTO",
 	"ShipmentStopDivider":           "GraphQL shipment workflow DTO",
+	"JournalEntry":                  "GraphQL journal DTO without Bun projection metadata",
+	"JournalEntryLine":              "GraphQL journal DTO without Bun projection metadata",
+	"JournalBatch":                  "GraphQL journal DTO without Bun projection metadata",
+	"ResolvedCategoryRate":          "GraphQL costing DTO without Bun projection metadata",
+	"FuelCostResolution":            "GraphQL costing DTO without Bun projection metadata",
+	"ResolvedCostProfile":           "GraphQL costing DTO without Bun projection metadata",
+	"CostCategoryGLAccountLink":     "GraphQL costing DTO without Bun projection metadata",
 }
 
 func run(opts generatorOptions) error {

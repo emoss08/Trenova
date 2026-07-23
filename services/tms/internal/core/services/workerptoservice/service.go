@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -32,6 +35,8 @@ type Params struct {
 	WorkerRepo      repositories.WorkerRepository
 	WorkflowStarter services.WorkflowStarter
 	AuditService    services.AuditService
+	DriverNotify    *drivernotificationservice.Service `optional:"true"`
+	Realtime        services.RealtimeService           `optional:"true"`
 }
 
 type Service struct {
@@ -41,6 +46,8 @@ type Service struct {
 	workerRepo      repositories.WorkerRepository
 	workflowStarter services.WorkflowStarter
 	auditService    services.AuditService
+	driverNotify    *drivernotificationservice.Service
+	realtime        services.RealtimeService
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
@@ -53,6 +60,8 @@ func New(p Params) *Service {
 		workerRepo:      p.WorkerRepo,
 		workflowStarter: p.WorkflowStarter,
 		auditService:    p.AuditService,
+		driverNotify:    p.DriverNotify,
+		realtime:        p.Realtime,
 	}
 }
 
@@ -88,6 +97,7 @@ func (s *Service) Create(
 		log.Error("failed to create PTO", zap.Error(err))
 		return nil, err
 	}
+	s.publishPTOInvalidation(ctx, createdEntity, permission.OpCreate, userID)
 
 	if err = s.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
@@ -118,6 +128,8 @@ func (s *Service) Approve(
 	if err != nil {
 		return nil, err
 	}
+	s.publishPTOInvalidation(ctx, updatedEntity, permission.OpApprove, req.UserID)
+	s.notifyDriverPTO(ctx, req.TenantInfo, updatedEntity, true)
 
 	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -190,6 +202,8 @@ func (s *Service) Reject(
 	if err != nil {
 		return nil, err
 	}
+	s.publishPTOInvalidation(ctx, updatedEntity, permission.OpReject, req.UserID)
+	s.notifyDriverPTO(ctx, req.TenantInfo, updatedEntity, false)
 
 	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -250,7 +264,19 @@ func (s *Service) Reject(
 		return nil, fmt.Errorf("failed to send SMS: %w", err)
 	}
 
-	return s.repo.UpdateStatus(ctx, req)
+	return updatedEntity, nil
+}
+
+func (s *Service) CancelRequested(
+	ctx context.Context,
+	req *repositories.UpdatePTOStatusRequest,
+) (*worker.WorkerPTO, error) {
+	updatedEntity, err := s.repo.UpdateStatus(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	s.publishPTOInvalidation(ctx, updatedEntity, permission.OpCancel, req.UserID)
+	return updatedEntity, nil
 }
 
 func (s *Service) GetChartData(
@@ -330,4 +356,57 @@ func (s *Service) ListUpcoming(
 	req *repositories.ListUpcomingPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return s.repo.ListUpcoming(ctx, req)
+}
+
+func (s *Service) publishPTOInvalidation(
+	ctx context.Context,
+	pto *worker.WorkerPTO,
+	action permission.Operation,
+	userID pulid.ID,
+) {
+	if s.realtime == nil || pto == nil {
+		return
+	}
+	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: pto.OrganizationID,
+		BusinessUnitID: pto.BusinessUnitID,
+		ActorUserID:    userID,
+		ActorType:      services.PrincipalTypeUser,
+		ActorID:        userID,
+		Resource:       "worker_pto",
+		Action:         string(action),
+		RecordID:       pto.ID,
+	})
+	if err != nil {
+		s.l.Warn("failed to publish PTO invalidation", zap.Error(err))
+	}
+}
+
+func (s *Service) notifyDriverPTO(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	pto *worker.WorkerPTO,
+	approved bool,
+) {
+	if s.driverNotify == nil || pto == nil {
+		return
+	}
+	title := "Time off denied"
+	message := "Your time-off request was not approved. Check Dash or talk to your manager."
+	if approved {
+		title = "Time off approved"
+		message = "Your time-off request was approved. Enjoy!"
+	}
+	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+		TenantInfo: tenantInfo,
+		WorkerID:   pto.WorkerID,
+		EventType:  "dash.pto_reviewed",
+		Priority:   notification.PriorityHigh,
+		Title:      title,
+		Message:    message,
+		Link:       "/dash/profile",
+		RelatedEntities: map[string]any{
+			"ptoId": pto.ID.String(),
+		},
+	})
 }

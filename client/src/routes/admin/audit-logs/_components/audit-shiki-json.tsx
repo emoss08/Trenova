@@ -1,16 +1,12 @@
-import { useTheme } from "@/components/theme-provider";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useResolvedTheme } from "@/hooks/use-resolved-theme";
+import { highlightCode } from "@/lib/shiki";
 import { cn } from "@/lib/utils";
 import { SearchIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import vitesseBlack from "shiki/themes/vitesse-black.mjs";
-import vitesseLight from "shiki/themes/vitesse-light.mjs";
-import jsonLanguage from "shiki/langs/json.mjs";
-import { createHighlighterCore } from "shiki/core";
 
 const SHIKI_THEME_LIGHT = "vitesse-light";
 const SHIKI_THEME_DARK = "vitesse-black";
@@ -18,12 +14,6 @@ const LINE_HEIGHT_PX = 18;
 const PADDING_PX = 24;
 const MIN_HEIGHT = 56;
 const MAX_HEIGHT = 288;
-
-type ResolvedTheme = "light" | "dark";
-
-let shikiHighlighterPromise: Promise<{
-  codeToHtml: (code: string, options: { lang: string; theme: string }) => string;
-}> | null = null;
 
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -116,39 +106,6 @@ function buildJsonPathIndex(value: unknown): Map<number, string> {
   return map;
 }
 
-async function getShikiHighlighter() {
-  if (!shikiHighlighterPromise) {
-    shikiHighlighterPromise = createHighlighterCore({
-      themes: [vitesseLight, vitesseBlack],
-      langs: [jsonLanguage],
-      engine: createJavaScriptRegexEngine(),
-    });
-  }
-
-  return shikiHighlighterPromise;
-}
-
-function useResolvedTheme(): ResolvedTheme {
-  const { theme } = useTheme();
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
-
-  useEffect(() => {
-    if (theme === "dark" || theme === "light") {
-      setResolvedTheme(theme);
-      return;
-    }
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setResolvedTheme(media.matches ? "dark" : "light");
-
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, [theme]);
-
-  return resolvedTheme;
-}
-
 export function ShikiJsonBlock({
   value,
   className,
@@ -192,15 +149,18 @@ export function ShikiJsonBlock({
     let cancelled = false;
 
     async function render() {
-      const highlighter = await getShikiHighlighter();
       const shikiTheme = resolvedTheme === "dark" ? SHIKI_THEME_DARK : SHIKI_THEME_LIGHT;
-      const renderedHtml = highlighter.codeToHtml(jsonCode, {
-        lang: "json",
-        theme: shikiTheme,
-      });
 
-      if (!cancelled) {
-        setBaseHtml(injectSensitiveBadgesIntoHtml(renderedHtml));
+      try {
+        const renderedHtml = await highlightCode(jsonCode, "json", shikiTheme);
+
+        if (!cancelled) {
+          setBaseHtml(injectSensitiveBadgesIntoHtml(renderedHtml));
+        }
+      } catch {
+        if (!cancelled) {
+          setBaseHtml("");
+        }
       }
     }
 

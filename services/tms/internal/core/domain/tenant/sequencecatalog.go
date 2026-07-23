@@ -16,6 +16,7 @@ var requiredSequenceTypes = []SequenceType{
 	SequenceTypeJournalEntry,
 	SequenceTypeManualJournalRequest,
 	SequenceTypeLocationCode,
+	SequenceTypeDriverSettlement,
 }
 
 var sequenceTypeOrder = map[SequenceType]int{
@@ -30,6 +31,7 @@ var sequenceTypeOrder = map[SequenceType]int{
 	SequenceTypeDebitMemo:            9,
 	SequenceTypeLocationCode:         10,
 	SequenceTypeOrder:                11,
+	SequenceTypeDriverSettlement:     12,
 }
 
 func RequiredSequenceTypes() []SequenceType {
@@ -138,6 +140,15 @@ func DefaultSequenceFormat(sequenceType SequenceType) (*SequenceFormat, error) {
 		return &SequenceFormat{
 			Type:           sequenceType,
 			Prefix:         "MJR",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
+	case SequenceTypeDriverSettlement:
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "STL",
 			IncludeYear:    true,
 			YearDigits:     2,
 			IncludeMonth:   true,

@@ -25,6 +25,9 @@ type Assignment struct {
 	TrailerID         *pulid.ID        `json:"trailerId,omitempty"         bun:"trailer_id,type:VARCHAR(100),nullzero"`
 	SecondaryWorkerID *pulid.ID        `json:"secondaryWorkerId,omitempty" bun:"secondary_worker_id,type:VARCHAR(100),nullzero"`
 	Status            AssignmentStatus `json:"status"                      bun:"status,type:assignment_status_enum,notnull,default:'New'"`
+	AckStatus         AssignmentAck    `json:"ackStatus"                   bun:"ack_status,type:VARCHAR(20),notnull,default:'Pending'"`
+	AckAt             *int64           `json:"ackAt,omitempty"             bun:"ack_at,type:BIGINT,nullzero"`
+	AckReason         string           `json:"ackReason,omitempty"         bun:"ack_reason,type:TEXT,nullzero"`
 	ArchivedAt        *int64           `json:"archivedAt,omitempty"        bun:"archived_at,type:BIGINT,nullzero"`
 	Version           int64            `json:"version"                     bun:"version,type:BIGINT"`
 	CreatedAt         int64            `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

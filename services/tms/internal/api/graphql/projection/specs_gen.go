@@ -18,9 +18,21 @@ var BusinessUnitSpec TypeSpec
 
 var CommoditySpec TypeSpec
 
+var CostCategorySpec TypeSpec
+
+var CostingControlSpec TypeSpec
+
 var CustomFieldDefinitionSpec TypeSpec
 
 var CustomerSpec TypeSpec
+
+var CustomerBillingProfileSpec TypeSpec
+
+var CustomerEmailProfileSpec TypeSpec
+
+var CustomerPaymentSpec TypeSpec
+
+var CustomerPaymentApplicationSpec TypeSpec
 
 var DistanceOverrideSpec TypeSpec
 
@@ -31,6 +43,12 @@ var DistanceProfileSpec TypeSpec
 var DocumentPacketRuleSpec TypeSpec
 
 var DocumentTypeSpec TypeSpec
+
+var DriverPayEventSpec TypeSpec
+
+var DriverSettlementSpec TypeSpec
+
+var DriverSettlementLineSpec TypeSpec
 
 var EdiCommunicationProfileSpec TypeSpec
 
@@ -64,6 +82,12 @@ var EquipmentManufacturerSpec TypeSpec
 
 var EquipmentTypeSpec TypeSpec
 
+var EscrowAccountSpec TypeSpec
+
+var EscrowTransactionSpec TypeSpec
+
+var FiscalPeriodSpec TypeSpec
+
 var FiscalYearSpec TypeSpec
 
 var FleetCodeSpec TypeSpec
@@ -88,6 +112,8 @@ var InvoiceSpec TypeSpec
 
 var InvoiceLineSpec TypeSpec
 
+var JournalEntryLineAccountSpec TypeSpec
+
 var JournalReversalSpec TypeSpec
 
 var LocationSpec TypeSpec
@@ -106,7 +132,23 @@ var OrderLegSpec TypeSpec
 
 var OrganizationSpec TypeSpec
 
+var PayAdvanceSpec TypeSpec
+
+var PayCodeSpec TypeSpec
+
+var PayCodeGLAccountSpec TypeSpec
+
+var PayProfileSpec TypeSpec
+
+var PayProfileComponentSpec TypeSpec
+
 var RateTableSpec TypeSpec
+
+var RecurringDeductionSpec TypeSpec
+
+var RecurringEarningSpec TypeSpec
+
+var RecurringShipmentSpec TypeSpec
 
 var ReportDefinitionSpec TypeSpec
 
@@ -129,6 +171,10 @@ var ServiceFailureShipmentSpec TypeSpec
 var ServiceFailureStopSpec TypeSpec
 
 var ServiceTypeSpec TypeSpec
+
+var SettlementBatchSpec TypeSpec
+
+var SettlementControlSpec TypeSpec
 
 var ShipmentSpec TypeSpec
 
@@ -175,6 +221,8 @@ var UserSpec TypeSpec
 var WorkerSpec TypeSpec
 
 var WorkerPTOSpec TypeSpec
+
+var WorkerPayAssignmentSpec TypeSpec
 
 var WorkerProfileSpec TypeSpec
 
@@ -801,6 +849,141 @@ func init() {
 		},
 	}
 
+	CostCategorySpec = TypeSpec{
+		TypeName: "CostCategory",
+		FieldMap: buncolgen.CostCategoryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "costBehavior",
+				FieldMapKey: "costBehavior",
+			},
+			{
+				Name:        "rateSource",
+				FieldMapKey: "rateSource",
+			},
+			{
+				Name:        "benchmarkRatePerMile",
+				FieldMapKey: "benchmarkRatePerMile",
+			},
+			{
+				Name:        "overrideRatePerMile",
+				FieldMapKey: "overrideRatePerMile",
+			},
+			{
+				Name:        "isActive",
+				FieldMapKey: "isActive",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:    "glAccounts",
+				Special: "glAccounts",
+			},
+		},
+	}
+
+	CostingControlSpec = TypeSpec{
+		TypeName: "CostingControl",
+		FieldMap: buncolgen.CostingControlFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "fuelIndexId",
+				FieldMapKey: "fuelIndexId",
+			},
+			{
+				Name:        "fuelIndex",
+				FieldMapKey: "fuelIndexId",
+				Relation: &RelationSpec{
+					Target: &FuelIndexSpec,
+				},
+			},
+			{
+				Name:        "useLiveFuelPrice",
+				FieldMapKey: "useLiveFuelPrice",
+			},
+			{
+				Name:        "milesPerGallon",
+				FieldMapKey: "milesPerGallon",
+			},
+			{
+				Name:        "includeDeadheadMiles",
+				FieldMapKey: "includeDeadheadMiles",
+			},
+			{
+				Name:        "glActualsEnabled",
+				FieldMapKey: "glActualsEnabled",
+			},
+			{
+				Name:        "glRollingMonths",
+				FieldMapKey: "glRollingMonths",
+			},
+			{
+				Name:        "plannedMonthlyMiles",
+				FieldMapKey: "plannedMonthlyMiles",
+			},
+			{
+				Name:        "targetMarginPercent",
+				FieldMapKey: "targetMarginPercent",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "categories",
+				Relation: &RelationSpec{
+					Target: &CostCategorySpec,
+				},
+			},
+		},
+	}
+
 	CustomFieldDefinitionSpec = TypeSpec{
 		TypeName: "CustomFieldDefinition",
 		FieldMap: buncolgen.CustomFieldDefinitionFieldMap,
@@ -981,6 +1164,495 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "stateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name: "billingProfile",
+				Relation: &RelationSpec{
+					Target: &CustomerBillingProfileSpec,
+				},
+			},
+			{
+				Name: "emailProfile",
+				Relation: &RelationSpec{
+					Target: &CustomerEmailProfileSpec,
+				},
+			},
+		},
+	}
+
+	CustomerBillingProfileSpec = TypeSpec{
+		TypeName: "CustomerBillingProfile",
+		FieldMap: buncolgen.CustomerBillingProfileFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "billingCycleType",
+				FieldMapKey: "billingCycleType",
+			},
+			{
+				Name:        "billingCycleDayOfWeek",
+				FieldMapKey: "billingCycleDayOfWeek",
+			},
+			{
+				Name:        "paymentTerm",
+				FieldMapKey: "paymentTerm",
+			},
+			{
+				Name:        "hasBillingControlOverrides",
+				FieldMapKey: "hasBillingControlOverrides",
+			},
+			{
+				Name:        "creditLimit",
+				FieldMapKey: "creditLimit",
+			},
+			{
+				Name:        "creditBalance",
+				FieldMapKey: "creditBalance",
+			},
+			{
+				Name:        "creditStatus",
+				FieldMapKey: "creditStatus",
+			},
+			{
+				Name:        "enforceCreditLimit",
+				FieldMapKey: "enforceCreditLimit",
+			},
+			{
+				Name:        "autoCreditHold",
+				FieldMapKey: "autoCreditHold",
+			},
+			{
+				Name:        "creditHoldReason",
+				FieldMapKey: "creditHoldReason",
+			},
+			{
+				Name:        "invoiceMethod",
+				FieldMapKey: "invoiceMethod",
+			},
+			{
+				Name:        "autoSendInvoiceOnGeneration",
+				FieldMapKey: "autoSendInvoiceOnGeneration",
+			},
+			{
+				Name:        "allowInvoiceConsolidation",
+				FieldMapKey: "allowInvoiceConsolidation",
+			},
+			{
+				Name:        "consolidationPeriodDays",
+				FieldMapKey: "consolidationPeriodDays",
+			},
+			{
+				Name:        "consolidationGroupBy",
+				FieldMapKey: "consolidationGroupBy",
+			},
+			{
+				Name:        "invoiceNumberFormat",
+				FieldMapKey: "invoiceNumberFormat",
+			},
+			{
+				Name:        "customerInvoicePrefix",
+				FieldMapKey: "customerInvoicePrefix",
+			},
+			{
+				Name:        "invoiceCopies",
+				FieldMapKey: "invoiceCopies",
+			},
+			{
+				Name:        "revenueAccountId",
+				FieldMapKey: "revenueAccountId",
+			},
+			{
+				Name:        "arAccountId",
+				FieldMapKey: "arAccountId",
+			},
+			{
+				Name:        "applyLateCharges",
+				FieldMapKey: "applyLateCharges",
+			},
+			{
+				Name:        "lateChargeRate",
+				FieldMapKey: "lateChargeRate",
+			},
+			{
+				Name:        "gracePeriodDays",
+				FieldMapKey: "gracePeriodDays",
+			},
+			{
+				Name:        "taxExempt",
+				FieldMapKey: "taxExempt",
+			},
+			{
+				Name:        "taxExemptNumber",
+				FieldMapKey: "taxExemptNumber",
+			},
+			{
+				Name:        "enforceCustomerBillingReq",
+				FieldMapKey: "enforceCustomerBillingReq",
+			},
+			{
+				Name:        "validateCustomerRates",
+				FieldMapKey: "validateCustomerRates",
+			},
+			{
+				Name:        "autoTransfer",
+				FieldMapKey: "autoTransfer",
+			},
+			{
+				Name:        "autoMarkReadyToBill",
+				FieldMapKey: "autoMarkReadyToBill",
+			},
+			{
+				Name:        "autoBill",
+				FieldMapKey: "autoBill",
+			},
+			{
+				Name:        "detentionBillingEnabled",
+				FieldMapKey: "detentionBillingEnabled",
+			},
+			{
+				Name:        "detentionFreeMinutes",
+				FieldMapKey: "detentionFreeMinutes",
+			},
+			{
+				Name:        "detentionRatePerHour",
+				FieldMapKey: "detentionRatePerHour",
+			},
+			{
+				Name:        "countLateOnlyOnAppointmentStops",
+				FieldMapKey: "countLateOnlyOnAppointmentStops",
+			},
+			{
+				Name:        "countDetentionOnlyOnAppointmentStops",
+				FieldMapKey: "countDetentionOnlyOnAppointmentStops",
+			},
+			{
+				Name:        "autoApplyAccessorials",
+				FieldMapKey: "autoApplyAccessorials",
+			},
+			{
+				Name:        "billingCurrency",
+				FieldMapKey: "billingCurrency",
+			},
+			{
+				Name:        "requirePONumber",
+				FieldMapKey: "requirePONumber",
+			},
+			{
+				Name:        "requireBOLNumber",
+				FieldMapKey: "requireBOLNumber",
+			},
+			{
+				Name:        "requireDeliveryNumber",
+				FieldMapKey: "requireDeliveryNumber",
+			},
+			{
+				Name:        "invoiceAdjustmentSupportingDocumentPolicy",
+				FieldMapKey: "invoiceAdjustmentSupportingDocumentPolicy",
+			},
+			{
+				Name:        "defaultBillerId",
+				FieldMapKey: "defaultBillerId",
+			},
+			{
+				Name:        "billingNotes",
+				FieldMapKey: "billingNotes",
+			},
+			{
+				Name:        "fuelSurchargeMode",
+				FieldMapKey: "fuelSurchargeMode",
+			},
+			{
+				Name:        "fuelSurchargeProgramId",
+				FieldMapKey: "fuelSurchargeProgramId",
+			},
+			{
+				Name:    "documentTypes",
+				Special: "documentTypes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CustomerEmailProfileSpec = TypeSpec{
+		TypeName: "CustomerEmailProfile",
+		FieldMap: buncolgen.CustomerEmailProfileFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "comment",
+				FieldMapKey: "comment",
+			},
+			{
+				Name:        "fromEmail",
+				FieldMapKey: "fromEmail",
+			},
+			{
+				Name:        "toRecipients",
+				FieldMapKey: "toRecipients",
+			},
+			{
+				Name:        "ccRecipients",
+				FieldMapKey: "ccRecipients",
+			},
+			{
+				Name:        "bccRecipients",
+				FieldMapKey: "bccRecipients",
+			},
+			{
+				Name:        "attachmentName",
+				FieldMapKey: "attachmentName",
+			},
+			{
+				Name:        "readReceipt",
+				FieldMapKey: "readReceipt",
+			},
+			{
+				Name:        "includeShipmentDetail",
+				FieldMapKey: "includeShipmentDetail",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CustomerPaymentSpec = TypeSpec{
+		TypeName: "CustomerPayment",
+		FieldMap: buncolgen.PaymentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "paymentDate",
+				FieldMapKey: "paymentDate",
+			},
+			{
+				Name:        "accountingDate",
+				FieldMapKey: "accountingDate",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "appliedAmountMinor",
+				FieldMapKey: "appliedAmountMinor",
+			},
+			{
+				Name:        "unappliedAmountMinor",
+				FieldMapKey: "unappliedAmountMinor",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "paymentMethod",
+				FieldMapKey: "paymentMethod",
+			},
+			{
+				Name:        "referenceNumber",
+				FieldMapKey: "referenceNumber",
+			},
+			{
+				Name:        "memo",
+				FieldMapKey: "memo",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "postedBatchId",
+				FieldMapKey: "postedBatchId",
+			},
+			{
+				Name:        "reversalBatchId",
+				FieldMapKey: "reversalBatchId",
+			},
+			{
+				Name:        "reversedById",
+				FieldMapKey: "reversedById",
+			},
+			{
+				Name:        "reversedAt",
+				FieldMapKey: "reversedAt",
+			},
+			{
+				Name:        "reversalReason",
+				FieldMapKey: "reversalReason",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "updatedById",
+				FieldMapKey: "updatedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "customer",
+				Special: "customer",
+			},
+			{
+				Name: "applications",
+				Relation: &RelationSpec{
+					Target: &CustomerPaymentApplicationSpec,
+				},
+			},
+		},
+	}
+
+	CustomerPaymentApplicationSpec = TypeSpec{
+		TypeName: "CustomerPaymentApplication",
+		FieldMap: buncolgen.ApplicationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "customerPaymentId",
+				FieldMapKey: "customerPaymentId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "appliedAmountMinor",
+				FieldMapKey: "appliedAmountMinor",
+			},
+			{
+				Name:        "shortPayAmountMinor",
+				FieldMapKey: "shortPayAmountMinor",
+			},
+			{
+				Name:        "lineNumber",
+				FieldMapKey: "lineNumber",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "invoice",
+				Special: "invoice",
 			},
 		},
 	}
@@ -1329,6 +2001,387 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	DriverPayEventSpec = TypeSpec{
+		TypeName: "DriverPayEvent",
+		FieldMap: buncolgen.PayEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "moveId",
+				FieldMapKey: "moveId",
+			},
+			{
+				Name:        "payProfileId",
+				FieldMapKey: "payProfileId",
+			},
+			{
+				Name:        "settlementId",
+				FieldMapKey: "settlementId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "eventDate",
+				FieldMapKey: "eventDate",
+			},
+			{
+				Name:        "grossAmountMinor",
+				FieldMapKey: "grossAmountMinor",
+			},
+			{
+				Name:        "totalMiles",
+				FieldMapKey: "totalMiles",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "components",
+				FieldMapKey: "components",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "proNumber",
+			},
+			{
+				Name:        "onHold",
+				FieldMapKey: "onHold",
+			},
+			{
+				Name:        "holdReason",
+				FieldMapKey: "holdReason",
+			},
+			{
+				Name:        "voidedAt",
+				FieldMapKey: "voidedAt",
+			},
+			{
+				Name:        "voidReason",
+				FieldMapKey: "voidReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	DriverSettlementSpec = TypeSpec{
+		TypeName: "DriverSettlement",
+		FieldMap: buncolgen.SettlementFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "batchId",
+				FieldMapKey: "batchId",
+			},
+			{
+				Name:        "payProfileId",
+				FieldMapKey: "payProfileId",
+			},
+			{
+				Name:        "settlementNumber",
+				FieldMapKey: "settlementNumber",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "classification",
+				FieldMapKey: "classification",
+			},
+			{
+				Name:        "payProfileName",
+				FieldMapKey: "payProfileName",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "payDate",
+				FieldMapKey: "payDate",
+			},
+			{
+				Name:        "grossEarningsMinor",
+				FieldMapKey: "grossEarningsMinor",
+			},
+			{
+				Name:        "reimbursementsMinor",
+				FieldMapKey: "reimbursementsMinor",
+			},
+			{
+				Name:        "deductionsMinor",
+				FieldMapKey: "deductionsMinor",
+			},
+			{
+				Name:        "carryForwardInMinor",
+				FieldMapKey: "carryForwardInMinor",
+			},
+			{
+				Name:        "carryForwardOutMinor",
+				FieldMapKey: "carryForwardOutMinor",
+			},
+			{
+				Name:        "netPayMinor",
+				FieldMapKey: "netPayMinor",
+			},
+			{
+				Name:        "totalMiles",
+				FieldMapKey: "totalMiles",
+			},
+			{
+				Name:        "shipmentCount",
+				FieldMapKey: "shipmentCount",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "hasExceptions",
+				FieldMapKey: "hasExceptions",
+			},
+			{
+				Name:        "exceptions",
+				FieldMapKey: "exceptions",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "postedById",
+				FieldMapKey: "postedById",
+			},
+			{
+				Name:        "postedAt",
+				FieldMapKey: "postedAt",
+			},
+			{
+				Name:        "paidAt",
+				FieldMapKey: "paidAt",
+			},
+			{
+				Name:        "paidById",
+				FieldMapKey: "paidById",
+			},
+			{
+				Name:        "paymentMethod",
+				FieldMapKey: "paymentMethod",
+			},
+			{
+				Name:        "paymentReference",
+				FieldMapKey: "paymentReference",
+			},
+			{
+				Name:        "voidedById",
+				FieldMapKey: "voidedById",
+			},
+			{
+				Name:        "voidedAt",
+				FieldMapKey: "voidedAt",
+			},
+			{
+				Name:        "voidReason",
+				FieldMapKey: "voidReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &DriverSettlementLineSpec,
+				},
+			},
+		},
+	}
+
+	DriverSettlementLineSpec = TypeSpec{
+		TypeName: "DriverSettlementLine",
+		FieldMap: buncolgen.SettlementLineFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "settlementId",
+				FieldMapKey: "settlementId",
+			},
+			{
+				Name:        "lineNumber",
+				FieldMapKey: "lineNumber",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "componentKind",
+				FieldMapKey: "componentKind",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "quantity",
+				FieldMapKey: "quantity",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "moveId",
+				FieldMapKey: "moveId",
+			},
+			{
+				Name:        "payEventId",
+				FieldMapKey: "payEventId",
+			},
+			{
+				Name:        "recurringDeductionId",
+				FieldMapKey: "recurringDeductionId",
+			},
+			{
+				Name:        "recurringEarningId",
+				FieldMapKey: "recurringEarningId",
+			},
+			{
+				Name:        "payCodeId",
+				FieldMapKey: "payCodeId",
+			},
+			{
+				Name:        "advanceId",
+				FieldMapKey: "advanceId",
+			},
+			{
+				Name:        "escrowAccountId",
+				FieldMapKey: "escrowAccountId",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "proNumber",
 			},
 		},
 	}
@@ -2590,6 +3643,224 @@ func init() {
 		},
 	}
 
+	EscrowAccountSpec = TypeSpec{
+		TypeName: "EscrowAccount",
+		FieldMap: buncolgen.EscrowAccountFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "targetAmountMinor",
+				FieldMapKey: "targetAmountMinor",
+			},
+			{
+				Name:        "balanceMinor",
+				FieldMapKey: "balanceMinor",
+			},
+			{
+				Name:        "annualInterestRate",
+				FieldMapKey: "annualInterestRate",
+			},
+			{
+				Name:        "lastInterestAccrualDate",
+				FieldMapKey: "lastInterestAccrualDate",
+			},
+			{
+				Name:        "openedDate",
+				FieldMapKey: "openedDate",
+			},
+			{
+				Name:        "closedDate",
+				FieldMapKey: "closedDate",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name: "transactions",
+				Relation: &RelationSpec{
+					Target: &EscrowTransactionSpec,
+				},
+			},
+		},
+	}
+
+	EscrowTransactionSpec = TypeSpec{
+		TypeName: "EscrowTransaction",
+		FieldMap: buncolgen.EscrowTransactionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "escrowAccountId",
+				FieldMapKey: "escrowAccountId",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "balanceAfterMinor",
+				FieldMapKey: "balanceAfterMinor",
+			},
+			{
+				Name:        "occurredDate",
+				FieldMapKey: "occurredDate",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "settlementId",
+				FieldMapKey: "settlementId",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	FiscalPeriodSpec = TypeSpec{
+		TypeName: "FiscalPeriod",
+		FieldMap: buncolgen.FiscalPeriodFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "fiscalYearId",
+				FieldMapKey: "fiscalYearId",
+			},
+			{
+				Name:        "periodNumber",
+				FieldMapKey: "periodNumber",
+			},
+			{
+				Name:        "periodType",
+				FieldMapKey: "periodType",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "startDate",
+				FieldMapKey: "startDate",
+			},
+			{
+				Name:        "endDate",
+				FieldMapKey: "endDate",
+			},
+			{
+				Name:        "isAdjusting",
+				FieldMapKey: "isAdjusting",
+			},
+			{
+				Name:        "allowAdjustingEntries",
+				FieldMapKey: "allowAdjustingEntries",
+			},
+			{
+				Name:        "adjustmentDeadline",
+				FieldMapKey: "adjustmentDeadline",
+			},
+			{
+				Name:        "lockedAt",
+				FieldMapKey: "lockedAt",
+			},
+			{
+				Name:        "closedAt",
+				FieldMapKey: "closedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	FiscalYearSpec = TypeSpec{
 		TypeName: "FiscalYear",
 		FieldMap: buncolgen.FiscalYearFieldMap,
@@ -2670,6 +3941,12 @@ func init() {
 				FieldMapKey: "organizationId",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
+				},
+			},
+			{
+				Name: "periods",
+				Relation: &RelationSpec{
+					Target: &FiscalPeriodSpec,
 				},
 			},
 		},
@@ -3028,6 +4305,10 @@ func init() {
 			{
 				Name:        "milesPerGallon",
 				FieldMapKey: "milesPerGallon",
+			},
+			{
+				Name:        "percentBasis",
+				FieldMapKey: "percentBasis",
 			},
 			{
 				Name:        "stepRounding",
@@ -3728,6 +5009,29 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	JournalEntryLineAccountSpec = TypeSpec{
+		TypeName: "JournalEntryLineAccount",
+		FieldMap: buncolgen.GLAccountFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "accountCode",
+				FieldMapKey: "accountCode",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
 			},
 		},
 	}
@@ -4570,6 +5874,338 @@ func init() {
 		},
 	}
 
+	PayAdvanceSpec = TypeSpec{
+		TypeName: "PayAdvance",
+		FieldMap: buncolgen.PayAdvanceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "reference",
+				FieldMapKey: "reference",
+			},
+			{
+				Name:        "issuedDate",
+				FieldMapKey: "issuedDate",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "recoveredMinor",
+				FieldMapKey: "recoveredMinor",
+			},
+			{
+				Name:        "writtenOffMinor",
+				FieldMapKey: "writtenOffMinor",
+			},
+			{
+				Name:    "outstandingMinor",
+				Special: "outstandingMinor",
+			},
+			{
+				Name:        "writeOffReason",
+				FieldMapKey: "writeOffReason",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+		},
+	}
+
+	PayCodeSpec = TypeSpec{
+		TypeName: "PayCode",
+		FieldMap: buncolgen.PayCodeFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "direction",
+				FieldMapKey: "direction",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "taxable",
+				FieldMapKey: "taxable",
+			},
+			{
+				Name:        "countsTowardGuarantee",
+				FieldMapKey: "countsTowardGuarantee",
+			},
+			{
+				Name:        "glAccountId",
+				FieldMapKey: "glAccountId",
+			},
+			{
+				Name:        "defaultAmountMinor",
+				FieldMapKey: "defaultAmountMinor",
+			},
+			{
+				Name:        "isSystem",
+				FieldMapKey: "isSystem",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "glAccount",
+				Special: "glAccount",
+			},
+		},
+	}
+
+	PayCodeGLAccountSpec = TypeSpec{
+		TypeName: "PayCodeGLAccount",
+		FieldMap: buncolgen.GLAccountFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "accountCode",
+				FieldMapKey: "accountCode",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+		},
+	}
+
+	PayProfileSpec = TypeSpec{
+		TypeName: "PayProfile",
+		FieldMap: buncolgen.PayProfileFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "classification",
+				FieldMapKey: "classification",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "guaranteedPeriodMinimumMinor",
+				FieldMapKey: "guaranteedPeriodMinimumMinor",
+			},
+			{
+				Name:        "perDiemRatePerMile",
+				FieldMapKey: "perDiemRatePerMile",
+			},
+			{
+				Name:        "perDiemDailyCapMinor",
+				FieldMapKey: "perDiemDailyCapMinor",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "components",
+				Relation: &RelationSpec{
+					Target: &PayProfileComponentSpec,
+				},
+			},
+			{
+				Name:    "activeAssignmentCount",
+				Special: "activeAssignmentCount",
+			},
+		},
+	}
+
+	PayProfileComponentSpec = TypeSpec{
+		TypeName: "PayProfileComponent",
+		FieldMap: buncolgen.PayProfileComponentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "payProfileId",
+				FieldMapKey: "payProfileId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "revenueBasis",
+				FieldMapKey: "revenueBasis",
+			},
+			{
+				Name:        "bands",
+				FieldMapKey: "bands",
+			},
+			{
+				Name:        "freeTimeMinutes",
+				FieldMapKey: "freeTimeMinutes",
+			},
+			{
+				Name:        "minAmountMinor",
+				FieldMapKey: "minAmountMinor",
+			},
+			{
+				Name:        "maxAmountMinor",
+				FieldMapKey: "maxAmountMinor",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "isActive",
+				FieldMapKey: "isActive",
+			},
+		},
+	}
+
 	RateTableSpec = TypeSpec{
 		TypeName: "RateTable",
 		FieldMap: buncolgen.RateTableFieldMap,
@@ -4634,6 +6270,359 @@ func init() {
 				FieldMapKey: "organizationId",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
+				},
+			},
+		},
+	}
+
+	RecurringDeductionSpec = TypeSpec{
+		TypeName: "RecurringDeduction",
+		FieldMap: buncolgen.RecurringDeductionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "payCodeId",
+				FieldMapKey: "payCodeId",
+			},
+			{
+				Name:        "escrowAccountId",
+				FieldMapKey: "escrowAccountId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "frequency",
+				FieldMapKey: "frequency",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "totalCapMinor",
+				FieldMapKey: "totalCapMinor",
+			},
+			{
+				Name:        "deductedToDateMinor",
+				FieldMapKey: "deductedToDateMinor",
+			},
+			{
+				Name:        "startDate",
+				FieldMapKey: "startDate",
+			},
+			{
+				Name:        "endDate",
+				FieldMapKey: "endDate",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "payCode",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &PayCodeSpec,
+				},
+			},
+		},
+	}
+
+	RecurringEarningSpec = TypeSpec{
+		TypeName: "RecurringEarning",
+		FieldMap: buncolgen.RecurringEarningFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "payCodeId",
+				FieldMapKey: "payCodeId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "frequency",
+				FieldMapKey: "frequency",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "totalCapMinor",
+				FieldMapKey: "totalCapMinor",
+			},
+			{
+				Name:        "paidToDateMinor",
+				FieldMapKey: "paidToDateMinor",
+			},
+			{
+				Name:        "startDate",
+				FieldMapKey: "startDate",
+			},
+			{
+				Name:        "endDate",
+				FieldMapKey: "endDate",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "payCode",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &PayCodeSpec,
+				},
+			},
+		},
+	}
+
+	RecurringShipmentSpec = TypeSpec{
+		TypeName: "RecurringShipment",
+		FieldMap: buncolgen.RecurringShipmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "sourceShipmentId",
+				FieldMapKey: "sourceShipmentId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "originLocationId",
+				FieldMapKey: "originLocationId",
+			},
+			{
+				Name:        "destinationLocationId",
+				FieldMapKey: "destinationLocationId",
+			},
+			{
+				Name:        "enteredById",
+				FieldMapKey: "enteredById",
+			},
+			{
+				Name:        "lastGeneratedShipmentId",
+				FieldMapKey: "lastGeneratedShipmentId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "cronExpression",
+				FieldMapKey: "cronExpression",
+			},
+			{
+				Name:        "timezone",
+				FieldMapKey: "timezone",
+			},
+			{
+				Name:        "startDate",
+				FieldMapKey: "startDate",
+			},
+			{
+				Name:        "endDate",
+				FieldMapKey: "endDate",
+			},
+			{
+				Name:        "maxOccurrences",
+				FieldMapKey: "maxOccurrences",
+			},
+			{
+				Name:        "leadTimeDays",
+				FieldMapKey: "leadTimeDays",
+			},
+			{
+				Name:        "skipWeekends",
+				FieldMapKey: "skipWeekends",
+			},
+			{
+				Name:        "exceptionPolicy",
+				FieldMapKey: "exceptionPolicy",
+			},
+			{
+				Name:        "blackoutDates",
+				FieldMapKey: "blackoutDates",
+			},
+			{
+				Name:        "autoGenerate",
+				FieldMapKey: "autoGenerate",
+			},
+			{
+				Name:        "nextOccurrenceAt",
+				FieldMapKey: "nextOccurrenceAt",
+			},
+			{
+				Name:        "nextOccurrenceSourceAt",
+				FieldMapKey: "nextOccurrenceSourceAt",
+			},
+			{
+				Name:        "lastOccurrenceAt",
+				FieldMapKey: "lastOccurrenceAt",
+			},
+			{
+				Name:        "lastRunAt",
+				FieldMapKey: "lastRunAt",
+			},
+			{
+				Name:        "generationCount",
+				FieldMapKey: "generationCount",
+			},
+			{
+				Name:        "consecutiveFailures",
+				FieldMapKey: "consecutiveFailures",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "customerId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+			{
+				Name:        "originLocation",
+				FieldMapKey: "originLocationId",
+				Relation: &RelationSpec{
+					Target: &LocationSpec,
+				},
+			},
+			{
+				Name:        "destinationLocation",
+				FieldMapKey: "destinationLocationId",
+				Relation: &RelationSpec{
+					Target: &LocationSpec,
+				},
+			},
+			{
+				Name:        "enteredBy",
+				FieldMapKey: "enteredById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
 				},
 			},
 		},
@@ -5395,6 +7384,198 @@ func init() {
 		},
 	}
 
+	SettlementBatchSpec = TypeSpec{
+		TypeName: "SettlementBatch",
+		FieldMap: buncolgen.SettlementBatchFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "payDate",
+				FieldMapKey: "payDate",
+			},
+			{
+				Name:        "settlementCount",
+				FieldMapKey: "settlementCount",
+			},
+			{
+				Name:        "exceptionCount",
+				FieldMapKey: "exceptionCount",
+			},
+			{
+				Name:        "totalGrossMinor",
+				FieldMapKey: "totalGrossMinor",
+			},
+			{
+				Name:        "totalNetMinor",
+				FieldMapKey: "totalNetMinor",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "generatedById",
+				FieldMapKey: "generatedById",
+			},
+			{
+				Name:        "generatedAt",
+				FieldMapKey: "generatedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "canceledById",
+				FieldMapKey: "canceledById",
+			},
+			{
+				Name:        "canceledAt",
+				FieldMapKey: "canceledAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "settlements",
+				Relation: &RelationSpec{
+					Target: &DriverSettlementSpec,
+				},
+			},
+		},
+	}
+
+	SettlementControlSpec = TypeSpec{
+		TypeName: "SettlementControl",
+		FieldMap: buncolgen.SettlementControlFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "payPeriodFrequency",
+				FieldMapKey: "payPeriodFrequency",
+			},
+			{
+				Name:        "periodEndDayOfWeek",
+				FieldMapKey: "periodEndDayOfWeek",
+			},
+			{
+				Name:        "payDelayDays",
+				FieldMapKey: "payDelayDays",
+			},
+			{
+				Name:        "payTrigger",
+				FieldMapKey: "payTrigger",
+			},
+			{
+				Name:        "autoGenerateBatches",
+				FieldMapKey: "autoGenerateBatches",
+			},
+			{
+				Name:        "autoApproveClean",
+				FieldMapKey: "autoApproveClean",
+			},
+			{
+				Name:        "autoAttachAccruals",
+				FieldMapKey: "autoAttachAccruals",
+			},
+			{
+				Name:        "autoPostOnApprove",
+				FieldMapKey: "autoPostOnApprove",
+			},
+			{
+				Name:        "allowNegativeNet",
+				FieldMapKey: "allowNegativeNet",
+			},
+			{
+				Name:        "varianceThresholdPct",
+				FieldMapKey: "varianceThresholdPct",
+			},
+			{
+				Name:        "varianceLookbackWeeks",
+				FieldMapKey: "varianceLookbackWeeks",
+			},
+			{
+				Name:        "defaultEscrowInterestRate",
+				FieldMapKey: "defaultEscrowInterestRate",
+			},
+			{
+				Name:        "escrowInterestFrequencyMonths",
+				FieldMapKey: "escrowInterestFrequencyMonths",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	ShipmentSpec = TypeSpec{
 		TypeName: "Shipment",
 		FieldMap: buncolgen.ShipmentFieldMap,
@@ -5470,6 +7651,10 @@ func init() {
 			{
 				Name:    "orderStatus",
 				Special: "orderStatus",
+			},
+			{
+				Name:    "profitabilityEstimate",
+				Special: "profitabilityEstimate",
 			},
 			{
 				Name:        "status",
@@ -5558,6 +7743,10 @@ func init() {
 			{
 				Name:        "ratingUnit",
 				FieldMapKey: "ratingUnit",
+			},
+			{
+				Name:        "fuelSurchargeLocked",
+				FieldMapKey: "fuelSurchargeLocked",
 			},
 			{
 				Name:        "ratingDetail",
@@ -6979,6 +9168,10 @@ func init() {
 				FieldMapKey: "isDefault",
 			},
 			{
+				Name:        "isOrgDefault",
+				FieldMapKey: "isOrgDefault",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -7743,6 +9936,87 @@ func init() {
 				FieldMapKey: "rejectorId",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
+	WorkerPayAssignmentSpec = TypeSpec{
+		TypeName: "WorkerPayAssignment",
+		FieldMap: buncolgen.WorkerPayAssignmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "workerId",
+				FieldMapKey: "workerId",
+			},
+			{
+				Name:        "payProfileId",
+				FieldMapKey: "payProfileId",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "splitPercent",
+				FieldMapKey: "splitPercent",
+			},
+			{
+				Name:        "rateOverrides",
+				FieldMapKey: "rateOverrides",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
+				Name:        "payProfile",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &PayProfileSpec,
 				},
 			},
 		},

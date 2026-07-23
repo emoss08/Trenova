@@ -16,6 +16,11 @@ type ListWorkersRequest struct {
 type WorkerSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	IncludeProfile     bool                           `json:"includeProfile"`
+	// OwnerOperatorsOnly narrows results to owner-operators: workers of type
+	// Contractor, or workers whose currently effective pay profile carries the
+	// OwnerOperator classification (covers contractors not yet assigned a
+	// profile and mislabeled workers on owner-op pay).
+	OwnerOperatorsOnly bool `json:"ownerOperatorsOnly"`
 }
 
 type GetWorkerByIDRequest struct {
@@ -46,6 +51,11 @@ type WorkerSyncDriftRecord struct {
 	LocalExternalID string `json:"localExternalId,omitempty"`
 	RemoteDriverID  string `json:"remoteDriverId,omitempty"`
 	DetectedAt      int64  `json:"detectedAt"`
+}
+
+type ListExpiringCredentialsRequest struct {
+	HorizonDays int `json:"horizonDays"`
+	GraceDays   int `json:"graceDays"`
 }
 
 type WorkerRepository interface {
@@ -82,4 +92,8 @@ type WorkerRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]WorkerSyncDriftRecord, error)
+	ListWorkersWithExpiringCredentials(
+		ctx context.Context,
+		req ListExpiringCredentialsRequest,
+	) ([]*worker.Worker, error)
 }

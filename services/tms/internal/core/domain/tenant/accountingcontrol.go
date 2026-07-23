@@ -62,6 +62,14 @@ type AccountingControl struct {
 	RealizedFXGainAccountID          pulid.ID `json:"realizedFxGainAccountId"          bun:"realized_fx_gain_account_id,type:VARCHAR(100),nullzero"`
 	RealizedFXLossAccountID          pulid.ID `json:"realizedFxLossAccountId"          bun:"realized_fx_loss_account_id,type:VARCHAR(100),nullzero"`
 
+	DefaultDriverPayExpenseAccountID        pulid.ID `json:"defaultDriverPayExpenseAccountId"        bun:"default_driver_pay_expense_account_id,type:VARCHAR(100),nullzero"`
+	DefaultPurchasedTransportationAccountID pulid.ID `json:"defaultPurchasedTransportationAccountId" bun:"default_purchased_transportation_account_id,type:VARCHAR(100),nullzero"`
+	DefaultSettlementsPayableAccountID      pulid.ID `json:"defaultSettlementsPayableAccountId"      bun:"default_settlements_payable_account_id,type:VARCHAR(100),nullzero"`
+	DefaultDriverAdvanceAccountID           pulid.ID `json:"defaultDriverAdvanceAccountId"           bun:"default_driver_advance_account_id,type:VARCHAR(100),nullzero"`
+	DefaultEscrowLiabilityAccountID         pulid.ID `json:"defaultEscrowLiabilityAccountId"         bun:"default_escrow_liability_account_id,type:VARCHAR(100),nullzero"`
+	DefaultDriverReimbursementAccountID     pulid.ID `json:"defaultDriverReimbursementAccountId"     bun:"default_driver_reimbursement_account_id,type:VARCHAR(100),nullzero"`
+	DefaultEscrowInterestExpenseAccountID   pulid.ID `json:"defaultEscrowInterestExpenseAccountId"   bun:"default_escrow_interest_expense_account_id,type:VARCHAR(100),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

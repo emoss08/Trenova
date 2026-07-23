@@ -67,6 +67,11 @@ var TractorColumns = struct {
 	RegistrationNumber      Column // "registration_number" → qualified: "trac.registration_number"
 	RegistrationExpiry      Column // "registration_expiry" → qualified: "trac.registration_expiry"
 	Vin                     Column // "vin" → qualified: "trac.vin"
+	OwnershipType           Column // "ownership_type" → qualified: "trac.ownership_type"
+	OwnerWorkerID           Column // "owner_worker_id" → qualified: "trac.owner_worker_id"
+	LessorName              Column // "lessor_name" → qualified: "trac.lessor_name"
+	LeaseReference          Column // "lease_reference" → qualified: "trac.lease_reference"
+	LeaseEndDate            Column // "lease_end_date" → qualified: "trac.lease_end_date"
 	LastKnownLocationID     Column // "last_known_location_id" → qualified: "trac.last_known_location_id"
 	LastKnownLocationName   Column // "last_known_location_name" → qualified: "trac.last_known_location_name"
 	Version                 Column // "version" → qualified: "trac.version"
@@ -91,6 +96,11 @@ var TractorColumns = struct {
 	RegistrationNumber:      NewColumn("registration_number", "trac"),
 	RegistrationExpiry:      NewColumn("registration_expiry", "trac"),
 	Vin:                     NewColumn("vin", "trac"),
+	OwnershipType:           NewColumn("ownership_type", "trac"),
+	OwnerWorkerID:           NewColumn("owner_worker_id", "trac"),
+	LessorName:              NewColumn("lessor_name", "trac"),
+	LeaseReference:          NewColumn("lease_reference", "trac"),
+	LeaseEndDate:            NewColumn("lease_end_date", "trac"),
 	LastKnownLocationID:     NewColumn("last_known_location_id", "trac"),
 	LastKnownLocationName:   NewColumn("last_known_location_name", "trac"),
 	Version:                 NewColumn("version", "trac"),
@@ -121,6 +131,11 @@ var TractorFieldMap = map[string]string{
 	"registrationNumber":      "registration_number",
 	"registrationExpiry":      "registration_expiry",
 	"vin":                     "vin",
+	"ownershipType":           "ownership_type",
+	"ownerWorkerId":           "owner_worker_id",
+	"lessorName":              "lessor_name",
+	"leaseReference":          "lease_reference",
+	"leaseEndDate":            "lease_end_date",
 	"lastKnownLocationId":     "last_known_location_id",
 	"lastKnownLocationName":   "last_known_location_name",
 	"version":                 "version",
@@ -149,6 +164,11 @@ var TractorInsertableColumns = []string{
 	"registration_number",
 	"registration_expiry",
 	"vin",
+	"ownership_type",
+	"owner_worker_id",
+	"lessor_name",
+	"lease_reference",
+	"lease_end_date",
 	"version",
 	"created_at",
 	"updated_at",
@@ -168,6 +188,7 @@ var TractorRelations = struct {
 	State                 string
 	PrimaryWorker         string
 	SecondaryWorker       string
+	OwnerWorker           string
 }{
 	BusinessUnit:          "BusinessUnit",
 	Organization:          "Organization",
@@ -177,6 +198,7 @@ var TractorRelations = struct {
 	State:                 "State",
 	PrimaryWorker:         "PrimaryWorker",
 	SecondaryWorker:       "SecondaryWorker",
+	OwnerWorker:           "OwnerWorker",
 }
 
 // TractorScopeTenant restricts a query to a single tenant by adding:
@@ -247,6 +269,11 @@ var TractorFilter = struct {
 	RegistrationNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationNumber" → DB: "registration_number"
 	RegistrationExpiry      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationExpiry" → DB: "registration_expiry"
 	Vin                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vin" → DB: "vin"
+	OwnershipType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownershipType" → DB: "ownership_type"
+	OwnerWorkerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerWorkerId" → DB: "owner_worker_id"
+	LessorName              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lessorName" → DB: "lessor_name"
+	LeaseReference          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "leaseReference" → DB: "lease_reference"
+	LeaseEndDate            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "leaseEndDate" → DB: "lease_end_date"
 	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -304,6 +331,21 @@ var TractorFilter = struct {
 	},
 	Vin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("vin", op, value)
+	},
+	OwnershipType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownershipType", op, value)
+	},
+	OwnerWorkerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerWorkerId", op, value)
+	},
+	LessorName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lessorName", op, value)
+	},
+	LeaseReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("leaseReference", op, value)
+	},
+	LeaseEndDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("leaseEndDate", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

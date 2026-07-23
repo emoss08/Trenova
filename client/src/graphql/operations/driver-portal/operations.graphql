@@ -1,0 +1,689 @@
+query WorkerPortalStatus($workerId: ID!) {
+  workerPortalStatus(workerId: $workerId) {
+    linked
+    portalUser {
+      id
+      name
+      emailAddress
+      status
+      lastLoginAt
+    }
+    pendingInvitation {
+      id
+      email
+      status
+      expiresAt
+      createdAt
+    }
+    invitations {
+      id
+      email
+      status
+      expiresAt
+      acceptedAt
+      createdAt
+      invitedBy {
+        id
+        name
+      }
+    }
+  }
+}
+
+mutation InviteWorkerToPortal($input: InviteWorkerToPortalInput!) {
+  inviteWorkerToPortal(input: $input) {
+    invitation {
+      id
+      email
+      status
+      expiresAt
+    }
+    inviteUrl
+    emailSent
+  }
+}
+
+mutation RevokeWorkerPortalAccess($workerId: ID!) {
+  revokeWorkerPortalAccess(workerId: $workerId)
+}
+
+query SettlementDisputeTable($input: DataTableConnectionInput!) {
+  settlementDisputes(input: $input) {
+    edges {
+      node {
+        id
+        settlementId
+        settlementLineId
+        workerId
+        status
+        category
+        description
+        resolutionNote
+        resolvedAt
+        createdAt
+        updatedAt
+        version
+        worker {
+          id
+          firstName
+          lastName
+        }
+        settlement {
+          id
+          settlementNumber
+          netPayMinor
+          currencyCode
+          status
+        }
+        resolvedBy {
+          id
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query SettlementDisputeDetail($id: ID!) {
+  settlementDispute(id: $id) {
+    id
+    settlementId
+    settlementLineId
+    workerId
+    status
+    category
+    description
+    submittedByUserId
+    resolutionNote
+    resolutionLineId
+    resolvedById
+    resolvedAt
+    version
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+    }
+    settlement {
+      id
+      settlementNumber
+      status
+      periodStart
+      periodEnd
+      netPayMinor
+      grossEarningsMinor
+      deductionsMinor
+      currencyCode
+    }
+    settlementLine {
+      id
+      lineNumber
+      category
+      description
+      amountMinor
+      proNumber
+    }
+    resolvedBy {
+      id
+      name
+    }
+  }
+}
+
+query OpenSettlementDisputeCount {
+  openSettlementDisputeCount
+}
+
+mutation StartSettlementDisputeReview($id: ID!) {
+  startSettlementDisputeReview(id: $id) {
+    id
+    status
+    version
+  }
+}
+
+mutation ResolveSettlementDispute($input: ResolveSettlementDisputeInput!) {
+  resolveSettlementDispute(input: $input) {
+    id
+    status
+    resolutionNote
+    resolutionLineId
+    resolvedAt
+    version
+  }
+}
+
+query MyPortalProfile {
+  myPortalProfile {
+    workerId
+    firstName
+    lastName
+    email
+    phoneNumber
+    workerType
+    driverType
+    fleetCodeName
+    organizationName
+  }
+}
+
+query MyLoads($scope: PortalLoadScope!, $limit: Int) {
+  myLoads(scope: $scope, limit: $limit) {
+    assignmentId
+    moveId
+    shipmentId
+    proNumber
+    bol
+    status
+    isPrimary
+    tractorCode
+    trailerCode
+    pieces
+    weight
+    distanceMiles
+    payGrossMinor
+    payStatus
+    payOnHold
+    ackStatus
+    stops {
+      id
+      type
+      status
+      sequence
+      locationName
+      addressLine
+      scheduledWindowStart
+      scheduledWindowEnd
+      actualArrival
+      actualDeparture
+    }
+  }
+}
+
+query MyLoadComments($shipmentId: ID!) {
+  myLoadComments(shipmentId: $shipmentId) {
+    id
+    type
+    priority
+    comment
+    authorName
+    createdAt
+  }
+}
+
+mutation RecordMyStopAction($input: RecordMyStopActionInput!) {
+  recordMyStopAction(input: $input)
+}
+
+mutation CreateMyLoadComment($input: CreateMyLoadCommentInput!) {
+  createMyLoadComment(input: $input) {
+    id
+    type
+    priority
+    comment
+    authorName
+    createdAt
+  }
+}
+
+query MyPeriodSummary {
+  myPeriodSummary {
+    periodStart
+    periodEnd
+    payDate
+    accruedGrossMinor
+    eventCount
+  }
+}
+
+query MyRecentPayEvents($limit: Int) {
+  myRecentPayEvents(limit: $limit) {
+    id
+    status
+    eventDate
+    proNumber
+    grossAmountMinor
+    totalMiles
+    currencyCode
+    onHold
+    holdReason
+  }
+}
+
+query MySettlements($limit: Int, $offset: Int) {
+  mySettlements(limit: $limit, offset: $offset) {
+    items {
+      id
+      settlementNumber
+      status
+      periodStart
+      periodEnd
+      payDate
+      grossEarningsMinor
+      reimbursementsMinor
+      deductionsMinor
+      netPayMinor
+      currencyCode
+      paidAt
+      paymentMethod
+      paymentReference
+    }
+    total
+  }
+}
+
+query MySettlement($id: ID!) {
+  mySettlement(id: $id) {
+    id
+    settlementNumber
+    status
+    classification
+    payProfileName
+    periodStart
+    periodEnd
+    payDate
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    carryForwardInMinor
+    carryForwardOutMinor
+    netPayMinor
+    totalMiles
+    shipmentCount
+    currencyCode
+    paidAt
+    paymentMethod
+    paymentReference
+    createdAt
+    lines {
+      id
+      lineNumber
+      category
+      componentKind
+      method
+      description
+      quantity
+      rate
+      amountMinor
+      proNumber
+    }
+  }
+}
+
+query MyEscrow {
+  myEscrow {
+    account {
+      id
+      status
+      targetAmountMinor
+      balanceMinor
+      currencyCode
+      createdAt
+    }
+    transactions {
+      id
+      type
+      amountMinor
+      balanceAfterMinor
+      description
+      occurredDate
+      createdAt
+    }
+  }
+}
+
+query MyAdvances {
+  myAdvances {
+    id
+    status
+    source
+    reference
+    amountMinor
+    recoveredMinor
+    outstandingMinor
+    currencyCode
+    issuedDate
+  }
+}
+
+query MyDisputes {
+  myDisputes {
+    id
+    settlementId
+    settlementLineId
+    status
+    category
+    description
+    resolutionNote
+    resolvedAt
+    createdAt
+    settlement {
+      id
+      settlementNumber
+      periodStart
+      periodEnd
+    }
+    settlementLine {
+      id
+      description
+      amountMinor
+      category
+    }
+  }
+}
+
+mutation CreateSettlementDispute($input: CreateSettlementDisputeInput!) {
+  createSettlementDispute(input: $input) {
+    id
+    status
+    category
+    description
+    createdAt
+  }
+}
+
+mutation WithdrawSettlementDispute($id: ID!) {
+  withdrawSettlementDispute(id: $id) {
+    id
+    status
+  }
+}
+
+query MyComplianceProfile {
+  myComplianceProfile {
+    workerId
+    licenseNumber
+    licenseState
+    cdlClass
+    endorsement
+    licenseExpiry
+    hazmatExpiry
+    medicalCardExpiry
+    physicalDueDate
+    mvrDueDate
+    twicExpiry
+    complianceStatus
+    isQualified
+    hireDate
+    addressLine1
+    addressLine2
+    city
+    stateAbbreviation
+    postalCode
+    phoneNumber
+    emergencyContactName
+    emergencyContactPhone
+  }
+}
+
+mutation UpdateMyContactInfo($input: UpdateMyContactInfoInput!) {
+  updateMyContactInfo(input: $input) {
+    workerId
+    addressLine1
+    addressLine2
+    city
+    stateAbbreviation
+    postalCode
+    phoneNumber
+    emergencyContactName
+    emergencyContactPhone
+  }
+}
+
+query MyPto {
+  myPto {
+    id
+    status
+    type
+    startDate
+    endDate
+    reason
+    createdAt
+  }
+}
+
+mutation RequestMyPto($input: RequestMyPtoInput!) {
+  requestMyPto(input: $input) {
+    id
+    status
+    type
+    startDate
+    endDate
+    reason
+    createdAt
+  }
+}
+
+mutation CancelMyPto($id: ID!) {
+  cancelMyPto(id: $id) {
+    id
+    status
+  }
+}
+
+query MyExpenses {
+  myExpenses {
+    id
+    shipmentId
+    payCodeId
+    status
+    amountMinor
+    currencyCode
+    description
+    incurredDate
+    receiptDocumentId
+    reviewNote
+    reviewedAt
+    createdAt
+    payCode {
+      id
+      code
+      description
+    }
+  }
+}
+
+mutation SubmitMyExpense($input: SubmitMyExpenseInput!) {
+  submitMyExpense(input: $input) {
+    id
+    status
+    amountMinor
+    description
+    incurredDate
+    createdAt
+  }
+}
+
+mutation CancelMyExpense($id: ID!) {
+  cancelMyExpense(id: $id) {
+    id
+    status
+  }
+}
+
+mutation RespondToMyAssignment($input: RespondToMyAssignmentInput!) {
+  respondToMyAssignment(input: $input)
+}
+
+query MyLoadPayEstimate($shipmentId: ID!, $moveId: ID!) {
+  myLoadPayEstimate(shipmentId: $shipmentId, moveId: $moveId) {
+    grossMinor
+    currencyCode
+  }
+}
+
+query MyYtdPay($year: Int!) {
+  myYtdPay(year: $year) {
+    workerId
+    year
+    settlementCount
+    grossEarningsMinor
+    reimbursementsMinor
+    deductionsMinor
+    netPayMinor
+  }
+}
+
+query DriverExpenseTable($input: DataTableConnectionInput!) {
+  driverExpenses(input: $input) {
+    edges {
+      node {
+        id
+        workerId
+        shipmentId
+        status
+        amountMinor
+        currencyCode
+        description
+        incurredDate
+        receiptDocumentId
+        reviewNote
+        reviewedAt
+        settlementLineId
+        createdAt
+        version
+        worker {
+          id
+          firstName
+          lastName
+        }
+        payCode {
+          id
+          code
+          description
+        }
+        reviewedBy {
+          id
+          name
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DriverExpenseDetail($id: ID!) {
+  driverExpense(id: $id) {
+    id
+    workerId
+    shipmentId
+    payCodeId
+    status
+    amountMinor
+    currencyCode
+    description
+    incurredDate
+    receiptDocumentId
+    reviewNote
+    reviewedById
+    reviewedAt
+    settlementLineId
+    version
+    createdAt
+    updatedAt
+    worker {
+      id
+      firstName
+      lastName
+      email
+      phoneNumber
+    }
+    payCode {
+      id
+      code
+      description
+    }
+    reviewedBy {
+      id
+      name
+    }
+  }
+}
+
+query PendingDriverExpenseCount {
+  pendingDriverExpenseCount
+}
+
+mutation ReviewDriverExpense($input: ReviewDriverExpenseInput!) {
+  reviewDriverExpense(input: $input) {
+    id
+    status
+    reviewNote
+    reviewedAt
+    settlementLineId
+    version
+  }
+}
+
+query DashControl {
+  dashControl {
+    id
+    requireLoadAcknowledgment
+    allowLoadRefusals
+    allowStopActions
+    allowLoadDocumentUpload
+    allowLoadComments
+    showLoadPay
+    showPayEstimates
+    allowExpenseSubmission
+    requireExpenseReceipt
+    allowSettlementDisputes
+    allowProfileDocumentUpload
+    allowContactInfoEdit
+    allowPtoRequests
+    sendCredentialReminders
+    enableDetentionAlerts
+    detentionAlertThresholdMinutes
+    version
+  }
+}
+
+mutation UpdateDashControl($input: UpdateDashControlInput!) {
+  updateDashControl(input: $input) {
+    id
+    requireLoadAcknowledgment
+    allowLoadRefusals
+    allowStopActions
+    allowLoadDocumentUpload
+    allowLoadComments
+    showLoadPay
+    showPayEstimates
+    allowExpenseSubmission
+    requireExpenseReceipt
+    allowSettlementDisputes
+    allowProfileDocumentUpload
+    allowContactInfoEdit
+    allowPtoRequests
+    sendCredentialReminders
+    enableDetentionAlerts
+    detentionAlertThresholdMinutes
+    version
+  }
+}
+
+query MyPortalFeatures {
+  myPortalFeatures {
+    requireLoadAcknowledgment
+    allowLoadRefusals
+    allowStopActions
+    allowLoadDocumentUpload
+    allowLoadComments
+    showLoadPay
+    showPayEstimates
+    allowExpenseSubmission
+    requireExpenseReceipt
+    allowSettlementDisputes
+    allowProfileDocumentUpload
+    allowContactInfoEdit
+    allowPtoRequests
+  }
+}

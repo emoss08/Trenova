@@ -22,6 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
+	"github.com/emoss08/trenova/internal/core/domain/driverpay"
+	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -54,6 +56,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -79,6 +83,23 @@ type AccountTypeEdge struct {
 	Cursor string                   `json:"cursor"`
 }
 
+type AddSettlementAdjustmentInput struct {
+	SettlementID string  `json:"settlementId"`
+	Description  string  `json:"description"`
+	AmountMinor  int     `json:"amountMinor"`
+	Quantity     *string `json:"quantity,omitempty"`
+	Rate         *string `json:"rate,omitempty"`
+	// Optional pay code — the adjustment posts to the code's GL account when mapped.
+	PayCodeID *string `json:"payCodeId,omitempty"`
+}
+
+type AdjustEscrowAccountInput struct {
+	AccountID    string `json:"accountId"`
+	AmountMinor  int    `json:"amountMinor"`
+	Description  string `json:"description"`
+	OccurredDate *int   `json:"occurredDate,omitempty"`
+}
+
 type APIKeyConnection struct {
 	Edges      []*APIKeyEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
@@ -94,6 +115,25 @@ type ApplyCustomerPaymentInput struct {
 	PaymentID      string                             `json:"paymentId"`
 	AccountingDate int                                `json:"accountingDate"`
 	Applications   []*CustomerPaymentApplicationInput `json:"applications"`
+}
+
+// Assigns a pay profile to a worker. Any currently-open assignment for the worker
+// is automatically ended on the new effective date — no manual cleanup needed.
+type AssignPayProfileInput struct {
+	WorkerID      string `json:"workerId"`
+	PayProfileID  string `json:"payProfileId"`
+	EffectiveFrom int    `json:"effectiveFrom"`
+	EffectiveTo   *int   `json:"effectiveTo,omitempty"`
+	// Defaults to 100. Use 50 for an even team split.
+	SplitPercent *string `json:"splitPercent,omitempty"`
+	// Optional per-component rate overrides for this driver.
+	RateOverrides []*PayRateOverrideInput `json:"rateOverrides,omitempty"`
+	Notes         *string                 `json:"notes,omitempty"`
+}
+
+type AttachPayEventsInput struct {
+	SettlementID string   `json:"settlementId"`
+	PayEventIds  []string `json:"payEventIds"`
 }
 
 type AttentionSummary struct {
@@ -161,6 +201,14 @@ type BillingQueueUpdateStatusInput struct {
 	ExceptionNotes      *string                           `json:"exceptionNotes,omitempty"`
 	ReviewNotes         *string                           `json:"reviewNotes,omitempty"`
 	CancelReason        *string                           `json:"cancelReason,omitempty"`
+}
+
+type BulkSettlementActionInput struct {
+	SettlementIds []string                               `json:"settlementIds"`
+	Action        driversettlementservice.BulkActionType `json:"action"`
+	// Required when action is MarkPaid.
+	PaymentMethod    *string `json:"paymentMethod,omitempty"`
+	PaymentReference *string `json:"paymentReference,omitempty"`
 }
 
 type BulkUpdateEquipmentManufacturerStatusInput struct {
@@ -275,6 +323,62 @@ type CostingControlInput struct {
 	Version              int     `json:"version"`
 }
 
+type CreateMyLoadCommentInput struct {
+	ShipmentID string `json:"shipmentId"`
+	Comment    string `json:"comment"`
+}
+
+type CreatePayCodeInput struct {
+	Direction             driverpay.PayCodeDirection `json:"direction"`
+	Code                  string                     `json:"code"`
+	Name                  string                     `json:"name"`
+	Description           *string                    `json:"description,omitempty"`
+	Taxable               *bool                      `json:"taxable,omitempty"`
+	CountsTowardGuarantee *bool                      `json:"countsTowardGuarantee,omitempty"`
+	GlAccountID           *string                    `json:"glAccountId,omitempty"`
+	DefaultAmountMinor    *int                       `json:"defaultAmountMinor,omitempty"`
+}
+
+type CreatePayProfileInput struct {
+	Status                       *domaintypes.Status           `json:"status,omitempty"`
+	Name                         string                        `json:"name"`
+	Description                  *string                       `json:"description,omitempty"`
+	Classification               driverpay.PayeeClassification `json:"classification"`
+	CurrencyCode                 *string                       `json:"currencyCode,omitempty"`
+	GuaranteedPeriodMinimumMinor *int                          `json:"guaranteedPeriodMinimumMinor,omitempty"`
+	PerDiemRatePerMile           *string                       `json:"perDiemRatePerMile,omitempty"`
+	PerDiemDailyCapMinor         *int                          `json:"perDiemDailyCapMinor,omitempty"`
+	Components                   []*PayProfileComponentInput   `json:"components"`
+}
+
+type CreateRecurringDeductionInput struct {
+	WorkerID        string  `json:"workerId"`
+	PayCodeID       string  `json:"payCodeId"`
+	EscrowAccountID *string `json:"escrowAccountId,omitempty"`
+	// When true and no escrow account is given, the deduction links to the driver's
+	// active escrow account and posts as an escrow contribution.
+	EscrowContribution *bool                         `json:"escrowContribution,omitempty"`
+	Frequency          *driverpay.DeductionFrequency `json:"frequency,omitempty"`
+	Description        string                        `json:"description"`
+	AmountMinor        int                           `json:"amountMinor"`
+	TotalCapMinor      *int                          `json:"totalCapMinor,omitempty"`
+	StartDate          int                           `json:"startDate"`
+	EndDate            *int                          `json:"endDate,omitempty"`
+	CurrencyCode       *string                       `json:"currencyCode,omitempty"`
+}
+
+type CreateRecurringEarningInput struct {
+	WorkerID      string                      `json:"workerId"`
+	PayCodeID     string                      `json:"payCodeId"`
+	Frequency     *driverpay.EarningFrequency `json:"frequency,omitempty"`
+	Description   string                      `json:"description"`
+	AmountMinor   int                         `json:"amountMinor"`
+	TotalCapMinor *int                        `json:"totalCapMinor,omitempty"`
+	StartDate     int                         `json:"startDate"`
+	EndDate       *int                        `json:"endDate,omitempty"`
+	CurrencyCode  *string                     `json:"currencyCode,omitempty"`
+}
+
 type CreateReportScheduleInput struct {
 	DefinitionID    string   `json:"definitionId"`
 	CronExpression  string   `json:"cronExpression"`
@@ -284,6 +388,13 @@ type CreateReportScheduleInput struct {
 	EmailAttach     *bool    `json:"emailAttach,omitempty"`
 	NotifyUserIds   []string `json:"notifyUserIds,omitempty"`
 	Enabled         bool     `json:"enabled"`
+}
+
+type CreateSettlementDisputeInput struct {
+	SettlementID     string                           `json:"settlementId"`
+	SettlementLineID *string                          `json:"settlementLineId,omitempty"`
+	Category         driversettlement.DisputeCategory `json:"category"`
+	Description      string                           `json:"description"`
 }
 
 type CustomFieldDefinitionConnection struct {
@@ -334,6 +445,17 @@ type DataTableConnectionInput struct {
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
 }
 
+type DetachPayEventInput struct {
+	SettlementID string `json:"settlementId"`
+	PayEventID   string `json:"payEventId"`
+}
+
+type DisputeAdjustmentInput struct {
+	Description string  `json:"description"`
+	AmountMinor int     `json:"amountMinor"`
+	PayCodeID   *string `json:"payCodeId,omitempty"`
+}
+
 type DistanceOverrideConnection struct {
 	Edges      []*DistanceOverrideEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
@@ -376,6 +498,44 @@ type DocumentTypeConnection struct {
 type DocumentTypeEdge struct {
 	Node   *documenttype.DocumentType `json:"node"`
 	Cursor string                     `json:"cursor"`
+}
+
+type DriverExpenseConnection struct {
+	Edges      []*DriverExpenseEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type DriverExpenseEdge struct {
+	Node   *driverpay.Expense `json:"node"`
+	Cursor string             `json:"cursor"`
+}
+
+type DriverPayEventConnection struct {
+	Edges      []*DriverPayEventEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type DriverPayEventEdge struct {
+	Node   *driversettlement.PayEvent `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
+type DriverSettlementActionInput struct {
+	SettlementID string  `json:"settlementId"`
+	Reason       *string `json:"reason,omitempty"`
+}
+
+type DriverSettlementConnection struct {
+	Edges      []*DriverSettlementEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type DriverSettlementEdge struct {
+	Node   *driversettlement.Settlement `json:"node"`
+	Cursor string                       `json:"cursor"`
 }
 
 type EIASeriesOption struct {
@@ -544,6 +704,11 @@ type EmailProfileEdge struct {
 	Cursor string         `json:"cursor"`
 }
 
+type EndWorkerPayAssignmentInput struct {
+	AssignmentID string `json:"assignmentId"`
+	EndDate      int    `json:"endDate"`
+}
+
 type EquipmentManufacturerConnection struct {
 	Edges      []*EquipmentManufacturerEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
@@ -598,6 +763,17 @@ type EquipmentTypePatchInput struct {
 	Color          graphql.Omittable[*string]  `json:"color,omitempty"`
 	InteriorLength graphql.Omittable[*float64] `json:"interiorLength,omitempty"`
 	Version        *int                        `json:"version,omitempty"`
+}
+
+type EscrowAccountConnection struct {
+	Edges      []*EscrowAccountEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type EscrowAccountEdge struct {
+	Node   *driverpay.EscrowAccount `json:"node"`
+	Cursor string                   `json:"cursor"`
 }
 
 type FieldFilterInput struct {
@@ -851,6 +1027,14 @@ type GLActualsWindow struct {
 	HasPostings bool    `json:"hasPostings"`
 }
 
+type GenerateDriverSettlementInput struct {
+	WorkerID    string  `json:"workerId"`
+	PeriodStart int     `json:"periodStart"`
+	PeriodEnd   int     `json:"periodEnd"`
+	PayDate     int     `json:"payDate"`
+	BatchID     *string `json:"batchId,omitempty"`
+}
+
 type GenerateFuelTableInput struct {
 	MinPrice   string `json:"minPrice"`
 	MaxPrice   string `json:"maxPrice"`
@@ -858,6 +1042,13 @@ type GenerateFuelTableInput struct {
 	StartValue string `json:"startValue"`
 	ValueStep  string `json:"valueStep"`
 	OpenEnded  *bool  `json:"openEnded,omitempty"`
+}
+
+type GenerateSettlementBatchInput struct {
+	PeriodStart *int    `json:"periodStart,omitempty"`
+	PeriodEnd   *int    `json:"periodEnd,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Notes       *string `json:"notes,omitempty"`
 }
 
 type GeneratedFuelTableRow struct {
@@ -888,6 +1079,12 @@ type HazmatSegregationRuleEdge struct {
 	Cursor string                                       `json:"cursor"`
 }
 
+type HoldPayEventInput struct {
+	PayEventID string `json:"payEventId"`
+	// Why pay is being deferred — shown to whoever reviews the held event.
+	Reason string `json:"reason"`
+}
+
 type HoldReasonConnection struct {
 	Edges      []*HoldReasonEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
@@ -899,6 +1096,12 @@ type HoldReasonEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type InviteWorkerToPortalInput struct {
+	WorkerID string `json:"workerId"`
+	// Overrides the email on the worker record when provided.
+	Email *string `json:"email,omitempty"`
+}
+
 type InvoiceConnection struct {
 	Edges      []*InvoiceEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -908,6 +1111,16 @@ type InvoiceConnection struct {
 type InvoiceEdge struct {
 	Node   *invoice.Invoice `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type IssuePayAdvanceInput struct {
+	WorkerID     string                  `json:"workerId"`
+	Source       driverpay.AdvanceSource `json:"source"`
+	Reference    *string                 `json:"reference,omitempty"`
+	IssuedDate   int                     `json:"issuedDate"`
+	AmountMinor  int                     `json:"amountMinor"`
+	Notes        *string                 `json:"notes,omitempty"`
+	CurrencyCode *string                 `json:"currencyCode,omitempty"`
 }
 
 type JournalEntryLineAccount struct {
@@ -975,7 +1188,18 @@ type ManualJournalEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type MarkDriverSettlementPaidInput struct {
+	SettlementID     string  `json:"settlementId"`
+	PaymentMethod    string  `json:"paymentMethod"`
+	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
 type Mutation struct {
+}
+
+type MySettlementList struct {
+	Items []*driversettlement.Settlement `json:"items"`
+	Total int                            `json:"total"`
 }
 
 type NotificationConnection struct {
@@ -992,6 +1216,14 @@ type NotificationEdge struct {
 type NotificationFilterInput struct {
 	State      *NotificationState `json:"state,omitempty"`
 	UnreadOnly *bool              `json:"unreadOnly,omitempty"`
+}
+
+type OpenEscrowAccountInput struct {
+	WorkerID           string  `json:"workerId"`
+	TargetAmountMinor  int     `json:"targetAmountMinor"`
+	AnnualInterestRate *string `json:"annualInterestRate,omitempty"`
+	OpenedDate         *int    `json:"openedDate,omitempty"`
+	CurrencyCode       *string `json:"currencyCode,omitempty"`
 }
 
 type OrderCharge struct {
@@ -1057,6 +1289,82 @@ type PageInfo struct {
 	EndCursor   *string `json:"endCursor,omitempty"`
 }
 
+type PayAdvanceConnection struct {
+	Edges      []*PayAdvanceEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type PayAdvanceEdge struct {
+	Node   *driverpay.PayAdvance `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type PayCodeConnection struct {
+	Edges      []*PayCodeEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type PayCodeEdge struct {
+	Node   *driverpay.PayCode `json:"node"`
+	Cursor string             `json:"cursor"`
+}
+
+// Slim GL account reference shown alongside a pay code.
+type PayCodeGLAccount struct {
+	ID          string `json:"id"`
+	AccountCode string `json:"accountCode"`
+	Name        string `json:"name"`
+}
+
+type PayMileageBandInput struct {
+	MinMiles int    `json:"minMiles"`
+	MaxMiles int    `json:"maxMiles"`
+	Rate     string `json:"rate"`
+}
+
+type PayProfileComponentInput struct {
+	Kind            driverpay.ComponentKind `json:"kind"`
+	Method          driverpay.CalcMethod    `json:"method"`
+	Description     *string                 `json:"description,omitempty"`
+	Rate            string                  `json:"rate"`
+	RevenueBasis    *driverpay.RevenueBasis `json:"revenueBasis,omitempty"`
+	Bands           []*PayMileageBandInput  `json:"bands,omitempty"`
+	FreeTimeMinutes *int                    `json:"freeTimeMinutes,omitempty"`
+	MinAmountMinor  *int                    `json:"minAmountMinor,omitempty"`
+	MaxAmountMinor  *int                    `json:"maxAmountMinor,omitempty"`
+	IsActive        *bool                   `json:"isActive,omitempty"`
+}
+
+type PayProfileConnection struct {
+	Edges      []*PayProfileEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type PayProfileEdge struct {
+	Node   *driverpay.PayProfile `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type PayRateOverrideInput struct {
+	ComponentID string `json:"componentId"`
+	Rate        string `json:"rate"`
+}
+
+type PayWorkerNowInput struct {
+	WorkerID string `json:"workerId"`
+	// Specific accrued events to pay; omit to pay everything accrued and unheld.
+	PayEventIds []string `json:"payEventIds,omitempty"`
+	// Also apply recurring deductions, escrow, advance recovery, and carry-forward.
+	// Off by default so the instant payout doesn't double-dip items the regular
+	// period settlement will take.
+	ApplyRecurring   *bool   `json:"applyRecurring,omitempty"`
+	PaymentMethod    string  `json:"paymentMethod"`
+	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
 type PostCustomerPaymentInput struct {
 	CustomerID      string                             `json:"customerId"`
 	PaymentDate     int                                `json:"paymentDate"`
@@ -1083,6 +1391,34 @@ type RateTableEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+type RecordMyStopActionInput struct {
+	MoveID string                        `json:"moveId"`
+	StopID string                        `json:"stopId"`
+	Action repositories.StopActualAction `json:"action"`
+}
+
+type RecurringDeductionConnection struct {
+	Edges      []*RecurringDeductionEdge `json:"edges"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+	TotalCount *int                      `json:"totalCount,omitempty"`
+}
+
+type RecurringDeductionEdge struct {
+	Node   *driverpay.RecurringDeduction `json:"node"`
+	Cursor string                        `json:"cursor"`
+}
+
+type RecurringEarningConnection struct {
+	Edges      []*RecurringEarningEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type RecurringEarningEdge struct {
+	Node   *driverpay.RecurringEarning `json:"node"`
+	Cursor string                      `json:"cursor"`
+}
+
 type RecurringShipmentConnection struct {
 	Edges      []*RecurringShipmentEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
@@ -1097,6 +1433,11 @@ type RecurringShipmentEdge struct {
 type RemoveOrderChargeInput struct {
 	OrderID  string `json:"orderId"`
 	ChargeID string `json:"chargeId"`
+}
+
+type RemoveSettlementAdjustmentInput struct {
+	SettlementID string `json:"settlementId"`
+	LineID       string `json:"lineId"`
 }
 
 type ReportCatalog struct {
@@ -1338,6 +1679,22 @@ type ReportSortInput struct {
 	Direction string `json:"direction"`
 }
 
+type RequestMyPtoInput struct {
+	Type      worker.PTOType `json:"type"`
+	StartDate int            `json:"startDate"`
+	EndDate   int            `json:"endDate"`
+	Reason    string         `json:"reason"`
+}
+
+type ResolveSettlementDisputeInput struct {
+	DisputeID      string `json:"disputeId"`
+	Approve        bool   `json:"approve"`
+	ResolutionNote string `json:"resolutionNote"`
+	// Optional correcting adjustment applied to the driver's open settlement (one is
+	// generated off-cycle when none exists). Only valid when approving.
+	Adjustment *DisputeAdjustmentInput `json:"adjustment,omitempty"`
+}
+
 type ResolvedCategoryRate struct {
 	Category        CostCategoryType    `json:"category"`
 	Name            string              `json:"name"`
@@ -1358,10 +1715,22 @@ type ResolvedCostProfile struct {
 	GlWindow             *GLActualsWindow        `json:"glWindow,omitempty"`
 }
 
+type RespondToMyAssignmentInput struct {
+	AssignmentID string  `json:"assignmentId"`
+	Accept       bool    `json:"accept"`
+	Reason       *string `json:"reason,omitempty"`
+}
+
 type ReverseCustomerPaymentInput struct {
 	PaymentID      string  `json:"paymentId"`
 	AccountingDate int     `json:"accountingDate"`
 	Reason         *string `json:"reason,omitempty"`
+}
+
+type ReviewDriverExpenseInput struct {
+	ExpenseID string  `json:"expenseId"`
+	Approve   bool    `json:"approve"`
+	Note      *string `json:"note,omitempty"`
 }
 
 type RoleConnection struct {
@@ -1462,6 +1831,28 @@ type ServiceTypeConnection struct {
 type ServiceTypeEdge struct {
 	Node   *servicetype.ServiceType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type SettlementBatchConnection struct {
+	Edges      []*SettlementBatchEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type SettlementBatchEdge struct {
+	Node   *driversettlement.SettlementBatch `json:"node"`
+	Cursor string                            `json:"cursor"`
+}
+
+type SettlementDisputeConnection struct {
+	Edges      []*SettlementDisputeEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type SettlementDisputeEdge struct {
+	Node   *driversettlement.Dispute `json:"node"`
+	Cursor string                    `json:"cursor"`
 }
 
 type Shipment struct {
@@ -2538,6 +2929,14 @@ type StoredMileageEdge struct {
 	Cursor string                       `json:"cursor"`
 }
 
+type SubmitMyExpenseInput struct {
+	ShipmentID   *string `json:"shipmentId,omitempty"`
+	PayCodeID    *string `json:"payCodeId,omitempty"`
+	AmountMinor  int     `json:"amountMinor"`
+	Description  string  `json:"description"`
+	IncurredDate *int    `json:"incurredDate,omitempty"`
+}
+
 type TCASubscriptionConnection struct {
 	Edges      []*TCASubscriptionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -2692,10 +3091,48 @@ type UpcomingWorkerPTOInput struct {
 	Timezone    *string           `json:"timezone,omitempty"`
 }
 
+type UpdateDashControlInput struct {
+	Version                        int  `json:"version"`
+	RequireLoadAcknowledgment      bool `json:"requireLoadAcknowledgment"`
+	AllowLoadRefusals              bool `json:"allowLoadRefusals"`
+	AllowStopActions               bool `json:"allowStopActions"`
+	AllowLoadDocumentUpload        bool `json:"allowLoadDocumentUpload"`
+	AllowLoadComments              bool `json:"allowLoadComments"`
+	ShowLoadPay                    bool `json:"showLoadPay"`
+	ShowPayEstimates               bool `json:"showPayEstimates"`
+	AllowExpenseSubmission         bool `json:"allowExpenseSubmission"`
+	RequireExpenseReceipt          bool `json:"requireExpenseReceipt"`
+	AllowSettlementDisputes        bool `json:"allowSettlementDisputes"`
+	AllowProfileDocumentUpload     bool `json:"allowProfileDocumentUpload"`
+	AllowContactInfoEdit           bool `json:"allowContactInfoEdit"`
+	AllowPtoRequests               bool `json:"allowPtoRequests"`
+	SendCredentialReminders        bool `json:"sendCredentialReminders"`
+	EnableDetentionAlerts          bool `json:"enableDetentionAlerts"`
+	DetentionAlertThresholdMinutes int  `json:"detentionAlertThresholdMinutes"`
+}
+
+type UpdateEscrowAccountInput struct {
+	ID                 string `json:"id"`
+	Version            int    `json:"version"`
+	WorkerID           string `json:"workerId"`
+	TargetAmountMinor  int    `json:"targetAmountMinor"`
+	AnnualInterestRate string `json:"annualInterestRate"`
+}
+
 type UpdateFuelIndexPriceInput struct {
 	ID        string `json:"id"`
 	PriceDate string `json:"priceDate"`
 	Price     string `json:"price"`
+}
+
+type UpdateMyContactInfoInput struct {
+	PhoneNumber           string  `json:"phoneNumber"`
+	AddressLine1          string  `json:"addressLine1"`
+	AddressLine2          *string `json:"addressLine2,omitempty"`
+	City                  string  `json:"city"`
+	PostalCode            string  `json:"postalCode"`
+	EmergencyContactName  *string `json:"emergencyContactName,omitempty"`
+	EmergencyContactPhone *string `json:"emergencyContactPhone,omitempty"`
 }
 
 type UpdateOrderChargeInput struct {
@@ -2704,6 +3141,64 @@ type UpdateOrderChargeInput struct {
 	Description string `json:"description"`
 	Amount      string `json:"amount"`
 	Version     int    `json:"version"`
+}
+
+type UpdatePayCodeInput struct {
+	ID                    string             `json:"id"`
+	Version               int                `json:"version"`
+	Status                domaintypes.Status `json:"status"`
+	Code                  string             `json:"code"`
+	Name                  string             `json:"name"`
+	Description           *string            `json:"description,omitempty"`
+	Taxable               bool               `json:"taxable"`
+	CountsTowardGuarantee bool               `json:"countsTowardGuarantee"`
+	GlAccountID           *string            `json:"glAccountId,omitempty"`
+	DefaultAmountMinor    *int               `json:"defaultAmountMinor,omitempty"`
+}
+
+type UpdatePayProfileInput struct {
+	ID                           string                        `json:"id"`
+	Version                      int                           `json:"version"`
+	Status                       *domaintypes.Status           `json:"status,omitempty"`
+	Name                         string                        `json:"name"`
+	Description                  *string                       `json:"description,omitempty"`
+	Classification               driverpay.PayeeClassification `json:"classification"`
+	CurrencyCode                 *string                       `json:"currencyCode,omitempty"`
+	GuaranteedPeriodMinimumMinor *int                          `json:"guaranteedPeriodMinimumMinor,omitempty"`
+	PerDiemRatePerMile           *string                       `json:"perDiemRatePerMile,omitempty"`
+	PerDiemDailyCapMinor         *int                          `json:"perDiemDailyCapMinor,omitempty"`
+	Components                   []*PayProfileComponentInput   `json:"components"`
+}
+
+type UpdateRecurringDeductionInput struct {
+	ID              string                       `json:"id"`
+	Version         int                          `json:"version"`
+	WorkerID        string                       `json:"workerId"`
+	PayCodeID       string                       `json:"payCodeId"`
+	EscrowAccountID *string                      `json:"escrowAccountId,omitempty"`
+	Status          driverpay.DeductionStatus    `json:"status"`
+	Frequency       driverpay.DeductionFrequency `json:"frequency"`
+	Description     string                       `json:"description"`
+	AmountMinor     int                          `json:"amountMinor"`
+	TotalCapMinor   *int                         `json:"totalCapMinor,omitempty"`
+	StartDate       int                          `json:"startDate"`
+	EndDate         *int                         `json:"endDate,omitempty"`
+	CurrencyCode    *string                      `json:"currencyCode,omitempty"`
+}
+
+type UpdateRecurringEarningInput struct {
+	ID            string                     `json:"id"`
+	Version       int                        `json:"version"`
+	WorkerID      string                     `json:"workerId"`
+	PayCodeID     string                     `json:"payCodeId"`
+	Status        driverpay.EarningStatus    `json:"status"`
+	Frequency     driverpay.EarningFrequency `json:"frequency"`
+	Description   string                     `json:"description"`
+	AmountMinor   int                        `json:"amountMinor"`
+	TotalCapMinor *int                       `json:"totalCapMinor,omitempty"`
+	StartDate     int                        `json:"startDate"`
+	EndDate       *int                       `json:"endDate,omitempty"`
+	CurrencyCode  *string                    `json:"currencyCode,omitempty"`
 }
 
 type UpdateReportDefinitionInput struct {
@@ -2730,6 +3225,23 @@ type UpdateReportScheduleInput struct {
 	EmailAttach     *bool    `json:"emailAttach,omitempty"`
 	NotifyUserIds   []string `json:"notifyUserIds,omitempty"`
 	Enabled         bool     `json:"enabled"`
+}
+
+type UpdateSettlementControlInput struct {
+	Version                       int                       `json:"version"`
+	PayPeriodFrequency            tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PeriodEndDayOfWeek            int                       `json:"periodEndDayOfWeek"`
+	PayDelayDays                  int                       `json:"payDelayDays"`
+	PayTrigger                    tenant.PayTrigger         `json:"payTrigger"`
+	AutoGenerateBatches           bool                      `json:"autoGenerateBatches"`
+	AutoApproveClean              bool                      `json:"autoApproveClean"`
+	AutoAttachAccruals            bool                      `json:"autoAttachAccruals"`
+	AutoPostOnApprove             bool                      `json:"autoPostOnApprove"`
+	AllowNegativeNet              bool                      `json:"allowNegativeNet"`
+	VarianceThresholdPct          string                    `json:"varianceThresholdPct"`
+	VarianceLookbackWeeks         int                       `json:"varianceLookbackWeeks"`
+	DefaultEscrowInterestRate     string                    `json:"defaultEscrowInterestRate"`
+	EscrowInterestFrequencyMonths int                       `json:"escrowInterestFrequencyMonths"`
 }
 
 type UserConnection struct {
@@ -2792,6 +3304,11 @@ type WorkerPatchInput struct {
 	Status     *domaintypes.Status `json:"status,omitempty"`
 	Type       *worker.WorkerType  `json:"type,omitempty"`
 	DriverType *worker.DriverType  `json:"driverType,omitempty"`
+}
+
+type WriteOffPayAdvanceInput struct {
+	AdvanceID string `json:"advanceId"`
+	Reason    string `json:"reason"`
 }
 
 type AssignmentStatus string

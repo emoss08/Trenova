@@ -48,5 +48,5 @@ func TestValidateUpdateRejectsMissingRequiredSequenceType(t *testing.T) {
 	})
 
 	require.NotNil(t, multiErr)
-	require.Contains(t, multiErr.Error(), string(tenant.SequenceTypeLocationCode))
+	require.Contains(t, multiErr.Error(), string(requiredTypes[len(requiredTypes)-1]))
 }

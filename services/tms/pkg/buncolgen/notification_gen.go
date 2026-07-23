@@ -324,3 +324,177 @@ var NotificationFilter = struct {
 		return NewFieldFilter("version", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// PushSubscription — table "user_push_subscriptions", alias "ups"
+// ---------------------------------------------------------------------------
+
+// PushSubscriptionTable holds the table name, alias, and primary key columns
+// for the "user_push_subscriptions" table. The alias "ups" is used in all generated
+// SQL fragments (e.g. "ups.id = ?").
+var PushSubscriptionTable = TableInfo{
+	Name:       "user_push_subscriptions",
+	Alias:      "ups",
+	PrimaryKey: []string{"id"},
+}
+
+// PushSubscriptionColumns provides type-safe column references for the "user_push_subscriptions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PushSubscriptionColumns.ID.String())
+//	// SELECT ups.id FROM user_push_subscriptions AS ups
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PushSubscriptionColumns.ID.Eq(), id)           // WHERE ups.id = ?
+//	q.Order(PushSubscriptionColumns.CreatedAt.OrderDesc())  // ORDER BY ups.created_at DESC
+var PushSubscriptionColumns = struct {
+	ID             Column // "id" → qualified: "ups.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "ups.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "ups.organization_id"
+	UserID         Column // "user_id" → qualified: "ups.user_id"
+	Endpoint       Column // "endpoint" → qualified: "ups.endpoint"
+	P256dh         Column // "p256dh" → qualified: "ups.p256dh"
+	Auth           Column // "auth" → qualified: "ups.auth"
+	UserAgent      Column // "user_agent" → qualified: "ups.user_agent"
+	CreatedAt      Column // "created_at" → qualified: "ups.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "ups.updated_at"
+}{
+	ID:             NewColumn("id", "ups"),
+	BusinessUnitID: NewColumn("business_unit_id", "ups"),
+	OrganizationID: NewColumn("organization_id", "ups"),
+	UserID:         NewColumn("user_id", "ups"),
+	Endpoint:       NewColumn("endpoint", "ups"),
+	P256dh:         NewColumn("p256dh", "ups"),
+	Auth:           NewColumn("auth", "ups"),
+	UserAgent:      NewColumn("user_agent", "ups"),
+	CreatedAt:      NewColumn("created_at", "ups"),
+	UpdatedAt:      NewColumn("updated_at", "ups"),
+}
+
+// PushSubscriptionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by PushSubscription.GetStaticFieldMap().
+var PushSubscriptionFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"userId":         "user_id",
+	"endpoint":       "endpoint",
+	"p256dh":         "p256dh",
+	"auth":           "auth",
+	"userAgent":      "user_agent",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// PushSubscriptionInsertableColumns lists column names suitable for INSERT statements on the "user_push_subscriptions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PushSubscriptionInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"user_id",
+	"endpoint",
+	"p256dh",
+	"auth",
+	"user_agent",
+	"created_at",
+	"updated_at",
+}
+
+// PushSubscriptionScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ups.organization_id = ? AND ups.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.PushSubscriptionScopeTenant(sq, ti).
+//		Where(buncolgen.PushSubscriptionColumns.ID.Eq(), id)
+func PushSubscriptionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, PushSubscriptionColumns.OrganizationID, PushSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// PushSubscriptionScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.PushSubscriptionScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.PushSubscriptionColumns.ID.In(), bun.List(ids))
+//	})
+func PushSubscriptionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, PushSubscriptionColumns.OrganizationID, PushSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// PushSubscriptionScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.PushSubscriptionScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.PushSubscriptionColumns.ID.Eq(), id)
+//	})
+func PushSubscriptionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, PushSubscriptionColumns.OrganizationID, PushSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// PushSubscriptionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.PushSubscriptionApplyTenant(tenantInfo))
+func PushSubscriptionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(PushSubscriptionColumns.OrganizationID, PushSubscriptionColumns.BusinessUnitID, ti)
+}
+
+// PushSubscriptionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "user_push_subscriptions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PushSubscriptionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PushSubscriptionFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	Endpoint       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "endpoint" → DB: "endpoint"
+	P256dh         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "p256dh" → DB: "p256dh"
+	Auth           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "auth" → DB: "auth"
+	UserAgent      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userAgent" → DB: "user_agent"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	Endpoint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("endpoint", op, value)
+	},
+	P256dh: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("p256dh", op, value)
+	},
+	Auth: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("auth", op, value)
+	},
+	UserAgent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userAgent", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}

@@ -53,6 +53,27 @@ func EquipmentStatusFromString(s string) (EquipmentStatus, error) {
 	}
 }
 
+type OwnershipType string
+
+const (
+	OwnershipTypeCompanyOwned  = OwnershipType("CompanyOwned")
+	OwnershipTypeLeased        = OwnershipType("Leased")
+	OwnershipTypeOwnerOperator = OwnershipType("OwnerOperator")
+)
+
+func (o OwnershipType) String() string {
+	return string(o)
+}
+
+func (o OwnershipType) IsValid() bool {
+	switch o {
+	case OwnershipTypeCompanyOwned, OwnershipTypeLeased, OwnershipTypeOwnerOperator:
+		return true
+	default:
+		return false
+	}
+}
+
 type TimeFormat string
 
 const (

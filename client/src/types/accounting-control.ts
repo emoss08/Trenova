@@ -14,10 +14,7 @@ export type AccountingBasis = z.infer<typeof accountingBasisSchema>;
 export const revenueRecognitionPolicySchema = z.enum(["OnInvoicePost", "OnCashReceipt"]);
 export type RevenueRecognitionPolicy = z.infer<typeof revenueRecognitionPolicySchema>;
 
-export const expenseRecognitionPolicySchema = z.enum([
-  "OnVendorBillPost",
-  "OnCashDisbursement",
-]);
+export const expenseRecognitionPolicySchema = z.enum(["OnVendorBillPost", "OnCashDisbursement"]);
 export type ExpenseRecognitionPolicy = z.infer<typeof expenseRecognitionPolicySchema>;
 
 export const journalPostingModeSchema = z.enum(["Manual", "Automatic"]);
@@ -33,11 +30,7 @@ export const journalSourceEventSchema = z.enum([
 ]);
 export type JournalSourceEvent = z.infer<typeof journalSourceEventSchema>;
 
-export const manualJournalEntryPolicySchema = z.enum([
-  "AllowAll",
-  "AdjustmentOnly",
-  "Disallow",
-]);
+export const manualJournalEntryPolicySchema = z.enum(["AllowAll", "AdjustmentOnly", "Disallow"]);
 export type ManualJournalEntryPolicy = z.infer<typeof manualJournalEntryPolicySchema>;
 
 export const journalReversalPolicySchema = z.enum(["Disallow", "NextOpenPeriod"]);
@@ -61,11 +54,7 @@ export type CurrencyMode = z.infer<typeof currencyModeSchema>;
 export const exchangeRateDatePolicySchema = z.enum(["DocumentDate", "AccountingDate"]);
 export type ExchangeRateDatePolicy = z.infer<typeof exchangeRateDatePolicySchema>;
 
-export const exchangeRateOverridePolicySchema = z.enum([
-  "Allow",
-  "RequireApproval",
-  "Disallow",
-]);
+export const exchangeRateOverridePolicySchema = z.enum(["Allow", "RequireApproval", "Disallow"]);
 export type ExchangeRateOverridePolicy = z.infer<typeof exchangeRateOverridePolicySchema>;
 
 export const accountingControlSchema = z.object({
@@ -112,6 +101,13 @@ export const accountingControlSchema = z.object({
   defaultRetainedEarningsAccountId: nullableStringSchema,
   realizedFxGainAccountId: nullableStringSchema,
   realizedFxLossAccountId: nullableStringSchema,
+
+  defaultDriverPayExpenseAccountId: nullableStringSchema,
+  defaultPurchasedTransportationAccountId: nullableStringSchema,
+  defaultSettlementsPayableAccountId: nullableStringSchema,
+  defaultDriverAdvanceAccountId: nullableStringSchema,
+  defaultEscrowLiabilityAccountId: nullableStringSchema,
+  defaultDriverReimbursementAccountId: nullableStringSchema,
 });
 
 export type AccountingControl = z.infer<typeof accountingControlSchema>;

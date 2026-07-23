@@ -1033,6 +1033,26 @@ type Config struct {
 	Twilio               TwilioConfig               `mapstructure:"twilio"`
 	Platform             PlatformConfig             `mapstructure:"platform"`
 	Reporting            ReportingConfig            `mapstructure:"reporting"`
+	Portal               PortalConfig               `mapstructure:"portal"`
+	Push                 PushConfig                 `mapstructure:"push"`
+}
+
+type PortalConfig struct {
+	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
+}
+
+type PushConfig struct {
+	VAPIDPublicKey  string `mapstructure:"vapidPublicKey"`
+	VAPIDPrivateKey string `mapstructure:"vapidPrivateKey"`
+	Subject         string `mapstructure:"subject" validate:"omitempty"`
+}
+
+func (c *PushConfig) Enabled() bool {
+	return c.VAPIDPublicKey != "" && c.VAPIDPrivateKey != ""
+}
+
+func (c *PortalConfig) GetBaseURL() string {
+	return strings.TrimSuffix(c.BaseURL, "/")
 }
 
 func (c *Config) GetCacheConfig() *CacheConfig { return &c.Cache }

@@ -340,6 +340,7 @@ func (r *Resolver) resolveWorkerSelectOptions(
 		ctx,
 		&repositories.WorkerSelectOptionsRequest{
 			SelectQueryRequest: req.selectQuery,
+			OwnerOperatorsOnly: selectOptionBoolFilter(req.filters, "ownerOperatorsOnly"),
 		},
 	)
 	if err != nil {

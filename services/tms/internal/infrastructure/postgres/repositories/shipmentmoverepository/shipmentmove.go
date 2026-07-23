@@ -312,6 +312,41 @@ func (r *repository) UpdateStatus(
 	})
 }
 
+func (r *repository) UpdateStopActuals(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	stop *shipment.Stop,
+) (*shipment.Stop, error) {
+	cols := buncolgen.StopColumns
+
+	ov := stop.Version
+	stop.Version++
+
+	results, err := r.db.DBForContext(ctx).NewUpdate().
+		Model(stop).
+		Column(
+			cols.ActualArrival.String(),
+			cols.ActualDeparture.String(),
+			cols.Status.String(),
+			cols.Version.String(),
+			cols.UpdatedAt.String(),
+		).
+		Where(cols.ID.Eq(), stop.ID).
+		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Where(cols.Version.Eq(), ov).
+		Exec(ctx)
+	if err != nil {
+		stop.Version = ov
+		return nil, fmt.Errorf("update stop actuals %s: %w", stop.ID, err)
+	}
+	if err = dberror.CheckRowsAffected(results, "Stop", stop.ID.String()); err != nil {
+		stop.Version = ov
+		return nil, err
+	}
+	return stop, nil
+}
+
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,

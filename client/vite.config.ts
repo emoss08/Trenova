@@ -14,6 +14,18 @@ const pdfjsDistPath = path.dirname(require.resolve("pdfjs-dist/package.json"));
 const cMapsDir = normalizePath(path.join(pdfjsDistPath, "cmaps"));
 
 export default defineConfig({
+  environments: {
+    client: {
+      build: {
+        rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, "index.html"),
+            dash: path.resolve(__dirname, "dash.html"),
+          },
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     // babel({ presets: [reactCompilerPreset()] }),

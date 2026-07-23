@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
@@ -27,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
@@ -74,6 +76,8 @@ func Options() fx.Option {
 		samsarajobs.Module,
 		shipmentjobs.Module,
 		recurringshipmentjobs.Module,
+		settlementjobs.Module,
+		compliancejobs.Module,
 		weatheralertjobs.Module,
 		fiscaljobs.Module,
 		invoiceadjustmentjobs.Module,

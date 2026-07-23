@@ -118,7 +118,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     onValueCommit={clearOpposite(index, "debitAmount")}
                   />
                 </td>
-                <td className="px-1 py-1.5 pt-4 justify-center flex items-center text-center">
+                <td className="flex items-center justify-center px-1 py-1.5 pt-4 text-center">
                   <Button
                     type="button"
                     variant="ghost"

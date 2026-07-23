@@ -2,11 +2,9 @@ import { ComponentLoader } from "@/components/component-loader";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from "@/components/ui/split-button";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
+import { OverflowTabsList } from "@/components/ui/overflow-tabs-list";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
@@ -23,6 +21,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BriefcaseIcon,
   FileTextIcon,
+  SmartphoneIcon,
+  WalletIcon,
   ShieldCheckIcon,
   UserIcon,
   XIcon,
@@ -83,6 +83,8 @@ const COMPLIANCE_FIELDS = [
 ] as const;
 
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
+const WorkerPayTab = lazy(() => import("./worker-pay-tab"));
+const WorkerPortalTab = lazy(() => import("./worker-portal-tab"));
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -96,20 +98,12 @@ interface WorkerEditPanelProps {
   form: UseFormReturn<Worker>;
 }
 
-export function WorkerEditPanel({
-  open,
-  onOpenChange,
-  row,
-  form,
-}: WorkerEditPanelProps) {
+export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPanelProps) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
 
-  const [activeTab, setActiveTab] = useQueryState(
-    "tab",
-    parseAsString.withDefault("general"),
-  );
+  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
 
   const {
     setError,
@@ -118,14 +112,9 @@ export function WorkerEditPanel({
     reset,
   } = form;
 
-  const hasGeneralErrors =
-    checkSectionErrors(errors, [...GENERAL_FIELDS]) || !!errors.customFields;
-  const hasEmploymentErrors = checkSectionErrors(errors, [
-    ...EMPLOYMENT_FIELDS,
-  ]);
-  const hasComplianceErrors = checkSectionErrors(errors, [
-    ...COMPLIANCE_FIELDS,
-  ]);
+  const hasGeneralErrors = checkSectionErrors(errors, [...GENERAL_FIELDS]) || !!errors.customFields;
+  const hasEmploymentErrors = checkSectionErrors(errors, [...EMPLOYMENT_FIELDS]);
+  const hasComplianceErrors = checkSectionErrors(errors, [...COMPLIANCE_FIELDS]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -193,12 +182,7 @@ export function WorkerEditPanel({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         pendingActionRef.current = defaultAction;
         void handleSubmit(onSubmit)();
@@ -209,8 +193,7 @@ export function WorkerEditPanel({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, isSubmitting, handleSubmit, defaultAction, onSubmit]);
 
-  const panelTitle =
-    row?.wholeName || `${row?.firstName} ${row?.lastName}` || "Worker";
+  const panelTitle = row?.wholeName || `${row?.firstName} ${row?.lastName}` || "Worker";
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
         timeFormat: TimeFormat.enum["24-hour"],
@@ -231,9 +214,7 @@ export function WorkerEditPanel({
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex flex-col gap-0.5">
-              <Dialog.Title className="text-sm leading-none font-medium">
-                {panelTitle}
-              </Dialog.Title>
+              <Dialog.Title className="text-sm leading-none font-medium">{panelTitle}</Dialog.Title>
               {panelDescription && (
                 <Dialog.Description className="text-xs text-muted-foreground">
                   {panelDescription}
@@ -271,37 +252,33 @@ export function WorkerEditPanel({
                   className="flex flex-1 flex-col overflow-hidden"
                 >
                   <div className="border-b border-border px-4">
-                    <TabsList variant="underline">
-                      <TabsTab
-                        value="general"
-                        className={cn(hasGeneralErrors && "text-destructive")}
-                      >
-                        <UserIcon className="size-4" />
-                        General Information
-                      </TabsTab>
-                      <TabsTab
-                        value="employment"
-                        className={cn(
-                          hasEmploymentErrors && "text-destructive",
-                        )}
-                      >
-                        <BriefcaseIcon className="size-4" />
-                        Employment Information
-                      </TabsTab>
-                      <TabsTab
-                        value="compliance"
-                        className={cn(
-                          hasComplianceErrors && "text-destructive",
-                        )}
-                      >
-                        <ShieldCheckIcon className="size-4" />
-                        Compliance Status
-                      </TabsTab>
-                      <TabsTab value="documents">
-                        <FileTextIcon className="size-4" />
-                        Documents
-                      </TabsTab>
-                    </TabsList>
+                    <OverflowTabsList
+                      items={[
+                        {
+                          value: "general",
+                          label: "General Information",
+                          icon: UserIcon,
+                          className: cn(hasGeneralErrors && "text-destructive"),
+                        },
+                        {
+                          value: "employment",
+                          label: "Employment Information",
+                          icon: BriefcaseIcon,
+                          className: cn(hasEmploymentErrors && "text-destructive"),
+                        },
+                        {
+                          value: "compliance",
+                          label: "Compliance Status",
+                          icon: ShieldCheckIcon,
+                          className: cn(hasComplianceErrors && "text-destructive"),
+                        },
+                        { value: "pay", label: "Pay", icon: WalletIcon },
+                        { value: "documents", label: "Documents", icon: FileTextIcon },
+                        { value: "portal", label: "Portal", icon: SmartphoneIcon },
+                      ]}
+                      activeValue={activeTab}
+                      onSelect={(value) => void setActiveTab(value)}
+                    />
                   </div>
                   <ScrollArea className="flex-1">
                     <TabsContent value="general" className="p-4">
@@ -313,6 +290,17 @@ export function WorkerEditPanel({
                     <TabsContent value="compliance" className="p-4">
                       <ComplianceTab />
                     </TabsContent>
+                    <TabsContent value="pay" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerPayTab workerId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
                     <TabsContent value="documents" className="p-4">
                       <Suspense
                         fallback={
@@ -321,10 +309,18 @@ export function WorkerEditPanel({
                           </div>
                         }
                       >
-                        <DocumentsTab
-                          resourceType="worker"
-                          resourceId={row?.id as string}
-                        />
+                        <DocumentsTab resourceType="worker" resourceId={row?.id as string} />
+                      </Suspense>
+                    </TabsContent>
+                    <TabsContent value="portal" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerPortalTab workerId={row?.id as string} />
                       </Suspense>
                     </TabsContent>
                   </ScrollArea>

@@ -12,6 +12,18 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   billing_queue: ["billing-queue-list", "billingQueue"],
   shipmentEvents: ["shipment-events"],
   "report-run": ["report-run-list"],
+  shipment_comment: ["shipment-comments", "shipment-comment-count"],
+  driver_settlement: [
+    "driver-settlement-list",
+    "driver-settlement-detail",
+    "settlement-workspace-summary",
+    "settlement-workspace-settlements",
+  ],
+  driver_pay_event: ["driver-pay-event-list"],
+  settlement_dispute: ["settlement-dispute-list", "settlement-dispute-detail"],
+  driver_expense: ["driver-expense-list", "driver-expense-detail", "pending-driver-expense-count"],
+  worker_pto: ["worker-pto-list", "worker"],
+  dash_control: ["dash-control"],
 };
 
 export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {

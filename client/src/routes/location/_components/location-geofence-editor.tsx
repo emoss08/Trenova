@@ -250,7 +250,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
           <img
             src={googleMapsEmptyState}
             alt="Google Maps Empty State"
-            className="absolute inset-0 size-full object-cover opacity-50 pointer-events-none select-none blur-sm"
+            className="pointer-events-none absolute inset-0 size-full object-cover opacity-50 blur-sm select-none"
           />
           <div className="relative z-10 flex flex-col items-center gap-4 text-center text-sm text-foreground">
             <span>
