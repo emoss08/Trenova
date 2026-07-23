@@ -1,8 +1,8 @@
-import { ComponentLoader } from "@/components/component-loader";
-import { EDIPartnerReadinessBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
+import { EDIPartnerReadinessBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { apiService } from "@/services/api";
-import type { EDIPartner } from "@/types/edi";
+import type { EDIPartner } from "@trenova/shared/types/edi";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2Icon, CircleIcon, TriangleAlertIcon } from "lucide-react";
 import { Link } from "react-router";

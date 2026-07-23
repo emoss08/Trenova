@@ -4,8 +4,8 @@ import {
   RejectWorkerPtoDocument,
   type WorkerPatchInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import type { Worker, WorkerPTO } from "@/types/worker";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Worker, WorkerPTO } from "@trenova/shared/types/worker";
 
 type PatchWorkerResponse = {
   patchWorker: unknown;

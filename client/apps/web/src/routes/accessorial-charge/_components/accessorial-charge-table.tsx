@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { accessorialChargeTableGraphQLConfig } from "@/lib/graphql/accessorial-charge-table";
-import type { AccessorialCharge } from "@/types/accessorial-charge";
-import { Resource } from "@/types/permission";
+import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./accessorial-charge-columns";
 import { AccessorialChargePanel } from "./accessorial-charge-panel";

@@ -1,6 +1,6 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ShipmentEvent, ShipmentEventSeverity } from "@/types/shipment-event";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { useEffect, useMemo, useRef } from "react";

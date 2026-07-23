@@ -1,9 +1,9 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BatchSourceAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { Input } from "@trenova/shared/components/ui/input";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 

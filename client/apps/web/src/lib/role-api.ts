@@ -9,9 +9,9 @@ import type {
   RoleImpact,
   SaveRoleConstraint,
   UserRoleAssignment,
-} from "@/types/role";
-import type { GenericLimitOffsetResponse } from "@/types/server";
-import { api } from "./api";
+} from "@trenova/shared/types/role";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import { api } from "@trenova/shared/lib/api";
 
 export type OperationDefinition = {
   operation: string;

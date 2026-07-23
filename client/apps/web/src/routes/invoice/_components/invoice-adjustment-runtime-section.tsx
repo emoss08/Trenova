@@ -1,15 +1,15 @@
 import { InputField } from "@/components/fields/input-field";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { formatUnixDate } from "@/lib/date";
-import { formatCurrency, upperFirst } from "@/lib/utils";
+import { formatUnixDate } from "@trenova/shared/lib/date";
+import { formatCurrency, upperFirst } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { Invoice } from "@/types/invoice";
+import type { Invoice } from "@trenova/shared/types/invoice";
 import type {
   InvoiceAdjustment,
   InvoiceAdjustmentLineage,

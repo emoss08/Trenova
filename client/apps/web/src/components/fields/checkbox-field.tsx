@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Checkbox } from "../animate-ui/components/base/checkbox";
 import type { CheckboxProps } from "../animate-ui/primitives/base/checkbox";
-import { Label } from "../ui/label";
+import { Label } from "@trenova/shared/components/ui/label";
 
 type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
   label: string;

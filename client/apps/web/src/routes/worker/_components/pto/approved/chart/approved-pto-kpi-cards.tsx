@@ -1,5 +1,5 @@
 import { MetricSkeleton } from "@/components/metric-skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import type { LucideIcon } from "lucide-react";
 import { CalendarCheck2, CalendarClock, TrendingUp, Users } from "lucide-react";
 import type { ApprovedPTOMetrics } from "./approved-pto-metrics";

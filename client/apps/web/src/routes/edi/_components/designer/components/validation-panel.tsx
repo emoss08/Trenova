@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { ListChecksIcon } from "lucide-react";
 import {
   useSelectDiagnostic,

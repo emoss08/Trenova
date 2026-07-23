@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import {
   listPersistedDocumentUploadSessions,
   persistDocumentUploadSession,
@@ -10,7 +10,7 @@ import type {
   DocumentProcessingProfile,
   DocumentUploadSession,
   DocumentUploadSessionState,
-} from "@/types/document";
+} from "@trenova/shared/types/document";
 import type { UploadErrorType, UploadState } from "@/types/upload";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";

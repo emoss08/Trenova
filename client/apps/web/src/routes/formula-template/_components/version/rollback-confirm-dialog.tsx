@@ -7,23 +7,23 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/collapsible";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   FieldChange,
   TemplateUsageResponse,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";

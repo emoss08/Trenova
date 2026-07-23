@@ -21,8 +21,8 @@ import {
   type RemoveOrderChargeMutation,
   type UpdateOrderChargeMutation,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import type { OrderFormValues } from "@/types/order";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { OrderFormValues } from "@trenova/shared/types/order";
 
 // The order's status is derived from its shipment legs, so it is never sent on write.
 // Version rides along for optimistic locking on updates.

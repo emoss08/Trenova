@@ -2,9 +2,9 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { accessorialChargeMethodChoices, rateUnitChoices, statusChoices } from "@/lib/choices";
-import type { AccessorialCharge } from "@/types/accessorial-charge";
+import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 

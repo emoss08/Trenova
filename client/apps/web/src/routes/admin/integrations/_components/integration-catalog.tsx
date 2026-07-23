@@ -1,9 +1,9 @@
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useTheme } from "@/components/theme-provider";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MagicCard } from "@/components/ui/magic-card";
+import { useTheme } from "@trenova/shared/components/theme-provider";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { MagicCard } from "@trenova/shared/components/ui/magic-card";
 import {
   Select,
   SelectContent,
@@ -11,12 +11,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/select";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { IntegrationCatalogItem } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";

@@ -2,7 +2,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { manualJournalTableGraphQLConfig } from "@/lib/graphql/manual-journal-table";
 import type { ManualJournal } from "@/types/manual-journal";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getManualJournalColumns } from "./_components/manual-journal-columns";
 import { ManualJournalPanel } from "./_components/manual-journal-panel";

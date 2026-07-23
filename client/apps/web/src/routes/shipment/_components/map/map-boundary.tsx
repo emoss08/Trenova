@@ -1,6 +1,6 @@
-import { LoadingSkeletonState } from "@/components/loading-skeleton";
-import { Button } from "@/components/ui/button";
-import { GOOGLE_MAPS_ERROR_MESSAGE } from "@/lib/constants";
+import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
+import { Button } from "@trenova/shared/components/ui/button";
+import { GOOGLE_MAPS_ERROR_MESSAGE } from "@trenova/shared/lib/constants";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { MapPinOffIcon, SettingsIcon, TriangleAlertIcon } from "lucide-react";
 import { Suspense } from "react";

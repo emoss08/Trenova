@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +6,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+} from "@trenova/shared/components/ui/dialog";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import type { GeneratedFuelRow } from "@/lib/graphql/fuel-surcharge";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { LoaderCircle, TriangleAlert, Wand2 } from "lucide-react";

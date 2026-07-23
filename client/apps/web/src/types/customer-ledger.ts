@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableStringSchema } from "./helpers";
+import { nullableStringSchema } from "@trenova/shared/types/helpers";
 
 export const customerLedgerEntrySchema = z.object({
   id: z.string(),

@@ -1,7 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import type { DataTablePanelProps } from "@/types/data-table";
-import { fleetCodeSchema, type FleetCode } from "@/types/fleet-code";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { fleetCodeSchema, type FleetCode } from "@trenova/shared/types/fleet-code";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-form";

@@ -1,4 +1,4 @@
-import type { SCIMDirectory, SCIMGroupRoleMapping } from "@/types/iam";
+import type { SCIMDirectory, SCIMGroupRoleMapping } from "@trenova/shared/types/iam";
 
 export const emptyDirectory: SCIMDirectory = {
   id: "",

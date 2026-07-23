@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { generateDateTime, generateDateTimeString } from "@/lib/date";
+import { Button } from "@trenova/shared/components/ui/button";
+import { generateDateTime, generateDateTimeString } from "@trenova/shared/lib/date";
 import { CalendarIcon } from "lucide-react";
 import { DateSuggestionInput } from "./date-suggestion-input";
 import { DateTimePickerPopover } from "./datetime-picker-popover";

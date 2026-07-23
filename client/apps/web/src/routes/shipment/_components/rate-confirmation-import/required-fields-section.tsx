@@ -5,7 +5,7 @@ import {
   ShipmentTypeAutocompleteField,
   EquipmentTypeAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { equipmentClassSchema } from "@/types/equipment-type";
 import { AlertCircleIcon } from "lucide-react";
 import type { Control } from "react-hook-form";

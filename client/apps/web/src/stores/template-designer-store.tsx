@@ -4,7 +4,7 @@ import type {
   EDITemplateScriptLibrary,
   EDITemplateSegment,
   EDITemplateVersion,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";

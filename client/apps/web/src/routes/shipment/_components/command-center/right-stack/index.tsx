@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@trenova/shared/components/ui/dropdown-menu";
 import {
   closestCenter,
   DndContext,

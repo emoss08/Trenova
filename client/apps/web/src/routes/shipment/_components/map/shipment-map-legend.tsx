@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 const ENTRIES: { label: string; color: string }[] = [
   { label: "In transit", color: "var(--brand)" },

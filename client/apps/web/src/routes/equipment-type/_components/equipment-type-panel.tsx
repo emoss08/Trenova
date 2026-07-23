@@ -1,7 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { equipmentTypeSchema, type EquipmentType } from "@/types/equipment-type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

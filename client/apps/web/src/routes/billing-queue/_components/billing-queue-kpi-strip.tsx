@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 

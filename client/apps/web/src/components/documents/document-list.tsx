@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import type { Document } from "@/types/document";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Document } from "@trenova/shared/types/document";
 import { FileIcon } from "lucide-react";
 import { DocumentCard } from "./document-card";
 import { DocumentGridCard } from "./document-grid-card";

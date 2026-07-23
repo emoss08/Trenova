@@ -1,8 +1,8 @@
 import { RecentActivityDocument, type RecentActivityQuery } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { queries } from "@/lib/queries";
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation, Resource } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 const ATTENTION_REFETCH_INTERVAL = 60_000;

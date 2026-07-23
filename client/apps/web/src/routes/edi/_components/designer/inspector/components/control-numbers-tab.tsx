@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { CopyIcon } from "lucide-react";
 import type { InspectorContext } from "../inspector-context";

@@ -1,9 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Progress } from "@trenova/shared/components/ui/progress";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import type { BillingUsageSummary } from "@/types/platform-billing";
 import { useQuery } from "@tanstack/react-query";

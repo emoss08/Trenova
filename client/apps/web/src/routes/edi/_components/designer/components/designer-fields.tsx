@@ -2,10 +2,10 @@ import { AutocompleteCommandContent } from "@/components/fields/autocomplete/aut
 import { AutocompleteTrigger } from "@/components/fields/autocomplete/autocomplete-input";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { SelectField } from "@/components/fields/select-field";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { EDIPartnerSettingField, EDISourceContextField } from "@/types/edi";
-import type { SelectOption } from "@/types/fields";
-import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import type { EDIPartnerSettingField, EDISourceContextField } from "@trenova/shared/types/edi";
+import type { SelectOption } from "@trenova/shared/types/fields";
+import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import { SearchIcon } from "lucide-react";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";

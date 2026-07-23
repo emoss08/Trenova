@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 
 type MetadataProps = {
   title?: string;

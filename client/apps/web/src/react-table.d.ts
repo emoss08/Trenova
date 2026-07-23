@@ -3,8 +3,8 @@ import type {
   FilterOperator,
   FilterState,
   FilterVariant,
-} from "./types/data-table";
-import type { SelectOption } from "./types/fields";
+} from "@trenova/shared/types/data-table";
+import type { SelectOption } from "@trenova/shared/types/fields";
 
 declare module "@tanstack/react-table" {
   interface TableMeta<TData extends Record<string, any>> {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loginResponseSchema } from "./user";
+import { loginResponseSchema } from "@trenova/shared/types/user";
 
 describe("loginResponseSchema", () => {
   it("normalizes nullable role ids from login responses", () => {

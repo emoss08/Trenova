@@ -1,5 +1,5 @@
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { Location } from "@/types/location";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { Location } from "@trenova/shared/types/location";
 import { LocationDialog } from "./location-dialog";
 
 export function LocationPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Location>) {

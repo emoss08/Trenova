@@ -1,5 +1,5 @@
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation } from "@trenova/shared/types/permission";
 import { redirect, type LoaderFunction } from "react-router";
 
 function getOperationLabel(operation: number): string {

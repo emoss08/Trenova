@@ -1,11 +1,11 @@
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {
   BookOpenIcon,

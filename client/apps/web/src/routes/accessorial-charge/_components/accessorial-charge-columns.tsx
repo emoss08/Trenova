@@ -2,12 +2,12 @@
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { type BadgeAttrProps } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { type BadgeAttrProps } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { accessorialChargeMethodChoices, statusChoices } from "@/lib/choices";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { AccessorialCharge, RateUnit } from "@/types/accessorial-charge";
+import type { AccessorialCharge, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";

@@ -1,8 +1,8 @@
 import { FieldWrapper } from "@/components/fields/field-components";
-import { useTheme } from "@/components/theme-provider";
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
-import type { VariableDefinitionInput } from "@/types/formula-template";
+import { useTheme } from "@trenova/shared/components/theme-provider";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
+import type { VariableDefinitionInput } from "@trenova/shared/types/formula-template";
 import { EditorView } from "@codemirror/view";
 import CodeMirror, { type ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { Controller, type FieldValues } from "react-hook-form";

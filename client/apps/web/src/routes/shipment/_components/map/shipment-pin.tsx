@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
 
 export type PinTone = "brand" | "destructive" | "success" | "warning" | "muted";

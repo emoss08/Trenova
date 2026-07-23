@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { userSchema } from "./user";
+import { userSchema } from "@trenova/shared/types/user";
 
 export const auditCategorySchema = z.enum(["System", "User"]);
 export type AuditCategory = z.infer<typeof auditCategorySchema>;

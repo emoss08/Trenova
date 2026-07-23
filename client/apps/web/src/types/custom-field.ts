@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 export const fieldTypeSchema = z.enum([
   "text",

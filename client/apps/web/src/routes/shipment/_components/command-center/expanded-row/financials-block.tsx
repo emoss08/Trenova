@@ -1,6 +1,6 @@
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
-import { cn, formatCurrency, formatPercent, formatPerMile } from "@/lib/utils";
-import type { Shipment } from "@/types/shipment";
+import { cn, formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { toneVar } from "../../analytics/kpi/tone";
 import { ProfitabilityBreakdownPopover } from "../../profitability/profitability-breakdown-popover";
 

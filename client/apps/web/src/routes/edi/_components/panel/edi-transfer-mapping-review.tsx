@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import type { EDIMappingProfileItem, EDIMappingResolution } from "@/types/edi";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { EDIMappingProfileItem, EDIMappingResolution } from "@trenova/shared/types/edi";
 import { mappingKey } from "../edi-display-utils";
 import { TargetLookup } from "../edi-target-lookup";
 import { EDIEmptyState } from "./edi-panel-primitives";

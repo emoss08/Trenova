@@ -1,21 +1,21 @@
-import { ComponentLoader } from "@/components/component-loader";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
-import { OverflowTabsList } from "@/components/ui/overflow-tabs-list";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
+import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-list";
+import { Tabs, TabsContent } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { checkSectionErrors } from "@/lib/form";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { TimeFormat } from "@/types/user";
-import type { Worker } from "@/types/worker";
+import { TimeFormat } from "@trenova/shared/types/user";
+import type { Worker } from "@trenova/shared/types/worker";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import {

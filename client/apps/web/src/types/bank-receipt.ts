@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 export const bankReceiptStatusSchema = z.enum(["Imported", "Matched", "Exception"]);
 export type BankReceiptStatus = z.infer<typeof bankReceiptStatusSchema>;

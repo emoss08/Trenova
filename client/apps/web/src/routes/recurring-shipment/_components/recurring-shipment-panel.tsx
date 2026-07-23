@@ -1,6 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { recurringShipmentSchema, type RecurringShipment } from "@/types/recurring-shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

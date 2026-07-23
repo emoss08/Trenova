@@ -1,6 +1,6 @@
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
-import type { DuplicateShipmentRequest } from "@/types/shipment";
-import { duplicateShipmentRequestSchema } from "@/types/shipment";
+import type { DuplicateShipmentRequest } from "@trenova/shared/types/shipment";
+import { duplicateShipmentRequestSchema } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";

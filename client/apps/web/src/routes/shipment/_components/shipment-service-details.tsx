@@ -3,9 +3,9 @@ import {
   ServiceTypeAutocompleteField,
   ShipmentTypeAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { equipmentClassSchema } from "@/types/equipment-type";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useFormContext } from "react-hook-form";
 
 export default function ShipmentServiceDetails() {

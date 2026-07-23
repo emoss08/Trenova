@@ -1,8 +1,8 @@
 import { useMapId } from "@/hooks/use-map-id";
-import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
+import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
 import { formatElapsedTime } from "@/lib/time-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";

@@ -3,7 +3,7 @@ import {
   optionalStringSchema,
   timestampSchema,
   versionSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 export const documentControlResourceSchema = z.enum([
   "shipment",

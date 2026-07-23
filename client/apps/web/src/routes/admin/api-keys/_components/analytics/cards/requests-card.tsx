@@ -1,5 +1,5 @@
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { Card, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { ChartContainer, type ChartConfig } from "@trenova/shared/components/ui/chart";
 import { Activity } from "lucide-react";
 import { Area, AreaChart } from "recharts";
 import type { ApiKeyAnalyticsData } from "../mock-data";

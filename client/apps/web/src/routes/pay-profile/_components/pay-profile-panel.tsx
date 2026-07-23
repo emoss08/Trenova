@@ -1,19 +1,19 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { AssignPayProfileDialog } from "@/components/pay/assign-pay-profile-dialog";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   createPayProfile,
   fetchPayProfileAssignments,
   updatePayProfile,
   type PayProfileRow,
 } from "@/lib/graphql/driver-settlement";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   payProfileFormSchema,
   type PayProfileComponentFormValues,
   type PayProfileFormValues,
-} from "@/types/driver-pay";
+} from "@trenova/shared/types/driver-pay";
 import type { CreatePayProfileInput, PayProfileComponentInput } from "@trenova/graphql/generated/graphql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";

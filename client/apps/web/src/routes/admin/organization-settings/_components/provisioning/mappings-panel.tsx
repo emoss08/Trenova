@@ -1,5 +1,5 @@
-import { DataTableLazyComponent } from "@/components/error-boundary";
-import { Button } from "@/components/ui/button";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { Button } from "@trenova/shared/components/ui/button";
 import { PlusIcon, UsersRoundIcon } from "lucide-react";
 import { lazy, memo, useCallback, useState } from "react";
 import { EmptyState, PanelHeader } from "../security-access/shared";

@@ -1,7 +1,7 @@
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createFuelSurchargeProgram,

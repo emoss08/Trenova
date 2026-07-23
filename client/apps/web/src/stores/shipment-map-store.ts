@@ -1,4 +1,4 @@
-import { createSelectors } from "@/lib/utils";
+import { createSelectors } from "@trenova/shared/lib/utils";
 import type { RainViewerData } from "@/types/shipment-map";
 import type { SetStateAction } from "react";
 import { create } from "zustand";

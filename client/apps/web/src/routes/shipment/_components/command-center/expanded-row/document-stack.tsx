@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { Document } from "@/types/document";
-import type { Shipment, ShipmentBillingRequirement } from "@/types/shipment";
+import type { Document } from "@trenova/shared/types/document";
+import type { Shipment, ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { PanelSkeleton } from "./panel-skeletons";

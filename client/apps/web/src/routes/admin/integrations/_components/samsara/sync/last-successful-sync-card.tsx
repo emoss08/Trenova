@@ -1,4 +1,4 @@
-import { formatDurationFromSeconds, formatToUserTimezone } from "@/lib/date";
+import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 
 export function LastSuccessfulSyncCard() {

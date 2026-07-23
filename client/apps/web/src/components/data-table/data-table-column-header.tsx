@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,9 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import type { SortDirection } from "@/types/data-table";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { cn } from "@trenova/shared/lib/utils";
+import type { SortDirection } from "@trenova/shared/types/data-table";
 import type { Column } from "@tanstack/react-table";
 import {
   ArrowDownIcon,

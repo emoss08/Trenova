@@ -1,6 +1,6 @@
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useFormContext } from "react-hook-form";
 
 export function JournalReversalForm() {

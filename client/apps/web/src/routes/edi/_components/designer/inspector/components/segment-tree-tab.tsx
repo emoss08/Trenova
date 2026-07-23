@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -7,10 +7,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
-import type { EDIInspectionDiagnostic, EDIX12Inspection, EDIX12Segment } from "@/types/edi";
+import { cn } from "@trenova/shared/lib/utils";
+import type { EDIInspectionDiagnostic, EDIX12Inspection, EDIX12Segment } from "@trenova/shared/types/edi";
 import { CopyIcon } from "lucide-react";
 
 export default function SegmentTreeTab({

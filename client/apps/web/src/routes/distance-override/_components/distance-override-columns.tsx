@@ -1,9 +1,9 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { formatLocation } from "@/lib/utils";
-import type { Customer } from "@/types/customer";
+import { formatLocation } from "@trenova/shared/lib/utils";
+import type { Customer } from "@trenova/shared/types/customer";
 import type { DistanceOverride } from "@/types/distance-override";
-import type { Location } from "@/types/location";
+import type { Location } from "@trenova/shared/types/location";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<DistanceOverride>[] {

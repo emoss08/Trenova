@@ -1,4 +1,4 @@
-import { SuspenseLoader } from "@/components/component-loader";
+import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { lazy } from "react";

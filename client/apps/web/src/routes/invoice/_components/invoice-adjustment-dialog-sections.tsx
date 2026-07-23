@@ -2,9 +2,9 @@ import { DocumentMultiSelectAutocompleteField } from "@/components/autocomplete-
 import { DocumentUploadSection } from "@/components/document-upload-section";
 import { NumberInput } from "@/components/fields/number-input";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Separator } from "@/components/ui/separator";
-import { cn, formatCurrency } from "@/lib/utils";
-import type { Invoice } from "@/types/invoice";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { Invoice } from "@trenova/shared/types/invoice";
 import type {
   InvoiceAdjustment,
   InvoiceAdjustmentKind,

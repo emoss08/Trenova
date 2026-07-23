@@ -1,10 +1,10 @@
-import { ApiRequestError } from "@/lib/api";
-import { GraphQLRequestError } from "@/lib/graphql";
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import {
   type NormalizedApiError,
   type ValidationError,
   apiProblem,
-} from "@/types/errors";
+} from "@trenova/shared/types/errors";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";

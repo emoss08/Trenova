@@ -2,7 +2,7 @@ import {
   AVAILABLE_FUNCTIONS,
   SHIPMENT_VARIABLES,
   type VariableDefinitionInput,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import { type CompletionContext } from "@codemirror/autocomplete";
 import {
   HighlightStyle,

@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   createDraftInvoiceAdjustmentRequestSchema,
   invoiceAdjustmentBatchQueueItemSchema,
@@ -24,7 +24,7 @@ import {
   type InvoiceReconciliationQueueItem,
   type UpdateDraftInvoiceAdjustmentRequest,
 } from "@/types/invoice-adjustment";
-import { createLimitOffsetResponse } from "@/types/server";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 const invoiceApprovalQueueListSchema = createLimitOffsetResponse(invoiceApprovalQueueItemSchema);
 const invoiceReconciliationQueueListSchema = createLimitOffsetResponse(

@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { ColumnDef } from "@tanstack/react-table";

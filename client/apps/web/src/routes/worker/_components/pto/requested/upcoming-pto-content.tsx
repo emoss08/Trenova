@@ -1,5 +1,5 @@
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,12 +8,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { ApiRequestError } from "@/lib/api";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import type { ApiRequestError } from "@trenova/shared/lib/api";
 import { approveWorkerPTO } from "@/lib/graphql/worker-mutations";
-import { formatRange } from "@/lib/date";
+import { formatRange } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
-import type { WorkerPTO } from "@/types/worker";
+import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CalendarRange, EllipsisIcon } from "lucide-react";
 import { useState } from "react";

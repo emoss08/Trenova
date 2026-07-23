@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { CreditCardIcon, MailIcon, UserIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { CustomerBillingProfileForm } from "./customer-billing-profile-form";

@@ -8,7 +8,7 @@ import {
   type CostingControlPageQuery,
   type ResolvedCostProfilePageQuery,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type CostingControl = CostingControlPageQuery["costingControl"];
 export type CostCategory = CostingControl["categories"][number];

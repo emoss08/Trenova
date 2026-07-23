@@ -7,19 +7,19 @@ import { NumberField } from "@/components/fields/number-field";
 import { PayCodeSelectField, usePayCodeOptions } from "@/components/fields/pay-code-select-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { recurringDeductionFrequencyChoices, recurringDeductionStatusChoices } from "@/lib/choices";
 import {
   createRecurringDeduction,
   updateRecurringDeduction,
   type RecurringDeductionRow,
 } from "@/lib/graphql/driver-settlement";
-import { getTodayDate } from "@/lib/date";
-import type { DataTablePanelProps } from "@/types/data-table";
+import { getTodayDate } from "@trenova/shared/lib/date";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   recurringDeductionFormSchema,
   type RecurringDeductionFormValues,
-} from "@/types/driver-pay";
+} from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm, useFormContext, useWatch, type Control, type Resolver } from "react-hook-form";

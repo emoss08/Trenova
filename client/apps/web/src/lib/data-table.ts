@@ -9,8 +9,8 @@ import type {
   SingleFilterItem,
   SortDirection,
   SortField,
-} from "@/types/data-table";
-import type { SelectOption } from "@/types/fields";
+} from "@trenova/shared/types/data-table";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import type {
   FormatRuleColor,
   TableColumnPinning,

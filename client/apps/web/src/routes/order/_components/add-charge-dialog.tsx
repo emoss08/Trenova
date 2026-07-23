@@ -1,6 +1,6 @@
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +8,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { graphQLErrorMessage } from "@/lib/graphql";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { addOrderCharge, updateOrderCharge, type OrderCharge } from "@/lib/graphql/order";
-import { orderChargeFormSchema, type OrderChargeFormValues } from "@/types/order";
+import { orderChargeFormSchema, type OrderChargeFormValues } from "@trenova/shared/types/order";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";

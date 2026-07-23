@@ -1,5 +1,5 @@
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import { apiService } from "@/services/api";
-import type { EDIPartner } from "@/types/edi";
+import type { EDIPartner } from "@trenova/shared/types/edi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";

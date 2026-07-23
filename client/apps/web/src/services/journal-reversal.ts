@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import type { JournalReversal } from "@/types/journal-reversal";
 
 export class JournalReversalService {

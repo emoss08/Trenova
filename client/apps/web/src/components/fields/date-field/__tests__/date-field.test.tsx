@@ -1,4 +1,4 @@
-import { generateDateOnlyString, generateDateTimeString, toUnixTimeStamp } from "@/lib/date";
+import { generateDateOnlyString, generateDateTimeString, toUnixTimeStamp } from "@trenova/shared/lib/date";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, useWatch } from "react-hook-form";

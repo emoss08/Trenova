@@ -1,8 +1,8 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { OrderStatusBadge } from "@/components/status-badge";
+import { OrderStatusBadge } from "@trenova/shared/components/status-badge";
 import { orderStatusChoices } from "@/lib/choices";
-import { formatCurrency } from "@/lib/utils";
-import type { Order } from "@/types/order";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { Order } from "@trenova/shared/types/order";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<Order>[] {

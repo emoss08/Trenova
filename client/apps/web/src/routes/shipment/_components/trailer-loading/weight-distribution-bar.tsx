@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { AxleWeight } from "@/types/loading-optimization";
 import type { RevenueContext } from "./use-loading-optimization";
 

@@ -2,7 +2,7 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
-import type { Location } from "@/types/location";
+import type { Location } from "@trenova/shared/types/location";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";

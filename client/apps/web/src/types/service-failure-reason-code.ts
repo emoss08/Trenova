@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableTextSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { nullableTextSchema, optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 export const serviceFailureReasonCategorySchema = z.enum([
   "Carrier",

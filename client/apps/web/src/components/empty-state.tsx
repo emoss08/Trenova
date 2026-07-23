@@ -1,6 +1,6 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
+import { Button } from "@trenova/shared/components/ui/button";
 import type { LucideIcon } from "lucide-react";
 
 interface EmptyStateProps {

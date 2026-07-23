@@ -1,4 +1,4 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import type { JournalEntryLine } from "@/types/journal-entry";
 
 type JournalLineItemsTableProps = {

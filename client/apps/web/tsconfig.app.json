@@ -24,6 +24,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@trenova/shared/*": [
+        "../../packages/shared/src/*"
       ]
     },
     /* Bundler mode */

@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import type { NavItemBadgeKind } from "@/config/navigation.types";
 import { useAttentionSummary } from "@/hooks/use-attention";
 

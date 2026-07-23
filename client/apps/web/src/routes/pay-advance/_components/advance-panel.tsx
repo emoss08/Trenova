@@ -1,5 +1,5 @@
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
@@ -7,8 +7,8 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { PayAdvanceStatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { PayAdvanceStatusBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,22 +16,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { payAdvanceSourceChoices } from "@/lib/choices";
-import { getTodayDate } from "@/lib/date";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import {
   issuePayAdvance,
   writeOffPayAdvance,
   type PayAdvanceRow,
 } from "@/lib/graphql/driver-settlement";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   issuePayAdvanceFormSchema,
   type IssuePayAdvanceFormValues,
   type PayAdvanceStatus,
-} from "@/types/driver-pay";
+} from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

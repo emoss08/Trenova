@@ -4,7 +4,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@trenova/shared/components/ui/dropdown-menu";
 import { useDataTable } from "@/contexts/data-table-context";
 import type {
   AddRecordAction,
@@ -12,7 +12,7 @@ import type {
   DataTableQueryOptions,
   FilterItem,
   SortField,
-} from "@/types/data-table";
+} from "@trenova/shared/types/data-table";
 import type {
   ActiveTableView,
   TableConfig,
@@ -24,9 +24,9 @@ import type {
 import type { ColumnDef, Table } from "@tanstack/react-table";
 import { ChevronDownIcon, DownloadIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 
 const DataTableSearch = lazy(

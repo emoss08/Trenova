@@ -1,6 +1,6 @@
-import { RouteErrorBoundary } from "@/components/error-boundary";
-import LoadingSkeleton from "@/components/loading-skeleton";
-import { useAuthStore } from "@/stores/auth-store";
+import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
+import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import { DashLayout } from "./_components/dash-layout";
 

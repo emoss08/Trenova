@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +9,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { API_BASE_URL } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import type { GenericLimitOffsetResponse } from "@/types/server";
-import type { Worker } from "@/types/worker";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { cn } from "@trenova/shared/lib/utils";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import type { Worker } from "@trenova/shared/types/worker";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {

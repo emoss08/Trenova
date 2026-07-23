@@ -1,5 +1,5 @@
 import { getOrderedStops } from "@/lib/shipment-utils";
-import type { Shipment, Stop } from "@/types/shipment";
+import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 
 export type Latlng = google.maps.LatLngLiteral;
 export type StopWithCoord = { stop: Stop; latlng: Latlng };

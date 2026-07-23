@@ -8,8 +8,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { ApiRequestError } from "@/lib/api";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import { CustomFieldService } from "@/services/custom-field";
 import type {
   CustomFieldDefinition,

@@ -1,18 +1,18 @@
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
-import { OverflowTabsList } from "@/components/ui/overflow-tabs-list";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
+import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-list";
+import { Tabs, TabsContent } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useCreatePanelActionPreference,
   type CreatePanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { API_ENDPOINTS } from "@/types/server";
+import { api } from "@trenova/shared/lib/api";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";

@@ -1,9 +1,9 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { coreResponsibilityChoices, fieldSensitivityChoices } from "@/lib/choices";
-import type { Role } from "@/types/role";
+import type { Role } from "@trenova/shared/types/role";
 import { useFormContext } from "react-hook-form";
 
 export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {

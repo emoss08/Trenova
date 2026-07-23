@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import type { ChartConfig } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { ChartConfig } from "@trenova/shared/components/ui/chart";
+import { cn } from "@trenova/shared/lib/utils";
 import { m } from "motion/react";
 
 export type AgingBucketKey =

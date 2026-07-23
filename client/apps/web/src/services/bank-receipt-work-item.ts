@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import { bankReceiptWorkItemSchema, type BankReceiptWorkItem } from "@/types/bank-receipt-work-item";
 
 const workItemListSchema = z.array(bankReceiptWorkItemSchema);

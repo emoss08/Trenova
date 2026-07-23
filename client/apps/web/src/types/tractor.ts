@@ -1,16 +1,16 @@
 import { z } from "zod";
 import { equipmentManufacturerSchema } from "./equipment-manufacturer";
 import { equipmentTypeSchema } from "./equipment-type";
-import { fleetCodeSchema } from "./fleet-code";
+import { fleetCodeSchema } from "@trenova/shared/types/fleet-code";
 import {
   equipmentStatusSchema,
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
   tenantInfoSchema,
-} from "./helpers";
-import { usStateSchema } from "./us-state";
-import { workerSchema } from "./worker";
+} from "@trenova/shared/types/helpers";
+import { usStateSchema } from "@trenova/shared/types/us-state";
+import { workerSchema } from "@trenova/shared/types/worker";
 
 export const tractorSchema = z.object({
   ...tenantInfoSchema.shape,

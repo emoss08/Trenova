@@ -1,12 +1,12 @@
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { ApiRequestError } from "@/lib/api";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";

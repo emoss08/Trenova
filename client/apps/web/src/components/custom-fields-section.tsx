@@ -8,7 +8,7 @@ import { InputField } from "./fields/input-field";
 import { NumberField } from "./fields/number-field";
 import { SelectField } from "./fields/select-field";
 import { SwitchField } from "./fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "./ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 
 interface CustomFieldsSectionProps<T extends FieldValues> {
   resourceType: string;

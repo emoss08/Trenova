@@ -2,9 +2,9 @@ import {
   ControlledEDITransferAutocompleteField,
   ControlledShipmentAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   getEDIDocumentSourceInputs,
   type EDIDocumentSourceField,

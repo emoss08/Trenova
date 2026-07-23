@@ -1,9 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { fieldSensitivityChoices } from "@/lib/choices";
-import type { FieldSensitivity, Role } from "@/types/role";
+import type { FieldSensitivity, Role } from "@trenova/shared/types/role";
 import { type ColumnDef } from "@tanstack/react-table";
 
 function SensitivityBadge({ sensitivity }: { sensitivity: FieldSensitivity }) {

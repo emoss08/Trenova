@@ -1,18 +1,18 @@
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { computeApplicationTotals, toMinor } from "@/lib/cash-application";
-import { getTodayDate } from "@/lib/date";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
 import { postAndApplyCustomerPayment } from "@/lib/graphql/customer-payment";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@/lib/utils";
-import type { DataTablePanelProps } from "@/types/data-table";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   recordPaymentSchema,
   type RecordPaymentFormValues,
-} from "@/types/customer-payment";
+} from "@trenova/shared/types/customer-payment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseAsString, useQueryStates } from "nuqs";

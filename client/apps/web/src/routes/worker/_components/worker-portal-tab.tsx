@@ -1,8 +1,8 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,13 +12,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import {
   fetchWorkerPortalStatus,
   inviteWorkerToPortal,
   revokeWorkerPortalAccess,
   type PortalInvitationRow,
-} from "@/lib/graphql/driver-portal";
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, CopyIcon, SmartphoneIcon } from "lucide-react";
 import { useState } from "react";

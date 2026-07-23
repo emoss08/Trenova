@@ -1,5 +1,5 @@
 import { apiService } from "@/services/api";
-import type { Document } from "@/types/document";
+import type { Document } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DownloadIcon,
@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "./ui/button";
-import { FormSection } from "./ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
 
 interface DocumentUploadSectionProps {
   resourceId: string;

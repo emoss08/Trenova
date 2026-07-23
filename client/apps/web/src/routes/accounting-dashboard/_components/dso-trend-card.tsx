@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/chart";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { AR_DSO_TARGET_DAYS } from "@/lib/accounting-constants";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";

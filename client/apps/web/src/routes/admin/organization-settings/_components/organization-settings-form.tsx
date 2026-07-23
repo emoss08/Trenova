@@ -3,10 +3,10 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
   organizationSettingsTabParser,
@@ -17,10 +17,10 @@ import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
 import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
 import { queries } from "@/lib/queries";
-import { isAbsoluteUrl } from "@/lib/utils";
+import { isAbsoluteUrl } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
-import { organizationSettingsSchema, type OrganizationSettings } from "@/types/organization";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { organizationSettingsSchema, type OrganizationSettings } from "@trenova/shared/types/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { HTMLMotionProps, Variants } from "motion/react";
 import { m, useAnimation, useReducedMotion } from "motion/react";
 import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";

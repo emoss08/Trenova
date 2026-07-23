@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,9 +6,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dialog";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { ContainerIcon, LoaderIcon, PrinterIcon, SaveIcon } from "lucide-react";
 import { useState } from "react";

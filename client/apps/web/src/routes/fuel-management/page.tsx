@@ -1,6 +1,6 @@
-import { DataTableLazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Fuel, Gauge, ListTree } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { lazy } from "react";

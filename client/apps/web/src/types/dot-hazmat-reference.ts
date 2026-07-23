@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalStringSchema } from "./helpers";
+import { optionalStringSchema } from "@trenova/shared/types/helpers";
 
 export const dotHazmatReferenceSchema = z.object({
   id: optionalStringSchema,

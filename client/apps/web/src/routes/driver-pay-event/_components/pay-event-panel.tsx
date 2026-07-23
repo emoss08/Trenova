@@ -1,9 +1,9 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import { DriverPayEventStatusBadge } from "@/components/status-badge";
+import { DriverPayEventStatusBadge } from "@trenova/shared/components/status-badge";
 import type { DriverPayEventRow } from "@/lib/graphql/driver-settlement";
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { DriverPayEventStatus } from "@/types/driver-pay";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { DriverPayEventStatus } from "@trenova/shared/types/driver-pay";
 
 export function PayEventPanel({
   open,

@@ -1,6 +1,6 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { PageHeaderProps } from "@/components/page-header";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type BillingWorkspaceLayoutProps = {
   pageHeaderProps: PageHeaderProps;

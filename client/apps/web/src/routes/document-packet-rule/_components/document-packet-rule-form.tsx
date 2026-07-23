@@ -2,8 +2,8 @@ import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields"
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { resourceTypeChoices } from "@/lib/choices";
 import type { DocumentPacketRule } from "@/types/document-packet-rule";
 import { useFormContext, useWatch } from "react-hook-form";

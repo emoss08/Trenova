@@ -1,9 +1,9 @@
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatTimestamp } from "@/lib/notification-helpers";
-import { cn } from "@/lib/utils";
-import type { Notification } from "@/types/notification";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Notification } from "@trenova/shared/types/notification";
 import { ArchiveIcon, ArchiveRestoreIcon, CheckIcon, MailIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { NotificationContent } from "./notification-content";

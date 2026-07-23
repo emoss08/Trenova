@@ -2,8 +2,8 @@ import {
   OrderTableDocument,
   type OrderTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
-import type { Order } from "@/types/order";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { Order } from "@trenova/shared/types/order";
 
 export const orderTableGraphQLConfig = defineDataTableGraphQLConfig<
   Order,

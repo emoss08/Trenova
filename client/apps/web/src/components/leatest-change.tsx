@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { XIcon } from "lucide-react";
 
 const latestChange = {

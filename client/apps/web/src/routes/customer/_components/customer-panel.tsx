@@ -1,11 +1,11 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { GeocodedBadge } from "@/components/geocode-badge";
-import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { formatToUserTimezone } from "@/lib/date";
-import { useAuthStore } from "@/stores/auth-store";
-import { customerSchema, type Customer } from "@/types/customer";
-import type { DataTablePanelProps } from "@/types/data-table";
+import { DialogDescription, DialogTitle } from "@trenova/shared/components/ui/dialog";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { customerSchema, type Customer } from "@trenova/shared/types/customer";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CustomerTabbedForm } from "./customer-tabbed-form";

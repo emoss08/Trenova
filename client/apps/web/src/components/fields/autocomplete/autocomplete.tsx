@@ -1,12 +1,12 @@
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { API_BASE_URL } from "@/lib/constants";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   fetchGraphQLSelectedOption,
   selectOptionFiltersFromSearchParams,
   type GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
-import { cn } from "@/lib/utils";
-import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+import { cn } from "@trenova/shared/lib/utils";
+import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useId, useMemo, useState } from "react";
 import type { Control, Path, RegisterOptions } from "react-hook-form";

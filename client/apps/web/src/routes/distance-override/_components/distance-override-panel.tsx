@@ -1,6 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   distanceOverrideSchema,
   type DistanceOverride,

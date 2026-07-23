@@ -1,4 +1,4 @@
-import { FormSection, FormGroup, FormControl } from "@/components/ui/form";
+import { FormSection, FormGroup, FormControl } from "@trenova/shared/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";

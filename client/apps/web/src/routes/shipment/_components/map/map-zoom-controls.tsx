@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEFAULT_ZOOM } from "@/lib/constants";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { DEFAULT_ZOOM } from "@trenova/shared/lib/constants";
 import { ControlPosition, MapControl, useMap } from "@vis.gl/react-google-maps";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { useCallback } from "react";

@@ -1,7 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { queries } from "@/lib/queries";
-import { getNameInitials, isAbsoluteUrl } from "@/lib/utils";
-import type { User } from "@/types/user";
+import { getNameInitials, isAbsoluteUrl } from "@trenova/shared/lib/utils";
+import type { User } from "@trenova/shared/types/user";
 import { useQuery } from "@tanstack/react-query";
 import type React from "react";
 

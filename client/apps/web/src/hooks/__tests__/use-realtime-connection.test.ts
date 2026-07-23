@@ -1,4 +1,4 @@
-import { patchEntityInListRows, shouldPatchEvent } from "@/hooks/realtime-patching";
+import { patchEntityInListRows, shouldPatchEvent } from "@trenova/shared/hooks/realtime-patching";
 import { describe, expect, it } from "vitest";
 
 describe("realtime shipment patching", () => {

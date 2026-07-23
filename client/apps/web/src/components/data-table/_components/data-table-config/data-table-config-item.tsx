@@ -1,5 +1,5 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,9 +8,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@trenova/shared/components/ui/dropdown-menu";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   TableConfig,

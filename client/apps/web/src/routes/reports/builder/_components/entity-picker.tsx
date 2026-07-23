@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
+import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalog, ReportCatalogEntity } from "@/lib/graphql/reports";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { ChevronRightIcon, SearchIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";

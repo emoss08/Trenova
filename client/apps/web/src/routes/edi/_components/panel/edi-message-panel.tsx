@@ -2,17 +2,17 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import {
   EDIMessageAckStatusBadge,
   EDIMessageDeliveryStatusBadge,
-} from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { EDIMessage, EDIMessageDeliveryStatus } from "@/types/edi";
-import { Operation, Resource } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { EDIMessage, EDIMessageDeliveryStatus } from "@trenova/shared/types/edi";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { invalidateEDIMessages } from "./edi-panel-invalidation";

@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 
 export interface GlobalSearchHit {
   id: string;

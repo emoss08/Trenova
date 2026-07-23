@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -7,14 +7,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { EDIConnection } from "@/types/edi";
-import { Operation, Resource } from "@/types/permission";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { EDIConnection } from "@trenova/shared/types/edi";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useState } from "react";

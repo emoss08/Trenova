@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { serviceFailure214PartnerSettingsSchema } from "./edi";
+import { serviceFailure214PartnerSettingsSchema } from "@trenova/shared/types/edi";
 
 describe("serviceFailure214PartnerSettingsSchema", () => {
   it("parses valid settings with defaults", () => {

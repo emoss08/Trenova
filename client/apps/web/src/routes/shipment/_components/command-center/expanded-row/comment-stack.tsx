@@ -1,8 +1,8 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { apiService } from "@/services/api";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import type { ShipmentComment } from "@/types/shipment-comment";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";

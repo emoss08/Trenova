@@ -1,22 +1,22 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { EmptyState } from "@/components/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

@@ -1,14 +1,14 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { cn, formatCurrency } from "@/lib/utils";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type {
   BreakdownDefinitionInput,
   TestBreakdownItem,
   TestExpressionRequest,
   VariableDefinitionInput,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import {
   AlertTriangleIcon,
   Braces,

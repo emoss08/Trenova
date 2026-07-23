@@ -24,7 +24,7 @@ import {
   type GenerateFuelSurchargeTableQuery,
   type GenerateFuelTableInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { FuelIndex, FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 
 export type FuelDashboardEntry = FuelDashboardQuery["fuelDashboard"][number];

@@ -1,15 +1,15 @@
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
-import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@/components/status-badge";
+import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/context-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
-import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
-import { formatCurrency } from "@/lib/utils";
+import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react";
 

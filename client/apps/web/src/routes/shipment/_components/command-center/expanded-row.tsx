@@ -1,5 +1,5 @@
-import type { RowAction } from "@/types/data-table";
-import type { Shipment } from "@/types/shipment";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import type { Row } from "@tanstack/react-table";
 import { lazy, Suspense, type ReactNode } from "react";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";

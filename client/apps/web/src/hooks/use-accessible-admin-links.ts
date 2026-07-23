@@ -1,8 +1,8 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { adminLinks } from "@/config/navigation.config";
 import { normalizePath } from "@/lib/route-utils";
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 
 export function useAccessibleAdminLinks(): SidebarLink[] {

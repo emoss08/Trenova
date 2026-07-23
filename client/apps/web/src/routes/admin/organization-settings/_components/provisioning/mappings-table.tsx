@@ -1,8 +1,8 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { DataTable } from "@/components/data-table/data-table";
 import { createSCIMGroupRoleMappingTableGraphQLConfig } from "@/lib/graphql/scim-group-role-mapping-table";
-import type { SCIMGroupRoleMapping } from "@/types/iam";
-import type { Role } from "@/types/role";
+import type { SCIMGroupRoleMapping } from "@trenova/shared/types/iam";
+import type { Role } from "@trenova/shared/types/role";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { scimGroupMappingPanelQueryKey } from "./constants";

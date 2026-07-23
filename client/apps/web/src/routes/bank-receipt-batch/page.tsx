@@ -1,11 +1,11 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceiptBatch } from "@/types/bank-receipt-batch";
 import { useQuery } from "@tanstack/react-query";
 import {

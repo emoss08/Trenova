@@ -5,9 +5,9 @@ import {
   updateRecurringEarning,
   type RecurringEarningRow,
 } from "@/lib/graphql/driver-settlement";
-import type { RecurringEarningStatus } from "@/types/driver-pay";
-import type { DockAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { RecurringEarningStatus } from "@trenova/shared/types/driver-pay";
+import type { DockAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";

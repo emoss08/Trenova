@@ -3,19 +3,19 @@ import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { OktaLogo } from "@/components/logos/okta";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { type OktaSSOConfig } from "@/types/organization";
+import { type OktaSSOConfig } from "@trenova/shared/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,

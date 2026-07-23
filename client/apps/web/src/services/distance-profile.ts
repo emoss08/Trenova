@@ -1,7 +1,7 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import { distanceProfileSchema, type DistanceProfile } from "@/types/distance-profile";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export class DistanceProfileService {
   public async selectOptions(query = "", limit = 50, offset = 0) {

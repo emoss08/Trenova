@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { rateTableTableGraphQLConfig } from "@/lib/graphql/rate-table-table";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import type { RateTableRow } from "@/types/rate-table";
 import { useMemo } from "react";
 import { getColumns } from "./rate-table-columns";

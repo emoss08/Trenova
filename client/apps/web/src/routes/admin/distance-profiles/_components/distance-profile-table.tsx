@@ -9,12 +9,12 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import { distanceProfileTableGraphQLConfig } from "@/lib/graphql/distance-profile-table";
 import { DistanceProfileService } from "@/services/distance-profile";
-import type { RowAction } from "@/types/data-table";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import type { DistanceProfile } from "@/types/distance-profile";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { CheckCircleIcon, Loader2Icon, TrashIcon } from "lucide-react";

@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import {
   Table,
   TableBody,
@@ -13,12 +13,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { activityViewParser, type ActivityViewValue } from "@/hooks/use-organization-setting-state";
-import { formatUnixDateTimeOrDash } from "@/lib/date";
+import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
-import { cn, formatIdentityProviderName, toTitleCase } from "@/lib/utils";
-import type { AuthEvent, ExternalIdentity, MFAAuthenticator, RiskDecision } from "@/types/iam";
+import { cn, formatIdentityProviderName, toTitleCase } from "@trenova/shared/lib/utils";
+import type { AuthEvent, ExternalIdentity, MFAAuthenticator, RiskDecision } from "@trenova/shared/types/iam";
 import { useQuery } from "@tanstack/react-query";
 import {
   ActivityIcon,

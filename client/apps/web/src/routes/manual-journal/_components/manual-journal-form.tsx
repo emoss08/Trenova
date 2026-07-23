@@ -1,4 +1,4 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { JournalLineItemsEditor } from "@/components/accounting/journal-line-items-editor";
 import { JournalLineItemsTable } from "@/components/accounting/journal-line-items-table";
 import {
@@ -8,8 +8,8 @@ import {
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { cn } from "@trenova/shared/lib/utils";
 import type { JournalEntryLine } from "@/types/journal-entry";
 import type { ManualJournalLine } from "@/types/manual-journal";
 import { CheckCircle2Icon, ScaleIcon } from "lucide-react";

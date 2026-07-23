@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import {
   REPORT_AGGREGATION_LABELS,
   type ReportFieldFilter,

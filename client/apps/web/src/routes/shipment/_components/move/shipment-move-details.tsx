@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { FormSection } from "@/components/ui/form";
-import { TruckIcon } from "@/components/ui/truck";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { TruckIcon } from "@trenova/shared/components/ui/truck";
 import { queries } from "@/lib/queries";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";

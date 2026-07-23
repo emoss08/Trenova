@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TractorTableDocument } from "@trenova/graphql/generated/graphql";
-import { clearCsrfToken, setCsrfToken } from "../api";
-import { GraphQLRequestError, requestGraphQL, resolveGraphQLURL } from "../graphql";
+import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
+import { GraphQLRequestError, requestGraphQL, resolveGraphQLURL } from "@trenova/shared/lib/graphql";
 import { fetchGraphQLSelectOptions } from "../graphql/select-options";
 
 const selectOptionCursor =

@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { api, ApiRequestError } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { api, ApiRequestError } from "@trenova/shared/lib/api";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 import { useState } from "react";

@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import type { ResourceCategory } from "@/lib/role-api";
 import {
   apiKeyListSchema,

@@ -1,5 +1,5 @@
-import { ShipmentStatusBadge } from "@/components/status-badge";
-import type { Shipment } from "@/types/shipment";
+import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
+import type { Shipment } from "@trenova/shared/types/shipment";
 
 export function StatusCell({ shipment }: { shipment: Shipment }) {
   return (

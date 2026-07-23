@@ -1,13 +1,13 @@
 import googleMapsEmptyState from "@/assets/integrations/empty-state/map-preview.webp";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useMapId } from "@/hooks/use-map-id";
 import { locationGeofenceTypeChoices } from "@/lib/choices";
-import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
+import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@/types/location";
-import { Operation, Resource } from "@/types/permission";
+import { cn } from "@trenova/shared/lib/utils";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@trenova/shared/types/location";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {
   AdvancedMarker,

@@ -4,7 +4,7 @@ import type {
   EDIPartnerDocumentProfile,
   EDIX12EnvelopeSettings,
   EDIMessageInspection,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { describe, expect, it } from "vitest";
 import {
   buildMessageInspectorContext,

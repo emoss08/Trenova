@@ -1,5 +1,5 @@
-import type { FieldFilter } from "@/types/data-table";
-import { shipmentStatusSchema, type ShipmentStatus } from "@/types/shipment";
+import type { FieldFilter } from "@trenova/shared/types/data-table";
+import { shipmentStatusSchema, type ShipmentStatus } from "@trenova/shared/types/shipment";
 
 export type SavedViewId = "all" | "transit" | "at-risk" | "unassigned" | "delivering-today";
 

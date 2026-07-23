@@ -1,11 +1,11 @@
-import { formatToUserTimezone } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   getDestinationStop,
   getShipmentEtaTone,
   type ShipmentEtaTone,
 } from "@/lib/shipment-utils";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 
 const TONE_CLASS: Record<ShipmentEtaTone, string> = {
   ontime: "text-foreground",

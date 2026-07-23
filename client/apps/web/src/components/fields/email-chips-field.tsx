@@ -1,5 +1,5 @@
 import { FieldWrapper } from "@/components/fields/field-components";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
 import {

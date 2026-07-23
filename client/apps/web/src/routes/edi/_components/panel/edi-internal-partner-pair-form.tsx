@@ -1,8 +1,8 @@
 import { OrganizationAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { Form, FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import type { OrganizationSelectOption } from "@/types/organization";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import type { OrganizationSelectOption } from "@trenova/shared/types/organization";
 import type { Control, UseFormReturn } from "react-hook-form";
 import type { CreateInternalPartnerPairFormValues } from "../edi-schemas";
 

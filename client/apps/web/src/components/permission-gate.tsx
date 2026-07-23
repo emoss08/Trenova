@@ -1,5 +1,5 @@
-import { usePermissionStore } from "@/stores/permission-store";
-import type { OperationType } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { OperationType } from "@trenova/shared/types/permission";
 import type { ReactNode } from "react";
 
 interface PermissionGateProps {

@@ -2,7 +2,7 @@ import {
   HoldReasonTableDocument,
   type HoldReasonTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { HoldReason } from "@/types/hold-reason";
 
 export const holdReasonTableGraphQLConfig = defineDataTableGraphQLConfig<

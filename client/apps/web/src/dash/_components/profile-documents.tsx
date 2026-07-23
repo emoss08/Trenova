@@ -1,13 +1,13 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatRange } from "@/lib/date";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatRange } from "@trenova/shared/lib/date";
 import {
   fetchMyProfileDocuments,
   fetchPortalWorkerDocumentTypes,
   uploadMyProfileDocument,
-} from "@/lib/portal";
-import { cn, formatFileSize } from "@/lib/utils";
+} from "@trenova/shared/lib/portal";
+import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, IdCardIcon, PaperclipIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";

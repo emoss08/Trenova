@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { TextShimmer } from "@/components/ui/text-shimmer";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { cn } from "@trenova/shared/lib/utils";
 
 export function RunConsoleLoadingState({
   description,

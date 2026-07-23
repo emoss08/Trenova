@@ -1,18 +1,18 @@
 import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { UploadPanel } from "@/components/documents/upload-panel";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/tooltip";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { ShipmentBillingRequirement } from "@/types/shipment";
-import type { Document } from "@/types/document";
+import type { ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
+import type { Document } from "@trenova/shared/types/document";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";

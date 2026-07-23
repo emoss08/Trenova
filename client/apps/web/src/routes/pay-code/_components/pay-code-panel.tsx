@@ -5,11 +5,11 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { payCodeDirectionChoices, statusChoices } from "@/lib/choices";
 import { createPayCode, updatePayCode, type PayCodeRow } from "@/lib/graphql/driver-settlement";
-import type { DataTablePanelProps } from "@/types/data-table";
-import { payCodeFormSchema, type PayCodeFormValues } from "@/types/driver-pay";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { payCodeFormSchema, type PayCodeFormValues } from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 

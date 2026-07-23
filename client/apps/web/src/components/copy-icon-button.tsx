@@ -1,6 +1,6 @@
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { CheckIcon, CopyIcon } from "lucide-react";
 
 export function CopyIconButton({

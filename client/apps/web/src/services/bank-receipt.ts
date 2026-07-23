@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import type { BankReceipt, MatchSuggestion, ReconciliationSummary } from "@/types/bank-receipt";
 
 export class BankReceiptService {

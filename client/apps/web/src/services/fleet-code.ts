@@ -1,12 +1,12 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   bulkUpdateFleetCodeStatusResponseSchema,
   fleetCodeSchema,
   type BulkUpdateFleetCodeStatusRequest,
   type BulkUpdateFleetCodeStatusResponse,
   type FleetCode,
-} from "@/types/fleet-code";
+} from "@trenova/shared/types/fleet-code";
 
 export class FleetCodeService {
   public async bulkUpdateStatus(request: BulkUpdateFleetCodeStatusRequest) {

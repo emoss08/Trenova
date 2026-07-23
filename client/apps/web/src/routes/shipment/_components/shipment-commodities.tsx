@@ -2,7 +2,7 @@ import { CommodityAutocompleteField } from "@/components/autocomplete-fields";
 import { EmptyState } from "@/components/empty-state";
 import { NumberField } from "@/components/fields/number-field";
 import { EntityRedirectLink } from "@/components/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,20 +10,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/tooltip";
 import { queries } from "@/lib/queries";
-import { cn, findDuplicateIds, pluralize, truncateText } from "@/lib/utils";
-import { ApiRequestError } from "@/lib/api";
+import { cn, findDuplicateIds, pluralize, truncateText } from "@trenova/shared/lib/utils";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import { apiService } from "@/services/api";
-import type { Commodity } from "@/types/commodity";
-import type { Shipment } from "@/types/shipment";
+import type { Commodity } from "@trenova/shared/types/commodity";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircleIcon,

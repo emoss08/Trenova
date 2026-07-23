@@ -1,4 +1,4 @@
-import { LazyComponent } from "@/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Outlet } from "react-router";
 
 export function AdminLayout() {

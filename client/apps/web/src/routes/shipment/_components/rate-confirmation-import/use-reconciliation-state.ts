@@ -1,5 +1,5 @@
-import type { DocumentIntelligence } from "@/types/document";
-import type { ShipmentCreateInput } from "@/types/shipment";
+import type { DocumentIntelligence } from "@trenova/shared/types/document";
+import type { ShipmentCreateInput } from "@trenova/shared/types/shipment";
 import { useCallback, useMemo, useReducer } from "react";
 import {
   computeCounts,

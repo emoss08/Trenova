@@ -8,7 +8,7 @@ import { JsonEditorField } from "@/components/fields/json-editor-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Form, FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import type { UseFormReturn } from "react-hook-form";
 import {

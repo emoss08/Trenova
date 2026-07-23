@@ -1,5 +1,5 @@
-import { Separator } from "@/components/ui/separator";
-import type { Location } from "@/types/location";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import type { Location } from "@trenova/shared/types/location";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import { HashIcon, MapPinIcon, XIcon } from "lucide-react";
 import type { NormalizedGeofence } from "./geofence-types";

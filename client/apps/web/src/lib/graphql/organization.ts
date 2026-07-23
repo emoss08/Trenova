@@ -3,12 +3,12 @@ import {
   UpdateOrganizationSettingsDocument,
   type OrganizationInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { safeParse } from "@/lib/parse";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   organizationSettingsSchema,
   type OrganizationSettings,
-} from "@/types/organization";
+} from "@trenova/shared/types/organization";
 
 type OrganizationSettingsResponse = {
   organization: unknown;

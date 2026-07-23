@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import type {
   EDITemplateElement,
   EDITemplateElementBaseSource,
   EDITemplateTransformStep,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { ShuffleIcon, Trash2Icon } from "lucide-react";
 import {
   createTransformStep,

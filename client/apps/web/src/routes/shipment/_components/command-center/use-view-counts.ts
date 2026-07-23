@@ -1,5 +1,5 @@
 import { getShipmentSavedViewCountsGraphQL } from "@/lib/graphql/shipment";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { SAVED_VIEWS, type SavedViewId } from "./saved-views";

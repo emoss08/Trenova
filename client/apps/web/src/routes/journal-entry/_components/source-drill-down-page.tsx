@@ -1,4 +1,4 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   JournalEntryPostingCard,
   type PostingEntry,
@@ -6,11 +6,11 @@ import {
 import { SourceDrillDownLink } from "@/components/accounting/source-drill-down-link";
 import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent } from "@trenova/shared/components/ui/card";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, BookOpenIcon, CheckCircle2Icon, ScrollTextIcon } from "lucide-react";
 import { m } from "motion/react";

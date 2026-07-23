@@ -3,11 +3,11 @@ import {
   HoverCardContent,
   HoverCardPortal,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "@trenova/shared/components/ui/hover-card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { formatToUserTimezone, toDate } from "@/lib/date";
-import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
+import { formatToUserTimezone, toDate } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { UTCDate } from "@date-fns/utc";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { CheckIcon, CopyIcon } from "lucide-react";

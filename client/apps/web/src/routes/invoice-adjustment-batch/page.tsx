@@ -1,18 +1,18 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { EmptyState } from "@/components/empty-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, Layers3Icon } from "lucide-react";
 import { useQueryStates } from "nuqs";

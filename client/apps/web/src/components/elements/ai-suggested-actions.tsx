@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 interface Suggestion {
   label: string;

@@ -2,7 +2,7 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "@trenova/shared/components/ui/hover-card";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";

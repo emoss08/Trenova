@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +6,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@trenova/shared/components/ui/dialog";
+import { Input } from "@trenova/shared/components/ui/input";
 import { useState } from "react";
 
 export function BulkMarkPaidDialog({

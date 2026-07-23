@@ -1,15 +1,15 @@
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { ChevronDownIcon } from "lucide-react";
 import { Controller, type FieldValues } from "react-hook-form";
-import { Button } from "../ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Textarea, type TextareaProps } from "../ui/textarea";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { Textarea, type TextareaProps } from "@trenova/shared/components/ui/textarea";
 import { FieldWrapper } from "./field-components";
 
 export type TextareaPreset = {

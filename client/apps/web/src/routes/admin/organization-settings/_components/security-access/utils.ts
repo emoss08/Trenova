@@ -1,11 +1,11 @@
-import type { BadgeVariant } from "@/components/ui/badge";
+import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type {
   AccessPolicy,
   AccessPolicyConditionRow,
   IdentityProvider,
   IdentityProviderFormValues,
-} from "@/types/iam";
-import type { API_ENDPOINTS } from "@/types/server";
+} from "@trenova/shared/types/iam";
+import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 
 export type ConditionRow = AccessPolicyConditionRow;
 

@@ -3,15 +3,15 @@ import type {
   GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
-import { formatRange } from "@/lib/date";
-import { formatLocation } from "@/lib/utils";
-import type { AccessorialCharge } from "@/types/accessorial-charge";
+import { formatRange } from "@trenova/shared/lib/date";
+import { formatLocation } from "@trenova/shared/lib/utils";
+import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import type { AccountType } from "@/types/account-type";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
-import type { Commodity } from "@/types/commodity";
+import type { Commodity } from "@trenova/shared/types/commodity";
 import type { DistanceProfile } from "@/types/distance-profile";
-import type { Document } from "@/types/document";
-import type { DocumentType } from "@/types/document-type";
+import type { Document } from "@trenova/shared/types/document";
+import type { DocumentType } from "@trenova/shared/types/document-type";
 import type {
   EDICommunicationProfile,
   EDIConnection,
@@ -20,22 +20,22 @@ import type {
   EDIPartner,
   EDIPartnerDocumentProfile,
   EDITemplate,
-} from "@/types/edi";
-import type { EmailProfile } from "@/types/email";
-import type { SelectOption as StaticSelectOption } from "@/types/fields";
-import type { FleetCode } from "@/types/fleet-code";
-import type { FormulaTemplate } from "@/types/formula-template";
+} from "@trenova/shared/types/edi";
+import type { EmailProfile } from "@trenova/shared/types/email";
+import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
+import type { FleetCode } from "@trenova/shared/types/fleet-code";
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import type { HazardousMaterial } from "@/types/hazardous-material";
-import type { Location } from "@/types/location";
+import type { Location } from "@trenova/shared/types/location";
 import type { LocationCategory } from "@/types/location-category";
-import type { OrganizationSelectOption } from "@/types/organization";
-import type { Role } from "@/types/role";
-import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+import type { OrganizationSelectOption } from "@trenova/shared/types/organization";
+import type { Role } from "@trenova/shared/types/role";
+import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import type { EquipmentType as EquipmentTypeOption } from "@/types/equipment-type";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
-import type { User } from "@/types/user";
+import type { User } from "@trenova/shared/types/user";
 import type { ReactNode } from "react";
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
@@ -43,7 +43,7 @@ import { FieldWrapper } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
 import { SelectField } from "./fields/select-field";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   control: Control<TForm>;

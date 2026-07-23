@@ -1,9 +1,9 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   accessorialChargeSchema,
   type AccessorialCharge,
-} from "@/types/accessorial-charge";
+} from "@trenova/shared/types/accessorial-charge";
 
 export class AccessorialChargeService {
   public async patch(

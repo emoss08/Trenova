@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { SAVED_VIEWS, type SavedViewId } from "./saved-views";
 import { useCommandCenterUrl } from "./url-state";

@@ -4,8 +4,8 @@ import {
   type SelectOptionsInput,
   type SelectOptionsQuery,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export type SelectOptionMeta = Record<string, unknown>;
 

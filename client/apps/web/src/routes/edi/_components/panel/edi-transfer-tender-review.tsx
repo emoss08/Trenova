@@ -1,7 +1,7 @@
-import { EDITransferStatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import type { EDIMappingResolution, EDITransfer } from "@/types/edi";
+import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { cn } from "@trenova/shared/lib/utils";
+import type { EDIMappingResolution, EDITransfer } from "@trenova/shared/types/edi";
 import {
   ArrowRightIcon,
   CalendarClockIcon,

@@ -11,7 +11,7 @@ import type {
   ReplaceEDITemplateScriptLibrariesRequest,
   ReplaceEDITemplateSegmentsRequest,
   UpdateEDITemplateVersionRequest,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { useQueryClient } from "@tanstack/react-query";
 
 type MutationOptions<TData, TVariables> = {

@@ -2,8 +2,8 @@ import { DataTable } from "@/components/data-table/data-table";
 import {
   driverExpenseTableGraphQLConfig,
   type DriverExpenseRow,
-} from "@/lib/graphql/driver-portal";
-import { Resource } from "@/types/permission";
+} from "@trenova/shared/lib/graphql/driver-portal";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./expense-columns";
 import { ExpensePanel } from "./expense-panel";

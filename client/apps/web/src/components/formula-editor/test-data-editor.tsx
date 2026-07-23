@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { SHIPMENT_VARIABLES, VARIABLE_CATEGORIES } from "@/types/formula-template";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { cn } from "@trenova/shared/lib/utils";
+import { SHIPMENT_VARIABLES, VARIABLE_CATEGORIES } from "@trenova/shared/types/formula-template";
 import { ChevronDown, ChevronUp, Database, RotateCcw } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@trenova/shared/components/ui/select";
 
 export const DEFAULT_TEST_VALUES: Record<string, unknown> = {
   // Shipment Fields

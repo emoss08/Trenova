@@ -6,7 +6,7 @@ import {
   accessPolicyFormSchema,
   type AccessPolicy,
   type AccessPolicyFormValues,
-} from "@/types/iam";
+} from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { type Resolver, useForm } from "react-hook-form";

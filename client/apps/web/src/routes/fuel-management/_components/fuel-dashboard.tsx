@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/chart";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { FuelDashboardEntry } from "@/lib/graphql/fuel-surcharge";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Fuel, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";

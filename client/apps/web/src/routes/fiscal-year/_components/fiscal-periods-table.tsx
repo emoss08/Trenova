@@ -1,11 +1,11 @@
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@trenova/shared/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -13,9 +13,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { fiscalPeriodStatusChoices, periodTypeChoices } from "@/lib/choices";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { FiscalPeriod } from "@/types/fiscal-period";
 import {
   CalendarIcon,

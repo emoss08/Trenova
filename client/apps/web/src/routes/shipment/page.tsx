@@ -1,11 +1,11 @@
-import { DataTableLazyComponent, LazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { analytics } from "@/lib/queries/analytics";
 import { queries } from "@/lib/queries";
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation, Resource } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, RefreshCwIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";

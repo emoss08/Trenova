@@ -1,6 +1,6 @@
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import type { DriverSettlementRow } from "@/lib/graphql/driver-settlement";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { SettlementDetail } from "./settlement-detail";
 
 export function SettlementPanel({

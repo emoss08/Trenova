@@ -6,9 +6,9 @@ import {
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { statusChoices } from "@/lib/choices";
-import type { EDICommunicationProfile } from "@/types/edi";
+import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
 import { useFormContext, useWatch } from "react-hook-form";
 import { communicationProfileMethodOptions, type CommunicationProfileFormValues } from "../edi-schemas";
 import {

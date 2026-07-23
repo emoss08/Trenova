@@ -1,4 +1,4 @@
-import type { BadgeVariant } from "@/types/badge";
+import type { BadgeVariant } from "@trenova/shared/types/badge";
 
 export type WeatherAlertCategory =
   | "winter_weather"

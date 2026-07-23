@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { getAvailableResources, type ResourceDefinition } from "@/lib/role-api";
-import { cn } from "@/lib/utils";
-import type { AddPermission, DataScope, Operation } from "@/types/role";
+import { cn } from "@trenova/shared/lib/utils";
+import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
 import { EyeIcon, PencilIcon, ShieldIcon, SparklesIcon } from "lucide-react";
 import { useMemo } from "react";

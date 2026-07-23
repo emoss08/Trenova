@@ -1,7 +1,7 @@
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalogEntity, ReportCatalogField } from "@/lib/graphql/reports";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ReportFieldRef } from "@/types/report";
 import { ChevronDownIcon, ChevronRightIcon, LockIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";

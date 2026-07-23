@@ -6,13 +6,13 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { Document, DocumentPacketSummary } from "@/types/document";
-import type { DocumentType } from "@/types/document-type";
+import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
+import type { DocumentType } from "@trenova/shared/types/document-type";
 import type {
   Shipment,
   ShipmentBillingReadiness,
   ShipmentBillingRequirement,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";

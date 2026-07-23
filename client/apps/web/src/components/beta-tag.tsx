@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { SparklesIcon } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 type BetaTagProps = {
   label?: string;
   includeIcon?: boolean;

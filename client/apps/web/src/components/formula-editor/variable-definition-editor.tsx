@@ -1,11 +1,11 @@
 import { SelectField } from "@/components/fields/select-field";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Input } from "@trenova/shared/components/ui/input";
 import type {
   VariableDefinition,
   VariableValueType,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import { Plus, Trash2, Variable } from "lucide-react";
 import { useCallback } from "react";
 import {

@@ -10,9 +10,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
   CardAction,
@@ -20,11 +20,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ShikiCodeBlock } from "@/components/ui/shiki-code-block";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { apiService } from "@/services/api";
 import type { DatabaseSessionChain } from "@/types/database-session";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

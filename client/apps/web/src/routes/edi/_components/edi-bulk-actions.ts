@@ -1,4 +1,4 @@
-import type { EDIBulkActionResult } from "@/types/edi";
+import type { EDIBulkActionResult } from "@trenova/shared/types/edi";
 import { toast } from "sonner";
 
 type EDIBulkOutcomeLabels = {

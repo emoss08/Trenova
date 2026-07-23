@@ -3,8 +3,8 @@ import {
   fieldFilterSchema,
   filterGroupSchema,
   sortFieldSchema,
-} from "./data-table";
-import { createLimitOffsetResponse } from "./server";
+} from "@trenova/shared/types/data-table";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export const configurationVisibilitySchema = z.enum([
   "Private",

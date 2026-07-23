@@ -9,8 +9,8 @@ import {
   type PatchEquipmentTypeMutation,
   type UpdateEquipmentTypeMutation,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { safeParse } from "@/lib/parse";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   bulkUpdateEquipmentTypeStatusResponseSchema,
   equipmentTypeSchema,

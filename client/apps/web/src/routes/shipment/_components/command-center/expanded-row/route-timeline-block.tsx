@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Stop, StopType } from "@/types/shipment";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import type { Stop, StopType } from "@trenova/shared/types/shipment";
 
 const STOP_KIND: Record<StopType, string> = {
   Pickup: "PICKUP",

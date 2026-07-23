@@ -1,5 +1,5 @@
 import type { AROpenItem } from "@/lib/graphql/accounts-receivable";
-import type { CashApplicationRow } from "@/types/customer-payment";
+import type { CashApplicationRow } from "@trenova/shared/types/customer-payment";
 
 export function toMinor(amount: number): number {
   return Math.round((Number.isFinite(amount) ? amount : 0) * 100);

@@ -1,10 +1,10 @@
-import type { BadgeVariant } from "@/components/ui/badge";
+import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type {
   EDIDocumentPreview,
   EDIMessage,
   EDIMessageInspection,
   InspectX12Request,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { formatUnix } from "../../edi-display-utils";
 import { buildMessageJsonFilename, buildX12Filename } from "../utils/edi-message-utils";
 import type { InspectorGridRow } from "./components/inspector-grid";

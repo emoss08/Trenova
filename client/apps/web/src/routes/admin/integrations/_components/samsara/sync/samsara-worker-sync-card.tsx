@@ -1,9 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { CardContent } from "@trenova/shared/components/ui/card";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -11,14 +11,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { usePermissions } from "@/hooks/use-permission";
-import { ApiRequestError } from "@/lib/api";
-import { formatToUserTimezone, generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import { formatToUserTimezone, generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import type { WorkerSyncLogLevel, WorkerSyncSummary } from "@/types/samsara";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, CopyIcon, ExternalLinkIcon, RefreshCcwIcon } from "lucide-react";

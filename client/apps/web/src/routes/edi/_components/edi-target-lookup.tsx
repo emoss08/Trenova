@@ -1,5 +1,5 @@
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import type { EDIMappingEntityType } from "@/types/edi";
+import type { EDIMappingEntityType } from "@trenova/shared/types/edi";
 import type { FieldValues } from "react-hook-form";
 import {
   getTargetOptionDescription,

@@ -1,5 +1,5 @@
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import {
   REPORT_DEFINITION_STATUS_LABELS,
   REPORT_RUN_STATUS_LABELS,

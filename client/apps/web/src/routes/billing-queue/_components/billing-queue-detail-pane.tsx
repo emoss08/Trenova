@@ -1,15 +1,15 @@
 import AuditTab from "@/components/audit-tab";
-import { PlainBillingQueueStatusBadge } from "@/components/status-badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { exceptionReasonLabels } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import ShipmentCommentsTab from "@/routes/shipment/_components/shipment-comments";
-import type { ExceptionReasonCode } from "@/types/billing-queue";
+import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,

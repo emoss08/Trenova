@@ -1,13 +1,13 @@
-import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import { usePermission } from "@/hooks/use-permission";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { auditLogTableGraphQLConfig } from "@/lib/graphql/audit-log-table";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   formatAuditValueWithDates,
   formatFieldLabel,
@@ -18,7 +18,7 @@ import {
   type NormalizedAuditChange,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
 import type { AuditEntry } from "@/types/audit-entry";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, fromUnixTime } from "date-fns";
 import { ChevronRight, ExternalLinkIcon } from "lucide-react";

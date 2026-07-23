@@ -12,7 +12,7 @@ import {
   type TabsProps as TabsPrimitiveProps,
   type TabsTabProps as TabsTabPrimitiveProps,
 } from "@/components/animate-ui/primitives/base/tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type TabsProps = TabsPrimitiveProps;
 

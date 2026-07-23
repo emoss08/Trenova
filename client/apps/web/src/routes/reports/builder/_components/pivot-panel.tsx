@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import { REPORT_AGGREGATION_LABELS, type ReportIR, type ReportPivotSpec } from "@/types/report";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
   aggregateColumns,
   columnDisplayLabel,

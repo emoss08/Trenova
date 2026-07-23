@@ -1,11 +1,11 @@
 import type { ShipmentProfitabilityQuery } from "@trenova/graphql/generated/graphql";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { queries } from "@/lib/queries";
-import { formatCurrency, formatPercent, formatPerMile } from "@/lib/utils";
+import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { useState, type ReactNode } from "react";

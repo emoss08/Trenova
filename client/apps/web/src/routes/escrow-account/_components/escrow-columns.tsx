@@ -1,7 +1,7 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { EscrowAccountStatusBadge } from "@/components/status-badge";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { EscrowAccountStatusBadge } from "@trenova/shared/components/status-badge";
 import type { EscrowAccountRow } from "@/lib/graphql/driver-settlement";
-import type { EscrowAccountStatus } from "@/types/driver-pay";
+import type { EscrowAccountStatus } from "@trenova/shared/types/driver-pay";
 import { type ColumnDef } from "@tanstack/react-table";
 
 function formatDate(unix?: number | null): string {

@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/card";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
   autoAssignmentStrategyChoices,

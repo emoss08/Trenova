@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@/types/edi";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@trenova/shared/types/edi";
 import { diagnosticKey } from "../../utils/edi-designer-utils";
 import { groupDiagnostics } from "../../utils/edi-message-utils";
 

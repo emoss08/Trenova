@@ -2,7 +2,7 @@ import {
   ServiceFailureTableDocument,
   type ServiceFailureTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { ServiceFailure } from "@/types/service-failure";
 
 export function createServiceFailureTableGraphQLConfig(shipmentId?: string) {

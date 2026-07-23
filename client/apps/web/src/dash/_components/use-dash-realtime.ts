@@ -1,7 +1,7 @@
-import { parseInvalidationEvent, RESOURCE_EVENT_NAME } from "@/hooks/realtime-patching";
-import { notification } from "@/lib/queries/notification";
-import { realtimeService } from "@/services/realtime";
-import { useAuthStore } from "@/stores/auth-store";
+import { parseInvalidationEvent, RESOURCE_EVENT_NAME } from "@trenova/shared/hooks/realtime-patching";
+import { notification } from "@trenova/shared/lib/queries/notification";
+import { realtimeService } from "@trenova/shared/services/realtime";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";

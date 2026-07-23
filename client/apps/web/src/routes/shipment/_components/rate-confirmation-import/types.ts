@@ -3,7 +3,7 @@ import type {
   DocumentIntelligenceConflict,
   DocumentIntelligenceField,
   DocumentIntelligenceStop,
-} from "@/types/document";
+} from "@trenova/shared/types/document";
 
 export type RequiredFieldsForm = {
   customerId: string;

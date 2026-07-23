@@ -1,5 +1,5 @@
 "use no memo";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { FileTextIcon, LockIcon } from "lucide-react";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { type ReactNode, lazy, Suspense } from "react";

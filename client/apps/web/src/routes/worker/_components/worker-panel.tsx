@@ -1,5 +1,5 @@
-import type { DataTablePanelProps } from "@/types/data-table";
-import { workerSchema, type Worker } from "@/types/worker";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { workerSchema, type Worker } from "@trenova/shared/types/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { WorkerCreatePanel } from "./worker-create-panel";

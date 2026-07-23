@@ -1,7 +1,7 @@
 import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
 import type { QuickActionCommand } from "@/config/navigation.types";
-import { Operation, type OperationType } from "@/types/permission";
+import { Operation, type OperationType } from "@trenova/shared/types/permission";
 import { SettingsIcon } from "lucide-react";
 
 type PaletteIconComponent = React.ComponentType<{

@@ -3,9 +3,9 @@ import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Badge } from "@/components/ui/badge";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import type { EDICommunicationProfile } from "@/types/edi";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
 import type { Control } from "react-hook-form";
 import {
   acknowledgmentOptions,

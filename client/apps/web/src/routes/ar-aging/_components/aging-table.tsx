@@ -1,4 +1,4 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   Table,
   TableBody,
@@ -7,9 +7,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import type { ARAgingRow, ARAgingSummary } from "@/lib/graphql/accounts-receivable";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   flexRender,
   getCoreRowModel,

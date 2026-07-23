@@ -1,7 +1,7 @@
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Progress } from "@trenova/shared/components/ui/progress";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { m } from "motion/react";
 import { AlertCircleIcon, LoaderCircleIcon } from "lucide-react";
 import { useCallback } from "react";

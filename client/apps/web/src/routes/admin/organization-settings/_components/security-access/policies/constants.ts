@@ -1,4 +1,4 @@
-import type { SelectOption } from "@/types/fields";
+import type { SelectOption } from "@trenova/shared/types/fields";
 
 export const effectFilterOptions: SelectOption[] = [
   { value: "all", label: "All effects" },

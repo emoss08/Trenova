@@ -1,4 +1,4 @@
-import type { OperationType } from "@/types/permission";
+import type { OperationType } from "@trenova/shared/types/permission";
 import type { LucideIcon } from "lucide-react";
 
 export type ModuleId =

@@ -1,6 +1,6 @@
-import { useUnreadNotificationCount } from "@/hooks/use-notifications";
-import { fetchMyPortalProfile } from "@/lib/graphql/driver-portal";
-import { cn } from "@/lib/utils";
+import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
+import { fetchMyPortalProfile } from "@trenova/shared/lib/graphql/driver-portal";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { BellIcon, HouseIcon, ReceiptTextIcon, TruckIcon, WalletIcon } from "lucide-react";
 import { m } from "motion/react";

@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { Loader2, Paperclip } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 interface AiChatInputProps {
   onSubmit?: (message: string, attachments?: File[]) => void;

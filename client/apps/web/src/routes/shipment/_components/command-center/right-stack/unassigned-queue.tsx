@@ -1,14 +1,14 @@
-import { Spinner } from "@/components/ui/spinner";
-import { TextShimmer } from "@/components/ui/text-shimmer";
-import { formatToUserTimezone } from "@/lib/date";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import {
   getDestinationLocation,
   getOriginLocation,
   getOriginStop,
   getTotalMiles,
 } from "@/lib/shipment-utils";
-import { cn, formatCurrency } from "@/lib/utils";
-import type { Shipment } from "@/types/shipment";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { GripVerticalIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useCommandCenterUrl } from "../url-state";

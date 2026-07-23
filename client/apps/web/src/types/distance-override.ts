@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { customerSchema } from "./customer";
-import { nullableStringSchema, tenantInfoSchema } from "./helpers";
-import { locationSchema } from "./location";
+import { customerSchema } from "@trenova/shared/types/customer";
+import { nullableStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
+import { locationSchema } from "@trenova/shared/types/location";
 
 export const distanceOverrideIntermediateStopSchema = z.object({
   locationId: z.string().min(1, { error: "Intermediate stop location is required" }),

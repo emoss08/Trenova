@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   bulkUpdateCustomerStatusResponseSchema,
   customerBillingProfileSchema,
@@ -8,7 +8,7 @@ import {
   type BulkUpdateCustomerStatusResponse,
   type Customer,
   type CustomerBillingProfile,
-} from "@/types/customer";
+} from "@trenova/shared/types/customer";
 
 export class CustomerService {
   public async bulkUpdateStatus(request: BulkUpdateCustomerStatusRequest) {

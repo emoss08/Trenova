@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -7,14 +7,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import {
   buildTemplateExport,
   downloadJson,
   getExportFilename,
 } from "@/lib/formula-template-export";
 import { apiService } from "@/services/api";
-import type { FormulaTemplate } from "@/types/formula-template";
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { DownloadIcon, Loader2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";

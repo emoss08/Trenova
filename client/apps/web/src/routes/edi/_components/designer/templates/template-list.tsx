@@ -1,17 +1,17 @@
 import { FormEditModal } from "@/components/form-edit-modal";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { TextShimmer } from "@/components/ui/text-shimmer";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
   useSelectedTemplateDesignerIds,
   useTemplateDesignerTemplateListInfiniteQuery,
   useTemplateDesignerUrlActions,
 } from "@/hooks/use-template-designer-state";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
-import { ediTemplateSchema, type EDITemplate, type UpdateEDITemplateRequest } from "@/types/edi";
+import { ediTemplateSchema, type EDITemplate, type UpdateEDITemplateRequest } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { PencilIcon } from "lucide-react";

@@ -1,10 +1,10 @@
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { listRoles } from "@/lib/role-api";
-import { cn } from "@/lib/utils";
-import type { Role } from "@/types/role";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Role } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";

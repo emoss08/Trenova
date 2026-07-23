@@ -1,7 +1,7 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { AssignPayProfileDialog } from "@/components/pay/assign-pay-profile-dialog";
-import { PayeeClassificationBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/dialog";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   endWorkerPayAssignment,
   fetchEffectiveWorkerPayAssignment,
@@ -18,8 +18,8 @@ import {
   fetchWorkerPayAssignments,
   type EffectiveWorkerPayAssignment,
 } from "@/lib/graphql/driver-settlement";
-import { getTodayDate } from "@/lib/date";
-import type { PayeeClassification } from "@/types/driver-pay";
+import { getTodayDate } from "@trenova/shared/lib/date";
+import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useState } from "react";

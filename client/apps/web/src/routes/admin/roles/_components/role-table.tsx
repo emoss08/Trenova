@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { roleTableGraphQLConfig } from "@/lib/graphql/role-table";
-import { Resource } from "@/types/permission";
-import type { Role } from "@/types/role";
+import { Resource } from "@trenova/shared/types/permission";
+import type { Role } from "@trenova/shared/types/role";
 import type { Row } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";

@@ -4,7 +4,7 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   allocateBudget,
   openItemToApplicationRow,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/cash-application";
 import { paymentMethodChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import type { RecordPaymentFormValues } from "@/types/customer-payment";
+import type { RecordPaymentFormValues } from "@trenova/shared/types/customer-payment";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";

@@ -1,5 +1,5 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Button } from "@/components/ui/button";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -7,15 +7,15 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { dateToUnixTimestamp, formatRange, generateDateOnly } from "@/lib/date";
-import { cancelMyExpense, fetchMyExpenses, submitMyExpense } from "@/lib/graphql/driver-portal";
-import { uploadMyExpenseReceipt } from "@/lib/portal";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/drawer";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { dateToUnixTimestamp, formatRange, generateDateOnly } from "@trenova/shared/lib/date";
+import { cancelMyExpense, fetchMyExpenses, submitMyExpense } from "@trenova/shared/lib/graphql/driver-portal";
+import { uploadMyExpenseReceipt } from "@trenova/shared/lib/portal";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CameraIcon, PlusIcon, ReceiptIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";

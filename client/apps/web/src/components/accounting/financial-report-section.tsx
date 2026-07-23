@@ -1,6 +1,6 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import type { StatementSection } from "@/types/income-statement";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type FinancialReportSectionProps = {
   section: StatementSection | null | undefined;

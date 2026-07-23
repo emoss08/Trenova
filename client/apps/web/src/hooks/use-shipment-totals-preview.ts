@@ -5,7 +5,7 @@ import type {
   Shipment,
   ShipmentTotalsFuelSurcharge,
   ShipmentTotalsResponse,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 

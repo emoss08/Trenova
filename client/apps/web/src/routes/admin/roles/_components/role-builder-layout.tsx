@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 import { Link } from "react-router";
 

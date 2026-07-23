@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   billingQueueFilterPresetSchema,
   billingQueueItemSchema,
@@ -12,7 +12,7 @@ import {
   type BillingQueueStats,
   type BillingQueueUpdateChargesInput,
   type BillingQueueUpdateStatusInput,
-} from "@/types/billing-queue";
+} from "@trenova/shared/types/billing-queue";
 
 export class BillingQueueService {
   public async getStats() {

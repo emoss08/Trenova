@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { Document } from "@/types/document";
+import type { Document } from "@trenova/shared/types/document";
 import {
   DownloadIcon,
   EllipsisVerticalIcon,

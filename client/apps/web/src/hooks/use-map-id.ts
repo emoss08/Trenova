@@ -1,5 +1,5 @@
-import { MAP_ID_DARK, MAP_ID_LIGHT } from "@/lib/constants";
-import { useTheme } from "@/components/theme-provider";
+import { MAP_ID_DARK, MAP_ID_LIGHT } from "@trenova/shared/lib/constants";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useMemo } from "react";
 
 export function useMapId() {

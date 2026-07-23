@@ -6,10 +6,10 @@ import {
   useCancelReportRun,
 } from "@/hooks/use-reports";
 import { usePermission } from "@/hooks/use-permission";
-import { graphQLErrorMessage } from "@/lib/graphql";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { reportRunsTableGraphQLConfig, type ReportRun } from "@/lib/graphql/reports";
-import type { RowAction } from "@/types/data-table";
-import { Operation, Resource } from "@/types/permission";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { BanIcon, DownloadIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";

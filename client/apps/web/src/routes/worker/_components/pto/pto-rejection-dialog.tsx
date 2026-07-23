@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,15 +6,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import type { ApiRequestError } from "@/lib/api";
+} from "@trenova/shared/components/ui/dialog";
+import { Form } from "@trenova/shared/components/ui/form";
+import type { ApiRequestError } from "@trenova/shared/lib/api";
 import { rejectWorkerPTO } from "@/lib/graphql/worker-mutations";
-import type { TableSheetProps } from "@/types/data-table";
+import type { TableSheetProps } from "@trenova/shared/types/data-table";
 import {
   ptoRejectionRequestSchema,
   type PTORejectionRequest,
-} from "@/types/worker";
+} from "@trenova/shared/types/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";

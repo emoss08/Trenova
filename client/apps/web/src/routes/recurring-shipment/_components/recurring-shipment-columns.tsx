@@ -1,7 +1,7 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { describeCron } from "@/lib/cron";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { RecurringShipment, RecurringShipmentStatus } from "@/types/recurring-shipment";
 import { type ColumnDef } from "@tanstack/react-table";
 import { ArrowRightIcon } from "lucide-react";

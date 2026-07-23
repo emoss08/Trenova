@@ -1,9 +1,9 @@
 import { Metadata } from "@/components/metadata";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
-import { PRIVACY_URL, TERMS_URL } from "@/lib/constants";
-import type { TenantLoginMetadata, UserOrganization } from "@/types/organization";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
+import type { TenantLoginMetadata, UserOrganization } from "@trenova/shared/types/organization";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { ArrowRightIcon, BuildingIcon, TruckIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";

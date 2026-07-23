@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { UserOrganization } from "@/types/organization";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { UserOrganization } from "@trenova/shared/types/organization";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 

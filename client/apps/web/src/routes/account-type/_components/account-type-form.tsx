@@ -2,7 +2,7 @@ import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { accountCategoryChoices, statusChoices } from "@/lib/choices";
 import type { AccountType } from "@/types/account-type";
 import { useFormContext } from "react-hook-form";

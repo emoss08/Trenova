@@ -3,7 +3,7 @@ import {
   decimalStringSchema,
   nullableIntegerSchema,
   nullableStringSchema,
-} from "@/types/helpers";
+} from "@trenova/shared/types/helpers";
 
 describe("decimalStringSchema", () => {
   it("parses string to float", () => {

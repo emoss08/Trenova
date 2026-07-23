@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { CircleDollarSign, FileCheck2, Layers, Wallet, X } from "lucide-react";
 import { useState } from "react";
 

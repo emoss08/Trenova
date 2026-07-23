@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   assignBillingQueueBillerGraphQL,
   updateBillingQueueStatusGraphQL,
 } from "@/lib/graphql/billing-queue";
 import { queries } from "@/lib/queries";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type {
   BillingQueueItem,
   BillingQueueUpdateStatusInput,
-} from "@/types/billing-queue";
+} from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,

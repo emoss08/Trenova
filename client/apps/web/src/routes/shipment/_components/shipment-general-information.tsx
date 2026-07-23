@@ -1,10 +1,10 @@
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { ApiRequestError } from "@/lib/api";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";

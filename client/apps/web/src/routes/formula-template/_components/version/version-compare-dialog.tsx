@@ -1,16 +1,16 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dialog";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { FieldChange } from "@/types/formula-template";
+import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
 

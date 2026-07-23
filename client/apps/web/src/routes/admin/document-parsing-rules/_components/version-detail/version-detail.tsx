@@ -11,11 +11,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
@@ -25,7 +25,7 @@ import {
   type RuleVersion,
   type RuleVersionFormValues,
 } from "@/types/document-parsing-rule";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, ArrowLeftIcon, LockIcon, RocketIcon } from "lucide-react";

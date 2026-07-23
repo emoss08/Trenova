@@ -45,13 +45,13 @@ vi.mock("@/hooks/use-realtime-connection", () => ({
   useRealtimeConnection: vi.fn(),
 }));
 
-vi.mock("@/services/auth", () => ({
+vi.mock("@trenova/shared/services/auth", () => ({
   authService: {
     activateSessionRoles: mocks.activateSessionRoles,
   },
 }));
 
-vi.mock("@/stores/permission-store", () => ({
+vi.mock("@trenova/shared/stores/permission-store", () => ({
   usePermissionStore: (
     selector: (state: {
       manifest: typeof mocks.manifest;

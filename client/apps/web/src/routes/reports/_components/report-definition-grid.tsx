@@ -7,17 +7,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
   useCreateReportDefinition,
   useDeleteReportDefinition,
@@ -25,10 +25,10 @@ import {
   useResetCannedFork,
 } from "@/hooks/use-reports";
 import { usePermissions } from "@/hooks/use-permission";
-import { graphQLErrorMessage } from "@/lib/graphql";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { ReportDefinition } from "@/lib/graphql/reports";
-import { cn } from "@/lib/utils";
-import { Resource } from "@/types/permission";
+import { cn } from "@trenova/shared/lib/utils";
+import { Resource } from "@trenova/shared/types/permission";
 import {
   parseReportIR,
   REPORT_DEFINITION_STATUS_LABELS,

@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
-import { cn } from "@/lib/utils";
+import { Button } from "@trenova/shared/components/ui/button";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
+import { cn } from "@trenova/shared/lib/utils";
 import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 type DockPosition = "center" | "left" | "right";
 

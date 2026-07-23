@@ -2,10 +2,10 @@ import { CustomerAutocompleteField, UserAutocompleteField } from "@/components/a
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { currencyChoices, orderStatusChoices } from "@/lib/choices";
 import { fetchOrderDetail } from "@/lib/graphql/order";
-import type { Order } from "@/types/order";
+import type { Order } from "@trenova/shared/types/order";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext, useWatch } from "react-hook-form";
 import { OrderChargesSection } from "./order-charges-section";

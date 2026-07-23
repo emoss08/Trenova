@@ -5,7 +5,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import {
   buildCron,
   DEFAULT_CRON_PARTS,
@@ -15,7 +15,7 @@ import {
   type CronFrequency,
   type CronParts,
 } from "@/lib/cron";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useController, type Control, type FieldPath, type FieldValues } from "react-hook-form";

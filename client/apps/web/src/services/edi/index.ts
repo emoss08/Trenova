@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   ediBulkActionResultSchema,
   ediPartnerReadinessSchema,
@@ -52,7 +52,7 @@ import {
   type UpsertEDICommunicationProfileRequest,
   type UpsertEDIPartnerRequest,
   type UpsertEDIPartnerDocumentProfileRequest,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { ediTransferEndpoints } from "./transfers";
 
 export class EDIService {

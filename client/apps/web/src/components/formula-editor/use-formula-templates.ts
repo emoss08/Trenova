@@ -7,7 +7,7 @@ import {
   type ListFormulaTemplatesParams,
   updateFormulaTemplate,
 } from "@/lib/formula-template-api";
-import type { FormulaTemplate } from "@/types/formula-template";
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 

@@ -11,12 +11,12 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import { DocumentPacketRuleService } from "@/services/document-packet-rule";
-import type { RowAction } from "@/types/data-table";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import type { DocumentPacketRule } from "@/types/document-packet-rule";
-import type { DocumentType } from "@/types/document-type";
-import { Resource } from "@/types/permission";
+import type { DocumentType } from "@trenova/shared/types/document-type";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, TrashIcon } from "lucide-react";

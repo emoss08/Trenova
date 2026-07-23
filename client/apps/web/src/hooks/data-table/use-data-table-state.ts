@@ -2,7 +2,7 @@ import {
   type FieldFilter,
   type FilterGroup,
   type SortField,
-} from "@/types/data-table";
+} from "@trenova/shared/types/data-table";
 import {
   createParser,
   parseAsInteger,

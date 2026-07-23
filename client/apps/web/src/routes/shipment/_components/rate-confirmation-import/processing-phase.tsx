@@ -1,8 +1,8 @@
-import { BorderBeam } from "@/components/ui/border-beam";
-import { Button } from "@/components/ui/button";
-import { TextShimmer } from "@/components/ui/text-shimmer";
-import { cn } from "@/lib/utils";
-import type { Document, DocumentShipmentDraft } from "@/types/document";
+import { BorderBeam } from "@trenova/shared/components/ui/border-beam";
+import { Button } from "@trenova/shared/components/ui/button";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { m } from "motion/react";
 import { AlertCircleIcon, CheckIcon, LoaderCircleIcon } from "lucide-react";
 

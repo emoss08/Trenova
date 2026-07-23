@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,13 +6,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/dialog";
+import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import type { TableSheetProps } from "@/types/data-table";
-import type { API_ENDPOINTS } from "@/types/server";
+import { api } from "@trenova/shared/lib/api";
+import { cn } from "@trenova/shared/lib/utils";
+import type { TableSheetProps } from "@trenova/shared/types/data-table";
+import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { type FieldValues, FormProvider, type UseFormReturn } from "react-hook-form";

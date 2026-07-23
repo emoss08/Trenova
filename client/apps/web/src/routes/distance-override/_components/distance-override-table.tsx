@@ -9,12 +9,12 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import { distanceOverrideTableGraphQLConfig } from "@/lib/graphql/distance-override-table";
 import { DistanceOverrideService } from "@/services/distance-override";
-import type { RowAction } from "@/types/data-table";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import type { DistanceOverride } from "@/types/distance-override";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, TrashIcon } from "lucide-react";

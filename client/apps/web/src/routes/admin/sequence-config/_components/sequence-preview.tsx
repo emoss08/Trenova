@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/hover-card";
+import { cn } from "@trenova/shared/lib/utils";
 import type { SequenceConfig, SequenceConfigDocument } from "@/types/sequence-config";
 import { CheckIcon, CopyIcon, InfoIcon } from "lucide-react";
 import { memo, useMemo, useState } from "react";

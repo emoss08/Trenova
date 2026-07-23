@@ -1,5 +1,5 @@
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Form } from "@/components/ui/form";
+import { Form } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";

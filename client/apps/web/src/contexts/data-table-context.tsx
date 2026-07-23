@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { ControlsProvider } from "@/contexts/control-context";
-import type { PanelMode } from "@/types/data-table";
+import type { PanelMode } from "@trenova/shared/types/data-table";
 import type {
   ColumnDef,
   PaginationState,

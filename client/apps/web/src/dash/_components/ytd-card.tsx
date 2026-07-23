@@ -1,6 +1,6 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import { fetchMyYtdPay } from "@/lib/graphql/driver-portal";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { fetchMyYtdPay } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 
 export function YtdCard() {

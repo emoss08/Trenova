@@ -1,7 +1,7 @@
-import { DataTableLazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { lazy, Suspense } from "react";
 
 const SubscriptionTable = lazy(() => import("./_components/subscription-table"));

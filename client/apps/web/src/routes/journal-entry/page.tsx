@@ -1,18 +1,18 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { JournalLineItemsTable } from "@/components/accounting/journal-line-items-table";
 import { SourceDrillDownLink } from "@/components/accounting/source-drill-down-link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/card";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";

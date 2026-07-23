@@ -1,7 +1,7 @@
 "use no memo";
-import { cn } from "@/lib/utils";
-import type { SelectOption } from "@/types/fields";
-import type { DriverType } from "@/types/worker";
+import { cn } from "@trenova/shared/lib/utils";
+import type { SelectOption } from "@trenova/shared/types/fields";
+import type { DriverType } from "@trenova/shared/types/worker";
 import {
   ChevronDownIcon,
   MapPinIcon,
@@ -12,16 +12,16 @@ import {
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { StatusBadge } from "./status-badge";
-import { Badge, type BadgeVariant } from "./ui/badge";
+import { StatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import {
   Command,
   CommandGroup,
   CommandList,
   SelectCommandItem,
-} from "./ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Spinner } from "./ui/spinner";
+} from "@trenova/shared/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 const DRIVER_TYPE_VARIANTS: Record<DriverType, BadgeVariant> = {
   Local: "info",

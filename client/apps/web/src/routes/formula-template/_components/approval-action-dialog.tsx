@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,10 +6,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/dialog";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { apiService } from "@/services/api";
-import type { FormulaTemplate } from "@/types/formula-template";
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";

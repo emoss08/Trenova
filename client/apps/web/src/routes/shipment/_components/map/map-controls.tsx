@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { MapStyleId, OverlayId } from "@/types/shipment-map";
 import { useMap } from "@vis.gl/react-google-maps";
 import { LocateFixedIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";

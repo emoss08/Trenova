@@ -1,5 +1,5 @@
 import { PdfViewer } from "@/components/elements/pdf-viewer";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { FileSearchIcon, FileTextIcon } from "lucide-react";

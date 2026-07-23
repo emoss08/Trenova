@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { toDate, toUnixTimeStamp } from "@/lib/date";
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { format } from "date-fns";
 import { CalendarIcon, XIcon } from "lucide-react";
 import { useState } from "react";

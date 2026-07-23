@@ -3,7 +3,7 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +11,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Input } from "@trenova/shared/components/ui/input";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { getTodayDate } from "@/lib/date";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import {
   assignPayProfileToWorker,
   fetchPayProfileDetail,
   fetchPayProfileOptions,
 } from "@/lib/graphql/driver-settlement";
-import { assignPayProfileFormSchema, type AssignPayProfileFormValues } from "@/types/driver-pay";
+import { assignPayProfileFormSchema, type AssignPayProfileFormValues } from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";

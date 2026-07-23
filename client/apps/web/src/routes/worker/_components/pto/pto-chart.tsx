@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { API_BASE_URL } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { cn } from "@trenova/shared/lib/utils";
 import { ResponsiveBar } from "@nivo/bar";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";

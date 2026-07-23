@@ -4,7 +4,7 @@ import type {
   EDITemplateScriptLibrary,
   EDITemplateSegment,
   EDITemplateVersion,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import {
   createTemplateDesignerStore,
   type TemplateDesignerStore,

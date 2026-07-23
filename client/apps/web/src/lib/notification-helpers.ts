@@ -1,4 +1,4 @@
-import type { BadgeVariant } from "@/components/ui/badge";
+import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatDistanceToNowStrict, isToday, isYesterday } from "date-fns";
 import {
   CircleAlertIcon,

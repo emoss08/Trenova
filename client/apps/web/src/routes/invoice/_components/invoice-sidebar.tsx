@@ -1,14 +1,14 @@
 import { EmptyState } from "@/components/empty-state";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+} from "@trenova/shared/components/ui/select";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import {
   InvoiceTableDocument,
   type DataTablePageInfoFieldsFragment,
@@ -17,8 +17,8 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
 import { billTypeChoices, invoiceStatusChoices } from "@/lib/choices";
-import { requestGraphQL } from "@/lib/graphql";
-import { cn } from "@/lib/utils";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { cn } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";

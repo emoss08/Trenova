@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -8,9 +8,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import type { EDITemplateElement, EDITemplateSegment } from "@/types/edi";
+} from "@trenova/shared/components/ui/table";
+import { cn } from "@trenova/shared/lib/utils";
+import type { EDITemplateElement, EDITemplateSegment } from "@trenova/shared/types/edi";
 import { useState } from "react";
 import {
   buildConditionString,

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -7,27 +7,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import { useOptionalDataTable } from "@/contexts/data-table-context";
 import { entitySearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { api } from "@/lib/api";
-import { formatToUserTimezone } from "@/lib/date";
-import { cn } from "@/lib/utils";
-import { type EditTableSheetProps } from "@/types/data-table";
-import { type API_ENDPOINTS } from "@/types/server";
-import { TimeFormat } from "@/types/user";
+import { api } from "@trenova/shared/lib/api";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import { type EditTableSheetProps } from "@trenova/shared/types/data-table";
+import { type API_ENDPOINTS } from "@trenova/shared/types/server";
+import { TimeFormat } from "@trenova/shared/types/user";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import React, { useCallback, useEffect, useRef, useTransition } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { ComponentLoader } from "./component-loader";
-import { Form } from "./ui/form";
-import { Kbd } from "./ui/kbd";
-import { Separator } from "./ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
+import { Form } from "@trenova/shared/components/ui/form";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;

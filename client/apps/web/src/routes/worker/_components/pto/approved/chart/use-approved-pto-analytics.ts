@@ -1,6 +1,6 @@
 import { queries } from "@/lib/queries";
-import { useAuthStore } from "@/stores/auth-store";
-import type { PTOChartDataPoint, PTOType, Worker } from "@/types/worker";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { PTOChartDataPoint, PTOType, Worker } from "@trenova/shared/types/worker";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import {

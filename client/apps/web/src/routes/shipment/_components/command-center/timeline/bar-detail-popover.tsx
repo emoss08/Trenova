@@ -1,13 +1,13 @@
-import { ShipmentStatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent } from "@/components/ui/popover";
-import { formatDurationFromSeconds, formatToUserTimezone } from "@/lib/date";
+import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent } from "@trenova/shared/components/ui/popover";
+import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
 import {
   getDestinationLocation,
   getOriginLocation,
   getTotalMiles,
 } from "@/lib/shipment-utils";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import {
   ArrowLeftRightIcon,
   CircleCheckIcon,

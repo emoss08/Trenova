@@ -1,12 +1,12 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+} from "@trenova/shared/components/ui/card";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import type {
   DocumentParsingAnalysis,
   SimulationResult,

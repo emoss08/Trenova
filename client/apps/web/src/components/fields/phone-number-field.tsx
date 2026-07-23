@@ -1,6 +1,6 @@
-import type { FormControlProps } from "@/types/fields";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
-import { PhoneInput, type PhoneInputProps } from "../ui/phone-input";
+import { PhoneInput, type PhoneInputProps } from "@trenova/shared/components/ui/phone-input";
 import { FieldWrapper } from "./field-components";
 
 type BasePhoneNumberFieldProps = Omit<PhoneInputProps, "name"> & {

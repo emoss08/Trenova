@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
-import { Card, CardContent } from "./ui/card";
-import { Skeleton } from "./ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
+import { Card, CardContent } from "@trenova/shared/components/ui/card";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 
 export function MetricSkeleton({
   length = 4,

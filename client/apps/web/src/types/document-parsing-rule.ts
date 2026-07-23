@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalStringSchema, timestampSchema, versionSchema } from "./helpers";
+import { optionalStringSchema, timestampSchema, versionSchema } from "@trenova/shared/types/helpers";
 
 const stringArraySchema = z.array(z.string()).optional().default([]);
 const stringSchemaWithDefault = z.string().optional().default("");

@@ -3,8 +3,8 @@ import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   payCalcMethodChoices,
   payComponentKindChoices,
@@ -12,7 +12,7 @@ import {
   payeeClassificationChoices,
   statusChoices,
 } from "@/lib/choices";
-import type { PayProfileFormValues } from "@/types/driver-pay";
+import type { PayProfileFormValues } from "@trenova/shared/types/driver-pay";
 import { Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 

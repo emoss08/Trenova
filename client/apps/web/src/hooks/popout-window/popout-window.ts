@@ -1,4 +1,4 @@
-import { APP_ENV } from "@/lib/constants";
+import { APP_ENV } from "@trenova/shared/lib/constants";
 import { nanoid } from "nanoid";
 
 export type PopoutWindowOptions = {

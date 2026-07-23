@@ -2,7 +2,7 @@ import type {
   Location,
   LocationGeofenceType,
   LocationGeofenceVertex,
-} from "@/types/location";
+} from "@trenova/shared/types/location";
 import type { NormalizedGeofence } from "./geofence-types";
 
 export type GeofenceInput = {

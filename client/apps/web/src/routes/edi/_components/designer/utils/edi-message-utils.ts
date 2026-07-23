@@ -1,5 +1,5 @@
-import { generateDateOnly, getEndOfDay, getStartOfDay } from "@/lib/date";
-import type { EDIDiagnostic, EDIMessage, EDIX12EnvelopeSettings } from "@/types/edi";
+import { generateDateOnly, getEndOfDay, getStartOfDay } from "@trenova/shared/lib/date";
+import type { EDIDiagnostic, EDIMessage, EDIX12EnvelopeSettings } from "@trenova/shared/types/edi";
 import { parseX12Document } from "../inspector/utils/x12-parser";
 
 export type ParsedX12Segment = {

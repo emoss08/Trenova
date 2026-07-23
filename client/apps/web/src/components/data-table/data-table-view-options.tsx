@@ -1,5 +1,5 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -7,13 +7,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@trenova/shared/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/popover";
+import { cn } from "@trenova/shared/lib/utils";
 import type { Table } from "@tanstack/react-table";
 import { CheckIcon, Columns3Icon } from "lucide-react";
 import { useState } from "react";

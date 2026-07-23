@@ -1,4 +1,4 @@
-import type { EDIX12EnvelopeSettings } from "@/types/edi";
+import type { EDIX12EnvelopeSettings } from "@trenova/shared/types/edi";
 import { InputBlock } from "../components/designer-shared";
 
 export function EnvelopeEditor({

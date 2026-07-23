@@ -1,10 +1,10 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { createOrder, updateOrder } from "@/lib/graphql/order";
-import { orderSchema, type Order } from "@/types/order";
+import { orderSchema, type Order } from "@trenova/shared/types/order";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { HistoryIcon } from "lucide-react";

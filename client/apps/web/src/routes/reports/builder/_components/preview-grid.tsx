@@ -1,7 +1,7 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ReportPreview } from "@/lib/graphql/reports";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { CircleAlertIcon, Table2Icon } from "lucide-react";
 import { m } from "motion/react";

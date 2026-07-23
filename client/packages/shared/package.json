@@ -1,0 +1,53 @@
+{
+  "name": "@trenova/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@foony/realtime": "^0.14.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@lukemorales/query-key-factory": "^1.3.4",
+    "@shadcn/react": "^0.2.1",
+    "@tanstack/react-query": "^5.101.2",
+    "@tanstack/react-table": "^8.21.3",
+    "chrono-node": "^2.9.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
+    "lucide-react": "^1.24.0",
+    "motion": "^12.42.2",
+    "react": "^19.2.7",
+    "react-day-picker": "^10.0.1",
+    "react-error-boundary": "^6.1.2",
+    "react-hook-form": "^7.81.0",
+    "react-phone-number-input": "^3.4.17",
+    "react-resizable-panels": "^4.12.1",
+    "react-router": "^8.2.0",
+    "react-textarea-autosize": "^8.5.9",
+    "recharts": "3.9.2",
+    "shiki": "^4.3.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "vaul": "^1.1.2",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14",
+    "@trenova/graphql": "workspace:*"
+  },
+  "devDependencies": {
+    "@trenova/config": "workspace:*",
+    "@types/react": "^19.2.17",
+    "vite": "^8.1.4",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "~7.0.2"
+  }
+}

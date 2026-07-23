@@ -4,11 +4,11 @@ import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useTheme } from "@/components/theme-provider";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { useTheme } from "@trenova/shared/components/theme-provider";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   Popover,
   PopoverContent,
@@ -16,10 +16,10 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@trenova/shared/components/ui/popover";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";

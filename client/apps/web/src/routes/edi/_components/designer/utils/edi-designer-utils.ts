@@ -7,7 +7,7 @@ import type {
   EDITemplateTransformStep,
   EDITemplateVersion,
   UpsertEDIPartnerDocumentProfileRequest,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 
 export type EDIDocumentContextFilters = {
   partnerId?: string;

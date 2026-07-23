@@ -4,7 +4,7 @@ import {
   nullableStringSchema,
   optionalStringSchema,
   tenantInfoSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 export const recurringShipmentStatusSchema = z.enum(["Active", "Paused", "Expired"]);
 

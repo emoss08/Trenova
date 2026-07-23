@@ -1,6 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { fiscalYearSchema, type FiscalYear } from "@/types/fiscal-year";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

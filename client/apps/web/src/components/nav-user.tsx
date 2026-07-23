@@ -4,7 +4,7 @@ import {
 	Avatar,
 	AvatarFallback,
 	AvatarImage,
-} from "@/components/ui/avatar";
+} from "@trenova/shared/components/ui/avatar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@trenova/shared/components/ui/dropdown-menu";
 import { UserIcon, SettingsIcon, CreditCardIcon, LogOutIcon } from "lucide-react";
 
 const user = {

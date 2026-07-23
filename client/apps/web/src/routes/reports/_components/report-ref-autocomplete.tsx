@@ -1,9 +1,9 @@
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import type { GraphQLSelectOptionsConfig } from "@/lib/graphql/select-options";
-import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import { XIcon } from "lucide-react";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";

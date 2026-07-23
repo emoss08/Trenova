@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { ClockIcon, ExternalLinkIcon } from "lucide-react";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";

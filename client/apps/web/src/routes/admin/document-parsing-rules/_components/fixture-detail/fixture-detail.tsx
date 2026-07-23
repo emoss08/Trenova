@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Form, FormSection, FormGroup, FormControl } from "@/components/ui/form";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form, FormSection, FormGroup, FormControl } from "@trenova/shared/components/ui/form";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -15,12 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@trenova/shared/components/ui/collapsible";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
@@ -30,7 +30,7 @@ import {
   type Fixture,
   type FixtureFormValues,
 } from "@/types/document-parsing-rule";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

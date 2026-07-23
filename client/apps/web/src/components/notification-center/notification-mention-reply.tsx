@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useNotificationAction, useReplyToMention } from "@/hooks/use-notifications";
-import type { Notification } from "@/types/notification";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useNotificationAction, useReplyToMention } from "@trenova/shared/hooks/use-notifications";
+import type { Notification } from "@trenova/shared/types/notification";
 import { CheckIcon, CornerUpLeftIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import {

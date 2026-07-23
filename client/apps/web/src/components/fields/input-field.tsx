@@ -1,8 +1,8 @@
 import type React from "react";
-import type { FormControlProps } from "@/types/fields";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
-import { Input, type InputProps } from "../ui/input";
-import { Skeleton } from "../ui/skeleton";
+import { Input, type InputProps } from "@trenova/shared/components/ui/input";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { FieldWrapper } from "./field-components";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {

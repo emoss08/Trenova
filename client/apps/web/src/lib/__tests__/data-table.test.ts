@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FilterItem, SingleFilterItem } from "@/types/data-table";
+import type { FilterItem, SingleFilterItem } from "@trenova/shared/types/data-table";
 import {
   convertFilterItemsToFieldFilters,
   convertFilterItemsToFilterGroups,

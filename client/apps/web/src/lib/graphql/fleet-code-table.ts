@@ -2,8 +2,8 @@ import {
   FleetCodeTableDocument,
   type FleetCodeTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
-import type { FleetCode } from "@/types/fleet-code";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { FleetCode } from "@trenova/shared/types/fleet-code";
 
 export const fleetCodeTableGraphQLConfig = defineDataTableGraphQLConfig<
   FleetCode,

@@ -1,7 +1,7 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import { holdReasonSchema, type HoldReason } from "@/types/hold-reason";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export class HoldReasonService {
   async getAll(params?: string) {

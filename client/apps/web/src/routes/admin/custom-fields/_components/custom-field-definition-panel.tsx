@@ -4,7 +4,7 @@ import {
   customFieldDefinitionSchema,
   type CustomFieldDefinition,
 } from "@/types/custom-field";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CustomFieldDefinitionForm } from "./custom-field-definition-form";

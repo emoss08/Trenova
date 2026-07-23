@@ -3,7 +3,7 @@ import {
   nullableStringSchema,
   optionalStringSchema,
   tenantInfoSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 export const locationCategoryTypeSchema = z.enum([
   "Terminal",

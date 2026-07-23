@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   forwardRef,
   useCallback,
@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Button } from "../ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export interface RejectedFile {
   file: File;

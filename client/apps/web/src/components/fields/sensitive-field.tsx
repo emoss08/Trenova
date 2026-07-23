@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
-import { Input } from "../ui/input";
+import { Input } from "@trenova/shared/components/ui/input";
 import { FieldWrapper } from "./field-components";
 import type { InputFieldProps } from "./input-field";
 

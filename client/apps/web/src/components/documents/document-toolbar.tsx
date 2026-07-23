@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ButtonGroup } from "@trenova/shared/components/ui/button-group";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/select";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   ArrowDownAZIcon,
   ArrowUpAZIcon,

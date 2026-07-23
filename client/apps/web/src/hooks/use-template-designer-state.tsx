@@ -14,7 +14,7 @@ import {
   getTemplateDesignerVersionDraftKey,
   useTemplateDesignerStore,
 } from "@/stores/template-designer-store";
-import type { EDIDiagnostic, EDITemplate, EDITemplateVersion } from "@/types/edi";
+import type { EDIDiagnostic, EDITemplate, EDITemplateVersion } from "@trenova/shared/types/edi";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { toast } from "sonner";

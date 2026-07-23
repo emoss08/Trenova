@@ -1,9 +1,9 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { FinancialReportSection } from "@/components/accounting/financial-report-section";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";

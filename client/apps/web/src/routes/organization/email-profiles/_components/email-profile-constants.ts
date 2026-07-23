@@ -1,6 +1,6 @@
-import type { SelectOption } from "@/types/fields";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import type { z } from "zod";
-import { emailProfileSchema } from "@/types/email";
+import { emailProfileSchema } from "@trenova/shared/types/email";
 
 export const emailProfileQueryKey = "email-profile-list";
 

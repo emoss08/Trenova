@@ -1,5 +1,5 @@
-import type { ApiRequestError } from "@/lib/api";
-import type { GraphQLRequestError } from "@/lib/graphql";
+import type { ApiRequestError } from "@trenova/shared/lib/api";
+import type { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import {
   useMutation,
   useQueryClient,

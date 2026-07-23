@@ -4,17 +4,17 @@ import * as React from "react";
 
 import { Check, Copy, User } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
-import { AnthropicLogo } from "@/components/ui/logos/anthropic";
-import { CohereLogo } from "@/components/ui/logos/cohere";
-import { DeepSeekLogo } from "@/components/ui/logos/deepseek";
-import { GeminiLogo } from "@/components/ui/logos/gemini";
-import { GroqLogo } from "@/components/ui/logos/groq";
-import { MetaLogo } from "@/components/ui/logos/meta";
-import { MistralLogo } from "@/components/ui/logos/mistral";
-import { OpenAILogo } from "@/components/ui/logos/openai";
-import { XAILogo } from "@/components/ui/logos/xai";
+import { AnthropicLogo } from "@trenova/shared/components/ui/logos/anthropic";
+import { CohereLogo } from "@trenova/shared/components/ui/logos/cohere";
+import { DeepSeekLogo } from "@trenova/shared/components/ui/logos/deepseek";
+import { GeminiLogo } from "@trenova/shared/components/ui/logos/gemini";
+import { GroqLogo } from "@trenova/shared/components/ui/logos/groq";
+import { MetaLogo } from "@trenova/shared/components/ui/logos/meta";
+import { MistralLogo } from "@trenova/shared/components/ui/logos/mistral";
+import { OpenAILogo } from "@trenova/shared/components/ui/logos/openai";
+import { XAILogo } from "@trenova/shared/components/ui/logos/xai";
 
 type MessageRole = "user" | "assistant";
 

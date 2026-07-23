@@ -1,4 +1,4 @@
-import type { Location } from "@/types/location";
+import type { Location } from "@trenova/shared/types/location";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import { MapPin } from "lucide-react";
 

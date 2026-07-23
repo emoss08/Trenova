@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { usePermissions } from "@/hooks/use-permission";
 import { describeCron } from "@/lib/cron";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import type { RecurringShipment } from "@/types/recurring-shipment";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarSyncIcon, SparklesIcon, XIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";

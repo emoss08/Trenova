@@ -1,7 +1,7 @@
 import { useDebounce } from "@/hooks/use-debounce";
-import type { ApiRequestError } from "@/lib/api";
+import type { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { LocationDetails } from "@/types/google-maps";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, SearchIcon } from "lucide-react";
@@ -14,7 +14,7 @@ import {
   type PathValue,
   type RegisterOptions,
 } from "react-hook-form";
-import { Button } from "../ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -22,10 +22,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Spinner } from "../ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+} from "@trenova/shared/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { InputField } from "./input-field";
 
 type AddressFieldProps<TForm extends FieldValues> = {

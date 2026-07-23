@@ -3,9 +3,9 @@ import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { statusChoices } from "@/lib/choices";
-import type { FleetCode } from "@/types/fleet-code";
+import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import { useFormContext } from "react-hook-form";
 
 export function FleetCodeForm() {

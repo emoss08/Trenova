@@ -1,5 +1,5 @@
 import { getMarginTone, resolveTargetMarginPct } from "@/lib/profitability";
-import { formatPercent } from "@/lib/utils";
+import { formatPercent } from "@trenova/shared/lib/utils";
 import { toneVar } from "../analytics/kpi/tone";
 
 export function MarginPill({

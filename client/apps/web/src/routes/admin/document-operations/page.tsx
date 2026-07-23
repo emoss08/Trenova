@@ -10,17 +10,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent } from "@trenova/shared/components/ui/card";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { apiService } from "@/services/api";
-import type { Document, DocumentUploadSession } from "@/types/document";
+import type { Document, DocumentUploadSession } from "@trenova/shared/types/document";
 import type { DocumentOperationsDiagnostics, WorkflowReference } from "@/types/document-operations";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

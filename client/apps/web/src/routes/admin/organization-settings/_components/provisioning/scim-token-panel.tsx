@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Table,
   TableBody,
@@ -8,10 +8,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { formatUnixDateTimeOrDash } from "@/lib/date";
-import { toTitleCase } from "@/lib/utils";
+import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
+import { toTitleCase } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ClipboardIcon, KeyRoundIcon, PlusIcon } from "lucide-react";

@@ -6,7 +6,7 @@ import {
   type JournalEntryDetailQuery,
   type JournalSourceByObjectQuery,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type JournalEntryDetail = NonNullable<JournalEntryDetailQuery["journalEntry"]>;
 export type JournalEntryBySource =

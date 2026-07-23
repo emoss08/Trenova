@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { tenantInfoSchema } from "./helpers";
+import { tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 export const storedMileageStopKeySchema = z.object({
   method: z.string(),

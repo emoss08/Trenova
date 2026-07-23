@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   SHIPMENT_VARIABLES,
   VARIABLE_CATEGORIES,
   AVAILABLE_FUNCTIONS,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import { BookOpen, Variable, FunctionSquare, ChevronDown } from "lucide-react";
 
 type Tab = "variables" | "functions";

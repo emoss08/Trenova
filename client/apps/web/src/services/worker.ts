@@ -1,13 +1,13 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
-import { API_BASE_URL } from "@/lib/constants";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   workerSchema,
   type ListUpcomingPTORequest,
   type PTOChartDataRequest,
   type Worker,
   type WorkerPTO,
-} from "@/types/worker";
+} from "@trenova/shared/types/worker";
 
 export class WorkerService {
   public async approvePTO(id: WorkerPTO["id"]) {

@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { checkSectionErrors } from "@/lib/form";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { Worker } from "@/types/worker";
+import type { Worker } from "@trenova/shared/types/worker";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { BriefcaseIcon, ShieldCheckIcon, UserIcon, XIcon } from "lucide-react";

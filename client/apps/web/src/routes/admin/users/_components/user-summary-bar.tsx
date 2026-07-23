@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { Loader2Icon, ShieldIcon, UserIcon } from "lucide-react";
 
 type UserSummaryBarProps = {

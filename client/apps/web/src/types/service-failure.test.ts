@@ -1,5 +1,5 @@
 import { findChoice, serviceFailureStatusChoices } from "@/lib/choices";
-import { nullableTextSchema } from "@/types/helpers";
+import { nullableTextSchema } from "@trenova/shared/types/helpers";
 import {
   serviceFailureEvaluationResultSchema,
   serviceFailureSourceSchema,

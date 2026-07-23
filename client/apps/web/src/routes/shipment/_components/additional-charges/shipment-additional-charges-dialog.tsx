@@ -2,7 +2,7 @@
 import { AccessorialChargeAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
-import type { AccessorialCharge } from "@/types/accessorial-charge";
-import type { Shipment } from "@/types/shipment";
+import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
 

@@ -4,10 +4,10 @@ import {
   ControlledEDITemplateAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -15,8 +15,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@trenova/shared/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
   buildEDIDocumentResolutionRequest,
@@ -26,12 +26,12 @@ import {
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
-import { downloadTextFile } from "@/lib/utils";
+import { downloadTextFile } from "@trenova/shared/lib/utils";
 import type {
   EDIMessage,
   EDIPartnerDocumentProfile,
   UpsertEDIPartnerDocumentProfileRequest,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import {
   ClipboardCheckIcon,
   CopyIcon,

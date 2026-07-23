@@ -1,8 +1,8 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -10,8 +10,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+} from "@trenova/shared/components/ui/select";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import {
   CONNECTOR_LABELS,
   generateFilterId,
@@ -22,8 +22,8 @@ import {
   getOperatorsForVariant,
   operatorRequiresValue,
 } from "@/lib/data-table";
-import { dateToUnixTimestamp, toDate, toUnixTimeStamp } from "@/lib/date";
-import { cn, truncateText } from "@/lib/utils";
+import { dateToUnixTimestamp, toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { cn, truncateText } from "@trenova/shared/lib/utils";
 import type {
   FilterConnector,
   FilterGroupItem,
@@ -31,8 +31,8 @@ import type {
   FilterOperator,
   FilterVariant,
   SingleFilterItem,
-} from "@/types/data-table";
-import type { SelectOption } from "@/types/fields";
+} from "@trenova/shared/types/data-table";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CalendarIcon, FilterIcon, FolderPlusIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";

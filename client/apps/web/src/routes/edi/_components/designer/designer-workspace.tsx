@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { ArchiveIcon, Layers3Icon } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { DesignerWorkspaceSkeleton } from "./components/designer-workspace-skeleton";

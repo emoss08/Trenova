@@ -1,4 +1,4 @@
-import type { PTOFilter, PTOType } from "@/types/worker";
+import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
 import { useQueryStates } from "nuqs";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";

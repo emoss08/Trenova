@@ -1,10 +1,10 @@
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { highlightCode } from "@/lib/shiki";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { SearchIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

@@ -1,7 +1,7 @@
 import { RoleSelectAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import type { SCIMGroupRoleMappingFormValues } from "@/types/iam";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import type { SCIMGroupRoleMappingFormValues } from "@trenova/shared/types/iam";
 import { useFormContext } from "react-hook-form";
 
 export function SCIMGroupMappingForm() {

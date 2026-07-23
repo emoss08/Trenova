@@ -1,4 +1,4 @@
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { NotificationPriority, TCASubscription } from "@/types/table-change-alert";
 import type { ColumnDef } from "@tanstack/react-table";
 

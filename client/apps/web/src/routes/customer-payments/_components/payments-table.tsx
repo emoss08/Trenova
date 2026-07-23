@@ -3,7 +3,7 @@ import {
   customerPaymentTableGraphQLConfig,
   type CustomerPaymentRow,
 } from "@/lib/graphql/customer-payment";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { CustomerPaymentPanel } from "./customer-payment-panel";
 import { getColumns } from "./payment-columns";

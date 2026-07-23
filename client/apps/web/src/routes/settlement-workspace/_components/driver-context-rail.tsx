@@ -1,5 +1,5 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Button } from "@/components/ui/button";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,10 +7,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/dialog";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   attachPayEventsToSettlement,
   fetchWorkerEarningsSummary,
@@ -27,8 +27,8 @@ import {
   type RecurringDeductionRow,
   type RecurringEarningRow,
 } from "@/lib/graphql/driver-settlement";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/lib/variants/button";
+import { cn } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeftToLine, Pause, PauseCircle, Play, PlusCircle } from "lucide-react";
 import { useState, type ReactNode } from "react";

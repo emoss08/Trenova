@@ -9,7 +9,7 @@ import {
   formatCurrency,
   formatLocation,
   initials,
-} from "../utils";
+} from "@trenova/shared/lib/utils";
 import { afterEach, vi } from "vitest";
 
 const originalCreateObjectUrlDescriptor = Object.getOwnPropertyDescriptor(URL, "createObjectURL");

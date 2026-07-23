@@ -1,9 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { fiscalYearTableGraphQLConfig } from "@/lib/graphql/fiscal-year-table";
-import { AlertDialog } from "@/components/ui/alert-dialog";
-import type { RowAction } from "@/types/data-table";
+import { AlertDialog } from "@trenova/shared/components/ui/alert-dialog";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import type { FiscalYear } from "@/types/fiscal-year";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import type { Row } from "@tanstack/react-table";
 import { LockIcon, PlayIcon, UnlockIcon, XCircleIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";

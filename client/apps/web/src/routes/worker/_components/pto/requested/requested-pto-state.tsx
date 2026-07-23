@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TriangleAlert } from "lucide-react";
 
 export function RequestedPTOOverviewSkeleton() {

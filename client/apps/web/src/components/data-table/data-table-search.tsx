@@ -1,11 +1,11 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@trenova/shared/components/ui/popover";
 import { HelpCircleIcon, SearchIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 

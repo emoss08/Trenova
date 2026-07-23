@@ -1,27 +1,27 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { usePayCodeOptions } from "@/components/fields/pay-code-select-field";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/select";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   fetchSettlementDisputeDetail,
   resolveSettlementDispute,
   startSettlementDisputeReview,
   type SettlementDisputeRow,
-} from "@/lib/graphql/driver-portal";
-import type { DataTablePanelProps } from "@/types/data-table";
+} from "@trenova/shared/lib/graphql/driver-portal";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";

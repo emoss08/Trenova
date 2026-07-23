@@ -3,9 +3,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RootErrorBoundary } from "@/components/error-boundary";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
+import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { ThemeProvider } from "@trenova/shared/components/theme-provider";
+import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { dashRouter } from "./router";
 import "@/styles/app.css";
 

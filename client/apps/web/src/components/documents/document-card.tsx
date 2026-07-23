@@ -1,9 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { Document } from "@/types/document";
+import type { Document } from "@trenova/shared/types/document";
 import { BrainCircuitIcon, DownloadIcon, EyeIcon, HistoryIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DocumentThumbnail } from "./document-thumbnail";

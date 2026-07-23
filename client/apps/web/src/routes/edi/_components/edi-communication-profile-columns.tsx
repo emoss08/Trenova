@@ -1,8 +1,8 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { StatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
-import type { EDICommunicationProfile } from "@/types/edi";
+import { StatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 import { communicationProfileMethods, profileStatusOptions } from "./edi-schemas";
 

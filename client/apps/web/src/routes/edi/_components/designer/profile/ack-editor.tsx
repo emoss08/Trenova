@@ -1,5 +1,5 @@
-import { Switch } from "@/components/ui/switch";
-import type { UpsertEDIPartnerDocumentProfileRequest } from "@/types/edi";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import type { UpsertEDIPartnerDocumentProfileRequest } from "@trenova/shared/types/edi";
 import type { Dispatch, SetStateAction } from "react";
 import { ControlledSelectField } from "../components/designer-fields";
 import { InputBlock } from "../components/designer-shared";

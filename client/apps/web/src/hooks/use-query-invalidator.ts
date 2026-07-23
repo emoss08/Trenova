@@ -1,4 +1,4 @@
-import { APP_ENV } from "@/lib/constants";
+import { APP_ENV } from "@trenova/shared/lib/constants";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 

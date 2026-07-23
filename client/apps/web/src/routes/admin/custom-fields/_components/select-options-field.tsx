@@ -1,7 +1,7 @@
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
-import { Button } from "@/components/ui/button";
-import { FormSection } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import type { CustomFieldDefinition } from "@/types/custom-field";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { type Control, useFieldArray } from "react-hook-form";

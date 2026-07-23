@@ -1,8 +1,8 @@
 import { useMapId } from "@/hooks/use-map-id";
-import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
+import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
-import { cn, formatLocation } from "@/lib/utils";
-import type { ShipmentMove, Stop } from "@/types/shipment";
+import { cn, formatLocation } from "@trenova/shared/lib/utils";
+import type { ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
 import { useMemo, useState } from "react";

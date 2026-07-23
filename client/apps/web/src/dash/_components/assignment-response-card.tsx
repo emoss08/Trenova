@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -6,9 +6,9 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { Textarea } from "@/components/ui/textarea";
-import { respondToMyAssignment, type PortalLoad } from "@/lib/graphql/driver-portal";
+} from "@trenova/shared/components/ui/drawer";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { respondToMyAssignment, type PortalLoad } from "@trenova/shared/lib/graphql/driver-portal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useState } from "react";

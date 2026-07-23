@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { permissionManifestSchema } from "./permission";
+import { permissionManifestSchema } from "@trenova/shared/types/permission";
 
 describe("permissionManifestSchema", () => {
   it("normalizes nullable role summary arrays", () => {

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -6,18 +6,18 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Spinner } from "@/components/ui/spinner";
+} from "@trenova/shared/components/ui/command";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
 import { useDebounce } from "@/hooks/use-debounce";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   fetchGraphQLSelectOptions,
   selectOptionFiltersFromSearchParams,
   type GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
-import { cn, pluralize, toTitleCase } from "@/lib/utils";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import { cn, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import type React from "react";

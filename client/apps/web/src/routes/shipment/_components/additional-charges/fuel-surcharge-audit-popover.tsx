@@ -1,8 +1,8 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import type { FuelSurchargeDetail } from "@/types/shipment";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import type { FuelSurchargeDetail } from "@trenova/shared/types/shipment";
 import { AlertTriangle, FuelIcon } from "lucide-react";
 
 function DetailRow({ label, value }: { label: string; value: string | null }) {

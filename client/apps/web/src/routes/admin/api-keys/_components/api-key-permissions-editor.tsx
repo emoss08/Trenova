@@ -5,25 +5,25 @@ import {
   AccordionPanel,
   AccordionTrigger,
 } from "@/components/animate-ui/primitives/base/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { dataScopeChoices } from "@/lib/choices";
 import type { ResourceCategory, ResourceDefinition } from "@/lib/role-api";
-import { cn, pluralize } from "@/lib/utils";
+import { cn, pluralize } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { ApiKeyPermissionInput } from "@/types/api-key";
-import type { DataScope } from "@/types/role";
+import type { DataScope } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronDownIcon, EyeIcon, SearchIcon, XIcon, ZapIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";

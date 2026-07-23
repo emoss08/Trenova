@@ -2,9 +2,9 @@ import {
   NumberFieldGroup,
   NumberFieldInput,
   NumberField as NumberFieldRoot,
-} from "@/components/ui/number-field";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/ui/number-field";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,16 +12,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn, formatCurrency } from "@/lib/utils";
+} from "@trenova/shared/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   BacktestResult,
   BacktestSummary,
   FormulaTemplate,
   FormulaTemplateFormValues,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,

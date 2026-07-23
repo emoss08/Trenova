@@ -1,8 +1,8 @@
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { NumberField } from "@/components/fields/number-field";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { formatSplitDateTime } from "@/lib/date";
+import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
-import type { ShipmentMove, SplitMovePayload, SplitMoveResponse, StopType } from "@/types/shipment";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { ShipmentMove, SplitMovePayload, SplitMoveResponse, StopType } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfoIcon } from "lucide-react";
 import { useCallback } from "react";

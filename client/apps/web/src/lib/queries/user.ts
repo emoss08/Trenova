@@ -1,6 +1,6 @@
 import { apiService } from "@/services/api";
 
-import type { User } from "@/types/user";
+import type { User } from "@trenova/shared/types/user";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const userOrganization = createQueryKeys("userOrganization", {

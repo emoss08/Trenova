@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { LoadingRecommendation } from "@/types/loading-optimization";
 import { LightbulbIcon, ShieldAlertIcon, TrendingUpIcon } from "lucide-react";
 

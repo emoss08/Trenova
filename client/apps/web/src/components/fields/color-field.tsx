@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Paintbrush } from "lucide-react";
 import { useCallback, useState } from "react";
 import {
@@ -11,7 +11,7 @@ import {
   type FieldValues,
   type Path,
 } from "react-hook-form";
-import { Input } from "../ui/input";
+import { Input } from "@trenova/shared/components/ui/input";
 import { FieldWrapper } from "./field-components";
 
 export type ColorFieldProps<TFieldValues extends FieldValues> = {

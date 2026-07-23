@@ -1,7 +1,7 @@
 import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { getShipmentEtaTone, type ShipmentEtaTone } from "@/lib/shipment-utils";
-import type { FieldFilter, FilterGroup } from "@/types/data-table";
-import type { Assignment, Shipment, ShipmentMove, Stop } from "@/types/shipment";
+import type { FieldFilter, FilterGroup } from "@trenova/shared/types/data-table";
+import type { Assignment, Shipment, ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { TimelineSort } from "../url-state";

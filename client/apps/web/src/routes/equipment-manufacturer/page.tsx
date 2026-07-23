@@ -1,4 +1,4 @@
-import { DataTableLazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 

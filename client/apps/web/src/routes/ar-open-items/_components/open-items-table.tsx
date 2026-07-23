@@ -1,8 +1,8 @@
 import { AgingBadge } from "@/components/accounting/aging-buckets";
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { PlainSettlementStatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -11,10 +11,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import type { AROpenItem } from "@/lib/graphql/accounts-receivable";
-import { cn } from "@/lib/utils";
-import type { SettlementStatus } from "@/types/invoice";
+import { cn } from "@trenova/shared/lib/utils";
+import type { SettlementStatus } from "@trenova/shared/types/invoice";
 import {
   flexRender,
   getCoreRowModel,

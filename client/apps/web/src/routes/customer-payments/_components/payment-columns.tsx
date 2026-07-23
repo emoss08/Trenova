@@ -1,7 +1,7 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { PlainCustomerPaymentStatusBadge } from "@/components/status-badge";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { PlainCustomerPaymentStatusBadge } from "@trenova/shared/components/status-badge";
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
-import type { CustomerPaymentStatus } from "@/types/customer-payment";
+import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payment";
 import { type ColumnDef } from "@tanstack/react-table";
 
 function formatDate(unix: number): string {

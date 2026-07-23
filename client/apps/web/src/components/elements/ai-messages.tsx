@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { ArrowDown } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 interface AiMessagesProps {
   children?: React.ReactNode;

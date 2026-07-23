@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { FieldRow } from "./field-row";

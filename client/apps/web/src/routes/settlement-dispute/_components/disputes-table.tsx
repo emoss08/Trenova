@@ -3,10 +3,10 @@ import {
   settlementDisputeTableGraphQLConfig,
   startSettlementDisputeReview,
   type SettlementDisputeRow,
-} from "@/lib/graphql/driver-portal";
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { runBulkAction } from "@/lib/bulk-run";
-import type { DockAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { DockAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { EyeIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";

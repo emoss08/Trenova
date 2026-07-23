@@ -1,6 +1,6 @@
 import { timezoneChoices } from "@/lib/choices";
-import { useAuthStore } from "@/stores/auth-store";
-import type { User } from "@/types/user";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { User } from "@trenova/shared/types/user";
 
 function HeaderOuter({ children }: { children: React.ReactNode }) {
   return (

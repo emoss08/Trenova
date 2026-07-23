@@ -1,15 +1,15 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatRange } from "@/lib/date";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Progress } from "@trenova/shared/components/ui/progress";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatRange } from "@trenova/shared/lib/date";
 import {
   fetchMyAdvances,
   fetchMyDisputes,
   fetchMyEscrow,
   withdrawSettlementDispute,
-} from "@/lib/graphql/driver-portal";
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";

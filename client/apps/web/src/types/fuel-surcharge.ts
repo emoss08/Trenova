@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { decimalStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { decimalStringSchema, optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 export const fuelIndexSourceSchema = z.enum(["EIA", "Custom"]);
 export type FuelIndexSource = z.infer<typeof fuelIndexSourceSchema>;

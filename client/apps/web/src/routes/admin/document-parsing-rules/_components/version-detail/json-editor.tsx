@@ -1,15 +1,15 @@
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import {
   darkTheme,
   lightTheme,
 } from "@/components/formula-editor/editor-theme";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/tooltip";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   ruleDocumentSchema,
   type RuleDocument,

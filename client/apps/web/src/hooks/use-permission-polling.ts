@@ -1,5 +1,5 @@
-import { useAuthStore } from "@/stores/auth-store";
-import { usePermissionStore } from "@/stores/permission-store";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { useEffect, useRef } from "react";
 
 const POLLING_INTERVAL_MS = 5 * 60 * 1000;

@@ -4,7 +4,7 @@ import {
   documentSchema,
   documentShipmentDraftSchema,
   documentUploadSessionSchema,
-} from "./document";
+} from "@trenova/shared/types/document";
 
 export const workflowReferenceSchema = z.object({
   kind: z.string(),

@@ -1,6 +1,6 @@
 import { StreamLanguage } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
-import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@/types/edi";
+import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@trenova/shared/types/edi";
 
 export function x12StreamLanguage(delimiters: EDIX12Inspection["separators"]) {
   const delimiterChars = `${escapeRegex(delimiters.element)}${escapeRegex(

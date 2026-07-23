@@ -1,5 +1,5 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { manualJournalStatusChoices } from "@/lib/choices";
 import type { ManualJournal } from "@/types/manual-journal";
 import type { ColumnDef } from "@tanstack/react-table";

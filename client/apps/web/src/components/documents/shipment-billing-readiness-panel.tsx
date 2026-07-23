@@ -1,11 +1,11 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Progress } from "@trenova/shared/components/ui/progress";
 import type {
   Shipment,
   ShipmentBillingReadiness,
   ShipmentBillingRequirement,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 import {
   AlertCircleIcon,
   CheckCircle2Icon,

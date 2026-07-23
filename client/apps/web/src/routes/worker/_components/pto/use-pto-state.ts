@@ -1,5 +1,5 @@
-import { dateToUnixTimestamp } from "@/lib/date";
-import { ptoFilterSchema } from "@/types/worker";
+import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
+import { ptoFilterSchema } from "@trenova/shared/types/worker";
 import { parseAsJson, parseAsStringLiteral } from "nuqs";
 
 export const viewTypeChoices = ["chart", "list"] as const;

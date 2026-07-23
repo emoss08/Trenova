@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatTimestamp, getPriorityConfig, SOURCE_LABELS } from "@/lib/notification-helpers";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { Notification } from "@/types/notification";
+import type { Notification } from "@trenova/shared/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCheckIcon, CheckIcon, InboxIcon } from "lucide-react";
 import { useCallback } from "react";

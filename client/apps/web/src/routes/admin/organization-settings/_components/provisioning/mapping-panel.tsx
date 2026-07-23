@@ -1,12 +1,12 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps, TableSheetProps } from "@/types/data-table";
+import type { DataTablePanelProps, TableSheetProps } from "@trenova/shared/types/data-table";
 import {
   scimGroupRoleMappingFormSchema,
   type SCIMGroupRoleMapping,
   type SCIMGroupRoleMappingFormValues,
-} from "@/types/iam";
+} from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Resolver, useForm } from "react-hook-form";
 import { emptyMapping, scimGroupMappingPanelQueryKey } from "./constants";

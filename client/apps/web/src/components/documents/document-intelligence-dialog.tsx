@@ -1,6 +1,6 @@
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@trenova/shared/components/ui/dialog";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { apiService } from "@/services/api";
 import type {
   Document,
@@ -20,7 +20,7 @@ import type {
   DocumentIntelligenceField,
   DocumentIntelligenceStop,
   DocumentShipmentDraft,
-} from "@/types/document";
+} from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircleIcon,

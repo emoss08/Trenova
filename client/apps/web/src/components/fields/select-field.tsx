@@ -1,14 +1,14 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type {
   FormControlProps,
   SelectOption,
   SelectOptionGroup,
   WarningProps,
-} from "@/types/fields";
+} from "@trenova/shared/types/fields";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
-import { Button } from "../ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -18,8 +18,8 @@ import {
   CommandList,
   CommandSeparator,
   SelectCommandItem,
-} from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+} from "@trenova/shared/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { FieldWrapper } from "./field-components";
 
 export type BaseSelectFieldProps = {

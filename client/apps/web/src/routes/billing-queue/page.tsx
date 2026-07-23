@@ -1,12 +1,12 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
-import { LazyComponent } from "@/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@trenova/shared/components/ui/sheet";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";

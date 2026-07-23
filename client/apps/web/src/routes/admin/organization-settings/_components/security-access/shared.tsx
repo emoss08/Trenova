@@ -1,12 +1,12 @@
 import { FieldWrapper } from "@/components/fields/field-components";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { cn, toTitleCase } from "@/lib/utils";
-import type { IdentityProviderFormValues } from "@/types/iam";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { cn, toTitleCase } from "@trenova/shared/lib/utils";
+import type { IdentityProviderFormValues } from "@trenova/shared/types/iam";
 import { AlertTriangleIcon, KeyRoundIcon, SearchIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Controller, type Control } from "react-hook-form";

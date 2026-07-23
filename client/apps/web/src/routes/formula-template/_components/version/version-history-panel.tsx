@@ -1,7 +1,7 @@
 import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,22 +17,22 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/sheet";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { UserHoverCard } from "@/components/user-hover-card";
 import { usePermission } from "@/hooks/use-permission";
-import { formatToUserTimezone, toDate, toUnixTimeStamp } from "@/lib/date";
+import { formatToUserTimezone, toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import {
   VERSION_TAG_OPTIONS,
@@ -41,8 +41,8 @@ import {
   type FormulaTemplateVersion,
   type TemplateUsageResponse,
   type VersionTag,
-} from "@/types/formula-template";
-import { Operation, Resource } from "@/types/permission";
+} from "@trenova/shared/types/formula-template";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseDate } from "../chrono";
+import { parseDate } from "@trenova/shared/lib/chrono";
 
 function startOfToday(): Date {
   const d = new Date();

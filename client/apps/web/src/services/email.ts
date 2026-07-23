@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   emailMessageListSchema,
   emailMessageSchema,
@@ -13,7 +13,7 @@ import {
   type EmailProfileAssignment,
   type EmailSuppression,
   type TestEmailProfileRequest,
-} from "@/types/email";
+} from "@trenova/shared/types/email";
 
 export class EmailService {
   public async listProfiles(params = "") {

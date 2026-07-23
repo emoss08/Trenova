@@ -1,9 +1,9 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { GLAccountAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@trenova/shared/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ManualJournalLine } from "@/types/manual-journal";
 import { CheckCircle2Icon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useCallback } from "react";

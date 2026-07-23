@@ -6,8 +6,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { cn } from "@trenova/shared/lib/utils";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Link, type LinkProps } from "react-router";

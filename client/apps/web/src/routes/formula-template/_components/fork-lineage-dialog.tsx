@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,10 +7,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
-import type { ForkLineage, FormulaTemplate } from "@/types/formula-template";
+import type { ForkLineage, FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon, GitBranchIcon, Loader2Icon } from "lucide-react";
 

@@ -1,6 +1,6 @@
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { LoadingOptimizationResult } from "@/types/loading-optimization";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export interface ShipmentMeta {

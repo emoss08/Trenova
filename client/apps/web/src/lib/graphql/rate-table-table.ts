@@ -2,7 +2,7 @@ import {
   RateTableTableDocument,
   type RateTableTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { RateTableRow } from "@/types/rate-table";
 
 export const rateTableTableGraphQLConfig = defineDataTableGraphQLConfig<

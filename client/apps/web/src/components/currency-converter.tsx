@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -6,12 +6,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/command";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useQuery, useMutation } from "@tanstack/react-query";

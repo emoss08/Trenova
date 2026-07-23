@@ -5,22 +5,22 @@ import {
   AiToolCallOutput,
 } from "@/components/elements/ai-tool-call";
 import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import {
   loadConversation,
   saveConversation,
   type PersistedChatMessage,
 } from "@/lib/import-chat-store";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   ConversationStatus,
   ImportAssistantChatMessage,
   ImportAssistantSuggestion,
   ImportAssistantToolCallRecord,
-} from "@/types/document";
+} from "@trenova/shared/types/document";
 import { ArrowUpIcon, CheckCircle2Icon, InfoIcon, SparklesIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

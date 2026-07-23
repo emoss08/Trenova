@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { formatToUserTimezone } from "@/lib/date";
-import { cn } from "@/lib/utils";
-import type { Shipment } from "@/types/shipment";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import {
   AlertTriangleIcon,
   ClockIcon,

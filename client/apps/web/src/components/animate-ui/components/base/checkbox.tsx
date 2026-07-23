@@ -5,7 +5,7 @@ import {
   Checkbox as CheckboxPrimitive,
   type CheckboxProps as CheckboxPrimitiveProps,
 } from "@/components/animate-ui/primitives/base/checkbox";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const checkboxVariants = cva(

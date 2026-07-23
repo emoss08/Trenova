@@ -1,7 +1,7 @@
 import type {
   DocumentPacketItem,
   DocumentPacketSummary,
-} from "@/types/document";
+} from "@trenova/shared/types/document";
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
@@ -11,12 +11,12 @@ import {
   XCircleIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
+} from "@trenova/shared/components/ui/collapsible";
 
 interface PacketCompletenessPanelProps {
   summary: DocumentPacketSummary;

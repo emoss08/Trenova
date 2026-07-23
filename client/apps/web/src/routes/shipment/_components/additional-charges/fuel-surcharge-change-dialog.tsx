@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import type { FuelSurchargeChange } from "@/hooks/use-shipment-totals-preview";
 import { FuelIcon } from "lucide-react";
 

@@ -4,7 +4,7 @@ import {
   type Shipment,
   type ShipmentStatus,
   type Stop,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 
 function findFirstStop(shipment: Shipment, type: Stop["type"]) {
   if (!shipment.moves?.length) return null;

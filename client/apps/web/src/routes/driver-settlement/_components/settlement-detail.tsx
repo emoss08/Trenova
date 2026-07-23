@@ -1,6 +1,6 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { DriverSettlementStatusBadge, PayeeClassificationBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { DriverSettlementStatusBadge, PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,19 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import { usePayCodeOptions } from "@/components/fields/pay-code-select-field";
-import { Input } from "@/components/ui/input";
-import { ScrollArea, type ScrollAreaMaskVariant } from "@/components/ui/scroll-area";
+import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   addDriverSettlementAdjustment,
   approveDriverSettlement,
@@ -36,9 +36,9 @@ import {
   type DriverSettlementDetail as SettlementDetailData,
   type DriverSettlementLineRow,
 } from "@/lib/graphql/driver-settlement";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/lib/variants/button";
-import type { DriverSettlementStatus, PayeeClassification } from "@/types/driver-pay";
+import { cn } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
+import type { DriverSettlementStatus, PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpRight,

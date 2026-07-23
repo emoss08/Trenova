@@ -1,5 +1,5 @@
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@/types/data-table";
+import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
 import type { Column } from "@tanstack/react-table";
 
 export type ExportColumn<TData> = {

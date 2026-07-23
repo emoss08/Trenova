@@ -1,10 +1,10 @@
-import { requestGraphQL } from "@/lib/graphql";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@/types/data-table";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { useQuery } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
 
-export type { DataTableQueryOptions } from "@/types/data-table";
+export type { DataTableQueryOptions } from "@trenova/shared/types/data-table";
 
 type GraphQLConnection<TNode> = {
   edges?: Array<{ node: TNode }>;

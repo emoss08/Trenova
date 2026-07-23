@@ -1,7 +1,7 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { SettlementBatchStatusBadge } from "@/components/status-badge";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { SettlementBatchStatusBadge } from "@trenova/shared/components/status-badge";
 import type { SettlementBatchRow } from "@/lib/graphql/driver-settlement";
-import type { SettlementBatchStatus } from "@/types/driver-pay";
+import type { SettlementBatchStatus } from "@trenova/shared/types/driver-pay";
 import { type ColumnDef } from "@tanstack/react-table";
 import { TriangleAlert } from "lucide-react";
 

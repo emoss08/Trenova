@@ -1,12 +1,12 @@
 import { FormCreateModal } from "@/components/form-create-modal";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useTemplateDesignerUrlActions } from "@/hooks/use-template-designer-state";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
-import { createTemplateFormSchema, type EDITemplate } from "@/types/edi";
+import { createTemplateFormSchema, type EDITemplate } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileCode2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useCallback, useState } from "react";

@@ -1,7 +1,7 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatUnixDateTimeOrDash } from "@/lib/date";
-import { toTitleCase } from "@/lib/utils";
-import type { ProvisioningAuditRecord } from "@/types/iam";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
+import { toTitleCase } from "@trenova/shared/lib/utils";
+import type { ProvisioningAuditRecord } from "@trenova/shared/types/iam";
 import { ActivityIcon } from "lucide-react";
 import { memo } from "react";
 import { ActivityItem, EmptyState, PanelHeader } from "../security-access/shared";

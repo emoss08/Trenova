@@ -1,6 +1,6 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
-import { createLimitOffsetResponse } from "@/types/server";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import {
   invoiceEmailAttemptSchema,
   generateInvoicePdfResultSchema,
@@ -10,7 +10,7 @@ import {
   updateInvoiceDraftSchema,
   type Invoice,
   type UpdateInvoiceDraft,
-} from "@/types/invoice";
+} from "@trenova/shared/types/invoice";
 
 const invoiceListSchema = createLimitOffsetResponse(invoiceSchema);
 const invoiceEmailAttemptListSchema = createLimitOffsetResponse(invoiceEmailAttemptSchema);

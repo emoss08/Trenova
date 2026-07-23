@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";

@@ -1,12 +1,12 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { ManualJournal, ManualJournalLine } from "@/types/manual-journal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, SendIcon, StampIcon, XIcon } from "lucide-react";

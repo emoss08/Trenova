@@ -1,9 +1,9 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
-import { PayeeClassificationBadge } from "@/components/status-badge";
+import { PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
 import { updatePayProfile, type PayProfileRow } from "@/lib/graphql/driver-settlement";
 import { payCalcMethodChoices, payComponentKindChoices, statusChoices } from "@/lib/choices";
-import type { PayeeClassification } from "@/types/driver-pay";
+import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";

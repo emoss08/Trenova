@@ -9,7 +9,7 @@ import {
   ReportSchedulesDocument,
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const reports = createQueryKeys("reports", {

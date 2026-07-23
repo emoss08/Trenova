@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,10 +7,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { formatToUserTimezone } from "@/lib/date";
-import type { Document } from "@/types/document";
+} from "@trenova/shared/components/ui/dialog";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import type { Document } from "@trenova/shared/types/document";
 import { ChevronDownIcon, HistoryIcon, RotateCcwIcon, UploadIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatFileSize } from "./document-upload-zone";

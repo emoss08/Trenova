@@ -1,9 +1,9 @@
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import type React from "react";

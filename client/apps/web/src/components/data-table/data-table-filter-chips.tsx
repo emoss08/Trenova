@@ -1,7 +1,7 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { getOperatorLabel, operatorRequiresValue, stringifyUnknown } from "@/lib/data-table";
-import type { FilterGroupItem, FilterItem, SingleFilterItem } from "@/types/data-table";
+import type { FilterGroupItem, FilterItem, SingleFilterItem } from "@trenova/shared/types/data-table";
 import { SearchIcon, XIcon } from "lucide-react";
 
 type DataTableFilterChipsProps = {

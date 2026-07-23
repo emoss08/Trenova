@@ -1,13 +1,13 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { FormGroup, FormControl, FormSection } from "@/components/ui/form";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormGroup, FormControl, FormSection } from "@trenova/shared/components/ui/form";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@trenova/shared/components/ui/collapsible";
 import {
   ChevronDownIcon,
   PlusIcon,

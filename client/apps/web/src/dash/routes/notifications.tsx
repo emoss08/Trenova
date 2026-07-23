@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
   useNotificationFeed,
-} from "@/hooks/use-notifications";
-import { cn } from "@/lib/utils";
-import type { Notification } from "@/types/notification";
+} from "@trenova/shared/hooks/use-notifications";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Notification } from "@trenova/shared/types/notification";
 import { BellIcon, CheckCheckIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useNavigate } from "react-router";

@@ -1,11 +1,11 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   usStateSchema,
   usStateSelectOptionResponseSchema,
   type UsState,
   type UsStateSelectOptionResponse,
-} from "@/types/us-state";
+} from "@trenova/shared/types/us-state";
 
 export class UsStateService {
   public async options() {

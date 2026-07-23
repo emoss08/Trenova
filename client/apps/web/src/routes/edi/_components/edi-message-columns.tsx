@@ -3,15 +3,15 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import {
   EDIMessageAckStatusBadge,
   EDIMessageDeliveryStatusBadge,
-} from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
+} from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   ediAckStatusChoices,
   ediDocumentDirectionChoices,
   ediMessageDeliveryStatusChoices,
   ediTransactionSetChoices,
 } from "@/lib/choices";
-import type { EDIMessage } from "@/types/edi";
+import type { EDIMessage } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export function getMessageColumns(): ColumnDef<EDIMessage>[] {

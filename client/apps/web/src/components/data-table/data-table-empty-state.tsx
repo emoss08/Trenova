@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type DataTableEmptyStateProps = {
   hasActiveFilters?: boolean;

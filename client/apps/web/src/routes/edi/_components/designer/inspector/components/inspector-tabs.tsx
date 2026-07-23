@@ -1,6 +1,6 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { EDIX12Inspection } from "@/types/edi";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
+import type { EDIX12Inspection } from "@trenova/shared/types/edi";
 import type { useEditorTheme } from "../../components/designer-shared";
 import type { InspectorContext } from "../inspector-context";
 import ControlNumbersTab from "./control-numbers-tab";

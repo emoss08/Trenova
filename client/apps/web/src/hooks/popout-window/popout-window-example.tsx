@@ -4,7 +4,7 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 // Example usage of the improved popout window manager
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { usePopoutWindow } from "./use-popout-window";
 
 export function PopoutWindowExample() {

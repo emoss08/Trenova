@@ -1,5 +1,5 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -7,9 +7,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   convertFilterItemsToFieldFilters,
@@ -27,9 +27,9 @@ import {
 } from "@/lib/data-table";
 import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
-import type { FieldFilter, FilterItem, RowAction } from "@/types/data-table";
-import type { Shipment } from "@/types/shipment";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FieldFilter, FilterItem, RowAction } from "@trenova/shared/types/data-table";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import type { TableConfig } from "@/types/table-configuration";
 import { useQuery } from "@tanstack/react-query";
 import {

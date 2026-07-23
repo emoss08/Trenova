@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { NumericFormat, type NumericFormatProps } from "react-number-format";
 

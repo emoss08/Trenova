@@ -1,6 +1,6 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,17 +8,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { usePermission } from "@/hooks/use-permission";
 import { findChoice, serviceFailureStatusChoices, serviceFailureTypeChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-failure";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,

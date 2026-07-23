@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useCannedReports, useForkCannedReport } from "@/hooks/use-reports";
 import { usePermissions } from "@/hooks/use-permission";
-import { graphQLErrorMessage } from "@/lib/graphql";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { CannedReport } from "@/lib/graphql/reports";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { parseReportIR, type ReportParameterDef } from "@/types/report";
 import { PackageIcon, PencilRulerIcon, PlayIcon } from "lucide-react";
 import { useMemo, useState } from "react";

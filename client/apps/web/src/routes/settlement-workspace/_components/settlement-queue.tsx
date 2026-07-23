@@ -1,18 +1,18 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { DriverSettlementStatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { Input } from "@trenova/shared/components/ui/input";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   bulkDriverSettlementAction,
   type DriverSettlementRow,
 } from "@/lib/graphql/driver-settlement";
 import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dialog";
 import { bulkActionEligibility, bulkActionVerbs } from "@/lib/settlement-lifecycle";
-import { cn } from "@/lib/utils";
-import type { DriverSettlementStatus } from "@/types/driver-pay";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import type { BulkSettlementActionType } from "@trenova/graphql/generated/graphql";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCheck, CircleDollarSign, Search, Send, TriangleAlert } from "lucide-react";

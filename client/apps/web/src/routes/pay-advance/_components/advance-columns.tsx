@@ -1,8 +1,8 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { PayAdvanceStatusBadge } from "@/components/status-badge";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { PayAdvanceStatusBadge } from "@trenova/shared/components/status-badge";
 import { payAdvanceSourceChoices } from "@/lib/choices";
 import type { PayAdvanceRow } from "@/lib/graphql/driver-settlement";
-import type { PayAdvanceStatus } from "@/types/driver-pay";
+import type { PayAdvanceStatus } from "@trenova/shared/types/driver-pay";
 import { type ColumnDef } from "@tanstack/react-table";
 
 function formatDate(unix: number): string {

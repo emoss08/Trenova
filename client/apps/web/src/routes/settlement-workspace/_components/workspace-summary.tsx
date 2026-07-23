@@ -1,5 +1,5 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { cn } from "@/lib/utils";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { cn } from "@trenova/shared/lib/utils";
 import type { SettlementWorkspaceSummary } from "@/lib/graphql/driver-settlement";
 import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";

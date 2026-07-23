@@ -1,4 +1,4 @@
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { describe, expect, it } from "vitest";
 import {
   buildTimelineData,

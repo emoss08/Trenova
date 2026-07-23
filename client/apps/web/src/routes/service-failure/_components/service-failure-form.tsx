@@ -2,10 +2,10 @@ import { ServiceFailureReasonCodeAutocompleteField } from "@/components/autocomp
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { ServiceFailureUpdate } from "@/types/service-failure";
 import type { ServiceFailureReasonCodeAppliesTo } from "@/types/service-failure-reason-code";
-import type { StopType } from "@/types/shipment";
+import type { StopType } from "@trenova/shared/types/shipment";
 import { useFormContext } from "react-hook-form";
 
 type ServiceFailureFormProps = {

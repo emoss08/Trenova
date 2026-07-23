@@ -1,11 +1,11 @@
 import { CopyIconButton } from "@/components/copy-icon-button";
-import { Badge } from "@/components/ui/badge";
-import { ShikiCodeBlock } from "@/components/ui/shiki-code-block";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
+import { cn } from "@trenova/shared/lib/utils";
 import type { CatalogFragment, CatalogOperation, CatalogSelection } from "@/types/graphql-catalog";
-import { Kbd } from "@/components/ui/kbd";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { FileCodeIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo } from "react";

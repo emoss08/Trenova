@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type BillingRecordCardProps = {
   title: React.ReactNode;

@@ -1,6 +1,6 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -8,11 +8,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import { useDebounce } from "@/hooks/use-debounce";
 import { usePermission } from "@/hooks/use-permission";
-import { cn } from "@/lib/utils";
-import { Operation, Resource } from "@/types/permission";
+import { cn } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { HistoryIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { Link, useNavigate } from "react-router";

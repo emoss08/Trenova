@@ -1,7 +1,7 @@
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { resetUserPassword } from "@/lib/user-api";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { LockIcon } from "lucide-react";
 import { useState } from "react";

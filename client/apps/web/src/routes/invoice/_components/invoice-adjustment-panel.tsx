@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +6,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@trenova/shared/components/ui/dialog";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
-import type { Invoice } from "@/types/invoice";
+import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentPreview } from "@/types/invoice-adjustment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { WalletCardsIcon } from "lucide-react";

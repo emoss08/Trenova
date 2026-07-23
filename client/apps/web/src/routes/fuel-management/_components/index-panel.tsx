@@ -4,8 +4,8 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { fuelTypeChoices } from "@/lib/choices";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createFuelIndex,

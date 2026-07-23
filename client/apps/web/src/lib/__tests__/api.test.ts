@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiRequestError, api, clearCsrfToken, setCsrfToken } from "../api";
-import type { ApiErrorResponse } from "@/types/errors";
+import { ApiRequestError, api, clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
+import type { ApiErrorResponse } from "@trenova/shared/types/errors";
 
 function createJsonResponse(data: unknown = { ok: true }): Response {
   return new Response(JSON.stringify(data), {

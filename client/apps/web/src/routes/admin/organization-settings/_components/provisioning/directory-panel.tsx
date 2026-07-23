@@ -5,12 +5,12 @@ import {
   scimDirectoryFormSchema,
   type SCIMDirectory,
   type SCIMDirectoryFormValues,
-} from "@/types/iam";
+} from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Resolver, useForm } from "react-hook-form";
 import { emptyDirectory, scimDirectoryPanelQueryKey } from "./constants";
 import { SCIMDirectoryForm } from "./directory-form";
-import type { TableSheetProps } from "@/types/data-table";
+import type { TableSheetProps } from "@trenova/shared/types/data-table";
 
 export type SCIMDirectoryPanelMode = "create" | "edit";
 

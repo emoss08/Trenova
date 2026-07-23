@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { FieldWrapper } from "./field-components";
 import type { TextareaFieldProps } from "./textarea-field";
 

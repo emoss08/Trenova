@@ -1,14 +1,14 @@
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import type { ReportCatalogField } from "@/lib/graphql/reports";
 import { operatorChoice } from "@/types/report";
 import { format } from "date-fns";

@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { Metadata } from "./metadata";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 
 export type PageHeaderProps = {
   title: string;

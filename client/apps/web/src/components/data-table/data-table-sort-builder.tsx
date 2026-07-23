@@ -1,18 +1,18 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@trenova/shared/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import type { SortDirection, SortField } from "@/types/data-table";
+} from "@trenova/shared/components/ui/select";
+import { cn } from "@trenova/shared/lib/utils";
+import type { SortDirection, SortField } from "@trenova/shared/types/data-table";
 import {
   closestCenter,
   DndContext,

@@ -1,6 +1,6 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Badge } from "@/components/ui/badge";
-import type { SettlementDisputeRow } from "@/lib/graphql/driver-portal";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { SettlementDisputeRow } from "@trenova/shared/lib/graphql/driver-portal";
 import { type ColumnDef } from "@tanstack/react-table";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];

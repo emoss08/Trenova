@@ -1,19 +1,19 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatSplitDateTime } from "@/lib/date";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { formatSplitDateTime } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
-import type { MoveStatus, Shipment, Stop, StopStatus, StopType } from "@/types/shipment";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { MoveStatus, Shipment, Stop, StopStatus, StopType } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,

@@ -8,8 +8,8 @@ import {
   type EDITestCase,
   type SaveEDITestCaseRequest,
   type UpsertEDIPartnerRequest,
-} from "@/types/edi";
-import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+} from "@trenova/shared/types/edi";
+import type { SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import { z } from "zod";
 
 export const mappingEntityTypes = ediMappingEntityTypeSchema.options;

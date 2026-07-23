@@ -1,4 +1,4 @@
-import type { DocumentUploadSession } from "@/types/document";
+import type { DocumentUploadSession } from "@trenova/shared/types/document";
 
 const DB_NAME = "trenova-document-uploads";
 const DB_VERSION = 1;

@@ -1,23 +1,23 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { dataScopeChoices } from "@/lib/choices";
 import {
   getAvailableResources,
   type ResourceCategory,
   type ResourceDefinition,
 } from "@/lib/role-api";
-import { cn } from "@/lib/utils";
-import type { AddPermission, DataScope, Operation } from "@/types/role";
+import { cn } from "@trenova/shared/lib/utils";
+import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
 import {
   CheckIcon,

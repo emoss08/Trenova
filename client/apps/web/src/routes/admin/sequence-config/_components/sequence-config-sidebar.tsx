@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { SequenceType } from "@/types/sequence-config";
 import { memo } from "react";
 import { useFormState } from "react-hook-form";

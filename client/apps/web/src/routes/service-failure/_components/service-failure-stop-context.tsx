@@ -1,6 +1,6 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { findChoice, stopTypeChoices } from "@/lib/choices";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-failure";
 import type { ReactNode } from "react";
 

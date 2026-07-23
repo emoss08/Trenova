@@ -1,4 +1,4 @@
-import { fetchMyLoads, type PortalLoad, type PortalStop } from "@/lib/graphql/driver-portal";
+import { fetchMyLoads, type PortalLoad, type PortalStop } from "@trenova/shared/lib/graphql/driver-portal";
 import type { PortalLoadScope } from "@trenova/graphql/generated/graphql";
 import { useQueries, useQuery } from "@tanstack/react-query";
 

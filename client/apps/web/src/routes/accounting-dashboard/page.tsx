@@ -1,7 +1,7 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { usePermission } from "@/hooks/use-permission";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { HandCoinsIcon } from "lucide-react";
 import { m } from "motion/react";
 import { Link } from "react-router";

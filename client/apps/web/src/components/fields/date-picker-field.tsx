@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { toUnixTimeStamp } from "@/lib/date";
+} from "@trenova/shared/components/ui/popover";
+import { toUnixTimeStamp } from "@trenova/shared/lib/date";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useCallback } from "react";

@@ -1,6 +1,6 @@
 "use no memo";
 
-import type { EDITransfer } from "@/types/edi";
+import type { EDITransfer } from "@trenova/shared/types/edi";
 import type { ReactNode } from "react";
 
 type EDITransferPanelContentProps = {

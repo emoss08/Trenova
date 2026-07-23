@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { ArrowLeftIcon } from "lucide-react";
 import { Link } from "react-router";
 

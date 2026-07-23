@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { tenantInfoSchema } from "./helpers";
+import { tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 const fiscalPeriodStatusSchema = z.enum(["Open", "Closed", "Locked"]);
 export type FiscalPeriodStatus = z.infer<typeof fiscalPeriodStatusSchema>;

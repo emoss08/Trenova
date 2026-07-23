@@ -1,25 +1,25 @@
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@trenova/shared/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
+} from "@trenova/shared/components/ui/dialog";
+import { Progress } from "@trenova/shared/components/ui/progress";
 import { apiService } from "@/services/api";
-import type { Document, DocumentShipmentDraft } from "@/types/document";
+import type { Document, DocumentShipmentDraft } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircleIcon,

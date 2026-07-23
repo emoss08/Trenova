@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { cn } from "@trenova/shared/lib/utils";
 import { XIcon } from "lucide-react";
 import { type KeyboardEvent, useCallback, useRef, useState } from "react";
 import {

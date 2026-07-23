@@ -1,4 +1,4 @@
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { BankReceiptStatus } from "@/types/bank-receipt";
 import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
 import type { WorkItemStatus } from "@/types/bank-receipt-work-item";

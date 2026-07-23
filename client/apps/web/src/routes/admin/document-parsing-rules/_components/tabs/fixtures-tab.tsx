@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { Fixture } from "@/types/document-parsing-rule";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlaskConicalIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";

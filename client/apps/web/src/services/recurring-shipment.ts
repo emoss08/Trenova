@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   generateRecurringShipmentResultSchema,
   matchRecurringShipmentsResponseSchema,
@@ -11,7 +11,7 @@ import {
   type RecurringShipmentRun,
   type RecurringShipmentStatus,
 } from "@/types/recurring-shipment";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export type MatchRecurringShipmentsInput = {
   customerId: string;

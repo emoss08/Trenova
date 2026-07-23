@@ -1,4 +1,4 @@
-import { QueryLazyComponent } from "@/components/error-boundary";
+import { QueryLazyComponent } from "@trenova/shared/components/error-boundary";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { queries } from "@/lib/queries";

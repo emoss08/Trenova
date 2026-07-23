@@ -1,7 +1,7 @@
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Input } from "@trenova/shared/components/ui/input";
+import { cn } from "@trenova/shared/lib/utils";
 import { MapPinIcon, TruckIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { Control, Path } from "react-hook-form";

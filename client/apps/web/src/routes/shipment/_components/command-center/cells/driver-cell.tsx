@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import type { Shipment } from "@/types/shipment";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { TriangleAlertIcon } from "lucide-react";
 
 function formatDriverName(first: string | undefined | null, last: string | undefined | null) {

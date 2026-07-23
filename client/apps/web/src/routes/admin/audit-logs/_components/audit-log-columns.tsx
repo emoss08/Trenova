@@ -1,7 +1,7 @@
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { AuditEntry } from "@/types/audit-entry";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   auditOperationFilterOptions,

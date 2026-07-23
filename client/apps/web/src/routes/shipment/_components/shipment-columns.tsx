@@ -1,11 +1,11 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
-import { ShipmentTenderStatusBadge } from "@/components/status-badge";
+import { ShipmentTenderStatusBadge } from "@trenova/shared/components/status-badge";
 import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choices";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
-import type { Customer } from "@/types/customer";
-import type { RowAction } from "@/types/data-table";
-import type { Shipment, Stop } from "@/types/shipment";
+import type { Customer } from "@trenova/shared/types/customer";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router";
 import { ActionsCell } from "./command-center/cells/actions-cell";

@@ -1,9 +1,9 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { EDITransferStatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediTransferStatusChoices } from "@/lib/choices";
-import type { EDITransfer } from "@/types/edi";
+import type { EDITransfer } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 import { LinkIcon } from "lucide-react";
 import { Link } from "react-router";

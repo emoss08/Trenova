@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { Input } from "@trenova/shared/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { integrationHeaderSearchParamsParser } from "../integration-marketplace-state";

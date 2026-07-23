@@ -1,5 +1,5 @@
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import type { EDIDocumentPreview } from "@/types/edi";
+import { Sheet, SheetContent } from "@trenova/shared/components/ui/sheet";
+import type { EDIDocumentPreview } from "@trenova/shared/types/edi";
 import type { Extension } from "@codemirror/state";
 import { useEffect, useMemo } from "react";
 import { useInspectX12Mutation } from "../hooks/use-edi-document-mutations";

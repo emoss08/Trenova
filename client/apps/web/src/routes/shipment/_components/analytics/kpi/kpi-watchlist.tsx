@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
 import type React from "react";
 import type { Tone } from "../mock-data";
 import { KpiCard, KpiHeader } from "./kpi-card";

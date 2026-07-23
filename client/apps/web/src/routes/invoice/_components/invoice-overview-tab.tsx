@@ -1,10 +1,10 @@
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { formatUnixDate, formatUnixDateTime } from "@/lib/date";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
-import { cn, formatCurrency } from "@/lib/utils";
-import type { Invoice } from "@/types/invoice";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentLineage } from "@/types/invoice-adjustment";
 import { ExternalLinkIcon } from "lucide-react";
 import { Link } from "react-router";

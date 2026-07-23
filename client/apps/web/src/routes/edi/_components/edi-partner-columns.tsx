@@ -1,11 +1,11 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { EDIPartnerReadinessBadge, StatusBadge } from "@/components/status-badge";
+import { EDIPartnerReadinessBadge, StatusBadge } from "@trenova/shared/components/status-badge";
 import { useQuery } from "@tanstack/react-query";
 import { partnerReadinessQueryOptions } from "./edi-partner-readiness";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { statusChoices } from "@/lib/choices";
-import type { EDIPartner } from "@/types/edi";
+import type { EDIPartner } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export function getPartnerColumns(): ColumnDef<EDIPartner>[] {

@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 

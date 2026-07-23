@@ -1,12 +1,12 @@
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRecentActivityInfinite, type RecentActivityEntry } from "@/hooks/use-attention";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   operationLabel,
   resourceLabel,

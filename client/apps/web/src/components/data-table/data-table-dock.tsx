@@ -1,16 +1,16 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDataTable } from "@/contexts/data-table-context";
-import { cn } from "@/lib/utils";
-import type { DockAction } from "@/types/data-table";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DockAction } from "@trenova/shared/types/data-table";
 import type { Table } from "@tanstack/react-table";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useState } from "react";
-import { Command, CommandGroup, CommandItem, CommandList } from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Command, CommandGroup, CommandItem, CommandList } from "@trenova/shared/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 type DataTableDockProps<TData> = {
   table: Table<TData>;

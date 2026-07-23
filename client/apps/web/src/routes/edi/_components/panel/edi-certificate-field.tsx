@@ -1,10 +1,10 @@
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useDebounce } from "@/hooks/use-debounce";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { CommunicationProfileFormValues } from "@/routes/edi/_components/edi-schemas";
-import type { EDICertificateSummary } from "@/types/edi";
+import type { EDICertificateSummary } from "@trenova/shared/types/edi";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { UploadIcon } from "lucide-react";
 import { useRef } from "react";

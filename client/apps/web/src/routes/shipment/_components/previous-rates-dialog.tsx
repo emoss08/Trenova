@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
-import { formatToUserTimezone } from "@/lib/date";
-import { formatCurrency } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dialog";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { GetPreviousRatesRequest, PreviousRateSummary } from "@/types/shipment";
+import type { GetPreviousRatesRequest, PreviousRateSummary } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { HistoryIcon } from "lucide-react";
 import { useState } from "react";

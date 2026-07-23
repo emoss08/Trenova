@@ -1,8 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { ediTableGraphQLConfigs } from "@/lib/graphql/edi-table";
 import { apiService } from "@/services/api";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { DataTablePanelProps, DockAction } from "@/types/data-table";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { DataTablePanelProps, DockAction } from "@trenova/shared/types/data-table";
 import type {
   EDICommunicationProfile,
   EDIInboundFile,
@@ -11,8 +11,8 @@ import type {
   EDIPartner,
   EDITestCaseRow,
   EDITransfer,
-} from "@/types/edi";
-import { Operation, Resource } from "@/types/permission";
+} from "@trenova/shared/types/edi";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon, CircleXIcon, RefreshCwIcon, RotateCcwIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";

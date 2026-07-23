@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   accessPoliciesSchema,
   accessPolicySchema,
@@ -22,7 +22,7 @@ import {
   type SCIMDirectoryListResponse,
   type SCIMGroupRoleMapping,
   type SCIMGroupRoleMappingListResponse,
-} from "@/types/iam";
+} from "@trenova/shared/types/iam";
 import {
   microsoftSSOConfigSchema,
   oktaSSOConfigSchema,
@@ -33,7 +33,7 @@ import {
   type OktaSSOConfig,
   type OrganizationSettings,
   type TenantLoginMetadata,
-} from "@/types/organization";
+} from "@trenova/shared/types/organization";
 
 export class OrganizationService {
   readonly base_url = "/organizations";

@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportCatalog, useReportDefinition } from "@/hooks/use-reports";
-import { graphQLErrorMessage } from "@/lib/graphql";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { CircleAlertIcon } from "lucide-react";
 import { useParams } from "react-router";
 import { ReportBuilder } from "./_components/report-builder";

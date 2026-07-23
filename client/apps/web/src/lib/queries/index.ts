@@ -39,7 +39,7 @@ import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
 import { sidebarPreferences } from "./sidebar-preferences";
-import { notification } from "./notification";
+import { notification } from "@trenova/shared/lib/queries/notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
 import { user, userOrganization } from "./user";

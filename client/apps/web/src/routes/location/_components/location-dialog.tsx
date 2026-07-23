@@ -1,15 +1,15 @@
 import { GeocodedBadge } from "@/components/geocode-badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
+} from "@trenova/shared/components/ui/dialog";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -18,11 +18,11 @@ import {
   type CreatePanelSaveAction,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@/lib/api";
-import { formatToUserTimezone } from "@/lib/date";
-import { useAuthStore } from "@/stores/auth-store";
-import type { DataTablePanelProps } from "@/types/data-table";
-import { locationSchema, type Location } from "@/types/location";
+import { api } from "@trenova/shared/lib/api";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { locationSchema, type Location } from "@trenova/shared/types/location";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";

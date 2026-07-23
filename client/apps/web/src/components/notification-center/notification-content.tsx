@@ -1,11 +1,11 @@
 import { DocumentFileTypeIcon } from "@/components/documents/document-file-type-icon";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { usePermission } from "@/hooks/use-permission";
-import { formatCurrency, formatFileSize } from "@/lib/utils";
-import { Operation, Resource } from "@/types/permission";
-import type { Notification } from "@/types/notification";
+import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import type { Notification } from "@trenova/shared/types/notification";
 import { formatDistanceToNowStrict } from "date-fns";
 import { DownloadIcon } from "lucide-react";
 import { MentionReply } from "./notification-mention-reply";

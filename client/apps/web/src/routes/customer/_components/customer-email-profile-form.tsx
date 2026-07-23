@@ -1,9 +1,9 @@
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
-import type { Customer } from "@/types/customer";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import type { Customer } from "@trenova/shared/types/customer";
 import { MailIcon, PaperclipIcon, SettingsIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 

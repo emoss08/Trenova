@@ -1,11 +1,11 @@
 "use no memo";
 import { EmptyState } from "@/components/empty-state";
-import { Button } from "@/components/ui/button";
-import { FormSection } from "@/components/ui/form";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type { AccessorialCharge } from "@/types/accessorial-charge";
-import type { Shipment } from "@/types/shipment";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { cn } from "@trenova/shared/lib/utils";
+import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import {
   BoxesIcon,
   FuelIcon,

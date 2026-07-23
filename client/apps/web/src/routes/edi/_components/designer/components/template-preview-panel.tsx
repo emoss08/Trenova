@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { ControlledEDIDocumentProfileAutocompleteField } from "@/components/autocomplete-fields";
 import {
   buildEDIDocumentResolutionRequest,
@@ -9,7 +9,7 @@ import {
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
-import type { EDIPartnerDocumentProfile } from "@/types/edi";
+import type { EDIPartnerDocumentProfile } from "@trenova/shared/types/edi";
 import { RefreshCwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

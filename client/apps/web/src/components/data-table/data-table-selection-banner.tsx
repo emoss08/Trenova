@@ -1,6 +1,6 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 type DataTableSelectionBannerProps = {
   visible: boolean;

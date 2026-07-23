@@ -4,7 +4,7 @@ import {
 } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fiscalYearStatusChoices } from "@/lib/choices";
-import { formatToUserTimezone } from "@/lib/date";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { FiscalYear } from "@/types/fiscal-year";
 import type { ColumnDef } from "@tanstack/react-table";
 

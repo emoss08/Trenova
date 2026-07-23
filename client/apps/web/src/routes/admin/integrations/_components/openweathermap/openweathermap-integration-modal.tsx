@@ -1,5 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { TableSheetProps } from "@/types/data-table";
+import { Dialog, DialogContent } from "@trenova/shared/components/ui/dialog";
+import type { TableSheetProps } from "@trenova/shared/types/data-table";
 import { OpenWeatherMapForm } from "./openweathermap-integration-form";
 
 export function OpenWeatherMapIntegrationModal({ open, onOpenChange }: TableSheetProps) {

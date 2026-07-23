@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import type { DocumentPreviewStatus } from "@/types/document";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DocumentPreviewStatus } from "@trenova/shared/types/document";
 import {
   FileIcon,
   FileSpreadsheetIcon,

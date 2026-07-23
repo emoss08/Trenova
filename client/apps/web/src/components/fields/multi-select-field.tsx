@@ -1,6 +1,6 @@
 "use no memo";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -8,19 +8,19 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
+} from "@trenova/shared/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { useDebounce } from "@/hooks/use-debounce";
-import { API_BASE_URL } from "@/lib/constants";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   fetchGraphQLSelectOptions,
   selectOptionFiltersFromSearchParams,
   type GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { multiSelectVariants } from "@/lib/variants/async-multi-select";
-import { type GenericLimitOffsetResponse } from "@/types/server";
+import { type GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import {
   useCallback,
@@ -39,7 +39,7 @@ import {
   type Path,
   type RegisterOptions,
 } from "react-hook-form";
-import { Spinner } from "../ui/spinner";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { FieldWrapper } from "./field-components";
 
 export interface BaseMultiSelectAutocompleteFieldProps<TOption> {

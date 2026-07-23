@@ -4,10 +4,10 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { statusChoices } from "@/lib/choices";
-import type { Customer } from "@/types/customer";
+import type { Customer } from "@trenova/shared/types/customer";
 import {
   BuildingIcon,
   LinkIcon,

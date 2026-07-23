@@ -1,5 +1,5 @@
 import { listShipmentEventsGraphQL } from "@/lib/graphql/shipment";
-import { safeParse } from "@/lib/parse";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   shipmentEventListSchema,
   type ShipmentEventList,

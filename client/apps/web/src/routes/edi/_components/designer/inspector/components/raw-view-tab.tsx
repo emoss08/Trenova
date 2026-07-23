@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { downloadTextFile } from "@/lib/utils";
-import type { EDIX12Inspection } from "@/types/edi";
+import { downloadTextFile } from "@trenova/shared/lib/utils";
+import type { EDIX12Inspection } from "@trenova/shared/types/edi";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { CopyIcon, DownloadIcon } from "lucide-react";

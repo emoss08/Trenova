@@ -8,8 +8,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import type { Document } from "@/types/document";
+} from "@trenova/shared/components/ui/alert-dialog";
+import type { Document } from "@trenova/shared/types/document";
 import { Loader2Icon, RotateCcwIcon } from "lucide-react";
 import { formatFileSize } from "./document-upload-zone";
 

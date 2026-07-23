@@ -1,7 +1,7 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { ReportRun } from "@/lib/graphql/reports";
-import { formatFileSize } from "@/lib/utils";
+import { formatFileSize } from "@trenova/shared/lib/utils";
 import { REPORT_RUN_STATUS_LABELS, REPORT_RUN_TRIGGER_LABELS } from "@/types/report";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CircleAlertIcon, ZapIcon } from "lucide-react";

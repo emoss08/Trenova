@@ -13,7 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "error";
 

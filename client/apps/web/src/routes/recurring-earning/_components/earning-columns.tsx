@@ -1,8 +1,8 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { recurringEarningStatusChoices } from "@/lib/choices";
 import { updateRecurringEarning, type RecurringEarningRow } from "@/lib/graphql/driver-settlement";
-import type { RecurringEarningStatus } from "@/types/driver-pay";
+import type { RecurringEarningStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";

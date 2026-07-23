@@ -1,9 +1,9 @@
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel, type FormTabConfig } from "@/components/tabbed-form-edit-panel";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { EDICommunicationProfile, EDIConnectionTestResult } from "@/types/edi";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { EDICommunicationProfile, EDIConnectionTestResult } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, RadioTowerIcon, ServerIcon, ShieldCheckIcon } from "lucide-react";

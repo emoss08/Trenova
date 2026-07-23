@@ -1,9 +1,9 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatRange } from "@/lib/date";
-import { formatCurrency } from "@/lib/utils";
-import { fetchMyPeriodSummary, fetchMyRecentPayEvents } from "@/lib/graphql/driver-portal";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatRange } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import { fetchMyPeriodSummary, fetchMyRecentPayEvents } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, ReceiptTextIcon } from "lucide-react";
 import { m } from "motion/react";

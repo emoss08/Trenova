@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
 
 function SkeletonLine({ className }: { className?: string }) {
   return <Skeleton className={cn("h-3 rounded-sm", className)} />;

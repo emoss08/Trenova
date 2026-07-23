@@ -1,24 +1,24 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@trenova/shared/components/ui/sheet";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
   useNotificationFeed,
   useUnreadNotificationCount,
-} from "@/hooks/use-notifications";
+} from "@trenova/shared/hooks/use-notifications";
 import {
   getNotificationDayGroup,
   NOTIFICATION_DAY_GROUPS,
   type NotificationDayGroup,
 } from "@/lib/notification-helpers";
-import { cn } from "@/lib/utils";
-import type { Notification, NotificationState } from "@/types/notification";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Notification, NotificationState } from "@trenova/shared/types/notification";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArchiveIcon,

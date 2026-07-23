@@ -1,5 +1,5 @@
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect, useMemo, useState } from "react";
 
 interface PresenceEvent {

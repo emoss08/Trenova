@@ -6,7 +6,7 @@ import {
   SwitchIcon as SwitchIconPrimitive,
   type SwitchProps as SwitchPrimitiveProps,
 } from '@/components/animate-ui/primitives/base/switch';
-import { cn } from '@/lib/utils';
+import { cn } from '@trenova/shared/lib/utils';
 
 type SwitchProps = SwitchPrimitiveProps & {
   pressedWidth?: number;

@@ -1,6 +1,6 @@
-import { FormGroup } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormGroup } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 
 export function ShipmentFormSkeleton() {
   return (

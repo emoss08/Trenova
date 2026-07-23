@@ -1,5 +1,5 @@
 import type React from "react";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@trenova/shared/components/ui/tooltip";
 import type { LoadingOptimizationResult } from "@/types/loading-optimization";
 import { COMMODITY_PALETTE } from "./constants";
 import { HazmatZoneOverlay } from "./hazmat-zone-overlay";

@@ -1,7 +1,7 @@
 import { InputFieldSkeleton } from "@/components/fields/input-field";
 import { SwitchFieldSkeleton } from "@/components/fields/switch-field";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 
 export function PageSkeleton() {
   return (

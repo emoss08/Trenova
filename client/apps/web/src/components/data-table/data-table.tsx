@@ -16,7 +16,7 @@ import {
 } from "@/lib/data-table";
 import { fetchAllRows } from "@/lib/data-table-export";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type {
   DataTableProps,
   FilterGroupItem,
@@ -25,7 +25,7 @@ import type {
   SingleFilterItem,
   SortDirection,
   SortField,
-} from "@/types/data-table";
+} from "@trenova/shared/types/data-table";
 import type {
   ActiveTableView,
   TableConfig,
@@ -57,7 +57,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Table, TableHeader, TableRow } from "../ui/table";
+import { Table, TableHeader, TableRow } from "@trenova/shared/components/ui/table";
 import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
 import { DataTableDock } from "./data-table-dock";

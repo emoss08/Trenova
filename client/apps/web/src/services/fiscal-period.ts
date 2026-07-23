@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import type { FiscalPeriod } from "@/types/fiscal-period";
 
 export class FiscalPeriodService {

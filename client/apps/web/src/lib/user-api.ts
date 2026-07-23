@@ -1,5 +1,5 @@
-import type { User } from "@/types/user";
-import { api } from "./api";
+import type { User } from "@trenova/shared/types/user";
+import { api } from "@trenova/shared/lib/api";
 
 export type ListUsersParams = {
   limit?: number;

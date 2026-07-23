@@ -6,12 +6,12 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useSwitchOrganization } from "@/hooks/use-organization-switch";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
-import type { UserOrganization } from "@/types/organization";
+import { cn } from "@trenova/shared/lib/utils";
+import type { UserOrganization } from "@trenova/shared/types/organization";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useState } from "react";

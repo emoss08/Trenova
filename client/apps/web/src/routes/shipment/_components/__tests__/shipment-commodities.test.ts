@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findDuplicateIds } from "@/lib/utils";
+import { findDuplicateIds } from "@trenova/shared/lib/utils";
 
 describe("findDuplicateIds", () => {
   it("returns empty set for empty array", () => {

@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { FormSection, FormGroup, FormControl } from "@/components/ui/form";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { FormSection, FormGroup, FormControl } from "@trenova/shared/components/ui/form";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   Controller,
   useFormContext,

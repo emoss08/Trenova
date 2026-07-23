@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { useTheme } from "@/components/theme-provider";
-import { disablePush, enablePush, getPushSubscription, pushSupported } from "@/lib/push";
-import { useAuthStore } from "@/stores/auth-store";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { useTheme } from "@trenova/shared/components/theme-provider";
+import { disablePush, enablePush, getPushSubscription, pushSupported } from "@trenova/shared/lib/push";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BellRingIcon, LogOutIcon, MoonIcon, SunIcon, MonitorIcon } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -13,7 +13,7 @@ import { useDashProfile } from "../_components/dash-layout";
 import { ProfileDocuments } from "../_components/profile-documents";
 import { PtoSection } from "../_components/pto-section";
 import { useDashFeatures } from "../_components/use-dash-features";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 const themeOptions = [
   { value: "light", label: "Light", icon: SunIcon },

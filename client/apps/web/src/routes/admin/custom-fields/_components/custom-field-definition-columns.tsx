@@ -1,6 +1,6 @@
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { fieldTypeChoices } from "@/lib/choices";
 import type { CustomFieldDefinition, FieldType } from "@/types/custom-field";
 import type { ColumnDef } from "@tanstack/react-table";

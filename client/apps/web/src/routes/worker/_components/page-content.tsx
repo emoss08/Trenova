@@ -1,5 +1,5 @@
-import { DataTableLazyComponent } from "@/components/error-boundary";
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { CalendarIcon, UsersIcon } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { lazy } from "react";

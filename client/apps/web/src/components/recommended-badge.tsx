@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { Sparkles } from "lucide-react";
 import { m } from "motion/react";
 import React from "react";
@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from "@trenova/shared/components/ui/tooltip";
 
 interface RecommendedBadgeProps {
   text?: string;

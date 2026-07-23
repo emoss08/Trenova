@@ -1,23 +1,23 @@
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
 import {
   SplitButton,
   type SplitButtonOption,
-} from "@/components/ui/split-button";
+} from "@trenova/shared/components/ui/split-button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@/lib/api";
-import { formatToUserTimezone } from "@/lib/date";
-import type { DataTablePanelProps } from "@/types/data-table";
-import { documentTypeSchema, type DocumentType } from "@/types/document-type";
-import { TimeFormat } from "@/types/user";
+import { api } from "@trenova/shared/lib/api";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { documentTypeSchema, type DocumentType } from "@trenova/shared/types/document-type";
+import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleAlertIcon } from "lucide-react";

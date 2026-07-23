@@ -1,9 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { ARWorklistItem } from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2Icon } from "lucide-react";
 import { m } from "motion/react";

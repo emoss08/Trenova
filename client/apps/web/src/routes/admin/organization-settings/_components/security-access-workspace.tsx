@@ -1,7 +1,7 @@
-import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { securityTabParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
-import { formatIdentityProviderName } from "@/lib/utils";
+import { formatIdentityProviderName } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import {

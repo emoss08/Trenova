@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { format } from "date-fns";
 import {
   DAY_LABEL_HEIGHT_PX,

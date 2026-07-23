@@ -1,4 +1,4 @@
-import { OrderStatusBadge } from "@/components/status-badge";
+import { OrderStatusBadge } from "@trenova/shared/components/status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,14 +8,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { FormSection } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { graphQLErrorMessage } from "@/lib/graphql";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cancelOrder, closeOrder, fetchOrderDetail } from "@/lib/graphql/order";
-import { formatCurrency } from "@/lib/utils";
-import type { Order } from "@/types/order";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { BanIcon, CheckCircle2Icon } from "lucide-react";
 import { useState } from "react";

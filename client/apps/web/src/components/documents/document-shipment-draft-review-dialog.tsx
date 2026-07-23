@@ -1,14 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@trenova/shared/components/ui/dialog";
+import { Form } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { ShipmentForm } from "@/routes/shipment/_components/shipment-form";
 import { apiService } from "@/services/api";
 import type {
@@ -16,8 +16,8 @@ import type {
   DocumentIntelligenceField,
   DocumentIntelligenceStop,
   DocumentShipmentDraft,
-} from "@/types/document";
-import { shipmentCreateSchema, type ShipmentCreateInput } from "@/types/shipment";
+} from "@trenova/shared/types/document";
+import { shipmentCreateSchema, type ShipmentCreateInput } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, LoaderCircleIcon, SparklesIcon } from "lucide-react";

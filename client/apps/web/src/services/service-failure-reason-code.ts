@@ -1,11 +1,11 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   serviceFailureReasonCodeSchema,
   type ServiceFailureReasonCode,
   type ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export class ServiceFailureReasonCodeService {
   async getAll(params?: string) {

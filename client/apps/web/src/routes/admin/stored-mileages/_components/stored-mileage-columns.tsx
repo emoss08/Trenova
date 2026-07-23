@@ -1,5 +1,5 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import type { StoredMileage } from "@/types/stored-mileage";
 import type { ColumnDef } from "@tanstack/react-table";
 

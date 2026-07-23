@@ -1,5 +1,5 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,8 +7,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@trenova/shared/components/ui/dialog";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import {
   FORMAT_RULE_COLOR_SWATCHES,
   generateFilterId,
@@ -24,14 +24,14 @@ import {
   operatorRequiresValue,
   stringifyUnknown,
 } from "@/lib/data-table";
-import { cn } from "@/lib/utils";
-import type { FilterVariant } from "@/types/data-table";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FilterVariant } from "@trenova/shared/types/data-table";
 import type {
   FormatRuleColor,
   FormatRuleOperator,
   TableFormatRule,
 } from "@/types/table-configuration";
-import type { SelectOption } from "@/types/fields";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import type { ColumnDef } from "@tanstack/react-table";
 import { PaintbrushIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";

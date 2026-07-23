@@ -1,15 +1,15 @@
 import { FormSaveDock } from "@/components/form-save-dock";
 import { SwitchField } from "@/components/fields/switch-field";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
+} from "@trenova/shared/components/ui/card";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Label } from "@trenova/shared/components/ui/label";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";

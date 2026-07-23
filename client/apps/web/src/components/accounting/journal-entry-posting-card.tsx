@@ -1,8 +1,8 @@
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { JournalLineItemsTable } from "@/components/accounting/journal-line-items-table";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { cn } from "@trenova/shared/lib/utils";
 import type { JournalEntryLine } from "@/types/journal-entry";
 import { ChevronRightIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";

@@ -1,13 +1,13 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
-import { createLimitOffsetResponse } from "@/types/server";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import {
   bulkUpdateLocationStatusResponseSchema,
   locationSchema,
   type BulkUpdateLocationStatusRequest,
   type BulkUpdateLocationStatusResponse,
   type Location,
-} from "@/types/location";
+} from "@trenova/shared/types/location";
 
 const locationListSchema = createLimitOffsetResponse(locationSchema);
 

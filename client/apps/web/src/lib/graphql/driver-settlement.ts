@@ -113,8 +113,8 @@ import {
   type WorkerPayAssignmentsQuery,
   type WriteOffPayAdvanceInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type PayProfileRow = NonNullable<
   PayProfileTableQuery["payProfiles"]["edges"]

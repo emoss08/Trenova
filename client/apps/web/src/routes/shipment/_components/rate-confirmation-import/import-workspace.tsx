@@ -1,9 +1,9 @@
-import { SuspenseLoader } from "@/components/component-loader";
-import { Button } from "@/components/ui/button";
+import { SuspenseLoader } from "@trenova/shared/components/component-loader";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { clearConversation } from "@/lib/import-chat-store";
 import { apiService } from "@/services/api";
-import { shipmentCreateSchema } from "@/types/shipment";
+import { shipmentCreateSchema } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { nanoid } from "nanoid";

@@ -2,7 +2,7 @@ import type {
   EDIPartnerDocumentProfile,
   EDITemplate,
   PreviewEDIDocumentRequest,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 
 export type EDIDocumentSourceField =
   | "shipmentId"

@@ -5,8 +5,8 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/popover";
+import { cn } from "@trenova/shared/lib/utils";
 import { InfoIcon } from "lucide-react";
 
 export type KpiInfoRow = {

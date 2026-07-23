@@ -10,10 +10,10 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { equipmentClassSchema } from "@/types/equipment-type";
-import { statusSchema } from "@/types/helpers";
+import { statusSchema } from "@trenova/shared/types/helpers";
 import type { Tractor } from "@/types/tractor";
 import { type Control, useFormContext } from "react-hook-form";
 

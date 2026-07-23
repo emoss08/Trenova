@@ -6,7 +6,7 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
-import type { FleetCode } from "@/types/fleet-code";
+import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { LoadingWarning } from "@/types/loading-optimization";
 import { AlertCircleIcon, AlertTriangleIcon, InfoIcon } from "lucide-react";
 

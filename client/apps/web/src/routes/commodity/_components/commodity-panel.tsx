@@ -1,7 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import type { DataTablePanelProps } from "@/types/data-table";
-import { commoditySchema, type Commodity } from "@/types/commodity";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { commoditySchema, type Commodity } from "@trenova/shared/types/commodity";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CommodityForm } from "./commodity-form";

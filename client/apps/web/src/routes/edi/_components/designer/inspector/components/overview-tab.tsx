@@ -1,4 +1,4 @@
-import type { EDIX12Inspection } from "@/types/edi";
+import type { EDIX12Inspection } from "@trenova/shared/types/edi";
 import type { InspectorContext } from "../inspector-context";
 import InspectorGrid from "./inspector-grid";
 

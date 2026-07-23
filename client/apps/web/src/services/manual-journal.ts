@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import type { ManualJournal } from "@/types/manual-journal";
 
 export class ManualJournalService {

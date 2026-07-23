@@ -1,4 +1,4 @@
-import { pluralize } from "@/lib/utils";
+import { pluralize } from "@trenova/shared/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,7 +8,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 
 export function DuplicateAlertDialog({
   open,

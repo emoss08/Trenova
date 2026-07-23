@@ -1,7 +1,7 @@
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { BooleanBadge } from "@/components/status-badge";
+import { BooleanBadge } from "@trenova/shared/components/status-badge";
 import { holdSeverityChoices, holdTypeChoices } from "@/lib/choices";
 import type { HoldReason } from "@/types/hold-reason";
 import { type ColumnDef } from "@tanstack/react-table";

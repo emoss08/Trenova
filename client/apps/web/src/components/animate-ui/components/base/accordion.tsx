@@ -12,7 +12,7 @@ import {
   type AccordionProps as AccordionPrimitiveProps,
   type AccordionTriggerProps as AccordionTriggerPrimitiveProps,
 } from "@/components/animate-ui/primitives/base/accordion";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type AccordionProps = AccordionPrimitiveProps;
 

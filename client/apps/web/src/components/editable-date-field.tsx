@@ -1,12 +1,12 @@
 "use no memo";
-import { generateDateOnlyString, toDate, toUnixTimeStamp } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { generateDateOnlyString, toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Badge } from "./ui/badge";
-import { Calendar } from "./ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Spinner } from "./ui/spinner";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 type EditableDateFieldProps = {
   date?: number | null;

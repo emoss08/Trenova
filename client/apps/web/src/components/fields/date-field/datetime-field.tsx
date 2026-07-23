@@ -1,5 +1,5 @@
-import { toDate, toUnixTimeStamp } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
 import type { AutoCompleteDateFieldProps } from "./date-field";

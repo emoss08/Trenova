@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -7,17 +7,17 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { daysUntil, formatUnixDate } from "@/lib/date";
+} from "@trenova/shared/components/ui/drawer";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { daysUntil, formatUnixDate } from "@trenova/shared/lib/date";
 import {
   fetchMyComplianceProfile,
   updateMyContactInfo,
   type PortalComplianceProfile,
-} from "@/lib/graphql/driver-portal";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/lib/graphql/driver-portal";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PencilIcon, ShieldCheckIcon, ShieldAlertIcon } from "lucide-react";
 import { useState } from "react";

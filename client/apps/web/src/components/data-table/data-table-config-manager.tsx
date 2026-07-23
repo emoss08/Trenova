@@ -1,10 +1,10 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth-store";
+import { cn } from "@trenova/shared/lib/utils";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermission } from "@/hooks/use-permission";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type {
   TableConfig,
   TableConfiguration,
@@ -13,8 +13,8 @@ import type {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { BookmarkIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { ScrollArea } from "../ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { DataTableConfigItem } from "./_components/data-table-config/data-table-config-item";
 
 type DataTableConfigManagerProps = {

@@ -1,17 +1,17 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   formatAccountingDate,
   JournalEntryPostingCard,
   type PostingEntry,
 } from "@/components/accounting/journal-entry-posting-card";
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import {
   PlainCustomerPaymentStatusBadge,
   PlainSettlementStatusBadge,
-} from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/dialog";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -28,17 +28,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { getTodayDate } from "@/lib/date";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import type { CustomerPaymentDetail } from "@/lib/graphql/customer-payment";
 import { reverseCustomerPayment } from "@/lib/graphql/customer-payment";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@/lib/utils";
-import type { CustomerPaymentStatus } from "@/types/customer-payment";
-import type { SettlementStatus } from "@/types/invoice";
-import { Operation, Resource } from "@/types/permission";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payment";
+import type { SettlementStatus } from "@trenova/shared/types/invoice";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,

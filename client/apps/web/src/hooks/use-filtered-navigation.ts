@@ -5,8 +5,8 @@ import {
   type NavItem,
   type NavModule,
 } from "@/config/navigation.types";
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 
 export function useFilteredNavigation() {

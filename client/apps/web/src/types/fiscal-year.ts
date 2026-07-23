@@ -4,7 +4,7 @@ import {
   nullableIntegerSchema,
   optionalStringSchema,
   tenantInfoSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 const fiscalYearStatusSchema = z.enum(["Draft", "Open", "Closed", "Locked"]);
 export type FiscalYearStatus = z.infer<typeof fiscalYearStatusSchema>;

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { isMotionComponent, m, type HTMLElements, type HTMLMotionProps } from "motion/react";
 import * as React from "react";
 

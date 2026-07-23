@@ -1,5 +1,5 @@
 import { EmptyState } from "@/components/empty-state";
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Package, Search, Truck } from "lucide-react";
 
 export function SearchLoading({ query }: { query: string }) {

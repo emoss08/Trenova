@@ -10,7 +10,7 @@ import type {
   InspectX12Request,
   PreviewEDIDocumentRequest,
   UpsertEDIPartnerDocumentProfileRequest,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 import { useQueryClient } from "@tanstack/react-query";
 
 type MutationOptions<TData, TVariables> = {

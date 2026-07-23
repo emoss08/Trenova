@@ -1,11 +1,11 @@
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatToUserTimezone } from "@/lib/date";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { AuditEntry } from "@/types/audit-entry";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useState } from "react";
 import {
   changeTypeLabel,

@@ -1,4 +1,4 @@
-import { fetchMyPortalFeatures, type PortalFeatures } from "@/lib/graphql/driver-portal";
+import { fetchMyPortalFeatures, type PortalFeatures } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 
 const ALL_ENABLED: PortalFeatures = {

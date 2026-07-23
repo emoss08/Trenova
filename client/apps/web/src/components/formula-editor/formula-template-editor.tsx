@@ -1,20 +1,20 @@
 import { FieldWrapper } from "@/components/fields/field-components";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/card";
+import { Input } from "@trenova/shared/components/ui/input";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   type FormulaTemplate,
   formulaTemplateSchema,
   type FormulaTemplateStatus,
   type FormulaTemplateType,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileCode2, Save, X } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";

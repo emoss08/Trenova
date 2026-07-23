@@ -1,6 +1,6 @@
-import { clearCsrfToken, setCsrfToken } from "@/lib/api";
+import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
-import type { GraphQLRequestError } from "@/lib/graphql";
+import type { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchDataTablePage, fetchGraphQLData } from "../use-data-table-query";
 

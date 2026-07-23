@@ -1,21 +1,21 @@
 import { RoleSelectAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { api } from "@/lib/api";
-import { formatToUserTimezone } from "@/lib/date";
+import { api } from "@trenova/shared/lib/api";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { assignRole, unassignRole } from "@/lib/role-api";
-import type { UserRoleAssignment } from "@/types/role";
-import { TimeFormat } from "@/types/user";
+import type { UserRoleAssignment } from "@trenova/shared/types/role";
+import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarIcon, PlusIcon, TrashIcon } from "lucide-react";

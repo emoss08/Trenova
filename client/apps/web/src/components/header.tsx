@@ -6,13 +6,13 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@trenova/shared/components/ui/breadcrumb";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useHistoryNavigation } from "@/hooks/use-history-navigation";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { queries } from "@/lib/queries";
 import { getPageTitle } from "@/lib/route-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useNavigationStore } from "@/stores/navigation-store";
 import type { ToggleFavoriteRequest } from "@/types/page-favorite";
@@ -22,8 +22,8 @@ import React from "react";
 import { Link, useLocation, useNavigation } from "react-router";
 import { toast } from "sonner";
 import { SystemInformation } from "./system-information";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 export function Header() {
   const navigation = useNavigation();

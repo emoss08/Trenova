@@ -3,7 +3,7 @@ import {
   optionalStringSchema,
   timestampSchema,
   versionSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 const decimalNumberSchema = z.coerce.number().finite();
 

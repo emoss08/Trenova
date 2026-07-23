@@ -4,7 +4,7 @@ import {
   type SidebarPreferencesInput,
   type SidebarPreferencesQuery,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type EffectiveSidebarPreferences = SidebarPreferencesQuery["sidebarPreferences"];
 export type SidebarSectionPreference = EffectiveSidebarPreferences["sections"][number];

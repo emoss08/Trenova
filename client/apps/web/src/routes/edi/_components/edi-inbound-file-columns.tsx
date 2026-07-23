@@ -1,9 +1,9 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { EDIInboundFileStatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { EDIInboundFileStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediConnectionMethodChoices, ediInboundFileStatusChoices } from "@/lib/choices";
-import type { EDIInboundFile } from "@/types/edi";
+import type { EDIInboundFile } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export function getInboundFileColumns(): ColumnDef<EDIInboundFile>[] {

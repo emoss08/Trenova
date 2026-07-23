@@ -1,4 +1,4 @@
-import type { SelectOption } from "@/types/fields";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import {
   ediDocumentDirectionSchema,
   ediDocumentStatusSchema,
@@ -8,7 +8,7 @@ import {
   ediTemplateStatusSchema,
   ediTransactionSetSchema,
   ediValidationModeSchema,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 
 const templateElementSourceLabels: Record<
   (typeof ediTemplateElementSourceSchema.options)[number],

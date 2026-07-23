@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,15 +7,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import { runBulkAction } from "@/lib/bulk-run";
 import {
   closeEscrowAccount,
   escrowAccountTableGraphQLConfig,
   type EscrowAccountRow,
 } from "@/lib/graphql/driver-settlement";
-import type { DockAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { DockAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";

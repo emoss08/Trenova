@@ -8,7 +8,7 @@ import { InputField } from "@/components/fields/input-field";
 import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   cdlClassChoices,
   complianceStatusChoices,
@@ -18,8 +18,8 @@ import {
   statusChoices,
   workerTypeChoices,
 } from "@/lib/choices";
-import { cn } from "@/lib/utils";
-import type { Worker } from "@/types/worker";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Worker } from "@trenova/shared/types/worker";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export function GeneralTab() {

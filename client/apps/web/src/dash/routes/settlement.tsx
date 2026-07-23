@@ -1,14 +1,14 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { DriverSettlementStatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatRange } from "@/lib/date";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { formatRange } from "@trenova/shared/lib/date";
 import {
   fetchMyDisputes,
   fetchMySettlement,
   type PortalSettlementLine,
-} from "@/lib/graphql/driver-portal";
-import type { DriverSettlementStatus } from "@/types/driver-pay";
+} from "@trenova/shared/lib/graphql/driver-portal";
+import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, FlagIcon } from "lucide-react";
 import { useMemo, useState } from "react";

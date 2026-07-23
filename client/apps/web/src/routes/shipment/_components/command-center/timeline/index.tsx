@@ -7,17 +7,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { FieldFilter, FilterGroup } from "@/types/data-table";
-import { Operation, Resource } from "@/types/permission";
-import type { AssignmentPayload } from "@/types/shipment";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { FieldFilter, FilterGroup } from "@trenova/shared/types/data-table";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import type { AssignmentPayload } from "@trenova/shared/types/shipment";
 import {
   DndContext,
   DragOverlay,

@@ -1,10 +1,10 @@
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { BooleanBadge } from "@/components/status-badge";
+import { BooleanBadge } from "@trenova/shared/components/status-badge";
 import { freightClassChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
-import type { Commodity } from "@/types/commodity";
+import type { Commodity } from "@trenova/shared/types/commodity";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";

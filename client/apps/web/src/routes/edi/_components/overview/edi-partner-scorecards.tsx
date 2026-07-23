@@ -5,10 +5,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import type { EdiPartnerScorecardsDocument } from "@trenova/graphql/generated/graphql";
-import { formatDurationFromSeconds } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { Link } from "react-router";
 

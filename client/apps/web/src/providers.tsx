@@ -2,10 +2,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import type React from "react";
-import { RootErrorBoundary } from "./components/error-boundary";
-import { ThemeProvider } from "./components/theme-provider";
-import { Toaster } from "./components/ui/toaster";
-// import { ApiRequestError } from "./lib/api";
+import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { ThemeProvider } from "@trenova/shared/components/theme-provider";
+import { Toaster } from "@trenova/shared/components/ui/toaster";
+// import { ApiRequestError } from "@trenova/shared/lib/api";
 
 const queryClient = new QueryClient({
   defaultOptions: {

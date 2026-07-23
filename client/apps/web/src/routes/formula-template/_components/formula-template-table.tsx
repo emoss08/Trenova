@@ -9,8 +9,8 @@ import {
   getBulkExportFilename,
 } from "@/lib/formula-template-export";
 import { apiService } from "@/services/api";
-import type { DockAction, RowAction } from "@/types/data-table";
-import type { FormulaTemplate } from "@/types/formula-template";
+import type { DockAction, RowAction } from "@trenova/shared/types/data-table";
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import {

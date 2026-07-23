@@ -4,8 +4,8 @@ import {
   nullableIntegerSchema,
   optionalStringSchema,
   tenantInfoSchema,
-} from "./helpers";
-import { stopTypeSchema } from "./shipment";
+} from "@trenova/shared/types/helpers";
+import { stopTypeSchema } from "@trenova/shared/types/shipment";
 import { serviceFailureReasonCodeSchema } from "./service-failure-reason-code";
 
 const nullableTimestampSchema = z.number().int().nullable().optional();

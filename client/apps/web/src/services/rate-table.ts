@@ -1,7 +1,7 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import { rateTableRowSchema, rateTableSchema, type RateTable } from "@/types/rate-table";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export class RateTableService {
   async list(params?: string) {

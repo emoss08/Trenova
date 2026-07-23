@@ -1,5 +1,5 @@
 "use no memo";
-import { TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { TableBody, TableCell, TableRow } from "@trenova/shared/components/ui/table";
 import { useDataTable } from "@/contexts/data-table-context";
 import {
   columnSizeVar,
@@ -7,12 +7,12 @@ import {
   pinnedCellStyle,
   type CompiledFormatRules,
 } from "@/lib/data-table";
-import { cn } from "@/lib/utils";
-import type { DataTableBodyProps, RowAction } from "@/types/data-table";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DataTableBodyProps, RowAction } from "@trenova/shared/types/data-table";
 import type { ColumnPinningState } from "@tanstack/react-table";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import { memo, useCallback, useRef } from "react";
-import { Spinner } from "../ui/spinner";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
 import { DataTableEmptyState } from "./data-table-empty-state";
 

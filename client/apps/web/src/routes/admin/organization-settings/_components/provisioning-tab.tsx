@@ -1,7 +1,7 @@
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { SCIMDirectory } from "@/types/iam";
+import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UsersRoundIcon } from "lucide-react";
 import { useQueryState } from "nuqs";

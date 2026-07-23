@@ -11,13 +11,13 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@trenova/shared/components/ui/alert-dialog";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiKeyTableGraphQLConfig } from "@/lib/graphql/api-key-table";
 import { apiService } from "@/services/api";
 import type { ApiKey } from "@/types/api-key";
-import type { RowAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { ShieldAlertIcon, ShieldOffIcon } from "lucide-react";

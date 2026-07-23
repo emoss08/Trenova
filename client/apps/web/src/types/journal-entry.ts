@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableStringSchema, optionalStringSchema } from "./helpers";
+import { nullableStringSchema, optionalStringSchema } from "@trenova/shared/types/helpers";
 
 export const journalEntryLineGLAccountSchema = z.object({
   id: z.string(),

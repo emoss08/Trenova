@@ -1,8 +1,8 @@
 import { FieldWrapper } from "@/components/fields/field-components";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
-import { useTheme } from "@/components/theme-provider";
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import { useTheme } from "@trenova/shared/components/theme-provider";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";

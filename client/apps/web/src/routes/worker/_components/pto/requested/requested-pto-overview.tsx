@@ -1,9 +1,9 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
 import { queries } from "@/lib/queries";
-import { useAuthStore } from "@/stores/auth-store";
-import type { PTOFilter, PTOType } from "@/types/worker";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef } from "react";

@@ -1,7 +1,7 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { cn } from "@trenova/shared/lib/utils";
 import type { TableDensity } from "@/types/table-configuration";
 import type { Table } from "@tanstack/react-table";
 import { ChevronRightIcon, PaintbrushIcon, Rows2Icon, Rows4Icon, SlidersHorizontalIcon } from "lucide-react";

@@ -1,5 +1,5 @@
-import { ErrorBoundaryUi } from "@/components/elements/error-boundary-ui";
-import { LoadingSkeletonState } from "@/components/loading-skeleton";
+import { ErrorBoundaryUi } from "@trenova/shared/components/elements/error-boundary-ui";
+import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";

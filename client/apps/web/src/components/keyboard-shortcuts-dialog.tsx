@@ -4,8 +4,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
+} from "@trenova/shared/components/ui/dialog";
+import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { keybindGroups } from "@/config/keybinds.config";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useState } from "react";

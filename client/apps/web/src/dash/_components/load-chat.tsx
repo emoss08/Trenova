@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Message, MessageContent, MessageFooter, MessageHeader } from "@/components/ui/message";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Message, MessageContent, MessageFooter, MessageHeader } from "@trenova/shared/components/ui/message";
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -8,15 +8,15 @@ import {
   MessageScrollerItem,
   MessageScrollerProvider,
   MessageScrollerViewport,
-} from "@/components/ui/message-scroller";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/message-scroller";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   createMyLoadComment,
   fetchMyLoadComments,
   type PortalLoadComment,
-} from "@/lib/graphql/driver-portal";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/lib/graphql/driver-portal";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageSquareTextIcon, SendIcon } from "lucide-react";
 import { useDashFeatures } from "./use-dash-features";

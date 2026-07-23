@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createLimitOffsetResponse } from "./server";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export const commentTypeEnum = z.enum([
   "Internal",

@@ -45,11 +45,11 @@ import {
 	type ShipmentMoveInput,
 	type ShipmentPreviousRatesInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
-import type { GraphQLExecutableDocument } from "@/types/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";
 import type { LoadingOptimizationRequest } from "@/types/loading-optimization";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import type {
   BulkTransferToBillingRequest,
   DuplicateShipmentRequest,
@@ -57,7 +57,7 @@ import type {
   Shipment,
   ShipmentCreateInput,
   ShipmentUpdateInput,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 import type { ShipmentComment } from "@/types/shipment-comment";
 import type { ShipmentEventList, ShipmentEventType } from "@/types/shipment-event";
 

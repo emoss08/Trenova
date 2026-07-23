@@ -3,8 +3,8 @@ import {
   TrailerAutocompleteField,
   WorkerAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,15 +12,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { ApiRequestError } from "@/lib/api";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
 import { apiService } from "@/services/api";
-import type { Assignment, AssignmentPayload } from "@/types/shipment";
-import { assignmentPayloadSchema } from "@/types/shipment";
+import type { Assignment, AssignmentPayload } from "@trenova/shared/types/shipment";
+import { assignmentPayloadSchema } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";

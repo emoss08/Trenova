@@ -1,5 +1,5 @@
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { queries } from "@/lib/queries";
 import { isRouteActive } from "@/lib/route-utils";
 import { useQuery } from "@tanstack/react-query";

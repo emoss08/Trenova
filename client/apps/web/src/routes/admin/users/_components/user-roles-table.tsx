@@ -1,5 +1,5 @@
-import { DataTableLazyComponent } from "@/components/error-boundary";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Activity, lazy } from "react";
 

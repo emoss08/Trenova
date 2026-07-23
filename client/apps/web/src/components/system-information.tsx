@@ -1,5 +1,5 @@
-import { formatCurrentUserTime } from "@/lib/date";
-import { useAuthStore } from "@/stores/auth-store";
+import { formatCurrentUserTime } from "@trenova/shared/lib/date";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Dot } from "lucide-react";
 import React from "react";
 

@@ -1,4 +1,4 @@
-import type { EDIDiagnostic, EDIX12EnvelopeSettings } from "@/types/edi";
+import type { EDIDiagnostic, EDIX12EnvelopeSettings } from "@trenova/shared/types/edi";
 import {
   getElementLabel,
   getElementRequirement,

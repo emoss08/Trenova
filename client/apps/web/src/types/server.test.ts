@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createLimitOffsetResponse } from "./server";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 describe("createLimitOffsetResponse", () => {
   it("accepts null limit-offset cursors from REST and GraphQL list responses", () => {

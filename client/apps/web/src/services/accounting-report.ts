@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import type { BalanceSheet } from "@/types/balance-sheet";
 import type { PeriodAccountBalance } from "@/types/gl-balance";
 import type { IncomeStatement } from "@/types/income-statement";

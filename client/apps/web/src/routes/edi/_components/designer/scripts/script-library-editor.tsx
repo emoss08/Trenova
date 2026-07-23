@@ -1,9 +1,9 @@
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
-import { useTheme } from "@/components/theme-provider";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-import type { EDITemplateScriptLibrary } from "@/types/edi";
+import { useTheme } from "@trenova/shared/components/theme-provider";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
+import type { EDITemplateScriptLibrary } from "@trenova/shared/types/edi";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";

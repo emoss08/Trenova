@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { LazyComponent } from "@/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 
 const Workspace = lazy(() => import("./_components/workspace"));

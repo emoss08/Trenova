@@ -2,7 +2,7 @@ import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+} from "@trenova/shared/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { timeFormatChoices, timezoneChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
@@ -22,8 +22,8 @@ import {
 } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
-import type { ChangeMyPassword, UpdateMySettings, User } from "@/types/user";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { ChangeMyPassword, UpdateMySettings, User } from "@trenova/shared/types/user";
 import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Globe, KeyRound, Mail, Trash2 } from "lucide-react";
 import type { ChangeEvent, ComponentType } from "react";

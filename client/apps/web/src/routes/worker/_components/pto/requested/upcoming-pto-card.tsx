@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { initials } from "@/lib/utils";
-import type { WorkerPTO } from "@/types/worker";
+import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { initials } from "@trenova/shared/lib/utils";
+import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { UpcomingPTOContent } from "./upcoming-pto-content";
 
 function UpcomingPTOCardOuter({ children }: { children: React.ReactNode }) {

@@ -3,14 +3,14 @@ import {
   OrganizationSettingsDocument,
   UpdateOrganizationSettingsDocument,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import type { OrganizationSettings } from "@/types/organization";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { OrganizationSettings } from "@trenova/shared/types/organization";
 import {
   getOrganizationSettingsGraphQL,
   updateOrganizationSettingsGraphQL,
 } from "./organization";
 
-vi.mock("@/lib/graphql", () => ({
+vi.mock("@trenova/shared/lib/graphql", () => ({
   requestGraphQL: vi.fn(),
 }));
 

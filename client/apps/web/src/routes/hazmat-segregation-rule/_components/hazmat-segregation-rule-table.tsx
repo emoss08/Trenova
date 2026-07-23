@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { hazmatSegregationRuleTableGraphQLConfig } from "@/lib/graphql/hazmat-segregation-rule-table";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
 import { useMemo } from "react";
 import { getColumns } from "./hazmat-segregation-rule-columns";

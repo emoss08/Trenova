@@ -1,7 +1,7 @@
-import { LoadingSkeletonState } from "@/components/loading-skeleton";
-import { useTheme } from "@/components/theme-provider";
+import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { PTOChartDataPoint } from "@/types/worker";
+import type { PTOChartDataPoint } from "@trenova/shared/types/worker";
 import { ResponsiveBar } from "@nivo/bar";
 import { type ColorSchemeId } from "@nivo/colors";
 import { format, parseISO } from "date-fns";

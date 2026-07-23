@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import { queries } from "@/lib/queries";
 import { getAvailableOperations, getAvailableResources } from "@/lib/role-api";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { AccessPolicy } from "@/types/iam";
+import type { AccessPolicy } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PencilIcon, PlusIcon, ShieldCheckIcon, ShieldXIcon, Trash2Icon } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";

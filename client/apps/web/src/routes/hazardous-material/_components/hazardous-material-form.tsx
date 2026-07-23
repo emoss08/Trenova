@@ -4,9 +4,9 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   hazardousClassChoices,

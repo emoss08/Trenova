@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 
 import { GlobalSearchService } from "./global-search";
 
-vi.mock("@/lib/api", () => ({
+vi.mock("@trenova/shared/lib/api", () => ({
   api: {
     get: vi.fn(),
   },

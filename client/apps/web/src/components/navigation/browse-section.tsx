@@ -5,14 +5,14 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@trenova/shared/components/ui/collapsible";
 import type { SidebarLink } from "@/components/sidebar-nav";
 import type { NavGroup, NavItem, NavModule } from "@/config/navigation.types";
 import { isNavGroup } from "@/config/navigation.types";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { findActiveNavPath, isRouteActive } from "@/lib/route-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { ChevronRightIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";

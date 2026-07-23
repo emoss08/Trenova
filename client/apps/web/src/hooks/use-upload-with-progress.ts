@@ -1,10 +1,10 @@
-import { api } from "@/lib/api";
-import type { Document } from "@/types/document";
+import { api } from "@trenova/shared/lib/api";
+import type { Document } from "@trenova/shared/types/document";
 import type {
   UploadErrorType,
   UploadState,
 } from "@/types/upload";
-import { documentSchema } from "@/types/document";
+import { documentSchema } from "@trenova/shared/types/document";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useCallback, useRef, useState } from "react";

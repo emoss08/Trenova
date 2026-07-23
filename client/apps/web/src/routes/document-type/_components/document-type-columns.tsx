@@ -8,7 +8,7 @@ import {
   documentCategoryChoices,
   documentClassificationChoices,
 } from "@/lib/choices";
-import type { DocumentType } from "@/types/document-type";
+import type { DocumentType } from "@trenova/shared/types/document-type";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<DocumentType>[] {

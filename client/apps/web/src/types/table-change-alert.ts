@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { notificationPrioritySchema, type NotificationPriority } from "./notification";
-import { createLimitOffsetResponse } from "./server";
+import { notificationPrioritySchema, type NotificationPriority } from "@trenova/shared/types/notification";
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export { notificationPrioritySchema, type NotificationPriority };
 

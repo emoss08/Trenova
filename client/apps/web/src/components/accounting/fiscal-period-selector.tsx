@@ -2,7 +2,7 @@ import {
   FiscalPeriodAutocompleteField,
   FiscalYearAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 

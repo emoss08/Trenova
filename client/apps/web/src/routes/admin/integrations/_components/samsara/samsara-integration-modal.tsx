@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@trenova/shared/components/ui/dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "@/components/ui/sidebar";
+} from "@trenova/shared/components/ui/sidebar";
 import { SettingsIcon, UsersIcon, type LucideIcon } from "lucide-react";
 import React, { Activity, useEffect, useState } from "react";
 import { SamsaraConfigurationContent } from "./configuration-content";

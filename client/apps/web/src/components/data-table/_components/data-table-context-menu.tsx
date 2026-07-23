@@ -7,9 +7,9 @@ import {
   ContextMenuLabel,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+} from "@trenova/shared/components/ui/context-menu";
 import { useDataTable } from "@/contexts/data-table-context";
-import type { RowAction } from "@/types/data-table";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import type { Row } from "@tanstack/react-table";
 import { EyeIcon, PencilIcon } from "lucide-react";
 import type { ReactNode } from "react";

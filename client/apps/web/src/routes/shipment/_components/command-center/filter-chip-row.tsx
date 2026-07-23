@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { CHIP_FILTERS, type ChipFilterId } from "./saved-views";
 import { useCommandCenterUrl } from "./url-state";
 

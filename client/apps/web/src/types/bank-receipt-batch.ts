@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 import { bankReceiptSchema } from "./bank-receipt";
 
 export const bankReceiptBatchStatusSchema = z.enum(["Processing", "Completed"]);

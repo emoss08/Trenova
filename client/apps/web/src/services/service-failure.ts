@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   serviceFailureEdi214LifecycleResultSchema,
   serviceFailureEdi214StatusSchema,
@@ -13,7 +13,7 @@ import {
   type ServiceFailureLifecycleRequest,
   type ServiceFailureUpdate,
 } from "@/types/service-failure";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export class ServiceFailureService {
   async getAll(params?: string) {

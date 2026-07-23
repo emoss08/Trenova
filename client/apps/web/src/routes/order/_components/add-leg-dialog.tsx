@@ -1,5 +1,5 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { graphQLErrorMessage } from "@/lib/graphql";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { attachOrderShipments } from "@/lib/graphql/order";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { useMutation } from "@tanstack/react-query";

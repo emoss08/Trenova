@@ -1,4 +1,4 @@
-import type { Shipment, ShipmentStatus } from "@/types/shipment";
+import type { Shipment, ShipmentStatus } from "@trenova/shared/types/shipment";
 import { useCommandCenterStore } from "../command-center/store";
 import { useCommandCenterUrl } from "../command-center/url-state";
 import { ShipmentCurrentPin, ShipmentEndpointPin, type PinTone } from "./shipment-pin";

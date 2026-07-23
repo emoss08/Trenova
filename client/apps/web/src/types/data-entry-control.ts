@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalStringSchema, timestampSchema, versionSchema } from "./helpers";
+import { optionalStringSchema, timestampSchema, versionSchema } from "@trenova/shared/types/helpers";
 
 export const caseFormatSchema = z.enum(["AsEntered", "Upper", "Lower", "TitleCase"]);
 

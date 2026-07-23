@@ -10,8 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -19,12 +19,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@trenova/shared/components/ui/dialog";
+import { Input } from "@trenova/shared/components/ui/input";
 import { apiService } from "@/services/api";
-import type { RowAction } from "@/types/data-table";
-import { testEmailProfileRequestSchema, type EmailProfile } from "@/types/email";
-import { Resource } from "@/types/permission";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import { testEmailProfileRequestSchema, type EmailProfile } from "@trenova/shared/types/email";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, SendIcon, TrashIcon } from "lucide-react";

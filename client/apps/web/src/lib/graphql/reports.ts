@@ -33,9 +33,9 @@ import {
   type UpdateReportScheduleInput,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/generated";
-import { API_BASE_URL } from "@/lib/constants";
-import { requestGraphQL } from "@/lib/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type ReportCatalog = ReportCatalogQuery["reportCatalog"];
 export type ReportCatalogEntity = ReportCatalog["entities"][number];

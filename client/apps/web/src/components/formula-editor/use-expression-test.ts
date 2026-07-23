@@ -3,7 +3,7 @@ import { testExpression } from "@/lib/formula-template-api";
 import type {
   TestExpressionRequest,
   TestExpressionResponse,
-} from "@/types/formula-template";
+} from "@trenova/shared/types/formula-template";
 
 export function useExpressionTest() {
   return useMutation<TestExpressionResponse, Error, TestExpressionRequest>({

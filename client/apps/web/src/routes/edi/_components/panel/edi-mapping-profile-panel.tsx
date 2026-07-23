@@ -1,8 +1,8 @@
 import { ControlledEDIPartnerAutocompleteField } from "@/components/autocomplete-fields";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
 import {
   Table,
   TableBody,
@@ -10,15 +10,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@trenova/shared/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { usePermissionStore } from "@/stores/permission-store";
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { EDIMappingProfile, EDIMappingProfileItem } from "@/types/edi";
-import { Operation, Resource } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { EDIMappingProfile, EDIMappingProfileItem } from "@trenova/shared/types/edi";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Trash2Icon } from "lucide-react";

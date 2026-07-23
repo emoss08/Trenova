@@ -1,6 +1,6 @@
-import type { BadgeVariant } from "@/components/ui/badge";
-import { formatToUserTimezone } from "@/lib/date";
-import type { SelectOption } from "@/types/fields";
+import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import type { SelectOption } from "@trenova/shared/types/fields";
 
 type AuditChangeType = "added" | "removed" | "changed";
 

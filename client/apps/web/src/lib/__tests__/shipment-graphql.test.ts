@@ -14,7 +14,7 @@ import {
 
 const requestGraphQLMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/graphql", () => ({
+vi.mock("@trenova/shared/lib/graphql", () => ({
   requestGraphQL: requestGraphQLMock,
 }));
 

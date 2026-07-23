@@ -4,7 +4,7 @@ import type {
   LoadingOptimizationResult,
   StopInput,
 } from "@/types/loading-optimization";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation } from "@tanstack/react-query";
 import { useFormContext, useWatch } from "react-hook-form";
 

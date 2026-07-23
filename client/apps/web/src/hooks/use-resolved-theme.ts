@@ -1,4 +1,4 @@
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type ResolvedTheme = "light" | "dark";

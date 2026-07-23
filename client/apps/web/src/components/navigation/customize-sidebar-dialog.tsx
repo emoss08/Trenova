@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -9,29 +9,29 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@trenova/shared/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+} from "@trenova/shared/components/ui/select";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
 import {
   useSidebarCustomizationOptions,
   useSidebarPreferences,
   useUpdateSidebarPreferences,
 } from "@/hooks/use-sidebar-preferences";
-import { graphQLErrorMessage } from "@/lib/graphql";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type {
   EffectiveSidebarPreferences,
   SidebarCustomizationOptions,
 } from "@/lib/graphql/sidebar-preferences";
 import { DEFAULT_SIDEBAR_PREFERENCES } from "@/lib/graphql/sidebar-preferences";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   closestCenter,
   DndContext,

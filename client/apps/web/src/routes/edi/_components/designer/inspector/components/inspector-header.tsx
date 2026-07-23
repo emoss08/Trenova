@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { DatabaseIcon } from "lucide-react";
 import type { InspectorContext } from "../inspector-context";
 

@@ -1,6 +1,6 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { DriverPayEventStatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { DriverPayEventStatusBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,14 +8,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+} from "@trenova/shared/components/ui/dialog";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   holdDriverPayEvent,
   releaseDriverPayEvent,
   type DriverPayEventRow,
 } from "@/lib/graphql/driver-settlement";
-import type { DriverPayEventStatus } from "@/types/driver-pay";
+import type { DriverPayEventStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { PauseIcon } from "lucide-react";

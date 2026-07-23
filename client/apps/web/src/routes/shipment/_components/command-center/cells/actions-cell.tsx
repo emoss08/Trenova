@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { RowAction } from "@/types/data-table";
-import type { Shipment } from "@/types/shipment";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 

@@ -1,4 +1,4 @@
-import { LazyComponent } from "@/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 
 const ImportWorkspace = lazy(() =>

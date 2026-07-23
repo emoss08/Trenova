@@ -1,4 +1,4 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { SourceDrillDownLink } from "@/components/accounting/source-drill-down-link";
 import {
   Table,
@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import type { ARLedgerEntry } from "@/lib/graphql/accounts-receivable";
 import { useMemo } from "react";
 

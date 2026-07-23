@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { tenantInfoSchema } from "./helpers";
+import { tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 export const resourceTypeSchema = z.enum(["Shipment", "Trailer", "Tractor", "Worker"]);
 

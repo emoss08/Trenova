@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns";
-import type { PTOChartDataPoint } from "@/types/worker";
+import type { PTOChartDataPoint } from "@trenova/shared/types/worker";
 
 export type PeakOccupancy = {
   dateLabel: string | null;

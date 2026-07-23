@@ -3,8 +3,8 @@ import { CheckboxField } from "@/components/fields/checkbox-field";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,16 +12,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   moveStatusChoices,
   stopScheduleTypeChoices,
   stopStatusChoices,
   stopTypeChoices,
 } from "@/lib/choices";
-import type { Shipment, StopScheduleType, StopStatus } from "@/types/shipment";
+import type { Shipment, StopScheduleType, StopStatus } from "@trenova/shared/types/shipment";
 import { CalendarIcon, MapPinIcon, PlusIcon, XIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 

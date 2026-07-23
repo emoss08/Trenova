@@ -1,20 +1,20 @@
 import AuditTab from "@/components/audit-tab";
 import { EmptyState } from "@/components/empty-state";
-import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@/components/status-badge";
+import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TextShimmer } from "@/components/ui/text-shimmer";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@trenova/shared/components/ui/hover-card";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
-import { ApiRequestError } from "@/lib/api";
-import { formatUnixDate } from "@/lib/date";
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   Invoice,
@@ -22,7 +22,7 @@ import type {
   InvoiceLineType,
   InvoiceSendPlan,
   InvoiceSendStatus,
-} from "@/types/invoice";
+} from "@trenova/shared/types/invoice";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,

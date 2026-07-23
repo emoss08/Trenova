@@ -5,8 +5,8 @@ import {
   updatePayProfile,
   type PayProfileRow,
 } from "@/lib/graphql/driver-settlement";
-import type { DockAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { DockAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";

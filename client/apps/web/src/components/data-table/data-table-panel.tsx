@@ -1,7 +1,7 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 

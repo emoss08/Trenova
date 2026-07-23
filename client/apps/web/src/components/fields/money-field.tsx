@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { FieldWrapper } from "./field-components";

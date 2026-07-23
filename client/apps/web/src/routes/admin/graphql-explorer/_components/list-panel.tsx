@@ -1,7 +1,7 @@
-import { Input } from "@/components/ui/input";
-import { Kbd } from "@/components/ui/kbd";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
 import type { CatalogFragment, CatalogOperation, CatalogSelection } from "@/types/graphql-catalog";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { SearchIcon, SearchXIcon } from "lucide-react";

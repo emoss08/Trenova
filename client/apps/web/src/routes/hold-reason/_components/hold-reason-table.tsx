@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { holdReasonTableGraphQLConfig } from "@/lib/graphql/hold-reason-table";
 import type { HoldReason } from "@/types/hold-reason";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./hold-reason-columns";
 import { HoldReasonPanel } from "./hold-reason-panel";

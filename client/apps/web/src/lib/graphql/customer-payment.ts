@@ -11,8 +11,8 @@ import {
   type PostCustomerPaymentInput,
   type ReverseCustomerPaymentInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type CustomerPaymentRow = NonNullable<
   CustomerPaymentTableQuery["customerPayments"]["edges"]

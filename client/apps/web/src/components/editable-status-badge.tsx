@@ -1,15 +1,15 @@
 "use no memo";
-import { cn } from "@/lib/utils";
-import type { SelectOption } from "@/types/fields";
+import { cn } from "@trenova/shared/lib/utils";
+import type { SelectOption } from "@trenova/shared/types/fields";
 import { CheckCheckIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { StatusBadge } from "./status-badge";
-import { Badge, type BadgeVariant } from "./ui/badge";
-import { Command, CommandGroup, CommandList, SelectCommandItem } from "./ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Spinner } from "./ui/spinner";
+import { StatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { Command, CommandGroup, CommandList, SelectCommandItem } from "@trenova/shared/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 const STATUS_VARIANTS: Record<string, BadgeVariant> = {
   active: "active",

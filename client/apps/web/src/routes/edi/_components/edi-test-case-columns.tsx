@@ -1,7 +1,7 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge } from "@/components/ui/badge";
-import type { EDITestCaseRow } from "@/types/edi";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { EDITestCaseRow } from "@trenova/shared/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export function getTestCaseColumns(): ColumnDef<EDITestCaseRow>[] {

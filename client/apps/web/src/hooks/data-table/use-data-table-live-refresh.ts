@@ -2,8 +2,8 @@ import {
   buildDataTableQueryKey,
   fetchDataTablePage,
 } from "@/hooks/data-table/use-data-table-query";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@/types/data-table";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef, useState } from "react";

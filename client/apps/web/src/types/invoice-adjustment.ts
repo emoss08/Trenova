@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { invoiceAdjustmentSupportingDocumentPolicySchema } from "./customer";
-import { documentSchema } from "./document";
-import { decimalStringSchema, nullableStringSchema, tenantInfoSchema } from "./helpers";
-import { invoiceLineSchema, invoiceSchema } from "./invoice";
+import { invoiceAdjustmentSupportingDocumentPolicySchema } from "@trenova/shared/types/customer";
+import { documentSchema } from "@trenova/shared/types/document";
+import { decimalStringSchema, nullableStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
+import { invoiceLineSchema, invoiceSchema } from "@trenova/shared/types/invoice";
 
 export const invoiceAdjustmentKindSchema = z.enum([
   "CreditOnly",

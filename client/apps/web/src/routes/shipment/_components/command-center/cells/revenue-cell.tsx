@@ -1,7 +1,7 @@
 import { parseDecimal } from "@/lib/profitability";
 import { getTotalMiles } from "@/lib/shipment-utils";
-import { formatCurrency } from "@/lib/utils";
-import type { Shipment } from "@/types/shipment";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { Shipment } from "@trenova/shared/types/shipment";
 
 export function RevenueCell({ shipment }: { shipment: Shipment }) {
   const total = parseDecimal(shipment.totalChargeAmount as unknown as string | number);

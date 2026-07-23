@@ -9,8 +9,8 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   fuelSurchargeDateBasisChoices,
   fuelSurchargeEffectiveDayChoices,

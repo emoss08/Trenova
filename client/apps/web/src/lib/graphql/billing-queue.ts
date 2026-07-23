@@ -4,9 +4,9 @@ import {
   type BillingQueueAssignInput,
   type BillingQueueUpdateStatusInput,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { safeParse } from "@/lib/parse";
-import { billingQueueItemSchema, type BillingQueueItem } from "@/types/billing-queue";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { billingQueueItemSchema, type BillingQueueItem } from "@trenova/shared/types/billing-queue";
 
 type UpdateBillingQueueStatusResponse = {
   updateBillingQueueStatus: unknown;

@@ -1,5 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { TableSheetProps } from "@/types/data-table";
+import { Dialog, DialogContent } from "@trenova/shared/components/ui/dialog";
+import type { TableSheetProps } from "@trenova/shared/types/data-table";
 import { OpenAIIntegrationForm } from "./openai-integration-form";
 
 export function OpenAIIntegrationModal({ open, onOpenChange }: TableSheetProps) {

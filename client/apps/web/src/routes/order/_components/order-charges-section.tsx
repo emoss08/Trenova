@@ -8,14 +8,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { FormSection } from "@/components/ui/form";
-import { graphQLErrorMessage } from "@/lib/graphql";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { fetchOrderDetail, removeOrderCharge, type OrderCharge } from "@/lib/graphql/order";
-import { formatCurrency } from "@/lib/utils";
-import type { Order } from "@/types/order";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { PencilIcon, PlusIcon, ReceiptTextIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";

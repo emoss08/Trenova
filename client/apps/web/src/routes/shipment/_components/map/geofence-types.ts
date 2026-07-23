@@ -1,4 +1,4 @@
-import type { LocationGeofenceType } from "@/types/location";
+import type { LocationGeofenceType } from "@trenova/shared/types/location";
 
 type Base = {
   id: string;

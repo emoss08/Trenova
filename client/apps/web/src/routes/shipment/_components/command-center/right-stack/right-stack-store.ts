@@ -1,4 +1,4 @@
-import { createSelectors } from "@/lib/utils";
+import { createSelectors } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 

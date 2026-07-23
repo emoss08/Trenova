@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { Providers } from "./providers";
 import { router } from "./router";
-import "./styles/app.css";
+import "@trenova/shared/styles/app.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   ArrowDownUpIcon,
   CalendarIcon,

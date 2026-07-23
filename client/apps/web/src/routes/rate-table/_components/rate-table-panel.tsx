@@ -1,20 +1,20 @@
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@/lib/api";
-import { formatToUserTimezone } from "@/lib/date";
+import { api } from "@trenova/shared/lib/api";
+import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { rateTableSchema, type RateTable, type RateTableRow } from "@/types/rate-table";
-import { TimeFormat } from "@/types/user";
+import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";

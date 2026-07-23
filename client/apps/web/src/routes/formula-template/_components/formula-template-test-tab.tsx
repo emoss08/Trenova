@@ -1,5 +1,5 @@
 import { ExpressionTestPanel } from "@/components/formula-editor/expression-test-panel";
-import type { FormulaTemplateFormValues } from "@/types/formula-template";
+import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 
 export default function FormulaTemplateTestTab({

@@ -1,5 +1,5 @@
 import { EdiPartnerReadinessDocument } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 
 export type EDIPartnerReadinessState = ResultOf<

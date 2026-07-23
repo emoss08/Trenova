@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export const TREND_RANGE_OPTIONS = [
   { label: "13w", value: 13 },

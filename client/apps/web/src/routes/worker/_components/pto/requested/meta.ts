@@ -1,4 +1,4 @@
-import type { WorkerPTO } from "@/types/worker";
+import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useMemo } from "react";
 
 export function usePTOTypeMeta(type: WorkerPTO["type"]) {

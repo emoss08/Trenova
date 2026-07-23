@@ -1,8 +1,8 @@
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@trenova/shared/components/ui/hover-card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { queries } from "@/lib/queries";
-import { truncateText } from "@/lib/utils";
-import { decimalStringSchema, optionalStringSchema } from "@/types/helpers";
+import { truncateText } from "@trenova/shared/lib/utils";
+import { decimalStringSchema, optionalStringSchema } from "@trenova/shared/types/helpers";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { lazy, Suspense } from "react";

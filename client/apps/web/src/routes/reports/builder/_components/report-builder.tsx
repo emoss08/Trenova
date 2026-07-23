@@ -1,14 +1,14 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   useCreateReportDefinition,
   useReportPreview,
   useUpdateReportDefinition,
 } from "@/hooks/use-reports";
 import { useDebounce } from "@/hooks/use-debounce";
-import { graphQLErrorMessage } from "@/lib/graphql";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { ReportCatalog, ReportDefinition } from "@/lib/graphql/reports";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   aggregationsForField,
   parseReportIR,

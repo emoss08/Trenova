@@ -4,7 +4,7 @@ import { EditableDriverTypeBadge } from "@/components/editable-driver-type-badge
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { EditableWorkerTypeBadge } from "@/components/editable-worker-type-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@trenova/shared/components/status-badge";
 import {
   complianceStatusChoices,
   driverTypeChoices,
@@ -12,9 +12,9 @@ import {
   workerTypeChoices,
 } from "@/lib/choices";
 import { patchWorker } from "@/lib/graphql/worker-mutations";
-import type { FleetCode } from "@/types/fleet-code";
-import type { UsState } from "@/types/us-state";
-import type { DriverType, Worker, WorkerType } from "@/types/worker";
+import type { FleetCode } from "@trenova/shared/types/fleet-code";
+import type { UsState } from "@trenova/shared/types/us-state";
+import type { DriverType, Worker, WorkerType } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";

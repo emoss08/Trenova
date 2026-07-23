@@ -1,14 +1,14 @@
 import { AgingDistributionBar } from "@/components/accounting/aging-buckets";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/chart";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { ARCustomerProfile } from "@/lib/graphql/accounts-receivable";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { m } from "motion/react";
 import { useMemo } from "react";
 import { Bar, BarChart, XAxis } from "recharts";

@@ -2,7 +2,7 @@
 
 import { Brain, Sparkles } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 
 type ThinkingVariant = "dots" | "pulse" | "brain" | "sparkles";
 

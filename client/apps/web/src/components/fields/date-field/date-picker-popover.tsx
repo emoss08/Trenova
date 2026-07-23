@@ -1,4 +1,4 @@
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
 import {
   Drawer,
   DrawerContent,
@@ -6,8 +6,8 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+} from "@trenova/shared/components/ui/drawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCallback, useState } from "react";
 

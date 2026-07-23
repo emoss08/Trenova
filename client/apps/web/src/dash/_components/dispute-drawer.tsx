@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -6,10 +6,10 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer";
-import { Textarea } from "@/components/ui/textarea";
-import { createSettlementDispute, type PortalSettlementLine } from "@/lib/graphql/driver-portal";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/drawer";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { createSettlementDispute, type PortalSettlementLine } from "@trenova/shared/lib/graphql/driver-portal";
+import { cn } from "@trenova/shared/lib/utils";
 import type { SettlementDisputeCategory } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

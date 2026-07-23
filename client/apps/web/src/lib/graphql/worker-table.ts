@@ -4,8 +4,8 @@ import {
   type WorkerPtoTableQueryVariables,
   type WorkerTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
-import type { Worker, WorkerPTO } from "@/types/worker";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { Worker, WorkerPTO } from "@trenova/shared/types/worker";
 
 export const workerTableGraphQLConfigs = {
   worker: defineDataTableGraphQLConfig<Worker, WorkerTableQueryVariables>({

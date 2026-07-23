@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { workerTableGraphQLConfigs } from "@/lib/graphql/worker-table";
-import { Resource } from "@/types/permission";
-import type { WorkerPTO } from "@/types/worker";
+import { Resource } from "@trenova/shared/types/permission";
+import type { WorkerPTO } from "@trenova/shared/types/worker";
 import { useMemo } from "react";
 import { getColumns } from "./pto-columns";
 

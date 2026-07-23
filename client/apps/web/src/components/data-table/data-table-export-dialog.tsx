@@ -1,5 +1,5 @@
 "use no memo";
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/dialog";
+import { Label } from "@trenova/shared/components/ui/label";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   buildCsv,
   buildExportColumns,
@@ -19,7 +19,7 @@ import {
   fetchAllRows,
   type ExportScope,
 } from "@/lib/data-table-export";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@/types/data-table";
+import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
 import type { Table } from "@tanstack/react-table";
 import { useRef, useState } from "react";
 import { toast } from "sonner";

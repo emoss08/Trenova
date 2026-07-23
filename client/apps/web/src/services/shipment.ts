@@ -21,14 +21,14 @@ import {
   uncancelShipmentGraphQL,
   updateShipmentGraphQL,
 } from "@/lib/graphql/shipment";
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   loadingOptimizationResultSchema,
   type LoadingOptimizationRequest,
 } from "@/types/loading-optimization";
-import { createLimitOffsetResponse, type PaginationInfo } from "@/types/server";
-import type { BillType } from "@/types/bill-type";
+import { createLimitOffsetResponse, type PaginationInfo } from "@trenova/shared/types/server";
+import type { BillType } from "@trenova/shared/types/bill-type";
 import {
   bulkTransferToBillingResponseSchema,
   duplicateShipmentResponseSchema,
@@ -46,7 +46,7 @@ import {
   type Shipment,
   type ShipmentCreateInput,
   type ShipmentUpdateInput,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 import type { ShipmentCommentListResponse } from "@/types/shipment-comment";
 
 const shipmentListSchema = createLimitOffsetResponse(shipmentSchema);

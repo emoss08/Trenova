@@ -4,7 +4,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@trenova/shared/components/ui/select";
 import type { ColorSchemeId } from "@nivo/colors";
 
 export type ApprovedPTOColorScheme = "nivo" | "greys";

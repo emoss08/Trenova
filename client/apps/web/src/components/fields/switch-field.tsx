@@ -1,11 +1,11 @@
-import { cn } from "@/lib/utils";
-import type { FormControlProps, WarningProps } from "@/types/fields";
+import { cn } from "@trenova/shared/lib/utils";
+import type { FormControlProps, WarningProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import type { SwitchProps } from "../animate-ui/components/base/switch";
 import { RecommendedBadge } from "../recommended-badge";
-import { Label } from "../ui/label";
-import { Skeleton } from "../ui/skeleton";
-import { Switch } from "../ui/switch";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Switch } from "@trenova/shared/components/ui/switch";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;

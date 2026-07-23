@@ -1,5 +1,5 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   BarChart3Icon,
   CalculatorIcon,

@@ -6,7 +6,7 @@ import {
   optionalStringSchema,
   statusSchema,
   tenantInfoSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 export const segregationTypeSchema = z.enum([
   "Prohibited",

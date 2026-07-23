@@ -3,7 +3,7 @@ import {
   listUnassignedShipmentsGraphQL,
 } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
-import type { FieldFilter } from "@/types/data-table";
+import type { FieldFilter } from "@trenova/shared/types/data-table";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 const DEFAULT_LIMIT = 20;

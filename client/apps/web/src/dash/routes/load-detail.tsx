@@ -1,7 +1,7 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { fetchMyLoadPayEstimate } from "@/lib/graphql/driver-portal";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { fetchMyLoadPayEstimate } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 import { ArrowLeftIcon, CheckIcon, CopyIcon, NavigationIcon } from "lucide-react";

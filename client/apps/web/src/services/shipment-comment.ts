@@ -1,4 +1,4 @@
-import { safeParse } from "@/lib/parse";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   createShipmentCommentGraphQL,
   deleteShipmentCommentGraphQL,
@@ -6,7 +6,7 @@ import {
   listShipmentCommentsGraphQL,
   updateShipmentCommentGraphQL,
 } from "@/lib/graphql/shipment";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import {
   shipmentCommentCountResponseSchema,
   shipmentCommentListResponseSchema,

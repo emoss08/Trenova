@@ -1,4 +1,4 @@
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@trenova/shared/components/ui/sheet";
 import { useEditorTheme } from "../components/designer-shared";
 import { useEDIMessageInspectionQuery } from "../hooks/use-edi-document-queries";
 import InspectorHeader from "./components/inspector-header";

@@ -9,30 +9,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useShipmentComments } from "@/hooks/use-shipment-comments";
-import { api } from "@/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import {
   commentPriorityChoices,
   commentTypeChoices,
   commentVisibilityChoices,
 } from "@/lib/choices";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { userInitials } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
-import { useAuthStore } from "@/stores/auth-store";
-import type { GenericSelectOption } from "@/types/fields";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import type { GenericSelectOption } from "@trenova/shared/types/fields";
 import type {
   CommentPriority,
   CommentType,

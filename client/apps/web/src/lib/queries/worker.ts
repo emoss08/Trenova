@@ -6,14 +6,14 @@ import {
   type WorkerPtoChartDataQuery,
   type WorkerPtoChartDataQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import type { GenericLimitOffsetResponse } from "@/types/server";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import type {
   ListUpcomingPTORequest,
   PTOChartDataRequest,
   PTOChartDataPoint,
   WorkerPTO,
-} from "@/types/worker";
+} from "@trenova/shared/types/worker";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 type WorkerPTOConnection = {

@@ -1,9 +1,9 @@
 import { EmailProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { EmailProfileAssignment } from "@/types/email";
+import type { EmailProfileAssignment } from "@trenova/shared/types/email";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";

@@ -1,7 +1,7 @@
 import { getShipmentProfitabilityGraphQL } from "@/lib/graphql/shipment";
 import { apiService } from "@/services/api";
-import type { PaginationInfo } from "@/types/server";
-import type { Shipment } from "@/types/shipment";
+import type { PaginationInfo } from "@trenova/shared/types/server";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const shipment = createQueryKeys("shipment", {

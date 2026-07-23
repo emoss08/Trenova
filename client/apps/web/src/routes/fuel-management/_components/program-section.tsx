@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,15 +9,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/alert-dialog";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   deleteFuelSurchargeProgram,
   type FuelProgramCurrentRate,
 } from "@/lib/graphql/fuel-surcharge";
 import { fuelSurchargeMethodChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Fuel, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";

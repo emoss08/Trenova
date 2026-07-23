@@ -1,13 +1,13 @@
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { NumberField } from "@/components/fields/number-field";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { getDataRetention, updateDataRetention } from "@/services/data-retention";
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation, Resource } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";

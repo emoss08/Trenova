@@ -1,8 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { recurringShipmentTableGraphQLConfig } from "@/lib/graphql/recurring-shipment-table";
 import { apiService } from "@/services/api";
-import type { RowAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import { useQueryClient } from "@tanstack/react-query";
 import { HistoryIcon, PauseIcon, ZapIcon } from "lucide-react";

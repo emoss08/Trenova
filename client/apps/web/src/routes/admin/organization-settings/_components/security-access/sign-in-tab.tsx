@@ -2,9 +2,9 @@ import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   identityProviderPanelSearchParamsParser,
   identityProviderSearchParser,
@@ -13,10 +13,10 @@ import {
   formatIdentityProviderName,
   parseCommaSeparatedList,
   parseWhitespaceSeparatedList,
-} from "@/lib/utils";
+} from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type { IdentityProvider, IdentityProviderFormValues } from "@/types/iam";
-import { identityProviderCreateFormSchema, identityProviderFormSchema } from "@/types/iam";
+import type { IdentityProvider, IdentityProviderFormValues } from "@trenova/shared/types/iam";
+import { identityProviderCreateFormSchema, identityProviderFormSchema } from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, PlusIcon, Trash2Icon } from "lucide-react";

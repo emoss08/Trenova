@@ -26,7 +26,7 @@ import {
   type ArPaymentStatsQuery,
   type ArTopOverdueCustomersQuery,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type ARAgingSummary = ArAgingSummaryQuery["arAgingSummary"];
 export type ARAgingRow = ARAgingSummary["rows"][number];

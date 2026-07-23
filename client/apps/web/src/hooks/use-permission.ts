@@ -1,5 +1,5 @@
-import { usePermissionStore } from "@/stores/permission-store";
-import { Operation, type OperationType } from "@/types/permission";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, type OperationType } from "@trenova/shared/types/permission";
 import { useCallback, useEffect } from "react";
 
 export function usePermission(resource: string, operation: OperationType) {

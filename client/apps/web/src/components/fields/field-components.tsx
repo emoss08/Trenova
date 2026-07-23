@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
-import type { WarningProps } from "@/types/fields";
+import { cn } from "@trenova/shared/lib/utils";
+import type { WarningProps } from "@trenova/shared/types/fields";
 import React, { useMemo } from "react";
-import { Label } from "../ui/label";
+import { Label } from "@trenova/shared/components/ui/label";
 
 export function ErrorMessage({ formError, id }: { formError?: string; id?: string }) {
   return (

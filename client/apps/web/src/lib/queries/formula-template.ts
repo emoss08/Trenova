@@ -1,5 +1,5 @@
 import { apiService } from "@/services/api";
-import type { FormulaTemplate } from "@/types/formula-template";
+import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const formulaTemplate = createQueryKeys("formulaTemplate", {

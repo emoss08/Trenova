@@ -19,7 +19,7 @@ import {
   getStartOfMonth,
   getEndOfMonth,
   getCommonDatePresets,
-} from "../date";
+} from "@trenova/shared/lib/date";
 
 describe("dateToUnixTimestamp", () => {
   it("converts known date to known timestamp", () => {

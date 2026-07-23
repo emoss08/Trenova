@@ -31,12 +31,12 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
-vi.mock("@/stores/auth-store", () => ({
+vi.mock("@trenova/shared/stores/auth-store", () => ({
   useAuthStore: (selector: (state: { setUser: typeof mocks.setUser }) => unknown) =>
     selector({ setUser: mocks.setUser }),
 }));
 
-vi.mock("@/stores/permission-store", () => ({
+vi.mock("@trenova/shared/stores/permission-store", () => ({
   usePermissionStore: (
     selector: (state: {
       fetchManifest: typeof mocks.fetchManifest;

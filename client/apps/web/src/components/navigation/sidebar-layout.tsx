@@ -1,5 +1,5 @@
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { useEffect } from "react";

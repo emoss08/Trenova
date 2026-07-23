@@ -1,7 +1,7 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { TCASubscriptionFormValues } from "@/types/table-change-alert";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { type Control, useFieldArray, useWatch } from "react-hook-form";

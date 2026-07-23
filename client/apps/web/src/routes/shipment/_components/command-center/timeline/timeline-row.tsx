@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { cn } from "@trenova/shared/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import { ChevronDownIcon, ChevronRightIcon, InboxIcon } from "lucide-react";
 import {

@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
-import { usePermissionStore } from "@/stores/permission-store";
+import { cn } from "@trenova/shared/lib/utils";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { useUpdateStore } from "@/stores/update-store";
-import { Operation, Resource } from "@/types/permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ExternalLinkIcon, XIcon } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export function LatestChange() {
   const manifest = usePermissionStore((state) => state.manifest);

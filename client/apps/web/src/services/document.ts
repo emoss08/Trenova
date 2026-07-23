@@ -1,6 +1,6 @@
-import { api, withCsrfHeader } from "@/lib/api";
-import { API_BASE_URL } from "@/lib/constants";
-import { safeParse } from "@/lib/parse";
+import { api, withCsrfHeader } from "@trenova/shared/lib/api";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   type CreateDocumentUploadSessionParams,
   type BulkUploadDocumentParams,
@@ -26,7 +26,7 @@ import {
   documentUploadPartTargetSchema,
   documentUploadSessionSchema,
   documentUploadSessionStateSchema,
-} from "@/types/document";
+} from "@trenova/shared/types/document";
 import { z } from "zod";
 
 type DocumentContentAction = "download" | "view" | "preview";

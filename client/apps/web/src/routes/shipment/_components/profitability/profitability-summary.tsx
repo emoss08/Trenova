@@ -1,7 +1,7 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { queries } from "@/lib/queries";
-import { formatCurrency, formatPerMile } from "@/lib/utils";
+import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { toneVar } from "../analytics/kpi/tone";
 import { MarginPill } from "./margin-pill";

@@ -3,9 +3,9 @@ import {
   type EdiDocumentDirection,
   type EdiTemplateStatus,
 } from "@trenova/graphql/generated/graphql";
-import { requestGraphQL } from "@/lib/graphql";
-import { safeParse } from "@/lib/parse";
-import { ediTemplateSchema, type EDITemplate } from "@/types/edi";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { ediTemplateSchema, type EDITemplate } from "@trenova/shared/types/edi";
 import { z } from "zod";
 
 const ediTemplateListPageSchema = z.object({

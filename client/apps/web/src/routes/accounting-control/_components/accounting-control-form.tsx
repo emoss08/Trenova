@@ -4,10 +4,10 @@ import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Label } from "@trenova/shared/components/ui/label";
 import { usePermissions } from "@/hooks/use-permission";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
@@ -32,7 +32,7 @@ import { OANDAExchangeRatesIntegrationModal } from "@/routes/admin/integrations/
 import { apiService } from "@/services/api";
 import type { AccountingControl, JournalSourceEvent } from "@/types/accounting-control";
 import { accountingControlSchema } from "@/types/accounting-control";
-import { Resource } from "@/types/permission";
+import { Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Settings2 } from "lucide-react";

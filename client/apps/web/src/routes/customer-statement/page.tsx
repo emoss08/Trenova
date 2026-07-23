@@ -1,16 +1,16 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type {
   AROpenItem,
   ARStatementTransaction,
 } from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,

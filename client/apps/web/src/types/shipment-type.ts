@@ -3,7 +3,7 @@ import {
   optionalStringSchema,
   statusSchema,
   tenantInfoSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 export const shipmentTypeSchema = z.object({
   ...tenantInfoSchema.shape,

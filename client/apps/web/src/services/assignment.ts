@@ -1,5 +1,5 @@
-import { api } from "@/lib/api";
-import { safeParse } from "@/lib/parse";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 import {
   assignmentPayloadSchema,
   assignmentSchema,
@@ -7,7 +7,7 @@ import {
   type AssignmentPayload,
   type SplitMovePayload,
   type SplitMoveResponse,
-} from "@/types/shipment";
+} from "@trenova/shared/types/shipment";
 
 export class AssignmentService {
   public async get(assignmentId: string) {

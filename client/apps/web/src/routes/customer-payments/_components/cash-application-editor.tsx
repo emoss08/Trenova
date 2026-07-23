@@ -1,8 +1,8 @@
 import { AgingBadge } from "@/components/accounting/aging-buckets";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { NumberField } from "@/components/fields/number-field";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -10,10 +10,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@trenova/shared/components/ui/table";
 import { computeApplicationTotals } from "@/lib/cash-application";
-import { cn, formatCurrency } from "@/lib/utils";
-import type { CashApplicationRow } from "@/types/customer-payment";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { CashApplicationRow } from "@trenova/shared/types/customer-payment";
 import { WandSparklesIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";

@@ -1,7 +1,7 @@
-import { ComponentLoader } from "@/components/component-loader";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import type { EdiSummaryDocument } from "@trenova/graphql/generated/graphql";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { AlertTriangleIcon } from "lucide-react";

@@ -15,7 +15,7 @@ import {
   type EdiTransferDirection,
   type EdiTransferTableQueryVariables,
 } from "@trenova/graphql/generated/graphql";
-import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
+import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type {
   EDICommunicationProfile,
   EDIInboundFile,
@@ -24,7 +24,7 @@ import type {
   EDIPartner,
   EDITestCaseRow,
   EDITransfer,
-} from "@/types/edi";
+} from "@trenova/shared/types/edi";
 
 export const ediTableGraphQLConfigs = {
   partners: defineDataTableGraphQLConfig<EDIPartner, EdiPartnerTableQueryVariables>({

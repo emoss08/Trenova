@@ -1,4 +1,4 @@
-import { formatUnixDateTimeOrDash } from "@/lib/date";
+import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import {
   ActivityIcon,
   KeyRoundIcon,

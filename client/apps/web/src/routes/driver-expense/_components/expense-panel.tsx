@@ -1,17 +1,17 @@
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { formatUnixDate } from "@/lib/date";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 import {
   fetchDriverExpenseDetail,
   reviewDriverExpense,
   type DriverExpenseRow,
-} from "@/lib/graphql/driver-portal";
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLinkIcon } from "lucide-react";
 import { useState } from "react";

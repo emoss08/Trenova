@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { orderTableGraphQLConfig } from "@/lib/graphql/order-table";
-import type { Order } from "@/types/order";
-import { Resource } from "@/types/permission";
+import type { Order } from "@trenova/shared/types/order";
+import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./order-columns";
 import { OrderPanel } from "./order-panel";

@@ -1,7 +1,7 @@
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { FormControl, FormGroup } from "@/components/ui/form";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   allocateBudget,
@@ -9,15 +9,15 @@ import {
   openItemToApplicationRow,
   toMinor,
 } from "@/lib/cash-application";
-import { getTodayDate } from "@/lib/date";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import type { CustomerPaymentDetail } from "@/lib/graphql/customer-payment";
 import { applyUnappliedCustomerPayment } from "@/lib/graphql/customer-payment";
 import { queries } from "@/lib/queries";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   applyUnappliedSchema,
   type ApplyUnappliedFormValues,
-} from "@/types/customer-payment";
+} from "@trenova/shared/types/customer-payment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";

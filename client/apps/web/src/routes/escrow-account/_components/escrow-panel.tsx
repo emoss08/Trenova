@@ -1,10 +1,10 @@
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
-import { AmountDisplay } from "@/components/accounting/amount-display";
+import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { NumberField } from "@/components/fields/number-field";
-import { EscrowAccountStatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
+import { EscrowAccountStatusBadge } from "@trenova/shared/components/status-badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@trenova/shared/components/ui/dialog";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   adjustEscrowAccount,
   closeEscrowAccount,
@@ -23,12 +23,12 @@ import {
   openEscrowAccount,
   type EscrowAccountRow,
 } from "@/lib/graphql/driver-settlement";
-import type { DataTablePanelProps } from "@/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   openEscrowAccountFormSchema,
   type EscrowAccountStatus,
   type OpenEscrowAccountFormValues,
-} from "@/types/driver-pay";
+} from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

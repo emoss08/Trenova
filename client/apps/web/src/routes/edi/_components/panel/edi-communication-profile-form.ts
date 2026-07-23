@@ -1,4 +1,4 @@
-import type { EDICommunicationProfile, UpsertEDICommunicationProfileRequest } from "@/types/edi";
+import type { EDICommunicationProfile, UpsertEDICommunicationProfileRequest } from "@trenova/shared/types/edi";
 import {
   emptyToUndefined,
   type CommunicationProfileFormValues,

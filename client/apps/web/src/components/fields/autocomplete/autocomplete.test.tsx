@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clearCsrfToken, setCsrfToken } from "@/lib/api";
+import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { Autocomplete, buildSelectedValueLookupCandidates } from "./autocomplete";
 

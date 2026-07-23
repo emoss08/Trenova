@@ -7,10 +7,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+} from "@trenova/shared/components/ui/card";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Label } from "@trenova/shared/components/ui/label";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   locationCodeComponents,
   type LocationCodeComponent,

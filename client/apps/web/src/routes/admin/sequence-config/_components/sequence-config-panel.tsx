@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@trenova/shared/components/ui/button";
 import type { SequenceConfig, SequenceConfigDocument, SequenceType } from "@/types/sequence-config";
 import { RotateCcwIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";

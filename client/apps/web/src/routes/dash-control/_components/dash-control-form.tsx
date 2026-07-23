@@ -1,11 +1,11 @@
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { fetchDashControl, updateDashControl } from "@/lib/graphql/driver-portal";
-import { dashControlFormSchema, type DashControlFormValues } from "@/types/driver-pay";
+import { fetchDashControl, updateDashControl } from "@trenova/shared/lib/graphql/driver-portal";
+import { dashControlFormSchema, type DashControlFormValues } from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";

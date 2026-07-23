@@ -1,8 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
-import type { DockAction, RowAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
+import type { DockAction, RowAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon, MapPinIcon } from "lucide-react";

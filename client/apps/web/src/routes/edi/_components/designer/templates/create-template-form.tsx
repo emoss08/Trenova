@@ -1,8 +1,8 @@
 import { EDIDocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { FormControl, FormGroup } from "@/components/ui/form";
-import { type EDIDocumentType, type TemplateFormValues } from "@/types/edi";
+import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { type EDIDocumentType, type TemplateFormValues } from "@trenova/shared/types/edi";
 import { useFormContext } from "react-hook-form";
 import { functionalGroupForTransactionSet } from "../utils/edi-designer-utils";
 import { templateStatusOptions } from "../utils/edi-designer-options";

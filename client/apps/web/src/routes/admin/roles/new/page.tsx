@@ -5,12 +5,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
+} from "@trenova/shared/components/ui/card";
+import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { api } from "@/lib/api";
-import type { AddPermission, CreateRole, Role } from "@/types/role";
-import { createRoleSchema } from "@/types/role";
+import { api } from "@trenova/shared/lib/api";
+import type { AddPermission, CreateRole, Role } from "@trenova/shared/types/role";
+import { createRoleSchema } from "@trenova/shared/types/role";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";

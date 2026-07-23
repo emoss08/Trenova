@@ -2,11 +2,11 @@ import {
   AgingDistributionBar,
   type AgingBucketTotals,
 } from "@/components/accounting/aging-buckets";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { AR_DSO_TARGET_DAYS } from "@/lib/accounting-constants";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 

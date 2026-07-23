@@ -1,7 +1,7 @@
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import type { SCIMDirectoryFormValues } from "@/types/iam";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import type { SCIMDirectoryFormValues } from "@trenova/shared/types/iam";
 import { useFormContext } from "react-hook-form";
 
 export function SCIMDirectoryForm() {

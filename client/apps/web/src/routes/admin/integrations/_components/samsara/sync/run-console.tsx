@@ -1,7 +1,7 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import type { WorkerSyncLogLevel } from "@/types/samsara";
 import { CopyIcon, TerminalIcon, Trash2Icon } from "lucide-react";

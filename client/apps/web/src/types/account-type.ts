@@ -3,7 +3,7 @@ import {
   optionalStringSchema,
   statusSchema,
   tenantInfoSchema,
-} from "./helpers";
+} from "@trenova/shared/types/helpers";
 
 const accountCategorySchema = z.enum([
   "Asset",

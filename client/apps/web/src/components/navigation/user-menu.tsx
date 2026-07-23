@@ -1,6 +1,6 @@
 import { UserSettingsDialog } from "@/components/navigation/user-settings-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@trenova/shared/components/theme-provider";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -14,8 +14,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuthStore } from "@/stores/auth-store";
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ChevronsUpDown, LogOut, Palette, Settings, User } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";

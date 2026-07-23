@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Label } from "@/components/ui/label";
+import { Label } from "@trenova/shared/components/ui/label";
 import { TimePeriodSelect } from "./period-select";
 import { TimePickerInput } from "./time-picker-input";
 import type { Period } from "./time-picker-utils";

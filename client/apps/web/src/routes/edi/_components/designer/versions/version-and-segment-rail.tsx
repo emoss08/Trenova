@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   useSelectedTemplateDesignerData,
   useSelectedTemplateDesignerIds,
   useTemplateDesignerUrlActions,
 } from "@/hooks/use-template-designer-state";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import { VersionStatusBadge } from "../components/designer-shared";
 import { diagnosticsForSegment } from "../utils/edi-designer-utils";

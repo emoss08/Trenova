@@ -1,7 +1,7 @@
-import Highlight from "@/components/highlight";
-import { Badge } from "@/components/ui/badge";
-import { CommandItem } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import Highlight from "@trenova/shared/components/highlight";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { CommandItem } from "@trenova/shared/components/ui/command";
+import { cn } from "@trenova/shared/lib/utils";
 import type { GlobalSearchHit } from "@/services/global-search";
 import { ArrowRight, FileText, Search, Truck, User, Users } from "lucide-react";
 

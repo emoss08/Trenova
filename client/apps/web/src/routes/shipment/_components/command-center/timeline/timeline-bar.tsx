@@ -1,7 +1,7 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatDurationFromSeconds, formatToUserTimezone } from "@/lib/date";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
 import { getDestinationLocation, getOriginLocation, type ShipmentEtaTone } from "@/lib/shipment-utils";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { ChevronLeftIcon, ChevronRightIcon, TimerIcon } from "lucide-react";
 import { DENSITY_CONFIGS, type TimelineDensity } from "./constants";

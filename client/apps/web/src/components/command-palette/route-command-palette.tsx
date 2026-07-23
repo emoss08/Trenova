@@ -1,20 +1,20 @@
-import Highlight from "@/components/highlight";
+import Highlight from "@trenova/shared/components/highlight";
 import {
   CommandDialog,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
+} from "@trenova/shared/components/ui/command";
+import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { navigationConfig } from "@/config/navigation.config";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
-import { usePermissionStore } from "@/stores/permission-store";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowRight, ArrowUp, CornerDownLeft, Plus, X } from "lucide-react";

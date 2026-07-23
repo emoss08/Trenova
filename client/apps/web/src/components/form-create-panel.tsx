@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useCreatePanelActionPreference,
   type CreatePanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
-import { api } from "@/lib/api";
-import type { DataTablePanelProps } from "@/types/data-table";
-import type { API_ENDPOINTS } from "@/types/server";
+import { api } from "@trenova/shared/lib/api";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";

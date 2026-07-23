@@ -4,16 +4,16 @@ import {
   OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
-import { TextShimmer } from "@/components/ui/text-shimmer";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@/lib/utils";
-import type { CreditStatus } from "@/types/customer";
-import type { GetPreviousRatesRequest, Shipment } from "@/types/shipment";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { CreditStatus } from "@trenova/shared/types/customer";
+import type { GetPreviousRatesRequest, Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon } from "lucide-react";
 import type React from "react";

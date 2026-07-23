@@ -1,6 +1,6 @@
 import { Metadata } from "@/components/metadata";
-import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/stores/auth-store";
+import { Button } from "@trenova/shared/components/ui/button";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useNavigate } from "react-router";
 
 export function Home() {

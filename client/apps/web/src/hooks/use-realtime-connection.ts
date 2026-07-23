@@ -1,8 +1,8 @@
 import { downloadReportRun } from "@/hooks/use-reports";
-import { APP_ENV } from "@/lib/constants";
+import { APP_ENV } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useRealtimeStore, type RealtimeConnectionState } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -17,7 +17,7 @@ import {
   resolveEntityID,
   shouldPatchEvent,
   type ResourceInvalidationEvent,
-} from "./realtime-patching";
+} from "@trenova/shared/hooks/realtime-patching";
 
 const COALESCE_DELAY_MS = 300;
 

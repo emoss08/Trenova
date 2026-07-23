@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Separator } from "@trenova/shared/components/ui/separator";
 import { queries } from "@/lib/queries";
 import {
   ACTIVITY_TYPE_COLORS,
