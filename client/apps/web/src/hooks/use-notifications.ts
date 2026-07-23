@@ -1,6 +1,6 @@
 import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
-import { queries } from "@/lib/queries";
+import { notification as notificationQueries } from "@/lib/queries/notification";
 import { apiService } from "@/services/api";
 import type { Notification, NotificationFeed, NotificationState } from "@/types/notification";
 import {
@@ -24,7 +24,7 @@ export interface NotificationFeedFilters {
 type FeedData = InfiniteData<NotificationFeed, string | null>;
 
 function feedQueryKey(filters: NotificationFeedFilters) {
-  return [...queries.notification.feed._def, "infinite", filters] as const;
+  return [...notificationQueries.feed._def, "infinite", filters] as const;
 }
 
 export function useNotificationFeed(filters: NotificationFeedFilters, enabled: boolean) {
@@ -50,7 +50,7 @@ export function useNotificationFeed(filters: NotificationFeedFilters, enabled: b
 
 export function useUnreadNotificationCount() {
   return useQuery({
-    ...queries.notification.unreadCount(),
+    ...notificationQueries.unreadCount(),
     refetchInterval: UNREAD_COUNT_REFETCH_INTERVAL,
   });
 }
@@ -90,7 +90,7 @@ function applyFeedPatch(queryClient: QueryClient, ids: Set<string>, action: Noti
   const counted = new Set<string>();
 
   queryClient.setQueriesData<FeedData>(
-    { queryKey: [...queries.notification.feed._def, "infinite"] },
+    { queryKey: [...notificationQueries.feed._def, "infinite"] },
     (data) => {
       if (!data) return data;
 
@@ -122,7 +122,7 @@ function applyFeedPatch(queryClient: QueryClient, ids: Set<string>, action: Noti
 function pruneFeeds(queryClient: QueryClient) {
   const cache = queryClient.getQueryCache();
   for (const query of cache.findAll({
-    queryKey: [...queries.notification.feed._def, "infinite"],
+    queryKey: [...notificationQueries.feed._def, "infinite"],
   })) {
     const filters = query.queryKey.at(-1) as NotificationFeedFilters | undefined;
     if (!filters) continue;
@@ -142,7 +142,7 @@ function pruneFeeds(queryClient: QueryClient) {
 
 function adjustUnreadCount(queryClient: QueryClient, delta: number) {
   if (delta === 0) return;
-  queryClient.setQueryData<number>(queries.notification.unreadCount().queryKey, (count) =>
+  queryClient.setQueryData<number>(notificationQueries.unreadCount().queryKey, (count) =>
     Math.max(0, (count ?? 0) + delta),
   );
 }
@@ -167,7 +167,7 @@ export function useNotificationAction(action: NotificationAction) {
   return useMutation({
     mutationFn: ACTION_FNS[action],
     onMutate: async (ids) => {
-      await queryClient.cancelQueries({ queryKey: queries.notification._def });
+      await queryClient.cancelQueries({ queryKey: notificationQueries._def });
       const delta = applyFeedPatch(queryClient, new Set(ids), action);
       adjustUnreadCount(queryClient, delta);
       pruneFeeds(queryClient);
@@ -175,7 +175,7 @@ export function useNotificationAction(action: NotificationAction) {
     onError: () => {
       toast.error(ACTION_ERRORS[action]);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: queries.notification._def }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: notificationQueries._def }),
   });
 }
 
@@ -221,11 +221,11 @@ export function useMarkAllNotificationsRead() {
   return useMutation({
     mutationFn: () => apiService.notificationService.markAllRead(),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: queries.notification._def });
+      await queryClient.cancelQueries({ queryKey: notificationQueries._def });
       const now = Math.floor(Date.now() / 1000);
 
       queryClient.setQueriesData<FeedData>(
-        { queryKey: [...queries.notification.feed._def, "infinite"] },
+        { queryKey: [...notificationQueries.feed._def, "infinite"] },
         (data) => {
           if (!data) return data;
           return {
@@ -239,11 +239,11 @@ export function useMarkAllNotificationsRead() {
           };
         },
       );
-      queryClient.setQueryData<number>(queries.notification.unreadCount().queryKey, 0);
+      queryClient.setQueryData<number>(notificationQueries.unreadCount().queryKey, 0);
     },
     onError: () => {
       toast.error("Couldn't mark all as read");
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: queries.notification._def }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: notificationQueries._def }),
   });
 }
