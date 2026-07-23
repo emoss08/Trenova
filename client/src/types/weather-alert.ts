@@ -1,4 +1,4 @@
-import type { BadgeVariant } from "@/components/ui/badge";
+import type { BadgeVariant } from "@/types/badge";
 
 export type WeatherAlertCategory =
   | "winter_weather"

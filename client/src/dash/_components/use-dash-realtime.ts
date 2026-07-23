@@ -1,5 +1,5 @@
 import { parseInvalidationEvent, RESOURCE_EVENT_NAME } from "@/hooks/realtime-patching";
-import { queries } from "@/lib/queries";
+import { notification } from "@/lib/queries/notification";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,7 +58,7 @@ export function useDashRealtime() {
         if (isForMe && entity?.title) {
           toast.info(entity.title, { description: entity.message });
         }
-        void queryClient.invalidateQueries({ queryKey: queries.notification._def });
+        void queryClient.invalidateQueries({ queryKey: notification._def });
         return;
       }
 

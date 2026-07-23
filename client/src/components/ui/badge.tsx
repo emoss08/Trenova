@@ -2,6 +2,7 @@ import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import type { BadgeVariant } from "@/types/badge";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
@@ -21,7 +22,7 @@ const badgeVariants = cva(
         teal: "border-teal-600/30 bg-teal-600/20 text-teal-700 dark:text-teal-400",
         warning: "border-yellow-600/30 bg-yellow-600/20 text-yellow-700 dark:text-yellow-400",
         outline: "text-muted-foreground",
-      },
+      } satisfies Record<BadgeVariant, string>,
     },
     defaultVariants: {
       variant: "default",
@@ -51,6 +52,5 @@ function Badge({ className, variant = "default", render, ...props }: BadgeProps)
   });
 }
 
-export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
-
+export type { BadgeVariant };
 export { Badge, badgeVariants };
