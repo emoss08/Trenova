@@ -1,6 +1,6 @@
 import { parseInvalidationEvent, RESOURCE_EVENT_NAME } from "@/hooks/realtime-patching";
 import { notification } from "@/lib/queries/notification";
-import { apiService } from "@/services/api";
+import { realtimeService } from "@/services/realtime";
 import { useAuthStore } from "@/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -37,7 +37,7 @@ export function useDashRealtime() {
       return;
     }
 
-    const realtime = apiService.realtimeService;
+    const realtime = realtimeService;
     realtime.connect();
     const channel = realtime.getChannel(realtime.getDataEventsChannelName(orgId, buId));
 

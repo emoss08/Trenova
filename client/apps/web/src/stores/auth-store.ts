@@ -1,5 +1,6 @@
 import { ApiRequestError, clearCsrfToken } from "@/lib/api";
-import { apiService } from "@/services/api";
+import { realtimeService } from "@/services/realtime";
+import { userService } from "@/services/user";
 import { authService } from "@/services/auth";
 import { usePermissionStore } from "@/stores/permission-store";
 import type { LoginRequest, User } from "@/types/user";
@@ -45,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           await authService.logout();
         } finally {
-          apiService.realtimeService.safeClose();
+          realtimeService.safeClose();
           clearCsrfToken();
           set({ user: null, isAuthenticated: false });
           usePermissionStore.getState().clearPermissions();
@@ -54,7 +55,7 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         try {
-          const freshUser = await apiService.userService.currentUser();
+          const freshUser = await userService.currentUser();
           set({ user: freshUser, isAuthenticated: true });
           usePermissionStore
             .getState()

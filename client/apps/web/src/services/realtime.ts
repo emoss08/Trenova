@@ -96,3 +96,5 @@ export class RealtimeService {
     return response.token;
   }
 }
+
+export const realtimeService = new RealtimeService();

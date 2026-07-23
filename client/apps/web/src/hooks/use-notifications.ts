@@ -1,7 +1,7 @@
 import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { notification as notificationQueries } from "@/lib/queries/notification";
-import { apiService } from "@/services/api";
+import { notificationService } from "@/services/notification";
 import type { Notification, NotificationFeed, NotificationState } from "@/types/notification";
 import {
   useInfiniteQuery,
@@ -32,7 +32,7 @@ export function useNotificationFeed(filters: NotificationFeedFilters, enabled: b
     queryKey: feedQueryKey(filters),
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) =>
-      apiService.notificationService.listNotifications({
+      notificationService.listNotifications({
         first: FEED_PAGE_SIZE,
         after: pageParam,
         state: filters.state,
@@ -155,10 +155,10 @@ const ACTION_ERRORS: Record<NotificationAction, string> = {
 };
 
 const ACTION_FNS: Record<NotificationAction, (ids: string[]) => Promise<void>> = {
-  read: (ids) => apiService.notificationService.markRead(ids),
-  unread: (ids) => apiService.notificationService.markUnread(ids),
-  dismiss: (ids) => apiService.notificationService.dismiss(ids),
-  restore: (ids) => apiService.notificationService.restore(ids),
+  read: (ids) => notificationService.markRead(ids),
+  unread: (ids) => notificationService.markUnread(ids),
+  dismiss: (ids) => notificationService.dismiss(ids),
+  restore: (ids) => notificationService.restore(ids),
 };
 
 export function useNotificationAction(action: NotificationAction) {
@@ -219,7 +219,7 @@ export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => apiService.notificationService.markAllRead(),
+    mutationFn: () => notificationService.markAllRead(),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: notificationQueries._def });
       const now = Math.floor(Date.now() / 1000);
