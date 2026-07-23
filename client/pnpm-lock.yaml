@@ -11,6 +11,18 @@ importers:
 
   .:
     devDependencies:
+      '@tanstack/eslint-plugin-query':
+        specifier: ^5.101.2
+        version: 5.101.2(eslint@10.6.0(jiti@2.7.0))(typescript@7.0.2)
+      eslint-plugin-better-tailwindcss:
+        specifier: ^4.6.1
+        version: 4.6.1(eslint@10.6.0(jiti@2.7.0))(oxlint@1.74.0(oxlint-tsgolint@0.24.0))(tailwindcss@4.3.2)(typescript@7.0.2)
+      oxlint:
+        specifier: ^1.73.0
+        version: 1.74.0(oxlint-tsgolint@0.24.0)
+      oxlint-tsgolint:
+        specifier: ^0.24.0
+        version: 0.24.0
       turbo:
         specifier: ^2.3.3
         version: 2.10.6
@@ -13515,6 +13527,24 @@ snapshots:
     optionalDependencies:
       eslint: 10.6.0(jiti@2.7.0)
       oxlint: 1.73.0(oxlint-tsgolint@0.24.0)
+    transitivePeerDependencies:
+      - '@eslint/css'
+      - typescript
+
+  eslint-plugin-better-tailwindcss@4.6.1(eslint@10.6.0(jiti@2.7.0))(oxlint@1.74.0(oxlint-tsgolint@0.24.0))(tailwindcss@4.3.2)(typescript@7.0.2):
+    dependencies:
+      '@eslint/css-tree': 4.0.4
+      '@valibot/to-json-schema': 1.7.1(valibot@1.4.2(typescript@7.0.2))
+      enhanced-resolve: 5.24.2
+      jiti: 2.7.0
+      synckit: 0.11.13
+      tailwind-csstree: 0.3.3
+      tailwindcss: 4.3.2
+      tsconfig-paths-webpack-plugin: 4.2.0
+      valibot: 1.4.2(typescript@7.0.2)
+    optionalDependencies:
+      eslint: 10.6.0(jiti@2.7.0)
+      oxlint: 1.74.0(oxlint-tsgolint@0.24.0)
     transitivePeerDependencies:
       - '@eslint/css'
       - typescript
