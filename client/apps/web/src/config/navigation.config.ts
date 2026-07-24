@@ -963,6 +963,13 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/agent-control",
+    title: "Agent Control",
+    group: "Organization",
+    resource: Resource.AgentControl,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/cost-control",
     title: "Cost Control",
     group: "Organization",

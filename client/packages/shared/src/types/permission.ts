@@ -162,6 +162,10 @@ export const Resource = {
   SettlementControl: "settlement_control",
   DashControl: "dash_control",
   DriverPortal: "driver_portal",
+  AgentRun: "agent_run",
+  AgentProposal: "agent_proposal",
+  AgentException: "agent_exception",
+  AgentControl: "agent_control",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

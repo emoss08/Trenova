@@ -884,6 +884,14 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "agent-control",
+                loader: createPermissionLoader(Resource.AgentControl, Operation.Read),
+                async lazy() {
+                  const { AgentControlPage } = await import("@/routes/agent-control/page");
+                  return { Component: AgentControlPage };
+                },
+              },
+              {
                 path: "distance-controls",
                 loader: createPermissionLoader(Resource.DistanceControl),
                 async lazy() {
