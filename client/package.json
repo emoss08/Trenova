@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.17.0",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -13,10 +13,10 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@tanstack/eslint-plugin-query": "^5.101.2",
-    "eslint-plugin-better-tailwindcss": "^4.6.1",
-    "oxlint": "^1.73.0",
-    "oxlint-tsgolint": "^0.24.0",
-    "turbo": "^2.3.3"
+    "@tanstack/eslint-plugin-query": "^5.101.4",
+    "eslint-plugin-better-tailwindcss": "^4.7.0",
+    "oxlint": "^1.75.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "turbo": "^2.10.6"
   }
 }
