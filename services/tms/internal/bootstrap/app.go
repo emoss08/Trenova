@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
@@ -34,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/telematicsjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/anthropiccompletionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
@@ -79,6 +82,9 @@ func Options() fx.Option {
 		samsarajobs.Module,
 		telematicsjobs.Module,
 		shipmentjobs.Module,
+		agentjobs.Module,
+		agenttoolservice.Module,
+		anthropiccompletionservice.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,
 		compliancejobs.Module,

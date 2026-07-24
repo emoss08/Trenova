@@ -46,6 +46,18 @@ func (s *Service) CancelWorkflow(ctx context.Context, workflowID, runID string) 
 	return s.client.CancelWorkflow(ctx, workflowID, runID)
 }
 
+func (s *Service) SignalWorkflow(
+	ctx context.Context,
+	workflowID, runID, signalName string,
+	arg any,
+) error {
+	if s.client == nil {
+		return serviceports.ErrWorkflowStarterDisabled
+	}
+
+	return s.client.SignalWorkflow(ctx, workflowID, runID, signalName, arg)
+}
+
 func (s *Service) Enabled() bool {
 	return s.client != nil
 }

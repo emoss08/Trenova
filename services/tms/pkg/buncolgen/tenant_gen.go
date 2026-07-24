@@ -483,6 +483,185 @@ var AccountingControlFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// AgentControl — table "agent_controls", alias "agc"
+// ---------------------------------------------------------------------------
+
+// AgentControlTable holds the table name, alias, and primary key columns
+// for the "agent_controls" table. The alias "agc" is used in all generated
+// SQL fragments (e.g. "agc.id = ?").
+var AgentControlTable = TableInfo{
+	Name:       "agent_controls",
+	Alias:      "agc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AgentControlColumns provides type-safe column references for the "agent_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AgentControlColumns.ID.String())
+//	// SELECT agc.id FROM agent_controls AS agc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AgentControlColumns.ID.Eq(), id)           // WHERE agc.id = ?
+//	q.Order(AgentControlColumns.CreatedAt.OrderDesc())  // ORDER BY agc.created_at DESC
+var AgentControlColumns = struct {
+	ID                     Column // "id" → qualified: "agc.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "agc.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "agc.organization_id"
+	ShadowMode             Column // "shadow_mode" → qualified: "agc.shadow_mode"
+	BillingAgentEnabled    Column // "billing_agent_enabled" → qualified: "agc.billing_agent_enabled"
+	DecisionTimeoutSeconds Column // "decision_timeout_seconds" → qualified: "agc.decision_timeout_seconds"
+	Version                Column // "version" → qualified: "agc.version"
+	CreatedAt              Column // "created_at" → qualified: "agc.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "agc.updated_at"
+}{
+	ID:                     NewColumn("id", "agc"),
+	BusinessUnitID:         NewColumn("business_unit_id", "agc"),
+	OrganizationID:         NewColumn("organization_id", "agc"),
+	ShadowMode:             NewColumn("shadow_mode", "agc"),
+	BillingAgentEnabled:    NewColumn("billing_agent_enabled", "agc"),
+	DecisionTimeoutSeconds: NewColumn("decision_timeout_seconds", "agc"),
+	Version:                NewColumn("version", "agc"),
+	CreatedAt:              NewColumn("created_at", "agc"),
+	UpdatedAt:              NewColumn("updated_at", "agc"),
+}
+
+// AgentControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AgentControl.GetStaticFieldMap().
+var AgentControlFieldMap = map[string]string{
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"shadowMode":             "shadow_mode",
+	"billingAgentEnabled":    "billing_agent_enabled",
+	"decisionTimeoutSeconds": "decision_timeout_seconds",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
+}
+
+// AgentControlInsertableColumns lists column names suitable for INSERT statements on the "agent_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AgentControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"shadow_mode",
+	"billing_agent_enabled",
+	"decision_timeout_seconds",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AgentControlRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AgentControlRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var AgentControlRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// AgentControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE agc.organization_id = ? AND agc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AgentControlScopeTenant(sq, ti).
+//		Where(buncolgen.AgentControlColumns.ID.Eq(), id)
+func AgentControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AgentControlColumns.OrganizationID, AgentControlColumns.BusinessUnitID, ti)
+}
+
+// AgentControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AgentControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AgentControlColumns.ID.In(), bun.List(ids))
+//	})
+func AgentControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AgentControlColumns.OrganizationID, AgentControlColumns.BusinessUnitID, ti)
+}
+
+// AgentControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AgentControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AgentControlColumns.ID.Eq(), id)
+//	})
+func AgentControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AgentControlColumns.OrganizationID, AgentControlColumns.BusinessUnitID, ti)
+}
+
+// AgentControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AgentControlApplyTenant(tenantInfo))
+func AgentControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AgentControlColumns.OrganizationID, AgentControlColumns.BusinessUnitID, ti)
+}
+
+// AgentControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AgentControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AgentControlFilter = struct {
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShadowMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
+	BillingAgentEnabled    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingAgentEnabled" → DB: "billing_agent_enabled"
+	DecisionTimeoutSeconds func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionTimeoutSeconds" → DB: "decision_timeout_seconds"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ShadowMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shadowMode", op, value)
+	},
+	BillingAgentEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billingAgentEnabled", op, value)
+	},
+	DecisionTimeoutSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decisionTimeoutSeconds", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // BillingControl — table "billing_controls", alias "bc"
 // ---------------------------------------------------------------------------
 

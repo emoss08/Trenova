@@ -9,6 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
@@ -156,6 +160,10 @@ type RouterParams struct {
 	ReportHandler                   *reporthandler.Handler
 	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
+	AgentProposalHandler            *agentproposalhandler.Handler
+	AgentExceptionHandler           *agentexceptionhandler.Handler
+	AgentControlHandler             *agentcontrolhandler.Handler
+	AgentRunHandler                 *agentrunhandler.Handler
 	VersionHandler                  *versionhandler.Handler
 	ControlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
@@ -269,6 +277,10 @@ type Router struct {
 	reportHandler                   *reporthandler.Handler
 	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
+	agentProposalHandler            *agentproposalhandler.Handler
+	agentExceptionHandler           *agentexceptionhandler.Handler
+	agentControlHandler             *agentcontrolhandler.Handler
+	agentRunHandler                 *agentrunhandler.Handler
 	versionHandler                  *versionhandler.Handler
 	controlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	weatherAlertHandler             *weatheralerthandler.Handler
@@ -375,6 +387,10 @@ func NewRouter(p RouterParams) *Router {
 		reportHandler:                   p.ReportHandler,
 		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
+		agentProposalHandler:            p.AgentProposalHandler,
+		agentExceptionHandler:           p.AgentExceptionHandler,
+		agentControlHandler:             p.AgentControlHandler,
+		agentRunHandler:                 p.AgentRunHandler,
 		versionHandler:                  p.VersionHandler,
 		controlPlaneProvisioningHandler: p.ControlPlaneProvisioningHandler,
 		weatherAlertHandler:             p.WeatherAlertHandler,
@@ -541,6 +557,10 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.reportHandler.RegisterRoutes(protected)
 	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
+	r.agentProposalHandler.RegisterRoutes(protected)
+	r.agentExceptionHandler.RegisterRoutes(protected)
+	r.agentControlHandler.RegisterRoutes(protected)
+	r.agentRunHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
 	r.orderHandler.RegisterRoutes(protected)
 	r.serviceFailureReasonCodeHandler.RegisterRoutes(protected)

@@ -5,6 +5,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountsreceivablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdecisionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentexceptionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentproposalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentrunrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
@@ -190,6 +195,11 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documentshipmentdraftrepository.New,
 	documentuploadrepository.New,
 	accessorialchargerepository.New,
+	agentrunrepository.New,
+	agentproposalrepository.New,
+	agentexceptionrepository.New,
+	agentdecisionrepository.New,
+	agentcontrolrepository.New,
 	assignmentrepository.New,
 	bankreceiptrepository.New,
 	bankreceiptbatchrepository.New,

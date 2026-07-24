@@ -8,6 +8,16 @@ var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
 
+var AgentControlSpec TypeSpec
+
+var AgentDecisionSpec TypeSpec
+
+var AgentExceptionSpec TypeSpec
+
+var AgentProposalSpec TypeSpec
+
+var AgentRunSpec TypeSpec
+
 var ApiKeySpec TypeSpec
 
 var AuditEntrySpec TypeSpec
@@ -393,6 +403,333 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	AgentControlSpec = TypeSpec{
+		TypeName: "AgentControl",
+		FieldMap: buncolgen.AgentControlFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shadowMode",
+				FieldMapKey: "shadowMode",
+			},
+			{
+				Name:        "billingAgentEnabled",
+				FieldMapKey: "billingAgentEnabled",
+			},
+			{
+				Name:        "decisionTimeoutSeconds",
+				FieldMapKey: "decisionTimeoutSeconds",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentDecisionSpec = TypeSpec{
+		TypeName: "AgentDecision",
+		FieldMap: buncolgen.AgentDecisionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "proposalId",
+				FieldMapKey: "proposalId",
+			},
+			{
+				Name:        "exceptionId",
+				FieldMapKey: "exceptionId",
+			},
+			{
+				Name:        "decidedByUserId",
+				FieldMapKey: "decidedByUserId",
+			},
+			{
+				Name:        "decision",
+				FieldMapKey: "decision",
+			},
+			{
+				Name:        "modifications",
+				FieldMapKey: "modifications",
+			},
+			{
+				Name:        "reasonCode",
+				FieldMapKey: "reasonCode",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentExceptionSpec = TypeSpec{
+		TypeName: "AgentException",
+		FieldMap: buncolgen.AgentExceptionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "attemptSummary",
+				FieldMapKey: "attemptSummary",
+			},
+			{
+				Name:        "evidence",
+				FieldMapKey: "evidence",
+			},
+			{
+				Name:        "blastRadius",
+				FieldMapKey: "blastRadius",
+			},
+			{
+				Name:        "resolutionState",
+				FieldMapKey: "resolutionState",
+			},
+			{
+				Name:        "resolutionNotes",
+				FieldMapKey: "resolutionNotes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentProposalSpec = TypeSpec{
+		TypeName: "AgentProposal",
+		FieldMap: buncolgen.AgentProposalFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "toolName",
+				FieldMapKey: "toolName",
+			},
+			{
+				Name:        "toolParams",
+				FieldMapKey: "toolParams",
+			},
+			{
+				Name:        "confidence",
+				FieldMapKey: "confidence",
+			},
+			{
+				Name:        "rationale",
+				FieldMapKey: "rationale",
+			},
+			{
+				Name:        "evidence",
+				FieldMapKey: "evidence",
+			},
+			{
+				Name:        "autonomyTier",
+				FieldMapKey: "autonomyTier",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentRunSpec = TypeSpec{
+		TypeName: "AgentRun",
+		FieldMap: buncolgen.AgentRunFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "agentType",
+				FieldMapKey: "agentType",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "workflowId",
+				FieldMapKey: "workflowId",
+			},
+			{
+				Name:        "modelIdentifier",
+				FieldMapKey: "modelIdentifier",
+			},
+			{
+				Name:        "promptVersion",
+				FieldMapKey: "promptVersion",
+			},
+			{
+				Name:        "inputContextHash",
+				FieldMapKey: "inputContextHash",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

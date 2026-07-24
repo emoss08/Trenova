@@ -72,6 +72,12 @@ const (
 	ResourceRateTable            Resource = "rate_table"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 
+	// Agent
+	ResourceAgentRun       Resource = "agent_run"
+	ResourceAgentProposal  Resource = "agent_proposal"
+	ResourceAgentException Resource = "agent_exception"
+	ResourceAgentControl   Resource = "agent_control"
+
 	// Customers
 	ResourceCustomer        Resource = "customer"
 	ResourceCustomerContact Resource = "customer_contact"

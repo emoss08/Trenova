@@ -73,6 +73,10 @@ func (noopWorkflowStarter) CancelWorkflow(context.Context, string, string) error
 	return nil
 }
 
+func (noopWorkflowStarter) SignalWorkflow(context.Context, string, string, string, any) error {
+	return nil
+}
+
 func (noopWorkflowStarter) Enabled() bool {
 	return false
 }

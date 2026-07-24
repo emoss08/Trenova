@@ -78,6 +78,7 @@ const (
 	PrincipalTypeUser   PrincipalType = "session_user"
 	PrincipalTypeAPIKey PrincipalType = "api_key"
 	PrincipalTypeSystem PrincipalType = "system"
+	PrincipalTypeAgent  PrincipalType = "agent"
 )
 
 type AuthenticatedPrincipal struct {
@@ -130,6 +131,13 @@ func (a *RequestActor) IsUser() bool {
 		return false
 	}
 	return a.PrincipalType == PrincipalTypeUser
+}
+
+func (a *RequestActor) IsAgent() bool {
+	if a == nil {
+		return false
+	}
+	return a.PrincipalType == PrincipalTypeAgent
 }
 
 func (lr *LoginRequest) Validate() error {

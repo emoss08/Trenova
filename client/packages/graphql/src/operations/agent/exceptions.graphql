@@ -1,0 +1,54 @@
+fragment AgentExceptionTableRowFields on AgentException {
+  id
+  organizationId
+  businessUnitId
+  runId
+  category
+  severity
+  subjectType
+  subjectId
+  attemptSummary
+  blastRadius
+  resolutionState
+  resolutionNotes
+  version
+  createdAt
+  updatedAt
+}
+
+fragment AgentExceptionDetailFields on AgentException {
+  ...AgentExceptionTableRowFields
+  evidence {
+    ...AgentEvidenceRefFields
+  }
+}
+
+query AgentExceptionTable($input: DataTableConnectionInput!) {
+  agentExceptions(input: $input) {
+    edges {
+      node {
+        ...AgentExceptionTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentExceptionDetail($id: ID!) {
+  agentException(id: $id) {
+    ...AgentExceptionDetailFields
+  }
+}
+
+mutation ResolveAgentException($id: ID!, $input: AgentExceptionResolveInput!) {
+  resolveAgentException(id: $id, input: $input) {
+    id
+    resolutionState
+    resolutionNotes
+    version
+    updatedAt
+  }
+}

@@ -7,6 +7,7 @@ const (
 	TypeSamsara            = Type("Samsara")
 	TypeHERE               = Type("HERE")
 	TypeOpenAI             = Type("OpenAI")
+	TypeAnthropic          = Type("Anthropic")
 	TypeOpenWeatherMap     = Type("OpenWeatherMap")
 	TypeOANDAExchangeRates = Type("OANDAExchangeRates")
 	TypeEIAFuelPrices      = Type("EIAFuelPrices")
