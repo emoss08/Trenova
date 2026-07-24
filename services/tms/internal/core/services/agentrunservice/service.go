@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -139,6 +140,13 @@ func (s *Service) Start(
 	}
 
 	return updated, nil
+}
+
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAgentRunConnectionRequest,
+) (*pagination.CursorListResult[*agent.AgentRun], error) {
+	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(

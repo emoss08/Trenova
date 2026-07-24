@@ -304,6 +304,224 @@ input AdjustEscrowAccountInput {
   occurredDate: Int
 }
 
+enum AgentAutonomyTier {
+  ActWithApproval
+  AutoExecute
+  Propose
+}
+
+type AgentControl {
+  billingAgentEnabled: Boolean!
+  businessUnitId: ID!
+  createdAt: Int!
+  decisionTimeoutSeconds: Int!
+  id: ID!
+  organizationId: ID!
+  shadowMode: Boolean!
+  updatedAt: Int!
+  version: Int!
+}
+
+input AgentControlInput {
+  billingAgentEnabled: Boolean!
+  decisionTimeoutSeconds: Int!
+  shadowMode: Boolean!
+}
+
+type AgentDecision {
+  businessUnitId: ID!
+  createdAt: Int!
+  decidedByUserId: ID!
+  decision: AgentDecisionType!
+  exceptionId: ID
+  id: ID!
+  """
+  Modifications carry tool-specific parameter overrides captured at decision time.
+  """
+  modifications: JSON
+  organizationId: ID!
+  proposalId: ID
+  reasonCode: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum AgentDecisionType {
+  Accepted
+  Modified
+  Rejected
+}
+
+type AgentEvidenceRef {
+  id: String!
+  note: String!
+  type: String!
+}
+
+type AgentException {
+  attemptSummary: String!
+  blastRadius: Int!
+  businessUnitId: ID!
+  category: AgentExceptionCategory!
+  createdAt: Int!
+  evidence: [AgentEvidenceRef!]!
+  id: ID!
+  organizationId: ID!
+  resolutionNotes: String!
+  resolutionState: AgentResolutionState!
+  runId: ID!
+  severity: AgentSeverity!
+  subjectId: ID!
+  subjectType: AgentSubjectType!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum AgentExceptionCategory {
+  AccessorialDispute
+  ConfidenceBelowThreshold
+  CustomerInformationError
+  DuplicateCharge
+  IncorrectRates
+  MissingBOL
+  MissingDocumentation
+  MissingReferenceNumber
+  MissingRequiredDocument
+  Other
+  RateMissingBasis
+  RateNotOnFile
+  RateVarianceRequiresAction
+  ServiceFailure
+  UnableToDiagnose
+  UnresolvedServiceFailures
+  WeightDiscrepancy
+}
+
+type AgentExceptionConnection {
+  edges: [AgentExceptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentExceptionEdge {
+  cursor: String!
+  node: AgentException!
+}
+
+input AgentExceptionResolveInput {
+  resolutionNotes: String
+  resolutionState: AgentResolutionState!
+}
+
+type AgentProposal {
+  autonomyTier: AgentAutonomyTier!
+  businessUnitId: ID!
+  confidence: Float!
+  createdAt: Int!
+  evidence: [AgentEvidenceRef!]!
+  id: ID!
+  organizationId: ID!
+  rationale: String!
+  runId: ID!
+  status: AgentProposalStatus!
+  toolName: String!
+  """
+  Tool parameters are tool-specific and validated per tool, so they remain intentionally open-ended.
+  """
+  toolParams: JSON!
+  updatedAt: Int!
+  version: Int!
+}
+
+type AgentProposalConnection {
+  edges: [AgentProposalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentProposalDecisionInput {
+  decision: AgentDecisionType!
+  modifications: JSON
+  reasonCode: String!
+}
+
+type AgentProposalEdge {
+  cursor: String!
+  node: AgentProposal!
+}
+
+enum AgentProposalStatus {
+  Accepted
+  Expired
+  Modified
+  Pending
+  Rejected
+  Superseded
+}
+
+enum AgentResolutionState {
+  Dismissed
+  InReview
+  Open
+  Resolved
+}
+
+type AgentRun {
+  agentType: AgentType!
+  businessUnitId: ID!
+  completedAt: Int
+  createdAt: Int!
+  errorMessage: String!
+  id: ID!
+  inputContextHash: String!
+  modelIdentifier: String!
+  organizationId: ID!
+  promptVersion: String!
+  startedAt: Int
+  status: AgentRunStatus!
+  subjectId: ID!
+  subjectType: AgentSubjectType!
+  updatedAt: Int!
+  version: Int!
+  workflowId: String!
+}
+
+type AgentRunConnection {
+  edges: [AgentRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentRunEdge {
+  cursor: String!
+  node: AgentRun!
+}
+
+enum AgentRunStatus {
+  AwaitingDecision
+  Completed
+  Diagnosing
+  Failed
+  GatheringContext
+  Pending
+  ShadowCompleted
+}
+
+enum AgentSeverity {
+  Critical
+  High
+  Low
+  Medium
+}
+
+enum AgentSubjectType {
+  BillingQueueItem
+}
+
+enum AgentType {
+  BillingException
+}
+
 scalar Any
 
 type ApiKey {
@@ -3364,6 +3582,7 @@ type Mutation {
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
+  decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
@@ -3427,6 +3646,7 @@ type Mutation {
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   resetCannedFork(id: ID!): ReportDefinition!
+  resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   """
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
   """
@@ -3457,6 +3677,7 @@ type Mutation {
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
+  updateAgentControl(input: AgentControlInput!): AgentControl!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
@@ -4263,6 +4484,13 @@ type Query {
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
   accountType(id: ID!): AccountType
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
+  agentControl: AgentControl!
+  agentException(id: ID!): AgentException
+  agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
+  agentProposal(id: ID!): AgentProposal
+  agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
+  agentRun(id: ID!): AgentRun
+  agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   arAgingSummary(asOfDate: Int): ARAgingSummary!

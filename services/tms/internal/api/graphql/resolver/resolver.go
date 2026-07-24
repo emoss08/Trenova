@@ -132,6 +132,11 @@ type Params struct {
 	BillingQueueService          services.BillingQueueService
 	InvoiceService               services.InvoiceService
 	InvoiceAdjustmentService     services.InvoiceAdjustmentService
+	AgentRunService              services.AgentRunService
+	AgentProposalService         services.AgentProposalService
+	AgentExceptionService        services.AgentExceptionService
+	AgentDecisionService         services.AgentDecisionService
+	AgentControlService          services.AgentControlService
 	IAMService                   services.IAMService
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service
@@ -219,6 +224,11 @@ type Resolver struct {
 	billingQueueService          services.BillingQueueService
 	invoiceService               services.InvoiceService
 	invoiceAdjustmentService     services.InvoiceAdjustmentService
+	agentRunService              services.AgentRunService
+	agentProposalService         services.AgentProposalService
+	agentExceptionService        services.AgentExceptionService
+	agentDecisionService         services.AgentDecisionService
+	agentControlService          services.AgentControlService
 	iamService                   services.IAMService
 	roleService                  *roleservice.Service
 	userService                  *userservice.Service
@@ -307,6 +317,11 @@ func New(p Params) *Resolver {
 		billingQueueService:          p.BillingQueueService,
 		invoiceService:               p.InvoiceService,
 		invoiceAdjustmentService:     p.InvoiceAdjustmentService,
+		agentRunService:              p.AgentRunService,
+		agentProposalService:         p.AgentProposalService,
+		agentExceptionService:        p.AgentExceptionService,
+		agentDecisionService:         p.AgentDecisionService,
+		agentControlService:          p.AgentControlService,
 		iamService:                   p.IAMService,
 		roleService:                  p.RoleService,
 		userService:                  p.UserService,

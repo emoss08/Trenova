@@ -1,0 +1,39 @@
+fragment AgentRunTableRowFields on AgentRun {
+  id
+  organizationId
+  businessUnitId
+  agentType
+  subjectType
+  subjectId
+  status
+  workflowId
+  modelIdentifier
+  promptVersion
+  startedAt
+  completedAt
+  errorMessage
+  version
+  createdAt
+  updatedAt
+}
+
+query AgentRunTable($input: DataTableConnectionInput!) {
+  agentRuns(input: $input) {
+    edges {
+      node {
+        ...AgentRunTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentRunDetail($id: ID!) {
+  agentRun(id: $id) {
+    ...AgentRunTableRowFields
+    inputContextHash
+  }
+}

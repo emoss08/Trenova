@@ -232,6 +232,54 @@ models:
   RateUnit:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accessorialcharge.RateUnit
+  AgentType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.Type
+  AgentSubjectType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.SubjectType
+  AgentRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RunStatus
+  AgentProposalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ProposalStatus
+  AgentAutonomyTier:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
+  AgentSeverity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.Severity
+  AgentResolutionState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ResolutionState
+  AgentDecisionType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.DecisionType
+  AgentExceptionCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ExceptionCategory
+  AgentEvidenceRef:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.EvidenceRef
+  AgentRun:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AgentRun
+  AgentProposal:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AgentProposal
+    fields:
+      confidence:
+        resolver: true
+  AgentException:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AgentException
+  AgentDecision:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AgentDecision
+  AgentControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.AgentControl
   AccessorialCharge:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accessorialcharge.AccessorialCharge

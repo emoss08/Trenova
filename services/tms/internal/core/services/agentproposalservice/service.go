@@ -53,6 +53,24 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAgentProposalConnectionRequest,
+) (*pagination.CursorListResult[*agent.AgentProposal], error) {
+	shadow, err := s.isShadow(ctx, req.Filter.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if shadow {
+		return &pagination.CursorListResult[*agent.AgentProposal]{
+			Items: []*agent.AgentProposal{},
+		}, nil
+	}
+
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentProposalByIDRequest,

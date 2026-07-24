@@ -1,0 +1,23 @@
+fragment AgentControlFields on AgentControl {
+  id
+  organizationId
+  businessUnitId
+  shadowMode
+  billingAgentEnabled
+  decisionTimeoutSeconds
+  version
+  createdAt
+  updatedAt
+}
+
+query AgentControlSettings {
+  agentControl {
+    ...AgentControlFields
+  }
+}
+
+mutation UpdateAgentControl($input: AgentControlInput!) {
+  updateAgentControl(input: $input) {
+    ...AgentControlFields
+  }
+}

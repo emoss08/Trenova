@@ -1,0 +1,229 @@
+enum AgentType {
+  BillingException
+}
+
+enum AgentSubjectType {
+  BillingQueueItem
+}
+
+enum AgentRunStatus {
+  Pending
+  GatheringContext
+  Diagnosing
+  AwaitingDecision
+  Completed
+  ShadowCompleted
+  Failed
+}
+
+enum AgentProposalStatus {
+  Pending
+  Accepted
+  Modified
+  Rejected
+  Expired
+  Superseded
+}
+
+enum AgentAutonomyTier {
+  Propose
+  ActWithApproval
+  AutoExecute
+}
+
+enum AgentSeverity {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum AgentResolutionState {
+  Open
+  InReview
+  Resolved
+  Dismissed
+}
+
+enum AgentDecisionType {
+  Accepted
+  Modified
+  Rejected
+}
+
+enum AgentExceptionCategory {
+  MissingDocumentation
+  IncorrectRates
+  WeightDiscrepancy
+  AccessorialDispute
+  DuplicateCharge
+  MissingReferenceNumber
+  CustomerInformationError
+  ServiceFailure
+  RateNotOnFile
+  MissingBOL
+  RateMissingBasis
+  RateVarianceRequiresAction
+  UnresolvedServiceFailures
+  MissingRequiredDocument
+  ConfidenceBelowThreshold
+  UnableToDiagnose
+  Other
+}
+
+type AgentEvidenceRef {
+  type: String!
+  id: String!
+  note: String!
+}
+
+type AgentRun {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentType: AgentType!
+  subjectType: AgentSubjectType!
+  subjectId: ID!
+  status: AgentRunStatus!
+  workflowId: String!
+  modelIdentifier: String!
+  promptVersion: String!
+  inputContextHash: String!
+  startedAt: Int
+  completedAt: Int
+  errorMessage: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type AgentProposal {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  runId: ID!
+  toolName: String!
+  "Tool parameters are tool-specific and validated per tool, so they remain intentionally open-ended."
+  toolParams: JSON!
+  confidence: Float!
+  rationale: String!
+  evidence: [AgentEvidenceRef!]!
+  autonomyTier: AgentAutonomyTier!
+  status: AgentProposalStatus!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type AgentException {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  runId: ID!
+  category: AgentExceptionCategory!
+  severity: AgentSeverity!
+  subjectType: AgentSubjectType!
+  subjectId: ID!
+  attemptSummary: String!
+  evidence: [AgentEvidenceRef!]!
+  blastRadius: Int!
+  resolutionState: AgentResolutionState!
+  resolutionNotes: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type AgentDecision {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  proposalId: ID
+  exceptionId: ID
+  decidedByUserId: ID!
+  decision: AgentDecisionType!
+  "Modifications carry tool-specific parameter overrides captured at decision time."
+  modifications: JSON
+  reasonCode: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type AgentControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shadowMode: Boolean!
+  billingAgentEnabled: Boolean!
+  decisionTimeoutSeconds: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type AgentRunEdge {
+  node: AgentRun!
+  cursor: String!
+}
+
+type AgentRunConnection {
+  edges: [AgentRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentProposalEdge {
+  node: AgentProposal!
+  cursor: String!
+}
+
+type AgentProposalConnection {
+  edges: [AgentProposalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentExceptionEdge {
+  node: AgentException!
+  cursor: String!
+}
+
+type AgentExceptionConnection {
+  edges: [AgentExceptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentProposalDecisionInput {
+  decision: AgentDecisionType!
+  modifications: JSON
+  reasonCode: String!
+}
+
+input AgentExceptionResolveInput {
+  resolutionState: AgentResolutionState!
+  resolutionNotes: String
+}
+
+input AgentControlInput {
+  shadowMode: Boolean!
+  billingAgentEnabled: Boolean!
+  decisionTimeoutSeconds: Int!
+}
+
+extend type Query {
+  agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
+  agentRun(id: ID!): AgentRun
+  agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
+  agentProposal(id: ID!): AgentProposal
+  agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
+  agentException(id: ID!): AgentException
+  agentControl: AgentControl!
+}
+
+extend type Mutation {
+  decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
+  updateAgentControl(input: AgentControlInput!): AgentControl!
+}

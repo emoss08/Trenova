@@ -79,6 +79,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAgentExceptionConnectionRequest,
+) (*pagination.CursorListResult[*agent.AgentException], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentExceptionByIDRequest,

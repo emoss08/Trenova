@@ -34,6 +34,87 @@ export type AdjustEscrowAccountInput = {
   occurredDate?: number | null | undefined;
 };
 
+export type AgentAutonomyTier =
+  | 'ActWithApproval'
+  | 'AutoExecute'
+  | 'Propose';
+
+export type AgentControlInput = {
+  billingAgentEnabled: boolean;
+  decisionTimeoutSeconds: number;
+  shadowMode: boolean;
+};
+
+export type AgentDecisionType =
+  | 'Accepted'
+  | 'Modified'
+  | 'Rejected';
+
+export type AgentExceptionCategory =
+  | 'AccessorialDispute'
+  | 'ConfidenceBelowThreshold'
+  | 'CustomerInformationError'
+  | 'DuplicateCharge'
+  | 'IncorrectRates'
+  | 'MissingBOL'
+  | 'MissingDocumentation'
+  | 'MissingReferenceNumber'
+  | 'MissingRequiredDocument'
+  | 'Other'
+  | 'RateMissingBasis'
+  | 'RateNotOnFile'
+  | 'RateVarianceRequiresAction'
+  | 'ServiceFailure'
+  | 'UnableToDiagnose'
+  | 'UnresolvedServiceFailures'
+  | 'WeightDiscrepancy';
+
+export type AgentExceptionResolveInput = {
+  resolutionNotes?: string | null | undefined;
+  resolutionState: AgentResolutionState;
+};
+
+export type AgentProposalDecisionInput = {
+  decision: AgentDecisionType;
+  modifications?: unknown;
+  reasonCode: string;
+};
+
+export type AgentProposalStatus =
+  | 'Accepted'
+  | 'Expired'
+  | 'Modified'
+  | 'Pending'
+  | 'Rejected'
+  | 'Superseded';
+
+export type AgentResolutionState =
+  | 'Dismissed'
+  | 'InReview'
+  | 'Open'
+  | 'Resolved';
+
+export type AgentRunStatus =
+  | 'AwaitingDecision'
+  | 'Completed'
+  | 'Diagnosing'
+  | 'Failed'
+  | 'GatheringContext'
+  | 'Pending'
+  | 'ShadowCompleted';
+
+export type AgentSeverity =
+  | 'Critical'
+  | 'High'
+  | 'Low'
+  | 'Medium';
+
+export type AgentSubjectType =
+  | 'BillingQueueItem';
+
+export type AgentType =
+  | 'BillingException';
+
 export type ApplyCustomerPaymentInput = {
   accountingDate: number;
   applications: Array<CustomerPaymentApplicationInput>;
@@ -2071,6 +2152,99 @@ export type ArCustomerProfileQueryVariables = Exact<{
 
 
 export type ArCustomerProfileQuery = { arCustomerProfile: { dsoDays: number, creditUtilization: number, delinquencyScore: number, snapshot: { customerId: string, customerName: string, totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, creditLimitMinor: number, hasCreditLimit: boolean, openInvoiceCount: number, oldestOpenInvoiceDate: number, oldestDaysPastDue: number, lastPaymentDate: number, lastPaymentMinor: number, avgDaysToPay: number, billedTrailing91Minor: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, monthlyCollections: Array<{ monthStart: number, amountMinor: number }> } } };
+
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, billingAgentEnabled: boolean, decisionTimeoutSeconds: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+
+export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentControlSettingsQuery = { agentControl: { ' $fragmentRefs'?: { 'AgentControlFieldsFragment': AgentControlFieldsFragment } } };
+
+export type UpdateAgentControlMutationVariables = Exact<{
+  input: AgentControlInput;
+}>;
+
+
+export type UpdateAgentControlMutation = { updateAgentControl: { ' $fragmentRefs'?: { 'AgentControlFieldsFragment': AgentControlFieldsFragment } } };
+
+export type AgentExceptionTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, category: AgentExceptionCategory, severity: AgentSeverity, subjectType: AgentSubjectType, subjectId: string, attemptSummary: string, blastRadius: number, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentExceptionTableRowFieldsFragment' };
+
+export type AgentExceptionDetailFieldsFragment = (
+  { evidence: Array<{ ' $fragmentRefs'?: { 'AgentEvidenceRefFieldsFragment': AgentEvidenceRefFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'AgentExceptionTableRowFieldsFragment': AgentExceptionTableRowFieldsFragment } }
+) & { ' $fragmentName'?: 'AgentExceptionDetailFieldsFragment' };
+
+export type AgentExceptionTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AgentExceptionTableQuery = { agentExceptions: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentExceptionTableRowFieldsFragment': AgentExceptionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentExceptionDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentExceptionDetailQuery = { agentException: { ' $fragmentRefs'?: { 'AgentExceptionDetailFieldsFragment': AgentExceptionDetailFieldsFragment } } | null };
+
+export type ResolveAgentExceptionMutationVariables = Exact<{
+  id: string | number;
+  input: AgentExceptionResolveInput;
+}>;
+
+
+export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
+
+export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
+
+export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
+
+export type AgentProposalDetailFieldsFragment = (
+  { evidence: Array<{ ' $fragmentRefs'?: { 'AgentEvidenceRefFieldsFragment': AgentEvidenceRefFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'AgentProposalTableRowFieldsFragment': AgentProposalTableRowFieldsFragment } }
+) & { ' $fragmentName'?: 'AgentProposalDetailFieldsFragment' };
+
+export type AgentProposalTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AgentProposalTableQuery = { agentProposals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentProposalTableRowFieldsFragment': AgentProposalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentProposalDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentProposalDetailQuery = { agentProposal: { ' $fragmentRefs'?: { 'AgentProposalDetailFieldsFragment': AgentProposalDetailFieldsFragment } } | null };
+
+export type DecideAgentProposalMutationVariables = Exact<{
+  id: string | number;
+  input: AgentProposalDecisionInput;
+}>;
+
+
+export type DecideAgentProposalMutation = { decideAgentProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, version: number, createdAt: number } };
+
+export type AgentRunTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentType: AgentType, subjectType: AgentSubjectType, subjectId: string, status: AgentRunStatus, workflowId: string, modelIdentifier: string, promptVersion: string, startedAt: number | null, completedAt: number | null, errorMessage: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentRunTableRowFieldsFragment' };
+
+export type AgentRunTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AgentRunTableQuery = { agentRuns: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentRunDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentRunDetailQuery = { agentRun: (
+    { inputContextHash: string }
+    & { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } }
+  ) | null };
 
 export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
 
@@ -4264,6 +4438,138 @@ export const AccountTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AccountTypeTableRowFields"}) as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
+export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentControlFields on AgentControl {
+  id
+  organizationId
+  businessUnitId
+  shadowMode
+  billingAgentEnabled
+  decisionTimeoutSeconds
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentControlFields"}) as unknown as TypedDocumentString<AgentControlFieldsFragment, unknown>;
+export const AgentExceptionTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentExceptionTableRowFields on AgentException {
+  id
+  organizationId
+  businessUnitId
+  runId
+  category
+  severity
+  subjectType
+  subjectId
+  attemptSummary
+  blastRadius
+  resolutionState
+  resolutionNotes
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentExceptionTableRowFields"}) as unknown as TypedDocumentString<AgentExceptionTableRowFieldsFragment, unknown>;
+export const AgentEvidenceRefFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentEvidenceRefFields on AgentEvidenceRef {
+  type
+  id
+  note
+}
+    `, {"fragmentName":"AgentEvidenceRefFields"}) as unknown as TypedDocumentString<AgentEvidenceRefFieldsFragment, unknown>;
+export const AgentExceptionDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentExceptionDetailFields on AgentException {
+  ...AgentExceptionTableRowFields
+  evidence {
+    ...AgentEvidenceRefFields
+  }
+}
+    fragment AgentExceptionTableRowFields on AgentException {
+  id
+  organizationId
+  businessUnitId
+  runId
+  category
+  severity
+  subjectType
+  subjectId
+  attemptSummary
+  blastRadius
+  resolutionState
+  resolutionNotes
+  version
+  createdAt
+  updatedAt
+}
+fragment AgentEvidenceRefFields on AgentEvidenceRef {
+  type
+  id
+  note
+}`, {"fragmentName":"AgentExceptionDetailFields"}) as unknown as TypedDocumentString<AgentExceptionDetailFieldsFragment, unknown>;
+export const AgentProposalTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentProposalTableRowFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentProposalTableRowFields"}) as unknown as TypedDocumentString<AgentProposalTableRowFieldsFragment, unknown>;
+export const AgentProposalDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentProposalDetailFields on AgentProposal {
+  ...AgentProposalTableRowFields
+  evidence {
+    ...AgentEvidenceRefFields
+  }
+}
+    fragment AgentEvidenceRefFields on AgentEvidenceRef {
+  type
+  id
+  note
+}
+fragment AgentProposalTableRowFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"AgentProposalDetailFields"}) as unknown as TypedDocumentString<AgentProposalDetailFieldsFragment, unknown>;
+export const AgentRunTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentRunTableRowFields on AgentRun {
+  id
+  organizationId
+  businessUnitId
+  agentType
+  subjectType
+  subjectId
+  status
+  workflowId
+  modelIdentifier
+  promptVersion
+  startedAt
+  completedAt
+  errorMessage
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentRunTableRowFields"}) as unknown as TypedDocumentString<AgentRunTableRowFieldsFragment, unknown>;
 export const ApiKeyTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment ApiKeyTableRowFields on ApiKey {
   id
@@ -7326,6 +7632,259 @@ export const ArCustomerProfileDocument = new TypedDocumentString(`
   }
 }
     `, {"hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}) as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
+export const AgentControlSettingsDocument = new TypedDocumentString(`
+    query AgentControlSettings {
+  agentControl {
+    ...AgentControlFields
+  }
+}
+    fragment AgentControlFields on AgentControl {
+  id
+  organizationId
+  businessUnitId
+  shadowMode
+  billingAgentEnabled
+  decisionTimeoutSeconds
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:a0288f356c0efe08e5b5e03734dc189a623608a752569930855e8cbf64a92ec8"}) as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
+export const UpdateAgentControlDocument = new TypedDocumentString(`
+    mutation UpdateAgentControl($input: AgentControlInput!) {
+  updateAgentControl(input: $input) {
+    ...AgentControlFields
+  }
+}
+    fragment AgentControlFields on AgentControl {
+  id
+  organizationId
+  businessUnitId
+  shadowMode
+  billingAgentEnabled
+  decisionTimeoutSeconds
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:58093530f37a6c071acec43d9b2b1887de5e9e0dee5f701e95ae8772ff374946"}) as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const AgentExceptionTableDocument = new TypedDocumentString(`
+    query AgentExceptionTable($input: DataTableConnectionInput!) {
+  agentExceptions(input: $input) {
+    edges {
+      node {
+        ...AgentExceptionTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment AgentExceptionTableRowFields on AgentException {
+  id
+  organizationId
+  businessUnitId
+  runId
+  category
+  severity
+  subjectType
+  subjectId
+  attemptSummary
+  blastRadius
+  resolutionState
+  resolutionNotes
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:6ca01df4dedda29f596a6079ea752eb44d94031642868941c493cc82a2e701ce"}) as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
+export const AgentExceptionDetailDocument = new TypedDocumentString(`
+    query AgentExceptionDetail($id: ID!) {
+  agentException(id: $id) {
+    ...AgentExceptionDetailFields
+  }
+}
+    fragment AgentExceptionTableRowFields on AgentException {
+  id
+  organizationId
+  businessUnitId
+  runId
+  category
+  severity
+  subjectType
+  subjectId
+  attemptSummary
+  blastRadius
+  resolutionState
+  resolutionNotes
+  version
+  createdAt
+  updatedAt
+}
+fragment AgentExceptionDetailFields on AgentException {
+  ...AgentExceptionTableRowFields
+  evidence {
+    ...AgentEvidenceRefFields
+  }
+}
+fragment AgentEvidenceRefFields on AgentEvidenceRef {
+  type
+  id
+  note
+}`, {"hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}) as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
+export const ResolveAgentExceptionDocument = new TypedDocumentString(`
+    mutation ResolveAgentException($id: ID!, $input: AgentExceptionResolveInput!) {
+  resolveAgentException(id: $id, input: $input) {
+    id
+    resolutionState
+    resolutionNotes
+    version
+    updatedAt
+  }
+}
+    `, {"hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}) as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;
+export const AgentProposalTableDocument = new TypedDocumentString(`
+    query AgentProposalTable($input: DataTableConnectionInput!) {
+  agentProposals(input: $input) {
+    edges {
+      node {
+        ...AgentProposalTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment AgentProposalTableRowFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:3c11aad3dfa1f3578ba970eea3e6ab333257ad5d109d76fbb92539c1c55bfaba"}) as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
+export const AgentProposalDetailDocument = new TypedDocumentString(`
+    query AgentProposalDetail($id: ID!) {
+  agentProposal(id: $id) {
+    ...AgentProposalDetailFields
+  }
+}
+    fragment AgentEvidenceRefFields on AgentEvidenceRef {
+  type
+  id
+  note
+}
+fragment AgentProposalTableRowFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  version
+  createdAt
+  updatedAt
+}
+fragment AgentProposalDetailFields on AgentProposal {
+  ...AgentProposalTableRowFields
+  evidence {
+    ...AgentEvidenceRefFields
+  }
+}`, {"hash":"sha256:04b976a90448c11f4bcd6c48fa4cbb4395bbcd84206f529aa13c6fb8d02408ca"}) as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
+export const DecideAgentProposalDocument = new TypedDocumentString(`
+    mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {
+  decideAgentProposal(id: $id, input: $input) {
+    id
+    proposalId
+    decision
+    reasonCode
+    decidedByUserId
+    version
+    createdAt
+  }
+}
+    `, {"hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}) as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
+export const AgentRunTableDocument = new TypedDocumentString(`
+    query AgentRunTable($input: DataTableConnectionInput!) {
+  agentRuns(input: $input) {
+    edges {
+      node {
+        ...AgentRunTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment AgentRunTableRowFields on AgentRun {
+  id
+  organizationId
+  businessUnitId
+  agentType
+  subjectType
+  subjectId
+  status
+  workflowId
+  modelIdentifier
+  promptVersion
+  startedAt
+  completedAt
+  errorMessage
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:f8fd026d38bed827c34a8fa2bd95f81850a45f27a961b4981b7b06ba8017e072"}) as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
+export const AgentRunDetailDocument = new TypedDocumentString(`
+    query AgentRunDetail($id: ID!) {
+  agentRun(id: $id) {
+    ...AgentRunTableRowFields
+    inputContextHash
+  }
+}
+    fragment AgentRunTableRowFields on AgentRun {
+  id
+  organizationId
+  businessUnitId
+  agentType
+  subjectType
+  subjectId
+  status
+  workflowId
+  modelIdentifier
+  promptVersion
+  startedAt
+  completedAt
+  errorMessage
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:1c4280969a19e8c0d0948fd97bb58d9d25538909c8f9a0224646c8813dfcdfa3"}) as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
 export const ApiKeyTableDocument = new TypedDocumentString(`
     query ApiKeyTable($input: DataTableConnectionInput!) {
   apiKeys(input: $input) {

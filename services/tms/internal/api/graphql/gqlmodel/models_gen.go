@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -98,6 +99,56 @@ type AdjustEscrowAccountInput struct {
 	AmountMinor  int    `json:"amountMinor"`
 	Description  string `json:"description"`
 	OccurredDate *int   `json:"occurredDate,omitempty"`
+}
+
+type AgentControlInput struct {
+	ShadowMode             bool `json:"shadowMode"`
+	BillingAgentEnabled    bool `json:"billingAgentEnabled"`
+	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds"`
+}
+
+type AgentExceptionConnection struct {
+	Edges      []*AgentExceptionEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type AgentExceptionEdge struct {
+	Node   *agent.AgentException `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type AgentExceptionResolveInput struct {
+	ResolutionState agent.ResolutionState `json:"resolutionState"`
+	ResolutionNotes *string               `json:"resolutionNotes,omitempty"`
+}
+
+type AgentProposalConnection struct {
+	Edges      []*AgentProposalEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type AgentProposalDecisionInput struct {
+	Decision      agent.DecisionType `json:"decision"`
+	Modifications map[string]any     `json:"modifications,omitempty"`
+	ReasonCode    string             `json:"reasonCode"`
+}
+
+type AgentProposalEdge struct {
+	Node   *agent.AgentProposal `json:"node"`
+	Cursor string               `json:"cursor"`
+}
+
+type AgentRunConnection struct {
+	Edges      []*AgentRunEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type AgentRunEdge struct {
+	Node   *agent.AgentRun `json:"node"`
+	Cursor string          `json:"cursor"`
 }
 
 type APIKeyConnection struct {

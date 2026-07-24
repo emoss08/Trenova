@@ -1,0 +1,60 @@
+fragment AgentEvidenceRefFields on AgentEvidenceRef {
+  type
+  id
+  note
+}
+
+fragment AgentProposalTableRowFields on AgentProposal {
+  id
+  organizationId
+  businessUnitId
+  runId
+  toolName
+  toolParams
+  confidence
+  rationale
+  autonomyTier
+  status
+  version
+  createdAt
+  updatedAt
+}
+
+fragment AgentProposalDetailFields on AgentProposal {
+  ...AgentProposalTableRowFields
+  evidence {
+    ...AgentEvidenceRefFields
+  }
+}
+
+query AgentProposalTable($input: DataTableConnectionInput!) {
+  agentProposals(input: $input) {
+    edges {
+      node {
+        ...AgentProposalTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentProposalDetail($id: ID!) {
+  agentProposal(id: $id) {
+    ...AgentProposalDetailFields
+  }
+}
+
+mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {
+  decideAgentProposal(id: $id, input: $input) {
+    id
+    proposalId
+    decision
+    reasonCode
+    decidedByUserId
+    version
+    createdAt
+  }
+}

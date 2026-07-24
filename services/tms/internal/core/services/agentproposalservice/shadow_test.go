@@ -44,6 +44,13 @@ func (f fakeProposalRepo) List(
 	return &pagination.ListResult[*agent.AgentProposal]{Items: f.items, Total: len(f.items)}, nil
 }
 
+func (f fakeProposalRepo) ListConnection(
+	context.Context,
+	*repositories.ListAgentProposalConnectionRequest,
+) (*pagination.CursorListResult[*agent.AgentProposal], error) {
+	return &pagination.CursorListResult[*agent.AgentProposal]{Items: f.items}, nil
+}
+
 func (f fakeProposalRepo) GetByID(
 	context.Context,
 	repositories.GetAgentProposalByIDRequest,
@@ -106,4 +113,28 @@ func TestList_NonShadowMode_SurfacesProposals(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 1, result.Total, "non-shadow mode must surface persisted proposals")
+}
+
+func connectionRequest() *repositories.ListAgentProposalConnectionRequest {
+	return &repositories.ListAgentProposalConnectionRequest{
+		Filter: &pagination.QueryOptions{},
+	}
+}
+
+func TestListConnection_ShadowMode_SurfacesNothing(t *testing.T) {
+	svc := newService(true)
+
+	result, err := svc.ListConnection(t.Context(), connectionRequest())
+
+	require.NoError(t, err)
+	require.Empty(t, result.Items, "shadow mode must surface no proposals over the connection")
+}
+
+func TestListConnection_NonShadowMode_SurfacesProposals(t *testing.T) {
+	svc := newService(false)
+
+	result, err := svc.ListConnection(t.Context(), connectionRequest())
+
+	require.NoError(t, err)
+	require.Len(t, result.Items, 1, "non-shadow mode must surface persisted proposals")
 }

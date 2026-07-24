@@ -23,6 +23,10 @@ type AgentRunService interface {
 		req *StartAgentRunRequest,
 		actor *RequestActor,
 	) (*agent.AgentRun, error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListAgentRunConnectionRequest,
+	) (*pagination.CursorListResult[*agent.AgentRun], error)
 	GetByID(
 		ctx context.Context,
 		req repositories.GetAgentRunByIDRequest,
@@ -34,6 +38,10 @@ type AgentProposalService interface {
 		ctx context.Context,
 		req *repositories.ListAgentProposalRequest,
 	) (*pagination.ListResult[*agent.AgentProposal], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListAgentProposalConnectionRequest,
+	) (*pagination.CursorListResult[*agent.AgentProposal], error)
 	GetByID(
 		ctx context.Context,
 		req repositories.GetAgentProposalByIDRequest,
@@ -69,6 +77,10 @@ type AgentExceptionService interface {
 		ctx context.Context,
 		req *repositories.ListAgentExceptionRequest,
 	) (*pagination.ListResult[*agent.AgentException], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListAgentExceptionConnectionRequest,
+	) (*pagination.CursorListResult[*agent.AgentException], error)
 	GetByID(
 		ctx context.Context,
 		req repositories.GetAgentExceptionByIDRequest,
