@@ -120,12 +120,12 @@ func (e *Entry) Validate() error {
 		if e.PrincipalID != e.APIKeyID {
 			return errors.New("api key audit entries must use api key ID as principal ID")
 		}
-	case "system":
+	case "system", "agent":
 		if e.UserID.IsNotNil() {
-			return errors.New("system audit entries cannot include a user ID")
+			return fmt.Errorf("%s audit entries cannot include a user ID", e.PrincipalType)
 		}
 		if e.APIKeyID.IsNotNil() {
-			return errors.New("system audit entries cannot include an api key ID")
+			return fmt.Errorf("%s audit entries cannot include an api key ID", e.PrincipalType)
 		}
 	default:
 		return fmt.Errorf("unsupported principal type %q", e.PrincipalType)

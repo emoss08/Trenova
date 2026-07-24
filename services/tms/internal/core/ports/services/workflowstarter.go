@@ -17,5 +17,10 @@ type WorkflowStarter interface {
 		args ...any,
 	) (client.WorkflowRun, error)
 	CancelWorkflow(ctx context.Context, workflowID, runID string) error
+	SignalWorkflow(
+		ctx context.Context,
+		workflowID, runID, signalName string,
+		arg any,
+	) error
 	Enabled() bool
 }

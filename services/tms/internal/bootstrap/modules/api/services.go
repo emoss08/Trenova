@@ -11,6 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
+	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -200,6 +205,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documentuploadservice.New,
 	func(s *documentuploadservice.Service) services.DocumentUploadService { return s },
 	accessorialchargeservice.New,
+	agentcontrolservice.New,
+	agentrunservice.New,
+	agentproposalservice.New,
+	agentexceptionservice.New,
+	agentdecisionservice.New,
 	assignmentservice.New,
 	fx.Annotate(
 		bankreceiptbatchservice.New,

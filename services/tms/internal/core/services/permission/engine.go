@@ -104,6 +104,10 @@ func (e *engine) Check(
 		return e.checkAPIKeyPermission(ctx, req, start)
 	}
 
+	if req.PrincipalType == services.PrincipalTypeAgent {
+		return e.checkAgentPermission(req, start), nil
+	}
+
 	load, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
 	if err != nil {
 		log.Error("failed to get permissions", zap.Error(err))
@@ -112,6 +116,25 @@ func (e *engine) Check(
 	}
 
 	return e.checkUserPermission(ctx, log, start, load, req)
+}
+
+func (e *engine) checkAgentPermission(
+	req *services.PermissionCheckRequest,
+	start time.Time,
+) *services.PermissionCheckResult {
+	allowed := permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
+
+	reason := "agent_denied"
+	if allowed {
+		reason = "agent_allowed"
+	}
+
+	return &services.PermissionCheckResult{
+		Allowed:       allowed,
+		Reason:        reason,
+		DataScope:     permission.DataScopeOrganization,
+		CheckDuration: time.Since(start).Milliseconds(),
+	}
 }
 
 func (e *engine) checkUserPermission(

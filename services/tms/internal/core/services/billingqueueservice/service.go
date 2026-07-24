@@ -423,6 +423,14 @@ func (s *service) UpdateStatus(
 	req *services.UpdateBillingQueueStatusRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
+	if actor.IsAgent() {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrForbidden,
+			"Agent principals cannot transition billing queue items; a human must decide",
+		)
+	}
+
 	var (
 		updated      *billingqueue.BillingQueueItem
 		previous     *billingqueue.BillingQueueItem

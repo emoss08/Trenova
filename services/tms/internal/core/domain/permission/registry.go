@@ -1105,6 +1105,67 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentRun.String(),
+		DisplayName: "Agent Run",
+		Description: "Billing exception agent runs",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View agent runs"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Start agent runs"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentProposal.String(),
+		DisplayName: "Agent Proposal",
+		Description: "Agent-proposed resolutions awaiting human decision",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View agent proposals"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Accept, modify, or reject agent proposals",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentException.String(),
+		DisplayName: "Agent Exception",
+		Description: "Agent exceptions raised for human review",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View agent exceptions"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Raise agent exceptions"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Resolve agent exceptions",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentControl.String(),
+		DisplayName: "Agent Control",
+		Description: "Per-organization agent autonomy configuration",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View agent control settings"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Update agent control settings",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceAccessorialCharge.String(),
 		DisplayName:        "Accessorial Charge",
 		Description:        "Accessorial charge definitions",

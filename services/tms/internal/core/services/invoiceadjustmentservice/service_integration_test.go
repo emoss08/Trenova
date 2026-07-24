@@ -288,6 +288,10 @@ func (f *fakeWorkflowStarter) CancelWorkflow(context.Context, string, string) er
 	return nil
 }
 
+func (f *fakeWorkflowStarter) SignalWorkflow(context.Context, string, string, string, any) error {
+	return nil
+}
+
 type workflowCall struct {
 	options  client.StartWorkflowOptions
 	workflow any

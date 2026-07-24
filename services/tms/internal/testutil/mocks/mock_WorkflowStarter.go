@@ -82,6 +82,50 @@ func (_c *MockWorkflowStarter_CancelWorkflow_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// SignalWorkflow provides a mock function for the type MockWorkflowStarter
+func (_mock *MockWorkflowStarter) SignalWorkflow(ctx context.Context, workflowID string, runID string, signalName string, arg any) error {
+	ret := _mock.Called(ctx, workflowID, runID, signalName, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SignalWorkflow")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, any) error); ok {
+		r0 = returnFunc(ctx, workflowID, runID, signalName, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWorkflowStarter_SignalWorkflow_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignalWorkflow'
+type MockWorkflowStarter_SignalWorkflow_Call struct {
+	*mock.Call
+}
+
+// SignalWorkflow is a helper method to define mock.On call
+func (_e *MockWorkflowStarter_Expecter) SignalWorkflow(ctx interface{}, workflowID interface{}, runID interface{}, signalName interface{}, arg interface{}) *MockWorkflowStarter_SignalWorkflow_Call {
+	return &MockWorkflowStarter_SignalWorkflow_Call{Call: _e.mock.On("SignalWorkflow", ctx, workflowID, runID, signalName, arg)}
+}
+
+func (_c *MockWorkflowStarter_SignalWorkflow_Call) Run(run func(ctx context.Context, workflowID string, runID string, signalName string, arg any)) *MockWorkflowStarter_SignalWorkflow_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(any))
+	})
+	return _c
+}
+
+func (_c *MockWorkflowStarter_SignalWorkflow_Call) Return(err error) *MockWorkflowStarter_SignalWorkflow_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWorkflowStarter_SignalWorkflow_Call) RunAndReturn(run func(ctx context.Context, workflowID string, runID string, signalName string, arg any) error) *MockWorkflowStarter_SignalWorkflow_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Enabled provides a mock function for the type MockWorkflowStarter
 func (_mock *MockWorkflowStarter) Enabled() bool {
 	ret := _mock.Called()
