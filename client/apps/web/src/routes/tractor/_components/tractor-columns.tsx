@@ -4,11 +4,7 @@ import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-st
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
-import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
-import type { EquipmentType } from "@/types/equipment-type";
-import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import type { Tractor } from "@/types/tractor";
-import type { Worker } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useCallback } from "react";
@@ -85,13 +81,13 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<Worker, Tractor>
+          <EntityRefCell<NonNullable<Tractor["primaryWorker"]>, Tractor>
             entity={primaryWorker}
             config={{
               basePath: "/workers",
               getId: (worker) => worker.id,
               getDisplayText: (worker) =>
-                `${worker.firstName} ${worker.lastName}`,
+                [worker.firstName, worker.lastName].filter(Boolean).join(" "),
               getHeaderText: "Primary Worker",
             }}
             parent={row.original}
@@ -118,12 +114,12 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<EquipmentType, Tractor>
+          <EntityRefCell<NonNullable<Tractor["equipmentType"]>, Tractor>
             entity={equipmentType}
             config={{
               basePath: "/equipment/configuration-files/equipment-types",
               getId: (equipmentType) => equipmentType.id,
-              getDisplayText: (equipmentType) => equipmentType.code,
+              getDisplayText: (equipmentType) => equipmentType.code ?? "",
               getHeaderText: "Equip. Type",
               color: {
                 getColor: (equipmentType) => equipmentType.color,
@@ -152,14 +148,12 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<EquipmentManufacturer, Tractor>
+          <EntityRefCell<NonNullable<Tractor["equipmentManufacturer"]>, Tractor>
             entity={equipmentManufacturer}
             config={{
-              basePath:
-                "/equipment/configuration-files/equipment-manufacturers",
+              basePath: "/equipment/configuration-files/equipment-manufacturers",
               getId: (equipmentManufacturer) => equipmentManufacturer.id,
-              getDisplayText: (equipmentManufacturer) =>
-                equipmentManufacturer.name,
+              getDisplayText: (equipmentManufacturer) => equipmentManufacturer.name ?? "",
               getHeaderText: "Equip. Manufacturer",
             }}
             parent={row.original}
@@ -177,12 +171,12 @@ export function getColumns(): ColumnDef<Tractor>[] {
         }
 
         return (
-          <EntityRefCell<FleetCode, Tractor>
+          <EntityRefCell<NonNullable<Tractor["fleetCode"]>, Tractor>
             entity={fleetCode}
             config={{
               basePath: "/dispatch/configuration-files/fleet-codes",
               getId: (fleetCode) => fleetCode.id,
-              getDisplayText: (fleetCode) => fleetCode.code,
+              getDisplayText: (fleetCode) => fleetCode.code ?? "",
               color: {
                 getColor: (fleetCode) => fleetCode.color,
               },
@@ -197,12 +191,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        return (
-          <HoverCardTimestamp
-            className="shrink-0"
-            timestamp={row.original.createdAt}
-          />
-        );
+        return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
       size: 200,
       minSize: 200,

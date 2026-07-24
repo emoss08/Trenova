@@ -20,6 +20,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BriefcaseIcon,
+  Clock4Icon,
   FileTextIcon,
   SmartphoneIcon,
   WalletIcon,
@@ -85,6 +86,7 @@ const COMPLIANCE_FIELDS = [
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const WorkerPayTab = lazy(() => import("./worker-pay-tab"));
 const WorkerPortalTab = lazy(() => import("./worker-portal-tab"));
+const WorkerHosTab = lazy(() => import("./worker-hos-tab"));
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -272,6 +274,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           icon: ShieldCheckIcon,
                           className: cn(hasComplianceErrors && "text-destructive"),
                         },
+                        { value: "hos", label: "HOS", icon: Clock4Icon },
                         { value: "pay", label: "Pay", icon: WalletIcon },
                         { value: "documents", label: "Documents", icon: FileTextIcon },
                         { value: "portal", label: "Portal", icon: SmartphoneIcon },
@@ -289,6 +292,17 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                     </TabsContent>
                     <TabsContent value="compliance" className="p-4">
                       <ComplianceTab />
+                    </TabsContent>
+                    <TabsContent value="hos" className="p-4">
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center py-12">
+                            <ComponentLoader message="Loading..." />
+                          </div>
+                        }
+                      >
+                        <WorkerHosTab workerId={row?.id as string} />
+                      </Suspense>
                     </TabsContent>
                     <TabsContent value="pay" className="p-4">
                       <Suspense

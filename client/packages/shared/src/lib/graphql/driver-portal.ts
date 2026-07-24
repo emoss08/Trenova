@@ -22,6 +22,9 @@ import {
   InviteWorkerToPortalDocument,
   MyAdvancesDocument,
   MyEscrowDocument,
+  MyHosDailyLogsDocument,
+  MyHosStateDocument,
+  MyHosViolationsDocument,
   MyLoadCommentsDocument,
   MyLoadsDocument,
   MyPeriodSummaryDocument,
@@ -61,6 +64,9 @@ import {
   type MyAdvancesQuery,
   type MyDisputesQuery,
   type MyEscrowQuery,
+  type MyHosDailyLogsQuery,
+  type MyHosStateQuery,
+  type MyHosViolationsQuery,
   type MyLoadCommentsQuery,
   type MyLoadsQuery,
   type MyPeriodSummaryQuery,
@@ -457,4 +463,34 @@ export async function updateDashControl(input: UpdateDashControlInput) {
     variables: { input },
   });
   return data.updateDashControl;
+}
+
+export type MyHosState = NonNullable<MyHosStateQuery["myHosState"]>;
+export type MyHosDailyLog = MyHosDailyLogsQuery["myHosDailyLogs"][number];
+export type MyHosViolation = MyHosViolationsQuery["myHosViolations"][number];
+
+export async function fetchMyHosState() {
+  const data = await requestGraphQL({
+    document: MyHosStateDocument,
+    operationName: "MyHosState",
+  });
+  return data.myHosState;
+}
+
+export async function fetchMyHosDailyLogs(startDate: string, endDate: string) {
+  const data = await requestGraphQL({
+    document: MyHosDailyLogsDocument,
+    operationName: "MyHosDailyLogs",
+    variables: { startDate, endDate },
+  });
+  return data.myHosDailyLogs;
+}
+
+export async function fetchMyHosViolations(since?: number) {
+  const data = await requestGraphQL({
+    document: MyHosViolationsDocument,
+    operationName: "MyHosViolations",
+    variables: { since },
+  });
+  return data.myHosViolations;
 }

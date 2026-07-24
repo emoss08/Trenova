@@ -41,6 +41,7 @@ type Params struct {
 	ControlRepo         repositories.ShipmentControlRepository
 	DispatchControlRepo repositories.DispatchControlRepository
 	WorkerRepo          repositories.WorkerRepository
+	TelematicsRepo      repositories.TelematicsRepository
 	CommodityRepo       repositories.CommodityRepository
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	TrailerRepo         repositories.TrailerRepository
@@ -62,6 +63,7 @@ type service struct {
 	controlRepo         repositories.ShipmentControlRepository
 	dispatchControlRepo repositories.DispatchControlRepository
 	workerRepo          repositories.WorkerRepository
+	telematicsRepo      repositories.TelematicsRepository
 	commodityRepo       repositories.CommodityRepository
 	continuityRepo      repositories.EquipmentContinuityRepository
 	trailerRepo         repositories.TrailerRepository
@@ -84,6 +86,7 @@ func New(p Params) portservices.AssignmentService {
 		controlRepo:         p.ControlRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
 		workerRepo:          p.WorkerRepo,
+		telematicsRepo:      p.TelematicsRepo,
 		commodityRepo:       p.CommodityRepo,
 		continuityRepo:      p.ContinuityRepo,
 		trailerRepo:         p.TrailerRepo,
@@ -558,6 +561,17 @@ func (s *service) CheckWorkerCompliance(
 	multiErr := errortypes.NewMultiError()
 
 	runWorkerComplianceChecks(primaryWorker, dc, hasHazmatCommodities, "primaryWorker", multiErr)
+
+	if err = s.runHOSComplianceChecks(
+		ctx,
+		req.TenantInfo,
+		dc,
+		req.PrimaryWorkerID,
+		req.SecondaryWorkerID,
+		multiErr,
+	); err != nil {
+		return err
+	}
 
 	if secondaryWorker != nil {
 		runWorkerComplianceChecks(

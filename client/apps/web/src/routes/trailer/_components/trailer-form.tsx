@@ -127,11 +127,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
   );
 }
 
-function RegistrationInformationSecond({
-  control,
-}: {
-  control: Control<Trailer>;
-}) {
+function RegistrationInformationSecond({ control }: { control: Control<Trailer> }) {
   return (
     <FormSection title="Registration Information" className="border-t py-2">
       <FormGroup cols={2}>
@@ -153,6 +149,15 @@ function RegistrationInformationSecond({
             placeholder="Registration Number"
             description="The unique registration number assigned to the trailer."
             maxLength={50}
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            name="externalId"
+            label="Samsara Asset ID"
+            placeholder="Samsara Asset ID"
+            description="Links the trailer to its Samsara asset for telematics. Auto-matched by VIN when left blank."
           />
         </FormControl>
         <FormControl>

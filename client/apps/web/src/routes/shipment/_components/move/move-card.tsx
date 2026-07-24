@@ -13,7 +13,13 @@ import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import type { MoveStatus, Shipment, Stop, StopStatus, StopType } from "@trenova/shared/types/shipment";
+import type {
+  MoveStatus,
+  Shipment,
+  Stop,
+  StopStatus,
+  StopType,
+} from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
@@ -226,6 +232,7 @@ export function MoveCard({
             open={assignmentOpen}
             onOpenChange={setAssignmentOpen}
             moveId={move.id!}
+            shipmentId={shipmentId}
             existingAssignment={move?.assignment}
             onAssigned={(assignment) => {
               setValue(`moves.${moveIndex}.assignment`, assignment);

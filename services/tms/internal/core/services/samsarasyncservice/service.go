@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -752,24 +751,7 @@ func (s *Service) resolveSamsaraClient(
 		return nil, errortypes.NewBusinessError("Samsara integration is not configured")
 	}
 
-	runtimeCfg, err := s.integrationService.GetRuntimeConfig(
-		ctx, tenantInfo, integration.TypeSamsara,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := sharedsamsara.New(
-		runtimeCfg.Config["token"],
-		sharedsamsara.WithBaseURL(runtimeCfg.Config["baseUrl"]),
-	)
-	if err != nil {
-		return nil, errortypes.NewBusinessError(
-			"failed to initialize Samsara client",
-		).WithInternal(err)
-	}
-
-	return client, nil
+	return s.integrationService.SamsaraClient(ctx, tenantInfo)
 }
 
 func buildSamsaraDriverCreateRequest(currentWorker *worker.Worker) drivers.CreateRequest {

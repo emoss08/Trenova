@@ -893,6 +893,289 @@ var BusinessUnitFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// DashControl — table "dash_controls", alias "dashc"
+// ---------------------------------------------------------------------------
+
+// DashControlTable holds the table name, alias, and primary key columns
+// for the "dash_controls" table. The alias "dashc" is used in all generated
+// SQL fragments (e.g. "dashc.id = ?").
+var DashControlTable = TableInfo{
+	Name:       "dash_controls",
+	Alias:      "dashc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// DashControlColumns provides type-safe column references for the "dash_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(DashControlColumns.ID.String())
+//	// SELECT dashc.id FROM dash_controls AS dashc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(DashControlColumns.ID.Eq(), id)           // WHERE dashc.id = ?
+//	q.Order(DashControlColumns.CreatedAt.OrderDesc())  // ORDER BY dashc.created_at DESC
+var DashControlColumns = struct {
+	ID                             Column // "id" → qualified: "dashc.id"
+	BusinessUnitID                 Column // "business_unit_id" → qualified: "dashc.business_unit_id"
+	OrganizationID                 Column // "organization_id" → qualified: "dashc.organization_id"
+	RequireLoadAcknowledgment      Column // "require_load_acknowledgment" → qualified: "dashc.require_load_acknowledgment"
+	AllowLoadRefusals              Column // "allow_load_refusals" → qualified: "dashc.allow_load_refusals"
+	AllowStopActions               Column // "allow_stop_actions" → qualified: "dashc.allow_stop_actions"
+	AllowLoadDocumentUpload        Column // "allow_load_document_upload" → qualified: "dashc.allow_load_document_upload"
+	AllowLoadComments              Column // "allow_load_comments" → qualified: "dashc.allow_load_comments"
+	ShowLoadPay                    Column // "show_load_pay" → qualified: "dashc.show_load_pay"
+	ShowPayEstimates               Column // "show_pay_estimates" → qualified: "dashc.show_pay_estimates"
+	AllowExpenseSubmission         Column // "allow_expense_submission" → qualified: "dashc.allow_expense_submission"
+	RequireExpenseReceipt          Column // "require_expense_receipt" → qualified: "dashc.require_expense_receipt"
+	AllowSettlementDisputes        Column // "allow_settlement_disputes" → qualified: "dashc.allow_settlement_disputes"
+	AllowProfileDocumentUpload     Column // "allow_profile_document_upload" → qualified: "dashc.allow_profile_document_upload"
+	AllowContactInfoEdit           Column // "allow_contact_info_edit" → qualified: "dashc.allow_contact_info_edit"
+	AllowPtoRequests               Column // "allow_pto_requests" → qualified: "dashc.allow_pto_requests"
+	SendCredentialReminders        Column // "send_credential_reminders" → qualified: "dashc.send_credential_reminders"
+	EnableDetentionAlerts          Column // "enable_detention_alerts" → qualified: "dashc.enable_detention_alerts"
+	DetentionAlertThresholdMinutes Column // "detention_alert_threshold_minutes" → qualified: "dashc.detention_alert_threshold_minutes"
+	Version                        Column // "version" → qualified: "dashc.version"
+	CreatedAt                      Column // "created_at" → qualified: "dashc.created_at"
+	UpdatedAt                      Column // "updated_at" → qualified: "dashc.updated_at"
+}{
+	ID:                             NewColumn("id", "dashc"),
+	BusinessUnitID:                 NewColumn("business_unit_id", "dashc"),
+	OrganizationID:                 NewColumn("organization_id", "dashc"),
+	RequireLoadAcknowledgment:      NewColumn("require_load_acknowledgment", "dashc"),
+	AllowLoadRefusals:              NewColumn("allow_load_refusals", "dashc"),
+	AllowStopActions:               NewColumn("allow_stop_actions", "dashc"),
+	AllowLoadDocumentUpload:        NewColumn("allow_load_document_upload", "dashc"),
+	AllowLoadComments:              NewColumn("allow_load_comments", "dashc"),
+	ShowLoadPay:                    NewColumn("show_load_pay", "dashc"),
+	ShowPayEstimates:               NewColumn("show_pay_estimates", "dashc"),
+	AllowExpenseSubmission:         NewColumn("allow_expense_submission", "dashc"),
+	RequireExpenseReceipt:          NewColumn("require_expense_receipt", "dashc"),
+	AllowSettlementDisputes:        NewColumn("allow_settlement_disputes", "dashc"),
+	AllowProfileDocumentUpload:     NewColumn("allow_profile_document_upload", "dashc"),
+	AllowContactInfoEdit:           NewColumn("allow_contact_info_edit", "dashc"),
+	AllowPtoRequests:               NewColumn("allow_pto_requests", "dashc"),
+	SendCredentialReminders:        NewColumn("send_credential_reminders", "dashc"),
+	EnableDetentionAlerts:          NewColumn("enable_detention_alerts", "dashc"),
+	DetentionAlertThresholdMinutes: NewColumn("detention_alert_threshold_minutes", "dashc"),
+	Version:                        NewColumn("version", "dashc"),
+	CreatedAt:                      NewColumn("created_at", "dashc"),
+	UpdatedAt:                      NewColumn("updated_at", "dashc"),
+}
+
+// DashControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by DashControl.GetStaticFieldMap().
+var DashControlFieldMap = map[string]string{
+	"id":                             "id",
+	"businessUnitId":                 "business_unit_id",
+	"organizationId":                 "organization_id",
+	"requireLoadAcknowledgment":      "require_load_acknowledgment",
+	"allowLoadRefusals":              "allow_load_refusals",
+	"allowStopActions":               "allow_stop_actions",
+	"allowLoadDocumentUpload":        "allow_load_document_upload",
+	"allowLoadComments":              "allow_load_comments",
+	"showLoadPay":                    "show_load_pay",
+	"showPayEstimates":               "show_pay_estimates",
+	"allowExpenseSubmission":         "allow_expense_submission",
+	"requireExpenseReceipt":          "require_expense_receipt",
+	"allowSettlementDisputes":        "allow_settlement_disputes",
+	"allowProfileDocumentUpload":     "allow_profile_document_upload",
+	"allowContactInfoEdit":           "allow_contact_info_edit",
+	"allowPtoRequests":               "allow_pto_requests",
+	"sendCredentialReminders":        "send_credential_reminders",
+	"enableDetentionAlerts":          "enable_detention_alerts",
+	"detentionAlertThresholdMinutes": "detention_alert_threshold_minutes",
+	"version":                        "version",
+	"createdAt":                      "created_at",
+	"updatedAt":                      "updated_at",
+}
+
+// DashControlInsertableColumns lists column names suitable for INSERT statements on the "dash_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var DashControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"require_load_acknowledgment",
+	"allow_load_refusals",
+	"allow_stop_actions",
+	"allow_load_document_upload",
+	"allow_load_comments",
+	"show_load_pay",
+	"show_pay_estimates",
+	"allow_expense_submission",
+	"require_expense_receipt",
+	"allow_settlement_disputes",
+	"allow_profile_document_upload",
+	"allow_contact_info_edit",
+	"allow_pto_requests",
+	"send_credential_reminders",
+	"enable_detention_alerts",
+	"detention_alert_threshold_minutes",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// DashControlRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(DashControlRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var DashControlRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// DashControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE dashc.organization_id = ? AND dashc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.DashControlScopeTenant(sq, ti).
+//		Where(buncolgen.DashControlColumns.ID.Eq(), id)
+func DashControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DashControlColumns.OrganizationID, DashControlColumns.BusinessUnitID, ti)
+}
+
+// DashControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.DashControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DashControlColumns.ID.In(), bun.List(ids))
+//	})
+func DashControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DashControlColumns.OrganizationID, DashControlColumns.BusinessUnitID, ti)
+}
+
+// DashControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.DashControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DashControlColumns.ID.Eq(), id)
+//	})
+func DashControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DashControlColumns.OrganizationID, DashControlColumns.BusinessUnitID, ti)
+}
+
+// DashControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.DashControlApplyTenant(tenantInfo))
+func DashControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DashControlColumns.OrganizationID, DashControlColumns.BusinessUnitID, ti)
+}
+
+// DashControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "dash_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	DashControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var DashControlFilter = struct {
+	ID                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RequireLoadAcknowledgment      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireLoadAcknowledgment" → DB: "require_load_acknowledgment"
+	AllowLoadRefusals              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowLoadRefusals" → DB: "allow_load_refusals"
+	AllowStopActions               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowStopActions" → DB: "allow_stop_actions"
+	AllowLoadDocumentUpload        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowLoadDocumentUpload" → DB: "allow_load_document_upload"
+	AllowLoadComments              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowLoadComments" → DB: "allow_load_comments"
+	ShowLoadPay                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "showLoadPay" → DB: "show_load_pay"
+	ShowPayEstimates               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "showPayEstimates" → DB: "show_pay_estimates"
+	AllowExpenseSubmission         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowExpenseSubmission" → DB: "allow_expense_submission"
+	RequireExpenseReceipt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireExpenseReceipt" → DB: "require_expense_receipt"
+	AllowSettlementDisputes        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowSettlementDisputes" → DB: "allow_settlement_disputes"
+	AllowProfileDocumentUpload     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowProfileDocumentUpload" → DB: "allow_profile_document_upload"
+	AllowContactInfoEdit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowContactInfoEdit" → DB: "allow_contact_info_edit"
+	AllowPtoRequests               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPtoRequests" → DB: "allow_pto_requests"
+	SendCredentialReminders        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendCredentialReminders" → DB: "send_credential_reminders"
+	EnableDetentionAlerts          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableDetentionAlerts" → DB: "enable_detention_alerts"
+	DetentionAlertThresholdMinutes func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionAlertThresholdMinutes" → DB: "detention_alert_threshold_minutes"
+	Version                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	RequireLoadAcknowledgment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requireLoadAcknowledgment", op, value)
+	},
+	AllowLoadRefusals: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowLoadRefusals", op, value)
+	},
+	AllowStopActions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowStopActions", op, value)
+	},
+	AllowLoadDocumentUpload: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowLoadDocumentUpload", op, value)
+	},
+	AllowLoadComments: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowLoadComments", op, value)
+	},
+	ShowLoadPay: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("showLoadPay", op, value)
+	},
+	ShowPayEstimates: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("showPayEstimates", op, value)
+	},
+	AllowExpenseSubmission: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowExpenseSubmission", op, value)
+	},
+	RequireExpenseReceipt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requireExpenseReceipt", op, value)
+	},
+	AllowSettlementDisputes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowSettlementDisputes", op, value)
+	},
+	AllowProfileDocumentUpload: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowProfileDocumentUpload", op, value)
+	},
+	AllowContactInfoEdit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowContactInfoEdit", op, value)
+	},
+	AllowPtoRequests: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowPtoRequests", op, value)
+	},
+	SendCredentialReminders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sendCredentialReminders", op, value)
+	},
+	EnableDetentionAlerts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableDetentionAlerts", op, value)
+	},
+	DetentionAlertThresholdMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("detentionAlertThresholdMinutes", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // DataRetention — table "data_retention", alias "dr"
 // ---------------------------------------------------------------------------
 

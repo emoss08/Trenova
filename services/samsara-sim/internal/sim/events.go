@@ -248,44 +248,193 @@ func (l *LiveSimulator) ActiveEventSummary(
 	return byType, violations, speeding
 }
 
-func (l *LiveSimulator) EventWebhookType(eventType string) string {
-	switch eventType {
-	case simEventSpeedMinor, simEventSpeedMajor:
-		return "VehicleSpeeding"
+type WebhookEmission struct {
+	EventType string
+	UniqueKey string
+	Data      map[string]any
+}
+
+type webhookEmissionContext struct {
+	Roster         map[string]driverRoster
+	Assets         map[string]Record
+	RouteByVehicle map[string]string
+}
+
+func (l *LiveSimulator) WebhookEmissionsForWindow(
+	at time.Time,
+	vehicleIDs []string,
+) []WebhookEmission {
+	events := l.EventsWindow(
+		at.Add(-18*time.Hour),
+		at.Add(18*time.Hour),
+		nil,
+		vehicleIDs,
+		0,
+	)
+	if len(events) == 0 {
+		return []WebhookEmission{}
+	}
+
+	ctx := webhookEmissionContext{
+		Roster:         l.loadDriverRoster(),
+		Assets:         l.loadAssetMetadata(),
+		RouteByVehicle: l.routeIDByVehicleMap(),
+	}
+	out := make([]WebhookEmission, 0, 2*len(events))
+	for idx := range events {
+		out = append(out, eventWebhookEmissions(&events[idx], at, &ctx)...)
+	}
+	return out
+}
+
+func (l *LiveSimulator) routeIDByVehicleMap() map[string]string {
+	routes, err := l.store.List(ResourceRoutes)
+	if err != nil {
+		return map[string]string{}
+	}
+	out := make(map[string]string, len(routes))
+	for _, route := range routes {
+		vehicleID := nestedString(route, "vehicle", "id")
+		if vehicleID == "" {
+			continue
+		}
+		if _, exists := out[vehicleID]; exists {
+			continue
+		}
+		out[vehicleID] = recordID(route)
+	}
+	return out
+}
+
+func eventWebhookEmissions(
+	event *SimEvent,
+	at time.Time,
+	ctx *webhookEmissionContext,
+) []WebhookEmission {
+	if event.StartsAt.After(at.UTC()) {
+		return nil
+	}
+
+	switch event.Type {
+	case simEventSpeedMinor:
+		return speedingWebhookEmissions(
+			event,
+			at,
+			"SpeedingEventStarted",
+			"SpeedingEventEnded",
+			ctx,
+		)
+	case simEventSpeedMajor:
+		return speedingWebhookEmissions(
+			event,
+			at,
+			"SevereSpeedingStarted",
+			"SevereSpeedingEnded",
+			ctx,
+		)
 	case simEventViolationBreak,
 		simEventViolationShift,
 		simEventViolationDrive,
 		simEventViolationCycle:
-		return "DriverHosViolationDetected"
+		return []WebhookEmission{hosViolationWebhookEmission(event, ctx)}
 	case simEventStopTrafficDelay:
-		return "RouteProgressDelayed"
-	case simEventStopFuelBreak:
-		return "VehicleStopped"
-	case simEventDutyOffDutyPause, simEventDutySleeperBlock:
-		return "DriverHosStatusChanged"
+		return []WebhookEmission{trafficDelayWebhookEmission(event, ctx)}
 	default:
-		return "RouteProgressDelayed"
+		return nil
 	}
 }
 
-func (l *LiveSimulator) EventWebhookPayload(event *SimEvent) map[string]any {
-	payload := map[string]any{
-		"id":       event.ID,
-		"type":     event.Type,
-		"startsAt": event.StartsAt.UTC().Format(time.RFC3339),
-		"endsAt":   event.EndsAt.UTC().Format(time.RFC3339),
-		"severity": event.Severity,
+func speedingWebhookEmissions(
+	event *SimEvent,
+	at time.Time,
+	startedType string,
+	endedType string,
+	ctx *webhookEmissionContext,
+) []WebhookEmission {
+	base := map[string]any{
+		"vehicle":   eventVehiclePayload(event, ctx),
+		"driver":    eventDriverPayload(event, ctx),
+		"startTime": event.StartsAt.UTC().Format(time.RFC3339),
 	}
-	if strings.TrimSpace(event.DriverID) != "" {
-		payload["driver"] = map[string]any{"id": event.DriverID}
+	out := make([]WebhookEmission, 0, 2)
+	out = append(out, WebhookEmission{
+		EventType: startedType,
+		UniqueKey: startedType + "|" + event.ID,
+		Data:      cloneMap(base),
+	})
+	if !event.EndsAt.After(at.UTC()) {
+		ended := cloneMap(base)
+		ended["endTime"] = event.EndsAt.UTC().Format(time.RFC3339)
+		out = append(out, WebhookEmission{
+			EventType: endedType,
+			UniqueKey: endedType + "|" + event.ID,
+			Data:      ended,
+		})
 	}
-	if strings.TrimSpace(event.VehicleID) != "" {
-		payload["vehicle"] = map[string]any{"id": event.VehicleID}
+	return out
+}
+
+func hosViolationWebhookEmission(
+	event *SimEvent,
+	ctx *webhookEmissionContext,
+) WebhookEmission {
+	violationType := hosViolationTypeForSimEvent(event.Type)
+	return WebhookEmission{
+		EventType: "AlertIncident",
+		UniqueKey: "AlertIncident|" + event.ID,
+		Data: map[string]any{
+			"alertConditions": []any{
+				map[string]any{
+					"description": "HOS Violation: " + violationType,
+				},
+			},
+			"driver":    eventDriverPayload(event, ctx),
+			"startTime": event.StartsAt.UTC().Format(time.RFC3339),
+		},
 	}
-	if len(event.Metadata) > 0 {
-		payload["metadata"] = cloneAny(event.Metadata)
+}
+
+func trafficDelayWebhookEmission(
+	event *SimEvent,
+	ctx *webhookEmissionContext,
+) WebhookEmission {
+	data := map[string]any{
+		"vehicle": eventVehiclePayload(event, ctx),
+		"driver":  eventDriverPayload(event, ctx),
+		"stop": map[string]any{
+			"etaTime": event.EndsAt.UTC().Format(time.RFC3339),
+		},
 	}
-	return payload
+	if routeID := strings.TrimSpace(ctx.RouteByVehicle[event.VehicleID]); routeID != "" {
+		data["route"] = map[string]any{"id": routeID}
+	}
+	return WebhookEmission{
+		EventType: "RouteStopEtaUpdated",
+		UniqueKey: "RouteStopEtaUpdated|" + event.ID,
+		Data:      data,
+	}
+}
+
+func eventDriverPayload(event *SimEvent, ctx *webhookEmissionContext) map[string]any {
+	driverID := strings.TrimSpace(event.DriverID)
+	if driverID == "" {
+		return map[string]any{}
+	}
+	return map[string]any{
+		"id":   driverID,
+		"name": firstNonEmpty(ctx.Roster[driverID].Name, driverID),
+	}
+}
+
+func eventVehiclePayload(event *SimEvent, ctx *webhookEmissionContext) map[string]any {
+	vehicleID := strings.TrimSpace(event.VehicleID)
+	if vehicleID == "" {
+		return map[string]any{}
+	}
+	return map[string]any{
+		"id":   vehicleID,
+		"name": vehicleIDToName(vehicleID, ctx.Assets),
+	}
 }
 
 func (l *LiveSimulator) pairEventsInWindow(

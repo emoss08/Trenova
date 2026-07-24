@@ -4,6 +4,7 @@ import type { MapStyleId, OverlayId, WeatherLayerId } from "@/types/shipment-map
 import { useCallback, useEffect, useMemo } from "react";
 
 const DEFAULT_OVERLAYS: Record<OverlayId, boolean> = {
+  vehicles: true,
   geofences: false,
   addresses: false,
   traffic: false,

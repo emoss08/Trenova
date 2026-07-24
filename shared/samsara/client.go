@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/shared/samsara/assets"
 	"github.com/emoss08/trenova/shared/samsara/compliance"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
+	"github.com/emoss08/trenova/shared/samsara/dvirs"
 	"github.com/emoss08/trenova/shared/samsara/forms"
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
 	"github.com/emoss08/trenova/shared/samsara/liveshares"
@@ -33,6 +34,7 @@ type Client struct {
 	Assets     assets.Service
 	Compliance compliance.Service
 	Drivers    drivers.Service
+	Dvirs      dvirs.Service
 	Forms      forms.Service
 	LiveShares liveshares.Service
 	Messages   messages.Service
@@ -69,6 +71,7 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 		Assets:     assets.NewService(transport),
 		Compliance: compliance.NewService(transport),
 		Drivers:    drivers.NewService(transport),
+		Dvirs:      dvirs.NewService(transport),
 		Forms:      forms.NewService(transport),
 		LiveShares: liveshares.NewService(transport),
 		Messages:   messages.NewService(transport),

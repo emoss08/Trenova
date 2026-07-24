@@ -63,6 +63,7 @@ var TrailerColumns = struct {
 	Year                    Column // "year" → qualified: "tr.year"
 	LicensePlateNumber      Column // "license_plate_number" → qualified: "tr.license_plate_number"
 	Vin                     Column // "vin" → qualified: "tr.vin"
+	ExternalID              Column // "external_id" → qualified: "tr.external_id"
 	RegistrationNumber      Column // "registration_number" → qualified: "tr.registration_number"
 	MaxLoadWeight           Column // "max_load_weight" → qualified: "tr.max_load_weight"
 	OwnershipType           Column // "ownership_type" → qualified: "tr.ownership_type"
@@ -94,6 +95,7 @@ var TrailerColumns = struct {
 	Year:                    NewColumn("year", "tr"),
 	LicensePlateNumber:      NewColumn("license_plate_number", "tr"),
 	Vin:                     NewColumn("vin", "tr"),
+	ExternalID:              NewColumn("external_id", "tr"),
 	RegistrationNumber:      NewColumn("registration_number", "tr"),
 	MaxLoadWeight:           NewColumn("max_load_weight", "tr"),
 	OwnershipType:           NewColumn("ownership_type", "tr"),
@@ -131,6 +133,7 @@ var TrailerFieldMap = map[string]string{
 	"year":                    "year",
 	"licensePlateNumber":      "license_plate_number",
 	"vin":                     "vin",
+	"externalId":              "external_id",
 	"registrationNumber":      "registration_number",
 	"maxLoadWeight":           "max_load_weight",
 	"ownershipType":           "ownership_type",
@@ -164,6 +167,7 @@ var TrailerInsertableColumns = []string{
 	"year",
 	"license_plate_number",
 	"vin",
+	"external_id",
 	"registration_number",
 	"max_load_weight",
 	"ownership_type",
@@ -263,6 +267,7 @@ var TrailerFilter = struct {
 	Year                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "year" → DB: "year"
 	LicensePlateNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "licensePlateNumber" → DB: "license_plate_number"
 	Vin                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vin" → DB: "vin"
+	ExternalID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
 	RegistrationNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationNumber" → DB: "registration_number"
 	MaxLoadWeight           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxLoadWeight" → DB: "max_load_weight"
 	OwnershipType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownershipType" → DB: "ownership_type"
@@ -317,6 +322,9 @@ var TrailerFilter = struct {
 	},
 	Vin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("vin", op, value)
+	},
+	ExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalId", op, value)
 	},
 	RegistrationNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("registrationNumber", op, value)

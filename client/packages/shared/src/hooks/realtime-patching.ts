@@ -24,6 +24,11 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   driver_expense: ["driver-expense-list", "driver-expense-detail", "pending-driver-expense-count"],
   worker_pto: ["worker-pto-list", "worker"],
   dash_control: ["dash-control"],
+  vehiclePosition: ["telematics"],
+  workerHosState: ["telematics"],
+  workerHosViolation: ["telematics"],
+  vehicleInspection: ["telematics"],
+  telematicsEvent: ["telematics"],
 };
 
 export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {

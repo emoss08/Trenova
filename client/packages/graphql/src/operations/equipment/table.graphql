@@ -67,6 +67,7 @@ fragment TractorTableRowFields on Tractor {
   registrationNumber
   registrationExpiry
   vin
+  externalId
   lastKnownLocationId
   lastKnownLocationName
   version
@@ -108,6 +109,7 @@ fragment TrailerTableRowFields on Trailer {
   year
   licensePlateNumber
   vin
+  externalId
   registrationNumber
   maxLoadWeight
   lastInspectionDate

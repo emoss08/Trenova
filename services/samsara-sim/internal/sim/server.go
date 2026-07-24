@@ -62,6 +62,42 @@ type Server struct {
 	webhookInboxMu  sync.Mutex
 	webhookInbox    []Record
 	webhookInboxSeq atomic.Uint64
+	geofenceWindow  lazyEmissionWindow
+	dvirWindow      lazyEmissionWindow
+	formWindow      lazyEmissionWindow
+	routeStopWindow lazyEmissionWindow
+	geofenceEntries atomic.Int64
+	geofenceExits   atomic.Int64
+}
+
+type lazyEmissionWindow struct {
+	mu     sync.Mutex
+	lastAt time.Time
+}
+
+func (w *lazyEmissionWindow) nextStart(
+	at time.Time,
+	fallbackLookback time.Duration,
+	maxLookback time.Duration,
+) time.Time {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	windowStart := w.lastAt
+	if windowStart.IsZero() ||
+		windowStart.After(at) ||
+		at.Sub(windowStart) > maxLookback {
+		windowStart = at.Add(-fallbackLookback)
+	}
+	w.lastAt = at
+	return windowStart
+}
+
+func (w *lazyEmissionWindow) reset() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	w.lastAt = time.Time{}
 }
 
 func NewServer(
@@ -146,6 +182,7 @@ func (s *Server) registerRoutes() {
 	s.registerAssetRoutes()
 	s.registerDriverRoutes()
 	s.registerRouteRoutes()
+	s.registerDvirRoutes()
 	s.registerFormRoutes()
 	s.registerMessageRoutes()
 	s.registerComplianceRoutes()
@@ -459,11 +496,11 @@ func (s *Server) dispatchEventOnce(
 	uniqueKey string,
 	eventType string,
 	data any,
-) {
+) bool {
 	cleanKey := strings.TrimSpace(uniqueKey)
 	if cleanKey == "" {
 		s.dispatchEvent(request, eventType, data)
-		return
+		return true
 	}
 
 	now := s.simNow()
@@ -471,7 +508,7 @@ func (s *Server) dispatchEventOnce(
 	s.eventMu.Lock()
 	if sentAt, exists := s.eventSentAt[cleanKey]; exists && now.Sub(sentAt) <= ttl {
 		s.eventMu.Unlock()
-		return
+		return false
 	}
 	s.eventSentAt[cleanKey] = now
 	for key, value := range s.eventSentAt {
@@ -482,6 +519,7 @@ func (s *Server) dispatchEventOnce(
 	s.eventMu.Unlock()
 
 	s.dispatchEvent(request, eventType, data)
+	return true
 }
 
 func (s *Server) appendWebhookInbox(record Record) {
@@ -573,6 +611,12 @@ func apiErrorCode(err error) string {
 		return "INVALID_SORT_BY"
 	case errors.Is(err, ErrInvalidBody):
 		return "INVALID_BODY"
+	case errors.Is(err, ErrStatTypesRequired):
+		return "TYPES_REQUIRED"
+	case errors.Is(err, ErrStatTypeInvalid):
+		return "INVALID_TYPES"
+	case errors.Is(err, ErrTimeRangeRequired):
+		return "TIME_RANGE_REQUIRED"
 	default:
 		return "ERROR"
 	}
@@ -985,6 +1029,15 @@ func recordCursor(record Record) string {
 			return driverID + "@" + logStart
 		}
 		return logStart
+	}
+
+	startTime := stringValue(record, "startTime")
+	if startTime != "" {
+		driverID := nestedString(record, "driver", "id")
+		if driverID != "" {
+			return driverID + "@" + startTime
+		}
+		return startTime
 	}
 
 	return ""

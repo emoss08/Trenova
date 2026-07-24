@@ -111,11 +111,7 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
   );
 }
 
-function RegistrationInformationSection({
-  control,
-}: {
-  control: Control<Tractor>;
-}) {
+function RegistrationInformationSection({ control }: { control: Control<Tractor> }) {
   return (
     <FormSection title="Registration Information" className="border-t py-2">
       <FormGroup cols={2}>
@@ -172,6 +168,25 @@ function RegistrationInformationSection({
   );
 }
 
+function TelematicsSection({ control }: { control: Control<Tractor> }) {
+  return (
+    <FormSection title="Telematics" className="border-t py-2">
+      <FormGroup cols={1}>
+        <FormControl cols="full">
+          <InputField
+            control={control}
+            name="externalId"
+            label="Samsara Vehicle ID"
+            placeholder="Samsara Vehicle ID"
+            description="Links this tractor to its Samsara vehicle for live telematics. Leave blank to auto-match by VIN."
+            maxLength={100}
+          />
+        </FormControl>
+      </FormGroup>
+    </FormSection>
+  );
+}
+
 function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
   return (
     <FormSection title="Worker Assignment" className="border-t py-2">
@@ -202,12 +217,18 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
 }
 
 export function TractorForm() {
-  const { control } = useFormContext<Tractor>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<Tractor>();
+
+  console.info("tractor form errors", errors);
 
   return (
     <>
       <GeneralInformationSection control={control} />
       <RegistrationInformationSection control={control} />
+      <TelematicsSection control={control} />
       <WorkerAssignmentSection control={control} />
       <CustomFieldsSection resourceType="tractor" control={control} />
     </>

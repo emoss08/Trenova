@@ -19,6 +19,7 @@ import { TrafficLayer } from "./traffic-layer";
 import { HighlightAutoPan } from "./use-highlight-pan";
 import { useMapShipments } from "./use-map-shipments";
 import { useMapUIState } from "./use-map-ui-state";
+import { VehiclePositionOverlay } from "./vehicle-position-overlay";
 import { WeatherAlertLayer } from "./weather-alert-layer";
 import { WeatherRadarLayer } from "./weather-radar-layer";
 
@@ -197,6 +198,7 @@ export default function ShipmentMapPanel({
             )}
             {overlays.alerts && <WeatherAlertLayer />}
             <ShipmentRouteOverlay enabled={backgroundEnabled} />
+            <VehiclePositionOverlay enabled={backgroundEnabled && overlays.vehicles} />
             <HighlightAutoPan mapInstanceId={LIVE_MAP_INSTANCE_ID} enabled={backgroundEnabled} />
             <MapZoomControls />
           </Map>

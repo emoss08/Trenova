@@ -136,6 +136,12 @@ export function formatPercent(value: number, digits: number = 1): string {
   return `${value.toFixed(digits)}%`;
 }
 
+const METERS_PER_MILE = 1609.344;
+
+export function metersToMiles(meters: number): number {
+  return meters / METERS_PER_MILE;
+}
+
 export function formatPerMile(value: number, digits: number = 2, currency: string = "USD"): string {
   const formatted = new Intl.NumberFormat("en-US", {
     style: "currency",

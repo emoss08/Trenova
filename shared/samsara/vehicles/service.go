@@ -11,6 +11,8 @@ import (
 type Service interface {
 	Stats(ctx context.Context, params StatsParams) (StatsResponse, error)
 	StatsAll(ctx context.Context, params StatsParams) ([]StatsData, error)
+	StatsFeed(ctx context.Context, params StatsFeedParams) (StatsFeedResponse, error)
+	StatsHistory(ctx context.Context, params StatsHistoryParams) (StatsHistoryResponse, error)
 }
 
 type service struct {
@@ -61,4 +63,46 @@ func (s *service) StatsAll(ctx context.Context, params StatsParams) ([]StatsData
 		params.After = page.Pagination.EndCursor
 	}
 	return items, nil
+}
+
+//nolint:gocritic // params is intentionally passed by value.
+func (s *service) StatsFeed(
+	ctx context.Context,
+	params StatsFeedParams,
+) (StatsFeedResponse, error) {
+	if err := params.Validate(); err != nil {
+		return StatsFeedResponse{}, err
+	}
+
+	out := StatsFeedResponse{}
+	if err := s.client.Do(ctx, httpx.Request{
+		Method: http.MethodGet,
+		Path:   "/fleet/vehicles/stats/feed",
+		Query:  params.Query(),
+		Out:    &out,
+	}); err != nil {
+		return StatsFeedResponse{}, err
+	}
+	return out, nil
+}
+
+//nolint:gocritic // params is intentionally passed by value.
+func (s *service) StatsHistory(
+	ctx context.Context,
+	params StatsHistoryParams,
+) (StatsHistoryResponse, error) {
+	if err := params.Validate(); err != nil {
+		return StatsHistoryResponse{}, err
+	}
+
+	out := StatsHistoryResponse{}
+	if err := s.client.Do(ctx, httpx.Request{
+		Method: http.MethodGet,
+		Path:   "/fleet/vehicles/stats/history",
+		Query:  params.Query(),
+		Out:    &out,
+	}); err != nil {
+		return StatsHistoryResponse{}, err
+	}
+	return out, nil
 }

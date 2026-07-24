@@ -67,6 +67,7 @@ var TractorColumns = struct {
 	RegistrationNumber      Column // "registration_number" → qualified: "trac.registration_number"
 	RegistrationExpiry      Column // "registration_expiry" → qualified: "trac.registration_expiry"
 	Vin                     Column // "vin" → qualified: "trac.vin"
+	ExternalID              Column // "external_id" → qualified: "trac.external_id"
 	OwnershipType           Column // "ownership_type" → qualified: "trac.ownership_type"
 	OwnerWorkerID           Column // "owner_worker_id" → qualified: "trac.owner_worker_id"
 	LessorName              Column // "lessor_name" → qualified: "trac.lessor_name"
@@ -96,6 +97,7 @@ var TractorColumns = struct {
 	RegistrationNumber:      NewColumn("registration_number", "trac"),
 	RegistrationExpiry:      NewColumn("registration_expiry", "trac"),
 	Vin:                     NewColumn("vin", "trac"),
+	ExternalID:              NewColumn("external_id", "trac"),
 	OwnershipType:           NewColumn("ownership_type", "trac"),
 	OwnerWorkerID:           NewColumn("owner_worker_id", "trac"),
 	LessorName:              NewColumn("lessor_name", "trac"),
@@ -131,6 +133,7 @@ var TractorFieldMap = map[string]string{
 	"registrationNumber":      "registration_number",
 	"registrationExpiry":      "registration_expiry",
 	"vin":                     "vin",
+	"externalId":              "external_id",
 	"ownershipType":           "ownership_type",
 	"ownerWorkerId":           "owner_worker_id",
 	"lessorName":              "lessor_name",
@@ -164,6 +167,7 @@ var TractorInsertableColumns = []string{
 	"registration_number",
 	"registration_expiry",
 	"vin",
+	"external_id",
 	"ownership_type",
 	"owner_worker_id",
 	"lessor_name",
@@ -269,6 +273,7 @@ var TractorFilter = struct {
 	RegistrationNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationNumber" → DB: "registration_number"
 	RegistrationExpiry      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "registrationExpiry" → DB: "registration_expiry"
 	Vin                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "vin" → DB: "vin"
+	ExternalID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
 	OwnershipType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownershipType" → DB: "ownership_type"
 	OwnerWorkerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerWorkerId" → DB: "owner_worker_id"
 	LessorName              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lessorName" → DB: "lessor_name"
@@ -331,6 +336,9 @@ var TractorFilter = struct {
 	},
 	Vin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("vin", op, value)
+	},
+	ExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalId", op, value)
 	},
 	OwnershipType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("ownershipType", op, value)

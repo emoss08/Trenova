@@ -189,6 +189,206 @@ func (_c *MockAssignmentRepository_FindInProgressByTractorID_Call) RunAndReturn(
 	return _c
 }
 
+// FindActiveByTractorID provides a mock function for the type MockAssignmentRepository
+func (_mock *MockAssignmentRepository) FindActiveByTractorID(ctx context.Context, tenantInfo pagination.TenantInfo, tractorID pulid.ID) (*shipment.Assignment, error) {
+	ret := _mock.Called(ctx, tenantInfo, tractorID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindActiveByTractorID")
+	}
+
+	var r0 *shipment.Assignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) (*shipment.Assignment, error)); ok {
+		return returnFunc(ctx, tenantInfo, tractorID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) *shipment.Assignment); ok {
+		r0 = returnFunc(ctx, tenantInfo, tractorID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Assignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, tractorID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+type MockAssignmentRepository_FindActiveByTractorID_Call struct {
+	*mock.Call
+}
+
+func (_e *MockAssignmentRepository_Expecter) FindActiveByTractorID(ctx any, tenantInfo any, tractorID any) *MockAssignmentRepository_FindActiveByTractorID_Call {
+	return &MockAssignmentRepository_FindActiveByTractorID_Call{Call: _e.mock.On("FindActiveByTractorID", ctx, tenantInfo, tractorID)}
+}
+
+func (_c *MockAssignmentRepository_FindActiveByTractorID_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, tractorID pulid.ID)) *MockAssignmentRepository_FindActiveByTractorID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(arg0, arg1, arg2)
+	})
+	return _c
+}
+
+func (_c *MockAssignmentRepository_FindActiveByTractorID_Call) Return(assignment *shipment.Assignment, err error) *MockAssignmentRepository_FindActiveByTractorID_Call {
+	_c.Call.Return(assignment, err)
+	return _c
+}
+
+func (_c *MockAssignmentRepository_FindActiveByTractorID_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, tractorID pulid.ID) (*shipment.Assignment, error)) *MockAssignmentRepository_FindActiveByTractorID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindActiveByPrimaryWorkerID provides a mock function for the type MockAssignmentRepository
+func (_mock *MockAssignmentRepository) FindActiveByWorkerID(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID) (*shipment.Assignment, error) {
+	ret := _mock.Called(ctx, tenantInfo, workerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindActiveByPrimaryWorkerID")
+	}
+
+	var r0 *shipment.Assignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) (*shipment.Assignment, error)); ok {
+		return returnFunc(ctx, tenantInfo, workerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) *shipment.Assignment); ok {
+		r0 = returnFunc(ctx, tenantInfo, workerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Assignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, workerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+type MockAssignmentRepository_FindActiveByWorkerID_Call struct {
+	*mock.Call
+}
+
+func (_e *MockAssignmentRepository_Expecter) FindActiveByWorkerID(ctx any, tenantInfo any, workerID any) *MockAssignmentRepository_FindActiveByWorkerID_Call {
+	return &MockAssignmentRepository_FindActiveByWorkerID_Call{Call: _e.mock.On("FindActiveByWorkerID", ctx, tenantInfo, workerID)}
+}
+
+func (_c *MockAssignmentRepository_FindActiveByWorkerID_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID)) *MockAssignmentRepository_FindActiveByWorkerID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(arg0, arg1, arg2)
+	})
+	return _c
+}
+
+func (_c *MockAssignmentRepository_FindActiveByWorkerID_Call) Return(assignment *shipment.Assignment, err error) *MockAssignmentRepository_FindActiveByWorkerID_Call {
+	_c.Call.Return(assignment, err)
+	return _c
+}
+
+func (_c *MockAssignmentRepository_FindActiveByWorkerID_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID) (*shipment.Assignment, error)) *MockAssignmentRepository_FindActiveByWorkerID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindInProgressByPrimaryWorkerID provides a mock function for the type MockAssignmentRepository
+func (_mock *MockAssignmentRepository) FindInProgressByPrimaryWorkerID(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, excludeMoveID pulid.ID) (*shipment.Assignment, error) {
+	ret := _mock.Called(ctx, tenantInfo, workerID, excludeMoveID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindInProgressByPrimaryWorkerID")
+	}
+
+	var r0 *shipment.Assignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) (*shipment.Assignment, error)); ok {
+		return returnFunc(ctx, tenantInfo, workerID, excludeMoveID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) *shipment.Assignment); ok {
+		r0 = returnFunc(ctx, tenantInfo, workerID, excludeMoveID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Assignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, workerID, excludeMoveID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindInProgressByPrimaryWorkerID'
+type MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call struct {
+	*mock.Call
+}
+
+func (_e *MockAssignmentRepository_Expecter) FindInProgressByPrimaryWorkerID(ctx any, tenantInfo any, workerID any, excludeMoveID any) *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call {
+	return &MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call{Call: _e.mock.On("FindInProgressByPrimaryWorkerID", ctx, tenantInfo, workerID, excludeMoveID)}
+}
+
+func (_c *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, excludeMoveID pulid.ID)) *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		var arg3 pulid.ID
+		if args[3] != nil {
+			arg3 = args[3].(pulid.ID)
+		}
+		run(arg0, arg1, arg2, arg3)
+	})
+	return _c
+}
+
+func (_c *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call) Return(assignment *shipment.Assignment, err error) *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call {
+	_c.Call.Return(assignment, err)
+	return _c
+}
+
+func (_c *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, workerID pulid.ID, excludeMoveID pulid.ID) (*shipment.Assignment, error)) *MockAssignmentRepository_FindInProgressByPrimaryWorkerID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindInProgressByTrailerID provides a mock function for the type MockAssignmentRepository
 func (_mock *MockAssignmentRepository) FindInProgressByTrailerID(ctx context.Context, tenantInfo pagination.TenantInfo, trailerID pulid.ID, excludeMoveID pulid.ID) (*shipment.Assignment, error) {
 	ret := _mock.Called(ctx, tenantInfo, trailerID, excludeMoveID)

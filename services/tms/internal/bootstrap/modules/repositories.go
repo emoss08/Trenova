@@ -126,6 +126,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantprovisioningrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tractorrepository"
@@ -267,6 +268,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documenttyperepository.New,
 	holdreasonrepository.New,
 	integrationrepository.New,
+	telematicsrepository.New,
 	emailrepository.New,
 	invoiceadjustmentcontrolrepository.New,
 	invoiceadjustmentrepository.New,

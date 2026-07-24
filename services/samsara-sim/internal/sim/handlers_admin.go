@@ -54,6 +54,8 @@ func (s *Server) handleStateSummary(writer http.ResponseWriter, request *http.Re
 		summary.ViolationsActive = violations
 		summary.SpeedingActive = speeding
 	}
+	summary.GeofenceEntriesDispatched = s.geofenceEntries.Load()
+	summary.GeofenceExitsDispatched = s.geofenceExits.Load()
 	payload := map[string]any{"data": summary}
 	s.respondJSON(writer, request, requestSignature(request)+"|state-summary", payload)
 }
@@ -127,6 +129,12 @@ func (s *Server) handleStateReset(writer http.ResponseWriter, request *http.Requ
 	s.eventMu.Lock()
 	s.eventSentAt = map[string]time.Time{}
 	s.eventMu.Unlock()
+	s.geofenceWindow.reset()
+	s.dvirWindow.reset()
+	s.formWindow.reset()
+	s.routeStopWindow.reset()
+	s.geofenceEntries.Store(0)
+	s.geofenceExits.Store(0)
 	s.clearWebhookInbox()
 	if s.scripts != nil {
 		if err := s.scripts.Reload(); err != nil {
@@ -310,8 +318,10 @@ func (s *Server) handleWebhookInboxCapture(writer http.ResponseWriter, request *
 
 	record := Record{
 		"receivedAtTime": s.simNow().UTC().Format(time.RFC3339),
+		"eventId":        strings.TrimSpace(stringValue(body, "eventId")),
 		"eventType":      strings.TrimSpace(stringValue(body, "eventType")),
 		"eventTime":      strings.TrimSpace(stringValue(body, "eventTime")),
+		"webhookId":      strings.TrimSpace(stringValue(body, "webhookId")),
 		"payload":        cloneAny(body),
 		"delivery": map[string]any{
 			"id":       strings.TrimSpace(request.Header.Get("X-Samsara-Sim-Delivery-Id")),

@@ -29,6 +29,18 @@ aliases:
 virtuals:
   ApiKey:
     - permissionScope
+  VehiclePosition:
+    - tractorCode
+    - primaryWorkerId
+    - primaryWorkerName
+  VehicleInspection:
+    - workerName
+  WorkerHosState:
+    - workerName
+    - driveLimitMs
+    - shiftLimitMs
+    - cycleLimitMs
+    - breakLimitMs
   DistanceOverrideStop:
     - stopOrder
   EdiCommunicationProfile:

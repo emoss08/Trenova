@@ -51,6 +51,7 @@ type Tractor struct {
 	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
 	RegistrationExpiry      *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
 	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
+	ExternalID              string                      `json:"externalId"              bun:"external_id,type:TEXT,nullzero"`
 	OwnershipType           domaintypes.OwnershipType   `json:"ownershipType"           bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`
 	OwnerWorkerID           *pulid.ID                   `json:"ownerWorkerId"           bun:"owner_worker_id,type:VARCHAR(100),nullzero"`
 	LessorName              string                      `json:"lessorName"              bun:"lessor_name,type:VARCHAR(150),nullzero"`

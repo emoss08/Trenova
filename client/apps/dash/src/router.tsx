@@ -93,6 +93,13 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/dash/hos",
+            async lazy() {
+              const { DashHosPage } = await import("./routes/hos");
+              return { Component: DashHosPage };
+            },
+          },
+          {
             path: "/dash/notifications",
             async lazy() {
               const { DashNotificationsPage } = await import("./routes/notifications");

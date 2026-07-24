@@ -1,7 +1,8 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { copyFile } from "node:fs/promises";
 import path from "node:path";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import { compression } from "vite-plugin-compression2";
 
 const proxyConfig = {
@@ -14,7 +15,24 @@ const proxyConfig = {
   },
 };
 
+// The app is served under /dash, so the bundle is emitted to dist/dash and a
+// copy of index.html is placed at the dist root so Cloudflare's
+// single-page-application not-found handling can resolve deep links.
+function rootIndexFallback(): Plugin {
+  return {
+    name: "dash-root-index-fallback",
+    apply: "build",
+    async closeBundle() {
+      await copyFile(
+        path.resolve(__dirname, "dist/dash/index.html"),
+        path.resolve(__dirname, "dist/index.html"),
+      );
+    },
+  };
+}
+
 export default defineConfig({
+  base: "/dash/",
   envDir: path.resolve(__dirname, "../.."),
   plugins: [
     react(),
@@ -23,6 +41,7 @@ export default defineConfig({
       algorithms: ["gzip", "brotliCompress"],
       threshold: 10240,
     }),
+    rootIndexFallback(),
   ],
   resolve: {
     alias: {
@@ -46,6 +65,7 @@ export default defineConfig({
   },
   build: {
     minify: "oxc",
+    outDir: "dist/dash",
     sourcemap: process.env.NODE_ENV === "development",
   },
 });

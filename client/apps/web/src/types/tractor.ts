@@ -37,14 +37,15 @@ export const tractorSchema = z.object({
   vin: optionalStringSchema,
   registrationNumber: optionalStringSchema,
   registrationExpiry: nullableIntegerSchema,
+  externalId: optionalStringSchema.default(""),
 
-  equipmentType: equipmentTypeSchema.nullish(),
-  equipmentManufacturer: equipmentManufacturerSchema.nullish(),
-  fleetCode: fleetCodeSchema.nullish(),
-  state: usStateSchema.nullish(),
-  primaryWorker: workerSchema.nullish(),
-  secondaryWorker: workerSchema.nullish(),
-  customFields: z.record(z.string(), z.any()).optional(),
+  equipmentType: equipmentTypeSchema.partial().nullish(),
+  equipmentManufacturer: equipmentManufacturerSchema.partial().nullish(),
+  fleetCode: fleetCodeSchema.partial().nullish(),
+  state: usStateSchema.partial().nullish(),
+  primaryWorker: workerSchema.partial().nullish(),
+  secondaryWorker: workerSchema.partial().nullish(),
+  customFields: z.record(z.string(), z.any()).nullish(),
 });
 
 export type Tractor = z.infer<typeof tractorSchema>;
@@ -54,12 +55,8 @@ export const bulkUpdateTractorStatusRequestSchema = z.object({
   status: equipmentStatusSchema,
 });
 
-export type BulkUpdateTractorStatusRequest = z.infer<
-  typeof bulkUpdateTractorStatusRequestSchema
->;
+export type BulkUpdateTractorStatusRequest = z.infer<typeof bulkUpdateTractorStatusRequestSchema>;
 
 export const bulkUpdateTractorStatusResponseSchema = z.array(tractorSchema);
 
-export type BulkUpdateTractorStatusResponse = z.infer<
-  typeof bulkUpdateTractorStatusResponseSchema
->;
+export type BulkUpdateTractorStatusResponse = z.infer<typeof bulkUpdateTractorStatusResponseSchema>;

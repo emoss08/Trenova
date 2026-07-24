@@ -49,6 +49,7 @@ import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 import { fuelSurcharge } from "./fuel-surcharge";
 import { costControl } from "./cost-control";
+import { telematics } from "./telematics";
 
 const financialQueries = mergeQueryKeys(
   accountingControl,
@@ -91,6 +92,7 @@ const operationsQueries = mergeQueryKeys(
   shipmentControl,
   weatherAlert,
   weatherRadar,
+  telematics,
 );
 
 const workspaceQueries = mergeQueryKeys(

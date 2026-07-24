@@ -7,6 +7,7 @@ package resolver
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
@@ -667,6 +668,93 @@ func (r *queryResolver) MyYtdPay(ctx context.Context, year int) (*driversettleme
 		return nil, err
 	}
 	return r.driverPortalService.MyYtdPay(ctx, tenantInfo(authCtx), year)
+}
+
+// MyHosState is the resolver for the myHosState field.
+func (r *queryResolver) MyHosState(ctx context.Context) (*gqlmodel.WorkerHosState, error) {
+	authCtx, err := r.requireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	wrk, err := r.driverPortalService.ResolveWorker(ctx, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	state, err := r.telematicsService.GetWorkerHOSState(ctx, tenantInfo(authCtx), wrk.ID)
+	if err != nil {
+		return nil, err
+	}
+	if state == nil {
+		return nil, nil
+	}
+	return mapWorkerHOSState(state), nil
+}
+
+// MyHosDailyLogs is the resolver for the myHosDailyLogs field.
+func (r *queryResolver) MyHosDailyLogs(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error) {
+	authCtx, err := r.requireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, date := range []string{startDate, endDate} {
+		if _, parseErr := time.Parse("2006-01-02", date); parseErr != nil {
+			return nil, errortypes.NewValidationError(
+				"startDate",
+				errortypes.ErrInvalid,
+				"Dates must use the YYYY-MM-DD format",
+			)
+		}
+	}
+	wrk, err := r.driverPortalService.ResolveWorker(ctx, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	days, err := r.telematicsService.GetWorkerHOSDailyLogs(
+		ctx,
+		tenantInfo(authCtx),
+		wrk.ID,
+		startDate,
+		endDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*gqlmodel.WorkerHosDailyLog, 0, len(days))
+	for _, day := range days {
+		out = append(out, mapWorkerHOSDailyLog(day))
+	}
+	return out, nil
+}
+
+// MyHosViolations is the resolver for the myHosViolations field.
+func (r *queryResolver) MyHosViolations(ctx context.Context, since *int) ([]*gqlmodel.WorkerHosViolation, error) {
+	authCtx, err := r.requireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+	wrk, err := r.driverPortalService.ResolveWorker(ctx, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	sinceAt := int64(0)
+	if since != nil && *since > 0 {
+		sinceAt = int64(*since)
+	}
+	violations, err := r.telematicsService.ListWorkerHOSViolations(
+		ctx,
+		tenantInfo(authCtx),
+		wrk.ID,
+		sinceAt,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*gqlmodel.WorkerHosViolation, 0, len(violations))
+	for _, violation := range violations {
+		out = append(out, mapWorkerHOSViolation(violation))
+	}
+	return out, nil
 }
 
 // DriverExpenses is the resolver for the driverExpenses field.

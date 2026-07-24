@@ -8,6 +8,7 @@ export type RainViewerData = {
 };
 
 export const OVERLAY_IDS = [
+  "vehicles",
   "geofences",
   "addresses",
   "traffic",

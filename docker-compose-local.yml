@@ -122,6 +122,22 @@ services:
             timeout: 10s
             retries: 5
 
+    samsara-sim:
+        build:
+            context: ./services/samsara-sim
+        container_name: samsara-sim
+        profiles:
+            - samsara-sim
+        ports:
+            - "8091:8091"
+        restart: unless-stopped
+        healthcheck:
+            test:
+                ["CMD", "wget", "-q", "--spider", "http://localhost:8091/_sim/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
 volumes:
     pg_data: {}
     redis_data: {}

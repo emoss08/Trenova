@@ -6,7 +6,14 @@
       "formattedAddress": "100 Fleet Ave, Austin, TX 78701",
       "latitude": 30.2672,
       "longitude": -97.7431,
-      "notes": "Primary dispatch yard"
+      "notes": "Primary dispatch yard",
+      "geofence": {
+        "circle": {
+          "latitude": 30.2672,
+          "longitude": -97.7431,
+          "radiusMeters": 500
+        }
+      }
     },
     {
       "id": "addr-2",
@@ -14,14 +21,28 @@
       "formattedAddress": "200 Warehouse Rd, Dallas, TX 75201",
       "latitude": 32.7767,
       "longitude": -96.797,
-      "notes": "North Texas cross-dock"
+      "notes": "North Texas cross-dock",
+      "geofence": {
+        "circle": {
+          "latitude": 32.7767,
+          "longitude": -96.797,
+          "radiusMeters": 450
+        }
+      }
     },
     {
       "id": "addr-3",
       "name": "San Antonio Customer Drop",
       "formattedAddress": "455 Commerce St, San Antonio, TX 78205",
       "latitude": 29.4241,
-      "longitude": -98.4936
+      "longitude": -98.4936,
+      "geofence": {
+        "circle": {
+          "latitude": 29.4241,
+          "longitude": -98.4936,
+          "radiusMeters": 400
+        }
+      }
     },
     {
       "id": "addr-4",
@@ -29,7 +50,59 @@
       "formattedAddress": "860 Bay Area Blvd, Houston, TX 77058",
       "latitude": 29.5502,
       "longitude": -95.097,
-      "notes": "Regional depot and fueling"
+      "notes": "Regional depot and fueling",
+      "geofence": {
+        "circle": {
+          "latitude": 29.5502,
+          "longitude": -95.097,
+          "radiusMeters": 600
+        }
+      }
+    },
+    {
+      "id": "addr-5",
+      "name": "Georgetown Corridor Fuel Stop",
+      "formattedAddress": "2400 Interstate 35 Frontage Rd, Georgetown, TX 78626",
+      "latitude": 30.655758,
+      "longitude": -97.701621,
+      "notes": "On-route stop along the Austin roundtrip corridor",
+      "geofence": {
+        "circle": {
+          "latitude": 30.655758,
+          "longitude": -97.701621,
+          "radiusMeters": 800
+        }
+      }
+    },
+    {
+      "id": "addr-6",
+      "name": "Fort Worth Relay Point",
+      "formattedAddress": "5600 White Settlement Rd, Fort Worth, TX 76114",
+      "latitude": 32.827618,
+      "longitude": -97.205875,
+      "notes": "On-route relay along the Dallas metro arc",
+      "geofence": {
+        "circle": {
+          "latitude": 32.827618,
+          "longitude": -97.205875,
+          "radiusMeters": 750
+        }
+      }
+    },
+    {
+      "id": "addr-7",
+      "name": "Humble Staging Lot",
+      "formattedAddress": "19100 Eastex Fwy, Humble, TX 77338",
+      "latitude": 30.054452,
+      "longitude": -95.157897,
+      "notes": "On-route staging along the Houston belt sweep",
+      "geofence": {
+        "circle": {
+          "latitude": 30.054452,
+          "longitude": -95.157897,
+          "radiusMeters": 800
+        }
+      }
     }
   ],
   "assets": [
@@ -46,7 +119,8 @@
         "tmsVehicleId": "unit-1001"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1FUJGLDR5CLBP1001"
     },
     {
       "id": "veh-1002",
@@ -61,7 +135,8 @@
         "tmsVehicleId": "unit-1002"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "4V4NC9EH6EN171002"
     },
     {
       "id": "veh-1003",
@@ -76,7 +151,8 @@
         "tmsVehicleId": "unit-1003"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1XKAD49X1KJ211003"
     },
     {
       "id": "veh-1004",
@@ -91,7 +167,8 @@
         "tmsVehicleId": "unit-1004"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1NPXGGGG50D171004"
     },
     {
       "id": "veh-1005",
@@ -106,7 +183,8 @@
         "tmsVehicleId": "unit-1005"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "3AKJHHDR5JSKA1005"
     },
     {
       "id": "veh-1006",
@@ -121,7 +199,8 @@
         "tmsVehicleId": "unit-1006"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "4V4NC9EH8LN181006"
     },
     {
       "id": "veh-1007",
@@ -136,7 +215,8 @@
         "tmsVehicleId": "unit-1007"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1XKYD49X3PJ221007"
     },
     {
       "id": "veh-1008",
@@ -151,7 +231,8 @@
         "tmsVehicleId": "unit-1008"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1NPXGGGG70D281008"
     },
     {
       "id": "veh-1009",
@@ -166,7 +247,8 @@
         "tmsVehicleId": "unit-1009"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "3AKJGLDR2ESFV1009"
     },
     {
       "id": "veh-1010",
@@ -181,7 +263,8 @@
         "tmsVehicleId": "unit-1010"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "4V4NC9EH0MN191010"
     },
     {
       "id": "veh-1011",
@@ -196,7 +279,8 @@
         "tmsVehicleId": "unit-1011"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1XKYDP9X5RJ231011"
     },
     {
       "id": "veh-1012",
@@ -211,7 +295,8 @@
         "tmsVehicleId": "unit-1012"
       },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z"
+      "updatedAtTime": "2026-03-01T14:24:00Z",
+      "vin": "1NPXGGGG90D391012"
     },
     {
       "id": "trl-2042",
@@ -459,6 +544,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1001"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -467,6 +563,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1002"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -475,6 +582,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1003"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -483,6 +601,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1004"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -491,6 +620,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1005"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -499,6 +639,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1006"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -507,6 +658,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1007"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -515,6 +677,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1008"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -523,6 +696,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1009"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -531,6 +715,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1010"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 70 hour / 8 day",
+            "shift": "Texas Intrastate",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -539,6 +734,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1011"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 60 hour / 7 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     },
     {
@@ -547,6 +753,17 @@
       "driverActivationStatus": "active",
       "externalIds": {
         "workerId": "worker-1012"
+      },
+      "eldSettings": {
+        "rulesets": [
+          {
+            "cycle": "USA 60 hour / 7 day",
+            "shift": "US Interstate Property",
+            "restart": "34-hour Restart",
+            "break": "Property (off-duty/sleeper)",
+            "jurisdiction": "TX"
+          }
+        ]
       }
     }
   ],
@@ -674,21 +891,375 @@
   ],
   "formTemplates": [
     {
-      "id": "e3c5abf4-2f5d-4f03-8a07-648d2d4f4a51",
-      "revisionId": "84f6d5e3-4e10-4cd6-9d52-5df1097a8740",
-      "title": "Pre-Trip Inspection",
+      "id": "1b8f2c7d-93aa-4e21-b5c4-2f6d81a0c9e3",
+      "revisionId": "7c3e9b12-5d48-4f77-a1b9-90c2d4e6f815",
+      "title": "Fuel Receipt",
+      "formCategory": "fuel",
       "createdAtTime": "2026-01-05T08:00:00Z",
       "updatedAtTime": "2026-02-12T09:30:00Z",
       "createdBy": {
         "id": "user-1",
-        "name": "Dispatch Admin"
+        "type": "user"
       },
       "updatedBy": {
         "id": "user-1",
-        "name": "Dispatch Admin"
+        "type": "user"
       },
-      "fields": [],
-      "sections": []
+      "fields": [
+        {
+          "id": "a1d64f20-6e3b-4c1d-8f52-30b9e7c2d4a1",
+          "label": "Gallons Purchased",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 2
+        },
+        {
+          "id": "b2e75a31-7f4c-4d2e-9a63-41cafd83e5b2",
+          "label": "Total Amount",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 2
+        },
+        {
+          "id": "c3f86b42-8a5d-4e3f-ab74-52dbfe94f6c3",
+          "label": "Fuel Stop Location",
+          "type": "text",
+          "isRequired": true
+        },
+        {
+          "id": "d4a97c53-9b6e-4f4a-bc85-63ecaf05a7d4",
+          "label": "Receipt Number",
+          "type": "text",
+          "isRequired": false
+        }
+      ],
+      "sections": [
+        {
+          "id": "e5ba8d64-ac7f-4a5b-cd96-74fdba16b8e5",
+          "label": "Fuel Receipt",
+          "fieldIndexFirstInclusive": 0,
+          "fieldIndexLastInclusive": 3
+        }
+      ]
+    },
+    {
+      "id": "5d21c4b8-6a97-4e30-9f1d-83b5a2c7e604",
+      "revisionId": "9e43a6d0-8cb9-4f52-a13f-a5d7c4e98216",
+      "title": "Incident Report",
+      "formCategory": "general",
+      "createdAtTime": "2026-01-05T08:15:00Z",
+      "updatedAtTime": "2026-02-12T09:45:00Z",
+      "createdBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "updatedBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "fields": [
+        {
+          "id": "f6cb9e75-bd8a-4b6c-de07-85aecb27c9f6",
+          "label": "Incident Description",
+          "type": "text",
+          "isRequired": true
+        },
+        {
+          "id": "07dcaf86-ce9b-4c7d-ef18-96bfdc38da07",
+          "label": "Incident Severity",
+          "type": "multiple_choice",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "18edba97-df0c-4d8e-fa29-a7cae049eb18",
+              "label": "Low"
+            },
+            {
+              "id": "29fecba8-ea1d-4e9f-ab3a-b8dbf15afc29",
+              "label": "Medium"
+            },
+            {
+              "id": "3aafdcb9-fb2e-4fa0-bc4b-c9eca26bad3a",
+              "label": "High"
+            }
+          ]
+        },
+        {
+          "id": "4bbaedca-ac3f-40b1-cd5c-dafdb37cbe4b",
+          "label": "Was Anyone Injured",
+          "type": "multiple_choice",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "5ccbfedb-bd4a-41c2-de6d-ebaec48dcf5c",
+              "label": "No"
+            },
+            {
+              "id": "6ddcafec-ce5b-42d3-ef7e-fcbfd59eda6d",
+              "label": "Yes"
+            }
+          ]
+        },
+        {
+          "id": "7eedbafd-df6c-43e4-fa8f-adcae66afb7e",
+          "label": "Corrective Action Taken",
+          "type": "text",
+          "isRequired": false
+        }
+      ],
+      "sections": [
+        {
+          "id": "8ffecbae-ea7d-44f5-ab9a-bedbf77bac8f",
+          "label": "Incident Report",
+          "fieldIndexFirstInclusive": 0,
+          "fieldIndexLastInclusive": 3
+        }
+      ]
+    },
+    {
+      "id": "e3c5abf4-2f5d-4f03-8a07-648d2d4f4a51",
+      "revisionId": "84f6d5e3-4e10-4cd6-9d52-5df1097a8740",
+      "title": "Trip Inspection Checklist",
+      "formCategory": "general",
+      "createdAtTime": "2026-01-05T08:00:00Z",
+      "updatedAtTime": "2026-02-12T09:30:00Z",
+      "createdBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "updatedBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "fields": [
+        {
+          "id": "90afdcbf-fb8e-45a6-bcab-cfeca88cbd90",
+          "label": "Exterior Inspection",
+          "type": "check_boxes",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "a1baedca-ac9f-46b7-cdbc-dafdb99dce01",
+              "label": "Lights OK"
+            },
+            {
+              "id": "b2cbfedb-bda0-47c8-decd-ebaecaaedf12",
+              "label": "Tires OK"
+            },
+            {
+              "id": "c3dcafec-ceb1-48d9-efde-fcbfdbbfea23",
+              "label": "Mirrors OK"
+            },
+            {
+              "id": "d4edbafd-dfc2-49ea-faef-adcaeccafb34",
+              "label": "No Leaks"
+            }
+          ]
+        },
+        {
+          "id": "e5fecbae-ead3-4afb-abfa-bedbfddbac45",
+          "label": "Cab Inspection",
+          "type": "check_boxes",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "f6afdcbf-fbe4-4bac-bcab-cfecaeecbd56",
+              "label": "Horn OK"
+            },
+            {
+              "id": "07baedca-acf5-4cbd-cdbc-dafdbffdce67",
+              "label": "Wipers OK"
+            },
+            {
+              "id": "18cbfedb-bd06-4dce-decd-ebaec00edf78",
+              "label": "Seatbelt OK"
+            }
+          ]
+        }
+      ],
+      "sections": [
+        {
+          "id": "29dcafec-ce17-4edf-efde-fcbfd11fea89",
+          "label": "Trip Inspection Checklist",
+          "fieldIndexFirstInclusive": 0,
+          "fieldIndexLastInclusive": 1
+        }
+      ]
+    },
+    {
+      "id": "2c9b7e14-4a6d-4f81-b3e2-7d1f9a0c5b48",
+      "revisionId": "8f4d2a19-6b73-4c05-9e18-2a7c6d3f1b90",
+      "title": "Bill of Lading (Shipper)",
+      "formCategory": "routing",
+      "createdAtTime": "2026-01-05T08:30:00Z",
+      "updatedAtTime": "2026-02-12T10:00:00Z",
+      "createdBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "updatedBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "fields": [
+        {
+          "id": "3a1e8c72-0d94-4b6f-a25c-91e7f0d4b3a6",
+          "label": "Seal Number",
+          "type": "text",
+          "isRequired": true
+        },
+        {
+          "id": "4b2f9d83-1e05-4c70-b36d-a2f801e5c4b7",
+          "label": "Pieces Loaded",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 0
+        },
+        {
+          "id": "5c3a0e94-2f16-4d81-c47e-b3092a06d5c8",
+          "label": "Gross Weight (lbs)",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 0
+        },
+        {
+          "id": "6d4b1fa5-3027-4e92-d58f-c4a03b17e6d9",
+          "label": "Trailer Temperature (°F)",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 1
+        },
+        {
+          "id": "7e5c20b6-4138-4fa3-e690-d5b14c28f7ea",
+          "label": "Load Secured",
+          "type": "multiple_choice",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "8f6d31c7-5249-40b4-f7a1-e6c25d390afb",
+              "label": "Yes"
+            },
+            {
+              "id": "9a7e42d8-635a-41c5-a8b2-f7d36e401b0c",
+              "label": "No"
+            }
+          ]
+        },
+        {
+          "id": "ab8f53e9-746b-42d6-b9c3-08e47f512c1d",
+          "label": "Shipper Signature",
+          "type": "signature",
+          "isRequired": true
+        },
+        {
+          "id": "bc9a64fa-857c-43e7-cad4-19f580623d2e",
+          "label": "Pickup Notes",
+          "type": "text",
+          "isRequired": false
+        }
+      ],
+      "sections": [
+        {
+          "id": "cdab750b-968d-44f8-dbe5-2a0691734e3f",
+          "label": "Bill of Lading",
+          "fieldIndexFirstInclusive": 0,
+          "fieldIndexLastInclusive": 6
+        }
+      ]
+    },
+    {
+      "id": "d1e0b2f3-4c5a-4b6e-8f70-3a2d1c0e9b84",
+      "revisionId": "e2f1c304-5d6b-4c7f-9081-4b3e2d1fac95",
+      "title": "Proof of Delivery (Consignee)",
+      "formCategory": "routing",
+      "createdAtTime": "2026-01-05T08:45:00Z",
+      "updatedAtTime": "2026-02-12T10:15:00Z",
+      "createdBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "updatedBy": {
+        "id": "user-1",
+        "type": "user"
+      },
+      "fields": [
+        {
+          "id": "f3021415-6e7c-4d80-a192-5c4f3e20bda6",
+          "label": "Pieces Delivered",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 0
+        },
+        {
+          "id": "04132526-7f8d-4e91-b2a3-6d504f31ceb7",
+          "label": "Delivery Temperature (°F)",
+          "type": "number",
+          "isRequired": true,
+          "numDecimalPlaces": 1
+        },
+        {
+          "id": "15243637-808e-4fa2-c3b4-7e615032dfc8",
+          "label": "Condition on Arrival",
+          "type": "multiple_choice",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "26354748-919f-40b3-d4c5-8f726143e0d9",
+              "label": "Good"
+            },
+            {
+              "id": "37465859-a2a0-41c4-e5d6-90725254f1ea",
+              "label": "Damaged"
+            },
+            {
+              "id": "4857697a-b3b1-42d5-f6e7-a1836365020b",
+              "label": "Refused"
+            }
+          ]
+        },
+        {
+          "id": "5968708b-c4c2-43e6-0708-b2947476132c",
+          "label": "Seal Intact",
+          "type": "multiple_choice",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "6a79819c-d5d3-44f7-1819-c3a58587243d",
+              "label": "Yes"
+            },
+            {
+              "id": "7b8a92ad-e6e4-4508-2920-d4b69698234e",
+              "label": "No"
+            }
+          ]
+        },
+        {
+          "id": "8c9ba3be-f7f5-4619-3a31-e5c7a7a9345f",
+          "label": "Receiver Name",
+          "type": "text",
+          "isRequired": true
+        },
+        {
+          "id": "9dacb4cf-0806-472a-4b42-f6d8b8ba4560",
+          "label": "Receiver Signature",
+          "type": "signature",
+          "isRequired": true
+        },
+        {
+          "id": "aebdc5d0-1917-483b-5c53-07e9c9cb5671",
+          "label": "Delivery Notes",
+          "type": "text",
+          "isRequired": false
+        }
+      ],
+      "sections": [
+        {
+          "id": "bfced6e1-2a28-494c-6d64-18fadadc6782",
+          "label": "Proof of Delivery",
+          "fieldIndexFirstInclusive": 0,
+          "fieldIndexLastInclusive": 6
+        }
+      ]
     }
   ],
   "formSubmissions": [
@@ -742,21 +1313,26 @@
       "name": "Core Fleet Events",
       "url": "http://localhost:8091/_sim/webhooks/inbox",
       "version": "2021-06-09",
-      "secretKey": "demo-secret",
+      "secretKey": "ZGVtby1zZWNyZXQ=",
       "eventTypes": [
         "AddressCreated",
+        "AddressDeleted",
         "AddressUpdated",
+        "AlertIncident",
         "DriverCreated",
-        "DriverHosStatusChanged",
-        "DriverHosViolationDetected",
+        "DvirSubmitted",
         "FormSubmitted",
         "FormUpdated",
-        "RouteProgressDelayed",
+        "GeofenceEntry",
+        "GeofenceExit",
         "RouteStopArrival",
+        "RouteStopDeparture",
         "RouteStopEtaUpdated",
+        "SevereSpeedingEnded",
+        "SevereSpeedingStarted",
+        "SpeedingEventEnded",
+        "SpeedingEventStarted",
         "VehicleCreated",
-        "VehicleSpeeding",
-        "VehicleStopped",
         "VehicleUpdated"
       ]
     }

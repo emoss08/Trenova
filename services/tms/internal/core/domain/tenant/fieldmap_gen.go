@@ -25,6 +25,13 @@ func (e *BusinessUnit) GetStaticFieldMap() map[string]string {
 	return buncolgen.BusinessUnitFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DashControl].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DashControlFieldMap] instead of parsing struct tags via reflection.
+func (e *DashControl) GetStaticFieldMap() map[string]string {
+	return buncolgen.DashControlFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DataRetention].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.DataRetentionFieldMap] instead of parsing struct tags via reflection.

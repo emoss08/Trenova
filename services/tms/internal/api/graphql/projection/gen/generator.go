@@ -58,6 +58,10 @@ var nonProjectionObjects = map[string]string{
 	"FuelCostResolution":            "GraphQL costing DTO without Bun projection metadata",
 	"ResolvedCostProfile":           "GraphQL costing DTO without Bun projection metadata",
 	"CostCategoryGLAccountLink":     "GraphQL costing DTO without Bun projection metadata",
+	"TelematicsFormFieldValue":      "GraphQL telematics form DTO without Bun projection metadata",
+	"TelematicsFormSubmission":      "GraphQL telematics form DTO without Bun projection metadata",
+	"TelematicsFormMapping":         "GraphQL telematics form DTO without Bun projection metadata",
+	"TelematicsFormMappingItem":     "GraphQL telematics form DTO without Bun projection metadata",
 }
 
 func run(opts generatorOptions) error {

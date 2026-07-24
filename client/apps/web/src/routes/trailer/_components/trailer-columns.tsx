@@ -6,9 +6,6 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { generateDateOnlyString, toDateFromUnixSeconds } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
-import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
-import type { EquipmentType } from "@/types/equipment-type";
-import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import type { Location } from "@trenova/shared/types/location";
 import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
@@ -65,12 +62,7 @@ function LastInspectionDateCell({ row }: { row: Trailer }) {
     [row.id, queryClient],
   );
 
-  return (
-    <EditableDateField
-      date={row.lastInspectionDate}
-      onDateChange={handleDateChange}
-    />
-  );
+  return <EditableDateField date={row.lastInspectionDate} onDateChange={handleDateChange} />;
 }
 
 export function getColumns(): ColumnDef<Trailer>[] {
@@ -116,12 +108,12 @@ export function getColumns(): ColumnDef<Trailer>[] {
         }
 
         return (
-          <EntityRefCell<EquipmentType, Trailer>
+          <EntityRefCell<NonNullable<Trailer["equipmentType"]>, Trailer>
             entity={equipmentType}
             config={{
               basePath: "/equipment/configuration-files/equipment-types",
               getId: (equipmentType) => equipmentType.id,
-              getDisplayText: (equipmentType) => equipmentType.code,
+              getDisplayText: (equipmentType) => equipmentType.code ?? "",
               getHeaderText: "Equip. Type",
               color: {
                 getColor: (equipmentType) => equipmentType.color,
@@ -150,14 +142,12 @@ export function getColumns(): ColumnDef<Trailer>[] {
         }
 
         return (
-          <EntityRefCell<EquipmentManufacturer, Trailer>
+          <EntityRefCell<NonNullable<Trailer["equipmentManufacturer"]>, Trailer>
             entity={equipmentManufacturer}
             config={{
-              basePath:
-                "/equipment/configuration-files/equipment-manufacturers",
+              basePath: "/equipment/configuration-files/equipment-manufacturers",
               getId: (equipmentManufacturer) => equipmentManufacturer.id,
-              getDisplayText: (equipmentManufacturer) =>
-                equipmentManufacturer.name,
+              getDisplayText: (equipmentManufacturer) => equipmentManufacturer.name ?? "",
               getHeaderText: "Equip. Manufacturer",
             }}
             parent={row.original}
@@ -175,12 +165,12 @@ export function getColumns(): ColumnDef<Trailer>[] {
         }
 
         return (
-          <EntityRefCell<FleetCode, Trailer>
+          <EntityRefCell<NonNullable<Trailer["fleetCode"]>, Trailer>
             entity={fleetCode}
             config={{
               basePath: "/dispatch/configuration-files/fleet-codes",
               getId: (fleetCode) => fleetCode.id,
-              getDisplayText: (fleetCode) => fleetCode.code,
+              getDisplayText: (fleetCode) => fleetCode.code ?? "",
               color: {
                 getColor: (fleetCode) => fleetCode.color,
               },
@@ -249,12 +239,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        return (
-          <HoverCardTimestamp
-            className="shrink-0"
-            timestamp={row.original.createdAt}
-          />
-        );
+        return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
       size: 200,
       minSize: 200,

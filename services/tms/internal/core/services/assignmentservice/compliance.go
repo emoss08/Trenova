@@ -123,7 +123,7 @@ func checkMVR(
 	prefix string,
 	multiErr *errortypes.MultiError,
 ) {
-	if !dc.EnforceHOSCompliance {
+	if !dc.EnforceDriverQualificationCompliance {
 		return
 	}
 

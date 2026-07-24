@@ -1,9 +1,13 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatRange } from "@trenova/shared/lib/date";
+import { formatClockDurationMs, formatRange } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { fetchMyPeriodSummary, fetchMyRecentPayEvents } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  fetchMyHosState,
+  fetchMyPeriodSummary,
+  fetchMyRecentPayEvents,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, ReceiptTextIcon } from "lucide-react";
 import { m } from "motion/react";
@@ -70,6 +74,11 @@ export function DashHomePage() {
     queryKey: ["dash-recent-pay-events"],
     queryFn: () => fetchMyRecentPayEvents(5),
   });
+  const hos = useQuery({
+    queryKey: ["dash-hos-state"],
+    queryFn: fetchMyHosState,
+    staleTime: 30_000,
+  });
 
   const currentLoad = loads.data?.[0];
 
@@ -131,6 +140,32 @@ export function DashHomePage() {
           </p>
         )}
       </m.section>
+
+      {hos.data ? (
+        <Section title="Hours of service" to="/dash/hos" toLabel="Open" delay={0.06}>
+          <Link
+            to="/dash/hos"
+            className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
+          >
+            <div>
+              <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+                Drive left
+              </p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums">
+                {formatClockDurationMs(hos.data.driveRemainingMs)}
+              </p>
+            </div>
+            <div>
+              <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+                Shift left
+              </p>
+              <p className="mt-0.5 text-lg font-semibold tabular-nums">
+                {formatClockDurationMs(hos.data.shiftRemainingMs)}
+              </p>
+            </div>
+          </Link>
+        </Section>
+      ) : null}
 
       <Section title="Current load" to="/dash/loads" toLabel="All loads" delay={0.08}>
         {loads.isPending ? (

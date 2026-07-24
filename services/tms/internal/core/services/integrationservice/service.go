@@ -134,6 +134,8 @@ func webhookTokenPrefix(typ integration.Type) string {
 		return "resend_"
 	case integration.TypePostmark:
 		return "postmark_"
+	case integration.TypeSamsara:
+		return "samsara_"
 	default:
 		return ""
 	}

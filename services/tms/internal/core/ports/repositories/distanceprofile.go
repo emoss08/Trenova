@@ -33,14 +33,41 @@ type DistanceProfileSelectOptionsRequest struct {
 }
 
 type DistanceProfileRepository interface {
-	List(ctx context.Context, req *ListDistanceProfileRequest) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
-	ListConnection(ctx context.Context, req *ListDistanceProfileConnectionRequest) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)
-	GetByID(ctx context.Context, req GetDistanceProfileByIDRequest) (*distanceprofile.DistanceProfile, error)
-	GetDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*distanceprofile.DistanceProfile, error)
-	EnsureDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*distanceprofile.DistanceProfile, error)
-	Create(ctx context.Context, entity *distanceprofile.DistanceProfile) (*distanceprofile.DistanceProfile, error)
-	Update(ctx context.Context, entity *distanceprofile.DistanceProfile) (*distanceprofile.DistanceProfile, error)
+	List(
+		ctx context.Context,
+		req *ListDistanceProfileRequest,
+	) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListDistanceProfileConnectionRequest,
+	) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error)
+	GetByID(
+		ctx context.Context,
+		req GetDistanceProfileByIDRequest,
+	) (*distanceprofile.DistanceProfile, error)
+	GetDefault(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*distanceprofile.DistanceProfile, error)
+	EnsureDefault(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*distanceprofile.DistanceProfile, error)
+	Create(
+		ctx context.Context,
+		entity *distanceprofile.DistanceProfile,
+	) (*distanceprofile.DistanceProfile, error)
+	Update(
+		ctx context.Context,
+		entity *distanceprofile.DistanceProfile,
+	) (*distanceprofile.DistanceProfile, error)
 	Delete(ctx context.Context, req DeleteDistanceProfileRequest) error
-	SetDefault(ctx context.Context, req GetDistanceProfileByIDRequest) (*distanceprofile.DistanceProfile, error)
-	SelectOptions(ctx context.Context, req *DistanceProfileSelectOptionsRequest) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
+	SetDefault(
+		ctx context.Context,
+		req GetDistanceProfileByIDRequest,
+	) (*distanceprofile.DistanceProfile, error)
+	SelectOptions(
+		ctx context.Context,
+		req *DistanceProfileSelectOptionsRequest,
+	) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
 }

@@ -137,6 +137,89 @@ func (r *repository) FindInProgressByTrailerID(
 	return r.findInProgressAssignment(ctx, tenantInfo, "a.trailer_id", trailerID, excludeMoveID)
 }
 
+func (r *repository) FindInProgressByPrimaryWorkerID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	excludeMoveID pulid.ID,
+) (*shipment.Assignment, error) {
+	return r.findInProgressAssignment(ctx, tenantInfo, "a.primary_worker_id", workerID, excludeMoveID)
+}
+
+func (r *repository) FindActiveByTractorID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	tractorID pulid.ID,
+) (*shipment.Assignment, error) {
+	return r.findActiveAssignment(ctx, tenantInfo, "a.tractor_id", tractorID)
+}
+
+func (r *repository) FindActiveByWorkerID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+) (*shipment.Assignment, error) {
+	entity := new(shipment.Assignment)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id").
+		Where("a.organization_id = ?", tenantInfo.OrgID).
+		Where("a.business_unit_id = ?", tenantInfo.BuID).
+		Where("a.archived_at IS NULL").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("a.primary_worker_id = ?", workerID).
+				WhereOr("a.secondary_worker_id = ?", workerID)
+		}).
+		Where("sm.status IN (?)", bun.List([]shipment.MoveStatus{
+			shipment.MoveStatusInTransit,
+			shipment.MoveStatusAssigned,
+		})).
+		OrderExpr("CASE sm.status WHEN ? THEN 0 ELSE 1 END ASC", shipment.MoveStatusInTransit).
+		Order("sm.created_at DESC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+		}
+		return nil, err
+	}
+	return entity, nil
+}
+
+func (r *repository) findActiveAssignment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	column string,
+	subjectID pulid.ID,
+) (*shipment.Assignment, error) {
+	entity := new(shipment.Assignment)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Join("JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id").
+		Where("a.organization_id = ?", tenantInfo.OrgID).
+		Where("a.business_unit_id = ?", tenantInfo.BuID).
+		Where("a.archived_at IS NULL").
+		Where(column+" = ?", subjectID).
+		Where("sm.status IN (?)", bun.List([]shipment.MoveStatus{
+			shipment.MoveStatusInTransit,
+			shipment.MoveStatusAssigned,
+		})).
+		OrderExpr("CASE sm.status WHEN ? THEN 0 ELSE 1 END ASC", shipment.MoveStatusInTransit).
+		Order("sm.created_at DESC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+		}
+		return nil, err
+	}
+	return entity, nil
+}
+
 func (r *repository) FindNearestActualEventByTractorID(
 	ctx context.Context,
 	req repositories.FindNearestActualTimelineEventRequest,

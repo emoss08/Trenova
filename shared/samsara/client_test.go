@@ -39,6 +39,7 @@ func TestNewAcceptsAPIKey(t *testing.T) {
 	require.NotNil(t, client.Assets)
 	require.NotNil(t, client.Compliance)
 	require.NotNil(t, client.Drivers)
+	require.NotNil(t, client.Dvirs)
 	require.NotNil(t, client.Forms)
 	require.NotNil(t, client.LiveShares)
 	require.NotNil(t, client.Messages)

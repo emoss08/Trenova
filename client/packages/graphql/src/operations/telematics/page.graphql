@@ -1,0 +1,250 @@
+query VehiclePositions($maxAgeSeconds: Int) {
+  vehiclePositions(maxAgeSeconds: $maxAgeSeconds) {
+    tractorId
+    tractorCode
+    provider
+    providerVehicleId
+    latitude
+    longitude
+    headingDegrees
+    speedMph
+    engineState
+    fuelPercent
+    odometerMeters
+    formattedLocation
+    recordedAt
+    receivedAt
+    primaryWorkerId
+    primaryWorkerName
+  }
+}
+
+query WorkerHosStates($workerIds: [ID!], $limit: Int) {
+  workerHosStates(workerIds: $workerIds, limit: $limit) {
+    workerId
+    workerName
+    provider
+    providerDriverId
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    currentVehicleId
+    currentTractorId
+    rulesetCycle
+    rulesetShift
+    rulesetJurisdiction
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+
+query WorkerHosState($workerId: ID!) {
+  workerHosState(workerId: $workerId) {
+    workerId
+    workerName
+    provider
+    providerDriverId
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    currentVehicleId
+    currentTractorId
+    rulesetCycle
+    rulesetShift
+    rulesetJurisdiction
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+
+query WorkerHosViolations($workerId: ID, $since: Int, $limit: Int) {
+  workerHosViolations(workerId: $workerId, since: $since, limit: $limit) {
+    workerId
+    violationType
+    description
+    durationMs
+    violationStartAt
+    dayStartAt
+    dayEndAt
+    detectedAt
+  }
+}
+
+query TelematicsStatus {
+  telematicsStatus {
+    provider
+    enabled
+    configured
+    webhookConfigured
+    lastPolledAt
+    lastSuccessAt
+    failureCount
+    lastError
+    mappedTractors
+    totalTractors
+    mappedWorkers
+  }
+}
+
+query WorkerHosLogs($workerId: ID!, $startTime: Int!, $endTime: Int!) {
+  workerHosLogs(workerId: $workerId, startTime: $startTime, endTime: $endTime) {
+    hosStatusType
+    logStartAt
+    logEndAt
+    remark
+    vehicleId
+    vehicleName
+    latitude
+    longitude
+    codrivers
+  }
+}
+
+query WorkerHosDailyLogs($workerId: ID!, $startDate: String!, $endDate: String!) {
+  workerHosDailyLogs(workerId: $workerId, startDate: $startDate, endDate: $endDate) {
+    startAt
+    endAt
+    driveDistanceMeters
+    activeDurationMs
+    driveDurationMs
+    onDutyDurationMs
+    offDutyDurationMs
+    sleeperBerthDurationMs
+    personalConveyanceDurationMs
+    yardMoveDurationMs
+    isCertified
+    certifiedAt
+    shippingDocs
+    vehicleNames
+  }
+}
+
+query ShipmentDriverFeasibility($shipmentId: ID!) {
+  shipmentDriverFeasibility(shipmentId: $shipmentId) {
+    workerId
+    workerName
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    deadheadMiles
+    estimatedDriveMs
+    verdict
+    reasons
+    tractorId
+    tractorCode
+    recordedAt
+  }
+}
+
+query VehicleInspections($tractorId: ID, $workerId: ID, $since: Int, $limit: Int) {
+  vehicleInspections(tractorId: $tractorId, workerId: $workerId, since: $since, limit: $limit) {
+    id
+    provider
+    inspectionType
+    safetyStatus
+    tractorId
+    workerId
+    workerName
+    startedAt
+    endedAt
+    odometerMeters
+    location
+    signed
+    defectCount
+    unresolvedDefectCount
+    defects
+  }
+}
+
+query WorkerFormSubmissions($workerId: ID!, $startTime: Int!, $endTime: Int!) {
+  workerFormSubmissions(workerId: $workerId, startTime: $startTime, endTime: $endTime) {
+    id
+    templateId
+    templateName
+    submittedAt
+    fields {
+      label
+      value
+    }
+  }
+}
+
+query HosCertificationSummary($startDate: String!, $endDate: String!) {
+  hosCertificationSummary(startDate: $startDate, endDate: $endDate) {
+    workerId
+    workerName
+    uncertifiedDays
+    totalDays
+  }
+}
+
+query ShipmentFormSubmissions($shipmentId: ID!) {
+  shipmentFormSubmissions(shipmentId: $shipmentId) {
+    id
+    provider
+    templateId
+    templateName
+    workerId
+    workerName
+    shipmentId
+    stopId
+    submittedAt
+    applied
+    appliedFields
+    fields {
+      label
+      type
+      value
+    }
+  }
+}
+
+query TelematicsFormMappings {
+  telematicsFormMappings {
+    id
+    provider
+    templateId
+    templateName
+    name
+    description
+    enabled
+    version
+    items {
+      id
+      sourceFieldLabel
+      targetKind
+      targetField
+      targetCustomFieldKey
+    }
+  }
+}
+
+mutation SaveTelematicsFormMapping($input: SaveTelematicsFormMappingInput!) {
+  saveTelematicsFormMapping(input: $input) {
+    id
+    name
+  }
+}
+
+mutation DeleteTelematicsFormMapping($id: ID!) {
+  deleteTelematicsFormMapping(id: $id)
+}

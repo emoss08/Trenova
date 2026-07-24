@@ -1333,6 +1333,22 @@ enum DriverExpenseStatus {
   Rejected
 }
 
+type DriverFeasibility {
+  cycleRemainingMs: Int!
+  deadheadMiles: Float
+  driveRemainingMs: Int!
+  dutyStatus: String
+  estimatedDriveMs: Int!
+  reasons: [String!]!
+  recordedAt: Int!
+  shiftRemainingMs: Int!
+  tractorCode: String
+  tractorId: ID
+  verdict: String!
+  workerId: ID!
+  workerName: String!
+}
+
 """
 The accrual ledger behind settlements: one pay event per driver per move,
 created automatically when a shipment reaches the organization's pay trigger.
@@ -2403,6 +2419,11 @@ input ForkCannedReportInput {
   name: String
 }
 
+type FormSubmissionField {
+  label: String!
+  value: String!
+}
+
 type FormulaTemplate {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -2896,6 +2917,13 @@ enum HoldType {
   OperationalHold
 }
 
+type HosCertificationSummary {
+  totalDays: Int!
+  uncertifiedDays: Int!
+  workerId: ID!
+  workerName: String!
+}
+
 input InviteWorkerToPortalInput {
   """Overrides the email on the worker record when provided."""
   email: String
@@ -3371,6 +3399,7 @@ type Mutation {
   deleteReportSchedule(id: ID!): Boolean!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
+  deleteTelematicsFormMapping(id: ID!): Boolean!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
   """
   Remove a pay event from a draft settlement, returning it to the unsettled pool.
@@ -3448,6 +3477,7 @@ type Mutation {
   """
   revokeWorkerPortalAccess(workerId: ID!): Boolean!
   runReport(input: RunReportInput!): ReportRun!
+  saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   """Moves an open dispute into review (back office)."""
@@ -4355,6 +4385,7 @@ type Query {
   hazmatSegregationRules(input: DataTableConnectionInput!): HazmatSegregationRuleConnection!
   holdReason(id: ID!): HoldReason
   holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
+  hosCertificationSummary(endDate: String!, startDate: String!): [HosCertificationSummary!]!
   invoice(id: ID!): Invoice
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
@@ -4376,6 +4407,16 @@ type Query {
   myDisputes: [SettlementDispute!]!
   myEscrow: PortalEscrowSummary!
   myExpenses: [DriverExpense!]!
+  """The signed-in driver's ELD daily logs (YYYY-MM-DD range)."""
+  myHosDailyLogs(endDate: String!, startDate: String!): [WorkerHosDailyLog!]!
+  """
+  The signed-in driver's live hours-of-service clocks from the carrier's ELD
+  provider. Null when the carrier has no telematics integration or the driver
+  is not linked to a provider record.
+  """
+  myHosState: WorkerHosState
+  """The signed-in driver's recent hours-of-service violations."""
+  myHosViolations(since: Int): [WorkerHosViolation!]!
   """Driver-visible dispatch notes for one of the signed-in driver's loads."""
   myLoadComments(shipmentId: ID!): [PortalComment!]!
   """Estimated driver pay for one of the signed-in driver's own moves."""
@@ -4459,7 +4500,9 @@ type Query {
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
+  shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
   shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
   shipmentType(id: ID!): ShipmentType
@@ -4474,6 +4517,9 @@ type Query {
   tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
   tcaSubscription(id: ID!): TCASubscription
   tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
+  telematicsFormMapping(id: ID!): TelematicsFormMapping
+  telematicsFormMappings: [TelematicsFormMapping!]!
+  telematicsStatus: TelematicsStatus!
   tractor(id: ID!): Tractor
   tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
   trailer(id: ID!): Trailer
@@ -4492,7 +4538,15 @@ type Query {
   upcomingWorkerPTO(input: UpcomingWorkerPTOInput!): WorkerPTOConnection!
   user(id: ID!): User
   users(input: DataTableConnectionInput!): UserConnection!
+  vehicleInspections(limit: Int, since: Int, tractorId: ID, workerId: ID): [VehicleInspection!]!
+  vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
   workerEarningsSummary(workerId: ID!): WorkerEarningsSummary!
+  workerFormSubmissions(endTime: Int!, startTime: Int!, workerId: ID!): [WorkerFormSubmission!]!
+  workerHosDailyLogs(endDate: String!, startDate: String!, workerId: ID!): [WorkerHosDailyLog!]!
+  workerHosLogs(endTime: Int!, startTime: Int!, workerId: ID!): [WorkerHosLogEntry!]!
+  workerHosState(workerId: ID!): WorkerHosState
+  workerHosStates(limit: Int, workerIds: [ID!]): [WorkerHosState!]!
+  workerHosViolations(limit: Int, since: Int, workerId: ID): [WorkerHosViolation!]!
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   """Full assignment history for a worker, newest first."""
@@ -5086,6 +5140,18 @@ input SaveReportDefinitionInput {
   status: String
   tags: [String!]
   visibility: String
+}
+
+input SaveTelematicsFormMappingInput {
+  description: String
+  enabled: Boolean!
+  id: ID
+  items: [TelematicsFormMappingItemInput!]!
+  name: String!
+  provider: String
+  templateId: String!
+  templateName: String
+  version: Int
 }
 
 enum SegregationType {
@@ -6844,6 +6910,68 @@ input TableConfigurationPatchInput {
   visibility: ConfigurationVisibility
 }
 
+type TelematicsFormFieldValue {
+  label: String!
+  type: String!
+  value: String!
+}
+
+type TelematicsFormMapping {
+  description: String!
+  enabled: Boolean!
+  id: ID!
+  items: [TelematicsFormMappingItem!]!
+  name: String!
+  provider: String!
+  templateId: String!
+  templateName: String!
+  version: Int!
+}
+
+type TelematicsFormMappingItem {
+  id: ID!
+  sourceFieldLabel: String!
+  targetCustomFieldKey: String!
+  targetField: String!
+  targetKind: String!
+}
+
+input TelematicsFormMappingItemInput {
+  sourceFieldLabel: String!
+  targetCustomFieldKey: String
+  targetField: String
+  targetKind: String!
+}
+
+type TelematicsFormSubmission {
+  applied: Boolean!
+  appliedFields: Int!
+  fields: [TelematicsFormFieldValue!]!
+  id: ID!
+  provider: String!
+  shipmentId: ID
+  stopId: ID
+  submittedAt: Int!
+  templateId: String!
+  templateName: String!
+  workerId: ID
+  workerName: String!
+}
+
+type TelematicsStatus {
+  configured: Boolean!
+  enabled: Boolean!
+  failureCount: Int!
+  lastError: String
+  lastPolledAt: Int
+  lastSuccessAt: Int
+  mappedTractors: Int!
+  mappedWorkers: Int!
+  provider: String!
+  totalTractors: Int!
+  webhookConfigured: Boolean!
+}
+
 enum TimeFormat {
   TwelveHour
   TwentyFourHour
@@ -6860,6 +6988,7 @@ type Tractor {
   equipmentStatus: EquipmentStatus!
   equipmentType: EquipmentType
   equipmentTypeId: ID!
+  externalId: String!
   fleetCode: FleetCode
   fleetCodeId: ID
   id: ID!
@@ -6902,6 +7031,7 @@ input TractorInput {
   customFields: JSON
   equipmentManufacturerId: ID!
   equipmentTypeId: ID!
+  externalId: String
   fleetCodeId: ID
   licensePlateNumber: String
   make: String
@@ -6922,6 +7052,7 @@ input TractorPatchInput {
   customFields: JSON
   equipmentManufacturerId: ID
   equipmentTypeId: ID
+  externalId: String
   fleetCodeId: ID @goField(omittable: true)
   licensePlateNumber: String
   make: String
@@ -6948,6 +7079,7 @@ type Trailer {
   equipmentStatus: EquipmentStatus!
   equipmentType: EquipmentType
   equipmentTypeId: ID!
+  externalId: String!
   fleetCode: FleetCode
   fleetCodeId: ID
   id: ID!
@@ -6988,6 +7120,7 @@ input TrailerInput {
   customFields: JSON
   equipmentManufacturerId: ID!
   equipmentTypeId: ID!
+  externalId: String
   fleetCodeId: ID
   lastInspectionDate: Int
   licensePlateNumber: String
@@ -7008,6 +7141,7 @@ input TrailerPatchInput {
   customFields: JSON
   equipmentManufacturerId: ID
   equipmentTypeId: ID
+  externalId: String
   fleetCodeId: ID @goField(omittable: true)
   lastInspectionDate: Int
   licensePlateNumber: String
@@ -7252,6 +7386,43 @@ type UserEdge {
   node: User!
 }
 
+type VehicleInspection {
+  defectCount: Int!
+  defects: Any
+  endedAt: Int!
+  id: ID!
+  inspectionType: String!
+  location: String
+  odometerMeters: Int
+  provider: String!
+  safetyStatus: String!
+  signed: Boolean!
+  startedAt: Int!
+  tractorId: ID
+  unresolvedDefectCount: Int!
+  workerId: ID
+  workerName: String
+}
+
+type VehiclePosition {
+  engineState: String
+  formattedLocation: String
+  fuelPercent: Float
+  headingDegrees: Float!
+  latitude: Float!
+  longitude: Float!
+  odometerMeters: Int
+  primaryWorkerId: ID
+  primaryWorkerName: String
+  provider: String!
+  providerVehicleId: String!
+  receivedAt: Int!
+  recordedAt: Int!
+  speedMph: Float!
+  tractorCode: String!
+  tractorId: ID!
+}
+
 type Worker {
   addressLine1: String!
   addressLine2: String!
@@ -7315,9 +7486,83 @@ type WorkerEdge {
   node: Worker!
 }
 
+type WorkerFormSubmission {
+  fields: [FormSubmissionField!]!
+  id: ID!
+  submittedAt: Int!
+  templateId: String!
+  templateName: String!
+}
+
 enum WorkerGender {
   Female
   Male
+}
+
+type WorkerHosDailyLog {
+  activeDurationMs: Int!
+  certifiedAt: Int
+  driveDistanceMeters: Int!
+  driveDurationMs: Int!
+  endAt: Int!
+  isCertified: Boolean!
+  offDutyDurationMs: Int!
+  onDutyDurationMs: Int!
+  personalConveyanceDurationMs: Int!
+  shippingDocs: String
+  sleeperBerthDurationMs: Int!
+  startAt: Int!
+  vehicleNames: [String!]
+  yardMoveDurationMs: Int!
+}
+
+type WorkerHosLogEntry {
+  codrivers: [String!]
+  hosStatusType: String!
+  latitude: Float
+  logEndAt: Int
+  logStartAt: Int!
+  longitude: Float
+  remark: String
+  vehicleId: String
+  vehicleName: String
+}
+
+type WorkerHosState {
+  breakLimitMs: Int!
+  breakRemainingMs: Int!
+  currentTractorId: ID
+  currentVehicleId: String
+  cycleLimitMs: Int!
+  cycleRemainingMs: Int!
+  cycleStartedAt: Int
+  cycleTomorrowMs: Int!
+  cycleViolationMs: Int!
+  driveLimitMs: Int!
+  driveRemainingMs: Int!
+  dutyStatus: String
+  provider: String!
+  providerDriverId: String!
+  recordedAt: Int!
+  rulesetCycle: String
+  rulesetJurisdiction: String
+  rulesetShift: String
+  shiftDrivingViolationMs: Int!
+  shiftLimitMs: Int!
+  shiftRemainingMs: Int!
+  workerId: ID!
+  workerName: String!
+}
+
+type WorkerHosViolation {
+  dayEndAt: Int
+  dayStartAt: Int
+  description: String
+  detectedAt: Int!
+  durationMs: Int!
+  violationStartAt: Int!
+  violationType: String!
+  workerId: ID!
 }
 
 type WorkerPTO {

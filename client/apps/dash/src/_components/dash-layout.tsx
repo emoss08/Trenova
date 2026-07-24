@@ -2,7 +2,14 @@ import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notificati
 import { fetchMyPortalProfile } from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { BellIcon, HouseIcon, ReceiptTextIcon, TruckIcon, WalletIcon } from "lucide-react";
+import {
+  BellIcon,
+  Clock4Icon,
+  HouseIcon,
+  ReceiptTextIcon,
+  TruckIcon,
+  WalletIcon,
+} from "lucide-react";
 import { m } from "motion/react";
 import { NavLink, Outlet, useLocation, Link } from "react-router";
 import { useDashRealtime } from "./use-dash-realtime";
@@ -10,6 +17,7 @@ import { useDashRealtime } from "./use-dash-realtime";
 const tabs = [
   { to: "/dash", label: "Home", icon: HouseIcon, end: true },
   { to: "/dash/loads", label: "Loads", icon: TruckIcon, end: false },
+  { to: "/dash/hos", label: "HOS", icon: Clock4Icon, end: false },
   { to: "/dash/pay", label: "Pay", icon: ReceiptTextIcon, end: false },
   { to: "/dash/money", label: "Money", icon: WalletIcon, end: false },
 ] as const;
@@ -103,7 +111,7 @@ export function DashLayout() {
         aria-label="Primary"
         className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
       >
-        <div className="mx-auto grid w-full max-w-lg grid-cols-4">
+        <div className="mx-auto grid w-full max-w-lg grid-cols-5">
           {tabs.map((tab) => (
             <NavLink
               key={tab.to}

@@ -97,7 +97,10 @@ type EDIService interface {
 		ctx context.Context,
 		req *BuildServiceFailureEDIPayloadRequest,
 	) (*ServiceFailureEDIPayloadResult, error)
-	PreviewDocument(ctx context.Context, req *PreviewEDIDocumentRequest) (*EDIDocumentPreview, error)
+	PreviewDocument(
+		ctx context.Context,
+		req *PreviewEDIDocumentRequest,
+	) (*EDIDocumentPreview, error)
 	GenerateDocument(ctx context.Context, req *GenerateEDIDocumentRequest) (*edi.EDIMessage, error)
 	PreviewServiceFailure214ForLifecycle(
 		ctx context.Context,

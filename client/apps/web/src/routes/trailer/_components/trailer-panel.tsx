@@ -10,12 +10,7 @@ import { TrailerForm } from "./trailer-form";
 
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 
-export function TrailerPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Trailer>) {
+export function TrailerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Trailer>) {
   const form = useForm({
     resolver: zodResolver(trailerSchema),
     defaultValues: {
@@ -26,6 +21,7 @@ export function TrailerPanel({
       year: undefined,
       licensePlateNumber: "",
       vin: "",
+      externalId: "",
       registrationNumber: "",
       maxLoadWeight: undefined,
       lastInspectionDate: undefined,

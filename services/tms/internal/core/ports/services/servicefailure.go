@@ -117,7 +117,11 @@ type ServiceFailureEDIPayloadResult struct {
 func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Manual service failure request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Manual service failure request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -137,13 +141,25 @@ func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("type", errortypes.ErrInvalid, "Service failure type is invalid")
 	}
 	if r.ScheduledCutoff != nil && *r.ScheduledCutoff <= 0 {
-		multiErr.Add("scheduledCutoff", errortypes.ErrInvalid, "Scheduled cutoff must be greater than zero")
+		multiErr.Add(
+			"scheduledCutoff",
+			errortypes.ErrInvalid,
+			"Scheduled cutoff must be greater than zero",
+		)
 	}
 	if r.ActualArrival != nil && *r.ActualArrival <= 0 {
-		multiErr.Add("actualArrival", errortypes.ErrInvalid, "Actual arrival must be greater than zero")
+		multiErr.Add(
+			"actualArrival",
+			errortypes.ErrInvalid,
+			"Actual arrival must be greater than zero",
+		)
 	}
 	if r.GracePeriodMinutes != nil && *r.GracePeriodMinutes <= 0 {
-		multiErr.Add("gracePeriodMinutes", errortypes.ErrInvalid, "Grace period must be greater than zero")
+		multiErr.Add(
+			"gracePeriodMinutes",
+			errortypes.ErrInvalid,
+			"Grace period must be greater than zero",
+		)
 	}
 	if r.LateMinutes != nil && *r.LateMinutes <= 0 {
 		multiErr.Add("lateMinutes", errortypes.ErrInvalid, "Late minutes must be greater than zero")
@@ -157,7 +173,11 @@ func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
 func (r *EvaluateShipmentServiceFailuresRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failure evaluation request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure evaluation request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -173,7 +193,11 @@ func (r *EvaluateShipmentServiceFailuresRequest) Validate() *errortypes.MultiErr
 func (r *EvaluateStopServiceFailuresRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failure stop evaluation request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure stop evaluation request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -192,7 +216,11 @@ func (r *EvaluateStopServiceFailuresRequest) Validate() *errortypes.MultiError {
 func (r *BulkEvaluateServiceFailuresRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Bulk service failure evaluation request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Bulk service failure evaluation request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -208,7 +236,11 @@ func (r *BulkEvaluateServiceFailuresRequest) Validate() *errortypes.MultiError {
 func (r *UpdateServiceFailureRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failure update request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure update request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -230,7 +262,11 @@ func (r *UpdateServiceFailureRequest) Validate() *errortypes.MultiError {
 func (r *ServiceFailureLifecycleRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failure lifecycle request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure lifecycle request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -252,7 +288,11 @@ func (r *ServiceFailureLifecycleRequest) Validate() *errortypes.MultiError {
 func (r *BuildServiceFailureEDIPayloadRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failure EDI payload request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure EDI payload request is required",
+		)
 		return multiErr
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
@@ -349,8 +389,16 @@ type ServiceFailureReasonCodeService interface {
 		ctx context.Context,
 		req *repositories.ServiceFailureReasonCodeSelectOptionsRequest,
 	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
-	Create(ctx context.Context, entity *servicefailure.ReasonCode, actor *RequestActor) (*servicefailure.ReasonCode, error)
-	Update(ctx context.Context, entity *servicefailure.ReasonCode, actor *RequestActor) (*servicefailure.ReasonCode, error)
+	Create(
+		ctx context.Context,
+		entity *servicefailure.ReasonCode,
+		actor *RequestActor,
+	) (*servicefailure.ReasonCode, error)
+	Update(
+		ctx context.Context,
+		entity *servicefailure.ReasonCode,
+		actor *RequestActor,
+	) (*servicefailure.ReasonCode, error)
 	Archive(
 		ctx context.Context,
 		id pulid.ID,

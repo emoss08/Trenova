@@ -32,6 +32,7 @@ type Trailer {
   year: Int
   licensePlateNumber: String!
   vin: String!
+  externalId: String!
   registrationNumber: String!
   maxLoadWeight: Int
   lastInspectionDate: Int
@@ -63,6 +64,7 @@ input TrailerInput {
   year: Int
   licensePlateNumber: String
   vin: String
+  externalId: String
   registrationNumber: String
   maxLoadWeight: Int
   lastInspectionDate: Int
@@ -83,6 +85,7 @@ input TrailerPatchInput {
   year: Int
   licensePlateNumber: String
   vin: String
+  externalId: String
   registrationNumber: String
   maxLoadWeight: Int
   lastInspectionDate: Int
