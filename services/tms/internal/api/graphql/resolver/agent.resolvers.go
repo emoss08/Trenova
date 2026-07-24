@@ -20,19 +20,12 @@ import (
 )
 
 // Confidence is the resolver for the confidence field.
-func (r *agentProposalResolver) Confidence(
-	ctx context.Context,
-	obj *agent.AgentProposal,
-) (float64, error) {
+func (r *agentProposalResolver) Confidence(ctx context.Context, obj *agent.AgentProposal) (float64, error) {
 	return obj.Confidence.InexactFloat64(), nil
 }
 
 // DecideAgentProposal is the resolver for the decideAgentProposal field.
-func (r *mutationResolver) DecideAgentProposal(
-	ctx context.Context,
-	id string,
-	input gqlmodel.AgentProposalDecisionInput,
-) (*agent.AgentDecision, error) {
+func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -53,11 +46,7 @@ func (r *mutationResolver) DecideAgentProposal(
 }
 
 // ResolveAgentException is the resolver for the resolveAgentException field.
-func (r *mutationResolver) ResolveAgentException(
-	ctx context.Context,
-	id string,
-	input gqlmodel.AgentExceptionResolveInput,
-) (*agent.AgentException, error) {
+func (r *mutationResolver) ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentException, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -77,10 +66,7 @@ func (r *mutationResolver) ResolveAgentException(
 }
 
 // UpdateAgentControl is the resolver for the updateAgentControl field.
-func (r *mutationResolver) UpdateAgentControl(
-	ctx context.Context,
-	input gqlmodel.AgentControlInput,
-) (*tenant.AgentControl, error) {
+func (r *mutationResolver) UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -95,10 +81,7 @@ func (r *mutationResolver) UpdateAgentControl(
 }
 
 // AgentRuns is the resolver for the agentRuns field.
-func (r *queryResolver) AgentRuns(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.AgentRunConnection, error) {
+func (r *queryResolver) AgentRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -144,10 +127,7 @@ func (r *queryResolver) AgentRun(ctx context.Context, id string) (*agent.AgentRu
 }
 
 // AgentProposals is the resolver for the agentProposals field.
-func (r *queryResolver) AgentProposals(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.AgentProposalConnection, error) {
+func (r *queryResolver) AgentProposals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentProposalConnection, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceAgentProposal,
@@ -178,10 +158,7 @@ func (r *queryResolver) AgentProposals(
 }
 
 // AgentProposal is the resolver for the agentProposal field.
-func (r *queryResolver) AgentProposal(
-	ctx context.Context,
-	id string,
-) (*agent.AgentProposal, error) {
+func (r *queryResolver) AgentProposal(ctx context.Context, id string) (*agent.AgentProposal, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceAgentProposal,
@@ -204,10 +181,7 @@ func (r *queryResolver) AgentProposal(
 }
 
 // AgentExceptions is the resolver for the agentExceptions field.
-func (r *queryResolver) AgentExceptions(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.AgentExceptionConnection, error) {
+func (r *queryResolver) AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceAgentException,
@@ -238,10 +212,7 @@ func (r *queryResolver) AgentExceptions(
 }
 
 // AgentException is the resolver for the agentException field.
-func (r *queryResolver) AgentException(
-	ctx context.Context,
-	id string,
-) (*agent.AgentException, error) {
+func (r *queryResolver) AgentException(ctx context.Context, id string) (*agent.AgentException, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceAgentException,
@@ -274,8 +245,6 @@ func (r *queryResolver) AgentControl(ctx context.Context) (*tenant.AgentControl,
 }
 
 // AgentProposal returns generated.AgentProposalResolver implementation.
-func (r *Resolver) AgentProposal() generated.AgentProposalResolver {
-	return &agentProposalResolver{r}
-}
+func (r *Resolver) AgentProposal() generated.AgentProposalResolver { return &agentProposalResolver{r} }
 
 type agentProposalResolver struct{ *Resolver }
