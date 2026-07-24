@@ -2,12 +2,13 @@ import { createSelectors } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
-export type RightStackModuleId = "unassigned" | "exceptions" | "hos";
+export type RightStackModuleId = "unassigned" | "exceptions" | "hos" | "certification";
 
 export const ALL_MODULES: readonly RightStackModuleId[] = [
   "unassigned",
   "exceptions",
   "hos",
+  "certification",
 ] as const;
 
 interface RightStackState {
@@ -34,6 +35,23 @@ const baseStore = create<RightStackState>()(
       {
         name: "trenova.rightStack",
         storage: createJSONStorage(() => localStorage),
+        merge: (persisted, current) => {
+          const saved = (persisted as Partial<RightStackState>) ?? {};
+          const savedOrder = saved.order ?? [];
+          const savedHidden = saved.hidden ?? [];
+          const known = new Set<RightStackModuleId>(ALL_MODULES);
+          const order = savedOrder.filter((id) => known.has(id));
+          for (const id of ALL_MODULES) {
+            if (!order.includes(id)) {
+              order.push(id);
+            }
+          }
+          return {
+            ...current,
+            order,
+            hidden: savedHidden.filter((id) => known.has(id)),
+          };
+        },
       },
     ),
   ),

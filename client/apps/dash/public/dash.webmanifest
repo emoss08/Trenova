@@ -10,7 +10,7 @@
   "theme_color": "#09090b",
   "icons": [
     {
-      "src": "/logo.ico",
+      "src": "/dash/logo.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
     }

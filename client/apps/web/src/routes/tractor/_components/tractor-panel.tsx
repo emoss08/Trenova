@@ -3,12 +3,13 @@ import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { tractorSchema, type Tractor } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileTextIcon } from "lucide-react";
+import { ClipboardCheckIcon, FileTextIcon } from "lucide-react";
 import { lazy, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-form";
 
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
+const InspectionsTab = lazy(() => import("./tractor-inspections-tab"));
 
 export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Tractor>) {
   const form = useForm({
@@ -23,6 +24,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       vin: "",
       registrationNumber: "",
       registrationExpiry: undefined,
+      externalId: "",
       equipmentTypeId: "",
       equipmentManufacturerId: "",
       fleetCodeId: "",
@@ -52,6 +54,15 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         contentProps: {
           resourceType: "tractor",
           resourceId: row?.id,
+        },
+      },
+      {
+        value: "inspections",
+        label: "Inspections",
+        icon: ClipboardCheckIcon,
+        content: InspectionsTab,
+        contentProps: {
+          tractorId: row?.id,
         },
       },
     ],

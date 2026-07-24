@@ -22,8 +22,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { PlusIcon } from "lucide-react";
+import { CertificationWatch } from "./certification-watch";
 import { ExceptionsInbox } from "./exceptions-inbox";
-import { HosWatchPlaceholder } from "./hos-watch-placeholder";
+import { HosWatch } from "./hos-watch";
 import { ALL_MODULES, useRightStackStore, type RightStackModuleId } from "./right-stack-store";
 import { UnassignedQueue } from "./unassigned-queue";
 
@@ -31,6 +32,7 @@ const MODULE_LABEL: Record<RightStackModuleId, string> = {
   unassigned: "Unassigned",
   exceptions: "Exceptions",
   hos: "HOS watch",
+  certification: "Uncertified logs",
 };
 
 type RendererProps = {
@@ -40,7 +42,8 @@ type RendererProps = {
 const RENDERERS: Record<RightStackModuleId, (props: RendererProps) => React.ReactElement> = {
   unassigned: UnassignedQueue,
   exceptions: ExceptionsInbox,
-  hos: () => <HosWatchPlaceholder />,
+  hos: HosWatch,
+  certification: CertificationWatch,
 };
 
 export default function RightStack({ backgroundEnabled = true }: { backgroundEnabled?: boolean }) {

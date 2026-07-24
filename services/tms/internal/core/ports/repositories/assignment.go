@@ -208,6 +208,22 @@ type AssignmentRepository interface {
 		trailerID pulid.ID,
 		excludeMoveID pulid.ID,
 	) (*shipment.Assignment, error)
+	FindInProgressByPrimaryWorkerID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+		excludeMoveID pulid.ID,
+	) (*shipment.Assignment, error)
+	FindActiveByTractorID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		tractorID pulid.ID,
+	) (*shipment.Assignment, error)
+	FindActiveByWorkerID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (*shipment.Assignment, error)
 	FindNearestActualEventByTractorID(
 		ctx context.Context,
 		req FindNearestActualTimelineEventRequest,

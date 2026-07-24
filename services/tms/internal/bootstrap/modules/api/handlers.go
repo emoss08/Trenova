@@ -89,6 +89,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -159,6 +160,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dothazmatreferencehandler.New,
 	edihandler.New,
 	emailhandler.New,
+	telematicshandler.New,
 	commodityhandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,

@@ -1,6 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
 
-const SERVICE_WORKER_URL = "/dash-sw.js";
+const SERVICE_WORKER_URL = `${import.meta.env.BASE_URL}dash-sw.js`;
 
 type PushPublicKeyResponse = {
   enabled: boolean;

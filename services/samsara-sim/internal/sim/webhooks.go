@@ -5,6 +5,8 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"hash/fnv"
@@ -21,9 +23,17 @@ import (
 	"github.com/emoss08/trenova/samsara-sim/internal/config"
 )
 
+const (
+	webhookOrgID           = int64(20936)
+	webhookEventTimeLayout = "2006-01-02T15:04:05.000Z07:00"
+)
+
 type WebhookEvent struct {
-	EventType string `json:"eventType"`
+	EventID   string `json:"eventId"`
 	EventTime string `json:"eventTime"`
+	EventType string `json:"eventType"`
+	OrgID     int64  `json:"orgId"`
+	WebhookID string `json:"webhookId"`
 	Data      any    `json:"data"`
 }
 
@@ -128,20 +138,30 @@ func (d *Dispatcher) Dispatch(profile, eventType string, data any) error {
 		return nil
 	}
 
-	event := WebhookEvent{
-		EventType: trimmedType,
-		EventTime: d.nowUTC().Format(time.RFC3339),
-		Data:      data,
-	}
-	payload, err := sonic.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("marshal webhook payload: %w", err)
-	}
+	eventTime := d.nowUTC()
+	identity := eventIdentity(data)
+	eventID := deterministicEventID(
+		trimmedType,
+		identity,
+		eventTime.UTC().Format(webhookEventTimeLayout),
+	)
 
 	for idx := range targets {
 		target := targets[idx]
+		event := WebhookEvent{
+			EventID:   eventID,
+			EventTime: eventTime.UTC().Format(webhookEventTimeLayout),
+			EventType: trimmedType,
+			OrgID:     webhookOrgID,
+			WebhookID: target.ID,
+			Data:      data,
+		}
+		payload, err := sonic.Marshal(event)
+		if err != nil {
+			return fmt.Errorf("marshal webhook payload: %w", err)
+		}
+
 		options := deliveryOptionsForTarget(&target)
-		identity := eventIdentity(data)
 		duplicates := d.duplicateCount(options, &target, trimmedType, identity)
 		totalDeliveries := 1 + duplicates
 		if totalDeliveries < 1 {
@@ -283,13 +303,13 @@ func (d *Dispatcher) sendOnce(ctx context.Context, job *deliveryJob, attempt int
 	request.Header.Set("X-Samsara-Sim-Delivery-Attempt", strconv.Itoa(attempt))
 
 	signatureTime := d.nowUTC().Add(job.TimestampSkew)
-	timestamp := strconv.FormatInt(signatureTime.Unix(), 10)
+	timestamp := signatureTime.UTC().Format(time.RFC3339)
 	signatureSecret := strings.TrimSpace(job.Target.Secret)
 	if signatureSecret == "" {
 		signatureSecret = strings.TrimSpace(d.cfg.SigningSecret)
 	}
 	if signatureSecret != "" {
-		signature := signPayload(signatureSecret, timestamp, job.Payload)
+		signature := signWebhookPayload(signatureSecret, timestamp, job.Payload)
 		request.Header.Set("X-Samsara-Timestamp", timestamp)
 		request.Header.Set("X-Samsara-Signature", signature)
 	}
@@ -351,12 +371,38 @@ func (d *Dispatcher) applyWebhookFault(
 	return false, nil
 }
 
-func signPayload(secret, timestamp string, payload []byte) string {
-	mac := hmac.New(sha256.New, []byte(secret))
+func webhookSigningKey(secret string) []byte {
+	clean := strings.TrimSpace(secret)
+	decoded, err := base64.StdEncoding.DecodeString(clean)
+	if err != nil || len(decoded) == 0 {
+		return []byte(clean)
+	}
+	return decoded
+}
+
+func signWebhookPayload(secret, timestamp string, payload []byte) string {
+	mac := hmac.New(sha256.New, webhookSigningKey(secret))
+	_, _ = mac.Write([]byte("v1:"))
 	_, _ = mac.Write([]byte(timestamp))
-	_, _ = mac.Write([]byte("."))
+	_, _ = mac.Write([]byte(":"))
 	_, _ = mac.Write(payload)
-	return hex.EncodeToString(mac.Sum(nil))
+	return "v1=" + hex.EncodeToString(mac.Sum(nil))
+}
+
+func deterministicEventID(parts ...string) string {
+	key := strings.Join(parts, "|")
+	var raw [16]byte
+	binary.BigEndian.PutUint64(raw[:8], fnvHash64(key+"|event-id-high"))
+	binary.BigEndian.PutUint64(raw[8:], fnvHash64(key+"|event-id-low"))
+	raw[6] = (raw[6] & 0x0f) | 0x40
+	raw[8] = (raw[8] & 0x3f) | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", raw[:4], raw[4:6], raw[6:8], raw[8:10], raw[10:])
+}
+
+func fnvHash64(value string) uint64 {
+	hasher := fnv.New64a()
+	_, _ = hasher.Write([]byte(value))
+	return hasher.Sum64()
 }
 
 func (d *Dispatcher) nowUTC() time.Time {

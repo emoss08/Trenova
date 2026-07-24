@@ -91,6 +91,12 @@ type routeSegment struct {
 	CumulativeStart time.Duration
 }
 
+type routeGeometry struct {
+	Points   []routePoint
+	Segments []routeSegment
+	Period   time.Duration
+}
+
 type routeStopLifecycle struct {
 	ID                   string
 	Sequence             int
@@ -1053,7 +1059,7 @@ func (l *LiveSimulator) generateDriverLogs(
 		windowEnd.Add(24*time.Hour),
 	)
 	for _, segment := range timeline {
-		if segment.Start.Before(windowStart) || segment.Start.After(windowEnd) {
+		if !segment.End.After(windowStart) || segment.Start.After(windowEnd) {
 			continue
 		}
 
@@ -1137,10 +1143,35 @@ func (l *LiveSimulator) routeStateForSample(
 	windowStart time.Time,
 	now time.Time,
 ) routeState {
+	geometry := l.routeGeometryForAsset(assetID, points)
+	return l.routeStateForGeometry(assetID, &geometry, sampleTime, windowStart, now)
+}
+
+func (l *LiveSimulator) routeGeometryForAsset(assetID string, points []routePoint) routeGeometry {
+	geometry := routeGeometry{Points: points}
+	if len(points) < 2 {
+		return geometry
+	}
+	segments, period := buildRouteSegments(points)
+	if len(segments) == 0 || period <= 0 {
+		return geometry
+	}
+	geometry.Segments, geometry.Period = l.tuneRouteSegmentsForDuration(assetID, segments, period)
+	return geometry
+}
+
+func (l *LiveSimulator) routeStateForGeometry(
+	assetID string,
+	geometry *routeGeometry,
+	sampleTime time.Time,
+	windowStart time.Time,
+	now time.Time,
+) routeState {
+	points := geometry.Points
 	if len(points) == 0 {
 		return routeState{}
 	}
-	if len(points) == 1 {
+	if len(geometry.Segments) == 0 || geometry.Period <= 0 {
 		return routeState{
 			Latitude:  points[0].Latitude,
 			Longitude: points[0].Longitude,
@@ -1150,22 +1181,10 @@ func (l *LiveSimulator) routeStateForSample(
 		}
 	}
 
-	segments, period := buildRouteSegments(points)
-	if len(segments) == 0 || period <= 0 {
-		return routeState{
-			Latitude:  points[0].Latitude,
-			Longitude: points[0].Longitude,
-			Heading:   normalizeHeading(points[0].Heading),
-			SpeedMPS:  clampFloat64(points[0].SpeedMPS, minRouteSpeedMPS, maxRouteSpeedMPS),
-			Address:   cloneMap(points[0].Address),
-		}
-	}
-	segments, period = l.tuneRouteSegmentsForDuration(assetID, segments, period)
-
-	offset := l.phaseOffset(assetID, period)
+	offset := l.phaseOffset(assetID, geometry.Period)
 	elapsed := now.Sub(l.startedAt) + sampleTime.Sub(windowStart) + offset
-	phase := normalizePhase(elapsed, period)
-	segment := segmentForPhase(segments, phase)
+	phase := normalizePhase(elapsed, geometry.Period)
+	segment := segmentForPhase(geometry.Segments, phase)
 	if segment == nil {
 		return routeState{}
 	}
@@ -1608,12 +1627,39 @@ func (l *LiveSimulator) applyVehicleEventsToRouteState(
 	if primaryEvent == nil {
 		return base
 	}
+	geometry := l.routeGeometryForAsset(vehicleID, points)
+	return l.applyPrimaryEventToRouteState(vehicleID, &geometry, primaryEvent, windowStart, now, base)
+}
 
+func (l *LiveSimulator) applyVehicleEventsToGeometryState(
+	vehicleID string,
+	geometry *routeGeometry,
+	events []SimEvent,
+	sampleTime time.Time,
+	windowStart time.Time,
+	now time.Time,
+	base routeState,
+) routeState {
+	primaryEvent := pickPrimarySimEventAt(events, sampleTime)
+	if primaryEvent == nil {
+		return base
+	}
+	return l.applyPrimaryEventToRouteState(vehicleID, geometry, primaryEvent, windowStart, now, base)
+}
+
+func (l *LiveSimulator) applyPrimaryEventToRouteState(
+	vehicleID string,
+	geometry *routeGeometry,
+	primaryEvent *SimEvent,
+	windowStart time.Time,
+	now time.Time,
+	base routeState,
+) routeState {
 	switch primaryEvent.Type {
 	case simEventStopFuelBreak, simEventDutyOffDutyPause, simEventDutySleeperBlock:
-		frozen := l.routeStateForSample(
+		frozen := l.routeStateForGeometry(
 			vehicleID,
-			points,
+			geometry,
 			primaryEvent.StartsAt,
 			windowStart,
 			now,
@@ -1621,9 +1667,9 @@ func (l *LiveSimulator) applyVehicleEventsToRouteState(
 		frozen.SpeedMPS = 0
 		return frozen
 	case simEventStopTrafficDelay:
-		frozen := l.routeStateForSample(
+		frozen := l.routeStateForGeometry(
 			vehicleID,
-			points,
+			geometry,
 			primaryEvent.StartsAt,
 			windowStart,
 			now,
@@ -2279,6 +2325,20 @@ func dynamicEngineSeconds(
 	return baseValue + maxInt64(increment, 0)
 }
 
+func dynamicOdometerMeters(
+	base Record,
+	now time.Time,
+	startedAt time.Time,
+	hashFactor float64,
+) int64 {
+	baseValue := int64(floatFromAny(nestedAny(base, "obdOdometerMeters", "value")))
+	if baseValue <= 0 {
+		baseValue = int64(180_000_000 + hashFactor*240_000_000)
+	}
+	traveled := int64(now.Sub(startedAt).Seconds() * (11.5 + hashFactor*7.5))
+	return baseValue + maxInt64(traveled, 0)
+}
+
 func dynamicBatteryMilliVolts(base Record, now time.Time, hashFactor float64) int64 {
 	baseValue := int64(floatFromAny(nestedAny(base, "batteryMilliVolts", "value")))
 	if baseValue <= 0 {
@@ -2300,6 +2360,26 @@ func vehicleName(vehicleID string, base Record, assets map[string]Record) string
 		}
 	}
 	return vehicleID
+}
+
+func vehicleWebhookPayload(vehicleID string, assets map[string]Record) map[string]any {
+	vehicle := map[string]any{
+		"id":          vehicleID,
+		"name":        vehicleIDToName(vehicleID, assets),
+		"assetType":   "vehicle",
+		"externalIds": map[string]any{},
+	}
+	if asset, ok := assets[vehicleID]; ok {
+		vehicle["licensePlate"] = stringValue(asset, "licensePlate")
+		vehicle["vin"] = firstNonEmpty(
+			stringValue(asset, "vin"),
+			stringValue(asset, "serialNumber"),
+		)
+		if externalIDs, okIDs := anyAsMap(asset["externalIds"]); okIDs {
+			vehicle["externalIds"] = cloneMap(externalIDs)
+		}
+	}
+	return vehicle
 }
 
 func vehicleIDToName(vehicleID string, assets map[string]Record) string {

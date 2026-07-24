@@ -28,6 +28,6 @@ simulation:
 
 webhooks:
   enabled: true
-  signingSecret: sim-signing-secret
+  signingSecret: c2ltLXNpZ25pbmctc2VjcmV0
   maxAttempts: 3
   initialBackoff: 200ms

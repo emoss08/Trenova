@@ -58,26 +58,55 @@ type EmailWebhookConfig struct {
 }
 
 type EmailRepository interface {
-	ListProfiles(context.Context, *ListEmailProfilesRequest) (*pagination.ListResult[*email.Profile], error)
-	ListProfilesConnection(context.Context, *ListEmailProfileConnectionRequest) (*pagination.CursorListResult[*email.Profile], error)
-	SelectProfileOptions(context.Context, *EmailProfileSelectOptionsRequest) (*pagination.ListResult[*email.Profile], error)
+	ListProfiles(
+		context.Context,
+		*ListEmailProfilesRequest,
+	) (*pagination.ListResult[*email.Profile], error)
+	ListProfilesConnection(
+		context.Context,
+		*ListEmailProfileConnectionRequest,
+	) (*pagination.CursorListResult[*email.Profile], error)
+	SelectProfileOptions(
+		context.Context,
+		*EmailProfileSelectOptionsRequest,
+	) (*pagination.ListResult[*email.Profile], error)
 	GetProfile(context.Context, GetEmailEntityRequest) (*email.Profile, error)
 	CreateProfile(context.Context, *email.Profile) (*email.Profile, error)
 	UpdateProfile(context.Context, *email.Profile) (*email.Profile, error)
 	DeleteProfile(context.Context, GetEmailEntityRequest) error
 	ListAssignments(context.Context, pagination.TenantInfo) ([]*email.ProfileAssignment, error)
-	UpsertAssignments(context.Context, pagination.TenantInfo, []*email.ProfileAssignment) ([]*email.ProfileAssignment, error)
-	GetAssignedProfile(context.Context, pagination.TenantInfo, email.Purpose) (*email.Profile, error)
+	UpsertAssignments(
+		context.Context,
+		pagination.TenantInfo,
+		[]*email.ProfileAssignment,
+	) ([]*email.ProfileAssignment, error)
+	GetAssignedProfile(
+		context.Context,
+		pagination.TenantInfo,
+		email.Purpose,
+	) (*email.Profile, error)
 	CreateMessage(context.Context, *email.Message) (*email.Message, error)
 	UpdateMessage(context.Context, *email.Message) (*email.Message, error)
 	GetMessage(context.Context, GetEmailEntityRequest) (*email.Message, error)
-	GetMessageByProviderID(context.Context, GetEmailMessageByProviderIDRequest) (*email.Message, error)
+	GetMessageByProviderID(
+		context.Context,
+		GetEmailMessageByProviderIDRequest,
+	) (*email.Message, error)
 	CreateAttachments(context.Context, []*email.Attachment) ([]*email.Attachment, error)
 	ListAttachments(context.Context, ListEmailAttachmentsRequest) ([]*email.Attachment, error)
-	GetEmailWebhookConfig(context.Context, GetEmailWebhookConfigRequest) (*EmailWebhookConfig, error)
-	ListMessages(context.Context, *ListEmailMessagesRequest) (*pagination.ListResult[*email.Message], error)
+	GetEmailWebhookConfig(
+		context.Context,
+		GetEmailWebhookConfigRequest,
+	) (*EmailWebhookConfig, error)
+	ListMessages(
+		context.Context,
+		*ListEmailMessagesRequest,
+	) (*pagination.ListResult[*email.Message], error)
 	CreateEvent(context.Context, *email.Event) (bool, error)
-	ListSuppressions(context.Context, *ListEmailSuppressionsRequest) (*pagination.ListResult[*email.Suppression], error)
+	ListSuppressions(
+		context.Context,
+		*ListEmailSuppressionsRequest,
+	) (*pagination.ListResult[*email.Suppression], error)
 	CreateSuppression(context.Context, *email.Suppression) (*email.Suppression, error)
 	DeleteSuppression(context.Context, GetEmailEntityRequest) error
 	HasSuppression(context.Context, pagination.TenantInfo, string) (bool, error)

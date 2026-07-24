@@ -10,10 +10,12 @@ import (
 )
 
 type Summary struct {
-	Resources          map[string]int `json:"resources"`
-	ActiveEventsByType map[string]int `json:"activeEventsByType"`
-	ViolationsActive   int            `json:"violationsActive"`
-	SpeedingActive     int            `json:"speedingActive"`
+	Resources                 map[string]int `json:"resources"`
+	ActiveEventsByType        map[string]int `json:"activeEventsByType"`
+	ViolationsActive          int            `json:"violationsActive"`
+	SpeedingActive            int            `json:"speedingActive"`
+	GeofenceEntriesDispatched int64          `json:"geofenceEntriesDispatched"`
+	GeofenceExitsDispatched   int64          `json:"geofenceExitsDispatched"`
 }
 
 type WebhookTarget struct {

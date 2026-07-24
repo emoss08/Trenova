@@ -2,7 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, TruckIcon } from "lucide-react";
 
 function LegendItem({ swatch, label }: { swatch: React.ReactNode; label: string }) {
   return (
@@ -39,6 +39,21 @@ function DashedLine() {
   );
 }
 
+function TruckChip() {
+  return (
+    <span
+      className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-full"
+      style={{
+        background: "var(--brand)",
+        border: "1px solid var(--card)",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+      }}
+    >
+      <TruckIcon className="size-2" style={{ color: "var(--brand-foreground)" }} />
+    </span>
+  );
+}
+
 function GradientBar({ from, to }: { from: string; to: string }) {
   return (
     <span
@@ -71,6 +86,7 @@ export function MapLegendPopover() {
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
           <LegendItem swatch={<Dot color="#000" />} label="Vehicle" />
+          <LegendItem swatch={<TruckChip />} label="Live Vehicle" />
           <LegendItem swatch={<Dot color="#3b82f6" />} label="Pickup Stop" />
           <LegendItem swatch={<Dot color="#16a34a" />} label="Delivery Stop" />
           <LegendItem swatch={<DashedLine />} label="Route" />

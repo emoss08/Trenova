@@ -39,10 +39,22 @@ type StoredMileageLookupRequest struct {
 }
 
 type StoredMileageRepository interface {
-	List(ctx context.Context, req *ListStoredMileageRequest) (*pagination.ListResult[*storedmileage.StoredMileage], error)
-	ListConnection(ctx context.Context, req *ListStoredMileageConnectionRequest) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)
-	GetByID(ctx context.Context, req GetStoredMileageByIDRequest) (*storedmileage.StoredMileage, error)
-	Lookup(ctx context.Context, req StoredMileageLookupRequest) (*storedmileage.StoredMileage, error)
+	List(
+		ctx context.Context,
+		req *ListStoredMileageRequest,
+	) (*pagination.ListResult[*storedmileage.StoredMileage], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListStoredMileageConnectionRequest,
+	) (*pagination.CursorListResult[*storedmileage.StoredMileage], error)
+	GetByID(
+		ctx context.Context,
+		req GetStoredMileageByIDRequest,
+	) (*storedmileage.StoredMileage, error)
+	Lookup(
+		ctx context.Context,
+		req StoredMileageLookupRequest,
+	) (*storedmileage.StoredMileage, error)
 	BulkUpsert(ctx context.Context, entities []*storedmileage.StoredMileage) error
 	IncrementHit(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo) error
 	Deactivate(ctx context.Context, req DeleteStoredMileageRequest) error
@@ -50,6 +62,10 @@ type StoredMileageRepository interface {
 
 type StoredMileageBufferRepository interface {
 	Push(ctx context.Context, candidate *storedmileage.StoredMileage) error
-	PopTenantBatches(ctx context.Context, batchSize int, totalLimit int) ([][]*storedmileage.StoredMileage, error)
+	PopTenantBatches(
+		ctx context.Context,
+		batchSize int,
+		totalLimit int,
+	) ([][]*storedmileage.StoredMileage, error)
 	Size(ctx context.Context) (int64, error)
 }

@@ -5,13 +5,24 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
+const (
+	catalogEmailCategoryLabel   = "Email"
+	catalogDocsLabel            = "Docs"
+	catalogWebsiteLabel         = "Website"
+	catalogViewIntegrationLabel = "View Integration"
+	catalogPostmarkLogoURL      = "/integrations/logos/postmark_all.png"
+	catalogSlateColor           = "#0f172a"
+	catalogGoogleMapsLogoURL    = "/integrations/logos/googleMaps.svg"
+	catalogOandaAPIURL          = "https://exchange-rates-api.oanda.com/"
+)
+
 var CatalogDefinitions = []CatalogItem{
 	{
 		Type:          integration.TypeResend,
 		Name:          "Resend",
 		Description:   "Transactional email delivery for invoices, authentication, reporting, and operational notifications.",
 		Category:      integration.CategoryEmail,
-		CategoryLabel: "Email",
+		CategoryLabel: catalogEmailCategoryLabel,
 		LogoURL:       "/integrations/logos/resend_logo_light.svg",
 		LogoLightURL:  "/integrations/logos/resend_logo_light.svg",
 		LogoDarkURL:   "/integrations/logos/resend_logo_dark.svg",
@@ -23,20 +34,20 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://resend.com/docs",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://resend.com/",
 			},
 		},
 		Featured:           true,
 		SortOrder:          5,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
-	plannedEmailCatalogItem(plannedEmailCatalogItemParams{
+	plannedEmailCatalogItem(&plannedEmailCatalogItemParams{
 		Type:         integration.TypeAmazonSES,
 		Name:         "Amazon SES",
 		Description:  "Planned support for Amazon Simple Email Service transactional delivery.",
@@ -47,7 +58,7 @@ var CatalogDefinitions = []CatalogItem{
 		LogoDarkURL:  "/integrations/logos/aws_dark.svg",
 		SortOrder:    55,
 	}),
-	plannedEmailCatalogItem(plannedEmailCatalogItemParams{
+	plannedEmailCatalogItem(&plannedEmailCatalogItemParams{
 		Type:         integration.TypeSendGrid,
 		Name:         "SendGrid",
 		Description:  "Planned support for SendGrid transactional email delivery.",
@@ -58,7 +69,7 @@ var CatalogDefinitions = []CatalogItem{
 		LogoDarkURL:  "/integrations/logos/sendgrid_dark.svg",
 		SortOrder:    56,
 	}),
-	plannedEmailCatalogItem(plannedEmailCatalogItemParams{
+	plannedEmailCatalogItem(&plannedEmailCatalogItemParams{
 		Type:         integration.TypeMailgun,
 		Name:         "Mailgun",
 		Description:  "Planned support for Mailgun transactional email delivery.",
@@ -74,30 +85,30 @@ var CatalogDefinitions = []CatalogItem{
 		Name:          "Postmark",
 		Description:   "Transactional email delivery with server streams, attachments, and delivery event webhooks.",
 		Category:      integration.CategoryEmail,
-		CategoryLabel: "Email",
-		LogoURL:       "/integrations/logos/postmark_all.png",
-		LogoLightURL:  "/integrations/logos/postmark_all.png",
-		LogoDarkURL:   "/integrations/logos/postmark_all.png",
+		CategoryLabel: catalogEmailCategoryLabel,
+		LogoURL:       catalogPostmarkLogoURL,
+		LogoLightURL:  catalogPostmarkLogoURL,
+		LogoDarkURL:   catalogPostmarkLogoURL,
 		DocsURL:       "https://postmarkapp.com/developer",
 		WebsiteURL:    "https://postmarkapp.com/",
 		Color:         "#ffde00",
 		GlowFrom:      "#ffde00",
-		GlowTo:        "#0f172a",
+		GlowTo:        catalogSlateColor,
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://postmarkapp.com/developer",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://postmarkapp.com/",
 			},
 		},
 		Featured:           true,
 		SortOrder:          6,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypeSamsara,
@@ -116,18 +127,18 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://developers.samsara.com/docs/tms-integration",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://www.samsara.com/",
 			},
 		},
 		Featured:           true,
 		SortOrder:          10,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypeGoogleMaps,
@@ -135,9 +146,9 @@ var CatalogDefinitions = []CatalogItem{
 		Description:   "Routing and geocoding",
 		Category:      integration.CategoryMappingRouting,
 		CategoryLabel: "Mapping & Routing",
-		LogoURL:       "/integrations/logos/googleMaps.svg",
-		LogoLightURL:  "/integrations/logos/googleMaps.svg",
-		LogoDarkURL:   "/integrations/logos/googleMaps.svg",
+		LogoURL:       catalogGoogleMapsLogoURL,
+		LogoLightURL:  catalogGoogleMapsLogoURL,
+		LogoDarkURL:   catalogGoogleMapsLogoURL,
 		DocsURL:       "https://developers.google.com/maps/documentation",
 		WebsiteURL:    "https://maps.google.com/",
 		Color:         "#8a0000",
@@ -146,18 +157,18 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://developers.google.com/maps/documentation",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://maps.google.com/",
 			},
 		},
 		Featured:           false,
 		SortOrder:          20,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypeOpenAI,
@@ -170,24 +181,24 @@ var CatalogDefinitions = []CatalogItem{
 		LogoDarkURL:   "/integrations/logos/openai_logo_white.svg",
 		DocsURL:       "https://platform.openai.com/docs",
 		WebsiteURL:    "https://openai.com/",
-		Color:         "#0f172a",
-		GlowFrom:      "#0f172a",
+		Color:         catalogSlateColor,
+		GlowFrom:      catalogSlateColor,
 		GlowTo:        "#10a37f",
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://platform.openai.com/docs",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://openai.com/",
 			},
 		},
 		Featured:           true,
 		SortOrder:          30,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypeOpenWeatherMap,
@@ -206,18 +217,18 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://openweathermap.org/api/weathermaps",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://openweathermap.org/",
 			},
 		},
 		Featured:           false,
 		SortOrder:          25,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypeOANDAExchangeRates,
@@ -228,7 +239,7 @@ var CatalogDefinitions = []CatalogItem{
 		LogoURL:       "/integrations/logos/oanada-light.svg",
 		LogoLightURL:  "/integrations/logos/oanada-light.svg",
 		LogoDarkURL:   "/integrations/logos/oanada-dark.svg",
-		DocsURL:       "https://exchange-rates-api.oanda.com/",
+		DocsURL:       catalogOandaAPIURL,
 		WebsiteURL:    "https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/",
 		Color:         "#00a86b",
 		GlowFrom:      "#00a86b",
@@ -236,23 +247,23 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
-				URL:   "https://exchange-rates-api.oanda.com/",
+				Label: catalogDocsLabel,
+				URL:   catalogOandaAPIURL,
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/",
 			},
 			{
 				Kind:  CatalogLinkKindAPI,
 				Label: "API Reference",
-				URL:   "https://exchange-rates-api.oanda.com/",
+				URL:   catalogOandaAPIURL,
 			},
 		},
 		Featured:           false,
 		SortOrder:          40,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypeEIAFuelPrices,
@@ -271,7 +282,7 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://www.eia.gov/opendata/documentation.php",
 			},
 			{
@@ -287,7 +298,7 @@ var CatalogDefinitions = []CatalogItem{
 		},
 		Featured:           false,
 		SortOrder:          41,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 	{
 		Type:          integration.TypePCMiler,
@@ -306,18 +317,18 @@ var CatalogDefinitions = []CatalogItem{
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   "https://developer.trimblemaps.com/restful-apis/routing/route-reports/post-route-reports/",
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   "https://maps.trimble.com/pcmiler/",
 			},
 		},
 		Featured:           false,
 		SortOrder:          21,
-		PrimaryActionLabel: "View Integration",
+		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 }
 
@@ -333,13 +344,13 @@ type plannedEmailCatalogItemParams struct {
 	SortOrder    int
 }
 
-func plannedEmailCatalogItem(p plannedEmailCatalogItemParams) CatalogItem {
+func plannedEmailCatalogItem(p *plannedEmailCatalogItemParams) CatalogItem {
 	return CatalogItem{
 		Type:          p.Type,
 		Name:          p.Name,
 		Description:   p.Description,
 		Category:      integration.CategoryEmail,
-		CategoryLabel: "Email",
+		CategoryLabel: catalogEmailCategoryLabel,
 		LogoURL:       p.LogoLightURL,
 		LogoLightURL:  p.LogoLightURL,
 		LogoDarkURL:   p.LogoDarkURL,
@@ -351,12 +362,12 @@ func plannedEmailCatalogItem(p plannedEmailCatalogItemParams) CatalogItem {
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
-				Label: "Docs",
+				Label: catalogDocsLabel,
 				URL:   p.DocsURL,
 			},
 			{
 				Kind:  CatalogLinkKindWebsite,
-				Label: "Website",
+				Label: catalogWebsiteLabel,
 				URL:   p.WebsiteURL,
 			},
 		},

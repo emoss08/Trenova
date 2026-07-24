@@ -86,7 +86,7 @@ func Default() Config {
 		},
 		Webhooks: WebhooksConfig{
 			Enabled:        true,
-			SigningSecret:  "sim-signing-secret",
+			SigningSecret:  "c2ltLXNpZ25pbmctc2VjcmV0",
 			MaxAttempts:    3,
 			InitialBackoff: 200 * time.Millisecond,
 		},

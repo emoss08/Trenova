@@ -1,0 +1,234 @@
+type VehiclePosition {
+  tractorId: ID!
+  tractorCode: String!
+  provider: String!
+  providerVehicleId: String!
+  latitude: Float!
+  longitude: Float!
+  headingDegrees: Float!
+  speedMph: Float!
+  engineState: String
+  fuelPercent: Float
+  odometerMeters: Int
+  formattedLocation: String
+  recordedAt: Int!
+  receivedAt: Int!
+  primaryWorkerId: ID
+  primaryWorkerName: String
+}
+
+type WorkerHosState {
+  workerId: ID!
+  workerName: String!
+  provider: String!
+  providerDriverId: String!
+  dutyStatus: String
+  driveRemainingMs: Int!
+  shiftRemainingMs: Int!
+  cycleRemainingMs: Int!
+  cycleTomorrowMs: Int!
+  breakRemainingMs: Int!
+  cycleStartedAt: Int
+  shiftDrivingViolationMs: Int!
+  cycleViolationMs: Int!
+  currentVehicleId: String
+  currentTractorId: ID
+  rulesetCycle: String
+  rulesetShift: String
+  rulesetJurisdiction: String
+  driveLimitMs: Int!
+  shiftLimitMs: Int!
+  cycleLimitMs: Int!
+  breakLimitMs: Int!
+  recordedAt: Int!
+}
+
+type WorkerHosViolation {
+  workerId: ID!
+  violationType: String!
+  description: String
+  durationMs: Int!
+  violationStartAt: Int!
+  dayStartAt: Int
+  dayEndAt: Int
+  detectedAt: Int!
+}
+
+type TelematicsStatus {
+  provider: String!
+  enabled: Boolean!
+  configured: Boolean!
+  webhookConfigured: Boolean!
+  lastPolledAt: Int
+  lastSuccessAt: Int
+  failureCount: Int!
+  lastError: String
+  mappedTractors: Int!
+  totalTractors: Int!
+  mappedWorkers: Int!
+}
+
+type WorkerHosLogEntry {
+  hosStatusType: String!
+  logStartAt: Int!
+  logEndAt: Int
+  remark: String
+  vehicleId: String
+  vehicleName: String
+  latitude: Float
+  longitude: Float
+  codrivers: [String!]
+}
+
+type WorkerHosDailyLog {
+  startAt: Int!
+  endAt: Int!
+  driveDistanceMeters: Int!
+  activeDurationMs: Int!
+  driveDurationMs: Int!
+  onDutyDurationMs: Int!
+  offDutyDurationMs: Int!
+  sleeperBerthDurationMs: Int!
+  personalConveyanceDurationMs: Int!
+  yardMoveDurationMs: Int!
+  isCertified: Boolean!
+  certifiedAt: Int
+  shippingDocs: String
+  vehicleNames: [String!]
+}
+
+type VehicleInspection {
+  id: ID!
+  provider: String!
+  inspectionType: String!
+  safetyStatus: String!
+  tractorId: ID
+  workerId: ID
+  workerName: String
+  startedAt: Int!
+  endedAt: Int!
+  odometerMeters: Int
+  location: String
+  signed: Boolean!
+  defectCount: Int!
+  unresolvedDefectCount: Int!
+  defects: Any
+}
+
+type FormSubmissionField {
+  label: String!
+  value: String!
+}
+
+type WorkerFormSubmission {
+  id: ID!
+  templateId: String!
+  templateName: String!
+  submittedAt: Int!
+  fields: [FormSubmissionField!]!
+}
+
+type HosCertificationSummary {
+  workerId: ID!
+  workerName: String!
+  uncertifiedDays: Int!
+  totalDays: Int!
+}
+
+type DriverFeasibility {
+  workerId: ID!
+  workerName: String!
+  dutyStatus: String
+  driveRemainingMs: Int!
+  shiftRemainingMs: Int!
+  cycleRemainingMs: Int!
+  deadheadMiles: Float
+  estimatedDriveMs: Int!
+  verdict: String!
+  reasons: [String!]!
+  tractorId: ID
+  tractorCode: String
+  recordedAt: Int!
+}
+
+type TelematicsFormFieldValue {
+  label: String!
+  type: String!
+  value: String!
+}
+
+type TelematicsFormSubmission {
+  id: ID!
+  provider: String!
+  templateId: String!
+  templateName: String!
+  workerId: ID
+  workerName: String!
+  shipmentId: ID
+  stopId: ID
+  submittedAt: Int!
+  applied: Boolean!
+  appliedFields: Int!
+  fields: [TelematicsFormFieldValue!]!
+}
+
+type TelematicsFormMappingItem {
+  id: ID!
+  sourceFieldLabel: String!
+  targetKind: String!
+  targetField: String!
+  targetCustomFieldKey: String!
+}
+
+type TelematicsFormMapping {
+  id: ID!
+  provider: String!
+  templateId: String!
+  templateName: String!
+  name: String!
+  description: String!
+  enabled: Boolean!
+  version: Int!
+  items: [TelematicsFormMappingItem!]!
+}
+
+input TelematicsFormMappingItemInput {
+  sourceFieldLabel: String!
+  targetKind: String!
+  targetField: String
+  targetCustomFieldKey: String
+}
+
+input SaveTelematicsFormMappingInput {
+  id: ID
+  provider: String
+  templateId: String!
+  templateName: String
+  name: String!
+  description: String
+  enabled: Boolean!
+  version: Int
+  items: [TelematicsFormMappingItemInput!]!
+}
+
+extend type Query {
+  shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
+  telematicsFormMappings: [TelematicsFormMapping!]!
+  telematicsFormMapping(id: ID!): TelematicsFormMapping
+  shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
+  vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
+  workerHosState(workerId: ID!): WorkerHosState
+  workerHosViolations(workerId: ID, since: Int, limit: Int): [WorkerHosViolation!]!
+  workerHosLogs(workerId: ID!, startTime: Int!, endTime: Int!): [WorkerHosLogEntry!]!
+  workerHosDailyLogs(workerId: ID!, startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
+  vehicleInspections(tractorId: ID, workerId: ID, since: Int, limit: Int): [VehicleInspection!]!
+  workerFormSubmissions(workerId: ID!, startTime: Int!, endTime: Int!): [WorkerFormSubmission!]!
+  hosCertificationSummary(startDate: String!, endDate: String!): [HosCertificationSummary!]!
+  telematicsStatus: TelematicsStatus!
+}
+
+extend type Mutation {
+  saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
+  deleteTelematicsFormMapping(id: ID!): Boolean!
+}

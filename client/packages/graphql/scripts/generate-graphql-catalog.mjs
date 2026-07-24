@@ -13,6 +13,7 @@ import {
 } from "graphql";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const clientRoot = packageRoot;
 const operationsDir = resolve(packageRoot, "src/operations");
 const srcDir = resolve(packageRoot, "src");
 const generatedDir = resolve(packageRoot, "src/generated");

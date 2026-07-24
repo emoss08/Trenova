@@ -135,7 +135,11 @@ func (r *CountUnresolvedServiceFailuresRequest) Validate() *errortypes.MultiErro
 func (r *ServiceFailuresByShipmentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failures by shipment request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failures by shipment request is required",
+		)
 		return multiErr
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
@@ -185,6 +189,9 @@ type ServiceFailureRepository interface {
 		ctx context.Context,
 		req *ServiceFailuresByShipmentRequest,
 	) ([]*servicefailure.ServiceFailure, error)
-	CountUnresolvedByShipment(ctx context.Context, req *ServiceFailuresByShipmentRequest) (int, error)
+	CountUnresolvedByShipment(
+		ctx context.Context,
+		req *ServiceFailuresByShipmentRequest,
+	) (int, error)
 	CountUnresolved(ctx context.Context, req *CountUnresolvedServiceFailuresRequest) (int, error)
 }

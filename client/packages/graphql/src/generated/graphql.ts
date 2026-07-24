@@ -1366,6 +1366,18 @@ export type SaveReportDefinitionInput = {
   visibility?: string | null | undefined;
 };
 
+export type SaveTelematicsFormMappingInput = {
+  description?: string | null | undefined;
+  enabled: boolean;
+  id?: string | number | null | undefined;
+  items: Array<TelematicsFormMappingItemInput>;
+  name: string;
+  provider?: string | null | undefined;
+  templateId: string;
+  templateName?: string | null | undefined;
+  version?: number | null | undefined;
+};
+
 export type SegregationType =
   | 'Barrier'
   | 'Distance'
@@ -1835,6 +1847,13 @@ export type TableConfigurationInput = {
   resource: string;
   tableConfig: unknown;
   visibility?: ConfigurationVisibility | null | undefined;
+};
+
+export type TelematicsFormMappingItemInput = {
+  sourceFieldLabel: string;
+  targetCustomFieldKey?: string | null | undefined;
+  targetField?: string | null | undefined;
+  targetKind: string;
 };
 
 export type UpcomingWorkerPtoInput = {
@@ -2684,6 +2703,26 @@ export type MyPortalFeaturesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MyPortalFeaturesQuery = { myPortalFeatures: { requireLoadAcknowledgment: boolean, allowLoadRefusals: boolean, allowStopActions: boolean, allowLoadDocumentUpload: boolean, allowLoadComments: boolean, showLoadPay: boolean, showPayEstimates: boolean, allowExpenseSubmission: boolean, requireExpenseReceipt: boolean, allowSettlementDisputes: boolean, allowProfileDocumentUpload: boolean, allowContactInfoEdit: boolean, allowPtoRequests: boolean } };
 
+export type MyHosStateQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyHosStateQuery = { myHosState: { workerId: string, workerName: string, provider: string, dutyStatus: string | null, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, cycleTomorrowMs: number, breakRemainingMs: number, cycleStartedAt: number | null, shiftDrivingViolationMs: number, cycleViolationMs: number, currentVehicleId: string | null, rulesetCycle: string | null, rulesetShift: string | null, driveLimitMs: number, shiftLimitMs: number, cycleLimitMs: number, breakLimitMs: number, recordedAt: number } | null };
+
+export type MyHosDailyLogsQueryVariables = Exact<{
+  startDate: string;
+  endDate: string;
+}>;
+
+
+export type MyHosDailyLogsQuery = { myHosDailyLogs: Array<{ startAt: number, endAt: number, driveDistanceMeters: number, driveDurationMs: number, onDutyDurationMs: number, offDutyDurationMs: number, sleeperBerthDurationMs: number, isCertified: boolean, certifiedAt: number | null, shippingDocs: string | null, vehicleNames: Array<string> | null }> };
+
+export type MyHosViolationsQueryVariables = Exact<{
+  since?: number | null | undefined;
+}>;
+
+
+export type MyHosViolationsQuery = { myHosViolations: Array<{ workerId: string, violationType: string, description: string | null, durationMs: number, violationStartAt: number, detectedAt: number }> };
+
 export type PayProfileTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
@@ -3251,9 +3290,9 @@ export type WorkerTableReferenceFieldsFragment = { id: string, firstName: string
 
 export type DataTablePageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'DataTablePageInfoFieldsFragment' };
 
-export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, primaryWorkerId: string, equipmentTypeId: string, equipmentManufacturerId: string, stateId: string | null, fleetCodeId: string | null, secondaryWorkerId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, vin: string, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null } & { ' $fragmentName'?: 'TractorTableRowFieldsFragment' };
+export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, primaryWorkerId: string, equipmentTypeId: string, equipmentManufacturerId: string, stateId: string | null, fleetCodeId: string | null, secondaryWorkerId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, vin: string, externalId: string, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null } & { ' $fragmentName'?: 'TractorTableRowFieldsFragment' };
 
-export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, equipmentTypeId: string, equipmentManufacturerId: string, registrationStateId: string | null, fleetCodeId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, vin: string, registrationNumber: string, maxLoadWeight: number | null, lastInspectionDate: number | null, registrationExpiry: number | null, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, registrationState: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null } & { ' $fragmentName'?: 'TrailerTableRowFieldsFragment' };
+export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, equipmentTypeId: string, equipmentManufacturerId: string, registrationStateId: string | null, fleetCodeId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, vin: string, externalId: string, registrationNumber: string, maxLoadWeight: number | null, lastInspectionDate: number | null, registrationExpiry: number | null, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, registrationState: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null } & { ' $fragmentName'?: 'TrailerTableRowFieldsFragment' };
 
 export type TractorTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -4312,6 +4351,120 @@ export type SetOrgDefaultTableConfigurationMutationVariables = Exact<{
 
 
 export type SetOrgDefaultTableConfigurationMutation = { setOrgDefaultTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
+
+export type VehiclePositionsQueryVariables = Exact<{
+  maxAgeSeconds?: number | null | undefined;
+}>;
+
+
+export type VehiclePositionsQuery = { vehiclePositions: Array<{ tractorId: string, tractorCode: string, provider: string, providerVehicleId: string, latitude: number, longitude: number, headingDegrees: number, speedMph: number, engineState: string | null, fuelPercent: number | null, odometerMeters: number | null, formattedLocation: string | null, recordedAt: number, receivedAt: number, primaryWorkerId: string | null, primaryWorkerName: string | null }> };
+
+export type WorkerHosStatesQueryVariables = Exact<{
+  workerIds?: Array<string | number> | string | number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type WorkerHosStatesQuery = { workerHosStates: Array<{ workerId: string, workerName: string, provider: string, providerDriverId: string, dutyStatus: string | null, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, cycleTomorrowMs: number, breakRemainingMs: number, cycleStartedAt: number | null, shiftDrivingViolationMs: number, cycleViolationMs: number, currentVehicleId: string | null, currentTractorId: string | null, rulesetCycle: string | null, rulesetShift: string | null, rulesetJurisdiction: string | null, driveLimitMs: number, shiftLimitMs: number, cycleLimitMs: number, breakLimitMs: number, recordedAt: number }> };
+
+export type WorkerHosStateQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type WorkerHosStateQuery = { workerHosState: { workerId: string, workerName: string, provider: string, providerDriverId: string, dutyStatus: string | null, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, cycleTomorrowMs: number, breakRemainingMs: number, cycleStartedAt: number | null, shiftDrivingViolationMs: number, cycleViolationMs: number, currentVehicleId: string | null, currentTractorId: string | null, rulesetCycle: string | null, rulesetShift: string | null, rulesetJurisdiction: string | null, driveLimitMs: number, shiftLimitMs: number, cycleLimitMs: number, breakLimitMs: number, recordedAt: number } | null };
+
+export type WorkerHosViolationsQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  since?: number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type WorkerHosViolationsQuery = { workerHosViolations: Array<{ workerId: string, violationType: string, description: string | null, durationMs: number, violationStartAt: number, dayStartAt: number | null, dayEndAt: number | null, detectedAt: number }> };
+
+export type TelematicsStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TelematicsStatusQuery = { telematicsStatus: { provider: string, enabled: boolean, configured: boolean, webhookConfigured: boolean, lastPolledAt: number | null, lastSuccessAt: number | null, failureCount: number, lastError: string | null, mappedTractors: number, totalTractors: number, mappedWorkers: number } };
+
+export type WorkerHosLogsQueryVariables = Exact<{
+  workerId: string | number;
+  startTime: number;
+  endTime: number;
+}>;
+
+
+export type WorkerHosLogsQuery = { workerHosLogs: Array<{ hosStatusType: string, logStartAt: number, logEndAt: number | null, remark: string | null, vehicleId: string | null, vehicleName: string | null, latitude: number | null, longitude: number | null, codrivers: Array<string> | null }> };
+
+export type WorkerHosDailyLogsQueryVariables = Exact<{
+  workerId: string | number;
+  startDate: string;
+  endDate: string;
+}>;
+
+
+export type WorkerHosDailyLogsQuery = { workerHosDailyLogs: Array<{ startAt: number, endAt: number, driveDistanceMeters: number, activeDurationMs: number, driveDurationMs: number, onDutyDurationMs: number, offDutyDurationMs: number, sleeperBerthDurationMs: number, personalConveyanceDurationMs: number, yardMoveDurationMs: number, isCertified: boolean, certifiedAt: number | null, shippingDocs: string | null, vehicleNames: Array<string> | null }> };
+
+export type ShipmentDriverFeasibilityQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentDriverFeasibilityQuery = { shipmentDriverFeasibility: Array<{ workerId: string, workerName: string, dutyStatus: string | null, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, deadheadMiles: number | null, estimatedDriveMs: number, verdict: string, reasons: Array<string>, tractorId: string | null, tractorCode: string | null, recordedAt: number }> };
+
+export type VehicleInspectionsQueryVariables = Exact<{
+  tractorId?: string | number | null | undefined;
+  workerId?: string | number | null | undefined;
+  since?: number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type VehicleInspectionsQuery = { vehicleInspections: Array<{ id: string, provider: string, inspectionType: string, safetyStatus: string, tractorId: string | null, workerId: string | null, workerName: string | null, startedAt: number, endedAt: number, odometerMeters: number | null, location: string | null, signed: boolean, defectCount: number, unresolvedDefectCount: number, defects: unknown }> };
+
+export type WorkerFormSubmissionsQueryVariables = Exact<{
+  workerId: string | number;
+  startTime: number;
+  endTime: number;
+}>;
+
+
+export type WorkerFormSubmissionsQuery = { workerFormSubmissions: Array<{ id: string, templateId: string, templateName: string, submittedAt: number, fields: Array<{ label: string, value: string }> }> };
+
+export type HosCertificationSummaryQueryVariables = Exact<{
+  startDate: string;
+  endDate: string;
+}>;
+
+
+export type HosCertificationSummaryQuery = { hosCertificationSummary: Array<{ workerId: string, workerName: string, uncertifiedDays: number, totalDays: number }> };
+
+export type ShipmentFormSubmissionsQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentFormSubmissionsQuery = { shipmentFormSubmissions: Array<{ id: string, provider: string, templateId: string, templateName: string, workerId: string | null, workerName: string, shipmentId: string | null, stopId: string | null, submittedAt: number, applied: boolean, appliedFields: number, fields: Array<{ label: string, type: string, value: string }> }> };
+
+export type TelematicsFormMappingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TelematicsFormMappingsQuery = { telematicsFormMappings: Array<{ id: string, provider: string, templateId: string, templateName: string, name: string, description: string, enabled: boolean, version: number, items: Array<{ id: string, sourceFieldLabel: string, targetKind: string, targetField: string, targetCustomFieldKey: string }> }> };
+
+export type SaveTelematicsFormMappingMutationVariables = Exact<{
+  input: SaveTelematicsFormMappingInput;
+}>;
+
+
+export type SaveTelematicsFormMappingMutation = { saveTelematicsFormMapping: { id: string, name: string } };
+
+export type DeleteTelematicsFormMappingMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteTelematicsFormMappingMutation = { deleteTelematicsFormMapping: boolean };
 
 export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
 
@@ -5382,6 +5535,7 @@ export const TractorTableRowFieldsFragmentDoc = new TypedDocumentString(`
   registrationNumber
   registrationExpiry
   vin
+  externalId
   lastKnownLocationId
   lastKnownLocationName
   version
@@ -5448,6 +5602,7 @@ export const TrailerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   year
   licensePlateNumber
   vin
+  externalId
   registrationNumber
   maxLoadWeight
   lastInspectionDate
@@ -9450,6 +9605,61 @@ export const MyPortalFeaturesDocument = new TypedDocumentString(`
   }
 }
     `, {"hash":"sha256:dce4827f759a822d4b074209578feb2d3f12294a2fb26e9d0184fd89c8183571"}) as unknown as TypedDocumentString<MyPortalFeaturesQuery, MyPortalFeaturesQueryVariables>;
+export const MyHosStateDocument = new TypedDocumentString(`
+    query MyHosState {
+  myHosState {
+    workerId
+    workerName
+    provider
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    currentVehicleId
+    rulesetCycle
+    rulesetShift
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+    `, {"hash":"sha256:c1834d0c849a7849f22da9cae7f0c1da9d78e6d9327007af8e1069447be19ba6"}) as unknown as TypedDocumentString<MyHosStateQuery, MyHosStateQueryVariables>;
+export const MyHosDailyLogsDocument = new TypedDocumentString(`
+    query MyHosDailyLogs($startDate: String!, $endDate: String!) {
+  myHosDailyLogs(startDate: $startDate, endDate: $endDate) {
+    startAt
+    endAt
+    driveDistanceMeters
+    driveDurationMs
+    onDutyDurationMs
+    offDutyDurationMs
+    sleeperBerthDurationMs
+    isCertified
+    certifiedAt
+    shippingDocs
+    vehicleNames
+  }
+}
+    `, {"hash":"sha256:9f6e740bf1e3561177b847ebf0a2d747cdd8485cdd8e8a6aacfce1b68c44b17b"}) as unknown as TypedDocumentString<MyHosDailyLogsQuery, MyHosDailyLogsQueryVariables>;
+export const MyHosViolationsDocument = new TypedDocumentString(`
+    query MyHosViolations($since: Int) {
+  myHosViolations(since: $since) {
+    workerId
+    violationType
+    description
+    durationMs
+    violationStartAt
+    detectedAt
+  }
+}
+    `, {"hash":"sha256:77de7aa6351424cded15e8965f181e87e627359088bf662610de7ef0337f5486"}) as unknown as TypedDocumentString<MyHosViolationsQuery, MyHosViolationsQueryVariables>;
 export const PayProfileTableDocument = new TypedDocumentString(`
     query PayProfileTable($input: DataTableConnectionInput!) {
   payProfiles(input: $input) {
@@ -11145,6 +11355,7 @@ fragment TractorTableRowFields on Tractor {
   registrationNumber
   registrationExpiry
   vin
+  externalId
   lastKnownLocationId
   lastKnownLocationName
   version
@@ -11169,7 +11380,7 @@ fragment TractorTableRowFields on Tractor {
   secondaryWorker {
     ...WorkerTableReferenceFields
   }
-}`, {"hash":"sha256:221694538edc13a9273b326e0a39921877c7dbd0af16166a2415150aadc1c61e"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
+}`, {"hash":"sha256:84002d01d1de34c81a5fe5513a8454924a54f83bd096a83c3fff6e33ee3ee10d"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
 export const TrailerTableDocument = new TypedDocumentString(`
     query TrailerTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true) {
   trailers(
@@ -11226,6 +11437,7 @@ fragment TrailerTableRowFields on Trailer {
   year
   licensePlateNumber
   vin
+  externalId
   registrationNumber
   maxLoadWeight
   lastInspectionDate
@@ -11248,7 +11460,7 @@ fragment TrailerTableRowFields on Trailer {
   registrationState {
     ...UsStateTableFields
   }
-}`, {"hash":"sha256:a03e38be977d09fb8f9c421a646adde0cf7b54ed10970765f43e353ca61ae4fe"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
+}`, {"hash":"sha256:dd7b3f97ad124f045bb9702e1f7805f966f9f8bd74752157392623e700f13705"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
 export const EquipmentTypeTableDocument = new TypedDocumentString(`
     query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {
   equipmentTypes(input: $input, classes: $classes) {
@@ -17772,6 +17984,285 @@ export const SetOrgDefaultTableConfigurationDocument = new TypedDocumentString(`
     profilePicUrl
   }
 }`, {"hash":"sha256:739270b19dc50a3d42f57caf1791f4dc556c4b51547b84eef44000bceb25aadc"}) as unknown as TypedDocumentString<SetOrgDefaultTableConfigurationMutation, SetOrgDefaultTableConfigurationMutationVariables>;
+export const VehiclePositionsDocument = new TypedDocumentString(`
+    query VehiclePositions($maxAgeSeconds: Int) {
+  vehiclePositions(maxAgeSeconds: $maxAgeSeconds) {
+    tractorId
+    tractorCode
+    provider
+    providerVehicleId
+    latitude
+    longitude
+    headingDegrees
+    speedMph
+    engineState
+    fuelPercent
+    odometerMeters
+    formattedLocation
+    recordedAt
+    receivedAt
+    primaryWorkerId
+    primaryWorkerName
+  }
+}
+    `, {"hash":"sha256:1ea010c608c8a6a56a22bdb956c0b3456a84a178dbd0b26b546394151f2643b7"}) as unknown as TypedDocumentString<VehiclePositionsQuery, VehiclePositionsQueryVariables>;
+export const WorkerHosStatesDocument = new TypedDocumentString(`
+    query WorkerHosStates($workerIds: [ID!], $limit: Int) {
+  workerHosStates(workerIds: $workerIds, limit: $limit) {
+    workerId
+    workerName
+    provider
+    providerDriverId
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    currentVehicleId
+    currentTractorId
+    rulesetCycle
+    rulesetShift
+    rulesetJurisdiction
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+    `, {"hash":"sha256:e993196b73825d21c3252bd8ab5924aa96894e77dfbff5a79ff2c27b82ce94c9"}) as unknown as TypedDocumentString<WorkerHosStatesQuery, WorkerHosStatesQueryVariables>;
+export const WorkerHosStateDocument = new TypedDocumentString(`
+    query WorkerHosState($workerId: ID!) {
+  workerHosState(workerId: $workerId) {
+    workerId
+    workerName
+    provider
+    providerDriverId
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    currentVehicleId
+    currentTractorId
+    rulesetCycle
+    rulesetShift
+    rulesetJurisdiction
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+    `, {"hash":"sha256:cc49820a722034cd85add21c54f6a0f71735ab5ee21b8fda9bb4fa168950b241"}) as unknown as TypedDocumentString<WorkerHosStateQuery, WorkerHosStateQueryVariables>;
+export const WorkerHosViolationsDocument = new TypedDocumentString(`
+    query WorkerHosViolations($workerId: ID, $since: Int, $limit: Int) {
+  workerHosViolations(workerId: $workerId, since: $since, limit: $limit) {
+    workerId
+    violationType
+    description
+    durationMs
+    violationStartAt
+    dayStartAt
+    dayEndAt
+    detectedAt
+  }
+}
+    `, {"hash":"sha256:ee2a598250f4b838d31576f9a6f84d7b3f0cc627a0685ba4a8277b7772fc7481"}) as unknown as TypedDocumentString<WorkerHosViolationsQuery, WorkerHosViolationsQueryVariables>;
+export const TelematicsStatusDocument = new TypedDocumentString(`
+    query TelematicsStatus {
+  telematicsStatus {
+    provider
+    enabled
+    configured
+    webhookConfigured
+    lastPolledAt
+    lastSuccessAt
+    failureCount
+    lastError
+    mappedTractors
+    totalTractors
+    mappedWorkers
+  }
+}
+    `, {"hash":"sha256:1d9495578b6b9b5df107368f4aa3a8dd865e9206d2783973300edad4ae0e41ea"}) as unknown as TypedDocumentString<TelematicsStatusQuery, TelematicsStatusQueryVariables>;
+export const WorkerHosLogsDocument = new TypedDocumentString(`
+    query WorkerHosLogs($workerId: ID!, $startTime: Int!, $endTime: Int!) {
+  workerHosLogs(workerId: $workerId, startTime: $startTime, endTime: $endTime) {
+    hosStatusType
+    logStartAt
+    logEndAt
+    remark
+    vehicleId
+    vehicleName
+    latitude
+    longitude
+    codrivers
+  }
+}
+    `, {"hash":"sha256:5e79dbd654930332be8bfa379edd7517caa5704ea4c95828a728de2990b86441"}) as unknown as TypedDocumentString<WorkerHosLogsQuery, WorkerHosLogsQueryVariables>;
+export const WorkerHosDailyLogsDocument = new TypedDocumentString(`
+    query WorkerHosDailyLogs($workerId: ID!, $startDate: String!, $endDate: String!) {
+  workerHosDailyLogs(
+    workerId: $workerId
+    startDate: $startDate
+    endDate: $endDate
+  ) {
+    startAt
+    endAt
+    driveDistanceMeters
+    activeDurationMs
+    driveDurationMs
+    onDutyDurationMs
+    offDutyDurationMs
+    sleeperBerthDurationMs
+    personalConveyanceDurationMs
+    yardMoveDurationMs
+    isCertified
+    certifiedAt
+    shippingDocs
+    vehicleNames
+  }
+}
+    `, {"hash":"sha256:afb2b821da02a2d1299a5244e45e4d69fa3fca98fc85b75a166d75f02f348620"}) as unknown as TypedDocumentString<WorkerHosDailyLogsQuery, WorkerHosDailyLogsQueryVariables>;
+export const ShipmentDriverFeasibilityDocument = new TypedDocumentString(`
+    query ShipmentDriverFeasibility($shipmentId: ID!) {
+  shipmentDriverFeasibility(shipmentId: $shipmentId) {
+    workerId
+    workerName
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    deadheadMiles
+    estimatedDriveMs
+    verdict
+    reasons
+    tractorId
+    tractorCode
+    recordedAt
+  }
+}
+    `, {"hash":"sha256:fdb4def530fa43a2a133da4ed4fc2520176f2f85cec98b87c6757cc39bd37ba8"}) as unknown as TypedDocumentString<ShipmentDriverFeasibilityQuery, ShipmentDriverFeasibilityQueryVariables>;
+export const VehicleInspectionsDocument = new TypedDocumentString(`
+    query VehicleInspections($tractorId: ID, $workerId: ID, $since: Int, $limit: Int) {
+  vehicleInspections(
+    tractorId: $tractorId
+    workerId: $workerId
+    since: $since
+    limit: $limit
+  ) {
+    id
+    provider
+    inspectionType
+    safetyStatus
+    tractorId
+    workerId
+    workerName
+    startedAt
+    endedAt
+    odometerMeters
+    location
+    signed
+    defectCount
+    unresolvedDefectCount
+    defects
+  }
+}
+    `, {"hash":"sha256:84120b78452541b137a1c8e98a006c3c5ca9da17e358439d216ab42f9e993e8f"}) as unknown as TypedDocumentString<VehicleInspectionsQuery, VehicleInspectionsQueryVariables>;
+export const WorkerFormSubmissionsDocument = new TypedDocumentString(`
+    query WorkerFormSubmissions($workerId: ID!, $startTime: Int!, $endTime: Int!) {
+  workerFormSubmissions(
+    workerId: $workerId
+    startTime: $startTime
+    endTime: $endTime
+  ) {
+    id
+    templateId
+    templateName
+    submittedAt
+    fields {
+      label
+      value
+    }
+  }
+}
+    `, {"hash":"sha256:ee9b934a702945fa5264fe619e5227c5312444776eabbe122e12a46626c35385"}) as unknown as TypedDocumentString<WorkerFormSubmissionsQuery, WorkerFormSubmissionsQueryVariables>;
+export const HosCertificationSummaryDocument = new TypedDocumentString(`
+    query HosCertificationSummary($startDate: String!, $endDate: String!) {
+  hosCertificationSummary(startDate: $startDate, endDate: $endDate) {
+    workerId
+    workerName
+    uncertifiedDays
+    totalDays
+  }
+}
+    `, {"hash":"sha256:5ef397ad8ab2cda3c54bdfb4972f31a59a23254d83eaf9cf1bd373d3a6250ac9"}) as unknown as TypedDocumentString<HosCertificationSummaryQuery, HosCertificationSummaryQueryVariables>;
+export const ShipmentFormSubmissionsDocument = new TypedDocumentString(`
+    query ShipmentFormSubmissions($shipmentId: ID!) {
+  shipmentFormSubmissions(shipmentId: $shipmentId) {
+    id
+    provider
+    templateId
+    templateName
+    workerId
+    workerName
+    shipmentId
+    stopId
+    submittedAt
+    applied
+    appliedFields
+    fields {
+      label
+      type
+      value
+    }
+  }
+}
+    `, {"hash":"sha256:e12871be510b7dfe523e84064a1bc8275664174502694f53ce189baffb0544b6"}) as unknown as TypedDocumentString<ShipmentFormSubmissionsQuery, ShipmentFormSubmissionsQueryVariables>;
+export const TelematicsFormMappingsDocument = new TypedDocumentString(`
+    query TelematicsFormMappings {
+  telematicsFormMappings {
+    id
+    provider
+    templateId
+    templateName
+    name
+    description
+    enabled
+    version
+    items {
+      id
+      sourceFieldLabel
+      targetKind
+      targetField
+      targetCustomFieldKey
+    }
+  }
+}
+    `, {"hash":"sha256:93efe56f6c97c1f71dfc6b2194bc7218d22a6cb0394af546447cf262a85546e6"}) as unknown as TypedDocumentString<TelematicsFormMappingsQuery, TelematicsFormMappingsQueryVariables>;
+export const SaveTelematicsFormMappingDocument = new TypedDocumentString(`
+    mutation SaveTelematicsFormMapping($input: SaveTelematicsFormMappingInput!) {
+  saveTelematicsFormMapping(input: $input) {
+    id
+    name
+  }
+}
+    `, {"hash":"sha256:4d1161b463a6581182544db2f8fff4d6006221c9955cbf2dcedac8f1b939aa76"}) as unknown as TypedDocumentString<SaveTelematicsFormMappingMutation, SaveTelematicsFormMappingMutationVariables>;
+export const DeleteTelematicsFormMappingDocument = new TypedDocumentString(`
+    mutation DeleteTelematicsFormMapping($id: ID!) {
+  deleteTelematicsFormMapping(id: $id)
+}
+    `, {"hash":"sha256:40eca474cafce94d59c9ce91ea624bdb51a477fa552b3f43e0a773c64fd39baf"}) as unknown as TypedDocumentString<DeleteTelematicsFormMappingMutation, DeleteTelematicsFormMappingMutationVariables>;
 export const UserTableDocument = new TypedDocumentString(`
     query UserTable($input: DataTableConnectionInput!) {
   users(input: $input) {

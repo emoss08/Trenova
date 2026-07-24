@@ -9,6 +9,7 @@ import {
   formatCurrency,
   formatLocation,
   initials,
+  metersToMiles,
 } from "@trenova/shared/lib/utils";
 import { afterEach, vi } from "vitest";
 
@@ -94,6 +95,20 @@ describe("pluralize", () => {
 
   it("returns plural when count is 2", () => {
     expect(pluralize("item", 2)).toBe("items");
+  });
+});
+
+describe("metersToMiles", () => {
+  it("converts one mile worth of meters", () => {
+    expect(metersToMiles(1609.344)).toBe(1);
+  });
+
+  it("returns 0 for 0 meters", () => {
+    expect(metersToMiles(0)).toBe(0);
+  });
+
+  it("converts fractional distances", () => {
+    expect(metersToMiles(804.672)).toBeCloseTo(0.5, 10);
   });
 });
 

@@ -67,6 +67,7 @@ const NOW_TICK_MS = 60_000;
 
 type PendingAssignment = {
   moveId: string;
+  shipmentId: string | null;
   existingAssignment: TimelineBar["assignment"];
   prefill: Partial<AssignmentPayload> | null;
 };
@@ -290,6 +291,7 @@ export default function CommandCenterTimeline({
 
     setPendingAssignment({
       moveId: bar.moveId,
+      shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
       prefill: { primaryWorkerId: row.key },
     });
@@ -333,6 +335,7 @@ export default function CommandCenterTimeline({
     setSelectedBar(null);
     setPendingAssignment({
       moveId: bar.moveId,
+      shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
       prefill: null,
     });
@@ -539,6 +542,7 @@ export default function CommandCenterTimeline({
           open
           onOpenChange={(open) => !open && setPendingAssignment(null)}
           moveId={pendingAssignment.moveId}
+          shipmentId={pendingAssignment.shipmentId}
           existingAssignment={pendingAssignment.existingAssignment}
           prefill={pendingAssignment.prefill}
           onAssigned={() => setPendingAssignment(null)}

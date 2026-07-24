@@ -96,8 +96,14 @@ type ServiceFailureReasonCodeRepository interface {
 		tenantInfo pagination.TenantInfo,
 		appliesTo servicefailure.ReasonCodeAppliesTo,
 	) (*servicefailure.ReasonCode, error)
-	Create(ctx context.Context, entity *servicefailure.ReasonCode) (*servicefailure.ReasonCode, error)
-	Update(ctx context.Context, entity *servicefailure.ReasonCode) (*servicefailure.ReasonCode, error)
+	Create(
+		ctx context.Context,
+		entity *servicefailure.ReasonCode,
+	) (*servicefailure.ReasonCode, error)
+	Update(
+		ctx context.Context,
+		entity *servicefailure.ReasonCode,
+	) (*servicefailure.ReasonCode, error)
 	Archive(
 		ctx context.Context,
 		id pulid.ID,

@@ -6,9 +6,45 @@ type FormTemplate = samsaraspec.FormTemplateResponseObjectResponseBody
 
 type FormSubmission = samsaraspec.FormSubmissionResponseObjectResponseBody
 
+type FormField = samsaraspec.FormsFieldInputObjectResponseBody
+
+type FieldType = samsaraspec.FormsFieldInputObjectResponseBodyType
+
+type FieldTextValue = samsaraspec.FormsTextValueObjectResponseBody
+
+type FieldNumberValue = samsaraspec.FormsNumberValueObjectResponseBody
+
+type FieldMultipleChoiceValue = samsaraspec.FormsMultipleChoiceValueObjectResponseBody
+
+type FieldCheckBoxesValue = samsaraspec.FormsCheckBoxesValueObjectResponseBody
+
+type FieldDateTimeValue = samsaraspec.FormsDateTimeValueObjectResponseBody
+
+type FieldSignatureValue = samsaraspec.FormsSignatureValueObjectResponseBody
+
+type FieldMediaValue = samsaraspec.FormsMediaValueObjectResponseBody
+
+type FieldAssetValue = samsaraspec.FormsAssetValueObjectResponseBody
+
+type FieldPersonValue = samsaraspec.FormsPersonValueObjectResponseBody
+
+type FieldGeofenceValue = samsaraspec.FormsGeofenceValueObjectResponseBody
+
+type FieldTableValue = samsaraspec.FormsTableValueObjectResponseBody
+
+type MediaRecord = samsaraspec.FormsMediaRecordObjectResponseBody
+
+type PolymorphicUser = samsaraspec.FormsPolymorphicUserObjectResponseBody
+
+type TemplateReference = samsaraspec.FormTemplateReferenceObjectResponseBody
+
+type SubmissionLocation = samsaraspec.FormsLocationObjectResponseBody
+
 type TemplateListResponse = samsaraspec.FormTemplatesGetFormTemplatesResponseBody
 
 type SubmissionListResponse = samsaraspec.FormSubmissionsGetFormSubmissionsResponseBody
+
+type SubmissionStreamResponse = samsaraspec.FormSubmissionsGetFormSubmissionsStreamResponseBody
 
 type CreateSubmissionRequest = samsaraspec.FormSubmissionsPostFormSubmissionRequestBody
 

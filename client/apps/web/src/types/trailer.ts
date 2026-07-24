@@ -45,6 +45,7 @@ export const trailerSchema = z.object({
     }),
   licensePlateNumber: optionalStringSchema,
   vin: optionalStringSchema,
+  externalId: optionalStringSchema.default(""),
   registrationNumber: optionalStringSchema,
   maxLoadWeight: nullableIntegerSchema,
   lastInspectionDate: nullableIntegerSchema,
@@ -52,10 +53,10 @@ export const trailerSchema = z.object({
   lastKnownLocationId: nullableStringSchema,
   lastKnownLocationName: optionalStringSchema,
 
-  equipmentType: equipmentTypeSchema.nullish(),
-  equipmentManufacturer: equipmentManufacturerSchema.nullish(),
-  fleetCode: fleetCodeSchema.nullish(),
-  registrationState: usStateSchema.nullish(),
+  equipmentType: equipmentTypeSchema.partial().nullish(),
+  equipmentManufacturer: equipmentManufacturerSchema.partial().nullish(),
+  fleetCode: fleetCodeSchema.partial().nullish(),
+  registrationState: usStateSchema.partial().nullish(),
   customFields: z.record(z.string(), z.any()).optional(),
 });
 
@@ -66,15 +67,11 @@ export const bulkUpdateTrailerStatusRequestSchema = z.object({
   status: equipmentStatusSchema,
 });
 
-export type BulkUpdateTrailerStatusRequest = z.infer<
-  typeof bulkUpdateTrailerStatusRequestSchema
->;
+export type BulkUpdateTrailerStatusRequest = z.infer<typeof bulkUpdateTrailerStatusRequestSchema>;
 
 export const bulkUpdateTrailerStatusResponseSchema = z.array(trailerSchema);
 
-export type BulkUpdateTrailerStatusResponse = z.infer<
-  typeof bulkUpdateTrailerStatusResponseSchema
->;
+export type BulkUpdateTrailerStatusResponse = z.infer<typeof bulkUpdateTrailerStatusResponseSchema>;
 
 export const locateTrailerPayloadSchema = z.object({
   newLocationId: z.string().min(1, { message: "Location is required" }),

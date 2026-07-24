@@ -562,6 +562,22 @@ type DriverExpenseEdge struct {
 	Cursor string             `json:"cursor"`
 }
 
+type DriverFeasibility struct {
+	WorkerID         string   `json:"workerId"`
+	WorkerName       string   `json:"workerName"`
+	DutyStatus       *string  `json:"dutyStatus,omitempty"`
+	DriveRemainingMs int      `json:"driveRemainingMs"`
+	ShiftRemainingMs int      `json:"shiftRemainingMs"`
+	CycleRemainingMs int      `json:"cycleRemainingMs"`
+	DeadheadMiles    *float64 `json:"deadheadMiles,omitempty"`
+	EstimatedDriveMs int      `json:"estimatedDriveMs"`
+	Verdict          string   `json:"verdict"`
+	Reasons          []string `json:"reasons"`
+	TractorID        *string  `json:"tractorId,omitempty"`
+	TractorCode      *string  `json:"tractorCode,omitempty"`
+	RecordedAt       int      `json:"recordedAt"`
+}
+
 type DriverPayEventConnection struct {
 	Edges      []*DriverPayEventEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
@@ -875,6 +891,11 @@ type ForkCannedReportInput struct {
 	Name      *string `json:"name,omitempty"`
 }
 
+type FormSubmissionField struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
 type FormulaTemplateConnection struct {
 	Edges      []*FormulaTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -1145,6 +1166,13 @@ type HoldReasonConnection struct {
 type HoldReasonEdge struct {
 	Node   *holdreason.HoldReason `json:"node"`
 	Cursor string                 `json:"cursor"`
+}
+
+type HosCertificationSummary struct {
+	WorkerID        string `json:"workerId"`
+	WorkerName      string `json:"workerName"`
+	UncertifiedDays int    `json:"uncertifiedDays"`
+	TotalDays       int    `json:"totalDays"`
 }
 
 type InviteWorkerToPortalInput struct {
@@ -1822,6 +1850,18 @@ type SaveReportDefinitionInput struct {
 	Status        *string        `json:"status,omitempty"`
 	DefaultFormat *string        `json:"defaultFormat,omitempty"`
 	Definition    *ReportIRInput `json:"definition"`
+}
+
+type SaveTelematicsFormMappingInput struct {
+	ID           *string                           `json:"id,omitempty"`
+	Provider     *string                           `json:"provider,omitempty"`
+	TemplateID   string                            `json:"templateId"`
+	TemplateName *string                           `json:"templateName,omitempty"`
+	Name         string                            `json:"name"`
+	Description  *string                           `json:"description,omitempty"`
+	Enabled      bool                              `json:"enabled"`
+	Version      *int                              `json:"version,omitempty"`
+	Items        []*TelematicsFormMappingItemInput `json:"items"`
 }
 
 type SelectOption struct {
@@ -3028,6 +3068,68 @@ type TableConfigurationPatchInput struct {
 	IsDefault   graphql.Omittable[*bool]       `json:"isDefault,omitempty"`
 }
 
+type TelematicsFormFieldValue struct {
+	Label string `json:"label"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+type TelematicsFormMapping struct {
+	ID           string                       `json:"id"`
+	Provider     string                       `json:"provider"`
+	TemplateID   string                       `json:"templateId"`
+	TemplateName string                       `json:"templateName"`
+	Name         string                       `json:"name"`
+	Description  string                       `json:"description"`
+	Enabled      bool                         `json:"enabled"`
+	Version      int                          `json:"version"`
+	Items        []*TelematicsFormMappingItem `json:"items"`
+}
+
+type TelematicsFormMappingItem struct {
+	ID                   string `json:"id"`
+	SourceFieldLabel     string `json:"sourceFieldLabel"`
+	TargetKind           string `json:"targetKind"`
+	TargetField          string `json:"targetField"`
+	TargetCustomFieldKey string `json:"targetCustomFieldKey"`
+}
+
+type TelematicsFormMappingItemInput struct {
+	SourceFieldLabel     string  `json:"sourceFieldLabel"`
+	TargetKind           string  `json:"targetKind"`
+	TargetField          *string `json:"targetField,omitempty"`
+	TargetCustomFieldKey *string `json:"targetCustomFieldKey,omitempty"`
+}
+
+type TelematicsFormSubmission struct {
+	ID            string                      `json:"id"`
+	Provider      string                      `json:"provider"`
+	TemplateID    string                      `json:"templateId"`
+	TemplateName  string                      `json:"templateName"`
+	WorkerID      *string                     `json:"workerId,omitempty"`
+	WorkerName    string                      `json:"workerName"`
+	ShipmentID    *string                     `json:"shipmentId,omitempty"`
+	StopID        *string                     `json:"stopId,omitempty"`
+	SubmittedAt   int                         `json:"submittedAt"`
+	Applied       bool                        `json:"applied"`
+	AppliedFields int                         `json:"appliedFields"`
+	Fields        []*TelematicsFormFieldValue `json:"fields"`
+}
+
+type TelematicsStatus struct {
+	Provider          string  `json:"provider"`
+	Enabled           bool    `json:"enabled"`
+	Configured        bool    `json:"configured"`
+	WebhookConfigured bool    `json:"webhookConfigured"`
+	LastPolledAt      *int    `json:"lastPolledAt,omitempty"`
+	LastSuccessAt     *int    `json:"lastSuccessAt,omitempty"`
+	FailureCount      int     `json:"failureCount"`
+	LastError         *string `json:"lastError,omitempty"`
+	MappedTractors    int     `json:"mappedTractors"`
+	TotalTractors     int     `json:"totalTractors"`
+	MappedWorkers     int     `json:"mappedWorkers"`
+}
+
 type TractorConnection struct {
 	Edges      []*TractorEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -3055,6 +3157,7 @@ type TractorInput struct {
 	RegistrationNumber      *string                      `json:"registrationNumber,omitempty"`
 	RegistrationExpiry      *int                         `json:"registrationExpiry,omitempty"`
 	Vin                     *string                      `json:"vin,omitempty"`
+	ExternalID              *string                      `json:"externalId,omitempty"`
 	Version                 *int                         `json:"version,omitempty"`
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
 }
@@ -3075,6 +3178,7 @@ type TractorPatchInput struct {
 	RegistrationNumber      *string                      `json:"registrationNumber,omitempty"`
 	RegistrationExpiry      *int                         `json:"registrationExpiry,omitempty"`
 	Vin                     *string                      `json:"vin,omitempty"`
+	ExternalID              *string                      `json:"externalId,omitempty"`
 	Version                 *int                         `json:"version,omitempty"`
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
 }
@@ -3102,6 +3206,7 @@ type TrailerInput struct {
 	Year                    *int                         `json:"year,omitempty"`
 	LicensePlateNumber      *string                      `json:"licensePlateNumber,omitempty"`
 	Vin                     *string                      `json:"vin,omitempty"`
+	ExternalID              *string                      `json:"externalId,omitempty"`
 	RegistrationNumber      *string                      `json:"registrationNumber,omitempty"`
 	MaxLoadWeight           *int                         `json:"maxLoadWeight,omitempty"`
 	LastInspectionDate      *int                         `json:"lastInspectionDate,omitempty"`
@@ -3122,6 +3227,7 @@ type TrailerPatchInput struct {
 	Year                    *int                         `json:"year,omitempty"`
 	LicensePlateNumber      *string                      `json:"licensePlateNumber,omitempty"`
 	Vin                     *string                      `json:"vin,omitempty"`
+	ExternalID              *string                      `json:"externalId,omitempty"`
 	RegistrationNumber      *string                      `json:"registrationNumber,omitempty"`
 	MaxLoadWeight           *int                         `json:"maxLoadWeight,omitempty"`
 	LastInspectionDate      *int                         `json:"lastInspectionDate,omitempty"`
@@ -3306,6 +3412,43 @@ type UserEdge struct {
 	Cursor string       `json:"cursor"`
 }
 
+type VehicleInspection struct {
+	ID                    string  `json:"id"`
+	Provider              string  `json:"provider"`
+	InspectionType        string  `json:"inspectionType"`
+	SafetyStatus          string  `json:"safetyStatus"`
+	TractorID             *string `json:"tractorId,omitempty"`
+	WorkerID              *string `json:"workerId,omitempty"`
+	WorkerName            *string `json:"workerName,omitempty"`
+	StartedAt             int     `json:"startedAt"`
+	EndedAt               int     `json:"endedAt"`
+	OdometerMeters        *int    `json:"odometerMeters,omitempty"`
+	Location              *string `json:"location,omitempty"`
+	Signed                bool    `json:"signed"`
+	DefectCount           int     `json:"defectCount"`
+	UnresolvedDefectCount int     `json:"unresolvedDefectCount"`
+	Defects               any     `json:"defects,omitempty"`
+}
+
+type VehiclePosition struct {
+	TractorID         string   `json:"tractorId"`
+	TractorCode       string   `json:"tractorCode"`
+	Provider          string   `json:"provider"`
+	ProviderVehicleID string   `json:"providerVehicleId"`
+	Latitude          float64  `json:"latitude"`
+	Longitude         float64  `json:"longitude"`
+	HeadingDegrees    float64  `json:"headingDegrees"`
+	SpeedMph          float64  `json:"speedMph"`
+	EngineState       *string  `json:"engineState,omitempty"`
+	FuelPercent       *float64 `json:"fuelPercent,omitempty"`
+	OdometerMeters    *int     `json:"odometerMeters,omitempty"`
+	FormattedLocation *string  `json:"formattedLocation,omitempty"`
+	RecordedAt        int      `json:"recordedAt"`
+	ReceivedAt        int      `json:"receivedAt"`
+	PrimaryWorkerID   *string  `json:"primaryWorkerId,omitempty"`
+	PrimaryWorkerName *string  `json:"primaryWorkerName,omitempty"`
+}
+
 type WorkerConnection struct {
 	Edges      []*WorkerEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
@@ -3315,6 +3458,80 @@ type WorkerConnection struct {
 type WorkerEdge struct {
 	Node   *worker.Worker `json:"node"`
 	Cursor string         `json:"cursor"`
+}
+
+type WorkerFormSubmission struct {
+	ID           string                 `json:"id"`
+	TemplateID   string                 `json:"templateId"`
+	TemplateName string                 `json:"templateName"`
+	SubmittedAt  int                    `json:"submittedAt"`
+	Fields       []*FormSubmissionField `json:"fields"`
+}
+
+type WorkerHosDailyLog struct {
+	StartAt                      int      `json:"startAt"`
+	EndAt                        int      `json:"endAt"`
+	DriveDistanceMeters          int      `json:"driveDistanceMeters"`
+	ActiveDurationMs             int      `json:"activeDurationMs"`
+	DriveDurationMs              int      `json:"driveDurationMs"`
+	OnDutyDurationMs             int      `json:"onDutyDurationMs"`
+	OffDutyDurationMs            int      `json:"offDutyDurationMs"`
+	SleeperBerthDurationMs       int      `json:"sleeperBerthDurationMs"`
+	PersonalConveyanceDurationMs int      `json:"personalConveyanceDurationMs"`
+	YardMoveDurationMs           int      `json:"yardMoveDurationMs"`
+	IsCertified                  bool     `json:"isCertified"`
+	CertifiedAt                  *int     `json:"certifiedAt,omitempty"`
+	ShippingDocs                 *string  `json:"shippingDocs,omitempty"`
+	VehicleNames                 []string `json:"vehicleNames,omitempty"`
+}
+
+type WorkerHosLogEntry struct {
+	HosStatusType string   `json:"hosStatusType"`
+	LogStartAt    int      `json:"logStartAt"`
+	LogEndAt      *int     `json:"logEndAt,omitempty"`
+	Remark        *string  `json:"remark,omitempty"`
+	VehicleID     *string  `json:"vehicleId,omitempty"`
+	VehicleName   *string  `json:"vehicleName,omitempty"`
+	Latitude      *float64 `json:"latitude,omitempty"`
+	Longitude     *float64 `json:"longitude,omitempty"`
+	Codrivers     []string `json:"codrivers,omitempty"`
+}
+
+type WorkerHosState struct {
+	WorkerID                string  `json:"workerId"`
+	WorkerName              string  `json:"workerName"`
+	Provider                string  `json:"provider"`
+	ProviderDriverID        string  `json:"providerDriverId"`
+	DutyStatus              *string `json:"dutyStatus,omitempty"`
+	DriveRemainingMs        int     `json:"driveRemainingMs"`
+	ShiftRemainingMs        int     `json:"shiftRemainingMs"`
+	CycleRemainingMs        int     `json:"cycleRemainingMs"`
+	CycleTomorrowMs         int     `json:"cycleTomorrowMs"`
+	BreakRemainingMs        int     `json:"breakRemainingMs"`
+	CycleStartedAt          *int    `json:"cycleStartedAt,omitempty"`
+	ShiftDrivingViolationMs int     `json:"shiftDrivingViolationMs"`
+	CycleViolationMs        int     `json:"cycleViolationMs"`
+	CurrentVehicleID        *string `json:"currentVehicleId,omitempty"`
+	CurrentTractorID        *string `json:"currentTractorId,omitempty"`
+	RulesetCycle            *string `json:"rulesetCycle,omitempty"`
+	RulesetShift            *string `json:"rulesetShift,omitempty"`
+	RulesetJurisdiction     *string `json:"rulesetJurisdiction,omitempty"`
+	DriveLimitMs            int     `json:"driveLimitMs"`
+	ShiftLimitMs            int     `json:"shiftLimitMs"`
+	CycleLimitMs            int     `json:"cycleLimitMs"`
+	BreakLimitMs            int     `json:"breakLimitMs"`
+	RecordedAt              int     `json:"recordedAt"`
+}
+
+type WorkerHosViolation struct {
+	WorkerID         string  `json:"workerId"`
+	ViolationType    string  `json:"violationType"`
+	Description      *string `json:"description,omitempty"`
+	DurationMs       int     `json:"durationMs"`
+	ViolationStartAt int     `json:"violationStartAt"`
+	DayStartAt       *int    `json:"dayStartAt,omitempty"`
+	DayEndAt         *int    `json:"dayEndAt,omitempty"`
+	DetectedAt       int     `json:"detectedAt"`
 }
 
 type WorkerPTOChartInput struct {

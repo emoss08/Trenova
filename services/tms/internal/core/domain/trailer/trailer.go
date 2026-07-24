@@ -47,6 +47,7 @@ type Trailer struct {
 	Year                    *int                        `json:"year"                    bun:"year,type:INT,nullzero"`
 	LicensePlateNumber      string                      `json:"licensePlateNumber"      bun:"license_plate_number,type:VARCHAR(50),nullzero"`
 	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
+	ExternalID              string                      `json:"externalId"              bun:"external_id,type:TEXT,nullzero"`
 	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
 	MaxLoadWeight           *int                        `json:"maxLoadWeight"           bun:"max_load_weight,type:INT,nullzero"`
 	OwnershipType           domaintypes.OwnershipType   `json:"ownershipType"           bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`

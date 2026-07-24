@@ -3,7 +3,12 @@ import {
   TrailerAutocompleteField,
   WorkerAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -27,11 +32,13 @@ import { TriangleAlertIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { AssignmentHosFeasibility } from "./assignment-hos-feasibility";
 
 type AssignmentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   moveId: string;
+  shipmentId?: string | null;
   existingAssignment?: Assignment | null;
   /**
    * Field values that take precedence over the existing assignment when the
@@ -46,6 +53,7 @@ export function AssignmentDialog({
   open,
   onOpenChange,
   moveId,
+  shipmentId,
   existingAssignment,
   prefill,
   onAssigned,
@@ -263,6 +271,14 @@ export function AssignmentDialog({
               />
             </FormControl>
           </FormGroup>
+          <AssignmentHosFeasibility
+            open={open}
+            shipmentId={shipmentId}
+            selectedWorkerId={watchedPrimaryWorker}
+            onSelectWorker={(workerId) =>
+              setValue("primaryWorkerId", workerId, { shouldDirty: true, shouldValidate: true })
+            }
+          />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel

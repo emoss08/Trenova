@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 func (s *Server) registerFormRoutes() {
 	s.mux.HandleFunc("GET /form-templates", s.handleFormTemplateList)
 	s.mux.HandleFunc("GET /form-submissions", s.handleFormSubmissionList)
+	s.mux.HandleFunc("GET /form-submissions/stream", s.handleFormSubmissionStream)
 	s.mux.HandleFunc("POST /form-submissions", s.handleFormSubmissionCreate)
 	s.mux.HandleFunc("PATCH /form-submissions", s.handleFormSubmissionPatch)
 }
@@ -21,12 +23,16 @@ func (s *Server) registerMessageRoutes() {
 func (s *Server) registerComplianceRoutes() {
 	s.mux.HandleFunc("GET /fleet/hos/clocks", s.handleHOSClockList)
 	s.mux.HandleFunc("GET /fleet/hos/logs", s.handleHOSLogList)
+	s.mux.HandleFunc("GET /fleet/hos/daily-logs", s.handleHOSDailyLogList)
+	s.mux.HandleFunc("GET /fleet/hos/violations", s.handleHOSViolationList)
 	s.mux.HandleFunc("GET /fleet/drivers/tachograph-files/history", s.handleDriverTachograph)
 	s.mux.HandleFunc("GET /fleet/vehicles/tachograph-files/history", s.handleVehicleTachograph)
 }
 
 func (s *Server) registerVehicleRoutes() {
 	s.mux.HandleFunc("GET /fleet/vehicles/stats", s.handleVehicleStats)
+	s.mux.HandleFunc("GET /fleet/vehicles/stats/feed", s.handleVehicleStatsFeed)
+	s.mux.HandleFunc("GET /fleet/vehicles/stats/history", s.handleVehicleStatsHistory)
 }
 
 func (s *Server) registerWebhookRoutes() {
@@ -71,7 +77,20 @@ func (s *Server) handleFormSubmissionList(writer http.ResponseWriter, request *h
 		return
 	}
 
-	filtered := filterByIDs(records, idsFromQuery(request.URL.Query(), "ids"))
+	ids := idsFromQuery(request.URL.Query(), "ids")
+	now := s.simNow()
+	if s.live != nil {
+		lookback := formListDefaultLookback
+		if len(ids) > 0 {
+			lookback = formListLookupLookback
+		}
+		records = append(
+			records,
+			s.live.GeneratedFormSubmissions(now, now.Add(-lookback), now, nil, nil)...,
+		)
+	}
+
+	filtered := filterByIDs(records, ids)
 	payload := map[string]any{
 		"data": recordsAsAny(filtered),
 	}
@@ -90,7 +109,7 @@ func (s *Server) handleFormSubmissionCreate(writer http.ResponseWriter, request 
 		s.respondStoreError(writer, err)
 		return
 	}
-	s.dispatchEvent(request, "FormSubmitted", created)
+	s.dispatchEvent(request, "FormSubmitted", map[string]any{"form": created})
 
 	payload := map[string]any{"data": created}
 	s.respondJSON(writer, request, requestSignature(request)+"|form-submission-create", payload)
@@ -114,7 +133,7 @@ func (s *Server) handleFormSubmissionPatch(writer http.ResponseWriter, request *
 		s.respondStoreError(writer, err)
 		return
 	}
-	s.dispatchEvent(request, "FormUpdated", updated)
+	s.dispatchEvent(request, "FormUpdated", map[string]any{"form": updated})
 
 	payload := map[string]any{"data": updated}
 	s.respondJSON(writer, request, requestSignature(request)+"|form-submission-patch", payload)
@@ -325,17 +344,73 @@ func (s *Server) dispatchLiveEvents(request *http.Request, at time.Time, vehicle
 		return
 	}
 
-	activeEvents := s.live.ActiveEvents(at, nil, vehicleIDs)
-	for idx := range activeEvents {
-		event := &activeEvents[idx]
-		webhookEventType := s.live.EventWebhookType(event.Type)
-		uniqueKey := webhookEventType + "|" + event.ID
-		s.dispatchEventOnce(
-			request,
-			uniqueKey,
-			webhookEventType,
-			s.live.EventWebhookPayload(event),
-		)
+	emissions := s.live.WebhookEmissionsForWindow(at, vehicleIDs)
+	for idx := range emissions {
+		emission := &emissions[idx]
+		s.dispatchEventOnce(request, emission.UniqueKey, emission.EventType, emission.Data)
+	}
+	s.dispatchGeofenceEvents(request, at)
+	s.dispatchRouteStopEvents(request, at)
+	s.dispatchDvirEvents(request, at)
+	s.dispatchFormEvents(request, at)
+}
+
+func (s *Server) dispatchRouteStopEvents(request *http.Request, at time.Time) {
+	if s.live == nil {
+		return
+	}
+
+	windowStart := s.routeStopWindow.nextStart(at, defaultAssetLookback, geofenceMaxWindowLookback)
+	emissions := s.live.RouteStopWebhookEmissions(at, windowStart, at, nil)
+	for idx := range emissions {
+		emission := &emissions[idx]
+		s.dispatchEventOnce(request, emission.UniqueKey, emission.EventType, emission.Data)
+	}
+}
+
+func (s *Server) dispatchGeofenceEvents(request *http.Request, at time.Time) {
+	if s.live == nil {
+		return
+	}
+
+	windowStart := s.geofenceWindow.nextStart(at, defaultAssetLookback, geofenceMaxWindowLookback)
+	emissions := s.live.GeofenceWebhookEmissions(at, windowStart, at, nil)
+	for idx := range emissions {
+		emission := &emissions[idx]
+		if !s.dispatchEventOnce(request, emission.UniqueKey, emission.EventType, emission.Data) {
+			continue
+		}
+		if emission.EventType == geofenceEventEntry {
+			s.geofenceEntries.Add(1)
+		} else {
+			s.geofenceExits.Add(1)
+		}
+	}
+}
+
+func (s *Server) dispatchDvirEvents(request *http.Request, at time.Time) {
+	if s.live == nil {
+		return
+	}
+
+	windowStart := s.dvirWindow.nextStart(at, defaultAssetLookback, geofenceMaxWindowLookback)
+	emissions := s.live.DvirWebhookEmissions(at, windowStart, at)
+	for idx := range emissions {
+		emission := &emissions[idx]
+		s.dispatchEventOnce(request, emission.UniqueKey, emission.EventType, emission.Data)
+	}
+}
+
+func (s *Server) dispatchFormEvents(request *http.Request, at time.Time) {
+	if s.live == nil {
+		return
+	}
+
+	windowStart := s.formWindow.nextStart(at, defaultAssetLookback, geofenceMaxWindowLookback)
+	emissions := s.live.FormWebhookEmissions(at, windowStart, at)
+	for idx := range emissions {
+		emission := &emissions[idx]
+		s.dispatchEventOnce(request, emission.UniqueKey, emission.EventType, emission.Data)
 	}
 }
 
@@ -384,7 +459,22 @@ func (s *Server) handleWebhookCreate(writer http.ResponseWriter, request *http.R
 		s.respondStoreError(writer, err)
 		return
 	}
+	if strings.TrimSpace(stringValue(created, "secretKey")) == "" {
+		created, err = s.store.Patch(ResourceWebhooks, recordID(created), Record{
+			"secretKey": generatedWebhookSecret(recordID(created)),
+		})
+		if err != nil {
+			s.respondStoreError(writer, err)
+			return
+		}
+	}
 	s.respondJSON(writer, request, requestSignature(request)+"|webhook-create", created)
+}
+
+func generatedWebhookSecret(webhookID string) string {
+	return base64.StdEncoding.EncodeToString(
+		[]byte("sim-webhook-secret|" + strings.TrimSpace(webhookID)),
+	)
 }
 
 func (s *Server) handleWebhookPatch(writer http.ResponseWriter, request *http.Request) {

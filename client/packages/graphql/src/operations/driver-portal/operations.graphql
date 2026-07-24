@@ -687,3 +687,55 @@ query MyPortalFeatures {
     allowPtoRequests
   }
 }
+
+query MyHosState {
+  myHosState {
+    workerId
+    workerName
+    provider
+    dutyStatus
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    cycleTomorrowMs
+    breakRemainingMs
+    cycleStartedAt
+    shiftDrivingViolationMs
+    cycleViolationMs
+    currentVehicleId
+    rulesetCycle
+    rulesetShift
+    driveLimitMs
+    shiftLimitMs
+    cycleLimitMs
+    breakLimitMs
+    recordedAt
+  }
+}
+
+query MyHosDailyLogs($startDate: String!, $endDate: String!) {
+  myHosDailyLogs(startDate: $startDate, endDate: $endDate) {
+    startAt
+    endAt
+    driveDistanceMeters
+    driveDurationMs
+    onDutyDurationMs
+    offDutyDurationMs
+    sleeperBerthDurationMs
+    isCertified
+    certifiedAt
+    shippingDocs
+    vehicleNames
+  }
+}
+
+query MyHosViolations($since: Int) {
+  myHosViolations(since: $since) {
+    workerId
+    violationType
+    description
+    durationMs
+    violationStartAt
+    detectedAt
+  }
+}

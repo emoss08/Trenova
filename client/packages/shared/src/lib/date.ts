@@ -283,6 +283,23 @@ export function formatDurationFromSeconds(durationInSeconds: number): string {
   return parts.join(" ");
 }
 
+export function formatDurationMs(durationInMs: number): string {
+  if (durationInMs === undefined || durationInMs === null || isNaN(durationInMs)) {
+    return "0m";
+  }
+  return formatDurationFromSeconds(Math.floor(durationInMs / 1000));
+}
+
+export function formatClockDurationMs(durationInMs: number): string {
+  if (durationInMs === undefined || durationInMs === null || isNaN(durationInMs)) {
+    return "0:00";
+  }
+  const totalMinutes = Math.max(0, Math.floor(durationInMs / 60_000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}:${String(minutes).padStart(2, "0")}`;
+}
+
 const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 export const daysUntil = (unixSeconds: number) => {
@@ -449,6 +466,11 @@ function addDays(date: Date, days: number): Date {
 export function formatUnixDate(value: number | null | undefined): string {
   if (!value) return "N/A";
   return new Date(value * 1000).toLocaleDateString();
+}
+
+export function formatUnixTime(value: number | null | undefined): string {
+  if (!value) return "N/A";
+  return new Date(value * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 export function formatUnixDateTime(value: number | null | undefined): string {

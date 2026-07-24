@@ -63,6 +63,7 @@ var DispatchControlColumns = struct {
 	EnforceMedicalCertCompliance         Column // "enforce_medical_cert_compliance" → qualified: "dc.enforce_medical_cert_compliance"
 	EnforceHazmatCompliance              Column // "enforce_hazmat_compliance" → qualified: "dc.enforce_hazmat_compliance"
 	EnforceDrugAndAlcoholCompliance      Column // "enforce_drug_and_alcohol_compliance" → qualified: "dc.enforce_drug_and_alcohol_compliance"
+	EnableAutoStopActuals                Column // "enable_auto_stop_actuals" → qualified: "dc.enable_auto_stop_actuals"
 	ComplianceEnforcementLevel           Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -85,6 +86,7 @@ var DispatchControlColumns = struct {
 	EnforceMedicalCertCompliance:         NewColumn("enforce_medical_cert_compliance", "dc"),
 	EnforceHazmatCompliance:              NewColumn("enforce_hazmat_compliance", "dc"),
 	EnforceDrugAndAlcoholCompliance:      NewColumn("enforce_drug_and_alcohol_compliance", "dc"),
+	EnableAutoStopActuals:                NewColumn("enable_auto_stop_actuals", "dc"),
 	ComplianceEnforcementLevel:           NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 NewColumn("service_failure_target", "dc"),
@@ -113,6 +115,7 @@ var DispatchControlFieldMap = map[string]string{
 	"enforceMedicalCertCompliance":         "enforce_medical_cert_compliance",
 	"enforceHazmatCompliance":              "enforce_hazmat_compliance",
 	"enforceDrugAndAlcoholCompliance":      "enforce_drug_and_alcohol_compliance",
+	"enableAutoStopActuals":                "enable_auto_stop_actuals",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -139,6 +142,7 @@ var DispatchControlInsertableColumns = []string{
 	"enforce_medical_cert_compliance",
 	"enforce_hazmat_compliance",
 	"enforce_drug_and_alcohol_compliance",
+	"enable_auto_stop_actuals",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -212,6 +216,7 @@ var DispatchControlFilter = struct {
 	EnforceMedicalCertCompliance         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceMedicalCertCompliance" → DB: "enforce_medical_cert_compliance"
 	EnforceHazmatCompliance              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceHazmatCompliance" → DB: "enforce_hazmat_compliance"
 	EnforceDrugAndAlcoholCompliance      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceDrugAndAlcoholCompliance" → DB: "enforce_drug_and_alcohol_compliance"
+	EnableAutoStopActuals                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAutoStopActuals" → DB: "enable_auto_stop_actuals"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -261,6 +266,9 @@ var DispatchControlFilter = struct {
 	},
 	EnforceDrugAndAlcoholCompliance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enforceDrugAndAlcoholCompliance", op, value)
+	},
+	EnableAutoStopActuals: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableAutoStopActuals", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("complianceEnforcementLevel", op, value)

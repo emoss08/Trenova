@@ -9,6 +9,13 @@ import (
 )
 
 type DistanceControlService interface {
-	Get(ctx context.Context, tenantInfo pagination.TenantInfo) (*distancecontrol.DistanceControl, error)
-	Update(ctx context.Context, entity *distancecontrol.DistanceControl, userID pulid.ID) (*distancecontrol.DistanceControl, error)
+	Get(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*distancecontrol.DistanceControl, error)
+	Update(
+		ctx context.Context,
+		entity *distancecontrol.DistanceControl,
+		userID pulid.ID,
+	) (*distancecontrol.DistanceControl, error)
 }

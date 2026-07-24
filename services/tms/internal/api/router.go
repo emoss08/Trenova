@@ -92,6 +92,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -181,6 +182,7 @@ type RouterParams struct {
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	EDIHandler                      *edihandler.Handler
 	EmailHandler                    *emailhandler.Handler
+	TelematicsHandler               *telematicshandler.Handler
 	CommodityHandler                *commodityhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
@@ -288,6 +290,7 @@ type Router struct {
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	ediHandler                      *edihandler.Handler
 	emailHandler                    *emailhandler.Handler
+	telematicsHandler               *telematicshandler.Handler
 	commodityHandler                *commodityhandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
@@ -397,6 +400,7 @@ func NewRouter(p RouterParams) *Router {
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
 		ediHandler:                      p.EDIHandler,
 		emailHandler:                    p.EmailHandler,
+		telematicsHandler:               p.TelematicsHandler,
 		commodityHandler:                p.CommodityHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
@@ -514,6 +518,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.versionHandler.RegisterPublicRoutes(rg)
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
+	r.telematicsHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
 }

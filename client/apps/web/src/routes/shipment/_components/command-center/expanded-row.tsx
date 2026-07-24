@@ -11,6 +11,11 @@ const DocumentsBlock = lazy(() =>
   import("./expanded-row/document-stack").then((m) => ({ default: m.DocumentsBlock })),
 );
 const QuickActionsBlock = lazy(() => import("./expanded-row/quick-actions-block"));
+const TelematicsFormsBlock = lazy(() =>
+  import("./expanded-row/telematics-forms-block").then((m) => ({
+    default: m.TelematicsFormsBlock,
+  })),
+);
 
 function PanelSection({
   title,
@@ -43,19 +48,24 @@ export function ExpandedRow({
   const stops = shipment.moves?.flatMap((m) => m.stops ?? []) ?? [];
 
   return (
-    <div className="grid grid-cols-1 gap-5 px-4 py-3 md:grid-cols-[2fr_1.4fr_1fr_1fr]">
-      <PanelSection title="Route timeline" fallback={<PanelSkeleton />}>
-        <RouteTimelineBlock stops={stops} />
-      </PanelSection>
-      <PanelSection title="Financials" fallback={<PanelSkeleton />}>
-        <FinancialsBlock shipment={shipment} />
-      </PanelSection>
-      <PanelSection title="Documents" fallback={<PanelSkeleton />}>
-        <DocumentsBlock shipment={shipment} onUpload={onUploadDocument} />
-      </PanelSection>
-      <PanelSection title="Quick actions" fallback={<PanelSkeleton />}>
-        <QuickActionsBlock row={row} actions={rowActions} />
-      </PanelSection>
+    <div className="flex flex-col gap-5 px-4 py-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-[2fr_1.4fr_1fr_1fr]">
+        <PanelSection title="Route timeline" fallback={<PanelSkeleton />}>
+          <RouteTimelineBlock stops={stops} />
+        </PanelSection>
+        <PanelSection title="Financials" fallback={<PanelSkeleton />}>
+          <FinancialsBlock shipment={shipment} />
+        </PanelSection>
+        <PanelSection title="Documents" fallback={<PanelSkeleton />}>
+          <DocumentsBlock shipment={shipment} onUpload={onUploadDocument} />
+        </PanelSection>
+        <PanelSection title="Quick actions" fallback={<PanelSkeleton />}>
+          <QuickActionsBlock row={row} actions={rowActions} />
+        </PanelSection>
+      </div>
+      <Suspense fallback={null}>
+        <TelematicsFormsBlock shipmentId={shipment.id ?? ""} />
+      </Suspense>
     </div>
   );
 }

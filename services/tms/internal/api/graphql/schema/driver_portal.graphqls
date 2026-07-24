@@ -539,6 +539,21 @@ extend type Query {
   myYtdPay(year: Int!): WorkerYTDPaySummary!
 
   """
+  The signed-in driver's live hours-of-service clocks from the carrier's ELD
+  provider. Null when the carrier has no telematics integration or the driver
+  is not linked to a provider record.
+  """
+  myHosState: WorkerHosState
+  """
+  The signed-in driver's ELD daily logs (YYYY-MM-DD range).
+  """
+  myHosDailyLogs(startDate: String!, endDate: String!): [WorkerHosDailyLog!]!
+  """
+  The signed-in driver's recent hours-of-service violations.
+  """
+  myHosViolations(since: Int): [WorkerHosViolation!]!
+
+  """
   Driver expense review queue (back office).
   """
   driverExpenses(input: DataTableConnectionInput!): DriverExpenseConnection!

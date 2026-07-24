@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
@@ -119,6 +120,7 @@ type Params struct {
 	FiscalYearRepo               repositories.FiscalYearRepository
 	FiscalPeriodRepo             repositories.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
+	TelematicsService            *telematicsservice.Service
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
@@ -211,6 +213,7 @@ type Resolver struct {
 	fiscalYearRepo               repositories.FiscalYearRepository
 	fiscalPeriodRepo             repositories.FiscalPeriodRepository
 	emailService                 *emailservice.Service
+	telematicsService            *telematicsservice.Service
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
 	distanceProfileService       *distanceprofileservice.Service
@@ -304,6 +307,7 @@ func New(p Params) *Resolver {
 		fiscalYearRepo:               p.FiscalYearRepo,
 		fiscalPeriodRepo:             p.FiscalPeriodRepo,
 		emailService:                 p.EmailService,
+		telematicsService:            p.TelematicsService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
 		distanceOverrideService:      p.DistanceOverrideService,
 		distanceProfileService:       p.DistanceProfileService,

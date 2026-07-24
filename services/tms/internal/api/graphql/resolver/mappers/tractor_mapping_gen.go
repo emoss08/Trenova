@@ -51,6 +51,7 @@ func TractorFromInput(
 		CustomFields:            input.CustomFields,
 		EquipmentManufacturerID: equipmentManufacturerID,
 		EquipmentTypeID:         equipmentTypeID,
+		ExternalID:              StringValue(input.ExternalID),
 		FleetCodeID:             fleetCodeID,
 		LicensePlateNumber:      StringValue(input.LicensePlateNumber),
 		Make:                    StringValue(input.Make),
@@ -91,6 +92,9 @@ func ApplyTractorPatch(
 			return err
 		}
 		entity.EquipmentTypeID = equipmentTypeID
+	}
+	if input.ExternalID != nil {
+		entity.ExternalID = *input.ExternalID
 	}
 	if fleetCodeIDValue, ok := input.FleetCodeID.ValueOK(); ok {
 		fleetCodeID, err := optionalID(fleetCodeIDValue)

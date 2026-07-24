@@ -5,6 +5,8 @@
 @import "@fontsource/ibm-plex-mono";
 @import "@fontsource/geist-mono";
 
+@source "../";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

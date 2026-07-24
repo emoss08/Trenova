@@ -7,14 +7,17 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangleIcon } from "lucide-react";
-import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { AlertTriangleIcon, CheckIcon, CopyIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { SamsaraFormMappingSection } from "./form-mapping-section";
+import { SamsaraSyncHealthSection } from "./sync-health-section";
 
 function getFieldValue(
   fields: { key: string; value?: string; hasValue: boolean }[] | undefined,
@@ -24,28 +27,44 @@ function getFieldValue(
   return { value: field?.value, hasValue: field?.hasValue ?? false };
 }
 
+function buildWebhookUrl(webhookToken: string | undefined): string | null {
+  if (!webhookToken) {
+    return null;
+  }
+
+  const apiBase = API_BASE_URL.startsWith("http")
+    ? API_BASE_URL
+    : `${window.location.origin}${API_BASE_URL}`;
+
+  return `${apiBase}/webhooks/samsara/${webhookToken}/`;
+}
+
 export function SamsaraConfigurationContent({ open }: { open: boolean }) {
   const queryClient = useQueryClient();
+  const [copied, setCopied] = useState(false);
 
   const configQuery = useQuery({
     ...queries.integration.config("Samsara"),
     enabled: open,
   });
-  const { control, watch, reset, setValue, handleSubmit, setError } =
+  const { control, reset, setValue, handleSubmit, setError } =
     useForm<UpdateIntegrationConfigRequest>({
       defaultValues: {
         enabled: false,
         configuration: {
           token: "",
           baseUrl: "",
+          webhookSecret: "",
         },
       },
     });
 
   const response = configQuery.data;
   const hasToken = getFieldValue(response?.fields, "token").hasValue;
-  const enabled = watch("enabled");
-  const token = watch("configuration.token");
+  const hasWebhookSecret = getFieldValue(response?.fields, "webhookSecret").hasValue;
+  const webhookUrl = buildWebhookUrl(getFieldValue(response?.fields, "webhookToken").value);
+  const enabled = useWatch({ control, name: "enabled" });
+  const token = useWatch({ control, name: "configuration.token" });
 
   useEffect(() => {
     if (!open || !response) {
@@ -57,6 +76,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
       configuration: {
         token: "",
         baseUrl: getFieldValue(response.fields, "baseUrl").value ?? "",
+        webhookSecret: "",
       },
     });
   }, [open, response, reset]);
@@ -68,6 +88,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     resourceName: "Samsara configuration",
     onSuccess: async () => {
       setValue("configuration.token", "");
+      setValue("configuration.webhookSecret", "");
       toast.success("Samsara integration updated");
       await Promise.all([
         queryClient.invalidateQueries({
@@ -97,8 +118,23 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     },
   });
 
+  const copyWebhookUrl = async () => {
+    if (!webhookUrl) {
+      return;
+    }
+    await navigator.clipboard.writeText(webhookUrl);
+    setCopied(true);
+    toast.success("Webhook URL copied to clipboard");
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   const onSubmit = async (data: UpdateIntegrationConfigRequest) => {
-    await saveMutation.mutateAsync(data);
+    const configuration = { ...data.configuration };
+    if (!configuration.webhookSecret?.trim()) {
+      delete configuration.webhookSecret;
+    }
+
+    await saveMutation.mutateAsync({ ...data, configuration });
 
     const testResult = await testMutation.mutateAsync();
     if (testResult.success) {
@@ -173,6 +209,58 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               </FormControl>
             )}
             <FormControl cols="full">
+              <div className="flex flex-col gap-0.5 border-t border-border pt-4">
+                <p className="text-sm font-semibold">Webhooks</p>
+                <p className="text-xs text-muted-foreground">
+                  Receive real-time vehicle and driver events from Samsara instead of waiting on
+                  polling.
+                </p>
+              </div>
+            </FormControl>
+            <FormControl cols="full">
+              <SensitiveField
+                name="configuration.webhookSecret"
+                control={control}
+                label={`Webhook Secret ${
+                  hasWebhookSecret ? "(leave blank to keep existing secret)" : ""
+                }`}
+                autoComplete="off"
+                placeholder={hasWebhookSecret ? "********" : "Enter Samsara webhook signing secret"}
+                description="Base64 signing secret from Samsara's webhook configuration, used to verify the X-Samsara-Signature header on incoming events."
+              />
+            </FormControl>
+            <FormControl cols="full">
+              {webhookUrl ? (
+                <div className="flex flex-col gap-1.5">
+                  <Label>Webhook Endpoint</Label>
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2">
+                    <p className="min-w-0 flex-1 truncate font-mono text-xs">{webhookUrl}</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={() => void copyWebhookUrl()}
+                    >
+                      {copied ? (
+                        <CheckIcon className="size-3.5" />
+                      ) : (
+                        <CopyIcon className="size-3.5" />
+                      )}
+                      <span className="sr-only">Copy webhook URL</span>
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Point Samsara&apos;s webhook at this URL. It is unique to your organization.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Save the configuration to generate your webhook endpoint.
+                </p>
+              )}
+            </FormControl>
+            <FormControl cols="full">
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -187,6 +275,12 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
             </FormControl>
           </FormGroup>
         </Form>
+      </section>
+      <section className="px-4">
+        <SamsaraSyncHealthSection open={open} />
+      </section>
+      <section className="px-4 pb-4">
+        <SamsaraFormMappingSection open={open} />
       </section>
     </div>
   );

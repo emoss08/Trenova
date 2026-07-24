@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/telematicsjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/anthropiccompletionservice"
@@ -40,6 +41,7 @@ import (
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
+	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
 	"go.uber.org/fx"
 )
 
@@ -60,6 +62,7 @@ func Options() fx.Option {
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
 		fx.Provide(integrationservice.New),
+		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,
 		editransport.Module,
@@ -77,6 +80,7 @@ func Options() fx.Option {
 		thumbnailjobs.Module,
 		smsjobs.Module,
 		samsarajobs.Module,
+		telematicsjobs.Module,
 		shipmentjobs.Module,
 		agentjobs.Module,
 		agenttoolservice.Module,
