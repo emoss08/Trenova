@@ -24,7 +24,9 @@ type SaveScheduleRequest struct {
 	Formats         []string
 	EmailRecipients []string
 	EmailAttach     bool
+	EmailInline     bool
 	NotifyUserIDs   []pulid.ID
+	Alert           *report.ScheduleAlert
 	Enabled         bool
 	Version         int64
 }
@@ -33,6 +35,7 @@ func (req *SaveScheduleRequest) delivery() *report.ScheduleDelivery {
 	return &report.ScheduleDelivery{
 		EmailRecipients: sliceutils.DedupeStrings(req.EmailRecipients),
 		EmailAttach:     req.EmailAttach,
+		EmailInline:     req.EmailInline,
 		NotifyUserIDs:   sliceutils.Dedupe(req.NotifyUserIDs),
 	}
 }
@@ -123,6 +126,7 @@ func (s *Service) CreateSchedule(
 		Timezone:       req.Timezone,
 		Formats:        req.Formats,
 		Delivery:       req.delivery(),
+		Alert:          req.Alert,
 		Enabled:        req.Enabled,
 		RunAsID:        req.TenantInfo.UserID,
 		NextRunAt:      nextRun,
@@ -174,6 +178,12 @@ func (s *Service) UpdateSchedule(
 	existing.Timezone = req.Timezone
 	existing.Formats = req.Formats
 	existing.Delivery = req.delivery()
+	// Re-arm on edit: an author changing the condition should not inherit the
+	// suppressed state of the condition they replaced.
+	if !scheduleAlertsEqual(existing.Alert, req.Alert) {
+		existing.AlertFiring = false
+	}
+	existing.Alert = req.Alert
 	existing.Enabled = req.Enabled
 	existing.NextRunAt = nextRun
 	if req.Enabled {
@@ -243,4 +253,28 @@ func (s *Service) DeleteSchedule(ctx context.Context, req *GetScheduleRequest) e
 		TenantInfo: req.TenantInfo,
 		ScheduleID: req.ScheduleID,
 	})
+}
+
+// scheduleAlertsEqual reports whether two alert conditions are the same, which
+// decides if suppression state survives an edit.
+//
+// The threshold value is a pointer, so struct equality would compare addresses
+// and report every save as a change — quietly re-arming a suppressed alert each
+// time anything else on the schedule was edited.
+func scheduleAlertsEqual(a, b *report.ScheduleAlert) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	if a.Operator != b.Operator || a.Threshold != b.Threshold ||
+		a.ColumnID != b.ColumnID || a.SuppressWhileFiring != b.SuppressWhileFiring {
+		return false
+	}
+	switch {
+	case a.Value == nil && b.Value == nil:
+		return true
+	case a.Value == nil || b.Value == nil:
+		return false
+	default:
+		return *a.Value == *b.Value
+	}
 }

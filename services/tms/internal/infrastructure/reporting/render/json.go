@@ -10,6 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/shopspring/decimal"
 )
 
@@ -22,10 +23,11 @@ func NewJSON() *JSONRenderer { return &JSONRenderer{} }
 func (r *JSONRenderer) Format() report.Format { return report.FormatJSON }
 
 type jsonSchemaColumn struct {
-	ID     string `json:"id"`
-	Label  string `json:"label"`
-	Type   string `json:"type"`
-	Format string `json:"format,omitempty"`
+	ID      string             `json:"id"`
+	Label   string             `json:"label"`
+	Type    string             `json:"type"`
+	Format  string             `json:"format,omitempty"`
+	Display reportfmt.Resolved `json:"display"`
 }
 
 type jsonMeta struct {
@@ -57,10 +59,11 @@ func (r *JSONRenderer) writeEnvelopeHead(
 	schemaColumns := make([]jsonSchemaColumn, len(schema))
 	for i := range schema {
 		schemaColumns[i] = jsonSchemaColumn{
-			ID:     schema[i].ID,
-			Label:  schema[i].Label,
-			Type:   string(schema[i].Type),
-			Format: string(schema[i].Format),
+			ID:      schema[i].ID,
+			Label:   schema[i].Label,
+			Type:    string(schema[i].Type),
+			Format:  string(schema[i].Format),
+			Display: schema[i].Display,
 		}
 	}
 	schemaJSON, err := sonic.Marshal(schemaColumns)
@@ -135,7 +138,13 @@ func (r *JSONRenderer) Render(
 		return nil, err
 	}
 
-	if _, err = out.WriteString(`],"summary":`); err != nil {
+	if _, err = out.WriteString(`]`); err != nil {
+		return nil, err
+	}
+	if err = r.writeTotals(ctx, out, req, schema); err != nil {
+		return nil, err
+	}
+	if _, err = out.WriteString(`,"summary":`); err != nil {
 		return nil, err
 	}
 	if _, err = out.Write(tail); err != nil {
@@ -152,6 +161,37 @@ func (r *JSONRenderer) Render(
 		Rows:      req.Dataset.RowCount(),
 		Truncated: truncated,
 	}, nil
+}
+
+// writeTotals appends the grand-total row as a same-width array, so a consumer
+// can index it against the schema exactly like a data row.
+func (r *JSONRenderer) writeTotals(
+	ctx context.Context,
+	out *bufio.Writer,
+	req *services.ReportRenderRequest,
+	schema []services.ReportResultColumn,
+) error {
+	row, err := req.Dataset.Totals(ctx)
+	if err != nil || row == nil {
+		return err
+	}
+
+	encoded := make([]any, len(schema))
+	for i := range schema {
+		if i < len(row) {
+			encoded[i] = jsonValue(row[i])
+		}
+	}
+	totalsJSON, err := sonic.Marshal(encoded)
+	if err != nil {
+		return err
+	}
+
+	if _, err = out.WriteString(`,"totals":`); err != nil {
+		return err
+	}
+	_, err = out.Write(totalsJSON)
+	return err
 }
 
 func jsonValue(value any) any {

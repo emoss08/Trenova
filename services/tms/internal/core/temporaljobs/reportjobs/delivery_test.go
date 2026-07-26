@@ -99,9 +99,7 @@ func TestDeliveryEmailBody(t *testing.T) {
 			EmailAttach:     true,
 		})
 
-		text, htmlBody := a.deliveryEmailBody(
-			deliveryTestRun(), schedule, "Fleet <Utilization>", true, false,
-		)
+		text, htmlBody := a.deliveryEmailBody(&deliveryEmailContent{run: deliveryTestRun(), schedule: schedule, title: "Fleet <Utilization>", attached: true, attachTooLarge: false})
 
 		assert.Contains(t, text, `"Fleet <Utilization>" is ready`)
 		assert.Contains(t, text, "Format: XLSX")
@@ -121,9 +119,7 @@ func TestDeliveryEmailBody(t *testing.T) {
 			EmailAttach:     true,
 		})
 
-		text, htmlBody := a.deliveryEmailBody(
-			deliveryTestRun(), schedule, "Fleet Utilization", false, true,
-		)
+		text, htmlBody := a.deliveryEmailBody(&deliveryEmailContent{run: deliveryTestRun(), schedule: schedule, title: "Fleet Utilization", attached: false, attachTooLarge: true})
 
 		assert.Contains(t, text, "exceeds the")
 		assert.Contains(t, text, "attachment limit")
@@ -139,7 +135,7 @@ func TestDeliveryEmailBody(t *testing.T) {
 		run := deliveryTestRun()
 		run.Truncated = true
 
-		text, _ := a.deliveryEmailBody(run, schedule, "Fleet Utilization", false, false)
+		text, _ := a.deliveryEmailBody(&deliveryEmailContent{run: run, schedule: schedule, title: "Fleet Utilization", attached: false, attachTooLarge: false})
 		assert.Contains(t, text, "truncated")
 	})
 }

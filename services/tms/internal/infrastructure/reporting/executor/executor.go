@@ -64,10 +64,13 @@ func (x *Executor) Open(
 	}
 
 	return &datasetReader{
-		schema:  req.Compiled.Columns,
-		rows:    rows,
-		cancel:  cancel,
-		maxRows: maxRows,
+		schema:   req.Compiled.Columns,
+		rows:     rows,
+		cancel:   cancel,
+		maxRows:  maxRows,
+		compiled: req.Compiled,
+		db:       x.db,
+		timeout:  timeout,
 	}, nil
 }
 
@@ -79,6 +82,12 @@ type datasetReader struct {
 	count     int64
 	truncated bool
 	closed    bool
+
+	compiled   *services.CompiledReportQuery
+	db         *postgres.ReportingConnection
+	timeout    time.Duration
+	totals     services.ReportRow
+	totalsDone bool
 }
 
 func (r *datasetReader) Schema() []services.ReportResultColumn { return r.schema }
@@ -128,6 +137,42 @@ func (r *datasetReader) Next(ctx context.Context) (services.ReportRow, error) {
 
 	r.count++
 	return row, nil
+}
+
+// Totals runs the compiled grand-total query on first call and memoizes it, so
+// a renderer that asks for totals at end-of-stream pays for one extra scan and
+// a caller that never asks pays for none.
+func (r *datasetReader) Totals(ctx context.Context) (services.ReportRow, error) {
+	if r.totalsDone || r.compiled == nil || !r.compiled.HasTotals() {
+		return r.totals, nil
+	}
+	r.totalsDone = true
+
+	queryCtx, cancel := context.WithTimeout(ctx, r.timeout)
+	defer cancel()
+
+	row := r.db.DB().QueryRowContext(queryCtx, r.compiled.TotalsSQL, r.compiled.TotalsArgs...)
+
+	raw := make([]any, len(r.schema))
+	scanTargets := make([]any, len(r.schema))
+	for i := range raw {
+		scanTargets[i] = &raw[i]
+	}
+	if err := row.Scan(scanTargets...); err != nil {
+		return nil, fmt.Errorf("scan report totals: %w", err)
+	}
+
+	totals := make(services.ReportRow, len(r.schema))
+	for i := range r.schema {
+		value, err := decodeValue(r.schema[i].Type, raw[i])
+		if err != nil {
+			return nil, fmt.Errorf("decode totals column %q: %w", r.schema[i].ID, err)
+		}
+		totals[i] = value
+	}
+
+	r.totals = totals
+	return totals, nil
 }
 
 func (r *datasetReader) Close() error {

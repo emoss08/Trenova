@@ -41,6 +41,13 @@ func NewPDF(p PDFParams) *PDFRenderer {
 
 func (r *PDFRenderer) Format() report.Format { return report.FormatPDF }
 
+// pdfCell carries the banded emphasis alongside the text so the template can
+// colour an exception without re-deriving it.
+type pdfCell struct {
+	Text string
+	Tone string
+}
+
 type pdfTemplateData struct {
 	Title       string
 	Description string
@@ -48,7 +55,8 @@ type pdfTemplateData struct {
 	RequestedBy string
 	Params      []pdfParam
 	Headers     []string
-	Rows        [][]string
+	Rows        [][]pdfCell
+	Totals      []string
 	Truncated   bool
 	Notice      string
 	RowCount    int64
@@ -75,7 +83,12 @@ var pdfTemplate = template.Must(template.New("report").Parse(`<!DOCTYPE html>
   th { text-align: left; border-bottom: 2px solid #111; padding: 4px 8px; font-weight: 600; }
   td { border-bottom: 1px solid #ddd; padding: 4px 8px; }
   tr:nth-child(even) td { background: #fafafa; }
+  tfoot td { border-top: 2px solid #111; border-bottom: none; background: #fff; font-weight: 600; }
   .notice { margin-top: 12px; color: #a00; font-size: 10px; }
+  td.tone-positive { color: #15803d; font-weight: 600; }
+  td.tone-warning  { color: #b45309; font-weight: 600; }
+  td.tone-negative { color: #b91c1c; font-weight: 600; }
+  td.tone-neutral  { color: #3f3f46; font-weight: 600; }
   .count { margin-top: 8px; color: #777; font-size: 10px; }
 </style>
 </head>
@@ -90,9 +103,10 @@ var pdfTemplate = template.Must(template.New("report").Parse(`<!DOCTYPE html>
 <table>
   <thead><tr>{{range .Headers}}<th>{{.}}</th>{{end}}</tr></thead>
   <tbody>
-    {{range .Rows}}<tr>{{range .}}<td>{{.}}</td>{{end}}</tr>
+    {{range .Rows}}<tr>{{range .}}<td{{if .Tone}} class="tone-{{.Tone}}"{{end}}>{{.Text}}</td>{{end}}</tr>
     {{end}}
   </tbody>
+  {{if .Totals}}<tfoot><tr>{{range .Totals}}<td>{{.}}</td>{{end}}</tr></tfoot>{{end}}
 </table>
 <div class="count">{{.RowCount}} rows</div>
 {{if .Truncated}}<div class="notice">{{.Notice}}</div>{{end}}
@@ -138,13 +152,21 @@ func (r *PDFRenderer) Render(
 			)
 		}
 
-		record := make([]string, len(schema))
+		record := make([]pdfCell, len(schema))
 		for i := range schema {
-			record[i] = formatCell(&schema[i], row[i], loc)
+			record[i] = pdfCell{
+				Text: formatCell(&schema[i], row[i], loc),
+				Tone: string(schema[i].Display.ToneFor(row[i])),
+			}
 		}
 		data.Rows = append(data.Rows, record)
 	}
 
+	totals, totalsErr := totalsCells(ctx, req.Dataset, loc)
+	if totalsErr != nil {
+		return nil, totalsErr
+	}
+	data.Totals = totals
 	data.Truncated = req.Dataset.Truncated()
 	data.RowCount = req.Dataset.RowCount()
 

@@ -31,10 +31,13 @@ type emitter struct {
 }
 
 type outputColumn struct {
-	id     string
-	expr   sqlExpr
-	column services.ReportResultColumn
-	isDim  bool
+	id            string
+	sourceID      string
+	pivotSuffix   string
+	explicitLabel bool
+	expr          sqlExpr
+	column        services.ReportResultColumn
+	isDim         bool
 }
 
 func requestLocation(orgTimezone string) (*time.Location, error) {
@@ -92,7 +95,71 @@ func (c *Compiler) emit(
 	asm.write(" LIMIT ")
 	asm.write(strconv.Itoa(limit))
 
-	return c.buildResult(v, plan, outputs, asm.sb.String(), asm.args, limit), nil
+	result := c.buildResult(v, plan, outputs, asm.sb.String(), asm.args, limit)
+
+	totals, err := e.totalsQuery(outputs, plan)
+	if err != nil {
+		return nil, err
+	}
+	if totals != nil {
+		result.TotalsSQL = totals.sb.String()
+		result.TotalsArgs = totals.args
+	}
+
+	return result, nil
+}
+
+// totalsQuery re-aggregates the same measure expressions with the grouping
+// removed, so the total row is computed from the underlying rows rather than
+// from the rows that survived the limit. It returns nil when the report has no
+// grouping to total over.
+func (e *emitter) totalsQuery(
+	outputs []outputColumn,
+	plan *joinPlan,
+) (*sqlAssembler, error) {
+	if !e.v.def.Totals || !e.v.def.HasMeasures() {
+		return nil, nil //nolint:nilnil // a nil assembler means "no totals row"
+	}
+	if !hasDimensionOutput(outputs) {
+		return nil, nil //nolint:nilnil // a single-row report is already its own total
+	}
+
+	asm := &sqlAssembler{}
+	asm.write("SELECT ")
+	for i := range outputs {
+		if i > 0 {
+			asm.write(", ")
+		}
+		if outputs[i].isDim {
+			asm.write("NULL")
+		} else {
+			asm.writeExpr(outputs[i].expr)
+		}
+		asm.write(" AS c")
+		asm.write(strconv.Itoa(i))
+	}
+
+	if err := e.writeFrom(asm, plan); err != nil {
+		return nil, err
+	}
+
+	whereExpr, err := e.whereClause()
+	if err != nil {
+		return nil, err
+	}
+	asm.write(" WHERE ")
+	asm.writeExpr(whereExpr)
+
+	return asm, nil
+}
+
+func hasDimensionOutput(outputs []outputColumn) bool {
+	for i := range outputs {
+		if outputs[i].isDim {
+			return true
+		}
+	}
+	return false
 }
 
 type sqlAssembler struct {
@@ -124,12 +191,20 @@ func (e *emitter) writeSelectFrom(
 		asm.write(strconv.Itoa(i))
 	}
 
+	return e.writeFrom(asm, plan)
+}
+
+func (e *emitter) writeFrom(asm *sqlAssembler, plan *joinPlan) error {
 	asm.write(" FROM ")
 	asm.write(e.v.entity.Table.As("t0"))
 
 	for _, join := range plan.joins {
+		clause, err := e.joinExpr(&join)
+		if err != nil {
+			return err
+		}
 		asm.write(" ")
-		asm.writeExpr(e.joinClause(&join))
+		asm.writeExpr(clause)
 	}
 
 	for _, key := range plan.lateralOrder {
@@ -297,6 +372,90 @@ func (e *emitter) scopeConds(entity *reportcatalog.Entity, alias string) sqlExpr
 	}
 
 	return sqlExpr{text: strings.Join(conds, " AND "), args: args}
+}
+
+// joinExpr writes the clause that brings one to-one entity into the query. A
+// pick edge resolves to a single row of a to-many path, which no ON clause can
+// express, so it becomes a correlated lateral instead.
+func (e *emitter) joinExpr(join *joinedEntity) (sqlExpr, error) {
+	if join.edge.Pick != nil {
+		return e.pickClause(join)
+	}
+	return e.joinClause(join), nil
+}
+
+// pickClause emits `LEFT JOIN LATERAL (… ORDER BY … LIMIT 1) AS alias ON TRUE`.
+// Downstream nothing else changes: the alias holds at most one row, so the
+// picked entity's fields group and filter exactly like a foreign-key join's,
+// and measures elsewhere in the report are not multiplied by the path's fan-out.
+func (e *emitter) pickClause(join *joinedEntity) (sqlExpr, error) {
+	pick := join.edge.Pick
+
+	_, via, err := e.c.catalog.ResolvePath(join.edge.Source, pick.Via)
+	if err != nil {
+		return sqlExpr{}, fmt.Errorf("pick edge %q: %w", join.edge.Name, err)
+	}
+
+	steps := e.buildChain(via, 0, join.alias+"p")
+	if len(steps) == 0 {
+		return sqlExpr{}, fmt.Errorf("pick edge %q has an empty via path", join.edge.Name)
+	}
+	terminalAlias := steps[len(steps)-1].alias
+
+	cc, err := e.chainClause(steps, join.parentAlias)
+	if err != nil {
+		return sqlExpr{}, err
+	}
+
+	var sb strings.Builder
+	var args []any
+
+	sb.WriteString("LEFT JOIN LATERAL (SELECT ")
+	sb.WriteString(terminalAlias)
+	sb.WriteString(".*")
+
+	cc.render(&sb, &args, nil, nil)
+
+	orderBy, err := pickOrderSQL(pick, steps)
+	if err != nil {
+		return sqlExpr{}, fmt.Errorf("pick edge %q: %w", join.edge.Name, err)
+	}
+	sb.WriteString(orderBy)
+	sb.WriteString(" LIMIT 1) AS ")
+	sb.WriteString(join.alias)
+	sb.WriteString(" ON TRUE")
+
+	return sqlExpr{text: sb.String(), args: args}, nil
+}
+
+// pickOrderSQL orders the candidate rows. Every term is NULLS LAST on purpose:
+// the chain left-joins its hops, so a parent with no child still produces a row
+// of nulls, and under a descending sort Postgres would otherwise rank that null
+// first and pick nothing where a real row exists.
+func pickOrderSQL(pick *reportcatalog.PickOne, steps []chainStep) (string, error) {
+	var sb strings.Builder
+	sb.WriteString(" ORDER BY ")
+
+	for i, term := range pick.OrderBy {
+		if term.Step < 0 || term.Step >= len(steps) {
+			return "", fmt.Errorf("order term %d references step %d of %d",
+				i, term.Step, len(steps))
+		}
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(steps[term.Step].alias)
+		sb.WriteString(".")
+		sb.WriteString(term.Column)
+		if term.Descending {
+			sb.WriteString(" DESC")
+		} else {
+			sb.WriteString(" ASC")
+		}
+		sb.WriteString(" NULLS LAST")
+	}
+
+	return sb.String(), nil
 }
 
 func (e *emitter) joinClause(join *joinedEntity) sqlExpr {
@@ -501,19 +660,34 @@ func (e *emitter) lateralClause(lateral *lateralPlan) (sqlExpr, error) {
 		col := measure.column
 		fieldExpr := terminalAlias + "." + col.ref.field.Column.Name
 
+		// A measure's own filter narrows the child rows it aggregates, so it
+		// belongs inside the lateral rather than around its outer sum.
+		var suffix string
+		if !col.spec.Filter.IsEmpty() {
+			inner, fErr := e.filterGroupWith(col.spec.Filter, e.aliasBinder(terminalAlias))
+			if fErr != nil {
+				return sqlExpr{}, fErr
+			}
+			suffix = " FILTER (WHERE " + inner.text + ")"
+			args = append(args, inner.args...)
+			if col.spec.Agg == reportcatalog.AggAvg {
+				args = append(args, inner.args...)
+			}
+		}
+
 		//nolint:exhaustive // count_distinct is rejected at validation for to-many paths
 		switch col.spec.Agg {
 		case reportcatalog.AggAvg:
-			fmt.Fprintf(&sb, "SUM(%s) AS %s_sum, COUNT(%s) AS %s_cnt",
-				fieldExpr, measure.innerName, fieldExpr, measure.innerName)
+			fmt.Fprintf(&sb, "SUM(%s)%s AS %s_sum, COUNT(%s)%s AS %s_cnt",
+				fieldExpr, suffix, measure.innerName, fieldExpr, suffix, measure.innerName)
 		case reportcatalog.AggCount:
-			fmt.Fprintf(&sb, "COUNT(%s) AS %s", fieldExpr, measure.innerName)
+			fmt.Fprintf(&sb, "COUNT(%s)%s AS %s", fieldExpr, suffix, measure.innerName)
 		case reportcatalog.AggSum:
-			fmt.Fprintf(&sb, "SUM(%s) AS %s", fieldExpr, measure.innerName)
+			fmt.Fprintf(&sb, "SUM(%s)%s AS %s", fieldExpr, suffix, measure.innerName)
 		case reportcatalog.AggMin:
-			fmt.Fprintf(&sb, "MIN(%s) AS %s", fieldExpr, measure.innerName)
+			fmt.Fprintf(&sb, "MIN(%s)%s AS %s", fieldExpr, suffix, measure.innerName)
 		case reportcatalog.AggMax:
-			fmt.Fprintf(&sb, "MAX(%s) AS %s", fieldExpr, measure.innerName)
+			fmt.Fprintf(&sb, "MAX(%s)%s AS %s", fieldExpr, suffix, measure.innerName)
 		default:
 			return sqlExpr{}, fmt.Errorf(
 				"aggregation %q is not supported across to-many relationships", col.spec.Agg,
@@ -554,7 +728,51 @@ func (e *emitter) whereClause() (sqlExpr, error) {
 	return sqlExpr{text: strings.Join(conds, " AND "), args: args}, nil
 }
 
+// filterBinder turns a single leaf filter into SQL. Row filters, measure
+// filters and the per-measure filters bound to a lateral's terminal alias only
+// differ in this one step, so the tree walk itself is shared.
+type filterBinder func(*report.FieldFilter) (sqlExpr, error)
+
+func (e *emitter) rowBinder() filterBinder {
+	return func(filter *report.FieldFilter) (sqlExpr, error) {
+		return e.filterExpr(filter, false)
+	}
+}
+
+func (e *emitter) havingBinder() filterBinder {
+	return func(filter *report.FieldFilter) (sqlExpr, error) {
+		return e.filterExpr(filter, true)
+	}
+}
+
+// aliasBinder resolves every leaf against a single alias, which is how a
+// measure's own filter is pushed inside the lateral that aggregates it.
+func (e *emitter) aliasBinder(alias string) filterBinder {
+	return func(filter *report.FieldFilter) (sqlExpr, error) {
+		ref := e.v.refs[filter.Ref.String()]
+		if ref == nil {
+			return sqlExpr{}, fmt.Errorf(
+				"unresolved measure filter reference %q", filter.Ref.String(),
+			)
+		}
+		return e.predicateExpr(
+			applyTransform(sqlExpr{text: alias + "." + ref.field.Column.Name}, filter.Transform),
+			filter, ref,
+		)
+	}
+}
+
 func (e *emitter) filterGroupExpr(group *report.FilterGroup, having bool) (sqlExpr, error) {
+	if having {
+		return e.filterGroupWith(group, e.havingBinder())
+	}
+	return e.filterGroupWith(group, e.rowBinder())
+}
+
+func (e *emitter) filterGroupWith(
+	group *report.FilterGroup,
+	bind filterBinder,
+) (sqlExpr, error) {
 	var parts []string
 	var args []any
 
@@ -564,7 +782,7 @@ func (e *emitter) filterGroupExpr(group *report.FilterGroup, having bool) (sqlEx
 	}
 
 	for i := range group.Filters {
-		expr, err := e.filterExpr(&group.Filters[i], having)
+		expr, err := bind(&group.Filters[i])
 		if err != nil {
 			return sqlExpr{}, err
 		}
@@ -576,7 +794,7 @@ func (e *emitter) filterGroupExpr(group *report.FilterGroup, having bool) (sqlEx
 		if group.Groups[i].IsEmpty() {
 			continue
 		}
-		expr, err := e.filterGroupExpr(&group.Groups[i], having)
+		expr, err := e.filterGroupWith(&group.Groups[i], bind)
 		if err != nil {
 			return sqlExpr{}, err
 		}
@@ -585,6 +803,22 @@ func (e *emitter) filterGroupExpr(group *report.FilterGroup, having bool) (sqlEx
 	}
 
 	return sqlExpr{text: strings.Join(parts, joiner), args: args}, nil
+}
+
+// andExpr conjoins two optional predicates; either side may be empty, which is
+// how a pivot bucket and a column's own filter compose into one FILTER clause.
+func andExpr(left, right sqlExpr) sqlExpr {
+	switch {
+	case left.text == "":
+		return right
+	case right.text == "":
+		return left
+	default:
+		return sqlExpr{
+			text: "(" + left.text + ") AND (" + right.text + ")",
+			args: appendArgs(left.args, right.args...),
+		}
+	}
 }
 
 func (e *emitter) filterExpr(filter *report.FieldFilter, having bool) (sqlExpr, error) {
@@ -605,7 +839,10 @@ func (e *emitter) filterExpr(filter *report.FieldFilter, having bool) (sqlExpr, 
 		return e.existsExpr(filter, ref)
 	}
 
-	fieldExpr := sqlExpr{text: e.plan.aliasFor(ref.pathKey) + "." + ref.field.Column.Name}
+	fieldExpr := applyTransform(
+		sqlExpr{text: e.plan.aliasFor(ref.pathKey) + "." + ref.field.Column.Name},
+		filter.Transform,
+	)
 	return e.predicateExpr(fieldExpr, filter, ref)
 }
 
@@ -625,7 +862,9 @@ func (e *emitter) existsExpr(filter *report.FieldFilter, ref *resolvedRef) (sqlE
 		return sqlExpr{}, err
 	}
 
-	fieldExpr := sqlExpr{text: terminalAlias + "." + ref.field.Column.Name}
+	fieldExpr := applyTransform(
+		sqlExpr{text: terminalAlias + "." + ref.field.Column.Name}, filter.Transform,
+	)
 	predicate, err := e.predicateExpr(fieldExpr, filter, ref)
 	if err != nil {
 		return sqlExpr{}, err

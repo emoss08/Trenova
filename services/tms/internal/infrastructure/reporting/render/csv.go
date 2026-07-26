@@ -70,17 +70,27 @@ func (r *CSVRenderer) Render(
 		}
 	}
 
+	totals, err := totalsCells(ctx, req.Dataset, loc)
+	if err != nil {
+		return nil, err
+	}
+	if totals != nil {
+		if err = writer.Write(totals); err != nil {
+			return nil, err
+		}
+	}
+
 	truncated := req.Dataset.Truncated()
 	if truncated {
 		notice := make([]string, len(schema))
 		notice[0] = truncationNotice
-		if err := writer.Write(notice); err != nil {
+		if err = writer.Write(notice); err != nil {
 			return nil, err
 		}
 	}
 
 	writer.Flush()
-	if err := writer.Error(); err != nil {
+	if err = writer.Error(); err != nil {
 		return nil, err
 	}
 

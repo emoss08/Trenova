@@ -4,6 +4,13 @@ package report
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Dashboard].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DashboardFieldMap] instead of parsing struct tags via reflection.
+func (e *Dashboard) GetStaticFieldMap() map[string]string {
+	return buncolgen.DashboardFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportDefinition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ReportDefinitionFieldMap] instead of parsing struct tags via reflection.
@@ -30,4 +37,11 @@ func (e *ReportRun) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.ReportScheduleFieldMap] instead of parsing struct tags via reflection.
 func (e *ReportSchedule) GetStaticFieldMap() map[string]string {
 	return buncolgen.ReportScheduleFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportView].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ReportViewFieldMap] instead of parsing struct tags via reflection.
+func (e *ReportView) GetStaticFieldMap() map[string]string {
+	return buncolgen.ReportViewFieldMap
 }

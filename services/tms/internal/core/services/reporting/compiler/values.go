@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -36,17 +37,32 @@ func coerceScalar(
 		}
 		return s, nil
 	case reportcatalog.FieldBool:
-		b, ok := value.(bool)
-		if !ok {
-			return nil, fmt.Errorf("expected a boolean, got %T", value)
-		}
-		return b, nil
+		return coerceBool(value)
 	case reportcatalog.FieldInt, reportcatalog.FieldEpoch:
 		return coerceInteger(value)
 	case reportcatalog.FieldDecimal:
 		return coerceDecimal(value)
 	default:
 		return nil, fmt.Errorf("fields of type %q cannot be compared to a value", fieldType)
+	}
+}
+
+// coerceBool accepts the string spellings as well: pivot values are carried as
+// strings in the IR, and JSON parameter payloads routinely arrive that way.
+func coerceBool(value any) (any, error) {
+	switch v := value.(type) {
+	case bool:
+		return v, nil
+	case string:
+		switch strings.ToLower(v) {
+		case "true", "t", "yes", "1":
+			return true, nil
+		case "false", "f", "no", "0":
+			return false, nil
+		}
+		return nil, fmt.Errorf("%q is not a boolean", v)
+	default:
+		return nil, fmt.Errorf("expected a boolean, got %T", value)
 	}
 }
 

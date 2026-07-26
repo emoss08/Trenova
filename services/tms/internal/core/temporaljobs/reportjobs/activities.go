@@ -215,7 +215,37 @@ func (a *Activities) PrepareRunActivity(
 		OrgTimezone:    org.Timezone,
 		RequestedBy:    requestedBy,
 		MaxRunSeconds:  int64(a.cfg.GetMaxRunDuration().Seconds()),
+		WantDigest:     a.scheduleWantsDigest(ctx, runnerTenant, run.ScheduleID),
 	}, nil
+}
+
+// scheduleWantsDigest asks whether this run feeds a schedule that needs rows
+// retained — either to render an inline table or to evaluate a measure alert.
+// Capturing is cheap but not free, so an ad-hoc run and a schedule that only
+// links to the artifact never pay for it.
+func (a *Activities) scheduleWantsDigest(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	scheduleID pulid.ID,
+) bool {
+	if scheduleID.IsNil() {
+		return false
+	}
+	schedule, err := a.scheduleRepo.GetByID(ctx, &repositories.GetReportScheduleRequest{
+		TenantInfo: tenant,
+		ScheduleID: scheduleID,
+	})
+	if err != nil {
+		// A digest is a presentation nicety; failing the run over it would be
+		// the wrong trade.
+		a.l.Warn("could not resolve schedule for report digest",
+			zap.String("scheduleId", scheduleID.String()), zap.Error(err))
+		return false
+	}
+	// A measure alert reads the grand total from the same capture, so it has
+	// to opt in too — otherwise the condition has nothing to compare against
+	// and would never fire.
+	return schedule.Delivery.WantsInlineDigest() || schedule.Alert.TargetsMeasure()
 }
 
 func (a *Activities) resolveDefinition(
@@ -347,7 +377,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}
 	defer reader.Close()
 
-	heartbeating := &heartbeatingReader{inner: reader, ctx: ctx}
+	source, digesting := wrapReader(ctx, reader, prepared)
 
 	renderer, err := a.renderers.For(prepared.Format)
 	if err != nil {
@@ -365,9 +395,13 @@ func (a *Activities) ExecuteAndRenderActivity(
 		prepared.Format.Extension(),
 	)
 
-	result, err := a.renderToStorage(ctx, prepared, renderer, heartbeating, artifactKey)
+	result, err := a.renderToStorage(ctx, prepared, renderer, source, artifactKey)
 	if err != nil {
 		return nil, err
+	}
+
+	if digesting != nil {
+		result.Digest = digesting.digest(ctx)
 	}
 
 	if a.resultCache != nil && cacheKey != "" {
@@ -379,6 +413,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 			ByteSize:          result.ByteSize,
 			Truncated:         result.Truncated,
 			ArtifactExpiresAt: expiresAt,
+			Digest:            result.Digest,
 		}); storeErr != nil {
 			a.l.Warn("failed to store report cache entry", zap.Error(storeErr))
 		}
@@ -422,6 +457,16 @@ func (a *Activities) cachedResult(
 		return nil, cacheKey
 	}
 
+	// A run that needs an inline digest cannot use an entry stored by a run that
+	// did not: the artifact is identical, but the email would silently lose its
+	// table. Re-running is the cheaper mistake.
+	if prepared.WantDigest && entry.Digest.IsEmpty() {
+		if a.metrics != nil {
+			a.metrics.RecordCacheLookup("miss")
+		}
+		return nil, cacheKey
+	}
+
 	if a.metrics != nil {
 		a.metrics.RecordCacheLookup("hit")
 	}
@@ -432,6 +477,7 @@ func (a *Activities) cachedResult(
 		Truncated:         entry.Truncated,
 		CacheHit:          true,
 		ArtifactExpiresAt: entry.ArtifactExpiresAt,
+		Digest:            entry.Digest,
 	}, cacheKey
 }
 
@@ -772,6 +818,22 @@ func (w *limitWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
+// wrapReader layers the activity's concerns over the raw dataset: heartbeats so
+// a long render is not killed, and — only when a schedule renders an inline
+// email table — a bounded tee of the rows.
+func wrapReader(
+	ctx context.Context,
+	reader services.ReportDatasetReader,
+	prepared *PreparedRun,
+) (services.ReportDatasetReader, *digestReader) {
+	var source services.ReportDatasetReader = &heartbeatingReader{inner: reader, ctx: ctx}
+	if !prepared.WantDigest {
+		return source, nil
+	}
+	digesting := newDigestReader(source, services.MaxDigestRows)
+	return digesting, digesting
+}
+
 type heartbeatingReader struct {
 	inner services.ReportDatasetReader
 	ctx   context.Context
@@ -791,8 +853,69 @@ func (r *heartbeatingReader) Next(ctx context.Context) (services.ReportRow, erro
 	return row, err
 }
 
+func (r *heartbeatingReader) Totals(ctx context.Context) (services.ReportRow, error) {
+	return r.inner.Totals(ctx)
+}
+
 func (r *heartbeatingReader) RowCount() int64 { return r.inner.RowCount() }
 
 func (r *heartbeatingReader) Truncated() bool { return r.inner.Truncated() }
 
 func (r *heartbeatingReader) Close() error { return r.inner.Close() }
+
+// digestReader captures a bounded prefix of the rows on their way to the
+// renderer, so an inline email digest costs one pass over data the run is
+// already streaming rather than a second query.
+type digestReader struct {
+	inner   services.ReportDatasetReader
+	rows    []services.ReportRow
+	limit   int
+	dropped bool
+}
+
+func newDigestReader(inner services.ReportDatasetReader, limit int) *digestReader {
+	if limit > services.MaxDigestRows {
+		limit = services.MaxDigestRows
+	}
+	return &digestReader{inner: inner, limit: limit}
+}
+
+func (r *digestReader) Schema() []services.ReportResultColumn { return r.inner.Schema() }
+
+func (r *digestReader) Next(ctx context.Context) (services.ReportRow, error) {
+	row, err := r.inner.Next(ctx)
+	if err != nil {
+		return row, err
+	}
+	if len(r.rows) < r.limit {
+		// The renderer owns the slice it was handed, so the digest keeps a copy.
+		r.rows = append(r.rows, append(services.ReportRow(nil), row...))
+	} else {
+		r.dropped = true
+	}
+	return row, nil
+}
+
+func (r *digestReader) Totals(ctx context.Context) (services.ReportRow, error) {
+	return r.inner.Totals(ctx)
+}
+
+func (r *digestReader) RowCount() int64 { return r.inner.RowCount() }
+
+func (r *digestReader) Truncated() bool { return r.inner.Truncated() }
+
+func (r *digestReader) Close() error { return r.inner.Close() }
+
+// digest assembles what was captured. Totals are read after the stream so the
+// grand total covers every matching row, not only the sampled ones.
+func (r *digestReader) digest(ctx context.Context) *services.ReportDigest {
+	digest := &services.ReportDigest{
+		Columns:   r.inner.Schema(),
+		Rows:      r.rows,
+		Truncated: r.dropped,
+	}
+	if totals, err := r.inner.Totals(ctx); err == nil {
+		digest.Totals = totals
+	}
+	return digest
+}

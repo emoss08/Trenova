@@ -1,7 +1,9 @@
 package compiler
 
 import (
+	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -10,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/shared/floatutils"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type resolvedRef struct {
@@ -128,7 +132,8 @@ func (c *Compiler) validate(
 	if hasMeasures {
 		for i := range v.columns {
 			if v.columns[i].spec.Kind == report.ColumnKindDimension &&
-				!v.columns[i].ref.field.Groupable {
+				!v.columns[i].ref.field.Groupable &&
+				v.columns[i].spec.Band.IsEmpty() {
 				multiErr.Add(fmt.Sprintf("definition.columns[%d]", i), errortypes.ErrInvalid,
 					"Non-groupable dimension in an aggregated report")
 			}
@@ -140,8 +145,11 @@ func (c *Compiler) validate(
 
 	c.validateFilterTree(v, multiErr, def.Filters, "definition.filters", false)
 	c.validateFilterTree(v, multiErr, def.Having, "definition.having", true)
-	c.validateSort(v, multiErr)
+	c.validateColumnFilters(v, multiErr)
 	c.validatePivot(v, multiErr, hasMeasures)
+	c.validateSort(v, multiErr)
+	validateTotals(v, multiErr)
+	validateCharts(v, multiErr)
 
 	if def.Limit < 0 {
 		multiErr.Add("definition.limit", errortypes.ErrInvalid, "Limit cannot be negative")
@@ -165,7 +173,7 @@ func (c *Compiler) validate(
 		return nil, multiErr
 	}
 
-	v.entityKeys = collectEntityKeys(v)
+	v.entityKeys = c.collectEntityKeys(v)
 	return v, nil
 }
 
@@ -187,6 +195,13 @@ func (c *Compiler) validateColumns(
 		}
 		if seenIDs[col.ID] {
 			multiErr.Add(fieldPath+".id", errortypes.ErrInvalid, "Duplicate column ID")
+			continue
+		}
+		// Pivot cells address themselves as "<columnId>:<value>", so the
+		// separator has to stay out of the ids it joins.
+		if strings.Contains(col.ID, pivotIDSeparator) {
+			multiErr.Add(fieldPath+".id", errortypes.ErrInvalid,
+				"Column IDs cannot contain ':'")
 			continue
 		}
 		seenIDs[col.ID] = true
@@ -216,8 +231,92 @@ func (c *Compiler) validateColumns(
 	}
 
 	validateComputedOperands(v, multiErr)
+	validateColumnPresentation(v, multiErr)
 
 	return dimensionCount
+}
+
+// validateColumnPresentation runs after operand resolution so transforms and
+// display overrides are checked against the type the column actually emits —
+// an aggregate's result type, not the raw field type.
+func validateColumnPresentation(v *validatedDef, multiErr *errortypes.MultiError) {
+	for i := range v.columns {
+		col := &v.columns[i]
+		fieldPath := fmt.Sprintf("definition.columns[%s]", col.spec.ID)
+		valueType := preTransformType(v, col)
+
+		if err := validateTransform(col.spec.Transform, valueType); err != nil {
+			multiErr.Add(fieldPath+".transform", errortypes.ErrInvalid, err.Error())
+			continue
+		}
+
+		if col.spec.Transform != nil && col.spec.Transform.Op.ProducesDecimal() {
+			valueType = reportcatalog.FieldDecimal
+		}
+		if err := col.spec.Display.Validate(valueType); err != nil {
+			multiErr.Add(fieldPath+".display", errortypes.ErrInvalid, err.Error())
+		}
+	}
+}
+
+func validateTransform(
+	transform *report.TransformSpec,
+	valueType reportcatalog.FieldType,
+) error {
+	if transform == nil {
+		return nil
+	}
+	if !transform.Op.IsValid() || transform.Op == report.TransformNone {
+		return fmt.Errorf("unknown transform %q", transform.Op)
+	}
+
+	switch {
+	case transform.Op.IsNumeric():
+		if valueType != reportcatalog.FieldInt && valueType != reportcatalog.FieldDecimal {
+			return fmt.Errorf(
+				"transform %q only applies to numeric columns, this column is %s",
+				transform.Op, valueType,
+			)
+		}
+	case transform.Op.IsText():
+		if valueType != reportcatalog.FieldString && valueType != reportcatalog.FieldEnum {
+			return fmt.Errorf(
+				"transform %q only applies to text columns, this column is %s",
+				transform.Op, valueType,
+			)
+		}
+	}
+
+	return validateTransformOperands(transform)
+}
+
+func validateTransformOperands(transform *report.TransformSpec) error {
+	if transform.Precision != nil {
+		if !transform.Op.UsesPrecision() {
+			return fmt.Errorf("transform %q does not take a precision", transform.Op)
+		}
+		if *transform.Precision < 0 || *transform.Precision > report.MaxTransformPrecision {
+			return fmt.Errorf(
+				"precision must be between 0 and %d", report.MaxTransformPrecision,
+			)
+		}
+	}
+
+	if transform.Op.UsesFactor() {
+		if transform.Factor == nil {
+			return errors.New("scaling requires a multiplier")
+		}
+		factor := *transform.Factor
+		if factor == 0 || !floatutils.IsFinite(factor) {
+			return errors.New("the scale multiplier must be a non-zero finite number")
+		}
+		return nil
+	}
+
+	if transform.Factor != nil {
+		return fmt.Errorf("transform %q does not take a multiplier", transform.Op)
+	}
+	return nil
 }
 
 func validateComputedShape(
@@ -256,17 +355,66 @@ func validateComputedShape(
 			fmt.Sprintf("Unknown format hint %q", comp.Format))
 		return false
 	}
-	if comp.LeftID == "" || comp.RightID == "" {
-		multiErr.Add(fieldPath+".computed", errortypes.ErrRequired,
-			"Computed columns require both operand column IDs")
-		return false
+	return validateComputedOperandShape(multiErr, col, fieldPath)
+}
+
+// validateComputedOperandShape enforces the operand contract: each side is
+// exactly one of a column or a constant, and at least one side has to be a
+// column — two constants are a number, not a calculation.
+func validateComputedOperandShape(
+	multiErr *errortypes.MultiError,
+	col *report.ColumnSpec,
+	fieldPath string,
+) bool {
+	comp := col.Computed
+	operands := comp.Operands()
+
+	for i, operand := range operands {
+		sidePath := fieldPath + ".computed." + computedSideName(i)
+		switch {
+		case operand.IsEmpty():
+			multiErr.Add(sidePath, errortypes.ErrRequired,
+				"Every side of a calculation needs a measure or a target value")
+			return false
+		case operand.IsAmbiguous():
+			multiErr.Add(sidePath, errortypes.ErrInvalid,
+				"A calculation operand is either a measure or a target value, not both")
+			return false
+		case operand.IsLiteral() && !floatutils.IsFinite(operand.ValueOrZero()):
+			multiErr.Add(sidePath, errortypes.ErrInvalid,
+				"A target value must be a finite number")
+			return false
+		case !operand.IsLiteral() && operand.ColumnID == col.ID:
+			multiErr.Add(sidePath, errortypes.ErrInvalid,
+				"A computed column cannot reference itself")
+			return false
+		}
 	}
-	if comp.LeftID == col.ID || comp.RightID == col.ID {
+
+	if operands[0].IsLiteral() && operands[1].IsLiteral() {
 		multiErr.Add(fieldPath+".computed", errortypes.ErrInvalid,
-			"A computed column cannot reference itself")
+			"A calculation needs at least one measure — two target values are a constant")
 		return false
 	}
+
+	// Dividing by a column guards against a zero row with NULLIF; a constant
+	// zero divisor is only ever an authoring mistake, so it is rejected here
+	// rather than silently blanking every row.
+	if comp.Op == report.ComputedOpDivide && operands[1].IsLiteral() &&
+		operands[1].ValueOrZero() == 0 {
+		multiErr.Add(fieldPath+".computed."+computedSideName(1), errortypes.ErrInvalid,
+			"Cannot divide by a target value of zero")
+		return false
+	}
+
 	return true
+}
+
+func computedSideName(index int) string {
+	if index == 0 {
+		return "left"
+	}
+	return "right"
 }
 
 func validateComputedOperands(v *validatedDef, multiErr *errortypes.MultiError) {
@@ -276,16 +424,19 @@ func validateComputedOperands(v *validatedDef, multiErr *errortypes.MultiError) 
 			continue
 		}
 		fieldPath := fmt.Sprintf("definition.columns[%s].computed", col.spec.ID)
-		for _, operandID := range []string{col.spec.Computed.LeftID, col.spec.Computed.RightID} {
-			operand := v.columnByID(operandID)
-			if operand == nil {
-				multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
-					"Computed operand %q does not reference a valid column", operandID))
+		for _, operand := range col.spec.Computed.Operands() {
+			if operand.IsLiteral() {
 				continue
 			}
-			if operand.spec.Kind != report.ColumnKindMeasure {
+			target := v.columnByID(operand.ColumnID)
+			if target == nil {
 				multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
-					"Computed operand %q must be a measure column", operandID))
+					"Computed operand %q does not reference a valid column", operand.ColumnID))
+				continue
+			}
+			if target.spec.Kind != report.ColumnKindMeasure {
+				multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
+					"Computed operand %q must be a measure column", operand.ColumnID))
 			}
 		}
 	}
@@ -334,7 +485,10 @@ func (c *Compiler) validateDimensionColumn(
 		))
 		return false
 	}
-	if !ref.field.Groupable && hasMeasures {
+	// Groupable marks a field as a sensible grouping key on its own. A band
+	// makes any numeric field one — a charge amount has far too many distinct
+	// values to group by, but its distribution across ranges is the point.
+	if !ref.field.Groupable && hasMeasures && col.Band.IsEmpty() {
 		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, fmt.Sprintf(
 			"Field %q cannot be used as a grouping dimension", col.Ref.String(),
 		))
@@ -348,6 +502,11 @@ func (c *Compiler) validateDimensionColumn(
 		)
 		return false
 	}
+	if col.Bucket != report.DateBucketNone && !col.Band.IsEmpty() {
+		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid,
+			"A column can carry a date bucket or a numeric range, not both")
+		return false
+	}
 	if col.Bucket != report.DateBucketNone {
 		if !col.Bucket.IsValid() {
 			multiErr.Add(fieldPath+".bucket", errortypes.ErrInvalid, "Invalid date bucket")
@@ -358,6 +517,48 @@ func (c *Compiler) validateDimensionColumn(
 				"Date buckets are only valid on date/timestamp fields")
 			return false
 		}
+	}
+	return validateBand(multiErr, col, ref, fieldPath)
+}
+
+// validateBand guards the numeric counterpart of a date bucket. The grouped
+// value is the range's lower bound cast back to the column's own type, so a
+// fractional boundary on a whole-number column would be truncated into a
+// different range than the author asked for.
+func validateBand(
+	multiErr *errortypes.MultiError,
+	col *report.ColumnSpec,
+	ref *resolvedRef,
+	fieldPath string,
+) bool {
+	if col.Band.IsEmpty() {
+		return true
+	}
+
+	if err := col.Band.Validate(); err != nil {
+		multiErr.Add(
+			fieldPath+".band", errortypes.ErrInvalid,
+			stringutils.CapitalizeFirst(err.Error()),
+		)
+		return false
+	}
+	if !bandableType(ref.field.Type) {
+		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, fmt.Sprintf(
+			"Ranges are only valid on numeric fields; %q is not one", col.Ref.String(),
+		))
+		return false
+	}
+	if ref.field.Type == reportcatalog.FieldInt && !col.Band.IsWhole() {
+		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, fmt.Sprintf(
+			"%q holds whole numbers, so its range boundaries must be whole numbers too",
+			col.Ref.String(),
+		))
+		return false
+	}
+	if col.Transform != nil && col.Transform.Op != report.TransformNone {
+		multiErr.Add(fieldPath+".transform", errortypes.ErrInvalid,
+			"A ranged column cannot also carry a transform; the range already reshapes the value")
+		return false
 	}
 	return true
 }
@@ -392,6 +593,14 @@ func (c *Compiler) validateMeasureColumn(
 			fieldPath+".bucket",
 			errortypes.ErrInvalid,
 			"Measures cannot be date-bucketed",
+		)
+		return false
+	}
+	if !col.Band.IsEmpty() {
+		multiErr.Add(
+			fieldPath+".band",
+			errortypes.ErrInvalid,
+			"Measures cannot be grouped into ranges; band the dimension instead",
 		)
 		return false
 	}
@@ -539,6 +748,11 @@ func (c *Compiler) validateHavingFilter(
 			"Measure filters support only comparison operators")
 		return false
 	}
+	if filter.Transform != nil {
+		multiErr.Add(fieldPath+".transform", errortypes.ErrInvalid,
+			"Measure filters compare the aggregate itself and cannot carry a transform")
+		return false
+	}
 	return true
 }
 
@@ -551,6 +765,10 @@ func (c *Compiler) validateRowFilter(
 	if filter.Agg != "" {
 		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid,
 			"Row filters cannot have an aggregation; use a measure filter")
+		return false
+	}
+	if err := validateTransform(filter.Transform, ref.field.Type); err != nil {
+		multiErr.Add(fieldPath+".transform", errortypes.ErrInvalid, err.Error())
 		return false
 	}
 	if !ref.field.Filterable {
@@ -567,19 +785,112 @@ func (c *Compiler) validateRowFilter(
 	return true
 }
 
+// validateColumnFilters checks the per-measure filters that let one row carry
+// both a total and a subset of that total.
+func (c *Compiler) validateColumnFilters(v *validatedDef, multiErr *errortypes.MultiError) {
+	for i := range v.columns {
+		col := &v.columns[i]
+		if col.spec.Filter.IsEmpty() {
+			continue
+		}
+
+		fieldPath := fmt.Sprintf("definition.columns[%s].filter", col.spec.ID)
+		if col.spec.Kind != report.ColumnKindMeasure {
+			multiErr.Add(
+				fieldPath,
+				errortypes.ErrInvalid,
+				"Only measure columns can carry their own filter; filter a calculation by filtering the measures it divides",
+			)
+			continue
+		}
+
+		c.validateFilterTree(v, multiErr, col.spec.Filter, fieldPath, false)
+		validateMeasureFilterScope(multiErr, col, fieldPath)
+	}
+}
+
+// validateMeasureFilterScope keeps a to-many measure's filter on the same path
+// it aggregates. Anything else would be evaluated against the parent row and
+// silently include children the author meant to exclude.
+func validateMeasureFilterScope(
+	multiErr *errortypes.MultiError,
+	col *validatedColumn,
+	fieldPath string,
+) {
+	if !col.ref.toMany {
+		return
+	}
+
+	_ = col.spec.Filter.Walk(func(filter *report.FieldFilter) error {
+		if reportcatalog.PathKey(filter.Ref.Path) == col.ref.pathKey {
+			return nil
+		}
+		multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
+			"A filter on %q can only use fields of %s, the records this measure aggregates; move %q to the report filters",
+			col.spec.ID,
+			col.ref.entity.PluralLabel,
+			filter.Ref.String(),
+		))
+		return nil
+	})
+}
+
 func (c *Compiler) validateSort(v *validatedDef, multiErr *errortypes.MultiError) {
+	pivoted := pivotedMeasureIDs(v.def.Pivot)
+
 	for i, sortSpec := range v.def.Sort {
 		fieldPath := fmt.Sprintf("definition.sort[%d]", i)
-		if _, ok := v.def.ColumnByID(sortSpec.ColumnID); !ok {
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid,
-				fmt.Sprintf("Sort references unknown column %q", sortSpec.ColumnID))
-		}
 		if sortSpec.Direction != dbtype.SortDirectionAsc &&
 			sortSpec.Direction != dbtype.SortDirectionDesc {
 			multiErr.Add(fieldPath+".direction", errortypes.ErrInvalid,
 				"Sort direction must be asc or desc")
 		}
+
+		baseID, pivotValue, isPivotCell := strings.Cut(sortSpec.ColumnID, pivotIDSeparator)
+		if _, ok := v.def.ColumnByID(baseID); !ok {
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid,
+				fmt.Sprintf("Sort references unknown column %q", sortSpec.ColumnID))
+			continue
+		}
+
+		switch {
+		case isPivotCell && !pivoted[baseID]:
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, fmt.Sprintf(
+				"Sort references pivot column %q, but %q is not spread across the pivot",
+				sortSpec.ColumnID, baseID,
+			))
+		case isPivotCell && !pivotValueExists(v.def.Pivot, pivotValue):
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, fmt.Sprintf(
+				"Sort references pivot value %q, which this report does not produce",
+				pivotValue,
+			))
+		case !isPivotCell && pivoted[baseID]:
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, fmt.Sprintf(
+				"%q is spread across pivot columns; sort by one of them instead", baseID,
+			))
+		}
 	}
+}
+
+func pivotedMeasureIDs(pivot *report.PivotSpec) map[string]bool {
+	if pivot == nil {
+		return nil
+	}
+	ids := make(map[string]bool, len(pivot.MeasureIDs))
+	for _, id := range pivot.MeasureIDs {
+		ids[id] = true
+	}
+	return ids
+}
+
+func pivotValueExists(pivot *report.PivotSpec, value string) bool {
+	if pivot == nil {
+		return false
+	}
+	if value == pivotOtherValue {
+		return pivot.IncludeOther
+	}
+	return slices.Contains(pivot.Values, value)
 }
 
 func (c *Compiler) validatePivot(
@@ -593,7 +904,11 @@ func (c *Compiler) validatePivot(
 	}
 
 	if !hasMeasures {
-		multiErr.Add("definition.pivot", errortypes.ErrInvalid, "Pivots require measure columns")
+		multiErr.Add(
+			"definition.pivot",
+			errortypes.ErrInvalid,
+			"Pivots require measure columns",
+		)
 		return
 	}
 	if len(pivot.Values) == 0 {
@@ -607,6 +922,11 @@ func (c *Compiler) validatePivot(
 	if len(pivot.MeasureIDs) == 0 {
 		multiErr.Add("definition.pivot.measureIds", errortypes.ErrRequired,
 			"Pivot must reference at least one measure")
+		return
+	}
+	if len(pivot.Labels) > 0 && len(pivot.Labels) != len(pivot.Values) {
+		multiErr.Add("definition.pivot.labels", errortypes.ErrInvalid,
+			"Pivot labels must match the number of pivot values")
 		return
 	}
 
@@ -641,8 +961,11 @@ func (c *Compiler) validatePivot(
 		col, ok := v.def.ColumnByID(id)
 		if !ok ||
 			(col.Kind != report.ColumnKindMeasure && col.Kind != report.ColumnKindComputed) {
-			multiErr.Add(fmt.Sprintf("definition.pivot.measureIds[%d]", i), errortypes.ErrInvalid,
-				fmt.Sprintf("Pivot measure %q does not reference a measure column", id))
+			multiErr.Add(
+				fmt.Sprintf("definition.pivot.measureIds[%d]", i),
+				errortypes.ErrInvalid,
+				fmt.Sprintf("Pivot measure %q does not reference a measure column", id),
+			)
 		}
 	}
 	for i := range v.def.Columns {
@@ -703,7 +1026,8 @@ func (c *Compiler) validateRefParam(param *report.ParameterDef) error {
 	if param.Type != reportcatalog.FieldRef {
 		if param.RefEntity != "" {
 			return fmt.Errorf(
-				"parameter %q declares a reference entity but is not a ref parameter", param.Name,
+				"parameter %q declares a reference entity but is not a ref parameter",
+				param.Name,
 			)
 		}
 		return nil
@@ -726,11 +1050,12 @@ func (c *Compiler) validateRefParam(param *report.ParameterDef) error {
 	return nil
 }
 
-func collectEntityKeys(v *validatedDef) []string {
+func (c *Compiler) collectEntityKeys(v *validatedDef) []string {
 	seen := map[string]bool{v.entity.Key: true}
 	for _, ref := range v.refs {
 		for _, step := range ref.path.Steps {
 			seen[step.Entity.Key] = true
+			c.collectPickVia(seen, step.Edge)
 		}
 	}
 
@@ -740,6 +1065,30 @@ func collectEntityKeys(v *validatedDef) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// collectPickVia records the entities a pick edge reads on its way to the row it
+// returns. They carry no output columns, but the query does read them, so they
+// have to be authorized like any other table and — more sharply — they belong in
+// the cache's data-version vector: reorder a shipment's moves and its origin
+// stop changes without the stops table being touched at all.
+func (c *Compiler) collectPickVia(seen map[string]bool, edge *reportcatalog.Edge) {
+	if edge == nil || edge.Pick == nil {
+		return
+	}
+
+	_, via, err := c.catalog.ResolvePath(edge.Source, edge.Pick.Via)
+	if err != nil {
+		return
+	}
+	for _, step := range via.Steps {
+		if seen[step.Entity.Key] {
+			continue
+		}
+		seen[step.Entity.Key] = true
+		// A via hop may itself be a picked edge, so the walk continues.
+		c.collectPickVia(seen, step.Edge)
+	}
 }
 
 func isComparisonOperator(op dbtype.Operator) bool {

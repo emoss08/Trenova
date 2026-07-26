@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/zap"
 )
@@ -35,6 +36,9 @@ const (
 	deliveryChannelInApp  = "notification"
 	deliveryOutcomeOK     = "delivered"
 	deliveryOutcomeFailed = "failed"
+
+	alertSkipConditionUnmet = "condition_not_met"
+	alertSkipAlreadyFiring  = "already_alerting"
 
 	dataKeyRunID             = "runId"
 	dataKeyStatus            = "status"
@@ -84,6 +88,10 @@ func (a *Activities) DeliverScheduledRunActivity(
 		return &DeliverRunResult{Skipped: true}, nil
 	}
 
+	if deliver, reason := a.evaluateAlert(ctx, run, schedule, payload.Digest); !deliver {
+		return &DeliverRunResult{Skipped: true, AlertSkipReason: reason}, nil
+	}
+
 	runnerTenant := pagination.TenantInfo{
 		OrgID:  run.OrganizationID,
 		BuID:   run.BusinessUnitID,
@@ -94,7 +102,7 @@ func (a *Activities) DeliverScheduledRunActivity(
 	result := &DeliverRunResult{}
 
 	if schedule.Delivery.HasEmail() {
-		if err = a.deliverRunEmail(ctx, run, schedule, title, result); err != nil {
+		if err = a.deliverRunEmail(ctx, run, schedule, title, payload.Digest, result); err != nil {
 			return nil, err
 		}
 	}
@@ -108,11 +116,94 @@ func (a *Activities) DeliverScheduledRunActivity(
 	return result, nil
 }
 
+// digestTotal reads one column's grand total out of the captured digest.
+// A missing column or absent total returns nil rather than zero: the measure
+// did not appear, and treating that as zero would fire "revenue below target"
+// on a report that simply lost the column.
+func digestTotal(digest *services.ReportDigest, columnID string) *float64 {
+	if digest.IsEmpty() || len(digest.Totals) == 0 {
+		return nil
+	}
+	for i := range digest.Columns {
+		if digest.Columns[i].ID != columnID {
+			continue
+		}
+		if i >= len(digest.Totals) {
+			return nil
+		}
+		return numericTotal(digest.Totals[i])
+	}
+	return nil
+}
+
+func numericTotal(value any) *float64 {
+	switch typed := value.(type) {
+	case decimal.Decimal:
+		converted, _ := typed.Float64()
+		return &converted
+	case int64:
+		converted := float64(typed)
+		return &converted
+	case float64:
+		return &typed
+	default:
+		return nil
+	}
+}
+
+// evaluateAlert decides whether a run's result is worth sending. A schedule
+// without an alert always delivers, which keeps every existing schedule
+// behaving exactly as before.
+//
+// The firing flag is what makes an alert usable day to day: a daily exception
+// report that stays broken for a week should mail once, not seven times, and it
+// should mail again the next time the condition clears and trips.
+func (a *Activities) evaluateAlert(
+	ctx context.Context,
+	run *report.ReportRun,
+	schedule *report.ReportSchedule,
+	digest *services.ReportDigest,
+) (deliver bool, reason string) {
+	alert := schedule.Alert
+	if alert == nil {
+		return true, ""
+	}
+
+	wasFiring := schedule.AlertFiring
+	matched := alert.Matches(run.RowCount)
+	if alert.TargetsMeasure() {
+		matched = alert.MatchesValue(digestTotal(digest, alert.ColumnID))
+	}
+
+	// Only the transition is written. A failure to persist is logged rather than
+	// raised: the delivery decision for this run stands on its own result, and
+	// losing the flag costs at most one duplicate email, never a missed alert.
+	if matched != wasFiring {
+		schedule.AlertFiring = matched
+		if _, err := a.scheduleRepo.Update(ctx, schedule); err != nil {
+			a.l.Warn("failed to persist report alert state",
+				zap.String("scheduleId", schedule.ID.String()),
+				zap.Bool("firing", matched),
+				zap.Error(err))
+		}
+	}
+
+	switch {
+	case !matched:
+		return false, alertSkipConditionUnmet
+	case alert.SuppressWhileFiring && wasFiring:
+		return false, alertSkipAlreadyFiring
+	default:
+		return true, ""
+	}
+}
+
 func (a *Activities) deliverRunEmail(
 	ctx context.Context,
 	run *report.ReportRun,
 	schedule *report.ReportSchedule,
 	title string,
+	digest *services.ReportDigest,
 	result *DeliverRunResult,
 ) error {
 	if a.email == nil {
@@ -125,7 +216,14 @@ func (a *Activities) deliverRunEmail(
 	subject := fmt.Sprintf(
 		"Scheduled report: %s (%s)", title, strings.ToUpper(string(run.Format)),
 	)
-	text, htmlBody := a.deliveryEmailBody(run, schedule, title, attach != nil, attachTooLarge)
+	text, htmlBody := a.deliveryEmailBody(&deliveryEmailContent{
+		run:            run,
+		schedule:       schedule,
+		title:          title,
+		digest:         digest,
+		attached:       attach != nil,
+		attachTooLarge: attachTooLarge,
+	})
 
 	req := &services.SendEmailRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -403,12 +501,22 @@ func (a *Activities) auditDelivery(
 	}
 }
 
+// deliveryEmailContent groups what the body needs; the parameter list had
+// outgrown a readable signature.
+type deliveryEmailContent struct {
+	run            *report.ReportRun
+	schedule       *report.ReportSchedule
+	title          string
+	digest         *services.ReportDigest
+	attached       bool
+	attachTooLarge bool
+}
+
 func (a *Activities) deliveryEmailBody(
-	run *report.ReportRun,
-	schedule *report.ReportSchedule,
-	title string,
-	attached, attachTooLarge bool,
+	content *deliveryEmailContent,
 ) (text, htmlBody string) {
+	run, schedule, title := content.run, content.schedule, content.title
+	attached, attachTooLarge := content.attached, content.attachTooLarge
 	generatedAt := formatInTimezone(run.CompletedAt, schedule.Timezone)
 	linkURL := a.cfg.GetDeliveryLinkBaseURL()
 	if linkURL != "" {
@@ -448,8 +556,17 @@ func (a *Activities) deliveryEmailBody(
 			"Download it any time from Reports → Run history in Trenova.")
 	}
 
+	loc := timezoneOrUTC(schedule.Timezone)
+	if note := digestNote(content.digest, run.RowCount); note != "" {
+		notes = append(notes, note)
+	}
+
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Your scheduled report %q is ready.\n\n", title)
+	if table := renderDigestText(content.digest, loc); table != "" {
+		sb.WriteString(table)
+		sb.WriteString("\n")
+	}
 	sb.WriteString(strings.Join(facts, "\n"))
 	sb.WriteString("\n\n")
 	sb.WriteString(strings.Join(notes, "\n"))
@@ -463,6 +580,9 @@ func (a *Activities) deliveryEmailBody(
 		`<h2 style="font-size:18px;font-weight:600;margin:24px 0 4px;">%s</h2>`,
 		html.EscapeString(title))
 	hb.WriteString(`<p style="margin:0 0 16px;color:#666;font-size:13px;">Scheduled report</p>`)
+	// The result itself leads: someone opening this on a phone should see the
+	// answer before the metadata about the file that also contains it.
+	hb.WriteString(renderDigestHTML(content.digest, loc))
 	hb.WriteString(`<table style="border-collapse:collapse;font-size:13px;margin:0 0 16px;">`)
 	for _, fact := range facts {
 		label, value, _ := strings.Cut(fact, ": ")
@@ -493,9 +613,15 @@ func (a *Activities) deliveryEmailBody(
 }
 
 func formatInTimezone(unix int64, timezone string) string {
+	return time.Unix(unix, 0).In(timezoneOrUTC(timezone)).Format("Jan 2, 2006 at 3:04 PM MST")
+}
+
+// timezoneOrUTC resolves a schedule's zone, falling back rather than failing —
+// a delivery is not worth losing over an unparseable timezone.
+func timezoneOrUTC(timezone string) *time.Location {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		loc = time.UTC
+		return time.UTC
 	}
-	return time.Unix(unix, 0).In(loc).Format("Jan 2, 2006 at 3:04 PM MST")
+	return loc
 }

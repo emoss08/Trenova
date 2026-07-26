@@ -104,7 +104,166 @@ func (b *builder) Build() (*reportcatalog.Catalog, error) {
 		catalog.Entities = append(catalog.Entities, *entity)
 	}
 
+	// Pick edges traverse the graph the entities above just formed, so they can
+	// only be resolved once every entity and its relation edges exist.
+	if err := b.attachPickEdges(catalog); err != nil {
+		return nil, err
+	}
+
 	return catalog, nil
+}
+
+func (b *builder) attachPickEdges(catalog *reportcatalog.Catalog) error {
+	byKey := make(map[string]*reportcatalog.Entity, len(catalog.Entities))
+	for i := range catalog.Entities {
+		byKey[catalog.Entities[i].Key] = &catalog.Entities[i]
+	}
+
+	for _, key := range b.manifest.SortedEntityKeys() {
+		em := b.manifest.Entities[key]
+		entity := byKey[key]
+
+		for _, name := range em.SortedPickEdgeNames() {
+			edge, err := buildPickEdge(byKey, key, name, em.PickEdges[name])
+			if err != nil {
+				return fmt.Errorf("entity %q: pick edge %q: %w", key, name, err)
+			}
+			entity.Edges = append(entity.Edges, *edge)
+		}
+	}
+
+	return nil
+}
+
+func buildPickEdge(
+	byKey map[string]*reportcatalog.Entity,
+	sourceKey, name string,
+	pm *PickManifest,
+) (*reportcatalog.Edge, error) {
+	if len(pm.Via) == 0 {
+		return nil, fmt.Errorf("no via path")
+	}
+	if edgeByName(byKey[sourceKey], name) != nil {
+		return nil, fmt.Errorf("an edge with this name already exists")
+	}
+
+	// Walk the via path so the terminal entity is derived, never declared — a
+	// pick edge that names a path the graph cannot walk fails the build.
+	steps := make([]*reportcatalog.Entity, 0, len(pm.Via))
+	current := byKey[sourceKey]
+	crossedToMany := false
+	for _, hop := range pm.Via {
+		edge := edgeByName(current, hop)
+		if edge == nil {
+			return nil, fmt.Errorf("entity %q has no edge %q", current.Key, hop)
+		}
+		if edge.Cardinality.IsToMany() {
+			crossedToMany = true
+		}
+		next, ok := byKey[edge.Target]
+		if !ok {
+			return nil, fmt.Errorf("edge %q targets unknown entity %q", hop, edge.Target)
+		}
+		current = next
+		steps = append(steps, current)
+	}
+
+	// Picking one row of a path that is already to-one is a plain join written
+	// the expensive way, and almost certainly a mistake in the manifest.
+	if !crossedToMany {
+		return nil, fmt.Errorf("via path %v never crosses a to-many edge", pm.Via)
+	}
+
+	orderBy, err := parseOrderTerms(pm.Via, steps, pm.OrderBy)
+	if err != nil {
+		return nil, err
+	}
+
+	label := pm.Label
+	if label == "" {
+		label = stringutils.HumanizeCamelCase(name)
+	}
+
+	return &reportcatalog.Edge{
+		Name:        name,
+		Label:       label,
+		Source:      sourceKey,
+		Target:      current.Key,
+		Cardinality: reportcatalog.CardinalityOne,
+		Pick:        &reportcatalog.PickOne{Via: pm.Via, OrderBy: orderBy},
+		Traversable: true,
+	}, nil
+}
+
+// The catalog's own lookups are built by an index pass the generator cannot
+// reach, so a freshly built catalog is scanned directly.
+func edgeByName(entity *reportcatalog.Entity, name string) *reportcatalog.Edge {
+	for i := range entity.Edges {
+		if entity.Edges[i].Name == name {
+			return &entity.Edges[i]
+		}
+	}
+	return nil
+}
+
+func fieldByKey(entity *reportcatalog.Entity, key string) *reportcatalog.Field {
+	for i := range entity.Fields {
+		if entity.Fields[i].Key == key {
+			return &entity.Fields[i]
+		}
+	}
+	return nil
+}
+
+// parseOrderTerms reads "<viaStep>.<column>" terms, "-" prefixed for
+// descending. Without a total order the row a pick returns is whichever one the
+// planner happened to reach first, so an empty list is rejected.
+func parseOrderTerms(
+	via []string,
+	steps []*reportcatalog.Entity,
+	terms []string,
+) ([]reportcatalog.OrderTerm, error) {
+	if len(terms) == 0 {
+		return nil, fmt.Errorf("no orderBy terms; the row picked would be arbitrary")
+	}
+
+	parsed := make([]reportcatalog.OrderTerm, 0, len(terms))
+	for _, term := range terms {
+		descending := strings.HasPrefix(term, "-")
+		body := strings.TrimPrefix(term, "-")
+
+		hop, fieldKey, found := strings.Cut(body, ".")
+		if !found {
+			return nil, fmt.Errorf("orderBy term %q must read \"<viaStep>.<field>\"", term)
+		}
+
+		stepIndex := -1
+		for i, name := range via {
+			if name == hop {
+				stepIndex = i
+				break
+			}
+		}
+		if stepIndex < 0 {
+			return nil, fmt.Errorf("orderBy term %q names %q, which is not on the via path", term, hop)
+		}
+
+		field := fieldByKey(steps[stepIndex], fieldKey)
+		if field == nil {
+			return nil, fmt.Errorf(
+				"orderBy term %q: entity %q has no reportable field %q",
+				term, steps[stepIndex].Key, fieldKey,
+			)
+		}
+
+		parsed = append(parsed, reportcatalog.OrderTerm{
+			Step:       stepIndex,
+			Column:     field.Column.Name,
+			Descending: descending,
+		})
+	}
+
+	return parsed, nil
 }
 
 func (b *builder) buildEntity(key string, em *EntityManifest) (*reportcatalog.Entity, error) {
@@ -599,9 +758,11 @@ func defaultAggregations(fieldType reportcatalog.FieldType) []reportcatalog.Aggr
 			reportcatalog.AggMin, reportcatalog.AggMax,
 		}
 	case reportcatalog.FieldEpoch:
+		// Averaging epoch seconds yields a mean instant, which is what dwell,
+		// detention, and cycle-time measures are built from.
 		return []reportcatalog.Aggregation{
 			reportcatalog.AggCount, reportcatalog.AggCountDistinct,
-			reportcatalog.AggMin, reportcatalog.AggMax,
+			reportcatalog.AggAvg, reportcatalog.AggMin, reportcatalog.AggMax,
 		}
 	case reportcatalog.FieldJSON:
 		return nil

@@ -43,6 +43,10 @@ type locationDef struct {
 	postalCode   string
 	stateAbbr    string
 	catName      string
+	// lat/lng place the location on a map. Without them nothing in the seed
+	// plots, so map charts and the shipment map have no data to demonstrate.
+	lat float64
+	lng float64
 }
 
 func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -97,6 +101,8 @@ func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
 					postalCode:   "90021",
 					stateAbbr:    "CA",
 					catName:      "Main Terminal",
+					lat:          34.0522,
+					lng:          -118.2437,
 				},
 				{
 					code:         "WH-DAL",
@@ -107,6 +113,8 @@ func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
 					postalCode:   "75212",
 					stateAbbr:    "TX",
 					catName:      "Central Warehouse",
+					lat:          32.7767,
+					lng:          -96.7970,
 				},
 				{
 					code:         "DC-CHI",
@@ -117,6 +125,8 @@ func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
 					postalCode:   "60609",
 					stateAbbr:    "IL",
 					catName:      "East Distribution Center",
+					lat:          41.8781,
+					lng:          -87.6298,
 				},
 				{
 					code:         "COLD-PHX",
@@ -127,6 +137,8 @@ func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
 					postalCode:   "85003",
 					stateAbbr:    "AZ",
 					catName:      "Cold Storage Hub",
+					lat:          33.4484,
+					lng:          -112.0740,
 				},
 				{
 					code:         "CUST-DEN",
@@ -137,6 +149,8 @@ func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
 					postalCode:   "80202",
 					stateAbbr:    "CO",
 					catName:      "Customer Drop Point",
+					lat:          39.7392,
+					lng:          -104.9903,
 				},
 				{
 					code:         "MAINT-01",
@@ -182,6 +196,13 @@ func (s *LocationSeed) Run(ctx context.Context, tx bun.Tx) error {
 					PostalCode:         d.postalCode,
 					CreatedAt:          now,
 					UpdatedAt:          now,
+				}
+
+				if d.lat != 0 && d.lng != 0 {
+					lat, lng := d.lat, d.lng
+					l.Latitude = &lat
+					l.Longitude = &lng
+					l.IsGeocoded = true
 				}
 
 				if _, err = tx.NewInsert().Model(l).Exec(ctx); err != nil {
