@@ -4,18 +4,17 @@ package documentrepository_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -232,139 +231,21 @@ func (r *testRepository) BulkDelete(
 	return nil
 }
 
-func createTestSchema(t *testing.T, db *bun.DB, tc *testutil.TestContext) {
-	t.Helper()
-
-	queries := []string{
-		`CREATE TABLE IF NOT EXISTS organizations (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS business_units (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) REFERENCES organizations(id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS users (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) REFERENCES organizations(id)
-		)`,
-		`DO $$ BEGIN
-			CREATE TYPE document_status_enum AS ENUM (
-				'Draft', 'Active', 'Archived', 'Expired', 'Pending', 'Rejected', 'PendingApproval'
-			);
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$`,
-		`DO $$ BEGIN
-			CREATE TYPE document_preview_status_enum AS ENUM (
-				'Pending', 'Ready', 'Failed', 'Unsupported'
-			);
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$`,
-		`DO $$ BEGIN
-			CREATE TYPE document_content_status_enum AS ENUM (
-				'Pending', 'Extracting', 'Extracted', 'Indexed', 'Failed'
-			);
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$`,
-		`DO $$ BEGIN
-			CREATE TYPE document_shipment_draft_status_enum AS ENUM (
-				'Unavailable', 'Pending', 'Ready', 'Failed'
-			);
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$`,
-		`CREATE TABLE IF NOT EXISTS documents (
-			id VARCHAR(100) NOT NULL,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id),
-			business_unit_id VARCHAR(100) NOT NULL REFERENCES business_units(id),
-			lineage_id VARCHAR(100) NOT NULL,
-			version_number BIGINT NOT NULL DEFAULT 1,
-			is_current_version BOOLEAN NOT NULL DEFAULT TRUE,
-			file_name VARCHAR(255) NOT NULL,
-			original_name VARCHAR(255) NOT NULL,
-			file_size BIGINT NOT NULL,
-			file_type VARCHAR(100) NOT NULL,
-			storage_path VARCHAR(500) NOT NULL,
-			checksum_sha256 VARCHAR(64),
-			storage_version_id VARCHAR(255),
-			storage_retention_mode VARCHAR(50),
-			storage_retention_until BIGINT,
-			storage_legal_hold BOOLEAN NOT NULL DEFAULT FALSE,
-			status document_status_enum NOT NULL DEFAULT 'Active',
-			description TEXT,
-			resource_id VARCHAR(100) NOT NULL,
-			resource_type VARCHAR(100) NOT NULL,
-			processing_profile VARCHAR(64) NOT NULL DEFAULT 'none',
-			expiration_date BIGINT,
-			tags VARCHAR(100)[] DEFAULT '{}',
-			is_public BOOLEAN NOT NULL DEFAULT FALSE,
-			uploaded_by_id VARCHAR(100) NOT NULL REFERENCES users(id),
-			approved_by_id VARCHAR(100) REFERENCES users(id),
-			approved_at BIGINT,
-			preview_storage_path VARCHAR(500),
-			preview_status document_preview_status_enum NOT NULL DEFAULT 'Unsupported',
-			content_status document_content_status_enum NOT NULL DEFAULT 'Pending',
-			content_error TEXT,
-			detected_kind VARCHAR(100),
-			has_extracted_text BOOLEAN NOT NULL DEFAULT FALSE,
-			shipment_draft_status document_shipment_draft_status_enum NOT NULL DEFAULT 'Unavailable',
-			document_type_id VARCHAR(100),
-			version BIGINT NOT NULL DEFAULT 0,
-			created_at BIGINT NOT NULL,
-			updated_at BIGINT NOT NULL,
-			PRIMARY KEY (id, organization_id, business_unit_id)
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_documents_resource ON documents(resource_type, resource_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_documents_tenant ON documents(business_unit_id, organization_id)`,
-	}
-
-	for _, q := range queries {
-		_, err := db.ExecContext(tc.Ctx, q)
-		if err != nil && !strings.Contains(err.Error(), "already exists") {
-			require.NoError(t, err, "failed to execute: %s", q)
-		}
-	}
-}
-
 type testFixtures struct {
 	orgID  pulid.ID
 	buID   pulid.ID
 	userID pulid.ID
 }
 
-func createTestFixtures(t *testing.T, db *bun.DB, tc *testutil.TestContext) *testFixtures {
+func newTestFixtures(t *testing.T, ctx context.Context, db *bun.DB) *testFixtures {
 	t.Helper()
 
-	orgID := pulid.MustNew("org_")
-	_, err := db.ExecContext(tc.Ctx,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(), "Test Org",
-	)
-	require.NoError(t, err)
-
-	buID := pulid.MustNew("bu_")
-	_, err = db.ExecContext(tc.Ctx,
-		`INSERT INTO business_units (id, name, organization_id) VALUES (?, ?, ?)`,
-		buID.String(), "Test BU", orgID.String(),
-	)
-	require.NoError(t, err)
-
-	userID := pulid.MustNew("usr_")
-	_, err = db.ExecContext(tc.Ctx,
-		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
-		userID.String(), "Test User", orgID.String(),
-	)
-	require.NoError(t, err)
+	data := seedtest.SeedFullTestData(t, ctx, db)
 
 	return &testFixtures{
-		orgID:  orgID,
-		buID:   buID,
-		userID: userID,
+		orgID:  data.Organization.ID,
+		buID:   data.BusinessUnit.ID,
+		userID: data.User.ID,
 	}
 }
 
@@ -401,16 +282,16 @@ func createTestDocument(
 }
 
 func TestDocumentRepository_Create_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
-	fixtures := createTestFixtures(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	fixtures := newTestFixtures(t, ctx, db)
 
 	repo := newTestRepository(db)
 
 	t.Run("create document successfully", func(t *testing.T) {
 		doc := createTestDocument(fixtures)
 
-		created, err := repo.Create(tc.Ctx, doc)
+		created, err := repo.Create(ctx, doc)
 		require.NoError(t, err)
 		assert.NotNil(t, created)
 		assert.Equal(t, doc.FileName, created.FileName)
@@ -427,7 +308,7 @@ func TestDocumentRepository_Create_Integration(t *testing.T) {
 			d.Description = "Full document with all fields"
 		})
 
-		created, err := repo.Create(tc.Ctx, doc)
+		created, err := repo.Create(ctx, doc)
 		require.NoError(t, err)
 		assert.NotNil(t, created.ExpirationDate)
 		assert.True(t, created.IsPublic)
@@ -435,18 +316,18 @@ func TestDocumentRepository_Create_Integration(t *testing.T) {
 }
 
 func TestDocumentRepository_GetByID_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
-	fixtures := createTestFixtures(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	fixtures := newTestFixtures(t, ctx, db)
 
 	repo := newTestRepository(db)
 
 	doc := createTestDocument(fixtures)
-	_, err := repo.Create(tc.Ctx, doc)
+	_, err := repo.Create(ctx, doc)
 	require.NoError(t, err)
 
 	t.Run("get existing document", func(t *testing.T) {
-		retrieved, err := repo.GetByID(tc.Ctx, repositories.GetDocumentByIDRequest{
+		retrieved, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -460,7 +341,7 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 	})
 
 	t.Run("get non-existent document", func(t *testing.T) {
-		_, err := repo.GetByID(tc.Ctx, repositories.GetDocumentByIDRequest{
+		_, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
 			ID: pulid.MustNew("doc_"),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -471,7 +352,7 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 	})
 
 	t.Run("get document with wrong tenant", func(t *testing.T) {
-		_, err := repo.GetByID(tc.Ctx, repositories.GetDocumentByIDRequest{
+		_, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -483,9 +364,9 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 }
 
 func TestDocumentRepository_GetByResourceID_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
-	fixtures := createTestFixtures(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	fixtures := newTestFixtures(t, ctx, db)
 
 	repo := newTestRepository(db)
 
@@ -504,15 +385,15 @@ func TestDocumentRepository_GetByResourceID_Integration(t *testing.T) {
 		d.FileName = "doc3.pdf"
 	})
 
-	_, err := repo.Create(tc.Ctx, doc1)
+	_, err := repo.Create(ctx, doc1)
 	require.NoError(t, err)
-	_, err = repo.Create(tc.Ctx, doc2)
+	_, err = repo.Create(ctx, doc2)
 	require.NoError(t, err)
-	_, err = repo.Create(tc.Ctx, doc3)
+	_, err = repo.Create(ctx, doc3)
 	require.NoError(t, err)
 
 	t.Run("get documents by resource", func(t *testing.T) {
-		docs, err := repo.GetByResourceID(tc.Ctx, repositories.GetDocumentsByResourceRequest{
+		docs, err := repo.GetByResourceID(ctx, repositories.GetDocumentsByResourceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
 				BuID:  fixtures.buID,
@@ -525,7 +406,7 @@ func TestDocumentRepository_GetByResourceID_Integration(t *testing.T) {
 	})
 
 	t.Run("get documents for resource with no documents", func(t *testing.T) {
-		docs, err := repo.GetByResourceID(tc.Ctx, repositories.GetDocumentsByResourceRequest{
+		docs, err := repo.GetByResourceID(ctx, repositories.GetDocumentsByResourceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
 				BuID:  fixtures.buID,
@@ -539,9 +420,9 @@ func TestDocumentRepository_GetByResourceID_Integration(t *testing.T) {
 }
 
 func TestDocumentRepository_List_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
-	fixtures := createTestFixtures(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	fixtures := newTestFixtures(t, ctx, db)
 
 	repo := newTestRepository(db)
 
@@ -554,12 +435,12 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 				d.Status = document.StatusArchived
 			}
 		})
-		_, err := repo.Create(tc.Ctx, doc)
+		_, err := repo.Create(ctx, doc)
 		require.NoError(t, err)
 	}
 
 	t.Run("list all documents", func(t *testing.T) {
-		result, err := repo.List(tc.Ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: fixtures.orgID,
@@ -577,7 +458,7 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 	})
 
 	t.Run("list with pagination", func(t *testing.T) {
-		result, err := repo.List(tc.Ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: fixtures.orgID,
@@ -595,7 +476,7 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 	})
 
 	t.Run("list with status filter", func(t *testing.T) {
-		result, err := repo.List(tc.Ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: fixtures.orgID,
@@ -614,21 +495,21 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 }
 
 func TestDocumentRepository_Update_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
-	fixtures := createTestFixtures(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	fixtures := newTestFixtures(t, ctx, db)
 
 	repo := newTestRepository(db)
 
 	doc := createTestDocument(fixtures)
-	created, err := repo.Create(tc.Ctx, doc)
+	created, err := repo.Create(ctx, doc)
 	require.NoError(t, err)
 
 	t.Run("update document successfully", func(t *testing.T) {
 		created.Description = "Updated description"
 		created.Status = document.StatusArchived
 
-		updated, err := repo.Update(tc.Ctx, created)
+		updated, err := repo.Update(ctx, created)
 		require.NoError(t, err)
 		assert.Equal(t, "Updated description", updated.Description)
 		assert.Equal(t, document.StatusArchived, updated.Status)
@@ -639,24 +520,24 @@ func TestDocumentRepository_Update_Integration(t *testing.T) {
 		created.Version = 0
 		created.Description = "Should fail"
 
-		_, err := repo.Update(tc.Ctx, created)
+		_, err := repo.Update(ctx, created)
 		assert.Error(t, err)
 	})
 }
 
 func TestDocumentRepository_Delete_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
-	fixtures := createTestFixtures(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+	fixtures := newTestFixtures(t, ctx, db)
 
 	repo := newTestRepository(db)
 
 	doc := createTestDocument(fixtures)
-	_, err := repo.Create(tc.Ctx, doc)
+	_, err := repo.Create(ctx, doc)
 	require.NoError(t, err)
 
 	t.Run("delete existing document", func(t *testing.T) {
-		err := repo.Delete(tc.Ctx, repositories.DeleteDocumentRequest{
+		err := repo.Delete(ctx, repositories.DeleteDocumentRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -665,7 +546,7 @@ func TestDocumentRepository_Delete_Integration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		_, err = repo.GetByID(tc.Ctx, repositories.GetDocumentByIDRequest{
+		_, err = repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -676,7 +557,7 @@ func TestDocumentRepository_Delete_Integration(t *testing.T) {
 	})
 
 	t.Run("delete non-existent document", func(t *testing.T) {
-		err := repo.Delete(tc.Ctx, repositories.DeleteDocumentRequest{
+		err := repo.Delete(ctx, repositories.DeleteDocumentRequest{
 			ID: pulid.MustNew("doc_"),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -688,71 +569,20 @@ func TestDocumentRepository_Delete_Integration(t *testing.T) {
 }
 
 func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
-	tc, db := testutil.SetupTestDB(t)
-	createTestSchema(t, db, tc)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
 
-	org1 := pulid.MustNew("org_")
-	_, err := db.ExecContext(
-		tc.Ctx,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		org1.String(),
-		"Org 1",
-	)
-	require.NoError(t, err)
-
-	bu1 := pulid.MustNew("bu_")
-	_, err = db.ExecContext(
-		tc.Ctx,
-		`INSERT INTO business_units (id, name, organization_id) VALUES (?, ?, ?)`,
-		bu1.String(),
-		"BU 1",
-		org1.String(),
-	)
-	require.NoError(t, err)
-
-	user1 := pulid.MustNew("usr_")
-	_, err = db.ExecContext(
-		tc.Ctx,
-		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
-		user1.String(),
-		"User 1",
-		org1.String(),
-	)
-	require.NoError(t, err)
-
-	org2 := pulid.MustNew("org_")
-	_, err = db.ExecContext(
-		tc.Ctx,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		org2.String(),
-		"Org 2",
-	)
-	require.NoError(t, err)
-
-	bu2 := pulid.MustNew("bu_")
-	_, err = db.ExecContext(
-		tc.Ctx,
-		`INSERT INTO business_units (id, name, organization_id) VALUES (?, ?, ?)`,
-		bu2.String(),
-		"BU 2",
-		org2.String(),
-	)
-	require.NoError(t, err)
-
-	user2 := pulid.MustNew("usr_")
-	_, err = db.ExecContext(
-		tc.Ctx,
-		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
-		user2.String(),
-		"User 2",
-		org2.String(),
-	)
-	require.NoError(t, err)
+	fixtures1 := newTestFixtures(t, ctx, db)
+	second := seedtest.SeedAdditionalTenant(t, ctx, db, "TWO")
+	fixtures2 := &testFixtures{
+		orgID:  second.Organization.ID,
+		buID:   second.BusinessUnit.ID,
+		userID: second.User.ID,
+	}
+	org1, bu1 := fixtures1.orgID, fixtures1.buID
+	org2, bu2 := fixtures2.orgID, fixtures2.buID
 
 	repo := newTestRepository(db)
-
-	fixtures1 := &testFixtures{orgID: org1, buID: bu1, userID: user1}
-	fixtures2 := &testFixtures{orgID: org2, buID: bu2, userID: user2}
 
 	doc1 := createTestDocument(fixtures1, func(d *document.Document) {
 		d.FileName = "org1-doc.pdf"
@@ -761,13 +591,13 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 		d.FileName = "org2-doc.pdf"
 	})
 
-	_, err = repo.Create(tc.Ctx, doc1)
+	_, err := repo.Create(ctx, doc1)
 	require.NoError(t, err)
-	_, err = repo.Create(tc.Ctx, doc2)
+	_, err = repo.Create(ctx, doc2)
 	require.NoError(t, err)
 
 	t.Run("org1 can only see org1 documents", func(t *testing.T) {
-		result, err := repo.List(tc.Ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: org1,
@@ -782,7 +612,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	})
 
 	t.Run("org2 can only see org2 documents", func(t *testing.T) {
-		result, err := repo.List(tc.Ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: org2,
@@ -797,7 +627,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	})
 
 	t.Run("org1 cannot access org2 document by ID", func(t *testing.T) {
-		_, err := repo.GetByID(tc.Ctx, repositories.GetDocumentByIDRequest{
+		_, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
 			ID: doc2.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: org1,
@@ -808,7 +638,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	})
 
 	t.Run("org1 cannot delete org2 document", func(t *testing.T) {
-		err := repo.Delete(tc.Ctx, repositories.DeleteDocumentRequest{
+		err := repo.Delete(ctx, repositories.DeleteDocumentRequest{
 			ID: doc2.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: org1,

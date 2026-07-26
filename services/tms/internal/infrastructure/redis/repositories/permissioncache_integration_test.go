@@ -30,7 +30,7 @@ func setupTestCacheRepository(t *testing.T) (*permissionCacheRepository, *redis.
 	}
 
 	cleanup := func() {
-		client.FlushAll(t.Context())
+		client.FlushDB(t.Context())
 	}
 
 	return repo, client, cleanup

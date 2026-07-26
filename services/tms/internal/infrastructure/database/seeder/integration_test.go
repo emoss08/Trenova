@@ -22,6 +22,19 @@ func newPopulatedRegistry() *seeder.Registry {
 	return r
 }
 
+// countRepeatableSeeds reports how many seeds opt into re-running on every
+// invocation, which is the expected "applied" count for a repeat run.
+func countRepeatableSeeds(registry *seeder.Registry, env common.Environment) int {
+	count := 0
+	for _, seed := range registry.GetForEnvironment(env) {
+		if repeatable, ok := seed.(interface{ Repeatable() bool }); ok && repeatable.Repeatable() {
+			count++
+		}
+	}
+
+	return count
+}
+
 func newSeedConfig() *config.Config {
 	return &config.Config{
 		System: config.SystemConfig{
@@ -261,7 +274,16 @@ func TestSeeder_Integration_Idempotent(t *testing.T) {
 			Force:       false,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, 0, report2.Applied, "second run should skip all seeds")
+
+		// Repeatable seeds reconcile state against the live registry, so they are
+		// meant to re-run every time; everything else must be skipped.
+		repeatable := countRepeatableSeeds(newPopulatedRegistry(), common.EnvDevelopment)
+		assert.Equal(
+			t,
+			repeatable,
+			report2.Applied,
+			"second run should only re-apply repeatable seeds",
+		)
 		assert.Greater(t, report2.Skipped, 0, "second run should report seeds as skipped")
 	})
 }

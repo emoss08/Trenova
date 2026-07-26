@@ -389,7 +389,7 @@ func createIntegrationSchema(t *testing.T, db *bun.DB) {
 		`CREATE TABLE IF NOT EXISTS users (
 			id VARCHAR(100) PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) REFERENCES organizations(id),
+			organization_id VARCHAR(100) REFERENCES organizations(id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS roles (
 			id VARCHAR(100) PRIMARY KEY,
@@ -460,10 +460,10 @@ func seedIntegrationData(t *testing.T, db *bun.DB) *integrationTestData {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		userID.String(),
 		"Test User",
 		orgID.String(),
-		false,
 	)
 
 	roleRepo := newTestRoleRepo(db)
@@ -597,40 +597,25 @@ func TestIntegration_NoPermissionDenied(t *testing.T) {
 
 func TestIntegration_BatchPermissionCheck(t *testing.T) {
 	eng, db, _ := setupIntegrationEngine(t)
-
-	orgID := pulid.MustNew("org_")
-	userID := pulid.MustNew("usr_")
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(),
-		"Test Org",
-	)
-	sharedtestutil.MustExec(
-		t,
-		db,
-		userID.String(),
-		"Admin",
-		orgID.String(),
-		true,
-	)
+	data := seedIntegrationData(t, db)
 
 	ctx := t.Context()
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
-		UserID:         userID,
-		OrganizationID: orgID,
+		UserID:         data.userID,
+		OrganizationID: data.orgID,
 		Checks: []services.ResourceOperationCheck{
 			{Resource: "shipment", Operation: permission.OpRead},
-			{Resource: "customer", Operation: permission.OpCreate},
+			{Resource: "shipment", Operation: permission.OpCreate},
+			{Resource: "shipment", Operation: permission.OpDelete},
 		},
 	})
 
 	require.NoError(t, err)
-	assert.Len(t, result.Results, 2)
-	assert.True(t, result.Results[0].Allowed)
-	assert.True(t, result.Results[1].Allowed)
+	require.Len(t, result.Results, 3)
+	assert.True(t, result.Results[0].Allowed, "granted read should be allowed")
+	assert.True(t, result.Results[1].Allowed, "granted create should be allowed")
+	assert.False(t, result.Results[2].Allowed, "ungranted delete should be denied")
 }
 
 func TestIntegration_InvalidateUser(t *testing.T) {
@@ -677,10 +662,10 @@ func TestIntegration_LightManifest(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		userID.String(),
 		"Admin",
 		orgID.String(),
-		true,
 	)
 
 	ctx := t.Context()
