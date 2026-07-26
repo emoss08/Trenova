@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -45,13 +44,7 @@ func setupTest(t *testing.T) *testDeps {
 	roleRepo := mocks.NewMockRoleRepository(t)
 	sessionRepo := mocks.NewMockSessionRepository(t)
 	storageClient := mocks.NewMockClient(t)
-	storageClient.On("Upload", mock.Anything, mock.Anything).Maybe().Return((*storage.FileInfo)(nil), nil)
-	storageClient.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
-	storageClient.On("GetPresignedURL", mock.Anything, mock.Anything).
-		Maybe().
-		Return("https://example.test/profile-picture.png", nil)
 	auditSvc := mocks.NewMockAuditService(t)
-	auditSvc.On("LogAction", mock.Anything, mock.Anything).Maybe().Return(nil)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -75,6 +68,11 @@ func setupTest(t *testing.T) *testDeps {
 		audit:       auditSvc,
 		svc:         svc,
 	}
+}
+
+// expectAuditLog arms the audit service for scenarios that mutate a user.
+func (d *testDeps) expectAuditLog() {
+	d.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
 }
 
 func newTestUser() *tenant.User {
@@ -566,6 +564,7 @@ func TestUpdateMySettings_Success(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTest(t)
+	deps.expectAuditLog()
 	ctx := t.Context()
 	user := newTestUser()
 	tenantInfo := pagination.TenantInfo{
@@ -619,6 +618,7 @@ func TestChangeMyPassword_Success(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTest(t)
+	deps.expectAuditLog()
 	ctx := t.Context()
 	user := newTestUserWithPassword(t, "current-password")
 	user.MustChangePassword = true

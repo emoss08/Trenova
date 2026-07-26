@@ -4,7 +4,6 @@ package documentservice_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	minioadapter "github.com/emoss08/trenova/internal/infrastructure/minio"
@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -43,19 +44,22 @@ type serviceHarness struct {
 	documentTypeRepo repositories.DocumentTypeRepository
 	packetRuleRepo   repositories.DocumentPacketRuleRepository
 	storage          storage.Client
+	cacheRepo        *mocks.MockDocumentCacheRepository
+	sessionRepo      *mocks.MockDocumentUploadSessionRepository
+	contentService   *mocks.MockDocumentContentService
+	searchProjection *mocks.MockDocumentSearchProjectionService
 }
 
 func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	t.Helper()
 
-	dbCtx, db := sharedtestutil.SetupTestDB(t)
-	t.Cleanup(dbCtx.Cancel)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
 
 	minioCtx, mc := sharedtestutil.SetupTestMinio(t)
 	t.Cleanup(minioCtx.Cancel)
 
-	createTestSchema(t, db, dbCtx.Ctx)
-	fixtures := createTestFixtures(t, db, dbCtx.Ctx)
+	fixtures := createTestFixtures(t, db, ctx)
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
 
@@ -84,29 +88,14 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	require.NoError(t, err)
 
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, repositories.ErrCacheMiss)
 
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-
 	contentService := mocks.NewMockDocumentContentService(t)
-	contentService.On("EnqueueExtraction", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	contentService.On("GetContent", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, assert.AnError)
-
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
-	searchProjection.On("Upsert", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	searchProjection.On("Delete", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	// Every scenario in this suite uploads at least one document, and each
+	// upload projects it into search.
+	searchProjection.On("Upsert", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	searchProjection.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	docRepo := documentrepository.New(documentrepository.Params{
 		DB:     conn,
@@ -120,6 +109,10 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		DB:     conn,
 		Logger: logger,
 	})
+
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 
 	service := documentservice.New(documentservice.Params{
 		Logger:           logger,
@@ -138,10 +131,11 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		SearchProjection:     searchProjection,
 		Config:               cfg,
 		ThumbnailGenerator:   thumbnailservice.NewGenerator(),
+		Encryption:           encryption,
 	})
 
 	return &serviceHarness{
-		ctx: dbCtx.Ctx,
+		ctx: ctx,
 		db:  db,
 		tenantInfo: pagination.TenantInfo{
 			OrgID:  fixtures.orgID,
@@ -153,121 +147,10 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		documentTypeRepo: docTypeRepo,
 		packetRuleRepo:   packetRuleRepo,
 		storage:          storageClient,
-	}
-}
-
-func createTestSchema(t *testing.T, db *bun.DB, ctx context.Context) {
-	t.Helper()
-
-	queries := []string{
-		`CREATE TABLE IF NOT EXISTS organizations (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS business_units (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS users (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS document_types (
-			id VARCHAR(100) NOT NULL,
-			business_unit_id VARCHAR(100) NOT NULL REFERENCES business_units(id),
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id),
-			code VARCHAR(10) NOT NULL,
-			name VARCHAR(100) NOT NULL,
-			description TEXT,
-			color VARCHAR(10),
-			document_classification VARCHAR(50) NOT NULL DEFAULT 'Public',
-			document_category VARCHAR(50) NOT NULL DEFAULT 'Other',
-			is_system BOOLEAN NOT NULL DEFAULT FALSE,
-			version BIGINT NOT NULL DEFAULT 0,
-			created_at BIGINT NOT NULL DEFAULT extract(epoch from current_timestamp)::bigint,
-			updated_at BIGINT NOT NULL DEFAULT extract(epoch from current_timestamp)::bigint,
-			PRIMARY KEY (id, business_unit_id, organization_id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS documents (
-			id VARCHAR(100) NOT NULL,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id),
-			business_unit_id VARCHAR(100) NOT NULL REFERENCES business_units(id),
-			lineage_id VARCHAR(100) NOT NULL,
-			version_number BIGINT NOT NULL DEFAULT 1,
-			is_current_version BOOLEAN NOT NULL DEFAULT TRUE,
-			file_name VARCHAR(255) NOT NULL,
-			original_name VARCHAR(255) NOT NULL,
-			file_size BIGINT NOT NULL,
-			file_type VARCHAR(100) NOT NULL,
-			storage_path VARCHAR(500) NOT NULL,
-			checksum_sha256 VARCHAR(64),
-			storage_version_id VARCHAR(255),
-			storage_retention_mode VARCHAR(50),
-			storage_retention_until BIGINT,
-			storage_legal_hold BOOLEAN NOT NULL DEFAULT FALSE,
-			status VARCHAR(50) NOT NULL DEFAULT 'Active',
-			description TEXT,
-			resource_id VARCHAR(100) NOT NULL,
-			resource_type VARCHAR(100) NOT NULL,
-			processing_profile VARCHAR(64) NOT NULL DEFAULT 'none',
-			expiration_date BIGINT,
-			tags VARCHAR(100)[] DEFAULT '{}',
-			is_public BOOLEAN NOT NULL DEFAULT FALSE,
-			uploaded_by_id VARCHAR(100) NOT NULL REFERENCES users(id),
-			approved_by_id VARCHAR(100) REFERENCES users(id),
-			approved_at BIGINT,
-			preview_storage_path VARCHAR(500),
-			preview_status VARCHAR(50) NOT NULL DEFAULT 'Unsupported',
-			content_status VARCHAR(50) NOT NULL DEFAULT 'Pending',
-			content_error TEXT,
-			detected_kind VARCHAR(100),
-			has_extracted_text BOOLEAN NOT NULL DEFAULT FALSE,
-			shipment_draft_status VARCHAR(50) NOT NULL DEFAULT 'Unavailable',
-			document_type_id VARCHAR(100),
-			version BIGINT NOT NULL DEFAULT 0,
-			created_at BIGINT NOT NULL,
-			updated_at BIGINT NOT NULL,
-			PRIMARY KEY (id, organization_id, business_unit_id)
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_documents_resource ON documents(resource_type, resource_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_documents_lineage ON documents(lineage_id, version_number DESC)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_current_lineage ON documents(lineage_id) WHERE is_current_version = TRUE`,
-		`CREATE TABLE IF NOT EXISTS document_packet_rules (
-			id VARCHAR(100) NOT NULL,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id),
-			business_unit_id VARCHAR(100) NOT NULL REFERENCES business_units(id),
-			resource_type VARCHAR(100) NOT NULL,
-			document_type_id VARCHAR(100) NOT NULL,
-			required BOOLEAN NOT NULL DEFAULT FALSE,
-			allow_multiple BOOLEAN NOT NULL DEFAULT FALSE,
-			display_order INTEGER NOT NULL DEFAULT 0,
-			expiration_required BOOLEAN NOT NULL DEFAULT FALSE,
-			expiration_warning_days INTEGER NOT NULL DEFAULT 30,
-			version BIGINT NOT NULL DEFAULT 0,
-			created_at BIGINT NOT NULL,
-			updated_at BIGINT NOT NULL,
-			PRIMARY KEY (id, organization_id, business_unit_id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS document_upload_sessions (
-			id VARCHAR(100) NOT NULL,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id),
-			business_unit_id VARCHAR(100) NOT NULL REFERENCES business_units(id),
-			document_id VARCHAR(100),
-			lineage_id VARCHAR(100),
-			version BIGINT NOT NULL DEFAULT 0,
-			created_at BIGINT NOT NULL DEFAULT 0,
-			updated_at BIGINT NOT NULL DEFAULT 0,
-			PRIMARY KEY (id, organization_id, business_unit_id)
-		)`,
-	}
-
-	for _, q := range queries {
-		_, err := db.ExecContext(ctx, q)
-		if err != nil && !strings.Contains(err.Error(), "already exists") {
-			require.NoError(t, err, "failed to execute: %s", q)
-		}
+		cacheRepo:        cacheRepo,
+		sessionRepo:      sessionRepo,
+		contentService:   contentService,
+		searchProjection: searchProjection,
 	}
 }
 
@@ -280,31 +163,12 @@ type testFixtures struct {
 func createTestFixtures(t *testing.T, db *bun.DB, ctx context.Context) *testFixtures {
 	t.Helper()
 
-	orgID := pulid.MustNew("org_")
-	_, err := db.ExecContext(ctx,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(), "Test Org",
-	)
-	require.NoError(t, err)
-
-	buID := pulid.MustNew("bu_")
-	_, err = db.ExecContext(ctx,
-		`INSERT INTO business_units (id, name, organization_id) VALUES (?, ?, ?)`,
-		buID.String(), "Test BU", orgID.String(),
-	)
-	require.NoError(t, err)
-
-	userID := pulid.MustNew("usr_")
-	_, err = db.ExecContext(ctx,
-		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
-		userID.String(), "Test User", orgID.String(),
-	)
-	require.NoError(t, err)
+	data := seedtest.SeedFullTestData(t, ctx, db)
 
 	return &testFixtures{
-		orgID:  orgID,
-		buID:   buID,
-		userID: userID,
+		orgID:  data.Organization.ID,
+		buID:   data.BusinessUnit.ID,
+		userID: data.User.ID,
 	}
 }
 
@@ -392,7 +256,16 @@ func updateDocumentExpiration(
 ) {
 	t.Helper()
 
-	_, err := h.db.NewUpdate().
+	// The schema refuses to store an expiration in the past, which is right for
+	// real writes but leaves no way to age a document. Dropping the check on the
+	// throwaway test database lets the suite simulate elapsed time.
+	_, err := h.db.ExecContext(
+		h.ctx,
+		`ALTER TABLE documents DROP CONSTRAINT IF EXISTS chk_documents_expiration_date`,
+	)
+	require.NoError(t, err)
+
+	_, err = h.db.NewUpdate().
 		Table("documents").
 		Set("expiration_date = ?", expiration).
 		Where("id = ?", documentID).
@@ -415,6 +288,12 @@ func fetchDocument(t *testing.T, h *serviceHarness, id pulid.ID) *document.Docum
 
 func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	h := setupDocumentServiceHarness(t)
+	// Versioning re-reads the current version, which misses the cache, and pulls
+	// the previous version's extracted content to carry lineage metadata forward.
+	h.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
+	h.contentService.On("GetContent", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, assert.AnError)
 
 	resourceID := pulid.MustNew("sh_").String()
 	docType := createDocumentType(t, h, "BOL", "Bill of Lading", documenttype.CategoryShipment)

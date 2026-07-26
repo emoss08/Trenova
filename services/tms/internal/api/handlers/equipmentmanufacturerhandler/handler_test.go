@@ -3,6 +3,7 @@ package equipmentmanufacturerhandler_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -17,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -103,14 +106,55 @@ func TestEquipmentManufacturerHandler_List_Success(t *testing.T) {
 func TestEquipmentManufacturerHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
+	const requestedLimit = 25
+
+	items := make([]*equipmentmanufacturer.EquipmentManufacturer, 0, requestedLimit+1)
+	for i := range requestedLimit + 1 {
+		items = append(items, &equipmentmanufacturer.EquipmentManufacturer{
+			ID:             pulid.MustNew("em_"),
+			OrganizationID: testutil.TestOrgID,
+			BusinessUnitID: testutil.TestBuID,
+			Name:           fmt.Sprintf("Manufacturer %02d", i),
+			Status:         domaintypes.StatusActive,
+			CreatedAt:      timeutils.NowUnix(),
+		})
+	}
+
 	repo := mocks.NewMockEquipmentManufacturerRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-			Items: []*equipmentmanufacturer.EquipmentManufacturer{},
-			Total: 75,
-		}, nil)
+	repo.On("List", mock.Anything, mock.MatchedBy(
+		func(req *repositories.ListEquipmentManufacturersRequest) bool {
+			return req.Filter.Pagination.Limit == requestedLimit+1
+		},
+	)).Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
+		Items: items,
+		Total: 75,
+	}, nil)
 
 	handler := setupEquipManufacturerHandler(t, repo)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/equipment-manufacturers/").
+		WithQuery(map[string]string{"limit": "25"}).
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp pagination.CursorResponse[[]map[string]any]
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, 75, resp.Count)
+	assert.Len(t, resp.Results, requestedLimit)
+	assert.True(t, resp.HasNextPage)
+	assert.NotEmpty(t, resp.EndCursor)
+}
+
+func TestEquipmentManufacturerHandler_List_RejectsOffset(t *testing.T) {
+	t.Parallel()
+
+	handler := setupEquipManufacturerHandler(t, mocks.NewMockEquipmentManufacturerRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -121,11 +165,7 @@ func TestEquipmentManufacturerHandler_List_WithPagination(t *testing.T) {
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp pagination.Response[[]map[string]any]
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 75, resp.Count)
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestEquipmentManufacturerHandler_Get_Success(t *testing.T) {

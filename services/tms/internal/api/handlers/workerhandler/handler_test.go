@@ -33,6 +33,7 @@ type handlerDeps struct {
 	valueRepo *mocks.MockCustomFieldValueRepository
 	defRepo   *mocks.MockCustomFieldDefinitionRepository
 	auditSvc  *mocks.MockAuditService
+	cacheRepo *mocks.MockWorkerCacheRepository
 }
 
 func setupWorkerHandler(
@@ -53,9 +54,6 @@ func setupWorkerHandler(
 		},
 	)
 	cacheRepo := mocks.NewMockWorkerCacheRepository(t)
-	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss).
-		Maybe()
 
 	cfService := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger:         logger,
@@ -101,6 +99,7 @@ func setupWorkerHandler(
 		valueRepo: valueRepo,
 		defRepo:   defRepo,
 		auditSvc:  auditSvc,
+		cacheRepo: cacheRepo,
 	}
 }
 
@@ -161,6 +160,8 @@ func TestWorkerHandler_Get_Success(t *testing.T) {
 	}, nil)
 
 	deps := setupWorkerHandler(t, repo)
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 	deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 		Return([]*customfield.CustomFieldValue{}, nil)
 
@@ -204,6 +205,8 @@ func TestWorkerHandler_Get_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	deps := setupWorkerHandler(t, repo)
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -393,6 +396,8 @@ func TestWorkerHandler_Patch_Success(t *testing.T) {
 		}, nil)
 
 	deps := setupWorkerHandler(t, repo)
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 	deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
 		Return([]*customfield.CustomFieldValue{}, nil)
 	deps.defRepo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
@@ -551,6 +556,8 @@ func TestWorkerHandler_Patch_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	deps := setupWorkerHandler(t, repo)
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).

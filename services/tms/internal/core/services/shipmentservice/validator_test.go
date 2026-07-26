@@ -666,16 +666,14 @@ func TestValidateUpdate_RejectsOverlappingActualTimesWithinShipmentForSameTracto
 			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
-		Return(nil, nil).
-		Maybe()
+		Return(nil, nil)
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
 			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
-		Return(nil, nil).
-		Maybe()
+		Return(nil, nil)
 	v := NewTestValidatorWithAssignmentRepo(t, assignmentRepo)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
@@ -944,14 +942,12 @@ func allowNoExternalTimelineOverlap(
 			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
-		Return(nil, nil).
-		Maybe()
+		Return(nil, nil)
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByPrimaryWorkerID(
 			mock.Anything,
 			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
-		Return(nil, nil).
-		Maybe()
+		Return(nil, nil)
 }

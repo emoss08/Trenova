@@ -39,7 +39,7 @@ func TestGetReturnsRequest(t *testing.T) {
 	t.Parallel()
 
 	request := approvedRequest(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{repo: repo}
 
 	result, err := svc.Get(
@@ -62,7 +62,7 @@ func TestListReturnsRequests(t *testing.T) {
 	t.Parallel()
 
 	request := approvedRequest(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{repo: repo}
 
 	result, err := svc.List(
@@ -108,7 +108,7 @@ func TestCreateDraftPersistsGeneratedNumber(t *testing.T) {
 		GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID}, GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
 		Return([]*glaccount.GLAccount{{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true}, {ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true}}, nil)
 
-	manualRepo, _ := newManualJournalRepositoryMock(t, nil)
+	manualRepo := newManualJournalRepositoryFake(nil)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           manualRepo,
@@ -146,7 +146,7 @@ func TestUpdateDraftBlocksNonDraftRequest(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusApproved
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{repo: repo}
 	result, err := svc.UpdateDraft(
 		t.Context(),
@@ -188,7 +188,7 @@ func TestUpdateDraftReplacesLines(t *testing.T) {
 		GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID}, GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
 		Return([]*glaccount.GLAccount{{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true}, {ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true}}, nil)
 
-	manualRepo, _ := newManualJournalRepositoryMock(t, request)
+	manualRepo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           manualRepo,
@@ -228,8 +228,8 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	request := approvedRequest(orgID, buID, userID)
 
-	manualRepo, _ := newManualJournalRepositoryMock(t, request)
-	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
+	manualRepo := newManualJournalRepositoryFake(request)
+	journalRepo := newJournalPostingRepositoryFake()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
@@ -263,16 +263,16 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, manualjournal.StatusPosted, result.Status)
 	assert.True(t, result.PostedBatchID.IsNotNil())
-	require.NotNil(t, journalTracker.last)
-	assert.Equal(t, request.TotalDebit, journalTracker.last.TotalDebit)
-	assert.Equal(t, request.TotalCredit, journalTracker.last.TotalCredit)
-	assert.Equal(t, "ManualJournalRequest", journalTracker.last.ReferenceType)
-	assert.Equal(t, periodID, journalTracker.last.FiscalPeriodID)
-	assert.Equal(t, request.AccountingDate, journalTracker.last.AccountingDate)
-	assert.False(t, journalTracker.last.RequiresApproval)
-	require.Len(t, journalTracker.last.Lines, 2)
-	assert.Equal(t, int64(1000), journalTracker.last.Lines[0].DebitAmount)
-	assert.Equal(t, int64(1000), journalTracker.last.Lines[1].CreditAmount)
+	require.NotNil(t, journalRepo.last)
+	assert.Equal(t, request.TotalDebit, journalRepo.last.TotalDebit)
+	assert.Equal(t, request.TotalCredit, journalRepo.last.TotalCredit)
+	assert.Equal(t, "ManualJournalRequest", journalRepo.last.ReferenceType)
+	assert.Equal(t, periodID, journalRepo.last.FiscalPeriodID)
+	assert.Equal(t, request.AccountingDate, journalRepo.last.AccountingDate)
+	assert.False(t, journalRepo.last.RequiresApproval)
+	require.Len(t, journalRepo.last.Lines, 2)
+	assert.Equal(t, int64(1000), journalRepo.last.Lines[0].DebitAmount)
+	assert.Equal(t, int64(1000), journalRepo.last.Lines[1].CreditAmount)
 }
 
 func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
@@ -286,8 +286,8 @@ func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	request := approvedRequest(orgID, buID, userID)
 
-	manualRepo, _ := newManualJournalRepositoryMock(t, request)
-	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
+	manualRepo := newManualJournalRepositoryFake(request)
+	journalRepo := newJournalPostingRepositoryFake()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
@@ -335,9 +335,9 @@ func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
 	}, testutil.NewSessionActor(userID, orgID, buID))
 
 	require.NoError(t, err)
-	require.NotNil(t, journalTracker.last)
-	assert.Equal(t, nextPeriodID, journalTracker.last.FiscalPeriodID)
-	assert.Equal(t, int64(1_700_001_000), journalTracker.last.AccountingDate)
+	require.NotNil(t, journalRepo.last)
+	assert.Equal(t, nextPeriodID, journalRepo.last.FiscalPeriodID)
+	assert.Equal(t, int64(1_700_001_000), journalRepo.last.AccountingDate)
 }
 
 func TestPostBlocksNonApprovedRequest(t *testing.T) {
@@ -349,8 +349,8 @@ func TestPostBlocksNonApprovedRequest(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusDraft
 
-	manualRepo, _ := newManualJournalRepositoryMock(t, request)
-	journalRepo, _ := newJournalPostingRepositoryMock(t)
+	manualRepo := newManualJournalRepositoryFake(request)
+	journalRepo := newJournalPostingRepositoryFake()
 	svc := &Service{
 		db:          fakeDBConnection{},
 		repo:        manualRepo,
@@ -400,8 +400,8 @@ func TestPostBlocksClosedPeriodWhenReopenRequired(t *testing.T) {
 			Status:       fiscalperiod.StatusClosed,
 		}, nil)
 
-	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	journalRepo := newJournalPostingRepositoryFake()
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           repo,
@@ -420,7 +420,7 @@ func TestPostBlocksClosedPeriodWhenReopenRequired(t *testing.T) {
 	require.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "reopen")
-	assert.Nil(t, journalTracker.last)
+	assert.Nil(t, journalRepo.last)
 }
 
 func TestSubmitMovesToPendingApprovalWhenRequired(t *testing.T) {
@@ -438,7 +438,7 @@ func TestSubmitMovesToPendingApprovalWhenRequired(t *testing.T) {
 		RequireManualJEApproval:  true,
 	}, nil)
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           repo,
@@ -475,7 +475,7 @@ func TestSubmitAutoApprovesWhenApprovalNotRequired(t *testing.T) {
 		RequireManualJEApproval:  false,
 	}, nil)
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           repo,
@@ -507,7 +507,7 @@ func TestApproveMarksApproved(t *testing.T) {
 	request.ApprovedAt = nil
 	request.ApprovedByID = pulid.Nil
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:           fakeDBConnection{},
 		repo:         repo,
@@ -538,7 +538,7 @@ func TestApproveBlocksInvalidStatus(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusDraft
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:           fakeDBConnection{},
 		repo:         repo,
@@ -568,7 +568,7 @@ func TestRejectMarksRejected(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusPendingApproval
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:           fakeDBConnection{},
 		repo:         repo,
@@ -600,7 +600,7 @@ func TestCancelMarksCancelled(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusApproved
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
+	repo := newManualJournalRepositoryFake(request)
 	svc := &Service{
 		db:           fakeDBConnection{},
 		repo:         repo,
@@ -632,8 +632,8 @@ func TestPostAllowsLockedPeriod(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	request := approvedRequest(orgID, buID, userID)
 
-	manualRepo, _ := newManualJournalRepositoryMock(t, request)
-	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
+	manualRepo := newManualJournalRepositoryFake(request)
+	journalRepo := newJournalPostingRepositoryFake()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
@@ -662,8 +662,8 @@ func TestPostAllowsLockedPeriod(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.NotNil(t, journalTracker.last)
-	assert.Equal(t, request.AccountingDate, journalTracker.last.AccountingDate)
+	require.NotNil(t, journalRepo.last)
+	assert.Equal(t, request.AccountingDate, journalRepo.last.AccountingDate)
 }
 
 func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
@@ -687,8 +687,8 @@ func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
 		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
 		Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusClosed}}, nil)
 
-	repo, _ := newManualJournalRepositoryMock(t, request)
-	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
+	repo := newManualJournalRepositoryFake(request)
+	journalRepo := newJournalPostingRepositoryFake()
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           repo,
@@ -710,7 +710,7 @@ func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
 	require.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "No next open")
-	assert.Nil(t, journalTracker.last)
+	assert.Nil(t, journalRepo.last)
 }
 
 type fakeDBConnection struct{}
@@ -729,78 +729,94 @@ func (fakeDBConnection) HealthCheck(context.Context) error { return nil }
 func (fakeDBConnection) IsHealthy(context.Context) bool    { return true }
 func (fakeDBConnection) Close() error                      { return nil }
 
-type manualJournalRepositoryTracker struct {
+// manualJournalRepositoryFake is an in-memory stand-in for the manual journal
+// repository. The service walks a request through several persistence steps per
+// scenario, so a stateful fake models it far more honestly than per-call mock
+// expectations.
+type manualJournalRepositoryFake struct {
 	current *manualjournal.Request
 	updated *manualjournal.Request
 }
 
-func newManualJournalRepositoryMock(
-	t *testing.T,
-	entity *manualjournal.Request,
-) (*mocks.MockManualJournalRepository, *manualJournalRepositoryTracker) {
-	t.Helper()
+var _ repositories.ManualJournalRepository = (*manualJournalRepositoryFake)(nil)
 
-	tracker := &manualJournalRepositoryTracker{current: cloneRequest(entity)}
-	repo := mocks.NewMockManualJournalRepository(t)
-	repo.EXPECT().
-		List(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ *repositories.ListManualJournalRequest) (*pagination.ListResult[*manualjournal.Request], error) {
-			items := []*manualjournal.Request{}
-			if tracker.current != nil {
-				items = append(items, cloneRequest(tracker.current))
-			}
-			return &pagination.ListResult[*manualjournal.Request]{Items: items}, nil
-		}).
-		Maybe()
-	repo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ repositories.GetManualJournalByIDRequest) (*manualjournal.Request, error) {
-			return cloneRequest(tracker.current), nil
-		}).
-		Maybe()
-	repo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, entity *manualjournal.Request) (*manualjournal.Request, error) {
-			entity.SyncTotals()
-			tracker.current = cloneRequest(entity)
-			return cloneRequest(entity), nil
-		}).
-		Maybe()
-	repo.EXPECT().
-		Update(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, entity *manualjournal.Request) (*manualjournal.Request, error) {
-			entity.SyncTotals()
-			tracker.current = cloneRequest(entity)
-			tracker.updated = cloneRequest(entity)
-			return cloneRequest(entity), nil
-		}).
-		Maybe()
-
-	return repo, tracker
+func newManualJournalRepositoryFake(entity *manualjournal.Request) *manualJournalRepositoryFake {
+	return &manualJournalRepositoryFake{current: cloneRequest(entity)}
 }
 
-type journalPostingRepositoryTracker struct {
+func (f *manualJournalRepositoryFake) List(
+	_ context.Context,
+	_ *repositories.ListManualJournalRequest,
+) (*pagination.ListResult[*manualjournal.Request], error) {
+	items := make([]*manualjournal.Request, 0, 1)
+	if f.current != nil {
+		items = append(items, cloneRequest(f.current))
+	}
+
+	return &pagination.ListResult[*manualjournal.Request]{Items: items, Total: len(items)}, nil
+}
+
+func (f *manualJournalRepositoryFake) ListConnection(
+	_ context.Context,
+	_ *repositories.ListManualJournalConnectionRequest,
+) (*pagination.CursorListResult[*manualjournal.Request], error) {
+	items := make([]*manualjournal.Request, 0, 1)
+	if f.current != nil {
+		items = append(items, cloneRequest(f.current))
+	}
+
+	return &pagination.CursorListResult[*manualjournal.Request]{Items: items}, nil
+}
+
+func (f *manualJournalRepositoryFake) GetByID(
+	_ context.Context,
+	_ repositories.GetManualJournalByIDRequest,
+) (*manualjournal.Request, error) {
+	return cloneRequest(f.current), nil
+}
+
+func (f *manualJournalRepositoryFake) Create(
+	_ context.Context,
+	entity *manualjournal.Request,
+) (*manualjournal.Request, error) {
+	entity.SyncTotals()
+	f.current = cloneRequest(entity)
+
+	return cloneRequest(entity), nil
+}
+
+func (f *manualJournalRepositoryFake) Update(
+	_ context.Context,
+	entity *manualjournal.Request,
+) (*manualjournal.Request, error) {
+	entity.SyncTotals()
+	f.current = cloneRequest(entity)
+	f.updated = cloneRequest(entity)
+
+	return cloneRequest(entity), nil
+}
+
+// journalPostingRepositoryFake records the posting the service produces so
+// assertions can inspect it.
+type journalPostingRepositoryFake struct {
 	last *repositories.CreateJournalPostingParams
 }
 
-func newJournalPostingRepositoryMock(
-	t *testing.T,
-) (*mocks.MockJournalPostingRepository, *journalPostingRepositoryTracker) {
-	t.Helper()
+var _ repositories.JournalPostingRepository = (*journalPostingRepositoryFake)(nil)
 
-	tracker := &journalPostingRepositoryTracker{}
-	repo := mocks.NewMockJournalPostingRepository(t)
-	repo.EXPECT().
-		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
-			copyParams := params
-			copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
-			tracker.last = &copyParams
-			return nil
-		}).
-		Maybe()
+func newJournalPostingRepositoryFake() *journalPostingRepositoryFake {
+	return &journalPostingRepositoryFake{}
+}
 
-	return repo, tracker
+func (f *journalPostingRepositoryFake) CreatePosting(
+	_ context.Context,
+	params repositories.CreateJournalPostingParams,
+) error {
+	copyParams := params
+	copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+	f.last = &copyParams
+
+	return nil
 }
 
 func approvedRequest(orgID, buID, userID pulid.ID) *manualjournal.Request {

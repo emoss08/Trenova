@@ -379,7 +379,13 @@ var (
 // 	}
 // }
 
-func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) *documentservice.Service {
+type unitDeps struct {
+	svc         *documentservice.Service
+	cacheRepo   *mocks.MockDocumentCacheRepository
+	sessionRepo *mocks.MockDocumentUploadSessionRepository
+}
+
+func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) *unitDeps {
 	storageCfg := &config.StorageConfig{
 		AllowedMIMETypes:   []string{"application/pdf", "image/png", "text/plain"},
 		MaxFileSize:        50 * 1024 * 1024,
@@ -389,23 +395,24 @@ func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) 
 		Config: &config.Config{Storage: *storageCfg},
 	})
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, repositories.ErrCacheMiss)
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
-	return documentservice.NewTestService(
-		zap.NewNop(),
-		repo,
-		cacheRepo,
-		sessionRepo,
-		sc,
-		validator,
-		&mocks.NoopAuditService{},
-		storageCfg,
-		thumbnailservice.NewGenerator(),
-		nil,
-	)
+	return &unitDeps{
+		svc: documentservice.NewTestService(
+			zap.NewNop(),
+			repo,
+			cacheRepo,
+			sessionRepo,
+			sc,
+			validator,
+			&mocks.NoopAuditService{},
+			storageCfg,
+			thumbnailservice.NewGenerator(),
+			nil,
+		),
+		cacheRepo:   cacheRepo,
+		sessionRepo: sessionRepo,
+	}
 }
 
 func TestUnit_List_Success(t *testing.T) {
@@ -423,7 +430,8 @@ func TestUnit_List_Success(t *testing.T) {
 			return expected, nil
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	result, err := svc.List(t.Context(), &repositories.ListDocumentsRequest{
 		Filter: &pagination.QueryOptions{
@@ -448,7 +456,8 @@ func TestUnit_List_Error(t *testing.T) {
 			return nil, errors.New("db error")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	result, err := svc.List(t.Context(), &repositories.ListDocumentsRequest{
 		Filter: &pagination.QueryOptions{
@@ -473,7 +482,10 @@ func TestUnit_Get_Success(t *testing.T) {
 			return doc, nil
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 
 	result, err := svc.Get(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -492,7 +504,10 @@ func TestUnit_Get_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 
 	result, err := svc.Get(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
@@ -515,7 +530,8 @@ func TestUnit_GetByResource_Success(t *testing.T) {
 			return docs, nil
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	result, err := svc.GetByResource(
 		t.Context(),
@@ -551,7 +567,8 @@ func TestUnit_Upload_Success(t *testing.T) {
 			return &storage.FileInfo{Key: "test-key"}, nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	fileData := []byte("pdf content here")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
@@ -574,7 +591,8 @@ func TestUnit_Upload_Success(t *testing.T) {
 func TestUnit_Upload_ValidationFailure(t *testing.T) {
 	t.Parallel()
 
-	svc := newUnitTestService(t, &mockDocRepo{}, &mockStorageClient{})
+	deps := newUnitTestService(t, &mockDocRepo{}, &mockStorageClient{})
+	svc := deps.svc
 
 	fileData := []byte("exe content")
 	fileHeader := storageutil.NewMockFileHeader("malware.exe", fileData, "application/x-msdownload")
@@ -602,7 +620,8 @@ func TestUnit_Upload_StorageError(t *testing.T) {
 			return nil, errors.New("storage unavailable")
 		},
 	}
-	svc := newUnitTestService(t, &mockDocRepo{}, sc)
+	deps := newUnitTestService(t, &mockDocRepo{}, sc)
+	svc := deps.svc
 
 	fileData := []byte("pdf content")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
@@ -640,7 +659,8 @@ func TestUnit_Upload_CreateRepoError_CleansUpStorage(t *testing.T) {
 			return nil, errors.New("db error")
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	fileData := []byte("pdf content")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
@@ -677,7 +697,8 @@ func TestUnit_BulkUpload_Success(t *testing.T) {
 			return &storage.FileInfo{}, nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	files := storageutil.NewMockFileHeaders([]storageutil.MockFileHeader{
 		{Filename: "a.pdf", Data: []byte("a"), ContentType: "application/pdf"},
@@ -723,7 +744,8 @@ func TestUnit_BulkUpload_PartialFailure(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	files := storageutil.NewMockFileHeaders([]storageutil.MockFileHeader{
 		{Filename: "a.pdf", Data: []byte("a"), ContentType: "application/pdf"},
@@ -767,7 +789,8 @@ func TestUnit_GetDownloadURL_Success(t *testing.T) {
 			return "https://storage.example.com/signed-url", nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetDownloadURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -786,7 +809,8 @@ func TestUnit_GetDownloadURL_DocNotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	url, err := svc.GetDownloadURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
@@ -815,7 +839,8 @@ func TestUnit_GetDownloadURL_PresignError(t *testing.T) {
 			return "", errors.New("presign failed")
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetDownloadURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -846,7 +871,8 @@ func TestUnit_GetViewURL_Success(t *testing.T) {
 			return "https://storage.example.com/view-url", nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -878,7 +904,8 @@ func TestUnit_GetViewURL_ActiveContentUsesAttachmentDisposition(t *testing.T) {
 			return "https://storage.example.com/view-url", nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -897,7 +924,8 @@ func TestUnit_GetViewURL_DocNotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
@@ -926,7 +954,8 @@ func TestUnit_GetViewURL_PresignError(t *testing.T) {
 			return "", errors.New("presign failed")
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -962,7 +991,10 @@ func TestUnit_Delete_Success(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
 		ID:         doc.ID,
@@ -999,7 +1031,10 @@ func TestUnit_Delete_WithPreview(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
 		ID:         doc.ID,
@@ -1019,7 +1054,8 @@ func TestUnit_Delete_NotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
 		ID:         pulid.MustNew("doc_"),
@@ -1052,7 +1088,10 @@ func TestUnit_Delete_RepoDeleteError(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
 		ID:         doc.ID,
@@ -1101,7 +1140,10 @@ func TestUnit_BulkDelete_Success(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{id1, id2},
@@ -1118,7 +1160,8 @@ func TestUnit_BulkDelete_Success(t *testing.T) {
 func TestUnit_BulkDelete_EmptyIDs(t *testing.T) {
 	t.Parallel()
 
-	svc := newUnitTestService(t, &mockDocRepo{}, &mockStorageClient{})
+	deps := newUnitTestService(t, &mockDocRepo{}, &mockStorageClient{})
+	svc := deps.svc
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{},
@@ -1138,7 +1181,8 @@ func TestUnit_BulkDelete_GetByIDsError(t *testing.T) {
 			return nil, errors.New("db error")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{pulid.MustNew("doc_")},
@@ -1169,7 +1213,10 @@ func TestUnit_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{pulid.MustNew("doc_")},
@@ -1208,7 +1255,10 @@ func TestUnit_BulkDelete_StorageDeleteErrors(t *testing.T) {
 			return errors.New("storage delete error")
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{pulid.MustNew("doc_")},
@@ -1242,7 +1292,8 @@ func TestUnit_GetPreviewURL_Success(t *testing.T) {
 			return "https://storage.example.com/preview-url", nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -1267,7 +1318,8 @@ func TestUnit_GetPreviewURL_NoPreview(t *testing.T) {
 			return doc, nil
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -1286,7 +1338,8 @@ func TestUnit_GetPreviewURL_DocNotFound(t *testing.T) {
 			return nil, errors.New("not found")
 		},
 	}
-	svc := newUnitTestService(t, repo, &mockStorageClient{})
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+	svc := deps.svc
 
 	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
@@ -1316,7 +1369,8 @@ func TestUnit_GetPreviewURL_PresignError(t *testing.T) {
 			return "", errors.New("presign error")
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
 
 	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
 		ID:         doc.ID,
@@ -1346,10 +1400,7 @@ func TestNew(t *testing.T) {
 	}
 	sc := &mockStorageClient{}
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, repositories.ErrCacheMiss)
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	svc := documentservice.NewTestService(
 		zap.NewNop(),
@@ -1424,7 +1475,10 @@ func TestUnit_Delete_WithPreviewPath(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
 		ID:         doc.ID,
@@ -1460,7 +1514,10 @@ func TestUnit_Delete_StorageDeleteError(t *testing.T) {
 			return errors.New("storage error")
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
 		ID:         doc.ID,
@@ -1500,7 +1557,10 @@ func TestUnit_BulkDelete_WithPreviewPaths(t *testing.T) {
 			return nil
 		},
 	}
-	svc := newUnitTestService(t, repo, sc)
+	deps := newUnitTestService(t, repo, sc)
+	svc := deps.svc
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{docs[0].ID},

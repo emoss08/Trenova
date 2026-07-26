@@ -3,6 +3,7 @@ package userhandler_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -13,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -40,98 +42,23 @@ type setupOptions struct {
 	cfg         *config.Config
 }
 
-func newDefaultUserRepo(t *testing.T) *mocks.MockUserRepository {
-	t.Helper()
-	repo := mocks.NewMockUserRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdatePassword", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	return repo
-}
-
-func newDefaultRoleRepo(t *testing.T) *mocks.MockRoleRepository {
-	t.Helper()
-	repo := mocks.NewMockRoleRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*permission.Role]{Items: []*permission.Role{}, Total: 0}, nil)
-	repo.On("Create", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(&permission.Role{}, nil)
-	repo.On("GetRolesWithInheritance", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetUsersWithRole", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, nil)
-	repo.On("CreateAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("DeleteAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("CreateResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("UpdateResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("DeleteResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetResourcePermissionsByRoleID", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	return repo
-}
-
-func newDefaultSessionRepo(t *testing.T) *mocks.MockSessionRepository {
-	t.Helper()
-	repo := mocks.NewMockSessionRepository(t)
-	repo.On("Get", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Create", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
-	return repo
-}
-
-func newDefaultPermCacheRepo(t *testing.T) *mocks.MockPermissionCacheRepository {
-	t.Helper()
-	repo := mocks.NewMockPermissionCacheRepository(t)
-	repo.On("Get", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("Delete", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("InvalidateOrganization", mock.Anything, mock.Anything).Maybe().Return(nil)
-	return repo
-}
-
 func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	t.Helper()
 
 	if opts.userRepo == nil {
-		opts.userRepo = newDefaultUserRepo(t)
+		opts.userRepo = mocks.NewMockUserRepository(t)
 	}
 	if opts.roleRepo == nil {
-		opts.roleRepo = newDefaultRoleRepo(t)
+		opts.roleRepo = mocks.NewMockRoleRepository(t)
 	}
 	if opts.sessionRepo == nil {
-		opts.sessionRepo = newDefaultSessionRepo(t)
+		opts.sessionRepo = mocks.NewMockSessionRepository(t)
 	}
 	if opts.permEngine == nil {
 		opts.permEngine = &mocks.AllowAllPermissionEngine{}
 	}
 	if opts.storage == nil {
 		opts.storage = mocks.NewMockClient(t)
-		opts.storage.On("Upload", mock.Anything, mock.Anything).Maybe().Return((*storage.FileInfo)(nil), nil)
-		opts.storage.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
-		opts.storage.On("GetPresignedURL", mock.Anything, mock.Anything).
-			Maybe().
-			Return("https://example.test/profile-picture.png", nil)
 	}
 	if opts.cfg == nil {
 		opts.cfg = &config.Config{
@@ -165,7 +92,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	roleSvc := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         opts.roleRepo,
-		PermissionCache:  newDefaultPermCacheRepo(t),
+		PermissionCache:  mocks.NewMockPermissionCacheRepository(t),
 		PermissionEngine: opts.permEngine,
 		Validator:        roleservice.NewTestValidator(),
 		Registry:         permission.NewEmptyRegistry(),
@@ -210,21 +137,6 @@ func TestUserHandler_List_Success(t *testing.T) {
 		},
 		Total: 1,
 	}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdatePassword", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -247,28 +159,55 @@ func TestUserHandler_List_Success(t *testing.T) {
 func TestUserHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
+	const requestedLimit = 10
+
+	items := make([]*tenant.User, 0, requestedLimit+1)
+	for i := range requestedLimit + 1 {
+		items = append(items, &tenant.User{
+			ID:                    pulid.MustNew("usr_"),
+			CurrentOrganizationID: testutil.TestOrgID,
+			BusinessUnitID:        testutil.TestBuID,
+			Name:                  fmt.Sprintf("User %02d", i),
+			Username:              fmt.Sprintf("user%02d", i),
+			EmailAddress:          fmt.Sprintf("user%02d@example.com", i),
+			Status:                domaintypes.StatusActive,
+			CreatedAt:             timeutils.NowUnix(),
+		})
+	}
+
 	repo := mocks.NewMockUserRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*tenant.User]{
-		Items: []*tenant.User{},
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListUsersRequest) bool {
+		return req.Filter.Pagination.Limit == requestedLimit+1
+	})).Return(&pagination.ListResult[*tenant.User]{
+		Items: items,
 		Total: 50,
 	}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdatePassword", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/users/").
+		WithQuery(map[string]string{"limit": "10"}).
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp pagination.CursorResponse[[]map[string]any]
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, 50, resp.Count)
+	assert.Len(t, resp.Results, requestedLimit)
+	assert.True(t, resp.HasNextPage)
+	assert.NotEmpty(t, resp.EndCursor)
+}
+
+func TestUserHandler_List_RejectsOffset(t *testing.T) {
+	t.Parallel()
+
+	handler := setupUserHandler(t, setupOptions{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -279,11 +218,7 @@ func TestUserHandler_List_WithPagination(t *testing.T) {
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp pagination.Response[[]map[string]any]
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 50, resp.Count)
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestUserHandler_List_Error(t *testing.T) {
@@ -291,20 +226,6 @@ func TestUserHandler_List_Error(t *testing.T) {
 
 	repo := mocks.NewMockUserRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -321,7 +242,7 @@ func TestUserHandler_List_Error(t *testing.T) {
 
 func makeUserRepo(t *testing.T) *mocks.MockUserRepository {
 	t.Helper()
-	repo := newDefaultUserRepo(t)
+	repo := mocks.NewMockUserRepository(t)
 	return repo
 }
 
@@ -329,22 +250,6 @@ func makeUserRepoWithGetByID(t *testing.T, user *tenant.User, err error) *mocks.
 	t.Helper()
 	repo := mocks.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, err)
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	return repo
 }
 
@@ -418,21 +323,6 @@ func TestUserHandler_Update_Success(t *testing.T) {
 		RunAndReturn(func(_ context.Context, entity *tenant.User) (*tenant.User, error) {
 			return entity, nil
 		})
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -511,21 +401,6 @@ func TestUserHandler_Update_ServiceError(t *testing.T) {
 		Timezone:              "America/New_York",
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("update failed"))
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -599,16 +474,8 @@ func TestUserHandler_GetRoleAssignments_Success(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	roleRepo := newDefaultRoleRepo(t)
+	roleRepo := mocks.NewMockRoleRepository(t)
 	roleRepo.ExpectedCalls = nil
-	roleRepo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*permission.Role]{Items: []*permission.Role{}, Total: 0}, nil)
-	roleRepo.On("Create", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(&permission.Role{}, nil)
-	roleRepo.On("GetRolesWithInheritance", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	roleRepo.On("GetUsersWithRole", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
 		Return([]*permission.UserRoleAssignment{
 			{
@@ -617,14 +484,6 @@ func TestUserHandler_GetRoleAssignments_Success(t *testing.T) {
 				RoleID: pulid.MustNew("rol_"),
 			},
 		}, nil)
-	roleRepo.On("CreateAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("DeleteAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("CreateResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("UpdateResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("DeleteResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("GetResourcePermissionsByRoleID", mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{roleRepo: roleRepo})
 
@@ -643,26 +502,10 @@ func TestUserHandler_GetRoleAssignments_Error(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	roleRepo := newDefaultRoleRepo(t)
+	roleRepo := mocks.NewMockRoleRepository(t)
 	roleRepo.ExpectedCalls = nil
-	roleRepo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*permission.Role]{Items: []*permission.Role{}, Total: 0}, nil)
-	roleRepo.On("Create", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(&permission.Role{}, nil)
-	roleRepo.On("GetRolesWithInheritance", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	roleRepo.On("GetUsersWithRole", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
 		Return(nil, errors.New("role repo error"))
-	roleRepo.On("CreateAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("DeleteAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("CreateResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("UpdateResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("DeleteResourcePermission", mock.Anything, mock.Anything).Maybe().Return(nil)
-	roleRepo.On("GetResourcePermissionsByRoleID", mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{roleRepo: roleRepo})
 
@@ -753,21 +596,6 @@ func TestUserHandler_Patch_Success(t *testing.T) {
 		RunAndReturn(func(_ context.Context, entity *tenant.User) (*tenant.User, error) {
 			return entity, nil
 		})
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -875,21 +703,6 @@ func TestUserHandler_Patch_UpdateError(t *testing.T) {
 		Timezone:              "America/New_York",
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("update failed"))
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -922,21 +735,6 @@ func TestUserHandler_BulkUpdateStatus_Success(t *testing.T) {
 		{ID: userID1, Status: domaintypes.StatusInactive},
 		{ID: userID2, Status: domaintypes.StatusInactive},
 	}, nil)
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -979,22 +777,6 @@ func TestUserHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 	repo := makeUserRepo(t)
 	repo.ExpectedCalls = nil
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return(nil, errors.New("get by ids failed"))
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -1028,20 +810,6 @@ func TestUserHandler_SelectOptions_Success(t *testing.T) {
 			},
 			Total: 1,
 		}, nil)
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -1063,20 +831,6 @@ func TestUserHandler_SelectOptions_Error(t *testing.T) {
 	repo.ExpectedCalls = nil
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(nil, errors.New("select options error"))
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -1145,9 +899,6 @@ func TestUserHandler_SimulatePermissions_Success(t *testing.T) {
 	addRoleID := pulid.MustNew("rol_")
 
 	permEngine := mocks.NewMockPermissionEngine(t)
-	permEngine.On("Check", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(&services.EffectivePermissions{
 			UserID:         userID,
@@ -1214,9 +965,6 @@ func TestUserHandler_SimulatePermissions_EngineError(t *testing.T) {
 
 	userID := pulid.MustNew("usr_")
 	permEngine := mocks.NewMockPermissionEngine(t)
-	permEngine.On("Check", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
 	permEngine.On("SimulatePermissions", mock.Anything, mock.Anything).
 		Return(nil, errors.New("simulate error"))
 
@@ -1252,22 +1000,6 @@ func TestUserHandler_GetOrganizations_Success(t *testing.T) {
 				Organization:   &tenant.Organization{Name: "Test Org"},
 			},
 		}, nil)
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -1289,22 +1021,6 @@ func TestUserHandler_GetOrganizations_Error(t *testing.T) {
 	repo.ExpectedCalls = nil
 	repo.On("GetOrganizations", mock.Anything, mock.Anything).
 		Return(nil, errors.New("organizations fetch error"))
-	repo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	repo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	repo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
 
@@ -1335,8 +1051,6 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 		ExpiresAt:      time.Now().Add(time.Hour).Unix(),
 	}, nil)
 	sessionRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
-	sessionRepo.On("Create", mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	userRepo := mocks.NewMockUserRepository(t)
 	userRepo.On("GetOrganizations", mock.Anything, mock.Anything).
@@ -1360,20 +1074,6 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 	}, nil)
 	userRepo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
-	userRepo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	userRepo.On("SelectOptions", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
-	userRepo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
-	userRepo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	userRepo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, nil)
-	userRepo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
 	handler := setupUserHandler(t, setupOptions{
 		userRepo:    userRepo,
@@ -1482,9 +1182,6 @@ func TestUserHandler_SwitchOrganization_ServiceError(t *testing.T) {
 
 	sessionRepo := mocks.NewMockSessionRepository(t)
 	sessionRepo.On("Get", mock.Anything, mock.Anything).Return(nil, errors.New("session not found"))
-	sessionRepo.On("Create", mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	handler := setupUserHandler(t, setupOptions{sessionRepo: sessionRepo})
 

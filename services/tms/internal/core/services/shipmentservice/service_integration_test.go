@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
@@ -40,7 +41,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -987,6 +987,10 @@ func newIntegrationShipmentService(
 		DB:     conn,
 		Logger: zap.NewNop(),
 	})
+	orderRepo := orderrepository.New(orderrepository.Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
 	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
 		DB:                         conn,
 		Logger:                     zap.NewNop(),
@@ -994,6 +998,7 @@ func newIntegrationShipmentService(
 		MoveRepository:             moveRepo,
 		AdditionalChargeRepository: additionalChargeRepo,
 		CommodityRepository:        shipmentCommodityRepo,
+		OrderRepository:            orderRepo,
 	})
 	controlRepo := shipmentcontrolrepository.New(shipmentcontrolrepository.Params{
 		DB:     conn,
@@ -1017,7 +1022,7 @@ func newIntegrationShipmentService(
 	})
 
 	registry := schema.NewRegistry()
-	registerIntegrationShipmentSchema(t, registry)
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
@@ -1048,10 +1053,8 @@ func newIntegrationShipmentService(
 		ShipmentRepo:              shipmentRepo,
 	})
 
-	audit := mocks.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
-	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit := &mocks.NoopAuditService{}
+	realtime := &mocks.NoopRealtimeService{}
 	commercial := newTestCommercialCalculator(formulaSvc, accessorialRepo)
 
 	svc := New(Params{
@@ -1079,97 +1082,6 @@ func newIntegrationShipmentService(
 	insertShipmentControl(t, ctx, db, tenantInfo)
 
 	return svc, shipmentRepo, controlRepo, accessorialRepo, tenantInfo, fixture, data
-}
-
-func registerIntegrationShipmentSchema(t *testing.T, registry *schema.Registry) {
-	t.Helper()
-
-	const shipmentSchema = `{
-		"$schema": "https://json-schema.org/draft/2020-12/schema",
-		"$id": "https://trenova.com/schemas/formula/shipment.schema.json",
-		"type": "object",
-		"x-formula-context": {
-			"category": "shipment",
-			"entities": ["Shipment"]
-		},
-		"x-data-source": {
-			"table": "shipments",
-			"preloads": ["Customer", "Moves.Stops", "Commodities.Commodity", "Commodities.Commodity.HazardousMaterial"]
-		},
-		"properties": {
-			"customer": {
-				"type": "object",
-				"properties": {
-					"name": {
-						"type": "string",
-						"x-source": { "path": "Customer.Name" }
-					},
-					"code": {
-						"type": "string",
-						"x-source": { "path": "Customer.Code" }
-					}
-				}
-			},
-			"weight": {
-				"type": ["number", "null"],
-				"x-source": { "path": "Weight", "nullable": true, "transform": "int64ToFloat64" }
-			},
-			"pieces": {
-				"type": ["integer", "null"],
-				"x-source": { "path": "Pieces", "nullable": true }
-			},
-			"freightChargeAmount": {
-				"type": "number",
-				"x-source": { "path": "FreightChargeAmount", "transform": "decimalToFloat64" }
-			},
-			"otherChargeAmount": {
-				"type": "number",
-				"x-source": { "path": "OtherChargeAmount", "transform": "decimalToFloat64" }
-			},
-			"currentTotalCharge": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeCurrentTotalCharge" }
-			},
-			"ratingUnit": {
-				"type": "integer",
-				"x-source": { "path": "RatingUnit" }
-			},
-			"totalDistance": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTotalDistance" }
-			},
-			"totalStops": {
-				"type": "integer",
-				"x-source": { "computed": true, "function": "computeTotalStops" }
-			},
-			"totalWeight": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTotalWeight" }
-			},
-			"totalPieces": {
-				"type": "integer",
-				"x-source": { "computed": true, "function": "computeTotalPieces" }
-			},
-			"totalLinearFeet": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTotalLinearFeet" }
-			},
-			"hasHazmat": {
-				"type": "boolean",
-				"x-source": { "computed": true, "function": "computeHasHazmat" }
-			},
-			"requiresTemperatureControl": {
-				"type": "boolean",
-				"x-source": { "computed": true, "function": "computeRequiresTemperatureControl" }
-			},
-			"temperatureDifferential": {
-				"type": "number",
-				"x-source": { "computed": true, "function": "computeTemperatureDifferential" }
-			}
-		}
-	}`
-
-	require.NoError(t, registry.Register("shipment", []byte(shipmentSchema)))
 }
 
 func insertShipmentControl(

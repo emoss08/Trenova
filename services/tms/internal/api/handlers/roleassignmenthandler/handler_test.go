@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -94,16 +95,54 @@ func TestRoleAssignmentHandler_List_Success(t *testing.T) {
 func TestRoleAssignmentHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
+	const requestedLimit = 10
+
+	items := make([]*permission.UserRoleAssignment, 0, requestedLimit+1)
+	for range requestedLimit + 1 {
+		items = append(items, &permission.UserRoleAssignment{
+			ID:             pulid.MustNew("ura_"),
+			OrganizationID: testutil.TestOrgID,
+			UserID:         pulid.MustNew("usr_"),
+			RoleID:         pulid.MustNew("rol_"),
+			AssignedAt:     timeutils.NowUnix(),
+		})
+	}
+
 	repo := mocks.NewMockRoleAssignmentRepository(t)
 	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListRoleAssignmentsRequest) bool {
-		return req.Filter.TenantInfo.OrgID == testutil.TestOrgID
+		return req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
+			req.Filter.Pagination.Limit == requestedLimit+1
 	})).
 		Return(&pagination.ListResult[*permission.UserRoleAssignment]{
-			Items: []*permission.UserRoleAssignment{},
+			Items: items,
 			Total: 30,
 		}, nil)
 
 	handler := setupRoleAssignmentHandler(t, repo)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/role-assignments/").
+		WithQuery(map[string]string{"limit": "10"}).
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp pagination.CursorResponse[[]map[string]any]
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, 30, resp.Count)
+	assert.Len(t, resp.Results, requestedLimit)
+	assert.True(t, resp.HasNextPage)
+	assert.NotEmpty(t, resp.EndCursor)
+}
+
+func TestRoleAssignmentHandler_List_RejectsOffset(t *testing.T) {
+	t.Parallel()
+
+	handler := setupRoleAssignmentHandler(t, mocks.NewMockRoleAssignmentRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -114,11 +153,7 @@ func TestRoleAssignmentHandler_List_WithPagination(t *testing.T) {
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp pagination.Response[[]map[string]any]
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 30, resp.Count)
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestRoleAssignmentHandler_Get_Success(t *testing.T) {

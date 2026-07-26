@@ -198,7 +198,7 @@ func setupHandler(
 	t *testing.T,
 	repo *mocks.MockDocumentRepository,
 	storageClient *mockStorageClient,
-) *documenthandler.Handler {
+) *handlerDeps {
 	t.Helper()
 
 	cfg := &config.Config{
@@ -217,12 +217,18 @@ func setupHandler(
 	return setupHandlerWithConfig(t, repo, storageClient, cfg)
 }
 
+type handlerDeps struct {
+	handler     *documenthandler.Handler
+	cacheRepo   *mocks.MockDocumentCacheRepository
+	sessionRepo *mocks.MockDocumentUploadSessionRepository
+}
+
 func setupHandlerWithConfig(
 	t *testing.T,
 	repo *mocks.MockDocumentRepository,
 	storageClient *mockStorageClient,
 	cfg *config.Config,
-) *documenthandler.Handler {
+) *handlerDeps {
 	t.Helper()
 
 	logger := zap.NewNop()
@@ -230,16 +236,7 @@ func setupHandlerWithConfig(
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
 	thumbnailGen := thumbnailservice.NewGenerator()
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss).
-		Maybe()
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
 
 	service := documentservice.NewTestService(
 		logger,
@@ -264,7 +261,11 @@ func setupHandlerWithConfig(
 		ErrorHandler:     errorHandler,
 	})
 
-	return documenthandler.NewTestHandlerWithConfig(service, errorHandler, pm, cfg)
+	return &handlerDeps{
+		handler:     documenthandler.NewTestHandlerWithConfig(service, errorHandler, pm, cfg),
+		cacheRepo:   cacheRepo,
+		sessionRepo: sessionRepo,
+	}
 }
 
 func encryptedDocumentBody(t *testing.T, body string, storagePath string) string {
@@ -330,14 +331,14 @@ func TestDocumentHandler_List_Success(t *testing.T) {
 		Total: 1,
 	}, nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -357,7 +358,7 @@ func TestDocumentHandler_List_WithFilters(t *testing.T) {
 		Total: 0,
 	}, nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -366,14 +367,30 @@ func TestDocumentHandler_List_WithFilters(t *testing.T) {
 			"resourceType": "trailer",
 			"status":       "Active",
 			"limit":        "10",
-			"offset":       "0",
 		}).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+}
+
+func TestDocumentHandler_List_RejectsOffset(t *testing.T) {
+	t.Parallel()
+
+	deps := setupHandler(t, mocks.NewMockDocumentRepository(t), &mockStorageClient{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/documents/").
+		WithQuery(map[string]string{"limit": "10", "offset": "0"}).
+		WithDefaultAuthContext()
+
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestDocumentHandler_List_ServiceError(t *testing.T) {
@@ -382,14 +399,14 @@ func TestDocumentHandler_List_ServiceError(t *testing.T) {
 	repo := mocks.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -418,14 +435,16 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 			}, nil
 		})
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -444,14 +463,16 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
@@ -461,14 +482,14 @@ func TestDocumentHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/invalid-id/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -506,14 +527,14 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/download/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -532,14 +553,14 @@ func TestDocumentHandler_Download_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/download/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
@@ -549,14 +570,14 @@ func TestDocumentHandler_Download_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/bad-id/download/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -582,14 +603,14 @@ func TestDocumentHandler_Download_StorageError(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/download/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -625,14 +646,14 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/view/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -651,14 +672,14 @@ func TestDocumentHandler_View_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/view/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
@@ -668,14 +689,14 @@ func TestDocumentHandler_View_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/bad-id/view/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -701,14 +722,14 @@ func TestDocumentHandler_View_StorageError(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/view/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -745,14 +766,14 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/preview/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -776,14 +797,14 @@ func TestDocumentHandler_Preview_NoPreviewAvailable(t *testing.T) {
 			}, nil
 		})
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/preview/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
@@ -798,14 +819,14 @@ func TestDocumentHandler_Preview_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/preview/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
@@ -815,14 +836,14 @@ func TestDocumentHandler_Preview_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/bad-id/preview/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -838,7 +859,7 @@ func TestDocumentHandler_Upload_Success(t *testing.T) {
 			return entity, nil
 		})
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -859,7 +880,7 @@ func TestDocumentHandler_Upload_Success(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -875,7 +896,7 @@ func TestDocumentHandler_Upload_MissingRequiredFields(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -891,7 +912,7 @@ func TestDocumentHandler_Upload_MissingRequiredFields(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -901,7 +922,7 @@ func TestDocumentHandler_Upload_MissingFile(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -915,7 +936,7 @@ func TestDocumentHandler_Upload_MissingFile(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -934,7 +955,7 @@ func TestDocumentHandler_Upload_RequestBodyTooLarge(t *testing.T) {
 			PresignedURLExpiry: 15 * time.Minute,
 		},
 	}
-	handler := setupHandlerWithConfig(t, repo, &mockStorageClient{}, cfg)
+	deps := setupHandlerWithConfig(t, repo, &mockStorageClient{}, cfg)
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -954,7 +975,7 @@ func TestDocumentHandler_Upload_RequestBodyTooLarge(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusRequestEntityTooLarge, ginCtx.ResponseCode())
@@ -970,7 +991,7 @@ func TestDocumentHandler_Upload_StorageError(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -990,7 +1011,7 @@ func TestDocumentHandler_Upload_StorageError(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -1002,7 +1023,7 @@ func TestDocumentHandler_Upload_CreateError(t *testing.T) {
 	repo := mocks.NewMockDocumentRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -1022,7 +1043,7 @@ func TestDocumentHandler_Upload_CreateError(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -1032,7 +1053,7 @@ func TestDocumentHandler_Upload_InvalidMIMEType(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -1052,7 +1073,7 @@ func TestDocumentHandler_Upload_InvalidMIMEType(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -1068,7 +1089,7 @@ func TestDocumentHandler_UploadBulk_Success(t *testing.T) {
 			return entity, nil
 		})
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -1087,7 +1108,7 @@ func TestDocumentHandler_UploadBulk_Success(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -1102,7 +1123,7 @@ func TestDocumentHandler_UploadBulk_MissingFields(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1116,7 +1137,7 @@ func TestDocumentHandler_UploadBulk_MissingFields(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -1126,7 +1147,7 @@ func TestDocumentHandler_UploadBulk_NoFiles(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -1142,7 +1163,7 @@ func TestDocumentHandler_UploadBulk_NoFiles(t *testing.T) {
 			[]testutil.MultipartFile{},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -1161,7 +1182,7 @@ func TestDocumentHandler_UploadBulk_TooManyFiles(t *testing.T) {
 			PresignedURLExpiry: 15 * time.Minute,
 		},
 	}
-	handler := setupHandlerWithConfig(t, repo, &mockStorageClient{}, cfg)
+	deps := setupHandlerWithConfig(t, repo, &mockStorageClient{}, cfg)
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -1180,7 +1201,7 @@ func TestDocumentHandler_UploadBulk_TooManyFiles(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -1203,14 +1224,16 @@ func TestDocumentHandler_Delete_Success(t *testing.T) {
 		})
 	repo.On("Delete", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/documents/" + docID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNoContent, ginCtx.ResponseCode())
@@ -1225,14 +1248,14 @@ func TestDocumentHandler_Delete_NotFound(t *testing.T) {
 	repo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/documents/" + docID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
@@ -1242,14 +1265,14 @@ func TestDocumentHandler_Delete_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/documents/invalid-id/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -1270,14 +1293,16 @@ func TestDocumentHandler_Delete_RepoError(t *testing.T) {
 		})
 	repo.On("Delete", mock.Anything, mock.Anything).Return(errService)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/documents/" + docID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -1305,7 +1330,9 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 		})
 	repo.On("BulkDelete", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	deps.sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1315,7 +1342,7 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 			"ids": []string{docID1.String(), docID2.String()},
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -1330,7 +1357,7 @@ func TestDocumentHandler_BulkDelete_InvalidJSON(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1338,7 +1365,7 @@ func TestDocumentHandler_BulkDelete_InvalidJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -1348,7 +1375,7 @@ func TestDocumentHandler_BulkDelete_EmptyIDs(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1358,7 +1385,7 @@ func TestDocumentHandler_BulkDelete_EmptyIDs(t *testing.T) {
 			"ids": []string{},
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -1368,7 +1395,7 @@ func TestDocumentHandler_BulkDelete_InvalidIDs(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockDocumentRepository(t)
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1378,7 +1405,7 @@ func TestDocumentHandler_BulkDelete_InvalidIDs(t *testing.T) {
 			"ids": []string{"invalid-id-format"},
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -1392,7 +1419,7 @@ func TestDocumentHandler_BulkDelete_ServiceError(t *testing.T) {
 	repo := mocks.NewMockDocumentRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1402,7 +1429,7 @@ func TestDocumentHandler_BulkDelete_ServiceError(t *testing.T) {
 			"ids": []string{docID.String()},
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -1433,14 +1460,14 @@ func TestDocumentHandler_GetByResource_Success(t *testing.T) {
 		},
 	}, nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/resource/trailer/" + resourceID + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -1458,14 +1485,14 @@ func TestDocumentHandler_GetByResource_Empty(t *testing.T) {
 	repo := mocks.NewMockDocumentRepository(t)
 	repo.On("GetByResourceID", mock.Anything, mock.Anything).Return([]*document.Document{}, nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/resource/trailer/" + resourceID + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -1483,14 +1510,14 @@ func TestDocumentHandler_GetByResource_ServiceError(t *testing.T) {
 	repo := mocks.NewMockDocumentRepository(t)
 	repo.On("GetByResourceID", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/resource/trailer/" + resourceID + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -1506,7 +1533,7 @@ func TestDocumentHandler_Upload_WithTags(t *testing.T) {
 			return entity, nil
 		})
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	resourceID := pulid.MustNew("tr_").String()
 	ginCtx := testutil.NewGinTestContext().
@@ -1528,7 +1555,7 @@ func TestDocumentHandler_Upload_WithTags(t *testing.T) {
 			},
 		)
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -1560,14 +1587,16 @@ func TestDocumentHandler_Delete_WithPreviewPath(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/documents/" + docID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNoContent, ginCtx.ResponseCode())
@@ -1596,14 +1625,14 @@ func TestDocumentHandler_Preview_StorageError(t *testing.T) {
 		},
 	}
 
-	handler := setupHandler(t, repo, storageClient)
+	deps := setupHandler(t, repo, storageClient)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/documents/" + docID.String() + "/preview/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -1620,7 +1649,7 @@ func TestDocumentHandler_List_WithResourceIDFilter(t *testing.T) {
 		Total: 0,
 	}, nil)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -1630,7 +1659,7 @@ func TestDocumentHandler_List_WithResourceIDFilter(t *testing.T) {
 		}).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -1655,7 +1684,9 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 		})
 	repo.On("BulkDelete", mock.Anything, mock.Anything).Return(errService)
 
-	handler := setupHandler(t, repo, &mockStorageClient{})
+	deps := setupHandler(t, repo, &mockStorageClient{})
+	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1665,7 +1696,7 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 			"ids": []string{docID.String()},
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())

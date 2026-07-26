@@ -73,7 +73,7 @@ func newEstimatorService(
 	controlRepo.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(control, nil).
-		Maybe()
+		Once()
 
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	if entity != nil {

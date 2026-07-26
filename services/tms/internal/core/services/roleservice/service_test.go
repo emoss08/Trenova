@@ -44,9 +44,6 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	permCache := mocks.NewMockPermissionCacheRepository(t)
 	permEngine := mocks.NewMockPermissionEngine(t)
 	logger := zap.NewNop()
-	permEngine.On("GetEffectivePermissions", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(testFullEffectivePermissions(), nil)
 
 	svc := &Service{
 		l:          logger.Named("test.role"),
@@ -65,6 +62,14 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		permEngine: permEngine,
 		svc:        svc,
 	}
+}
+
+// expectFullEffectivePermissions arms the permission engine for scenarios that
+// reach a sensitivity check. Tests that stop earlier must not declare it, so an
+// unused expectation stays a failure.
+func (d *testServiceDeps) expectFullEffectivePermissions() {
+	d.permEngine.On("GetEffectivePermissions", mock.Anything, mock.Anything, mock.Anything).
+		Return(testFullEffectivePermissions(), nil)
 }
 
 func testFullEffectivePermissions() *services.EffectivePermissions {
@@ -161,6 +166,7 @@ func TestUpdateRole_Success(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -231,6 +237,7 @@ func TestAssignRole_Success(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	targetUserID := pulid.MustNew("usr_")
@@ -272,6 +279,7 @@ func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	targetUserID := pulid.MustNew("usr_")
@@ -385,6 +393,7 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -476,6 +485,7 @@ func TestCircularInheritance_DirectSelfReference(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -694,6 +704,7 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -809,6 +820,7 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -851,6 +863,7 @@ func TestCircularInheritance_NoParents(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -879,6 +892,7 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -1206,6 +1220,7 @@ func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -1239,6 +1254,7 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -1274,6 +1290,7 @@ func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -1309,6 +1326,7 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")

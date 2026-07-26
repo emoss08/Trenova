@@ -70,19 +70,7 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 	}
 
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, repositories.ErrCacheMiss)
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.EXPECT().
-		ClearDocumentReference(mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	sessionRepo.EXPECT().
-		ClearDocumentReferences(mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
 	contentService := mocks.NewMockDocumentContentService(t)
 	contentService.EXPECT().
 		GetContent(mock.Anything, documentID, tenantInfo).

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/zap"
 )
 
@@ -357,7 +359,7 @@ func createRoleServiceSchema(t *testing.T, db *bun.DB) {
 		`CREATE TABLE IF NOT EXISTS users (
 			id VARCHAR(100) PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) REFERENCES organizations(id),
+			organization_id VARCHAR(100) REFERENCES organizations(id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS roles (
 			id VARCHAR(100) PRIMARY KEY,
@@ -555,6 +557,7 @@ func setupIntegrationService(t *testing.T) (*Service, *bun.DB) {
 	svc := &Service{
 		l:          zap.NewNop().Named("test.role-service"),
 		roleRepo:   roleRepo,
+		rbacRepo:   &rbactest.Repository{},
 		permCache:  cacheRepo,
 		permEngine: permEngine,
 		validator: &Validator{
@@ -586,10 +589,10 @@ func TestIntegration_CreateRole_CircularInheritance(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
-		true,
 	)
 
 	roleID := pulid.MustNew("rol_")
@@ -607,6 +610,67 @@ func TestIntegration_CreateRole_CircularInheritance(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Equal(t, ErrCircularInheritance, err)
+}
+
+// seedActorRole gives the actor a role carrying the sensitivity and resource
+// grants the service's no-escalation guard requires. Without it an actor can
+// only ever grant permissions it already holds, which is nothing.
+func seedActorRole(
+	t *testing.T,
+	db *bun.DB,
+	orgID, actorID pulid.ID,
+	sensitivity permission.FieldSensitivity,
+	resources ...string,
+) pulid.ID {
+	t.Helper()
+
+	now := timeutils.NowUnix()
+	actorRoleID := pulid.MustNew("rol_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO roles (id, organization_id, name, max_sensitivity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		actorRoleID.String(),
+		orgID.String(),
+		"Actor Role",
+		string(sensitivity),
+		now,
+		now,
+	)
+
+	for _, resource := range resources {
+		sharedtestutil.MustExec(
+			t,
+			db,
+			`INSERT INTO resource_permissions (id, role_id, resource, operations, data_scope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			pulid.MustNew("rsp_").String(),
+			actorRoleID.String(),
+			resource,
+			pgdialect.Array([]string{
+				string(permission.OpRead),
+				string(permission.OpCreate),
+				string(permission.OpUpdate),
+				string(permission.OpDelete),
+			}),
+			string(permission.DataScopeOrganization),
+			now,
+			now,
+		)
+	}
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO user_role_assignments (id, user_id, organization_id, role_id, assigned_at) VALUES (?, ?, ?, ?, ?)`,
+		pulid.MustNew("ura_").String(),
+		actorID.String(),
+		orgID.String(),
+		actorRoleID.String(),
+		now,
+	)
+
+	return actorRoleID
 }
 
 func TestIntegration_UpdateRole_Success(t *testing.T) {
@@ -627,10 +691,10 @@ func TestIntegration_UpdateRole_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
-		true,
 	)
 
 	now := timeutils.NowUnix()
@@ -645,6 +709,7 @@ func TestIntegration_UpdateRole_Success(t *testing.T) {
 		now,
 		now,
 	)
+	seedActorRole(t, db, orgID, actorID, permission.SensitivityRestricted)
 
 	role := &permission.Role{
 		ID:             roleID,
@@ -680,10 +745,10 @@ func TestIntegration_UpdateRole_SystemRole_Fails(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
-		true,
 	)
 
 	now := timeutils.NowUnix()
@@ -734,18 +799,18 @@ func TestIntegration_AssignRole_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
-		true,
 	)
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		targetUserID.String(),
 		"User",
 		orgID.String(),
-		false,
 	)
 
 	now := timeutils.NowUnix()
@@ -794,10 +859,10 @@ func TestIntegration_InitializeOrganizationRoles(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		creatorID.String(),
 		"Creator",
 		orgID.String(),
-		true,
 	)
 
 	err := svc.InitializeOrganizationRoles(ctx, orgID, creatorID)
@@ -831,10 +896,10 @@ func TestIntegration_CreateResourcePermission_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
-		true,
 	)
 
 	now := timeutils.NowUnix()
@@ -849,6 +914,8 @@ func TestIntegration_CreateResourcePermission_Success(t *testing.T) {
 		now,
 		now,
 	)
+
+	seedActorRole(t, db, orgID, actorID, permission.SensitivityRestricted, "shipment")
 
 	rp := &permission.ResourcePermission{
 		RoleID:     roleID,

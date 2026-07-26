@@ -2,6 +2,7 @@ package rolehandler_test
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -24,44 +26,18 @@ import (
 
 var errNotFound = errors.New("role not found")
 
-func setupRoleHandler(t *testing.T, repo *mocks.MockRoleRepository) *rolehandler.Handler {
+type roleDeps struct {
+	handler       *rolehandler.Handler
+	permCacheRepo *mocks.MockPermissionCacheRepository
+}
+
+func setupRoleHandler(t *testing.T, repo *mocks.MockRoleRepository) *roleDeps {
 	t.Helper()
 
 	logger := zap.NewNop()
 	permEngine := &mocks.AllowAllPermissionEngine{}
 
-	userRepo := mocks.NewMockUserRepository(t)
-	userRepo.On("List", mock.Anything, mock.Anything).
-		Maybe().
-		Return(&pagination.ListResult[any]{}, nil)
-	userRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("SelectOptions", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	userRepo.On("GetOrganizations", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	userRepo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil, nil)
-	userRepo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	userRepo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-
 	permCacheRepo := mocks.NewMockPermissionCacheRepository(t)
-	permCacheRepo.On("Get", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	permCacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	permCacheRepo.On("Delete", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(nil)
-	permCacheRepo.On("InvalidateOrganization", mock.Anything, mock.Anything).Maybe().Return(nil)
-	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return([]*permission.UserRoleAssignment{}, nil)
 
 	service := roleservice.New(roleservice.Params{
 		Logger:           logger,
@@ -84,11 +60,14 @@ func setupRoleHandler(t *testing.T, repo *mocks.MockRoleRepository) *rolehandler
 		Config: cfg,
 	})
 
-	return rolehandler.New(rolehandler.Params{
-		Service:          service,
-		PermissionEngine: permEngine,
-		ErrorHandler:     errorHandler,
-	})
+	return &roleDeps{
+		handler: rolehandler.New(rolehandler.Params{
+			Service:          service,
+			PermissionEngine: permEngine,
+			ErrorHandler:     errorHandler,
+		}),
+		permCacheRepo: permCacheRepo,
+	}
 }
 
 func TestRoleHandler_List_Success(t *testing.T) {
@@ -108,14 +87,14 @@ func TestRoleHandler_List_Success(t *testing.T) {
 		Total: 1,
 	}, nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -129,13 +108,52 @@ func TestRoleHandler_List_Success(t *testing.T) {
 func TestRoleHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
+	const requestedLimit = 10
+
+	items := make([]*permission.Role, 0, requestedLimit+1)
+	for i := range requestedLimit + 1 {
+		items = append(items, &permission.Role{
+			ID:             pulid.MustNew("rol_"),
+			OrganizationID: testutil.TestOrgID,
+			BusinessUnitID: testutil.TestBuID,
+			Name:           fmt.Sprintf("Role %02d", i),
+			CreatedAt:      timeutils.NowUnix(),
+		})
+	}
+
 	repo := mocks.NewMockRoleRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*permission.Role]{
-		Items: []*permission.Role{},
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListRolesRequest) bool {
+		return req.Filter.Pagination.Limit == requestedLimit+1
+	})).Return(&pagination.ListResult[*permission.Role]{
+		Items: items,
 		Total: 25,
 	}, nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/roles/").
+		WithQuery(map[string]string{"limit": "10"}).
+		WithDefaultAuthContext()
+
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp pagination.CursorResponse[[]map[string]any]
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, 25, resp.Count)
+	assert.Len(t, resp.Results, requestedLimit)
+	assert.True(t, resp.HasNextPage)
+	assert.NotEmpty(t, resp.EndCursor)
+}
+
+func TestRoleHandler_List_RejectsOffset(t *testing.T) {
+	t.Parallel()
+
+	deps := setupRoleHandler(t, mocks.NewMockRoleRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -143,14 +161,10 @@ func TestRoleHandler_List_WithPagination(t *testing.T) {
 		WithQuery(map[string]string{"limit": "10", "offset": "0"}).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp pagination.Response[[]map[string]any]
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 25, resp.Count)
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestRoleHandler_List_ServiceError(t *testing.T) {
@@ -159,14 +173,14 @@ func TestRoleHandler_List_ServiceError(t *testing.T) {
 	repo := mocks.NewMockRoleRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errors.New("database error"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -184,14 +198,14 @@ func TestRoleHandler_Get_Success(t *testing.T) {
 		Description:    "Administrator role",
 	}, nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/" + roleID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -208,14 +222,14 @@ func TestRoleHandler_Get_NotFound(t *testing.T) {
 	repo := mocks.NewMockRoleRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/" + roleID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -225,14 +239,14 @@ func TestRoleHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/invalid-id").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -244,7 +258,7 @@ func TestRoleHandler_Create_Success(t *testing.T) {
 	repo := mocks.NewMockRoleRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -255,7 +269,7 @@ func TestRoleHandler_Create_Success(t *testing.T) {
 			"description": "Editor role",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -269,7 +283,7 @@ func TestRoleHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -277,7 +291,7 @@ func TestRoleHandler_Create_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -289,7 +303,7 @@ func TestRoleHandler_Create_ServiceError(t *testing.T) {
 	repo := mocks.NewMockRoleRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(errors.New("create failed"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -300,7 +314,7 @@ func TestRoleHandler_Create_ServiceError(t *testing.T) {
 			"description": "Editor role",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -318,7 +332,9 @@ func TestRoleHandler_Update_Success(t *testing.T) {
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -329,7 +345,7 @@ func TestRoleHandler_Update_Success(t *testing.T) {
 			"description": "Updated editor role",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -343,7 +359,7 @@ func TestRoleHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -353,7 +369,7 @@ func TestRoleHandler_Update_InvalidID(t *testing.T) {
 			"name": "Updated",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -364,7 +380,7 @@ func TestRoleHandler_Update_BadJSON(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -372,7 +388,7 @@ func TestRoleHandler_Update_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -390,7 +406,7 @@ func TestRoleHandler_Update_ServiceError(t *testing.T) {
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(errors.New("update failed"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -401,7 +417,7 @@ func TestRoleHandler_Update_ServiceError(t *testing.T) {
 			"description": "Updated role",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -429,14 +445,14 @@ func TestRoleHandler_GetImpact_Success(t *testing.T) {
 		},
 	}, nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/" + roleID.String() + "/impact").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -451,14 +467,14 @@ func TestRoleHandler_GetImpact_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/invalid-id/impact").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -472,14 +488,14 @@ func TestRoleHandler_GetImpact_ServiceError(t *testing.T) {
 	repo.On("GetUsersWithRole", mock.Anything, mock.Anything).
 		Return(nil, errors.New("failed to get impacted users"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/" + roleID.String() + "/impact").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -493,14 +509,14 @@ func TestRoleHandler_GetImpact_EmptyResult(t *testing.T) {
 	repo.On("GetUsersWithRole", mock.Anything, mock.Anything).
 		Return([]repositories.ImpactedUser{}, nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/roles/" + roleID.String() + "/impact").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -522,7 +538,9 @@ func TestRoleHandler_AddPermission_Success(t *testing.T) {
 	}, nil)
 	repo.On("CreateResourcePermission", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -534,7 +552,7 @@ func TestRoleHandler_AddPermission_Success(t *testing.T) {
 			"dataScope":  "organization",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -549,7 +567,7 @@ func TestRoleHandler_AddPermission_InvalidRoleID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -561,7 +579,7 @@ func TestRoleHandler_AddPermission_InvalidRoleID(t *testing.T) {
 			"dataScope":  "organization",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -572,7 +590,7 @@ func TestRoleHandler_AddPermission_BadJSON(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -580,7 +598,7 @@ func TestRoleHandler_AddPermission_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -599,7 +617,7 @@ func TestRoleHandler_AddPermission_ServiceError(t *testing.T) {
 	repo.On("CreateResourcePermission", mock.Anything, mock.Anything).
 		Return(errors.New("failed to create permission"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -611,7 +629,7 @@ func TestRoleHandler_AddPermission_ServiceError(t *testing.T) {
 			"dataScope":  "organization",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -630,7 +648,9 @@ func TestRoleHandler_UpdatePermission_Success(t *testing.T) {
 	}, nil)
 	repo.On("UpdateResourcePermission", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -642,7 +662,7 @@ func TestRoleHandler_UpdatePermission_Success(t *testing.T) {
 			"dataScope":  "all",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -659,7 +679,7 @@ func TestRoleHandler_UpdatePermission_InvalidRoleID(t *testing.T) {
 
 	permID := pulid.MustNew("rp_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -671,7 +691,7 @@ func TestRoleHandler_UpdatePermission_InvalidRoleID(t *testing.T) {
 			"dataScope":  "organization",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -682,7 +702,7 @@ func TestRoleHandler_UpdatePermission_InvalidPermID(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -694,7 +714,7 @@ func TestRoleHandler_UpdatePermission_InvalidPermID(t *testing.T) {
 			"dataScope":  "organization",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -706,7 +726,7 @@ func TestRoleHandler_UpdatePermission_BadJSON(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -714,7 +734,7 @@ func TestRoleHandler_UpdatePermission_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -734,7 +754,7 @@ func TestRoleHandler_UpdatePermission_ServiceError(t *testing.T) {
 	repo.On("UpdateResourcePermission", mock.Anything, mock.Anything).
 		Return(errors.New("update permission failed"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -746,7 +766,7 @@ func TestRoleHandler_UpdatePermission_ServiceError(t *testing.T) {
 			"dataScope":  "organization",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -765,14 +785,16 @@ func TestRoleHandler_DeletePermission_Success(t *testing.T) {
 	}, nil)
 	repo.On("DeleteResourcePermission", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	deps.permCacheRepo.On("InvalidateByRole", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions/" + permID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNoContent, ginCtx.ResponseCode())
@@ -783,14 +805,14 @@ func TestRoleHandler_DeletePermission_InvalidRoleID(t *testing.T) {
 
 	permID := pulid.MustNew("rp_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/invalid-id/permissions/" + permID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -801,14 +823,14 @@ func TestRoleHandler_DeletePermission_InvalidPermID(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions/invalid-id").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -828,14 +850,14 @@ func TestRoleHandler_DeletePermission_ServiceError(t *testing.T) {
 	repo.On("DeleteResourcePermission", mock.Anything, mock.Anything).
 		Return(errors.New("delete permission failed"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions/" + permID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -854,7 +876,9 @@ func TestRoleHandler_AssignRole_Success(t *testing.T) {
 	}, nil)
 	repo.On("CreateAssignment", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*permission.UserRoleAssignment{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -864,7 +888,7 @@ func TestRoleHandler_AssignRole_Success(t *testing.T) {
 			"userId": userID.String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -889,7 +913,9 @@ func TestRoleHandler_AssignRole_WithExpiry(t *testing.T) {
 	}, nil)
 	repo.On("CreateAssignment", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*permission.UserRoleAssignment{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -900,7 +926,7 @@ func TestRoleHandler_AssignRole_WithExpiry(t *testing.T) {
 			"expiresAt": expiresAt,
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -915,7 +941,7 @@ func TestRoleHandler_AssignRole_InvalidRoleID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -925,7 +951,7 @@ func TestRoleHandler_AssignRole_InvalidRoleID(t *testing.T) {
 			"userId": pulid.MustNew("usr_").String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -936,7 +962,7 @@ func TestRoleHandler_AssignRole_BadJSON(t *testing.T) {
 
 	roleID := pulid.MustNew("rol_")
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -944,7 +970,7 @@ func TestRoleHandler_AssignRole_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -964,7 +990,9 @@ func TestRoleHandler_AssignRole_ServiceError(t *testing.T) {
 	repo.On("CreateAssignment", mock.Anything, mock.Anything).
 		Return(errors.New("assignment failed"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
+	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*permission.UserRoleAssignment{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -974,7 +1002,7 @@ func TestRoleHandler_AssignRole_ServiceError(t *testing.T) {
 			"userId": userID.String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -987,14 +1015,14 @@ func TestRoleHandler_UnassignRole_Success(t *testing.T) {
 	repo := mocks.NewMockRoleRepository(t)
 	repo.On("DeleteAssignment", mock.Anything, mock.Anything).Return(nil)
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/assignments/" + assignmentID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNoContent, ginCtx.ResponseCode())
@@ -1004,14 +1032,14 @@ func TestRoleHandler_UnassignRole_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleRepository(t)
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/assignments/invalid-id").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -1024,14 +1052,14 @@ func TestRoleHandler_UnassignRole_ServiceError(t *testing.T) {
 	repo := mocks.NewMockRoleRepository(t)
 	repo.On("DeleteAssignment", mock.Anything, mock.Anything).Return(errors.New("unassign failed"))
 
-	handler := setupRoleHandler(t, repo)
+	deps := setupRoleHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
 		WithPath("/api/v1/roles/assignments/" + assignmentID.String()).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)

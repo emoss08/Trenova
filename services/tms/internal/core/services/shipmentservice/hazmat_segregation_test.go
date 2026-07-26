@@ -33,8 +33,7 @@ func TestValidatorValidateCreate_SkipsHazmatSegregationWhenDisabled(t *testing.T
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{CheckHazmatSegregation: false, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil).
-		Maybe()
+		Return(&tenant.ShipmentControl{CheckHazmatSegregation: false, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
 
 	v := &Validator{
 		validator: newValidatorBuilder(
@@ -418,8 +417,7 @@ func mockHazmatControlRepo(
 				BuID:  entity.BusinessUnitID,
 			},
 		}).
-		Return(&tenant.ShipmentControl{CheckHazmatSegregation: true, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil).
-		Maybe()
+		Return(&tenant.ShipmentControl{CheckHazmatSegregation: true, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
 
 	return repo
 }

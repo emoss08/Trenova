@@ -32,8 +32,7 @@ func allowAllPermissionsMock(t *testing.T) *mocks.MockPermissionEngine {
 				results[idx] = serviceports.PermissionCheckResult{Allowed: true}
 			}
 			return &serviceports.BatchPermissionCheckResult{Results: results}, nil
-		}).
-		Maybe()
+		})
 
 	return engine
 }
@@ -44,7 +43,7 @@ func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 		logger:      zaptest.NewLogger(t),
 		config:      &config.SearchConfig{},
 		searchRepo:  repo,
-		permissions: allowAllPermissionsMock(t),
+		permissions: mocks.NewMockPermissionEngine(t),
 	}
 
 	result, err := svc.Search(context.Background(), &serviceports.GlobalSearchRequest{})

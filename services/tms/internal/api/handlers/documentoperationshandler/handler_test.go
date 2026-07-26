@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentoperationsservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -47,14 +46,8 @@ func setupHandler(t *testing.T) *testDeps {
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
 	workflowStarter := mocks.NewMockWorkflowStarter(t)
 
-	permEngine := mocks.NewMockPermissionEngine(t)
-	permEngine.EXPECT().
-		Check(mock.Anything, mock.Anything).
-		Maybe().
-		Return(&serviceports.PermissionCheckResult{Allowed: true}, nil)
-
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-		PermissionEngine: permEngine,
+		PermissionEngine: &mocks.AllowAllPermissionEngine{},
 		ErrorHandler:     errorHandler,
 	})
 

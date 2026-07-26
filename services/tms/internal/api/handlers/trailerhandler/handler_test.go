@@ -29,23 +29,19 @@ import (
 var errNotFound = errors.New("trailer not found")
 var errService = errors.New("service error")
 
-func setupTrailerHandler(t *testing.T, repo *mocks.MockTrailerRepository) *trailerhandler.Handler {
+type trailerDeps struct {
+	handler   *trailerhandler.Handler
+	cfDefRepo *mocks.MockCustomFieldDefinitionRepository
+	cfValRepo *mocks.MockCustomFieldValueRepository
+}
+
+func setupTrailerHandler(t *testing.T, repo *mocks.MockTrailerRepository) *trailerDeps {
 	t.Helper()
 
 	logger := zap.NewNop()
 
 	cfDefRepo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	cfDefRepo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
-		Maybe().
-		Return([]*customfield.CustomFieldDefinition{}, nil)
 	cfValRepo := mocks.NewMockCustomFieldValueRepository(t)
-	cfValRepo.On("GetByResource", mock.Anything, mock.Anything).
-		Maybe().
-		Return([]*customfield.CustomFieldValue{}, nil)
-	cfValRepo.On("GetByResources", mock.Anything, mock.Anything).
-		Maybe().
-		Return(map[string][]*customfield.CustomFieldValue{}, nil)
-	cfValRepo.On("Upsert", mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	cfValuesService := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger:         logger,
@@ -82,11 +78,15 @@ func setupTrailerHandler(t *testing.T, repo *mocks.MockTrailerRepository) *trail
 		ErrorHandler:     errorHandler,
 	})
 
-	return trailerhandler.New(trailerhandler.Params{
-		Service:              service,
-		ErrorHandler:         errorHandler,
-		PermissionMiddleware: pm,
-	})
+	return &trailerDeps{
+		handler: trailerhandler.New(trailerhandler.Params{
+			Service:              service,
+			ErrorHandler:         errorHandler,
+			PermissionMiddleware: pm,
+		}),
+		cfDefRepo: cfDefRepo,
+		cfValRepo: cfValRepo,
+	}
 }
 
 func TestTrailerHandler_List_Success(t *testing.T) {
@@ -107,14 +107,16 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 		nil,
 	)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
+	deps.cfValRepo.On("GetByResources", mock.Anything, mock.Anything).
+		Return(map[string][]*customfield.CustomFieldValue{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/trailers/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -133,7 +135,7 @@ func TestTrailerHandler_List_WithPagination(t *testing.T) {
 		return req.Cursor.Limit == 10 && req.Cursor.After == ""
 	})).Return(pagination.NewCursorListResult([]*trailer.Trailer{}, 10), nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -141,7 +143,7 @@ func TestTrailerHandler_List_WithPagination(t *testing.T) {
 		WithQuery(map[string]string{"limit": "10"}).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -157,14 +159,14 @@ func TestTrailerHandler_List_Error(t *testing.T) {
 	repo := mocks.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/trailers/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -179,7 +181,7 @@ func TestTrailerHandler_List_WithQueryParams(t *testing.T) {
 		nil,
 	)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -191,7 +193,7 @@ func TestTrailerHandler_List_WithQueryParams(t *testing.T) {
 		}).
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -210,14 +212,16 @@ func TestTrailerHandler_Get_Success(t *testing.T) {
 		Status:         domaintypes.EquipmentStatusAvailable,
 	}, nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
+	deps.cfValRepo.On("GetByResource", mock.Anything, mock.Anything).
+		Return([]*customfield.CustomFieldValue{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/trailers/" + trID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -234,14 +238,14 @@ func TestTrailerHandler_Get_NotFound(t *testing.T) {
 	repo := mocks.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/trailers/" + trID.String() + "/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -251,14 +255,14 @@ func TestTrailerHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/trailers/invalid-id/").
 		WithDefaultAuthContext()
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -276,7 +280,7 @@ func TestTrailerHandler_Create_Success(t *testing.T) {
 			return entity
 		}, nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -289,7 +293,7 @@ func TestTrailerHandler_Create_Success(t *testing.T) {
 			"equipmentManufacturerId": eqMfgID.String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
@@ -303,7 +307,7 @@ func TestTrailerHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -311,7 +315,7 @@ func TestTrailerHandler_Create_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -325,7 +329,7 @@ func TestTrailerHandler_Create_ServiceError(t *testing.T) {
 	repo := mocks.NewMockTrailerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -338,7 +342,7 @@ func TestTrailerHandler_Create_ServiceError(t *testing.T) {
 			"equipmentManufacturerId": eqMfgID.String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -365,7 +369,7 @@ func TestTrailerHandler_Update_Success(t *testing.T) {
 			return entity
 		}, nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -378,7 +382,7 @@ func TestTrailerHandler_Update_Success(t *testing.T) {
 			"equipmentManufacturerId": eqMfgID.String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -392,7 +396,7 @@ func TestTrailerHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -402,7 +406,7 @@ func TestTrailerHandler_Update_InvalidID(t *testing.T) {
 			"code": "TR002",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -413,7 +417,7 @@ func TestTrailerHandler_Update_BadJSON(t *testing.T) {
 
 	trID := pulid.MustNew("tr_")
 	repo := mocks.NewMockTrailerRepository(t)
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -421,7 +425,7 @@ func TestTrailerHandler_Update_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -445,7 +449,7 @@ func TestTrailerHandler_Update_ServiceError(t *testing.T) {
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPut).
@@ -458,7 +462,7 @@ func TestTrailerHandler_Update_ServiceError(t *testing.T) {
 			"equipmentManufacturerId": eqMfgID.String(),
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -485,7 +489,12 @@ func TestTrailerHandler_Patch_Success(t *testing.T) {
 			return entity
 		}, nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
+	deps.cfValRepo.On("GetByResource", mock.Anything, mock.Anything).
+		Return([]*customfield.CustomFieldValue{}, nil)
+	deps.cfDefRepo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
+		Return([]*customfield.CustomFieldDefinition{}, nil)
+	deps.cfValRepo.On("Upsert", mock.Anything, mock.Anything).Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).
@@ -495,7 +504,7 @@ func TestTrailerHandler_Patch_Success(t *testing.T) {
 			"code": "TR003",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -509,7 +518,7 @@ func TestTrailerHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).
@@ -519,7 +528,7 @@ func TestTrailerHandler_Patch_InvalidID(t *testing.T) {
 			"code": "TR003",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
@@ -532,7 +541,7 @@ func TestTrailerHandler_Patch_GetError(t *testing.T) {
 	repo := mocks.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).
@@ -542,7 +551,7 @@ func TestTrailerHandler_Patch_GetError(t *testing.T) {
 			"code": "TR003",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -565,7 +574,9 @@ func TestTrailerHandler_Patch_BadJSON(t *testing.T) {
 		Status:                  domaintypes.EquipmentStatusAvailable,
 	}, nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
+	deps.cfValRepo.On("GetByResource", mock.Anything, mock.Anything).
+		Return([]*customfield.CustomFieldValue{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).
@@ -573,7 +584,7 @@ func TestTrailerHandler_Patch_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -597,7 +608,9 @@ func TestTrailerHandler_Patch_UpdateError(t *testing.T) {
 	}, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
+	deps.cfValRepo.On("GetByResource", mock.Anything, mock.Anything).
+		Return([]*customfield.CustomFieldValue{}, nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPatch).
@@ -607,7 +620,7 @@ func TestTrailerHandler_Patch_UpdateError(t *testing.T) {
 			"code": "TR003",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
@@ -652,7 +665,7 @@ func TestTrailerHandler_BulkUpdateStatus_Success(t *testing.T) {
 		},
 	}, nil)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -663,7 +676,7 @@ func TestTrailerHandler_BulkUpdateStatus_Success(t *testing.T) {
 			"status":     "OutOfService",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
@@ -677,7 +690,7 @@ func TestTrailerHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -685,7 +698,7 @@ func TestTrailerHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 		WithDefaultAuthContext().
 		WithBody("{invalid json")
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.True(t, ginCtx.ResponseCode() >= 400)
@@ -698,7 +711,7 @@ func TestTrailerHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 	repo := mocks.NewMockTrailerRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return(nil, errService)
 
-	handler := setupTrailerHandler(t, repo)
+	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -709,7 +722,7 @@ func TestTrailerHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 			"status":     "OutOfService",
 		})
 
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())

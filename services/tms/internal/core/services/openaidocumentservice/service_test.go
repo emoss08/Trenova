@@ -36,7 +36,7 @@ func (t rewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.base.RoundTrip(cloned)
 }
 
-func newTestService(t *testing.T, handler http.HandlerFunc) *Service {
+func newTestService(t *testing.T, handler http.HandlerFunc) (*Service, *mocks.MockAILogRepository) {
 	t.Helper()
 
 	server := httptest.NewServer(handler)
@@ -83,9 +83,6 @@ func newTestService(t *testing.T, handler http.HandlerFunc) *Service {
 	})
 
 	aiLogRepo := mocks.NewMockAILogRepository(t)
-	aiLogRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(entry *ailog.Log) bool {
-		return entry != nil && entry.Model != "" && entry.Operation != ""
-	})).Return(&ailog.Log{}, nil).Maybe()
 
 	service := New(Params{
 		Logger:      zap.NewNop(),
@@ -104,13 +101,13 @@ func newTestService(t *testing.T, handler http.HandlerFunc) *Service {
 		},
 	}
 
-	return service
+	return service, aiLogRepo
 }
 
 func TestRouteDocumentBuildsStructuredRequest(t *testing.T) {
 	t.Parallel()
 
-	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+	service, aiLogRepo := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodPost, r.Method)
 		require.Equal(t, "/v1/responses", r.URL.Path)
 		require.Equal(t, "Bearer test-api-key", r.Header.Get("Authorization"))
@@ -139,6 +136,9 @@ func TestRouteDocumentBuildsStructuredRequest(t *testing.T) {
 			"service_tier": "default",
 		}))
 	})
+	aiLogRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(entry *ailog.Log) bool {
+		return entry != nil && entry.Model != "" && entry.Operation != ""
+	})).Return(&ailog.Log{}, nil).Once()
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -163,7 +163,7 @@ func TestRouteDocumentBuildsStructuredRequest(t *testing.T) {
 func TestExtractRateConfirmationBuildsExtractionSchemaRequest(t *testing.T) {
 	t.Parallel()
 
-	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+	service, aiLogRepo := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
 		var payload responsesRequest
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
 		assert.Equal(t, "gpt-5-mini-2025-08-07", payload.Model)
@@ -196,6 +196,9 @@ func TestExtractRateConfirmationBuildsExtractionSchemaRequest(t *testing.T) {
 			"service_tier": "default",
 		}))
 	})
+	aiLogRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(entry *ailog.Log) bool {
+		return entry != nil && entry.Model != "" && entry.Operation != ""
+	})).Return(&ailog.Log{}, nil).Once()
 
 	result, err := service.ExtractRateConfirmation(t.Context(), &serviceports.AIExtractRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -219,7 +222,7 @@ func TestExtractRateConfirmationBuildsExtractionSchemaRequest(t *testing.T) {
 func TestSubmitRateConfirmationBackgroundExtraction(t *testing.T) {
 	t.Parallel()
 
-	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+	service, _ := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodPost, r.Method)
 
 		var payload responsesRequest
@@ -258,7 +261,7 @@ func TestSubmitRateConfirmationBackgroundExtraction(t *testing.T) {
 func TestPollRateConfirmationBackgroundExtractionCompleted(t *testing.T) {
 	t.Parallel()
 
-	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+	service, _ := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodGet, r.Method)
 		require.Equal(t, "/v1/responses/resp_123", r.URL.Path)
 
@@ -289,7 +292,7 @@ func TestPollRateConfirmationBackgroundExtractionCompleted(t *testing.T) {
 func TestPollRateConfirmationBackgroundExtractionIncompleteIncludesReason(t *testing.T) {
 	t.Parallel()
 
-	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+	service, _ := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, http.MethodGet, r.Method)
 		require.Equal(t, "/v1/responses/resp_123", r.URL.Path)
 

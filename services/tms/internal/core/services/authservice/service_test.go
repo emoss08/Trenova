@@ -27,6 +27,7 @@ import (
 type testDeps struct {
 	userRepo    *mocks.MockUserRepository
 	sessionRepo *mocks.MockSessionRepository
+	portalRepo  *mocks.MockPortalAccessRepository
 	svc         *Service
 }
 
@@ -34,13 +35,15 @@ func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	ur := mocks.NewMockUserRepository(t)
 	sr := mocks.NewMockSessionRepository(t)
+	pr := mocks.NewMockPortalAccessRepository(t)
 	svc := &Service{
-		ur:       ur,
-		sr:       sr,
-		rbacRepo: &rbactest.Repository{},
-		l:        zap.NewNop(),
+		ur:         ur,
+		sr:         sr,
+		portalRepo: pr,
+		rbacRepo:   &rbactest.Repository{},
+		l:          zap.NewNop(),
 	}
-	return &testDeps{userRepo: ur, sessionRepo: sr, svc: svc}
+	return &testDeps{userRepo: ur, sessionRepo: sr, portalRepo: pr, svc: svc}
 }
 
 func newTestUser(t *testing.T) *tenant.User {
@@ -108,6 +111,9 @@ func TestLogin_Success(t *testing.T) {
 	}
 
 	deps.userRepo.On("FindByEmail", mock.Anything, req.EmailAddress).Return(usr, nil)
+	deps.portalRepo.On("ExistsWorkerForUser", mock.Anything, mock.Anything).
+		Return(false, nil).
+		Once()
 	deps.sessionRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 	deps.userRepo.On("UpdateLastLoginAt", mock.Anything, usr.ID).Return(nil)
 
@@ -144,6 +150,9 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 	}
 
 	deps.userRepo.On("FindByEmail", mock.Anything, req.EmailAddress).Return(usr, nil)
+	deps.portalRepo.On("ExistsWorkerForUser", mock.Anything, mock.Anything).
+		Return(false, nil).
+		Once()
 	deps.sessionRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 	deps.userRepo.On("UpdateLastLoginAt", mock.Anything, usr.ID).Return(nil)
 
@@ -232,6 +241,9 @@ func TestLogin_SessionCreateError(t *testing.T) {
 	}
 
 	deps.userRepo.On("FindByEmail", mock.Anything, req.EmailAddress).Return(usr, nil)
+	deps.portalRepo.On("ExistsWorkerForUser", mock.Anything, mock.Anything).
+		Return(false, nil).
+		Once()
 	deps.sessionRepo.On("Create", mock.Anything, mock.Anything).Return(errors.New("redis error"))
 
 	result, err := deps.svc.Login(ctx, req)
@@ -423,6 +435,9 @@ func TestLogin_UpdateLastLoginAtError_StillSucceeds(t *testing.T) {
 	}
 
 	deps.userRepo.On("FindByEmail", mock.Anything, req.EmailAddress).Return(usr, nil)
+	deps.portalRepo.On("ExistsWorkerForUser", mock.Anything, mock.Anything).
+		Return(false, nil).
+		Once()
 	deps.sessionRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 	deps.userRepo.On("UpdateLastLoginAt", mock.Anything, usr.ID).Return(errors.New("update failed"))
 

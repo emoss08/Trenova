@@ -26,7 +26,14 @@ import (
 func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, dispatchRepo := newTestProvider(t)
+	deps := newTestProvider(t)
+	provider, mockDB, dispatchRepo := deps.provider, deps.mockDB, deps.dispatchRepo
+	deps.costingControlRepo.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(newTestCostingControl(), nil)
+	deps.costingActualsRepo.EXPECT().
+		FleetCostAggregates(mock.Anything, mock.Anything).
+		Return(&repositories.FleetCostAggregatesResult{}, nil)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	target := 96.5
@@ -142,7 +149,8 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 func TestGetAnalyticsData_ReturnsSavedViewCountsInclude(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, _ := newTestProvider(t)
+	deps := newTestProvider(t)
+	provider, mockDB := deps.provider, deps.mockDB
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
@@ -177,7 +185,15 @@ func TestGetAnalyticsData_ReturnsSavedViewCountsInclude(t *testing.T) {
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }
 
-func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockDispatchControlRepository) {
+type providerDeps struct {
+	provider           *Provider
+	mockDB             sqlmock.Sqlmock
+	dispatchRepo       *mocks.MockDispatchControlRepository
+	costingControlRepo *mocks.MockCostingControlRepository
+	costingActualsRepo *mocks.MockCostingActualsRepository
+}
+
+func newTestProvider(t *testing.T) *providerDeps {
 	t.Helper()
 
 	db, mockDB, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
@@ -192,28 +208,26 @@ func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockDispa
 	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
 
 	costingControlRepo := mocks.NewMockCostingControlRepository(t)
-	costingControlRepo.EXPECT().
-		GetByOrgID(mock.Anything, mock.Anything).
-		Return(newTestCostingControl(), nil).
-		Maybe()
 
 	costingActualsRepo := mocks.NewMockCostingActualsRepository(t)
-	costingActualsRepo.EXPECT().
-		FleetCostAggregates(mock.Anything, mock.Anything).
-		Return(&repositories.FleetCostAggregatesResult{}, nil).
-		Maybe()
 
 	costingService := costingservice.NewTestService(costingservice.TestServiceParams{
 		Repo:        costingControlRepo,
 		ActualsRepo: costingActualsRepo,
 	})
 
-	return &Provider{
-		l:              zap.NewNop(),
-		db:             postgres.NewTestConnection(bunDB),
-		dispatchRepo:   dispatchRepo,
-		costingService: costingService,
-	}, mockDB, dispatchRepo
+	return &providerDeps{
+		provider: &Provider{
+			l:              zap.NewNop(),
+			db:             postgres.NewTestConnection(bunDB),
+			dispatchRepo:   dispatchRepo,
+			costingService: costingService,
+		},
+		mockDB:             mockDB,
+		dispatchRepo:       dispatchRepo,
+		costingControlRepo: costingControlRepo,
+		costingActualsRepo: costingActualsRepo,
+	}
 }
 
 func newTestCostingControl() *costingcontrol.CostingControl {
@@ -232,7 +246,8 @@ func newTestCostingControl() *costingcontrol.CostingControl {
 func TestGetDetentionWatchlist_ReturnsRowsWithToneThresholds(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, _ := newTestProvider(t)
+	deps := newTestProvider(t)
+	provider, mockDB := deps.provider, deps.mockDB
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
@@ -256,7 +271,8 @@ func TestGetDetentionWatchlist_ReturnsRowsWithToneThresholds(t *testing.T) {
 func TestGetLaneHeatmap_AggregatesRegions(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, _ := newTestProvider(t)
+	deps := newTestProvider(t)
+	provider, mockDB := deps.provider, deps.mockDB
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
@@ -294,7 +310,8 @@ func TestGetLaneHeatmap_AggregatesRegions(t *testing.T) {
 func TestGetCustomerMix_RanksByRevenueAndCalculatesMetrics(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, _ := newTestProvider(t)
+	deps := newTestProvider(t)
+	provider, mockDB := deps.provider, deps.mockDB
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
@@ -338,7 +355,8 @@ func TestGetCustomerMix_RanksByRevenueAndCalculatesMetrics(t *testing.T) {
 func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, _ := newTestProvider(t)
+	deps := newTestProvider(t)
+	provider, mockDB := deps.provider, deps.mockDB
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	pickupStart := time.Date(2026, time.May, 8, 9, 30, 0, 0, time.UTC).Unix()
