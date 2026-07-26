@@ -46,6 +46,7 @@ import {
   PlayIcon,
   PlusIcon,
   RotateCcwIcon,
+  TableIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useState } from "react";
@@ -112,7 +113,7 @@ function DefinitionCard({
   const { canCreate, canUpdate, canExport } = usePermissions(Resource.Report);
 
   return (
-    <ReportCard index={index} onClick={() => void navigate(`/reports/builder/${definition.id}`)}>
+    <ReportCard index={index} onClick={() => void navigate(`/reports/explore/${definition.id}`)}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -138,6 +139,11 @@ function DefinitionCard({
               }
             />
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                title="Explore Results"
+                startContent={<TableIcon className="size-3.5" />}
+                onClick={() => void navigate(`/reports/explore/${definition.id}`)}
+              />
               <DropdownMenuItem
                 title="Edit in Builder"
                 startContent={<PencilIcon className="size-3.5" />}

@@ -1,35 +1,25 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import type { ReportPreview } from "@/lib/graphql/reports";
+import type { ReportIrInput, ReportPreview } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import type { ReportIR } from "@/types/report";
 import { CircleAlertIcon, Table2Icon } from "lucide-react";
 import { m } from "motion/react";
-import { useRef } from "react";
+import { useState } from "react";
+import { DrillThroughSheet, type DrillTarget } from "../../_components/drill-through-sheet";
+import { buildDrillTarget } from "../../_components/drill-target";
+import { ReportChart } from "../../_components/report-chart";
+import { ResultGrid, type GridSort } from "../../_components/result-grid";
 
 type PreviewGridProps = {
+  ir: ReportIR;
+  previewInput: ReportIrInput | null;
+  previewParams?: Record<string, unknown>;
   preview: ReportPreview | undefined;
   loading: boolean;
   error: string | null;
   ready: boolean;
 };
-
-const ROW_HEIGHT = 30;
-
-function formatCell(value: unknown, type: string): string {
-  if (value === null || value === undefined) return "";
-  if (type === "epoch" && typeof value === "number") {
-    return new Date(value * 1000).toLocaleString();
-  }
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "string") return value;
-  if (typeof value === "number") return String(value);
-  return JSON.stringify(value);
-}
-
-function isNumericType(type: string): boolean {
-  return type === "int" || type === "decimal";
-}
 
 function CenteredState({ children }: { children: React.ReactNode }) {
   return (
@@ -44,16 +34,22 @@ function CenteredState({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function PreviewGrid({ preview, loading, error, ready }: PreviewGridProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const rows = Array.isArray(preview?.rows) ? (preview.rows as unknown[][]) : [];
+export function PreviewGrid({
+  ir,
+  previewInput,
+  previewParams,
+  preview,
+  loading,
+  error,
+  ready,
+}: PreviewGridProps) {
+  const [view, setView] = useState("table");
+  const [sort, setSort] = useState<GridSort | null>(null);
+  const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
 
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 20,
-  });
+  const rows = Array.isArray(preview?.rows) ? (preview.rows as unknown[][]) : [];
+  const totals = Array.isArray(preview?.totals) ? (preview.totals as unknown[]) : null;
+  const charts = ir.charts ?? [];
 
   if (!ready) {
     return (
@@ -97,12 +93,34 @@ export function PreviewGrid({ preview, loading, error, ready }: PreviewGridProps
 
   if (!preview) return null;
 
+  const activeChart = charts.find((chart) => chart.id === view);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-8 items-center gap-2 border-b border-border px-3">
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+      <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border px-3">
+        <button
+          type="button"
+          onClick={() => setView("table")}
+          className={cn(
+            "text-2xs font-medium tracking-wide uppercase transition-colors",
+            view === "table" ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
           Preview
-        </span>
+        </button>
+        {charts.map((chart) => (
+          <button
+            key={chart.id}
+            type="button"
+            onClick={() => setView(chart.id)}
+            className={cn(
+              "max-w-32 truncate text-2xs font-medium tracking-wide uppercase transition-colors",
+              view === chart.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {chart.title || chart.type}
+          </button>
+        ))}
         <span className="rounded-sm bg-muted px-1.5 py-px text-2xs text-muted-foreground tabular-nums">
           {rows.length} row{rows.length === 1 ? "" : "s"}
         </span>
@@ -114,62 +132,41 @@ export function PreviewGrid({ preview, loading, error, ready }: PreviewGridProps
         <div className="flex-1" />
         {loading && <Spinner className="size-3.5 text-muted-foreground" />}
       </div>
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
-        <div className="min-w-fit">
-          <div className="sticky top-0 z-10 flex border-b border-border bg-background/95 backdrop-blur-sm">
-            {preview.columns.map((column) => (
-              <div
-                key={column.id}
-                className={cn(
-                  "w-44 shrink-0 truncate px-3 py-1.5 text-2xs font-medium tracking-wide text-muted-foreground uppercase",
-                  isNumericType(column.type) && "text-right",
-                )}
-                title={column.label}
-              >
-                {column.label}
-              </div>
-            ))}
-          </div>
-          <div
-            className={cn("relative transition-opacity", loading && "opacity-50")}
-            style={{ height: virtualizer.getTotalSize() }}
-          >
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const row = rows[virtualRow.index];
-              return (
-                <div
-                  key={virtualRow.key}
-                  className="absolute top-0 left-0 flex w-full border-b border-border/40 transition-colors hover:bg-accent/40"
-                  style={{
-                    height: virtualRow.size,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  {preview.columns.map((column, columnIndex) => (
-                    <div
-                      key={column.id}
-                      className={cn(
-                        "w-44 shrink-0 truncate px-3 py-1.5 text-xs",
-                        isNumericType(column.type)
-                          ? "text-right font-mono tabular-nums"
-                          : "text-foreground/90",
-                      )}
-                      title={formatCell(row?.[columnIndex], column.type)}
-                    >
-                      {formatCell(row?.[columnIndex], column.type)}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-          {rows.length === 0 && (
-            <p className="p-8 text-center text-xs text-muted-foreground">
-              The report compiled but returned no rows for the preview window.
-            </p>
-          )}
+
+      {activeChart ? (
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          <ReportChart
+            chart={activeChart}
+            columns={preview.columns}
+            rows={rows}
+            className="min-h-0 flex-1"
+          />
         </div>
-      </div>
+      ) : (
+        <ResultGrid
+          columns={preview.columns}
+          rows={rows}
+          totals={totals}
+          loading={loading}
+          sort={sort}
+          onSortChange={setSort}
+          onCellClick={(rowIndex, columnIndex) => {
+            const target = buildDrillTarget(ir, preview.columns, rows[rowIndex], columnIndex);
+            if (target) setDrillTarget(target);
+          }}
+          emptyMessage="The report compiled but returned no rows for the preview window."
+        />
+      )}
+
+      <DrillThroughSheet
+        open={drillTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDrillTarget(null);
+        }}
+        definition={previewInput}
+        params={previewParams}
+        target={drillTarget}
+      />
     </div>
   );
 }

@@ -17,7 +17,9 @@ import { HistoryIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { Link, useNavigate } from "react-router";
 import { CannedGallery } from "./_components/canned-gallery";
+import { DashboardGallery } from "./_components/dashboard-gallery";
 import { ReportDefinitionGrid } from "./_components/report-definition-grid";
+import { useCreateDashboardAction } from "./_components/use-create-dashboard-action";
 import {
   GALLERY_SORT_CHOICES,
   LIBRARY_SORT_CHOICES,
@@ -94,20 +96,33 @@ function FilterSelect({
   );
 }
 
+function searchPlaceholder(tab: ReportTab): string {
+  switch (tab) {
+    case "library":
+      return "Search reports...";
+    case "dashboards":
+      return "Search dashboards...";
+    default:
+      return "Search gallery...";
+  }
+}
+
 export function ReportsPage() {
   const navigate = useNavigate();
   const { allowed: canCreate } = usePermission(Resource.Report, Operation.Create);
   const [params, setParams] = useQueryStates(reportsPageSearchParamsParser);
   const debouncedQuery = useDebounce(params.query, 300);
+  const createDashboard = useCreateDashboardAction();
 
   const isLibrary = params.tab === "library";
+  const isDashboards = params.tab === "dashboards";
   const sortChoices = isLibrary ? LIBRARY_SORT_CHOICES : GALLERY_SORT_CHOICES;
 
   const switchTab = (tab: ReportTab) => {
     void setParams({
       tab,
-      sortBy: tab === "gallery" && params.sortBy === "last_run" ? "name_asc" : params.sortBy,
-      status: tab === "gallery" ? "all" : params.status,
+      sortBy: tab !== "library" && params.sortBy === "last_run" ? "name_asc" : params.sortBy,
+      status: tab === "library" ? params.status : "all",
     });
   };
 
@@ -138,8 +153,11 @@ export function ReportsPage() {
           <TabButton active={isLibrary} onClick={() => switchTab("library")}>
             My Reports
           </TabButton>
-          <TabButton active={!isLibrary} onClick={() => switchTab("gallery")}>
+          <TabButton active={params.tab === "gallery"} onClick={() => switchTab("gallery")}>
             Gallery
+          </TabButton>
+          <TabButton active={isDashboards} onClick={() => switchTab("dashboards")}>
+            Dashboards
           </TabButton>
         </div>
         <div className="flex-1" />
@@ -173,14 +191,16 @@ export function ReportsPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="shrink-0">
-          <FilterSelect
-            items={REPORT_CATEGORY_FILTER_CHOICES}
-            value={params.category}
-            onValueChange={(value) => void setParams({ category: value })}
-            ariaLabel="Filter by category"
-          />
-        </div>
+        {!isDashboards && (
+          <div className="shrink-0">
+            <FilterSelect
+              items={REPORT_CATEGORY_FILTER_CHOICES}
+              value={params.category}
+              onValueChange={(value) => void setParams({ category: value })}
+              ariaLabel="Filter by category"
+            />
+          </div>
+        )}
         {isLibrary && (
           <div className="shrink-0">
             <FilterSelect
@@ -196,23 +216,37 @@ export function ReportsPage() {
           </div>
         )}
         <Input
-          className="h-7 w-64 pl-8 text-xs"
-          placeholder={isLibrary ? "Search reports..." : "Search gallery..."}
+          className={cn("h-7 pl-8 text-xs", isDashboards ? "w-44" : "w-64")}
+          placeholder={searchPlaceholder(params.tab)}
           leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
           value={params.query}
           onChange={(event) => void setParams({ query: event.target.value })}
         />
+        {isDashboards && canCreate && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 shrink-0 text-xs"
+            onClick={createDashboard.create}
+            disabled={createDashboard.isPending}
+          >
+            <PlusIcon className="size-3.5" />
+            New Dashboard
+          </Button>
+        )}
       </div>
-      {isLibrary ? (
+      {isLibrary && (
         <ReportDefinitionGrid
           search={debouncedQuery}
           sortBy={params.sortBy}
           category={params.category}
           status={params.status}
         />
-      ) : (
+      )}
+      {params.tab === "gallery" && (
         <CannedGallery search={params.query} sortBy={params.sortBy} category={params.category} />
       )}
+      {isDashboards && <DashboardGallery search={debouncedQuery} sortBy={params.sortBy} />}
     </PageLayout>
   );
 }

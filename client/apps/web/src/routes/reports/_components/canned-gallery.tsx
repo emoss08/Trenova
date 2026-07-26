@@ -6,13 +6,14 @@ import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { Resource } from "@trenova/shared/types/permission";
 import { parseReportIR, type ReportParameterDef } from "@/types/report";
-import { PackageIcon, PencilRulerIcon, PlayIcon } from "lucide-react";
+import { PackageIcon, PencilRulerIcon, PlayIcon, TableIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import {
   compareReportsBySort,
   groupByReportCategory,
+  normalizeReportCategory,
   type ReportSortOrder,
 } from "../reports-page-state";
 import { CategoryGroupHeader, ReportCard, ReportGridEmptyState } from "./report-card-chrome";
@@ -60,6 +61,15 @@ function CannedReportCard({
 
       <div className="mt-3 flex items-center justify-end border-t border-border/60 pt-3">
         <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 px-2 text-2xs"
+            render={<Link to={`/reports/explore?canned=${encodeURIComponent(report.key)}`} />}
+          >
+            <TableIcon className="size-3" />
+            Explore
+          </Button>
           {canCustomize && (
             <Button
               variant="ghost"
@@ -104,7 +114,10 @@ export function CannedGallery({
     const term = search.trim().toLowerCase();
     return (cannedReports ?? [])
       .filter((report) => {
-        if (category !== "all" && report.category !== category) {
+        if (
+          category !== "all" &&
+          normalizeReportCategory(report.category) !== normalizeReportCategory(category)
+        ) {
           return false;
         }
         if (!term) {

@@ -248,3 +248,20 @@ export const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(_stor
 
   return store;
 };
+
+/**
+ * Saves an in-memory blob to the user's downloads. Generated files (a
+ * dashboard workbook, say) have no URL to link to, so the object URL is
+ * created and revoked around a synthetic click.
+ */
+export function downloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}

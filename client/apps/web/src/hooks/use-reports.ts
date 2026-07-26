@@ -1,22 +1,32 @@
 import { getFragmentData } from "@trenova/graphql/generated";
 import {
+  ReportDashboardFieldsFragmentDoc,
   ReportDefinitionFieldsFragmentDoc,
+  ReportPreviewFieldsFragmentDoc,
   ReportRunFieldsFragmentDoc,
   ReportScheduleFieldsFragmentDoc,
+  ReportViewFieldsFragmentDoc,
+  type ReportDrillInput,
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
 import {
   cancelReportRun,
+  createReportDashboard,
   createReportDefinition,
   createReportSchedule,
+  createReportView,
+  deleteReportDashboard,
   deleteReportDefinition,
   deleteReportSchedule,
+  deleteReportView,
   forkCannedReport,
   reportRunDownloadUrl,
   resetCannedFork,
   runReport,
+  updateReportDashboard,
   updateReportDefinition,
   updateReportSchedule,
+  updateReportView,
   type ReportRun,
 } from "@/lib/graphql/reports";
 import { queries } from "@/lib/queries";
@@ -102,16 +112,100 @@ export function useReportSchedules(definitionId?: string, enabled = true) {
   });
 }
 
+/**
+ * `supersede` lets the builder drop its own in-flight preview on the next
+ * keystroke. Surfaces that load several previews at once — dashboards — must
+ * leave it off, or each tile cancels the one before it.
+ */
 export function useReportPreview(
   definition: ReportIrInput | null,
   params?: Record<string, unknown>,
+  options?: { supersede?: boolean },
 ) {
   return useQuery({
-    ...queries.reports.preview(definition ?? { entity: "", columns: [] }, params),
+    ...queries.reports.preview(
+      definition ?? { entity: "", columns: [] },
+      params,
+      options?.supersede ?? false,
+    ),
     enabled: Boolean(definition && definition.entity && definition.columns.length > 0),
     staleTime: 30_000,
     retry: false,
-    select: (data) => data.previewReport,
+    select: (data) => getFragmentData(ReportPreviewFieldsFragmentDoc, data.previewReport),
+  });
+}
+
+export function useReportDrillThrough(input: ReportDrillInput | null) {
+  return useQuery({
+    ...queries.reports.drillThrough(
+      input ?? { definition: { entity: "", columns: [] }, dimensions: [] },
+    ),
+    enabled: Boolean(input),
+    staleTime: 30_000,
+    retry: false,
+    select: (data) => getFragmentData(ReportPreviewFieldsFragmentDoc, data.drillThroughReport),
+  });
+}
+
+export function useReportDashboards(enabled = true) {
+  return useQuery({
+    ...queries.reports.dashboards(),
+    enabled,
+    staleTime: 15_000,
+    select: (data) =>
+      data.reportDashboards.map((dashboard) =>
+        getFragmentData(ReportDashboardFieldsFragmentDoc, dashboard),
+      ),
+  });
+}
+
+export function useReportDashboard(id: string | undefined) {
+  return useQuery({
+    ...queries.reports.dashboard(id ?? ""),
+    enabled: Boolean(id),
+    select: (data) => getFragmentData(ReportDashboardFieldsFragmentDoc, data.reportDashboard),
+  });
+}
+
+function useInvalidateDashboards() {
+  const queryClient = useQueryClient();
+
+  return async (dashboardId?: string) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queries.reports.dashboards().queryKey }),
+      dashboardId
+        ? queryClient.invalidateQueries({
+            queryKey: queries.reports.dashboard(dashboardId).queryKey,
+          })
+        : Promise.resolve(),
+    ]);
+  };
+}
+
+export function useCreateReportDashboard() {
+  const invalidate = useInvalidateDashboards();
+
+  return useMutation({
+    mutationFn: createReportDashboard,
+    onSuccess: async () => invalidate(),
+  });
+}
+
+export function useUpdateReportDashboard() {
+  const invalidate = useInvalidateDashboards();
+
+  return useMutation({
+    mutationFn: updateReportDashboard,
+    onSuccess: async (updated) => invalidate(updated.id),
+  });
+}
+
+export function useDeleteReportDashboard() {
+  const invalidate = useInvalidateDashboards();
+
+  return useMutation({
+    mutationFn: deleteReportDashboard,
+    onSuccess: async () => invalidate(),
   });
 }
 
@@ -234,6 +328,51 @@ export function useDeleteReportSchedule() {
 
   return useMutation({
     mutationFn: deleteReportSchedule,
+    onSuccess: async () => invalidate(),
+  });
+}
+
+export function useReportViews(definitionId?: string, enabled = true) {
+  return useQuery({
+    ...queries.reports.views(definitionId),
+    enabled,
+    select: (data) => getFragmentData(ReportViewFieldsFragmentDoc, data.reportViews),
+  });
+}
+
+function useInvalidateViews() {
+  const queryClient = useQueryClient();
+
+  return async () => {
+    await queryClient.invalidateQueries({
+      queryKey: queries.reports.views._def,
+    });
+  };
+}
+
+export function useCreateReportView() {
+  const invalidate = useInvalidateViews();
+
+  return useMutation({
+    mutationFn: createReportView,
+    onSuccess: async () => invalidate(),
+  });
+}
+
+export function useUpdateReportView() {
+  const invalidate = useInvalidateViews();
+
+  return useMutation({
+    mutationFn: updateReportView,
+    onSuccess: async () => invalidate(),
+  });
+}
+
+export function useDeleteReportView() {
+  const invalidate = useInvalidateViews();
+
+  return useMutation({
+    mutationFn: deleteReportView,
     onSuccess: async () => invalidate(),
   });
 }

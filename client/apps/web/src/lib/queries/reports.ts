@@ -1,12 +1,17 @@
 import {
   CannedReportsDocument,
+  DrillThroughReportDocument,
   PreviewReportDocument,
   ReportCatalogDocument,
+  ReportDashboardByIdDocument,
+  ReportDashboardsDocument,
   ReportDefinitionByIdDocument,
   ReportDefinitionRevisionsDocument,
   ReportDefinitionsTableDocument,
   ReportRunByIdDocument,
   ReportSchedulesDocument,
+  ReportViewsDocument,
+  type ReportDrillInput,
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -74,13 +79,48 @@ export const reports = createQueryKeys("reports", {
         variables: { definitionId },
       }),
   }),
-  preview: (definition: ReportIrInput, params?: Record<string, unknown>) => ({
-    queryKey: [definition, params],
+  views: (definitionId?: string) => ({
+    queryKey: [definitionId ?? "all"],
+    queryFn: async () =>
+      requestGraphQL({
+        document: ReportViewsDocument,
+        operationName: "ReportViews",
+        variables: { definitionId },
+      }),
+  }),
+  preview: (definition: ReportIrInput, params?: Record<string, unknown>, supersede = false) => ({
+    queryKey: [definition, params, supersede],
     queryFn: async () =>
       requestGraphQL({
         document: PreviewReportDocument,
         operationName: "PreviewReport",
-        variables: { definition, params },
+        variables: { definition, params, supersede },
+      }),
+  }),
+  drillThrough: (input: ReportDrillInput) => ({
+    queryKey: [input],
+    queryFn: async () =>
+      requestGraphQL({
+        document: DrillThroughReportDocument,
+        operationName: "DrillThroughReport",
+        variables: { input },
+      }),
+  }),
+  dashboards: () => ({
+    queryKey: ["dashboards"],
+    queryFn: async () =>
+      requestGraphQL({
+        document: ReportDashboardsDocument,
+        operationName: "ReportDashboards",
+      }),
+  }),
+  dashboard: (id: string) => ({
+    queryKey: [id],
+    queryFn: async () =>
+      requestGraphQL({
+        document: ReportDashboardByIdDocument,
+        operationName: "ReportDashboardById",
+        variables: { id },
       }),
   }),
 });

@@ -43,7 +43,7 @@ import {
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { ReportDefinition, ReportSchedule } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
-import { REPORT_FORMAT_CHOICES } from "@/types/report";
+import { REPORT_FORMAT_CHOICES, type ReportIR } from "@/types/report";
 import {
   BellIcon,
   CalendarClockIcon,
@@ -55,7 +55,7 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { m } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useController, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
@@ -66,9 +66,30 @@ type ScheduleFormValues = {
   formats: string[];
   emailRecipients: string[];
   emailAttach: boolean;
+  emailInline: boolean;
   notifyUserIds: string[];
+  alertEnabled: boolean;
+  alertOperator: string;
+  alertThreshold: number;
+  /** Empty targets the row count; otherwise an output column's grand total. */
+  alertColumnId: string;
+  alertValue: number;
+  alertSuppress: boolean;
   enabled: boolean;
 };
+
+/**
+ * An alert compares the run's row count, which is what makes an exception
+ * report — one that should normally come back empty — worth scheduling.
+ */
+const ALERT_OPERATOR_CHOICES: { value: string; label: string }[] = [
+  { value: "gt", label: "more than" },
+  { value: "gte", label: "at least" },
+  { value: "lt", label: "fewer than" },
+  { value: "lte", label: "at most" },
+  { value: "eq", label: "exactly" },
+  { value: "ne", label: "anything but" },
+];
 
 const EMPTY_FORM: ScheduleFormValues = {
   cronExpression: "0 8 * * 1",
@@ -76,7 +97,14 @@ const EMPTY_FORM: ScheduleFormValues = {
   formats: ["xlsx"],
   emailRecipients: [],
   emailAttach: false,
+  emailInline: false,
   notifyUserIds: [],
+  alertEnabled: false,
+  alertOperator: "gt",
+  alertThreshold: 0,
+  alertColumnId: "",
+  alertValue: 0,
+  alertSuppress: true,
   enabled: true,
 };
 
@@ -108,7 +136,14 @@ function scheduleToForm(schedule: ReportSchedule): ScheduleFormValues {
     formats: [...schedule.formats],
     emailRecipients: [...schedule.emailRecipients],
     emailAttach: schedule.emailAttach,
+    emailInline: schedule.emailInline,
     notifyUserIds: [...schedule.notifyUserIds],
+    alertEnabled: !!schedule.alert,
+    alertOperator: schedule.alert?.operator ?? "gt",
+    alertThreshold: schedule.alert?.threshold ?? 0,
+    alertColumnId: schedule.alert?.columnId ?? "",
+    alertValue: schedule.alert?.value ?? 0,
+    alertSuppress: schedule.alert?.suppressWhileFiring ?? true,
     enabled: schedule.enabled,
   };
 }
@@ -121,7 +156,31 @@ function scheduleToInput(schedule: ReportSchedule) {
     formats: [...schedule.formats],
     emailRecipients: [...schedule.emailRecipients],
     emailAttach: schedule.emailAttach,
+    emailInline: schedule.emailInline,
     notifyUserIds: [...schedule.notifyUserIds],
+    alert: schedule.alert
+      ? {
+          operator: schedule.alert.operator,
+          threshold: schedule.alert.threshold,
+          columnId: schedule.alert.columnId,
+          value: schedule.alert.value,
+          suppressWhileFiring: schedule.alert.suppressWhileFiring,
+        }
+      : undefined,
+  };
+}
+
+function alertFromForm(values: ScheduleFormValues) {
+  if (!values.alertEnabled) return undefined;
+  // A measure alert carries its own value; the two thresholds stay separate
+  // because a total is rarely whole and a row count always is.
+  const targetsMeasure = values.alertColumnId !== "";
+  return {
+    operator: values.alertOperator,
+    threshold: targetsMeasure ? 0 : Number(values.alertThreshold) || 0,
+    columnId: targetsMeasure ? values.alertColumnId : undefined,
+    value: targetsMeasure ? Number(values.alertValue) || 0 : undefined,
+    suppressWhileFiring: values.alertSuppress,
   };
 }
 
@@ -194,6 +253,116 @@ function ToggleChip({
   );
 }
 
+/**
+ * Turns a recurring report into an exception alert: deliver only when the run's
+ * row count satisfies the condition. Everything stays off by default so an
+ * existing schedule keeps sending on every run.
+ */
+const ALERT_ROW_COUNT = "";
+
+function AlertConditionFields({
+  control,
+  measures,
+}: {
+  control: Control<ScheduleFormValues>;
+  measures: { value: string; label: string }[];
+}) {
+  const alertEnabled = useWatch({ control, name: "alertEnabled" });
+  const operator = useWatch({ control, name: "alertOperator" });
+  const threshold = useWatch({ control, name: "alertThreshold" });
+  const columnId = useWatch({ control, name: "alertColumnId" });
+  const value = useWatch({ control, name: "alertValue" });
+
+  const operatorLabel =
+    ALERT_OPERATOR_CHOICES.find((choice) => choice.value === operator)?.label ?? "more than";
+
+  const targetsMeasure = columnId !== ALERT_ROW_COUNT;
+  const targetChoices = [
+    { value: ALERT_ROW_COUNT, label: "Row count" },
+    ...measures,
+  ];
+  const measureLabel = measures.find((choice) => choice.value === columnId)?.label ?? "the total";
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-border pt-3">
+      <SectionLabel>Alert</SectionLabel>
+      <SwitchField
+        control={control}
+        name="alertEnabled"
+        label="Only send when there is something to report"
+        description="Skip delivery entirely when the result does not meet your condition."
+        outlined
+      />
+      <AnimatePresence initial={false}>
+        {alertEnabled && (
+          <m.div
+            key="alert"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="flex flex-col gap-3 overflow-hidden"
+          >
+            {measures.length > 0 && (
+              <div className="w-full">
+                <SelectField
+                  control={control}
+                  name="alertColumnId"
+                  label="Watch"
+                  options={targetChoices}
+                />
+              </div>
+            )}
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="w-40">
+                <SelectField
+                  control={control}
+                  name="alertOperator"
+                  label={targetsMeasure ? "Send when the total is" : "Send when the report returns"}
+                  options={ALERT_OPERATOR_CHOICES}
+                />
+              </div>
+              <div className="w-28">
+                {targetsMeasure ? (
+                  <InputField control={control} name="alertValue" type="number" step="any" />
+                ) : (
+                  <InputField
+                    control={control}
+                    name="alertThreshold"
+                    type="number"
+                    min={0}
+                    rules={{ min: { value: 0, message: "Cannot be negative" } }}
+                  />
+                )}
+              </div>
+              {!targetsMeasure && <span className="pb-2 text-xs text-muted-foreground">rows</span>}
+            </div>
+            <p className="text-2xs text-muted-foreground">
+              {targetsMeasure ? (
+                <>
+                  Sends only when {measureLabel} is {operatorLabel} {Number(value) || 0}.
+                </>
+              ) : (
+                <>
+                  Sends only when the report returns {operatorLabel} {Number(threshold) || 0} row
+                  {Number(threshold) === 1 ? "" : "s"}.
+                </>
+              )}
+            </p>
+            <SwitchField
+              control={control}
+              name="alertSuppress"
+              label="Only alert me when it changes"
+              description="Stays quiet while the condition keeps holding, and alerts again once it clears and returns."
+              outlined
+            />
+          </m.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <span className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -218,15 +387,15 @@ const TIME_OPTIONS: { value: string; label: string }[] = Array.from(
   },
 );
 
-const pillTrigger = "h-7 w-auto gap-1 border-transparent bg-transparent px-1.5 font-medium text-foreground hover:bg-muted data-popup-open:bg-muted";
+const pillTrigger =
+  "h-7 w-auto gap-1 border-transparent bg-transparent px-1.5 font-medium text-foreground hover:bg-muted data-popup-open:bg-muted";
 
 function timeOptions(hour: number, minute: number): { value: string; label: string }[] {
   const current = hour * 60 + minute;
   if (current % TIME_STEP_MINUTES === 0) return TIME_OPTIONS;
-  return [
-    ...TIME_OPTIONS,
-    { value: String(current), label: formatTimeOfDay(hour, minute) },
-  ].sort((a, b) => Number(a.value) - Number(b.value));
+  return [...TIME_OPTIONS, { value: String(current), label: formatTimeOfDay(hour, minute) }].sort(
+    (a, b) => Number(a.value) - Number(b.value),
+  );
 }
 
 function TimeSelect({
@@ -270,12 +439,8 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
     rules: { required: "A cron expression is required" },
   });
 
-  const [parts, setParts] = useState<CronParts>(
-    () => parseCron(field.value) ?? DEFAULT_CRON_PARTS,
-  );
-  const [tab, setTab] = useState<CadenceTab>(
-    () => parseCron(field.value)?.frequency ?? "custom",
-  );
+  const [parts, setParts] = useState<CronParts>(() => parseCron(field.value) ?? DEFAULT_CRON_PARTS);
+  const [tab, setTab] = useState<CadenceTab>(() => parseCron(field.value)?.frequency ?? "custom");
 
   const applyParts = (next: CronParts) => {
     setParts(next);
@@ -429,12 +594,14 @@ function ScheduleForm({
   onCancel,
   submitting,
   submitLabel,
+  measures,
 }: {
   initialValues: ScheduleFormValues;
   onSubmit: (values: ScheduleFormValues) => void;
   onCancel: () => void;
   submitting: boolean;
   submitLabel: string;
+  measures: { value: string; label: string }[];
 }) {
   const { control, handleSubmit } = useForm<ScheduleFormValues>({
     defaultValues: initialValues,
@@ -481,13 +648,22 @@ function ScheduleForm({
           description="Each recipient gets an email with a link to the report when it completes."
         />
         {emailRecipients.length > 0 && (
-          <SwitchField
-            control={control}
-            name="emailAttach"
-            label="Attach the report file"
-            description="Attached when within the size limit; larger files are linked instead."
-            outlined
-          />
+          <>
+            <SwitchField
+              control={control}
+              name="emailInline"
+              label="Show the results in the email"
+              description="Puts the first rows in the message body, so recipients read the answer without opening a file."
+              outlined
+            />
+            <SwitchField
+              control={control}
+              name="emailAttach"
+              label="Attach the report file"
+              description="Attached when within the size limit; larger files are linked instead."
+              outlined
+            />
+          </>
         )}
         <UserMultiSelectAutocompleteField<ScheduleFormValues>
           control={control}
@@ -499,6 +675,8 @@ function ScheduleForm({
           triggerClassName="h-7 text-xs"
         />
       </div>
+
+      <AlertConditionFields control={control} measures={measures} />
 
       <div className="flex items-center justify-between border-t border-border pt-3">
         <SwitchField control={control} name="enabled" label="Enabled" />
@@ -597,7 +775,9 @@ function ScheduleRow({
       <div
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-md",
-          schedule.enabled ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground",
+          schedule.enabled
+            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+            : "bg-muted text-muted-foreground",
         )}
       >
         <CalendarClockIcon className="size-4" strokeWidth={1.75} />
@@ -672,6 +852,19 @@ export function ReportSchedulesDialog({
   definition: ReportDefinition | null;
 }) {
   const definitionId = definition?.id;
+
+  // Only aggregate columns have a grand total to watch, so a dimension is
+  // never offered as an alert target.
+  const measures = useMemo(() => {
+    const ir = definition?.definition as ReportIR | undefined;
+    if (!ir?.columns) return [];
+    return ir.columns
+      .filter((column: ReportIR["columns"][number]) => column.kind !== "dimension")
+      .map((column: ReportIR["columns"][number]) => ({
+        value: column.id,
+        label: column.label || column.id,
+      }));
+  }, [definition]);
   const { data: schedules, isLoading } = useReportSchedules(definitionId, open);
   const createSchedule = useCreateReportSchedule();
   const updateSchedule = useUpdateReportSchedule();
@@ -693,7 +886,9 @@ export function ReportSchedulesDialog({
       formats: values.formats,
       emailRecipients: values.emailRecipients,
       emailAttach: values.emailAttach,
+      emailInline: values.emailInline,
       notifyUserIds: values.notifyUserIds,
+      alert: alertFromForm(values),
       enabled: values.enabled,
     };
 
@@ -780,6 +975,7 @@ export function ReportSchedulesDialog({
                 onCancel={closeForm}
                 submitting={updateSchedule.isPending}
                 submitLabel="Save Changes"
+                measures={measures}
               />
             ) : (
               <ScheduleRow
@@ -801,6 +997,7 @@ export function ReportSchedulesDialog({
               onCancel={closeForm}
               submitting={createSchedule.isPending}
               submitLabel="Create Schedule"
+              measures={measures}
             />
           ) : (
             <Button variant="outline" onClick={() => setEditing("new")}>

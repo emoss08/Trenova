@@ -1,7 +1,7 @@
 import { REPORT_CATEGORY_CHOICES, REPORT_DEFINITION_STATUS_LABELS } from "@/types/report";
 import { parseAsString, parseAsStringLiteral } from "nuqs";
 
-export const reportTabs = ["library", "gallery"] as const;
+export const reportTabs = ["library", "gallery", "dashboards"] as const;
 export type ReportTab = (typeof reportTabs)[number];
 
 export const reportSortOrders = ["name_asc", "name_desc", "last_run"] as const;
@@ -57,8 +57,15 @@ const categoryLabels = new Map(
   REPORT_CATEGORY_CHOICES.map((choice) => [choice.value, choice.label]),
 );
 
+// Canned reports carry display-cased categories ("Billing") while saved
+// definitions store the slug ("billing"); both resolve to the same group.
+export function normalizeReportCategory(category: string): string {
+  return category.trim().toLowerCase() || "uncategorized";
+}
+
 export function reportCategoryLabel(category: string): string {
-  return categoryLabels.get(category) ?? (category || "Uncategorized");
+  const key = normalizeReportCategory(category);
+  return categoryLabels.get(key) ?? (category || "Uncategorized");
 }
 
 export type ReportCategoryGroup<T> = {
@@ -73,7 +80,7 @@ export function groupByReportCategory<T extends { category: string }>(
 ): ReportCategoryGroup<T>[] {
   const groups = new Map<string, ReportCategoryGroup<T>>();
   for (const item of items) {
-    const key = item.category || "uncategorized";
+    const key = normalizeReportCategory(item.category);
     const group = groups.get(key);
     if (group) {
       group.items.push(item);

@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import {
   aggregateColumns,
   columnDisplayLabel,
+  pivotValueLabel,
   refLabel,
   resolveField,
   type CatalogIndex,
@@ -21,6 +22,40 @@ type PivotPanelProps = {
   ir: ReportIR;
   onChange: (pivot: ReportPivotSpec | null) => void;
 };
+
+type PivotField = ReturnType<typeof resolveField>;
+
+// Value edits must carry the labels with them: the server rejects a pivot
+// whose label list no longer lines up with its values.
+function withValues(pivot: ReportPivotSpec, values: string[]): ReportPivotSpec {
+  if (!pivot.labels) return { ...pivot, values };
+
+  const byValue = new Map(pivot.values.map((value, index) => [value, pivot.labels?.[index] ?? ""]));
+  const labels = values.map((value) => byValue.get(value) ?? "");
+
+  return {
+    ...pivot,
+    values,
+    labels: labels.some((label) => label !== "") ? labels : undefined,
+  };
+}
+
+// Labels are positional and must stay aligned with the value list, so the
+// array is rebuilt whole and dropped once every entry is back to the default.
+function withValueLabel(
+  pivot: ReportPivotSpec,
+  index: number,
+  label: string,
+  field: PivotField,
+): string[] | undefined {
+  const labels = pivot.values.map((value, valueIndex) => {
+    if (valueIndex === index) return label.trim();
+    const existing = pivot.labels?.[valueIndex] ?? "";
+    return existing === pivotValueLabel(field, value) ? "" : existing;
+  });
+
+  return labels.some((entry) => entry !== "") ? labels : undefined;
+}
 
 export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
@@ -91,12 +126,14 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
                     <Checkbox
                       checked={pivot.values.includes(enumValue.value)}
                       onCheckedChange={(checked) =>
-                        onChange({
-                          ...pivot,
-                          values: checked
-                            ? [...pivot.values, enumValue.value]
-                            : pivot.values.filter((v) => v !== enumValue.value),
-                        })
+                        onChange(
+                          withValues(
+                            pivot,
+                            checked
+                              ? [...pivot.values, enumValue.value]
+                              : pivot.values.filter((v) => v !== enumValue.value),
+                          ),
+                        )
                       }
                     />
                     {enumValue.label}
@@ -109,17 +146,47 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
                 placeholder="Comma-separated values"
                 value={pivot.values.join(", ")}
                 onChange={(event) =>
-                  onChange({
-                    ...pivot,
-                    values: event.target.value
-                      .split(",")
-                      .map((v) => v.trim())
-                      .filter(Boolean),
-                  })
+                  onChange(
+                    withValues(
+                      pivot,
+                      event.target.value
+                        .split(",")
+                        .map((v) => v.trim())
+                        .filter(Boolean),
+                    ),
+                  )
                 }
               />
             )}
           </div>
+          {pivot.values.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground">Column names</Label>
+              <p className="text-2xs text-muted-foreground">
+                Each pivot value becomes its own column — name them however the report should read.
+              </p>
+              <div className="flex flex-col gap-1">
+                {pivot.values.map((value, valueIndex) => (
+                  <div key={value} className="flex items-center gap-2">
+                    <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">
+                      {pivotValueLabel(pivotField, value)}
+                    </span>
+                    <Input
+                      className="h-7"
+                      value={pivot.labels?.[valueIndex] ?? ""}
+                      placeholder={pivotValueLabel(pivotField, value)}
+                      onChange={(event) =>
+                        onChange({
+                          ...pivot,
+                          labels: withValueLabel(pivot, valueIndex, event.target.value, pivotField),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs text-muted-foreground">Measures to Pivot</Label>
             <div className="flex flex-col gap-1">

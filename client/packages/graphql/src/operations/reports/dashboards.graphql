@@ -1,0 +1,41 @@
+fragment ReportDashboardFields on ReportDashboard {
+  id
+  name
+  description
+  category
+  tags
+  ownerId
+  visibility
+  layout
+  version
+  createdAt
+  updatedAt
+}
+
+query ReportDashboards {
+  reportDashboards {
+    ...ReportDashboardFields
+  }
+}
+
+query ReportDashboardById($id: ID!) {
+  reportDashboard(id: $id) {
+    ...ReportDashboardFields
+  }
+}
+
+mutation CreateReportDashboard($input: SaveReportDashboardInput!) {
+  createReportDashboard(input: $input) {
+    ...ReportDashboardFields
+  }
+}
+
+mutation UpdateReportDashboard($input: UpdateReportDashboardInput!) {
+  updateReportDashboard(input: $input) {
+    ...ReportDashboardFields
+  }
+}
+
+mutation DeleteReportDashboard($id: ID!) {
+  deleteReportDashboard(id: $id)
+}

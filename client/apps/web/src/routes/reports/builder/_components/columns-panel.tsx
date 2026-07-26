@@ -16,8 +16,15 @@ import {
   REPORT_COMPUTED_OP_CHOICES,
   REPORT_DATE_BUCKET_CHOICES,
   aggregationsForField,
+  bandableType,
+  columnValueType,
+  computedOperand,
+  computedOperandIsTarget,
+  withComputedOperand,
   type ReportColumnSpec,
   type ReportComputedOp,
+  type ReportComputedOperand,
+  type ReportComputedSide,
   type ReportDateBucket,
   type ReportIR,
 } from "@/types/report";
@@ -38,9 +45,15 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVerticalIcon, SigmaIcon, XIcon } from "lucide-react";
+import { FilterIcon, GripVerticalIcon, PaletteIcon, SigmaIcon, XIcon } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
+import { useState } from "react";
+import { BandEditor } from "./band-editor";
+import { ColumnFormatEditor } from "./column-format-editor";
+import { MeasureFilterEditor } from "./measure-filter-editor";
 import {
   columnDisplayLabel,
+  defaultColumnLabel,
   measureColumns,
   pathCrossesToMany,
   refLabel,
@@ -56,6 +69,74 @@ type ColumnsPanelProps = {
   ir: ReportIR;
   onChange: (columns: ReportColumnSpec[]) => void;
 };
+
+/** Sentinel option that switches an operand from a measure to a constant. */
+const TARGET_OPTION = "__target__";
+
+/**
+ * One side of a calculation. An operand is either another measure in the
+ * report or a fixed target — the target is what makes variance-to-goal and
+ * attainment expressible, since no column holds the goal.
+ */
+function ComputedOperandField({
+  label,
+  operand,
+  measures,
+  disallowTarget,
+  defaultTarget,
+  onChange,
+}: {
+  label: string;
+  operand: ReportComputedOperand;
+  measures: { value: string; label: string }[];
+  disallowTarget: boolean;
+  defaultTarget: number;
+  onChange: (operand: ReportComputedOperand) => void;
+}) {
+  const isTarget = computedOperandIsTarget(operand);
+  const choices = disallowTarget
+    ? measures
+    : [...measures, { value: TARGET_OPTION, label: "Target value…" }];
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Select
+        value={isTarget ? TARGET_OPTION : (operand.columnId ?? "")}
+        onValueChange={(next) => {
+          if (!next) return;
+          onChange(
+            next === TARGET_OPTION
+              ? { value: operand.value ?? defaultTarget }
+              : { columnId: next },
+          );
+        }}
+        items={choices}
+      >
+        <SelectTrigger className="h-7">
+          <SelectValue placeholder="Select measure" />
+        </SelectTrigger>
+        <SelectContent>
+          {choices.map((choice) => (
+            <SelectItem key={choice.value} value={choice.value}>
+              {choice.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {isTarget && (
+        <Input
+          className="h-7"
+          type="number"
+          step="any"
+          placeholder="0"
+          value={operand.value ?? ""}
+          onChange={(event) => onChange({ value: Number(event.target.value) })}
+        />
+      )}
+    </div>
+  );
+}
 
 function ComputedColumnBody({
   ir,
@@ -78,29 +159,27 @@ function ComputedColumnBody({
   const updateComputed = (patch: Partial<NonNullable<ReportColumnSpec["computed"]>>) =>
     onUpdate({ ...column, computed: { ...computed, ...patch } });
 
+  const left = computedOperand(computed, "left");
+  const right = computedOperand(computed, "right");
+  const setOperand = (side: ReportComputedSide, operand: ReportComputedOperand) =>
+    onUpdate({ ...column, computed: withComputedOperand(computed, side, operand) });
+
+  // Zero is the natural starting target for a variance but a useless one for a
+  // ratio, where it would only ever divide to nothing.
+  const defaultTarget = computed.op === "divide" || computed.op === "multiply" ? 1 : 0;
+
   return (
     <div className="grid grid-cols-2 gap-2">
-      <div className="flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">First measure</Label>
-        <Select
-          value={computed.leftId}
-          onValueChange={(leftId) => {
-            if (leftId) updateComputed({ leftId });
-          }}
-          items={operandChoices}
-        >
-          <SelectTrigger className="h-7">
-            <SelectValue placeholder="Select measure" />
-          </SelectTrigger>
-          <SelectContent>
-            {operandChoices.map((choice) => (
-              <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ComputedOperandField
+        label="First value"
+        operand={left}
+        measures={operandChoices}
+        // Two constants are a number, not a calculation, so the side opposite
+        // a target only ever offers measures.
+        disallowTarget={computedOperandIsTarget(right)}
+        defaultTarget={defaultTarget}
+        onChange={(operand) => setOperand("left", operand)}
+      />
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Operation</Label>
         <Select
@@ -122,27 +201,14 @@ function ComputedColumnBody({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">Second measure</Label>
-        <Select
-          value={computed.rightId}
-          onValueChange={(rightId) => {
-            if (rightId) updateComputed({ rightId });
-          }}
-          items={operandChoices}
-        >
-          <SelectTrigger className="h-7">
-            <SelectValue placeholder="Select measure" />
-          </SelectTrigger>
-          <SelectContent>
-            {operandChoices.map((choice) => (
-              <SelectItem key={choice.value} value={choice.value}>
-                {choice.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ComputedOperandField
+        label="Second value"
+        operand={right}
+        measures={operandChoices}
+        disallowTarget={computedOperandIsTarget(left)}
+        defaultTarget={defaultTarget}
+        onChange={(operand) => setOperand("right", operand)}
+      />
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Format</Label>
         <Select
@@ -165,7 +231,7 @@ function ComputedColumnBody({
         </Select>
       </div>
       <div className="col-span-2 flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">Label</Label>
+        <Label className="text-xs text-muted-foreground">Column name</Label>
         <Input
           className="h-7"
           value={column.label ?? ""}
@@ -190,11 +256,11 @@ function SortableColumnRow({
   onUpdate: (column: ReportColumnSpec) => void;
   onRemove: () => void;
 }) {
+  const [formatOpen, setFormatOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const sortable = useSortable({ id: column.id });
   const field = column.ref ? resolveField(index, ir.entity, column.ref) : undefined;
-  const crossesToMany = column.ref
-    ? pathCrossesToMany(index, ir.entity, column.ref.path)
-    : false;
+  const crossesToMany = column.ref ? pathCrossesToMany(index, ir.entity, column.ref.path) : false;
   const aggregations = field ? aggregationsForField(field) : [];
   const canBeDimension = !crossesToMany;
   const canBeMeasure = aggregations.length > 0;
@@ -229,11 +295,35 @@ function SortableColumnRow({
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {column.ref ? refLabel(index, ir.entity, column.ref) : (column.label ?? "Calculation")}
         </span>
-        <Badge
-          variant={isComputed ? "orange" : column.kind === "measure" ? "purple" : "info"}
-        >
+        <Badge variant={isComputed ? "orange" : column.kind === "measure" ? "purple" : "info"}>
           {isComputed ? "calc" : column.kind}
         </Badge>
+        {column.kind === "measure" && (
+          <Button
+            variant={filterOpen ? "secondary" : "ghost"}
+            size="icon"
+            className="size-6"
+            onClick={() => setFilterOpen((open) => !open)}
+            aria-label="Measure filter"
+            aria-expanded={filterOpen}
+            title="Only count matching records"
+          >
+            <FilterIcon className={cn("size-3.5", column.filter && "text-primary")} />
+          </Button>
+        )}
+        <Button
+          variant={formatOpen ? "secondary" : "ghost"}
+          size="icon"
+          className="size-6"
+          onClick={() => setFormatOpen((open) => !open)}
+          aria-label="Formatting options"
+          aria-expanded={formatOpen}
+          title="Formatting"
+        >
+          <PaletteIcon
+            className={cn("size-3.5", (column.display || column.transform) && "text-primary")}
+          />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -247,100 +337,141 @@ function SortableColumnRow({
       {isComputed ? (
         <ComputedColumnBody ir={ir} index={index} column={column} onUpdate={onUpdate} />
       ) : (
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Kind</Label>
-          <Select
-            value={column.kind}
-            onValueChange={(kind) => {
-              if (!kind || kind === column.kind) return;
-              if (kind === "measure") {
-                onUpdate({ ...column, kind: "measure", agg: aggregations[0], bucket: undefined });
-              } else {
-                onUpdate({ ...column, kind: "dimension", agg: undefined });
-              }
-            }}
-            items={kindChoices}
-          >
-            <SelectTrigger className="h-7">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {canBeDimension && <SelectItem value="dimension">Dimension</SelectItem>}
-              {canBeMeasure && <SelectItem value="measure">Measure</SelectItem>}
-            </SelectContent>
-          </Select>
-        </div>
-        {column.kind === "measure" && (
+        <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Aggregation</Label>
+            <Label className="text-xs text-muted-foreground">Kind</Label>
             <Select
-              value={column.agg ?? ""}
-              onValueChange={(agg) => {
-                if (agg) onUpdate({ ...column, agg: agg as ReportColumnSpec["agg"] });
+              value={column.kind}
+              onValueChange={(kind) => {
+                if (!kind || kind === column.kind) return;
+                if (kind === "measure") {
+                  onUpdate({ ...column, kind: "measure", agg: aggregations[0], bucket: undefined });
+                } else {
+                  onUpdate({ ...column, kind: "dimension", agg: undefined });
+                }
               }}
-              items={aggregations.map((agg) => ({
-                value: agg,
-                label: REPORT_AGGREGATION_LABELS[agg],
-              }))}
-            >
-              <SelectTrigger className="h-7">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                {aggregations.map((agg) => (
-                  <SelectItem key={agg} value={agg}>
-                    {REPORT_AGGREGATION_LABELS[agg]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {column.kind === "dimension" && field?.type === "epoch" && (
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Bucket</Label>
-            <Select
-              value={column.bucket ?? "none"}
-              onValueChange={(bucket) => {
-                if (!bucket) return;
-                onUpdate({
-                  ...column,
-                  bucket: bucket === "none" ? undefined : (bucket as ReportDateBucket),
-                });
-              }}
-              items={BUCKET_CHOICES}
+              items={kindChoices}
             >
               <SelectTrigger className="h-7">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Exact</SelectItem>
-                {REPORT_DATE_BUCKET_CHOICES.map((choice) => (
-                  <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
-                  </SelectItem>
-                ))}
+                {canBeDimension && <SelectItem value="dimension">Dimension</SelectItem>}
+                {canBeMeasure && <SelectItem value="measure">Measure</SelectItem>}
               </SelectContent>
             </Select>
           </div>
-        )}
-        <div
-          className={cn(
-            "flex flex-col gap-1",
-            column.kind === "dimension" && field?.type !== "epoch" ? "" : "col-span-2",
+          {column.kind === "measure" && (
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Aggregation</Label>
+              <Select
+                value={column.agg ?? ""}
+                onValueChange={(agg) => {
+                  if (agg) onUpdate({ ...column, agg: agg as ReportColumnSpec["agg"] });
+                }}
+                items={aggregations.map((agg) => ({
+                  value: agg,
+                  label: REPORT_AGGREGATION_LABELS[agg],
+                }))}
+              >
+                <SelectTrigger className="h-7">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {aggregations.map((agg) => (
+                    <SelectItem key={agg} value={agg}>
+                      {REPORT_AGGREGATION_LABELS[agg]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-        >
-          <Label className="text-xs text-muted-foreground">Label</Label>
-          <Input
-            className="h-7"
-            value={column.label ?? ""}
-            placeholder={field?.label ?? column.ref?.field}
-            onChange={(event) => onUpdate({ ...column, label: event.target.value || undefined })}
-          />
+          {column.kind === "dimension" && field?.type === "epoch" && (
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Bucket</Label>
+              <Select
+                value={column.bucket ?? "none"}
+                onValueChange={(bucket) => {
+                  if (!bucket) return;
+                  onUpdate({
+                    ...column,
+                    bucket: bucket === "none" ? undefined : (bucket as ReportDateBucket),
+                  });
+                }}
+                items={BUCKET_CHOICES}
+              >
+                <SelectTrigger className="h-7">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Exact</SelectItem>
+                  {REPORT_DATE_BUCKET_CHOICES.map((choice) => (
+                    <SelectItem key={choice.value} value={choice.value}>
+                      {choice.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div
+            className={cn(
+              "flex flex-col gap-1",
+              column.kind === "dimension" && field?.type !== "epoch" ? "" : "col-span-2",
+            )}
+          >
+            <Label className="text-xs text-muted-foreground">Column name</Label>
+            <Input
+              className="h-7"
+              value={column.label ?? ""}
+              placeholder={defaultColumnLabel(index, ir, column)}
+              onChange={(event) => onUpdate({ ...column, label: event.target.value || undefined })}
+            />
+          </div>
+          {column.kind === "dimension" && bandableType(field?.type) && (
+            <BandEditor
+              column={column}
+              valueType={columnValueType(column, field?.type)}
+              formatHint={field?.format ?? undefined}
+              onUpdate={onUpdate}
+            />
+          )}
         </div>
-      </div>
       )}
+      <AnimatePresence initial={false}>
+        {filterOpen && column.kind === "measure" && (
+          <m.div
+            key="filter"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <MeasureFilterEditor index={index} ir={ir} column={column} onUpdate={onUpdate} />
+          </m.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence initial={false}>
+        {formatOpen && (
+          <m.div
+            key="format"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <ColumnFormatEditor
+              column={column}
+              fieldType={field?.type}
+              formatHint={isComputed ? column.computed?.format : (field?.format ?? undefined)}
+              onUpdate={onUpdate}
+            />
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -360,17 +491,19 @@ export function ColumnsPanel({ index, ir, onChange }: ColumnsPanelProps) {
   const addCalculation = () => {
     const measures = measureColumns(ir);
     if (measures.length === 0) return;
+    // With a second measure the useful default is a ratio between the two;
+    // with only one, it is that measure measured against a target.
+    const computed: NonNullable<ReportColumnSpec["computed"]> =
+      measures.length > 1
+        ? { op: "divide", leftId: measures[0].id, rightId: measures[1].id }
+        : { op: "subtract", leftId: measures[0].id, rightValue: 0 };
     onChange([
       ...ir.columns,
       {
         id: uniqueColumnId(ir, "calc"),
         kind: "computed",
         label: "Calculation",
-        computed: {
-          op: "divide",
-          leftId: measures[0].id,
-          rightId: (measures[1] ?? measures[0]).id,
-        },
+        computed,
       },
     ]);
   };

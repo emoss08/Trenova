@@ -1,12 +1,48 @@
-query PreviewReport($definition: ReportIRInput!, $params: JSON) {
-  previewReport(definition: $definition, params: $params) {
-    columns {
-      id
-      label
-      type
-      format
+fragment ReportPreviewFields on ReportPreview {
+  columns {
+    id
+    label
+    type
+    format
+    display {
+      style
+      decimals
+      grouping
+      currency
+      negative
+      notation
+      prefix
+      suffix
+      dateStyle
+      boolStyle
+      durationUnit
+      durationStyle
+      nullText
+      rules {
+        op
+        value
+        upper
+        tone
+      }
+      band {
+        width
+        edges
+      }
     }
-    rows
-    truncated
+  }
+  rows
+  totals
+  truncated
+}
+
+query PreviewReport($definition: ReportIRInput!, $params: JSON, $supersede: Boolean) {
+  previewReport(definition: $definition, params: $params, supersede: $supersede) {
+    ...ReportPreviewFields
+  }
+}
+
+query DrillThroughReport($input: ReportDrillInput!) {
+  drillThroughReport(input: $input) {
+    ...ReportPreviewFields
   }
 }
