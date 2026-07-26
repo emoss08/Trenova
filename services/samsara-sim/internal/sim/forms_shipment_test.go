@@ -296,6 +296,12 @@ func TestShipperConsigneeSubmissionsDeterministic(t *testing.T) {
 
 	first := NewLiveSimulator(loadDefaultFixtureStore(t), "shipment-det-seed")
 	second := NewLiveSimulator(loadDefaultFixtureStore(t), "shipment-det-seed")
+	// Each constructor anchors itself to time.Now(), so two simulators built a
+	// moment apart can straddle a minute boundary and legitimately diverge.
+	// Determinism is a property of identical seed *and* identical sim time.
+	second.startedAt = first.startedAt
+	second.anchorTime = first.anchorTime
+
 	now := first.anchorTime.Add(3 * 24 * time.Hour)
 	windowStart := now.Add(-2 * 24 * time.Hour)
 

@@ -72,16 +72,11 @@ func TestServerEventsWindowAndActiveEndpoints(t *testing.T) {
 
 func TestServerDispatchLiveEventsDeduplicatesWebhookByEvent(t *testing.T) {
 	var deliveryCount atomic.Int64
-	delivered := make(chan struct{}, 8)
 	webhookReceiver := httptest.NewServer(http.HandlerFunc(func(
 		writer http.ResponseWriter,
-		request *http.Request,
+		_ *http.Request,
 	) {
 		deliveryCount.Add(1)
-		select {
-		case delivered <- struct{}{}:
-		default:
-		}
 		writer.WriteHeader(http.StatusNoContent)
 	}))
 	defer webhookReceiver.Close()
@@ -102,19 +97,58 @@ func TestServerDispatchLiveEventsDeduplicatesWebhookByEvent(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/fleet/vehicles/stats?vehicleIds=veh-1", nil)
 	request.Header.Set("Authorization", "Bearer dev-samsara-token")
 
+	// The number of emissions in the window depends on the simulated clock, so
+	// assert the dedupe property itself: replaying the same dispatch must not
+	// deliver any webhook a second time.
 	srv.dispatchLiveEvents(request, at, []string{"veh-1"})
-	srv.dispatchLiveEvents(request, at, []string{"veh-1"})
-
-	select {
-	case <-delivered:
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for webhook delivery")
+	first := waitForSettledDeliveries(t, &deliveryCount)
+	if first == 0 {
+		t.Fatal("expected the first dispatch to deliver at least one webhook")
 	}
 
-	time.Sleep(200 * time.Millisecond)
-	if got := deliveryCount.Load(); got != 1 {
-		t.Fatalf("expected exactly one deduplicated delivery, got %d", got)
+	srv.dispatchLiveEvents(request, at, []string{"veh-1"})
+	second := waitForSettledDeliveries(t, &deliveryCount)
+	if second != first {
+		t.Fatalf(
+			"expected replayed dispatch to be deduplicated, got %d deliveries after %d",
+			second,
+			first,
+		)
 	}
+}
+
+// waitForSettledDeliveries blocks until the delivery counter stops changing for
+// a quiet period, then returns it. Webhook delivery is asynchronous, so a fixed
+// sleep would either be flaky or needlessly slow.
+func waitForSettledDeliveries(t *testing.T, counter *atomic.Int64) int64 {
+	t.Helper()
+
+	const (
+		pollInterval = 20 * time.Millisecond
+		quietPeriod  = 250 * time.Millisecond
+		deadline     = 5 * time.Second
+	)
+
+	expiry := time.Now().Add(deadline)
+	last := counter.Load()
+	stableSince := time.Now()
+
+	for time.Now().Before(expiry) {
+		time.Sleep(pollInterval)
+
+		current := counter.Load()
+		if current != last {
+			last = current
+			stableSince = time.Now()
+			continue
+		}
+		if time.Since(stableSince) >= quietPeriod {
+			return current
+		}
+	}
+
+	t.Fatalf("webhook delivery count never settled, last value %d", last)
+	return 0
 }
 
 func TestServerDispatchLiveEventsHonorsWebhookFaultDrop(t *testing.T) {
