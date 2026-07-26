@@ -8,6 +8,7 @@ import {
   PackageIcon,
   ReceiptIcon,
   TruckIcon,
+  WalletIcon,
   WrenchIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ export const sequenceTitles: Record<SequenceType, string> = {
   journal_entry: "Journal Entry Number",
   manual_journal_request: "Manual Journal Request",
   location_code: "Location Code",
+  driver_settlement: "Driver Settlement Number",
 };
 
 export const sequenceDescriptions: Record<SequenceType, string> = {
@@ -34,6 +36,7 @@ export const sequenceDescriptions: Record<SequenceType, string> = {
   journal_entry: "Controls journal entry numbering for posted ledger entries.",
   manual_journal_request: "Controls manual journal request numbering before approval and posting.",
   location_code: "Controls generated location codes assigned during location creation.",
+  driver_settlement: "Controls driver settlement numbering for pay period settlements.",
 };
 
 export const sequenceIcons: Record<SequenceType, LucideIcon> = {
@@ -46,6 +49,7 @@ export const sequenceIcons: Record<SequenceType, LucideIcon> = {
   journal_entry: FileTextIcon,
   manual_journal_request: ClipboardEditIcon,
   location_code: MapPinIcon,
+  driver_settlement: WalletIcon,
 };
 
 export type SidebarGroup = {
@@ -57,6 +61,7 @@ export const sidebarGroups: SidebarGroup[] = [
   { label: "Operations", items: ["pro_number", "consolidation", "order", "work_order"] },
   { label: "Billing", items: ["invoice"] },
   { label: "Accounting", items: ["journal_batch", "journal_entry", "manual_journal_request"] },
+  { label: "Payroll", items: ["driver_settlement"] },
   { label: "Locations", items: ["location_code"] },
 ];
 
@@ -110,6 +115,7 @@ const defaultPrefixes: Record<SequenceType, string> = {
   journal_entry: "JE",
   manual_journal_request: "MJR",
   location_code: "LOC",
+  driver_settlement: "STL",
 };
 
 export function defaultConfigForType(
