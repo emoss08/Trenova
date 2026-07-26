@@ -554,6 +554,20 @@ extend type Query {
   myHosViolations(since: Int): [WorkerHosViolation!]!
 
   """
+  The signed-in driver's notification feed. Scoped strictly to notifications
+  targeted at the driver; organization-wide (global) notifications are never
+  returned.
+  """
+  myNotifications(
+    input: DataTableConnectionInput!
+    filter: NotificationFilterInput
+  ): NotificationConnection!
+  """
+  Count of the signed-in driver's unread, personally targeted notifications.
+  """
+  myNotificationUnreadCount: Int!
+
+  """
   Driver expense review queue (back office).
   """
   driverExpenses(input: DataTableConnectionInput!): DriverExpenseConnection!
@@ -612,6 +626,20 @@ extend type Mutation {
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
   """
   resolveSettlementDispute(input: ResolveSettlementDisputeInput!): SettlementDispute!
+
+  """
+  Marks all of the signed-in driver's personally targeted notifications as read.
+  """
+  markAllMyNotificationsRead: Boolean!
+  """
+  Notification state changes for the signed-in driver. Each only ever touches
+  notifications targeted at the driver; organization-wide notifications are
+  never affected.
+  """
+  markMyNotificationsRead(ids: [ID!]!): Boolean!
+  markMyNotificationsUnread(ids: [ID!]!): Boolean!
+  dismissMyNotifications(ids: [ID!]!): Boolean!
+  restoreMyNotifications(ids: [ID!]!): Boolean!
 
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   cancelMyPto(id: ID!): PortalPto!

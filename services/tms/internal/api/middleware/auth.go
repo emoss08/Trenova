@@ -99,6 +99,7 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		LastReauthenticatedAt:  sess.LastReauthenticatedAt,
 		RiskDecision:           sess.RiskDecision,
 		RiskDecisionID:         sess.RiskDecisionID,
+		IsPortalUser:           sess.IsPortalUser,
 	})
 
 	return nil

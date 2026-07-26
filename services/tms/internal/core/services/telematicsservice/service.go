@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
@@ -32,6 +33,7 @@ type Params struct {
 	EncryptionService   *encryptionservice.Service
 	RealtimeService     services.RealtimeService
 	Notifications       *notificationservice.Service
+	DriverNotify        *drivernotificationservice.Service `optional:"true"`
 	AssignmentRepo      repositories.AssignmentRepository
 	ShipmentRepo        repositories.ShipmentRepository
 	ShipmentMoveRepo    repositories.ShipmentMoveRepository
@@ -49,6 +51,7 @@ type Service struct {
 	encryptionService   *encryptionservice.Service
 	realtimeService     services.RealtimeService
 	notifications       *notificationservice.Service
+	driverNotify        *drivernotificationservice.Service
 	assignmentRepo      repositories.AssignmentRepository
 	shipmentRepo        repositories.ShipmentRepository
 	shipmentMoveRepo    repositories.ShipmentMoveRepository
@@ -67,6 +70,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		encryptionService:   p.EncryptionService,
 		realtimeService:     p.RealtimeService,
 		notifications:       p.Notifications,
+		driverNotify:        p.DriverNotify,
 		assignmentRepo:      p.AssignmentRepo,
 		shipmentRepo:        p.ShipmentRepo,
 		shipmentMoveRepo:    p.ShipmentMoveRepo,
