@@ -3,6 +3,7 @@ package seedtest
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -228,4 +229,49 @@ func SeedFullTestData(t *testing.T, ctx context.Context, db *bun.DB) *TestData {
 
 	require.NoError(t, tx.Commit(), "failed to commit test data")
 	return data
+}
+
+// SeedAdditionalTenant creates a second, fully isolated tenant inside a database
+// that already has one. Tenant-scoping tests need two tenants side by side, and
+// the uniquely named business unit, organization and state keep them from
+// colliding on the schema's unique indexes.
+func SeedAdditionalTenant(
+	t *testing.T,
+	ctx context.Context,
+	db *bun.DB,
+	suffix string,
+) *TestData {
+	t.Helper()
+
+	tx, err := db.BeginTx(ctx, nil)
+	require.NoError(t, err, "failed to begin transaction for additional tenant")
+
+	state := NewState().
+		WithName("Test State "+suffix).
+		WithAbbreviation(suffix).
+		Build(t, ctx, tx)
+	bu := NewBusinessUnit().
+		WithName("Test Business Unit "+suffix).
+		WithCode(suffix).
+		Build(t, ctx, tx)
+	org := NewOrganization(bu.ID, state.ID).
+		WithName("Test Organization "+suffix).
+		WithScacCode(suffix).
+		WithDOTNumber("999"+suffix).
+		WithBucketName("test-bucket-"+strings.ToLower(suffix)).
+		Build(t, ctx, tx)
+	user := NewUser(org.ID, bu.ID).
+		WithUsername("testuser"+strings.ToLower(suffix)).
+		WithEmail("test-"+strings.ToLower(suffix)+"@example.com").
+		WithPassword("password123").
+		Build(t, ctx, tx)
+
+	require.NoError(t, tx.Commit(), "failed to commit additional tenant")
+
+	return &TestData{
+		BusinessUnit: bu,
+		Organization: org,
+		User:         user,
+		State:        state,
+	}
 }

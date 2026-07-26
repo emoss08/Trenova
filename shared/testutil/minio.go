@@ -3,6 +3,8 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -177,6 +179,59 @@ func WithMinioBucket(bucket string) func(*MinioOptions) {
 	}
 }
 
+// MinioEndpointEnv points the suite at an already-running MinIO (a CI service
+// container) instead of starting a throwaway one, so every `go test` process
+// shares one object store.
+const MinioEndpointEnv = "TRENOVA_TEST_MINIO_ENDPOINT"
+
+// resolveMinioEndpoint returns a host:port to run against, starting a container
+// only when the caller has not supplied one.
+func resolveMinioEndpoint(
+	ctx context.Context,
+	options MinioOptions,
+) (string, testcontainers.Container, error) {
+	if endpoint := strings.TrimSpace(os.Getenv(MinioEndpointEnv)); endpoint != "" {
+		return endpoint, nil, nil
+	}
+
+	req := testcontainers.ContainerRequest{
+		Image:        options.Image,
+		ExposedPorts: []string{"9000/tcp"},
+		Env: map[string]string{
+			"MINIO_ROOT_USER":     options.AccessKey,
+			"MINIO_ROOT_PASSWORD": options.SecretKey,
+		},
+		Cmd: []string{"server", "/data"},
+		WaitingFor: wait.ForAll(
+			wait.ForHTTP("/minio/health/live").WithPort("9000/tcp"),
+			wait.ForListeningPort("9000/tcp"),
+		).WithDeadline(60 * time.Second),
+	}
+
+	container, err := testcontainers.GenericContainer(
+		ctx,
+		testcontainers.GenericContainerRequest{
+			ContainerRequest: req,
+			Started:          true,
+		},
+	)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to start minio container: %w", err)
+	}
+
+	host, err := container.Host(ctx)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get minio host: %w", err)
+	}
+
+	port, err := container.MappedPort(ctx, "9000/tcp")
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get minio port: %w", err)
+	}
+
+	return fmt.Sprintf("%s:%s", host, port.Port()), container, nil
+}
+
 func getSharedMinio() (*MinioContainer, error) {
 	sharedMinioOnce.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -184,47 +239,11 @@ func getSharedMinio() (*MinioContainer, error) {
 
 		options := DefaultMinioOptions()
 
-		req := testcontainers.ContainerRequest{
-			Name:         "trenova-test-minio",
-			Image:        options.Image,
-			ExposedPorts: []string{"9000/tcp"},
-			Env: map[string]string{
-				"MINIO_ROOT_USER":     options.AccessKey,
-				"MINIO_ROOT_PASSWORD": options.SecretKey,
-			},
-			Cmd: []string{"server", "/data"},
-			WaitingFor: wait.ForAll(
-				wait.ForHTTP("/minio/health/live").WithPort("9000/tcp"),
-				wait.ForListeningPort("9000/tcp"),
-			).WithDeadline(60 * time.Second),
-		}
-
-		container, err := testcontainers.GenericContainer(
-			ctx,
-			testcontainers.GenericContainerRequest{
-				ContainerRequest: req,
-				Started:          true,
-				Reuse:            true,
-			},
-		)
+		endpoint, container, err := resolveMinioEndpoint(ctx, options)
 		if err != nil {
-			sharedMinioErr = fmt.Errorf("failed to start minio container: %w", err)
+			sharedMinioErr = err
 			return
 		}
-
-		host, err := container.Host(ctx)
-		if err != nil {
-			sharedMinioErr = fmt.Errorf("failed to get minio host: %w", err)
-			return
-		}
-
-		port, err := container.MappedPort(ctx, "9000/tcp")
-		if err != nil {
-			sharedMinioErr = fmt.Errorf("failed to get minio port: %w", err)
-			return
-		}
-
-		endpoint := fmt.Sprintf("%s:%s", host, port.Port())
 
 		client, err := minio.New(endpoint, &minio.Options{
 			Creds:  credentials.NewStaticV4(options.AccessKey, options.SecretKey, ""),
@@ -235,10 +254,12 @@ func getSharedMinio() (*MinioContainer, error) {
 			return
 		}
 
+		// Processes share the server, so treat an existing bucket as success.
 		err = client.MakeBucket(ctx, options.Bucket, minio.MakeBucketOptions{})
 		if err != nil {
 			errResponse := minio.ToErrorResponse(err)
-			if errResponse.Code != "BucketAlreadyOwnedByYou" {
+			if errResponse.Code != "BucketAlreadyOwnedByYou" &&
+				errResponse.Code != "BucketAlreadyExists" {
 				sharedMinioErr = fmt.Errorf("failed to create test bucket: %w", err)
 				return
 			}

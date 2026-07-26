@@ -3,6 +3,8 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -22,6 +24,9 @@ var (
 type RedisContainer struct {
 	container testcontainers.Container
 	address   string
+	// db isolates concurrent test processes that share one Redis server, so a
+	// flush in one package cannot wipe another package's keys.
+	db int
 }
 
 func (r *RedisContainer) Address() string {
@@ -31,6 +36,7 @@ func (r *RedisContainer) Address() string {
 func (r *RedisContainer) Client() *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr: r.address,
+		DB:   r.db,
 	})
 }
 
@@ -92,13 +98,23 @@ func SetupRedis(t *testing.T, opts ...func(*RedisOptions)) *RedisContainer {
 	return rc
 }
 
+// RedisAddrEnv points the suite at an already-running Redis instead of starting
+// a throwaway container, so every `go test` process shares one server.
+const RedisAddrEnv = "TRENOVA_TEST_REDIS_ADDR"
+
 func getSharedRedis() (*RedisContainer, error) {
 	sharedRedisOnce.Do(func() {
+		if addr := strings.TrimSpace(os.Getenv(RedisAddrEnv)); addr != "" {
+			// Redis ships with 16 logical databases; spreading processes across
+			// them keeps a shared server safe for parallel packages.
+			sharedRedisContainer = &RedisContainer{address: addr, db: os.Getpid() % 16}
+			return
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
 		req := testcontainers.ContainerRequest{
-			Name:         "trenova-test-redis",
 			Image:        "redis:8",
 			ExposedPorts: []string{"6379/tcp"},
 			WaitingFor:   wait.ForLog("Ready to accept connections"),
@@ -109,7 +125,6 @@ func getSharedRedis() (*RedisContainer, error) {
 			testcontainers.GenericContainerRequest{
 				ContainerRequest: req,
 				Started:          true,
-				Reuse:            true,
 			},
 		)
 		if err != nil {
@@ -146,7 +161,7 @@ func SetupTestRedis(t *testing.T) *redis.Client {
 
 	client := rc.Client()
 
-	client.FlushAll(context.Background())
+	client.FlushDB(context.Background())
 
 	t.Cleanup(func() {
 		client.Close()

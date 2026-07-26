@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -19,9 +20,10 @@ import (
 )
 
 var (
-	sharedContainer *PostgresContainer
-	sharedOnce      sync.Once
-	sharedErr       error
+	sharedContainer        *PostgresContainer
+	sharedRunningContainer *postgres.PostgresContainer
+	sharedOnce             sync.Once
+	sharedErr              error
 )
 
 type PostgresContainer struct {
@@ -166,6 +168,86 @@ func RequireIntegration(t *testing.T) {
 	}
 }
 
+// PostgresDSNEnv points the suite at an already-running Postgres instead of
+// starting a throwaway container. Sharing one server across every `go test`
+// process is what keeps the integration suite fast in CI.
+const PostgresDSNEnv = "TRENOVA_TEST_POSTGRES_DSN"
+
+// resolveAdminDSN returns a DSN for a Postgres server to run against, starting a
+// container only when the caller has not supplied one.
+func resolveAdminDSN(ctx context.Context, options PostgresOptions) (string, error) {
+	if dsn := strings.TrimSpace(os.Getenv(PostgresDSNEnv)); dsn != "" {
+		return dsn, nil
+	}
+
+	container, err := postgres.Run(ctx,
+		options.Image,
+		postgres.WithDatabase(options.Database),
+		postgres.WithUsername(options.Username),
+		postgres.WithPassword(options.Password),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2),
+		),
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to start postgres container: %w", err)
+	}
+
+	sharedRunningContainer = container
+
+	host, err := container.Host(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get postgres host: %w", err)
+	}
+
+	port, err := container.MappedPort(ctx, "5432")
+	if err != nil {
+		return "", fmt.Errorf("failed to get postgres port: %w", err)
+	}
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		options.Username, options.Password, host, port.Port(), options.Database), nil
+}
+
+// replaceDatabase swaps the database segment of a Postgres DSN.
+func replaceDatabase(dsn, database string) string {
+	base, query, hasQuery := strings.Cut(dsn, "?")
+	slash := strings.LastIndex(base, "/")
+	if slash < 0 {
+		return dsn
+	}
+
+	replaced := base[:slash+1] + database
+	if hasQuery {
+		return replaced + "?" + query
+	}
+
+	return replaced
+}
+
+// createDatabaseWithRetry rides out the transient failures that show up when a
+// dozen test processes create their databases on one server at the same time.
+func createDatabaseWithRetry(ctx context.Context, adminDB *bun.DB, dbName string) error {
+	stmt := fmt.Sprintf("CREATE DATABASE %s", dbName)
+
+	var lastErr error
+	for attempt := range 10 {
+		if _, lastErr = adminDB.ExecContext(ctx, stmt); lastErr == nil {
+			return nil
+		}
+
+		backoff := min(time.Duration(attempt+1)*250*time.Millisecond, 3*time.Second)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff):
+		}
+	}
+
+	return lastErr
+}
+
 func getSharedPostgres() (*PostgresContainer, error) {
 	sharedOnce.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -173,37 +255,20 @@ func getSharedPostgres() (*PostgresContainer, error) {
 
 		options := DefaultPostgresOptions()
 
-		container, err := postgres.Run(ctx,
-			options.Image,
-			postgres.WithDatabase(options.Database),
-			postgres.WithUsername(options.Username),
-			postgres.WithPassword(options.Password),
-			testcontainers.WithWaitStrategy(
-				wait.ForLog("database system is ready to accept connections").
-					WithOccurrence(2),
-			),
-			testcontainers.WithReuseByName("trenova-test-postgres"),
-		)
+		adminDSN, err := resolveAdminDSN(ctx, options)
 		if err != nil {
-			sharedErr = fmt.Errorf("failed to start postgres container: %w", err)
+			sharedErr = err
 			return
 		}
 
-		host, err := container.Host(ctx)
-		if err != nil {
-			sharedErr = fmt.Errorf("failed to get postgres host: %w", err)
-			return
-		}
-
-		port, err := container.MappedPort(ctx, "5432")
-		if err != nil {
-			sharedErr = fmt.Errorf("failed to get postgres port: %w", err)
-			return
-		}
-
-		adminDSN := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-			options.Username, options.Password, host, port.Port(), options.Database)
-		adminSQL := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(adminDSN)))
+		// Many test processes share one server, so CREATE DATABASE can queue
+		// behind other sessions; the default read timeout is too tight for that.
+		adminSQL := sql.OpenDB(pgdriver.NewConnector(
+			pgdriver.WithDSN(adminDSN),
+			pgdriver.WithReadTimeout(2*time.Minute),
+			pgdriver.WithWriteTimeout(2*time.Minute),
+		))
+		adminSQL.SetMaxOpenConns(2)
 		adminDB := bun.NewDB(adminSQL, pgdialect.New())
 
 		for i := range 30 {
@@ -212,24 +277,23 @@ func getSharedPostgres() (*PostgresContainer, error) {
 			}
 			if i == 29 {
 				adminDB.Close()
-				sharedErr = fmt.Errorf("failed to connect to postgres container after retries")
+				sharedErr = fmt.Errorf("failed to connect to postgres after retries")
 				return
 			}
 			time.Sleep(500 * time.Millisecond)
 		}
 
-		dbName := fmt.Sprintf("trenova_test_%d", os.Getpid())
+		dbName := fmt.Sprintf("trenova_shared_test_%d", os.Getpid())
 
-		_, _ = adminDB.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbName))
-		_, err = adminDB.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", dbName))
+		_, _ = adminDB.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", dbName))
+		err = createDatabaseWithRetry(ctx, adminDB, dbName)
 		adminDB.Close()
 		if err != nil {
 			sharedErr = fmt.Errorf("failed to create per-process database: %w", err)
 			return
 		}
 
-		dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-			options.Username, options.Password, host, port.Port(), dbName)
+		dsn := replaceDatabase(adminDSN, dbName)
 		sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 		db := bun.NewDB(sqldb, pgdialect.New())
 
@@ -239,7 +303,7 @@ func getSharedPostgres() (*PostgresContainer, error) {
 		}
 
 		sharedContainer = &PostgresContainer{
-			container: container,
+			container: sharedRunningContainer,
 			dsn:       dsn,
 			db:        db,
 		}
