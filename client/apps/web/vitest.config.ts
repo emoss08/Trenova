@@ -41,6 +41,10 @@ export default defineConfig({
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
         },
         optimizeDeps: {
+          // @foony/realtime builds its Node-only `ws` fallback specifier at
+          // runtime, so pre-bundling it makes esbuild try to resolve `ws` in a
+          // browser target. Mirrors the app's vite.config.ts.
+          exclude: ["@foony/realtime"],
           include: [
             "react",
             "react-dom",

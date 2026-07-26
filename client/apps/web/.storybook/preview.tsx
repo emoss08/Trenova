@@ -1,12 +1,12 @@
-import "@/styles/app.css";
+import "@trenova/shared/styles/app.css";
 
 import type { Decorator, Preview } from "@storybook/react-vite";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useMemo } from "react";
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@trenova/shared/components/theme-provider";
+import { Toaster } from "@trenova/shared/components/ui/toaster";
 
 const withAppProviders: Decorator = (Story, context) => {
   const theme = context.globals.theme === "dark" ? "dark" : "light";

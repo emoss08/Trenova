@@ -61,7 +61,7 @@ jobs:
       matrix:
         task:
           - name: Lint
-            run: pnpm lint --format=github
+            run: pnpm lint -- --format=github
           - name: Typecheck
             run: pnpm typecheck
           - name: Test
