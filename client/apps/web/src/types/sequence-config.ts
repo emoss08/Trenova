@@ -11,6 +11,7 @@ export const sequenceTypes = [
   "journal_entry",
   "manual_journal_request",
   "location_code",
+  "driver_settlement",
 ] as const;
 
 export const sequenceTypeSchema = z.enum(sequenceTypes);
