@@ -9,6 +9,13 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
+type notificationActionParams struct {
+	IDs          []string
+	TenantInfo   pagination.TenantInfo
+	PersonalOnly bool
+	Action       func(context.Context, repositories.NotificationActionRequest) error
+}
+
 func (r *mutationResolver) notificationAction(
 	ctx context.Context,
 	ids []string,
@@ -19,14 +26,53 @@ func (r *mutationResolver) notificationAction(
 		return false, err
 	}
 
-	notificationIDs, err := parseIDs(ids)
+	return r.applyNotificationAction(ctx, notificationActionParams{
+		IDs:          ids,
+		TenantInfo:   tenantInfo(authCtx),
+		PersonalOnly: authCtx.IsPortalUser,
+		Action:       action,
+	})
+}
+
+// myNotificationAction resolves the signed-in driver before acting and always
+// forces personal scope, so a portal caller can never mutate an
+// organization-wide notification even if the session predates portal tagging.
+func (r *mutationResolver) myNotificationAction(
+	ctx context.Context,
+	ids []string,
+	action func(context.Context, repositories.NotificationActionRequest) error,
+) (bool, error) {
+	authCtx, err := r.requireAuth(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	if err = action(ctx, repositories.NotificationActionRequest{
-		IDs:        notificationIDs,
-		TenantInfo: tenantInfo(authCtx),
+	ti := tenantInfo(authCtx)
+	if _, err = r.driverPortalService.ResolveWorker(ctx, ti); err != nil {
+		return false, err
+	}
+
+	return r.applyNotificationAction(ctx, notificationActionParams{
+		IDs:          ids,
+		TenantInfo:   ti,
+		PersonalOnly: true,
+		Action:       action,
+	})
+}
+
+func (r *mutationResolver) applyNotificationAction(
+	ctx context.Context,
+	params notificationActionParams,
+) (bool, error) {
+	notificationIDs, err := parseIDs(params.IDs)
+	if err != nil {
+		return false, err
+	}
+
+	if err = params.Action(ctx, repositories.NotificationActionRequest{
+		IDs:          notificationIDs,
+		TenantInfo:   params.TenantInfo,
+		PersonalOnly: params.PersonalOnly,
 	}); err != nil {
 		return false, err
 	}

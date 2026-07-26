@@ -31,7 +31,7 @@ export function useDashProfile() {
 }
 
 function NotificationBell() {
-  const { data: unreadCount } = useUnreadNotificationCount();
+  const { data: unreadCount } = useUnreadNotificationCount("mine");
   const count = unreadCount ?? 0;
 
   return (

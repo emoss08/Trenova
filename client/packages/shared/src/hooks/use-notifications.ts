@@ -2,6 +2,7 @@ import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/graphq
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
 import { notificationService } from "@trenova/shared/services/notification";
+import type { NotificationScope } from "@trenova/shared/services/notification";
 import type { Notification, NotificationFeed, NotificationState } from "@trenova/shared/types/notification";
 import {
   useInfiniteQuery,
@@ -23,13 +24,17 @@ export interface NotificationFeedFilters {
 
 type FeedData = InfiniteData<NotificationFeed, string | null>;
 
-function feedQueryKey(filters: NotificationFeedFilters) {
-  return [...notificationQueries.feed._def, "infinite", filters] as const;
+function feedQueryKey(filters: NotificationFeedFilters, scope: NotificationScope) {
+  return [...notificationQueries.feed._def, "infinite", scope, filters] as const;
 }
 
-export function useNotificationFeed(filters: NotificationFeedFilters, enabled: boolean) {
+export function useNotificationFeed(
+  filters: NotificationFeedFilters,
+  enabled: boolean,
+  scope: NotificationScope = "all",
+) {
   return useInfiniteQuery({
-    queryKey: feedQueryKey(filters),
+    queryKey: feedQueryKey(filters, scope),
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) =>
       notificationService.listNotifications({
@@ -37,6 +42,7 @@ export function useNotificationFeed(filters: NotificationFeedFilters, enabled: b
         after: pageParam,
         state: filters.state,
         unreadOnly: filters.unreadOnly,
+        scope,
       }),
     getNextPageParam: (lastPage) =>
       lastPage.hasNextPage && lastPage.endCursor ? lastPage.endCursor : undefined,
@@ -48,9 +54,9 @@ export function useNotificationFeed(filters: NotificationFeedFilters, enabled: b
   });
 }
 
-export function useUnreadNotificationCount() {
+export function useUnreadNotificationCount(scope: NotificationScope = "all") {
   return useQuery({
-    ...notificationQueries.unreadCount(),
+    ...notificationQueries.unreadCount(scope),
     refetchInterval: UNREAD_COUNT_REFETCH_INTERVAL,
   });
 }
@@ -140,9 +146,9 @@ function pruneFeeds(queryClient: QueryClient) {
   }
 }
 
-function adjustUnreadCount(queryClient: QueryClient, delta: number) {
+function adjustUnreadCount(queryClient: QueryClient, delta: number, scope: NotificationScope) {
   if (delta === 0) return;
-  queryClient.setQueryData<number>(notificationQueries.unreadCount().queryKey, (count) =>
+  queryClient.setQueryData<number>(notificationQueries.unreadCount(scope).queryKey, (count) =>
     Math.max(0, (count ?? 0) + delta),
   );
 }
@@ -154,22 +160,28 @@ const ACTION_ERRORS: Record<NotificationAction, string> = {
   restore: "Couldn't restore notification",
 };
 
-const ACTION_FNS: Record<NotificationAction, (ids: string[]) => Promise<void>> = {
-  read: (ids) => notificationService.markRead(ids),
-  unread: (ids) => notificationService.markUnread(ids),
-  dismiss: (ids) => notificationService.dismiss(ids),
-  restore: (ids) => notificationService.restore(ids),
+const ACTION_FNS: Record<
+  NotificationAction,
+  (ids: string[], scope: NotificationScope) => Promise<void>
+> = {
+  read: (ids, scope) => notificationService.markRead(ids, scope),
+  unread: (ids, scope) => notificationService.markUnread(ids, scope),
+  dismiss: (ids, scope) => notificationService.dismiss(ids, scope),
+  restore: (ids, scope) => notificationService.restore(ids, scope),
 };
 
-export function useNotificationAction(action: NotificationAction) {
+export function useNotificationAction(
+  action: NotificationAction,
+  scope: NotificationScope = "all",
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ACTION_FNS[action],
+    mutationFn: (ids: string[]) => ACTION_FNS[action](ids, scope),
     onMutate: async (ids) => {
       await queryClient.cancelQueries({ queryKey: notificationQueries._def });
       const delta = applyFeedPatch(queryClient, new Set(ids), action);
-      adjustUnreadCount(queryClient, delta);
+      adjustUnreadCount(queryClient, delta, scope);
       pruneFeeds(queryClient);
     },
     onError: () => {
@@ -215,11 +227,11 @@ export function useReplyToMention() {
   });
 }
 
-export function useMarkAllNotificationsRead() {
+export function useMarkAllNotificationsRead(scope: NotificationScope = "all") {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => notificationService.markAllRead(),
+    mutationFn: () => notificationService.markAllRead(scope),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: notificationQueries._def });
       const now = Math.floor(Date.now() / 1000);
@@ -239,7 +251,7 @@ export function useMarkAllNotificationsRead() {
           };
         },
       );
-      queryClient.setQueryData<number>(notificationQueries.unreadCount().queryKey, 0);
+      queryClient.setQueryData<number>(notificationQueries.unreadCount(scope).queryKey, 0);
     },
     onError: () => {
       toast.error("Couldn't mark all as read");

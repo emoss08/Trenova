@@ -126,8 +126,9 @@ func (s *Service) CountUnread(
 	ctx context.Context,
 	userID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
 ) (int64, error) {
-	return s.repo.CountUnread(ctx, userID, tenantInfo)
+	return s.repo.CountUnread(ctx, userID, tenantInfo, personalOnly)
 }
 
 func (s *Service) MarkAsRead(
@@ -162,6 +163,7 @@ func (s *Service) MarkAllAsRead(
 	ctx context.Context,
 	userID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
 ) error {
-	return s.repo.MarkAllAsRead(ctx, userID, tenantInfo)
+	return s.repo.MarkAllAsRead(ctx, userID, tenantInfo, personalOnly)
 }

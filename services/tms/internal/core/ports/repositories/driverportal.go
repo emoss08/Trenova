@@ -68,6 +68,10 @@ type PortalAccessRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) (*worker.Worker, error)
+	ExistsWorkerForUser(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (bool, error)
 	GetWorkerForPortalManagement(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

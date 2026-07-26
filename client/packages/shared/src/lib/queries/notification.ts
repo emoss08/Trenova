@@ -1,5 +1,8 @@
 import { notificationService } from "@trenova/shared/services/notification";
-import type { NotificationFeedParams } from "@trenova/shared/services/notification";
+import type {
+  NotificationFeedParams,
+  NotificationScope,
+} from "@trenova/shared/services/notification";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const notification = createQueryKeys("notification", {
@@ -7,8 +10,8 @@ export const notification = createQueryKeys("notification", {
     queryKey: [params],
     queryFn: async () => notificationService.listNotifications(params),
   }),
-  unreadCount: () => ({
-    queryKey: ["unread-count"],
-    queryFn: async () => notificationService.getUnreadCount(),
+  unreadCount: (scope: NotificationScope = "all") => ({
+    queryKey: ["unread-count", scope],
+    queryFn: async () => notificationService.getUnreadCount(scope),
   }),
 });

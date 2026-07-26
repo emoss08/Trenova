@@ -27,6 +27,7 @@ type Session struct {
 	LastReauthenticatedAt int64        `json:"lastReauthenticatedAt,omitempty"`
 	RiskDecision          string       `json:"riskDecision,omitempty"`
 	RiskDecisionID        pulid.ID     `json:"riskDecisionId,omitempty"`
+	IsPortalUser          bool         `json:"isPortalUser"`
 	LastAccessedAt        int64        `json:"lastAccessedAt"`
 	ExpiresAt             int64        `json:"expiresAt"`
 	CreatedAt             int64        `json:"createdAt"`
@@ -46,6 +47,7 @@ type NewSessionRequest struct {
 	LastReauthenticatedAt int64
 	RiskDecision          string
 	RiskDecisionID        pulid.ID
+	IsPortalUser          bool
 }
 
 func NewSession(req *NewSessionRequest) *Session {
@@ -78,6 +80,7 @@ func NewSession(req *NewSessionRequest) *Session {
 		LastReauthenticatedAt: reauthAt,
 		RiskDecision:          req.RiskDecision,
 		RiskDecisionID:        req.RiskDecisionID,
+		IsPortalUser:          req.IsPortalUser,
 		LastAccessedAt:        now,
 		ExpiresAt:             req.ExpiresAt,
 		CreatedAt:             now,

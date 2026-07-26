@@ -31,6 +31,7 @@ const (
 	LastReauthenticatedAtKey  = Key("lastReauthenticatedAt")
 	RiskDecisionKey           = Key("riskDecision")
 	RiskDecisionIDKey         = Key("riskDecisionId")
+	IsPortalUserKey           = Key("isPortalUser")
 )
 
 const (
@@ -105,6 +106,7 @@ type SessionAuthContextParams struct {
 	LastReauthenticatedAt  int64
 	RiskDecision           string
 	RiskDecisionID         pulid.ID
+	IsPortalUser           bool
 }
 
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
@@ -121,6 +123,7 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	c.Set(string(LastReauthenticatedAtKey), p.LastReauthenticatedAt)
 	c.Set(string(RiskDecisionKey), p.RiskDecision)
 	c.Set(string(RiskDecisionIDKey), p.RiskDecisionID)
+	c.Set(string(IsPortalUserKey), p.IsPortalUser)
 	c.Request = c.Request.WithContext(WithSessionRoleActivation(
 		c.Request.Context(),
 		p.ActiveRoleIDs,
@@ -158,6 +161,7 @@ type AuthContext struct {
 	LastReauthenticatedAt  int64
 	RiskDecision           string
 	RiskDecisionID         pulid.ID
+	IsPortalUser           bool
 }
 
 func (ac *AuthContext) IsAPIKey() bool {
@@ -286,6 +290,11 @@ func authContextFromGin(c *gin.Context) *AuthContext {
 			c,
 			string(RiskDecisionIDKey),
 			pulid.Nil,
+		),
+		IsPortalUser: helpers.ContextValueOr[bool](
+			c,
+			string(IsPortalUserKey),
+			false,
 		),
 	}
 }

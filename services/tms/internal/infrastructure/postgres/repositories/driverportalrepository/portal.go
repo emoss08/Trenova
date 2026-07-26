@@ -197,6 +197,25 @@ func (r *portalAccessRepository) GetWorkerByUserID(
 	return entity, nil
 }
 
+func (r *portalAccessRepository) ExistsWorkerForUser(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	cols := buncolgen.WorkerColumns
+	exists, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*worker.Worker)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				Where(cols.UserID.Eq(), tenantInfo.UserID)
+		}).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("check worker linkage for user: %w", err)
+	}
+	return exists, nil
+}
+
 func (r *portalAccessRepository) GetWorkerForPortalManagement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
