@@ -38,6 +38,7 @@ type Params struct {
 	SSOConfigRepo     repositories.SSOConfigRepository
 	SSOStateRepo      repositories.SSOLoginStateRepository
 	APIKeyRepository  repositories.APIKeyRepository
+	PortalRepo        repositories.PortalAccessRepository
 	UsageRecorder     services.UsageRecorder
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
@@ -49,13 +50,14 @@ type Service struct {
 	or        repositories.OrganizationRepository
 	sr        repositories.SessionRepository
 	rbacRepo  repositories.RBACRepository
-	ssoRepo   repositories.SSOConfigRepository
-	stateRepo repositories.SSOLoginStateRepository
-	akr       repositories.APIKeyRepository
-	usageBuf  services.UsageRecorder
-	enc       *encryptionservice.Service
-	cfg       *config.Config
-	l         *zap.Logger
+	ssoRepo    repositories.SSOConfigRepository
+	stateRepo  repositories.SSOLoginStateRepository
+	akr        repositories.APIKeyRepository
+	portalRepo repositories.PortalAccessRepository
+	usageBuf   services.UsageRecorder
+	enc        *encryptionservice.Service
+	cfg        *config.Config
+	l          *zap.Logger
 }
 
 func New(p Params) services.AuthService {
@@ -64,13 +66,14 @@ func New(p Params) services.AuthService {
 		or:        p.OrganizationRepo,
 		sr:        p.SessionRepository,
 		rbacRepo:  p.RBACRepository,
-		ssoRepo:   p.SSOConfigRepo,
-		stateRepo: p.SSOStateRepo,
-		akr:       p.APIKeyRepository,
-		usageBuf:  p.UsageRecorder,
-		enc:       p.Encryption,
-		cfg:       p.Config,
-		l:         p.Logger.Named("service.auth"),
+		ssoRepo:    p.SSOConfigRepo,
+		stateRepo:  p.SSOStateRepo,
+		akr:        p.APIKeyRepository,
+		portalRepo: p.PortalRepo,
+		usageBuf:   p.UsageRecorder,
+		enc:        p.Encryption,
+		cfg:        p.Config,
+		l:          p.Logger.Named("service.auth"),
 	}
 }
 
@@ -660,12 +663,20 @@ func (s *Service) createSession(
 ) (*session.Session, error) {
 	expiresAt := timeutils.NowUnix() + int64(session.DefaultTTL.Seconds())
 
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  user.CurrentOrganizationID,
+		BuID:   user.BusinessUnitID,
+		UserID: user.ID,
+	}
+
+	isPortalUser, err := s.portalRepo.ExistsWorkerForUser(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	sess := session.NewSession(&session.NewSessionRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  user.CurrentOrganizationID,
-			BuID:   user.BusinessUnitID,
-			UserID: user.ID,
-		},
+		TenantInfo:            tenantInfo,
+		IsPortalUser:          isPortalUser,
 		ExpiresAt:             expiresAt,
 		AuthProvider:          authn.AuthProvider,
 		ExternalIdentityID:    authn.ExternalIdentityID,

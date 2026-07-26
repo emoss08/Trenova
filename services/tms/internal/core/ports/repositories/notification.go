@@ -18,11 +18,13 @@ type ListNotificationConnectionRequest struct {
 	NotificationColumns []string                 `json:"-"`
 	State               notification.State       `json:"state"`
 	UnreadOnly          bool                     `json:"unreadOnly"`
+	PersonalOnly        bool                     `json:"-"`
 }
 
 type NotificationActionRequest struct {
-	IDs        []pulid.ID
-	TenantInfo pagination.TenantInfo
+	IDs          []pulid.ID
+	TenantInfo   pagination.TenantInfo
+	PersonalOnly bool
 }
 
 type ExistsRecentNotificationRequest struct {
@@ -49,12 +51,18 @@ type NotificationRepository interface {
 	) (*pagination.CursorListResult[*notification.Notification], error)
 	MarkAsRead(ctx context.Context, req NotificationActionRequest) error
 	MarkAsUnread(ctx context.Context, req NotificationActionRequest) error
-	MarkAllAsRead(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) error
+	MarkAllAsRead(
+		ctx context.Context,
+		userID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		personalOnly bool,
+	) error
 	Dismiss(ctx context.Context, req NotificationActionRequest) error
 	Restore(ctx context.Context, req NotificationActionRequest) error
 	CountUnread(
 		ctx context.Context,
 		userID pulid.ID,
 		tenantInfo pagination.TenantInfo,
+		personalOnly bool,
 	) (int64, error)
 }

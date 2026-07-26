@@ -40,9 +40,9 @@ const priorityDot: Record<string, string> = {
 
 export function DashNotificationsPage() {
   const navigate = useNavigate();
-  const feed = useNotificationFeed({ state: "inbox", unreadOnly: false }, true);
-  const markRead = useNotificationAction("read");
-  const markAllRead = useMarkAllNotificationsRead();
+  const feed = useNotificationFeed({ state: "inbox", unreadOnly: false }, true, "mine");
+  const markRead = useNotificationAction("read", "mine");
+  const markAllRead = useMarkAllNotificationsRead("mine");
 
   const notifications = feed.data?.notifications ?? [];
   const hasUnread = notifications.some((notification) => notification.readAt === null);

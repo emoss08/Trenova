@@ -42,8 +42,8 @@ func (_m *MockNotificationRepository) EXPECT() *MockNotificationRepository_Expec
 }
 
 // CountUnread provides a mock function for the type MockNotificationRepository
-func (_mock *MockNotificationRepository) CountUnread(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) (int64, error) {
-	ret := _mock.Called(ctx, userID, tenantInfo)
+func (_mock *MockNotificationRepository) CountUnread(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo, personalOnly bool) (int64, error) {
+	ret := _mock.Called(ctx, userID, tenantInfo, personalOnly)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CountUnread")
@@ -51,16 +51,16 @@ func (_mock *MockNotificationRepository) CountUnread(ctx context.Context, userID
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (int64, error)); ok {
-		return returnFunc(ctx, userID, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, bool) (int64, error)); ok {
+		return returnFunc(ctx, userID, tenantInfo, personalOnly)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) int64); ok {
-		r0 = returnFunc(ctx, userID, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, bool) int64); ok {
+		r0 = returnFunc(ctx, userID, tenantInfo, personalOnly)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
-		r1 = returnFunc(ctx, userID, tenantInfo)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo, bool) error); ok {
+		r1 = returnFunc(ctx, userID, tenantInfo, personalOnly)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -76,11 +76,11 @@ type MockNotificationRepository_CountUnread_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockNotificationRepository_Expecter) CountUnread(ctx any, userID any, tenantInfo any) *MockNotificationRepository_CountUnread_Call {
-	return &MockNotificationRepository_CountUnread_Call{Call: _e.mock.On("CountUnread", ctx, userID, tenantInfo)}
+func (_e *MockNotificationRepository_Expecter) CountUnread(ctx any, userID any, tenantInfo any, personalOnly any) *MockNotificationRepository_CountUnread_Call {
+	return &MockNotificationRepository_CountUnread_Call{Call: _e.mock.On("CountUnread", ctx, userID, tenantInfo, personalOnly)}
 }
 
-func (_c *MockNotificationRepository_CountUnread_Call) Run(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo)) *MockNotificationRepository_CountUnread_Call {
+func (_c *MockNotificationRepository_CountUnread_Call) Run(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo, personalOnly bool)) *MockNotificationRepository_CountUnread_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -94,10 +94,15 @@ func (_c *MockNotificationRepository_CountUnread_Call) Run(run func(ctx context.
 		if args[2] != nil {
 			arg2 = args[2].(pagination.TenantInfo)
 		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -108,7 +113,7 @@ func (_c *MockNotificationRepository_CountUnread_Call) Return(n int64, err error
 	return _c
 }
 
-func (_c *MockNotificationRepository_CountUnread_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) (int64, error)) *MockNotificationRepository_CountUnread_Call {
+func (_c *MockNotificationRepository_CountUnread_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo, personalOnly bool) (int64, error)) *MockNotificationRepository_CountUnread_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -384,16 +389,16 @@ func (_c *MockNotificationRepository_ListConnection_Call) RunAndReturn(run func(
 }
 
 // MarkAllAsRead provides a mock function for the type MockNotificationRepository
-func (_mock *MockNotificationRepository) MarkAllAsRead(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) error {
-	ret := _mock.Called(ctx, userID, tenantInfo)
+func (_mock *MockNotificationRepository) MarkAllAsRead(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo, personalOnly bool) error {
+	ret := _mock.Called(ctx, userID, tenantInfo, personalOnly)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MarkAllAsRead")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
-		r0 = returnFunc(ctx, userID, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, bool) error); ok {
+		r0 = returnFunc(ctx, userID, tenantInfo, personalOnly)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -409,11 +414,11 @@ type MockNotificationRepository_MarkAllAsRead_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockNotificationRepository_Expecter) MarkAllAsRead(ctx any, userID any, tenantInfo any) *MockNotificationRepository_MarkAllAsRead_Call {
-	return &MockNotificationRepository_MarkAllAsRead_Call{Call: _e.mock.On("MarkAllAsRead", ctx, userID, tenantInfo)}
+func (_e *MockNotificationRepository_Expecter) MarkAllAsRead(ctx any, userID any, tenantInfo any, personalOnly any) *MockNotificationRepository_MarkAllAsRead_Call {
+	return &MockNotificationRepository_MarkAllAsRead_Call{Call: _e.mock.On("MarkAllAsRead", ctx, userID, tenantInfo, personalOnly)}
 }
 
-func (_c *MockNotificationRepository_MarkAllAsRead_Call) Run(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo)) *MockNotificationRepository_MarkAllAsRead_Call {
+func (_c *MockNotificationRepository_MarkAllAsRead_Call) Run(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo, personalOnly bool)) *MockNotificationRepository_MarkAllAsRead_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -427,10 +432,15 @@ func (_c *MockNotificationRepository_MarkAllAsRead_Call) Run(run func(ctx contex
 		if args[2] != nil {
 			arg2 = args[2].(pagination.TenantInfo)
 		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -441,7 +451,7 @@ func (_c *MockNotificationRepository_MarkAllAsRead_Call) Return(err error) *Mock
 	return _c
 }
 
-func (_c *MockNotificationRepository_MarkAllAsRead_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) error) *MockNotificationRepository_MarkAllAsRead_Call {
+func (_c *MockNotificationRepository_MarkAllAsRead_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo, personalOnly bool) error) *MockNotificationRepository_MarkAllAsRead_Call {
 	_c.Call.Return(run)
 	return _c
 }

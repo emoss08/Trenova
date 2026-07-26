@@ -36,21 +36,49 @@ func New(p Params) repositories.NotificationRepository {
 	}
 }
 
-func (r *repository) userOrGlobalFilter(
+var cols = buncolgen.NotificationColumns
+
+func (r *repository) scopeFilter(
 	q *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
 ) *bun.SelectQuery {
+	if personalOnly {
+		return q.
+			Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
+			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+	}
+
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.
-			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+			WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 				return inner.
-					Where(
-						"notif.target_user_id = ? AND notif.business_unit_id = ?",
-						tenantInfo.UserID,
-						tenantInfo.BuID,
-					).
-					WhereOr("notif.channel = ?", notification.ChannelGlobal)
-			})
+					Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
+					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+			}).
+			WhereOr(cols.Channel.Eq(), notification.ChannelGlobal)
+	})
+}
+
+func (r *repository) scopeActionQuery(
+	q *bun.UpdateQuery,
+	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
+) *bun.UpdateQuery {
+	if personalOnly {
+		return q.
+			Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
+			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+	}
+
+	return q.WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+		return uq.
+			WhereGroup(" AND ", func(inner *bun.UpdateQuery) *bun.UpdateQuery {
+				return inner.
+					Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
+					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+			}).
+			WhereOr(cols.Channel.Eq(), notification.ChannelGlobal)
 	})
 }
 
@@ -58,7 +86,6 @@ func (r *repository) ExistsRecent(
 	ctx context.Context,
 	req repositories.ExistsRecentNotificationRequest,
 ) (bool, error) {
-	cols := buncolgen.NotificationColumns
 	return r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*notification.Notification)(nil)).
@@ -98,14 +125,14 @@ func (r *repository) List(
 
 	q = querybuilder.ApplyFilters(
 		q,
-		"notif",
+		buncolgen.NotificationTable.Alias,
 		req.Filter,
 		(*notification.Notification)(nil),
 	)
 
-	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
-	q = r.userOrGlobalFilter(q, req.Filter.TenantInfo)
-	q = q.Order("notif.created_at DESC")
+	q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
+	q = r.scopeFilter(q, req.Filter.TenantInfo, false)
+	q = q.Order(cols.CreatedAt.OrderDesc())
 	q = q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 
 	total, err := q.ScanAndCount(ctx)
@@ -133,13 +160,13 @@ func stateFilter(
 	req *repositories.ListNotificationConnectionRequest,
 ) *bun.SelectQuery {
 	if req.State == notification.StateArchived {
-		q = q.Where("notif.dismissed_at IS NOT NULL")
+		q = q.Where(cols.DismissedAt.IsNotNull())
 	} else {
-		q = q.Where("notif.dismissed_at IS NULL")
+		q = q.Where(cols.DismissedAt.IsNull())
 	}
 
 	if req.UnreadOnly {
-		q = q.Where("notif.read_at IS NULL")
+		q = q.Where(cols.ReadAt.IsNull())
 	}
 
 	return q
@@ -160,9 +187,9 @@ func (r *repository) applyCursorPageFilters(
 		return nil, err
 	}
 
-	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
+	q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
 	q = stateFilter(q, req)
-	return r.userOrGlobalFilter(q, req.Filter.TenantInfo), nil
+	return r.scopeFilter(q, req.Filter.TenantInfo, req.PersonalOnly), nil
 }
 
 func (r *repository) applyTotalCountFilters(
@@ -176,9 +203,9 @@ func (r *repository) applyTotalCountFilters(
 		(*notification.Notification)(nil),
 	)
 
-	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
+	q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
 	q = stateFilter(q, req)
-	return r.userOrGlobalFilter(q, req.Filter.TenantInfo)
+	return r.scopeFilter(q, req.Filter.TenantInfo, req.PersonalOnly)
 }
 
 func (r *repository) ListConnection(
@@ -227,13 +254,12 @@ func (r *repository) ListConnection(
 }
 
 func (r *repository) actionQuery(req repositories.NotificationActionRequest) *bun.UpdateQuery {
-	return r.db.DB().
+	q := r.db.DB().
 		NewUpdate().
 		Model((*notification.Notification)(nil)).
-		Where("notif.id IN (?)", bun.List(req.IDs)).
-		Where("notif.organization_id = ?", req.TenantInfo.OrgID).
-		Where("((notif.target_user_id = ? AND notif.business_unit_id = ?) OR notif.channel = ?)",
-			req.TenantInfo.UserID, req.TenantInfo.BuID, notification.ChannelGlobal)
+		Where(cols.ID.In(), bun.List(req.IDs)).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID)
+	return r.scopeActionQuery(q, req.TenantInfo, req.PersonalOnly)
 }
 
 func (r *repository) MarkAsRead(
@@ -243,8 +269,8 @@ func (r *repository) MarkAsRead(
 	log := r.l.With(zap.String("operation", "MarkAsRead"))
 
 	_, err := r.actionQuery(req).
-		Set("read_at = ?", timeutils.NowUnix()).
-		Where("notif.read_at IS NULL").
+		Set(cols.ReadAt.Set(), timeutils.NowUnix()).
+		Where(cols.ReadAt.IsNull()).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to mark notifications as read", zap.Error(err))
@@ -261,8 +287,8 @@ func (r *repository) MarkAsUnread(
 	log := r.l.With(zap.String("operation", "MarkAsUnread"))
 
 	_, err := r.actionQuery(req).
-		Set("read_at = NULL").
-		Where("notif.read_at IS NOT NULL").
+		Set(cols.ReadAt.SetNull()).
+		Where(cols.ReadAt.IsNotNull()).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to mark notifications as unread", zap.Error(err))
@@ -280,9 +306,9 @@ func (r *repository) Dismiss(
 
 	now := timeutils.NowUnix()
 	_, err := r.actionQuery(req).
-		Set("dismissed_at = ?", now).
-		Set("read_at = COALESCE(read_at, ?)", now).
-		Where("notif.dismissed_at IS NULL").
+		Set(cols.DismissedAt.Set(), now).
+		Set(cols.ReadAt.SetExpr("COALESCE({}, ?)"), now).
+		Where(cols.DismissedAt.IsNull()).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to dismiss notifications", zap.Error(err))
@@ -299,8 +325,8 @@ func (r *repository) Restore(
 	log := r.l.With(zap.String("operation", "Restore"))
 
 	_, err := r.actionQuery(req).
-		Set("dismissed_at = NULL").
-		Where("notif.dismissed_at IS NOT NULL").
+		Set(cols.DismissedAt.SetNull()).
+		Where(cols.DismissedAt.IsNotNull()).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to restore notifications", zap.Error(err))
@@ -314,18 +340,28 @@ func (r *repository) MarkAllAsRead(
 	ctx context.Context,
 	userID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
 ) error {
 	log := r.l.With(zap.String("operation", "MarkAllAsRead"))
 
-	_, err := r.db.DB().
+	q := r.db.DB().
 		NewUpdate().
 		Model((*notification.Notification)(nil)).
-		Set("read_at = ?", timeutils.NowUnix()).
-		Where("notif.organization_id = ?", tenantInfo.OrgID).
-		Where("((notif.target_user_id = ? AND notif.business_unit_id = ?) OR notif.channel = ?)",
-			userID, tenantInfo.BuID, notification.ChannelGlobal).
-		Where("notif.read_at IS NULL").
-		Where("notif.dismissed_at IS NULL").
+		Set(cols.ReadAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.NotificationScopeTenantUpdate(uq, tenantInfo)
+		})
+
+	ti := tenantInfo
+	ti.UserID = userID
+	q = r.scopeActionQuery(q, ti, personalOnly)
+
+	_, err := q.
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.
+				Where(cols.ReadAt.IsNull()).
+				Where(cols.DismissedAt.IsNull())
+		}).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to mark all notifications as read", zap.Error(err))
@@ -339,17 +375,23 @@ func (r *repository) CountUnread(
 	ctx context.Context,
 	userID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
 ) (int64, error) {
 	log := r.l.With(zap.String("operation", "CountUnread"))
+
+	ti := tenantInfo
+	ti.UserID = userID
 
 	q := r.db.DB().
 		NewSelect().
 		Model((*notification.Notification)(nil)).
-		Where("notif.organization_id = ?", tenantInfo.OrgID).
-		Where("notif.read_at IS NULL").
-		Where("notif.dismissed_at IS NULL")
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.NotificationScopeTenant(sq, ti).
+				Where(cols.ReadAt.IsNull()).
+				Where(cols.DismissedAt.IsNull())
+		})
 
-	q = r.userOrGlobalFilter(q, tenantInfo)
+	q = r.scopeFilter(q, ti, personalOnly)
 
 	count, err := q.Count(ctx)
 	if err != nil {

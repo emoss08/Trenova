@@ -34,6 +34,44 @@ query NotificationUnreadCount {
   notificationUnreadCount
 }
 
+query MyNotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {
+  myNotifications(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...NotificationFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query MyNotificationUnreadCount {
+  myNotificationUnreadCount
+}
+
+mutation MarkAllMyNotificationsRead {
+  markAllMyNotificationsRead
+}
+
+mutation MarkMyNotificationsRead($ids: [ID!]!) {
+  markMyNotificationsRead(ids: $ids)
+}
+
+mutation MarkMyNotificationsUnread($ids: [ID!]!) {
+  markMyNotificationsUnread(ids: $ids)
+}
+
+mutation DismissMyNotifications($ids: [ID!]!) {
+  dismissMyNotifications(ids: $ids)
+}
+
+mutation RestoreMyNotifications($ids: [ID!]!) {
+  restoreMyNotifications(ids: $ids)
+}
+
 mutation MarkNotificationsRead($ids: [ID!]!) {
   markNotificationsRead(ids: $ids)
 }
