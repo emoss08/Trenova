@@ -19,7 +19,9 @@ type previewSlot struct {
 }
 
 // previewLimiter enforces single-flight previews per user: starting a new
-// preview cancels the user's previous in-flight one.
+// preview cancels the user's previous in-flight one. Only callers that opt in
+// participate — a surface that loads several previews at once (a dashboard)
+// would otherwise cancel all but its last one.
 type previewLimiter struct {
 	mu         sync.Mutex
 	generation uint64
@@ -56,11 +58,16 @@ type PreviewRequest struct {
 
 	Definition *report.Definition
 	Params     map[string]any
+	// Supersede marks this preview as replacing the caller's previous one, so
+	// the builder's in-flight query is dropped on the next keystroke. Surfaces
+	// that issue independent previews in parallel must leave it unset.
+	Supersede bool
 }
 
 type PreviewResult struct {
 	Columns   []services.ReportResultColumn
 	Rows      []services.ReportRow
+	Totals    services.ReportRow
 	Truncated bool
 }
 
@@ -69,9 +76,12 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*PreviewRes
 
 	previewCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	userKey := req.TenantInfo.UserID.String()
-	generation := s.previews.acquire(userKey, cancel)
-	defer s.previews.release(userKey, generation)
+
+	if req.Supersede {
+		userKey := req.TenantInfo.UserID.String()
+		generation := s.previews.acquire(userKey, cancel)
+		defer s.previews.release(userKey, generation)
+	}
 
 	result, err := s.runPreview(previewCtx, req)
 
@@ -131,9 +141,15 @@ func (s *Service) runPreview(
 		rows = append(rows, row)
 	}
 
+	totals, err := reader.Totals(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &PreviewResult{
 		Columns:   reader.Schema(),
 		Rows:      rows,
+		Totals:    totals,
 		Truncated: reader.Truncated(),
 	}, nil
 }

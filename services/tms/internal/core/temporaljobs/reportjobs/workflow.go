@@ -165,6 +165,7 @@ func RunReportWorkflow(
 				RunID:          payload.RunID,
 				OrganizationID: payload.OrganizationID,
 				BusinessUnitID: payload.BusinessUnitID,
+				Digest:         execResult.Digest,
 			},
 		).Get(deliverCtx, nil); err != nil {
 			workflow.GetLogger(ctx).Error("scheduled report delivery failed",

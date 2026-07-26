@@ -24,6 +24,19 @@ type EntityManifest struct {
 	ExcludeFields   []string                  `yaml:"excludeFields"`
 	Fields          map[string]*FieldManifest `yaml:"fields"`
 	Edges           map[string]*EdgeManifest  `yaml:"edges"`
+	PickEdges       map[string]*PickManifest  `yaml:"pickEdges"`
+}
+
+// PickManifest declares a to-one edge that resolves to a single row of a
+// to-many path — a shipment's origin stop, say. Unlike the edges above it has
+// no bun relation to parse, so the manifest supplies the whole definition.
+//
+// OrderBy terms read "<viaStep>.<column>", prefixed with "-" for descending:
+// `["-moves.sequence", "-stops.sequence"]` picks the last stop of the last move.
+type PickManifest struct {
+	Label   string   `yaml:"label"`
+	Via     []string `yaml:"via"`
+	OrderBy []string `yaml:"orderBy"`
 }
 
 type FieldManifest struct {
@@ -82,4 +95,13 @@ func (e *EntityManifest) SortedEdgeNames() []string {
 
 func (e *EdgeManifest) IsTraversable() bool {
 	return e.Traversable == nil || *e.Traversable
+}
+
+func (e *EntityManifest) SortedPickEdgeNames() []string {
+	names := make([]string, 0, len(e.PickEdges))
+	for name := range e.PickEdges {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }

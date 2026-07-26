@@ -21,8 +21,14 @@ entities:
       bol: { label: "BOL" }
       totalChargeAmount: { label: "Total Charge", format: money }
       freightChargeAmount: { label: "Freight Charge", format: money }
-      otherChargeAmount: { label: "Other Charges", format: money }
+      otherChargeAmount: { label: "Accessorial Charges", format: money }
       baseRate: { label: "Base Rate", format: money }
+      weight: { label: "Weight", format: weight }
+      pieces: { label: "Pieces", format: count }
+      actualShipDate: { label: "Ship Date" }
+      actualDeliveryDate: { label: "Delivery Date" }
+      markedReadyToBillAt: { label: "Ready to Bill At" }
+      billedAt: { label: "Billed At" }
     edges:
       customer: { label: Customer }
       shipmentType: { label: "Shipment Type" }
@@ -31,6 +37,20 @@ entities:
       trailerType: { label: "Trailer Equipment Type" }
       moves: { label: Moves }
       commodities: { label: Commodities }
+    # Lane accessors. A shipment's origin and destination are particular stops
+    # of it, so without these the only way to reach them crosses a to-many path
+    # and multiplies every measure by the stop count. Picking one row each makes
+    # "revenue by origin state to destination state" an ordinary grouping.
+    pickEdges:
+      # Origin is the first stop of the first move; destination the last of the last.
+      originStop:
+        label: "Origin Stop"
+        via: [moves, stops]
+        orderBy: [moves.sequence, stops.sequence]
+      destinationStop:
+        label: "Destination Stop"
+        via: [moves, stops]
+        orderBy: ["-moves.sequence", "-stops.sequence"]
 
   shipment_move:
     struct: shipment.ShipmentMove
@@ -39,6 +59,9 @@ entities:
     pluralLabel: Shipment Moves
     description: Movement legs within a shipment
     category: Operations
+    fields:
+      distance: { label: "Miles", format: distance }
+      loaded: { label: "Loaded" }
     edges:
       shipment: { label: Shipment }
       assignment: { label: Assignment }
@@ -56,6 +79,8 @@ entities:
       scheduledWindowEnd: { label: "Scheduled Window End", type: epoch }
       actualArrival: { label: "Actual Arrival", type: epoch }
       actualDeparture: { label: "Actual Departure", type: epoch }
+      weight: { label: "Weight", format: weight }
+      pieces: { label: "Pieces", format: count }
     edges:
       location: { label: Location }
 
@@ -79,6 +104,9 @@ entities:
     pluralLabel: Shipment Commodities
     description: Commodity line items on a shipment
     category: Operations
+    fields:
+      weight: { label: "Weight", format: weight }
+      pieces: { label: "Pieces", format: count }
     edges:
       shipment: { label: Shipment }
       commodity: { label: Commodity }
@@ -106,6 +134,13 @@ entities:
     pluralLabel: Customers
     description: Customers who tender freight
     category: Parties
+    # Coordinates are groupable by exception. A raw decimal is normally a poor
+    # grouping key — which is why the default says no — but a latitude/longitude
+    # pair is an identity, not a measurement, and grouping by it is what puts
+    # one pin per place on a map.
+    fields:
+      latitude: { label: "Latitude", groupable: true }
+      longitude: { label: "Longitude", groupable: true }
 
   worker:
     struct: worker.Worker
@@ -128,12 +163,21 @@ entities:
     fields:
       dob: { label: "Date of Birth", type: epoch }
       lastComplianceCheck: { label: "Last Compliance Check", type: epoch }
+      lastMvrCheck: { label: "Last MVR Check", type: epoch }
+      lastDrugTest: { label: "Last Drug Test", type: epoch }
       licenseNumber: { label: "License Number" }
       cdlClass: { label: "CDL Class" }
+      cdlRestrictions: { label: "CDL Restrictions" }
       hazmatExpiry: { label: "Hazmat Expiry" }
       licenseExpiry: { label: "License Expiry" }
       medicalCardExpiry: { label: "Medical Card Expiry" }
       twicExpiry: { label: "TWIC Expiry" }
+      mvrDueDate: { label: "MVR Due Date" }
+      physicalDueDate: { label: "Physical Due Date" }
+      isQualified: { label: "Qualified" }
+      eldExempt: { label: "ELD Exempt" }
+      shortHaulExempt: { label: "Short-Haul Exempt" }
+      terminationDate: { label: "Termination Date" }
 
   tractor:
     struct: tractor.Tractor
@@ -142,6 +186,12 @@ entities:
     pluralLabel: Tractors
     description: Power units
     category: Equipment
+    fields:
+      code: { label: "Unit Number" }
+      vin: { label: "VIN" }
+      licensePlateNumber: { label: "License Plate" }
+      registrationNumber: { label: "Registration Number" }
+      registrationExpiry: { label: "Registration Expiry" }
     edges:
       equipmentType: { label: "Equipment Type" }
       equipmentManufacturer: { label: Manufacturer }
@@ -156,6 +206,14 @@ entities:
     pluralLabel: Trailers
     description: Trailers and towed equipment
     category: Equipment
+    fields:
+      code: { label: "Unit Number" }
+      vin: { label: "VIN" }
+      licensePlateNumber: { label: "License Plate" }
+      registrationNumber: { label: "Registration Number" }
+      registrationExpiry: { label: "Registration Expiry" }
+      maxLoadWeight: { label: "Max Load Weight", format: weight }
+      lastInspectionDate: { label: "Last Inspection" }
     edges:
       equipmentType: { label: "Equipment Type" }
       equipmentManufacturer: { label: Manufacturer }
@@ -171,6 +229,9 @@ entities:
     fields:
       totalAmount: { label: "Total Amount", format: money }
       subtotalAmount: { label: "Subtotal", format: money }
+      otherAmount: { label: "Other Amount", format: money }
+      appliedAmount: { label: "Applied Amount", format: money }
+      number: { label: "Invoice Number" }
     edges:
       customer: { label: Customer }
       shipment: { label: Shipment }
@@ -195,6 +256,13 @@ entities:
     pluralLabel: Locations
     description: Physical pickup, delivery, and facility locations
     category: Parties
+    # Coordinates are groupable by exception. A raw decimal is normally a poor
+    # grouping key — which is why the default says no — but a latitude/longitude
+    # pair is an identity, not a measurement, and grouping by it is what puts
+    # one pin per place on a map.
+    fields:
+      latitude: { label: "Latitude", groupable: true }
+      longitude: { label: "Longitude", groupable: true }
     edges:
       locationCategory: { label: Category }
 
@@ -247,6 +315,10 @@ entities:
     pluralLabel: Fleet Codes
     description: Fleet groupings
     category: Equipment
+    fields:
+      revenueGoal: { label: "Revenue Goal", format: money }
+      mileageGoal: { label: "Mileage Goal", format: distance }
+      deadheadGoal: { label: "Deadhead Goal", format: percent }
 
   shipment_type:
     struct: shipmenttype.ShipmentType
@@ -263,3 +335,73 @@ entities:
     pluralLabel: Service Types
     description: Service level classification
     category: Configuration
+
+  # The reporting engine reporting on itself. Run history is what answers which
+  # reports earn their keep, which ones fail, and how much the result cache is
+  # actually saving — questions an admin otherwise has to ask the database by
+  # hand. Everything identifying an artifact or a workflow is excluded: those
+  # are plumbing, and an artifact key is a storage path nobody should filter on.
+  report_run:
+    struct: report.ReportRun
+    resource: report
+    label: Report Run
+    pluralLabel: Report Runs
+    description: Execution history for reports, schedules, and exports
+    category: Reporting
+    excludeFields:
+      - params
+      - error
+      - artifactKey
+      - artifactExpiresAt
+      - temporalWorkflowId
+      - temporalRunId
+      - revisionId
+      - cannedVersion
+      - version
+      - updatedAt
+    fields:
+      status: { label: "Status" }
+      format: { label: "Format" }
+      trigger: { label: "Trigger" }
+      rowCount: { label: "Rows", format: count }
+      # Byte counts and millisecond durations have no format hint that fits —
+      # the duration formatter is second-resolution and would render most runs
+      # as 0:00 — so both stay honest numbers with the unit in the label.
+      byteSize: { label: "Size (bytes)", format: count }
+      durationMs: { label: "Duration (ms)", format: count }
+      cacheHit: { label: "Cache Hit" }
+      truncated: { label: "Truncated" }
+      cannedKey: { label: "Canned Report Key" }
+      queuedAt: { label: "Queued At", type: epoch }
+      startedAt: { label: "Started At", type: epoch }
+      completedAt: { label: "Completed At", type: epoch }
+    edges:
+      reportDefinition: { label: "Report" }
+
+  report_definition:
+    struct: report.ReportDefinition
+    resource: report
+    label: Report
+    pluralLabel: Reports
+    description: Saved report definitions
+    category: Reporting
+    ownershipColumn: owner_id
+    excludeFields:
+      - definition
+      - diagnostics
+      - tags
+      - catalogVersion
+      - cannedVersion
+      - version
+      - updatedAt
+    fields:
+      name: { label: "Name" }
+      description: { label: "Description" }
+      category: { label: "Category" }
+      kind: { label: "Kind" }
+      cannedKey: { label: "Canned Report Key" }
+      visibility: { label: "Visibility" }
+      status: { label: "Status" }
+      defaultFormat: { label: "Default Format" }
+      currentRevision: { label: "Revision", format: count }
+      lastRunAt: { label: "Last Run At", type: epoch }

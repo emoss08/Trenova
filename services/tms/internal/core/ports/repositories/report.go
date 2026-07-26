@@ -93,6 +93,34 @@ type ReportDefinitionRepository interface {
 	) ([]*report.ReportDefinitionRevision, error)
 }
 
+type GetReportDashboardRequest struct {
+	TenantInfo  pagination.TenantInfo
+	DashboardID pulid.ID
+}
+
+type ListReportDashboardsRequest struct {
+	TenantInfo pagination.TenantInfo
+	// ViewerID scopes results to dashboards the viewer may see: shared
+	// dashboards plus the viewer's own.
+	ViewerID pulid.ID
+	Limit    int
+	Offset   int
+}
+
+type ReportDashboardRepository interface {
+	Create(ctx context.Context, entity *report.Dashboard) (*report.Dashboard, error)
+	Update(ctx context.Context, entity *report.Dashboard) (*report.Dashboard, error)
+	GetByID(
+		ctx context.Context,
+		req *GetReportDashboardRequest,
+	) (*report.Dashboard, error)
+	List(
+		ctx context.Context,
+		req *ListReportDashboardsRequest,
+	) ([]*report.Dashboard, error)
+	Delete(ctx context.Context, req *GetReportDashboardRequest) error
+}
+
 type GetReportRunRequest struct {
 	TenantInfo pagination.TenantInfo
 	RunID      pulid.ID
@@ -174,4 +202,38 @@ type ReportScheduleRepository interface {
 	ListAllEnabled(ctx context.Context) ([]*report.ReportSchedule, error)
 	ListDue(ctx context.Context, nowUnix int64, limit int) ([]*report.ReportSchedule, error)
 	Delete(ctx context.Context, req *GetReportScheduleRequest) error
+}
+
+type GetReportViewRequest struct {
+	TenantInfo pagination.TenantInfo
+	ViewID     pulid.ID
+}
+
+// ListReportViewsRequest scopes the picker. VisibleToID is the caller: a view
+// is listed when it is shared or when they own it, so one person's working set
+// never appears in everyone else's list.
+type ListReportViewsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	VisibleToID  pulid.ID
+	Limit        int
+	Offset       int
+}
+
+// RecordReportViewRunRequest stamps usage on a view. It is deliberately not an
+// Update: run bookkeeping must not collide with a concurrent edit by bumping
+// the optimistic-lock version out from under it.
+type RecordReportViewRunRequest struct {
+	TenantInfo pagination.TenantInfo
+	ViewID     pulid.ID
+	RanAt      int64
+}
+
+type ReportViewRepository interface {
+	Create(ctx context.Context, entity *report.ReportView) (*report.ReportView, error)
+	Update(ctx context.Context, entity *report.ReportView) (*report.ReportView, error)
+	GetByID(ctx context.Context, req *GetReportViewRequest) (*report.ReportView, error)
+	List(ctx context.Context, req *ListReportViewsRequest) ([]*report.ReportView, error)
+	RecordRun(ctx context.Context, req *RecordReportViewRunRequest) error
+	Delete(ctx context.Context, req *GetReportViewRequest) error
 }

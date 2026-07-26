@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -25,12 +26,15 @@ type Params struct {
 
 	Logger           *zap.Logger
 	DefinitionRepo   repositories.ReportDefinitionRepository
+	DashboardRepo    repositories.ReportDashboardRepository
 	RunRepo          repositories.ReportRunRepository
 	ScheduleRepo     repositories.ReportScheduleRepository
+	ViewRepo         repositories.ReportViewRepository
 	OrganizationRepo repositories.OrganizationRepository
 	UserRepo         repositories.UserRepository
 	Compiler         services.ReportCompiler
 	Executor         services.ReportDatasetExecutor
+	PermissionEngine services.PermissionEngine
 	WorkflowStarter  services.WorkflowStarter
 	Storage          storage.Client
 	AuditService     services.AuditService `optional:"true"`
@@ -39,21 +43,25 @@ type Params struct {
 }
 
 type Service struct {
-	l            *zap.Logger
-	defRepo      repositories.ReportDefinitionRepository
-	runRepo      repositories.ReportRunRepository
-	scheduleRepo repositories.ReportScheduleRepository
-	orgRepo      repositories.OrganizationRepository
-	userRepo     repositories.UserRepository
-	compiler     services.ReportCompiler
-	executor     services.ReportDatasetExecutor
-	workflows    services.WorkflowStarter
-	storage      storage.Client
-	audit        services.AuditService
-	metrics      *metrics.Report
-	cfg          *config.ReportingConfig
-	previews     *previewLimiter
-	canned       *canned.Registry
+	l             *zap.Logger
+	defRepo       repositories.ReportDefinitionRepository
+	dashboardRepo repositories.ReportDashboardRepository
+	runRepo       repositories.ReportRunRepository
+	scheduleRepo  repositories.ReportScheduleRepository
+	viewRepo      repositories.ReportViewRepository
+	orgRepo       repositories.OrganizationRepository
+	userRepo      repositories.UserRepository
+	compiler      services.ReportCompiler
+	executor      services.ReportDatasetExecutor
+	perms         services.PermissionEngine
+	permRegistry  *permission.Registry
+	workflows     services.WorkflowStarter
+	storage       storage.Client
+	audit         services.AuditService
+	metrics       *metrics.Report
+	cfg           *config.ReportingConfig
+	previews      *previewLimiter
+	canned        *canned.Registry
 }
 
 //nolint:gocritic // fx.In parameter structs must be passed by value
@@ -64,21 +72,25 @@ func New(p Params) *Service {
 	}
 
 	return &Service{
-		l:            p.Logger.Named("service.reporting"),
-		defRepo:      p.DefinitionRepo,
-		runRepo:      p.RunRepo,
-		scheduleRepo: p.ScheduleRepo,
-		orgRepo:      p.OrganizationRepo,
-		userRepo:     p.UserRepo,
-		compiler:     p.Compiler,
-		executor:     p.Executor,
-		workflows:    p.WorkflowStarter,
-		storage:      p.Storage,
-		audit:        p.AuditService,
-		metrics:      reportMetrics,
-		cfg:          p.Config.GetReportingConfig(),
-		previews:     newPreviewLimiter(),
-		canned:       canned.Default(),
+		l:             p.Logger.Named("service.reporting"),
+		defRepo:       p.DefinitionRepo,
+		dashboardRepo: p.DashboardRepo,
+		runRepo:       p.RunRepo,
+		scheduleRepo:  p.ScheduleRepo,
+		viewRepo:      p.ViewRepo,
+		orgRepo:       p.OrganizationRepo,
+		userRepo:      p.UserRepo,
+		compiler:      p.Compiler,
+		executor:      p.Executor,
+		perms:         p.PermissionEngine,
+		permRegistry:  permission.NewRegistry(),
+		workflows:     p.WorkflowStarter,
+		storage:       p.Storage,
+		audit:         p.AuditService,
+		metrics:       reportMetrics,
+		cfg:           p.Config.GetReportingConfig(),
+		previews:      newPreviewLimiter(),
+		canned:        canned.Default(),
 	}
 }
 

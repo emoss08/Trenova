@@ -150,6 +150,18 @@ type ReportRunConnection {
 
 # --- Report schedules --------------------------------------------------------
 
+# A schedule carrying an alert delivers only when the run's row count satisfies
+# the condition, which turns a recurring report into an exception alert.
+type ReportScheduleAlert {
+  operator: String!
+  threshold: Int!
+  # columnId switches the alert from counting rows to reading one measure's
+  # grand total; value is that measure's threshold.
+  columnId: String
+  value: Float
+  suppressWhileFiring: Boolean!
+}
+
 type ReportSchedule {
   id: ID!
   definitionId: ID!
@@ -158,7 +170,10 @@ type ReportSchedule {
   formats: [String!]!
   emailRecipients: [String!]!
   emailAttach: Boolean!
+  emailInline: Boolean!
   notifyUserIds: [ID!]!
+  alert: ReportScheduleAlert
+  alertFiring: Boolean!
   enabled: Boolean!
   runAsId: ID!
   lastRunId: ID
@@ -169,18 +184,69 @@ type ReportSchedule {
   updatedAt: Int!
 }
 
+# A saved view is a named set of parameter values for one report — the same
+# question asked for a different region or period, without retyping it.
+type ReportView {
+  id: ID!
+  definitionId: ID!
+  ownerId: ID!
+  name: String!
+  description: String
+  params: JSON
+  shared: Boolean!
+  pinned: Boolean!
+  format: String
+  lastRunAt: Int
+  runCount: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
 # --- Preview -----------------------------------------------------------------
+
+type ReportDisplayRule {
+  op: String!
+  value: Float!
+  upper: Float!
+  tone: String!
+}
+
+type ReportBand {
+  width: Float!
+  edges: [Float!]!
+}
+
+type ReportColumnDisplay {
+  style: String!
+  decimals: Int!
+  grouping: Boolean!
+  currency: String!
+  negative: String!
+  notation: String!
+  prefix: String!
+  suffix: String!
+  dateStyle: String!
+  boolStyle: String!
+  durationUnit: String!
+  durationStyle: String!
+  nullText: String!
+  rules: [ReportDisplayRule!]!
+  band: ReportBand
+}
 
 type ReportPreviewColumn {
   id: String!
   label: String!
   type: String!
   format: String
+  display: ReportColumnDisplay!
 }
 
 type ReportPreview {
   columns: [ReportPreviewColumn!]!
   rows: Any!
+  totals: Any
   truncated: Boolean!
 }
 
@@ -193,9 +259,46 @@ input ReportFieldRefInput {
 
 input ReportComputedInput {
   op: String!
-  leftId: String!
-  rightId: String!
+  leftId: String
+  rightId: String
+  leftValue: Float
+  rightValue: Float
   format: String
+}
+
+input ReportTransformInput {
+  op: String!
+  precision: Int
+  factor: Float
+}
+
+input ReportDisplayRuleInput {
+  op: String!
+  value: Float!
+  upper: Float
+  tone: String!
+}
+
+input ReportDisplayInput {
+  style: String
+  decimals: Int
+  grouping: Boolean
+  currency: String
+  negative: String
+  notation: String
+  prefix: String
+  suffix: String
+  dateStyle: String
+  boolStyle: String
+  durationUnit: String
+  durationStyle: String
+  nullText: String
+  rules: [ReportDisplayRuleInput!]
+}
+
+input ReportBandInput {
+  width: Float
+  edges: [Float!]
 }
 
 input ReportColumnInput {
@@ -204,8 +307,36 @@ input ReportColumnInput {
   kind: String!
   agg: String
   bucket: String
+  band: ReportBandInput
   label: String
   computed: ReportComputedInput
+  transform: ReportTransformInput
+  display: ReportDisplayInput
+  filter: ReportFilterGroupInput
+}
+
+input ReportChartGoalInput {
+  value: Float
+  columnId: String
+  label: String
+}
+
+input ReportChartInput {
+  id: String!
+  type: String!
+  title: String
+  xColumnId: String
+  seriesIds: [String!]
+  stacked: Boolean
+  hideLegend: Boolean
+  showValues: Boolean
+  curved: Boolean
+  limit: Int
+  compareId: String
+  goal: ReportChartGoalInput
+  latColumnId: String
+  lngColumnId: String
+  labelColumnId: String
 }
 
 input ReportFilterInput {
@@ -214,6 +345,7 @@ input ReportFilterInput {
   value: Any
   param: String
   agg: String
+  transform: ReportTransformInput
 }
 
 input ReportFilterGroupInput {
@@ -230,6 +362,7 @@ input ReportSortInput {
 input ReportPivotInput {
   ref: ReportFieldRefInput!
   values: [String!]!
+  labels: [String!]
   measureIds: [String!]!
   includeOther: Boolean
 }
@@ -254,6 +387,21 @@ input ReportIRInput {
   limit: Int
   pivot: ReportPivotInput
   parameters: [ReportParameterDefInput!]
+  totals: Boolean
+  charts: [ReportChartInput!]
+}
+
+input ReportDrillValueInput {
+  columnId: String!
+  value: Any
+}
+
+input ReportDrillInput {
+  definition: ReportIRInput!
+  params: JSON
+  dimensions: [ReportDrillValueInput!]!
+  columnId: String
+  limit: Int
 }
 
 input SaveReportDefinitionInput {
@@ -285,6 +433,10 @@ input RunReportInput {
   cannedKey: String
   format: String!
   params: JSON
+  # Running from a saved view resolves its report, parameters, and format on
+  # the server, so the run is guaranteed to be the view rather than whatever
+  # the caller claimed it was. Explicit params or a format still win.
+  viewId: ID
 }
 
 input ForkCannedReportInput {
@@ -298,6 +450,14 @@ input ReportRunsFilterInput {
   statuses: [String!]
 }
 
+input ReportScheduleAlertInput {
+  operator: String!
+  threshold: Int!
+  columnId: String
+  value: Float
+  suppressWhileFiring: Boolean
+}
+
 input CreateReportScheduleInput {
   definitionId: ID!
   cronExpression: String!
@@ -305,7 +465,9 @@ input CreateReportScheduleInput {
   formats: [String!]!
   emailRecipients: [String!]
   emailAttach: Boolean
+  emailInline: Boolean
   notifyUserIds: [ID!]
+  alert: ReportScheduleAlertInput
   enabled: Boolean!
 }
 
@@ -318,8 +480,101 @@ input UpdateReportScheduleInput {
   formats: [String!]!
   emailRecipients: [String!]
   emailAttach: Boolean
+  emailInline: Boolean
   notifyUserIds: [ID!]
+  alert: ReportScheduleAlertInput
   enabled: Boolean!
+}
+
+input CreateReportViewInput {
+  definitionId: ID!
+  name: String!
+  description: String
+  params: JSON
+  shared: Boolean
+  pinned: Boolean
+  format: String
+}
+
+# The report a view answers is fixed at creation, so it is absent here: a view
+# that could be repointed would keep its name and silently change its meaning.
+input UpdateReportViewInput {
+  id: ID!
+  version: Int!
+  name: String!
+  description: String
+  params: JSON
+  shared: Boolean
+  pinned: Boolean
+  format: String
+}
+
+# --- Dashboards --------------------------------------------------------------
+
+type ReportDashboard {
+  id: ID!
+  name: String!
+  description: String!
+  category: String!
+  tags: [String!]!
+  ownerId: ID!
+  visibility: String!
+  layout: JSON!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input ReportDashboardTileInput {
+  id: String!
+  kind: String!
+  title: String
+  definitionId: ID
+  cannedKey: String
+  chartId: String
+  columnId: String
+  text: String
+  x: Int!
+  y: Int!
+  w: Int!
+  h: Int!
+  limit: Int
+  paramBindings: JSON
+}
+
+input ReportDashboardFilterInput {
+  id: String!
+  label: String
+  entity: String!
+  ref: ReportFieldRefInput!
+  operator: String!
+  default: Any
+}
+
+input ReportDashboardLayoutInput {
+  tiles: [ReportDashboardTileInput!]!
+  parameters: [ReportParameterDefInput!]
+  filters: [ReportDashboardFilterInput!]
+}
+
+input SaveReportDashboardInput {
+  name: String!
+  description: String
+  category: String
+  tags: [String!]
+  visibility: String
+  layout: ReportDashboardLayoutInput!
+}
+
+input UpdateReportDashboardInput {
+  id: ID!
+  version: Int!
+  name: String!
+  description: String
+  category: String
+  tags: [String!]
+  visibility: String
+  layout: ReportDashboardLayoutInput!
 }
 
 # --- Operations --------------------------------------------------------------
@@ -335,8 +590,17 @@ extend type Query {
     input: DataTableConnectionInput!
     filter: ReportRunsFilterInput
   ): ReportRunConnection!
-  previewReport(definition: ReportIRInput!, params: JSON): ReportPreview!
+  previewReport(
+    definition: ReportIRInput!
+    params: JSON
+    supersede: Boolean
+  ): ReportPreview!
+  drillThroughReport(input: ReportDrillInput!): ReportPreview!
   reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportViews(definitionId: ID): [ReportView!]!
+  reportView(id: ID!): ReportView!
+  reportDashboards: [ReportDashboard!]!
+  reportDashboard(id: ID!): ReportDashboard!
 }
 
 extend type Mutation {
@@ -350,4 +614,10 @@ extend type Mutation {
   createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
   updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
   deleteReportSchedule(id: ID!): Boolean!
+  createReportView(input: CreateReportViewInput!): ReportView!
+  updateReportView(input: UpdateReportViewInput!): ReportView!
+  deleteReportView(id: ID!): Boolean!
+  createReportDashboard(input: SaveReportDashboardInput!): ReportDashboard!
+  updateReportDashboard(input: UpdateReportDashboardInput!): ReportDashboard!
+  deleteReportDashboard(id: ID!): Boolean!
 }

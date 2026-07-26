@@ -1,14 +1,12 @@
 package render
 
 import (
+	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
@@ -77,28 +75,38 @@ func formatCell(
 	value any,
 	loc *time.Location,
 ) string {
-	if value == nil {
-		return ""
-	}
-
-	switch v := value.(type) {
-	case decimal.Decimal:
-		return v.String()
-	case int64:
-		if column.Type == reportcatalog.FieldEpoch {
-			return time.Unix(v, 0).In(loc).Format("2006-01-02 15:04:05")
-		}
-		return strconv.FormatInt(v, 10)
-	case bool:
-		if v {
-			return "true"
-		}
-		return "false"
-	case string:
-		return v
-	default:
-		return fmt.Sprint(v)
-	}
+	return column.Display.String(value, loc)
 }
 
 const truncationNotice = "Results were truncated at the row limit; narrow your filters or use a larger export format."
+
+// totalsLabel names the grand-total row in the leading grouping column, which
+// the compiler leaves empty precisely so the label has somewhere to live.
+const totalsLabel = "Total"
+
+// totalsCells formats the grand-total row, or returns nil when the report did
+// not ask for one. Grouping columns come back blank apart from the label.
+func totalsCells(
+	ctx context.Context,
+	dataset services.ReportDatasetReader,
+	loc *time.Location,
+) ([]string, error) {
+	row, err := dataset.Totals(ctx)
+	if err != nil || row == nil {
+		return nil, err
+	}
+
+	schema := dataset.Schema()
+	cells := make([]string, len(schema))
+	for i := range schema {
+		if i >= len(row) || row[i] == nil {
+			continue
+		}
+		cells[i] = formatCell(&schema[i], row[i], loc)
+	}
+	if len(cells) > 0 && row[0] == nil {
+		cells[0] = totalsLabel
+	}
+
+	return cells, nil
+}

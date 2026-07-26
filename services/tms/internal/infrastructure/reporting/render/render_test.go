@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,7 @@ type fakeReader struct {
 	schema    []services.ReportResultColumn
 	rows      []services.ReportRow
 	generate  func(i int64) services.ReportRow
+	totals    services.ReportRow
 	total     int64
 	pos       int64
 	truncated bool
@@ -50,24 +52,40 @@ func (f *fakeReader) Next(_ context.Context) (services.ReportRow, error) {
 	return row, nil
 }
 
+func (f *fakeReader) Totals(_ context.Context) (services.ReportRow, error) { return f.totals, nil }
+
 func (f *fakeReader) RowCount() int64 { return f.pos }
 
 func (f *fakeReader) Truncated() bool { return f.truncated }
 
 func (f *fakeReader) Close() error { return nil }
 
+// testColumn mirrors what the compiler emits: every column carries a resolved
+// display contract derived from its type and format hint.
+func testColumn(
+	id, label string,
+	fieldType reportcatalog.FieldType,
+	hint reportcatalog.FormatHint,
+) services.ReportResultColumn {
+	return services.ReportResultColumn{
+		ID:     id,
+		Label:  label,
+		Type:   fieldType,
+		Format: hint,
+		Display: reportfmt.Resolve(reportfmt.ResolveInput{
+			Type: fieldType,
+			Hint: hint,
+		}),
+	}
+}
+
 func testSchema() []services.ReportResultColumn {
 	return []services.ReportResultColumn{
-		{ID: "c0", Label: "Customer", Type: reportcatalog.FieldString},
-		{
-			ID:     "c1",
-			Label:  "Total Charge",
-			Type:   reportcatalog.FieldDecimal,
-			Format: reportcatalog.FormatMoney,
-		},
-		{ID: "c2", Label: "Shipments", Type: reportcatalog.FieldInt},
-		{ID: "c3", Label: "Created", Type: reportcatalog.FieldEpoch},
-		{ID: "c4", Label: "Active", Type: reportcatalog.FieldBool},
+		testColumn("c0", "Customer", reportcatalog.FieldString, reportcatalog.FormatNone),
+		testColumn("c1", "Total Charge", reportcatalog.FieldDecimal, reportcatalog.FormatMoney),
+		testColumn("c2", "Shipments", reportcatalog.FieldInt, reportcatalog.FormatCount),
+		testColumn("c3", "Created", reportcatalog.FieldEpoch, reportcatalog.FormatNone),
+		testColumn("c4", "Active", reportcatalog.FieldBool, reportcatalog.FormatNone),
 	}
 }
 
@@ -114,8 +132,8 @@ func TestCSVRendererGolden(t *testing.T) {
 	assert.True(t, stats.Truncated)
 
 	want := "Customer,Total Charge,Shipments,Created,Active\n" +
-		"\"ACME, Inc.\",1234.5,12,2026-07-15 11:00:00,true\n" +
-		"\"Quote \"\"Freight\"\"\",-99.1,0,2026-07-15 11:00:00,false\n" +
+		"\"ACME, Inc.\",\"$1,234.50\",12,2026-07-15 11:00,Yes\n" +
+		"\"Quote \"\"Freight\"\"\",($99.10),0,2026-07-15 11:00,No\n" +
 		"Ünïcode Cargo 🚚,,,,\n" +
 		truncationNotice + ",,,,\n"
 	assert.Equal(t, want, buf.String())
@@ -197,13 +215,27 @@ func TestXLSXRendererGolden(t *testing.T) {
 		"decimal cells must be numeric, not strings")
 	assert.NotEqual(t, excelize.CellTypeInlineString, chargeType,
 		"decimal cells must be numeric, not strings")
+	// The cell holds the raw number; the money format lives in the cell style,
+	// so Excel can still sum the column.
+	rawCharge, err := file.GetCellValue("Data", "B2", excelize.Options{RawCellValue: true})
+	require.NoError(t, err)
+	assert.Equal(t, "1234.5", rawCharge)
+
 	charge, err := file.GetCellValue("Data", "B2")
 	require.NoError(t, err)
-	assert.Equal(t, "1234.5", charge)
+	assert.Equal(t, "$1,234.50", charge)
 
 	shipments, err := file.GetCellValue("Data", "C2")
 	require.NoError(t, err)
 	assert.Equal(t, "12", shipments)
+
+	createdType, err := file.GetCellType("Data", "D2")
+	require.NoError(t, err)
+	assert.NotEqual(t, excelize.CellTypeSharedString, createdType,
+		"epoch columns must be date-formatted numbers, not strings")
+	created, err := file.GetCellValue("Data", "D2")
+	require.NoError(t, err)
+	assert.Equal(t, "2026-07-15 11:00", created)
 
 	title, err := file.GetCellValue("Report", "B1")
 	require.NoError(t, err)
@@ -337,15 +369,19 @@ func TestRegistryResolvesRenderers(t *testing.T) {
 func TestFormatCellEdgeCases(t *testing.T) {
 	loc := metaLocation(&services.ReportRunMeta{Timezone: "America/Chicago"})
 
-	epochCol := &services.ReportResultColumn{Type: reportcatalog.FieldEpoch}
-	assert.Equal(t, "2026-07-16 00:00:00", formatCell(epochCol, int64(1784178000), loc))
+	epochCol := testColumn("c", "Created", reportcatalog.FieldEpoch, reportcatalog.FormatNone)
+	assert.Equal(t, "2026-07-16 00:00", formatCell(&epochCol, int64(1784178000), loc))
 
-	intCol := &services.ReportResultColumn{Type: reportcatalog.FieldInt}
-	assert.Equal(t, "42", formatCell(intCol, int64(42), loc))
-	assert.Equal(t, "", formatCell(intCol, nil, loc))
+	intCol := testColumn("c", "Count", reportcatalog.FieldInt, reportcatalog.FormatCount)
+	assert.Equal(t, "42", formatCell(&intCol, int64(42), loc))
+	assert.Equal(t, "", formatCell(&intCol, nil, loc))
 
-	strCol := &services.ReportResultColumn{Type: reportcatalog.FieldString}
-	assert.Equal(t, strings.Repeat("x", 3), formatCell(strCol, "xxx", loc))
+	strCol := testColumn("c", "Name", reportcatalog.FieldString, reportcatalog.FormatNone)
+	assert.Equal(t, strings.Repeat("x", 3), formatCell(&strCol, "xxx", loc))
+
+	// A column with no resolved display renders raw rather than guessing.
+	bare := &services.ReportResultColumn{Type: reportcatalog.FieldDecimal}
+	assert.Equal(t, "1234.5", formatCell(bare, decimal.RequireFromString("1234.5"), loc))
 }
 
 func zapNop() *zap.Logger { return zap.NewNop() }

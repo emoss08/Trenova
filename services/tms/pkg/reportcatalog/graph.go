@@ -32,6 +32,29 @@ type ThroughJoin struct {
 	Tenant     TenantColumns
 }
 
+// OrderTerm orders the rows a PickOne chooses from. Step indexes into the
+// pick's Via path, so a term can order by a column on any hop of the chain.
+type OrderTerm struct {
+	Step       int
+	Column     string
+	Descending bool
+}
+
+// PickOne turns a to-many relationship into a to-one edge by naming which
+// single row of it stands for the parent: the first stop of a shipment is its
+// origin, the last is its destination. The compiler emits a correlated
+// LATERAL … ORDER BY … LIMIT 1, so downstream the edge behaves exactly like any
+// other to-one join — its fields group and filter without fanning rows out.
+//
+// This is what makes lane analysis expressible. "Revenue by origin state to
+// destination state" is a question about two particular stops of a shipment,
+// and without picking them the only honest answer crosses a to-many path and
+// multiplies every measure by the stop count.
+type PickOne struct {
+	Via     []string
+	OrderBy []OrderTerm
+}
+
 type Edge struct {
 	Name        string
 	Label       string
@@ -40,6 +63,9 @@ type Edge struct {
 	Cardinality Cardinality
 	Join        []JoinPair
 	Through     *ThroughJoin
+	// Pick is set when this to-one edge resolves to one row of a to-many
+	// relationship rather than to a foreign key.
+	Pick        *PickOne
 	Traversable bool
 }
 

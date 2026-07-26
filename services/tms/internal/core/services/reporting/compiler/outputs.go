@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/pkg/reportfmt"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -25,15 +27,17 @@ func (e *emitter) buildOutputColumns() ([]outputColumn, error) {
 		col := &e.v.columns[i]
 
 		if col.spec.Kind == report.ColumnKindDimension {
-			expr, err := e.dimensionExpr(col.ref, col.spec.Bucket)
+			expr, err := e.dimensionExpr(col.ref, columnGrouping(col.spec))
 			if err != nil {
 				return nil, err
 			}
 			outputs = append(outputs, outputColumn{
-				id:     col.spec.ID,
-				expr:   expr,
-				isDim:  true,
-				column: e.resultColumn(col, "", col.spec.Label),
+				id:            col.spec.ID,
+				sourceID:      col.spec.ID,
+				explicitLabel: col.spec.Label != "",
+				expr:          applyTransform(expr, col.spec.Transform),
+				isDim:         true,
+				column:        e.resultColumn(col, "", ""),
 			})
 			continue
 		}
@@ -52,11 +56,15 @@ func (e *emitter) buildOutputColumns() ([]outputColumn, error) {
 			return nil, err
 		}
 		outputs = append(outputs, outputColumn{
-			id:     col.spec.ID,
-			expr:   expr,
-			column: e.outputResultColumn(col, "", col.spec.Label),
+			id:            col.spec.ID,
+			sourceID:      col.spec.ID,
+			explicitLabel: col.spec.Label != "",
+			expr:          applyTransform(expr, col.spec.Transform),
+			column:        e.outputResultColumn(col, "", ""),
 		})
 	}
+
+	disambiguateLabels(e.v, outputs)
 
 	return outputs, nil
 }
@@ -74,20 +82,11 @@ func (e *emitter) columnValueExpr(col *validatedColumn, filter sqlExpr) (sqlExpr
 func (e *emitter) computedExpr(col *validatedColumn, filter sqlExpr) (sqlExpr, error) {
 	comp := col.spec.Computed
 
-	left := e.v.columnByID(comp.LeftID)
-	right := e.v.columnByID(comp.RightID)
-	if left == nil || right == nil {
-		return sqlExpr{}, fmt.Errorf(
-			"computed column %q references an unknown operand",
-			col.spec.ID,
-		)
-	}
-
-	leftExpr, err := e.measureExpr(left, filter)
+	leftExpr, err := e.computedOperandExpr(comp.Left(), col.spec.ID, filter)
 	if err != nil {
 		return sqlExpr{}, err
 	}
-	rightExpr, err := e.measureExpr(right, filter)
+	rightExpr, err := e.computedOperandExpr(comp.Right(), col.spec.ID, filter)
 	if err != nil {
 		return sqlExpr{}, err
 	}
@@ -106,6 +105,28 @@ func (e *emitter) computedExpr(col *validatedColumn, filter sqlExpr) (sqlExpr, e
 	}, nil
 }
 
+// computedOperandExpr resolves one side of a calculation. A constant is
+// inlined as a decimal literal rather than bound as an argument: the whole
+// expression is re-emitted per pivot cell and for the totals pass, and a
+// placeholder would desync the argument list from the SQL it belongs to.
+func (e *emitter) computedOperandExpr(
+	operand report.ComputedOperand,
+	ownerID string,
+	filter sqlExpr,
+) (sqlExpr, error) {
+	if operand.IsLiteral() {
+		return sqlExpr{text: decimal.NewFromFloat(operand.ValueOrZero()).String()}, nil
+	}
+
+	col := e.v.columnByID(operand.ColumnID)
+	if col == nil {
+		return sqlExpr{}, fmt.Errorf(
+			"computed column %q references an unknown operand", ownerID,
+		)
+	}
+	return e.measureExpr(col, filter)
+}
+
 func computedOpSQL(op report.ComputedOp) string {
 	//nolint:exhaustive // divide is emitted separately with a NULLIF guard
 	switch op {
@@ -118,26 +139,37 @@ func computedOpSQL(op report.ComputedOp) string {
 	}
 }
 
-func (e *emitter) dimensionExpr(ref *resolvedRef, bucket report.DateBucket) (sqlExpr, error) {
+func (e *emitter) dimensionExpr(
+	ref *resolvedRef,
+	grouping dimensionGrouping,
+) (sqlExpr, error) {
 	alias := e.plan.aliasFor(ref.pathKey)
 	if alias == "" {
 		return sqlExpr{}, fmt.Errorf("no alias planned for path %q", ref.pathKey)
 	}
 	col := alias + "." + ref.field.Column.Name
 
-	if bucket == report.DateBucketNone {
+	if !grouping.band.IsEmpty() {
+		return sqlExpr{text: bandExpr(col, grouping.band, ref.field.Type)}, nil
+	}
+
+	if grouping.bucket == report.DateBucketNone {
 		return sqlExpr{text: col}, nil
 	}
 
 	return sqlExpr{
 		text: "EXTRACT(EPOCH FROM date_trunc(?, to_timestamp(" + col + ") AT TIME ZONE ?))::bigint",
-		args: []any{string(bucket), e.loc.String()},
+		args: []any{string(grouping.bucket), e.loc.String()},
 	}, nil
 }
 
 func (e *emitter) measureExpr(col *validatedColumn, filter sqlExpr) (sqlExpr, error) {
 	if !col.ref.toMany {
-		return e.aggregateExpr(col.ref, col.spec.Agg, filter)
+		scoped, err := e.scopedMeasureFilter(col, filter)
+		if err != nil {
+			return sqlExpr{}, err
+		}
+		return e.aggregateExpr(col.ref, col.spec.Agg, scoped)
 	}
 
 	lateral := e.plan.laterals[col.ref.pathKey]
@@ -190,6 +222,22 @@ func (e *emitter) measureExpr(col *validatedColumn, filter sqlExpr) (sqlExpr, er
 			"aggregation %q is not supported across to-many relationships", col.spec.Agg,
 		)
 	}
+}
+
+// scopedMeasureFilter conjoins the caller's bucket predicate (a pivot cell)
+// with the column's own filter so a pivoted, filtered measure narrows on both.
+func (e *emitter) scopedMeasureFilter(
+	col *validatedColumn,
+	filter sqlExpr,
+) (sqlExpr, error) {
+	if col.spec.Filter.IsEmpty() {
+		return filter, nil
+	}
+	own, err := e.filterGroupExpr(col.spec.Filter, false)
+	if err != nil {
+		return sqlExpr{}, err
+	}
+	return andExpr(filter, own), nil
 }
 
 func (e *emitter) aggregateExpr(
@@ -246,28 +294,31 @@ func (e *emitter) havingLateralExpr(
 		)
 	}
 
+	// A measure column carrying its own filter aggregates a subset, so it
+	// cannot stand in for the unfiltered measure a HAVING clause asks about.
 	for _, m := range lateral.measures {
-		if m.column.spec.Agg == agg && m.column.ref.ref.String() == ref.ref.String() {
+		if m.column.spec.Agg == agg && m.column.ref.ref.String() == ref.ref.String() &&
+			m.column.spec.Filter.IsEmpty() {
 			return e.measureExpr(m.column, sqlExpr{})
 		}
 	}
 
 	return sqlExpr{}, fmt.Errorf(
-		"measure filter on %q requires a matching measure column with aggregation %q",
+		"measure filter on %q requires a matching unfiltered measure column with aggregation %q",
 		ref.ref.String(), agg,
 	)
 }
 
 func (e *emitter) pivotExpansions(col *validatedColumn) ([]outputColumn, error) {
 	pivot := e.v.def.Pivot
-	pivotExpr, err := e.dimensionExpr(e.v.pivotRef, report.DateBucketNone)
+	pivotExpr, err := e.dimensionExpr(e.v.pivotRef, dimensionGrouping{})
 	if err != nil {
 		return nil, err
 	}
 
 	outputs := make([]outputColumn, 0, len(pivot.Values)+1)
 
-	for _, value := range pivot.Values {
+	for valueIndex, value := range pivot.Values {
 		coerced, cErr := coerceScalar(e.v.pivotRef.field.Type, e.v.pivotRef.field, value)
 		if cErr != nil {
 			return nil, fmt.Errorf("pivot value %q: %w", value, cErr)
@@ -282,11 +333,14 @@ func (e *emitter) pivotExpansions(col *validatedColumn) ([]outputColumn, error) 
 			return nil, mErr
 		}
 
-		label := e.pivotLabel(col, value)
+		suffix := pivot.LabelFor(valueIndex, e.pivotValueLabel(value))
 		outputs = append(outputs, outputColumn{
-			id:     col.spec.ID + ":" + value,
-			expr:   expr,
-			column: e.outputResultColumn(col, value, label),
+			id:            col.spec.ID + pivotIDSeparator + value,
+			sourceID:      col.spec.ID,
+			pivotSuffix:   suffix,
+			explicitLabel: col.spec.Label != "",
+			expr:          applyTransform(expr, col.spec.Transform),
+			column:        e.outputResultColumn(col, value, defaultLabel(col)+" ("+suffix+")"),
 		})
 	}
 
@@ -310,30 +364,33 @@ func (e *emitter) pivotExpansions(col *validatedColumn) ([]outputColumn, error) 
 		}
 
 		outputs = append(outputs, outputColumn{
-			id:     col.spec.ID + ":__other__",
-			expr:   expr,
-			column: e.outputResultColumn(col, "__other__", e.pivotLabel(col, "Other")),
+			id:            col.spec.ID + pivotIDSeparator + pivotOtherValue,
+			sourceID:      col.spec.ID,
+			pivotSuffix:   "Other",
+			explicitLabel: col.spec.Label != "",
+			expr:          applyTransform(expr, col.spec.Transform),
+			column:        e.outputResultColumn(col, pivotOtherValue, defaultLabel(col)+" (Other)"),
 		})
 	}
 
 	return outputs, nil
 }
 
-func (e *emitter) pivotLabel(col *validatedColumn, value string) string {
-	base := col.spec.Label
-	if base == "" && col.ref != nil {
-		base = col.ref.field.Label
-	}
-
-	display := value
+func (e *emitter) pivotValueLabel(value string) string {
 	for i := range e.v.pivotRef.field.EnumValues {
 		if e.v.pivotRef.field.EnumValues[i].Value == value {
-			display = e.v.pivotRef.field.EnumValues[i].Label
-			break
+			return e.v.pivotRef.field.EnumValues[i].Label
 		}
 	}
-
-	return base + " (" + display + ")"
+	if e.v.pivotRef.field.Type == reportcatalog.FieldBool {
+		switch value {
+		case "true":
+			return "Yes"
+		case "false":
+			return "No"
+		}
+	}
+	return value
 }
 
 func (e *emitter) outputResultColumn(
@@ -378,44 +435,32 @@ func (e *emitter) computedResultColumn(
 	pivotValue string,
 	labelOverride string,
 ) services.ReportResultColumn {
-	comp := col.spec.Computed
-	left := e.v.columnByID(comp.LeftID)
-	right := e.v.columnByID(comp.RightID)
-
-	resultType := reportcatalog.FieldDecimal
-	if comp.Op != report.ComputedOpDivide && left != nil && right != nil {
-		leftType := measureResultType(left.spec.Agg, left.ref.field.Type)
-		rightType := measureResultType(right.spec.Agg, right.ref.field.Type)
-		if leftType == reportcatalog.FieldInt && rightType == reportcatalog.FieldInt {
-			resultType = reportcatalog.FieldInt
-		}
-	}
-
+	// A constant carries no field, so it contributes no sensitivity; the
+	// calculation is only ever as sensitive as the columns it reads.
 	sensitivity := permission.SensitivityPublic
-	for _, operand := range []*validatedColumn{left, right} {
-		if operand == nil {
+	for _, operand := range col.spec.Computed.Operands() {
+		source := e.v.columnByID(operand.ColumnID)
+		if operand.IsLiteral() || source == nil {
 			continue
 		}
-		if operandSens := e.fieldSensitivity(operand); operandSens.Level() > sensitivity.Level() {
+		if operandSens := e.fieldSensitivity(source); operandSens.Level() > sensitivity.Level() {
 			sensitivity = operandSens
 		}
 	}
 
 	label := labelOverride
 	if label == "" {
-		label = col.spec.Label
+		label = defaultLabel(col)
 	}
 
-	id := col.spec.ID
-	if pivotValue != "" {
-		id = col.spec.ID + ":" + pivotValue
-	}
+	resultType := columnValueType(e.v, col)
 
 	return services.ReportResultColumn{
-		ID:          id,
+		ID:          outputColumnID(col, pivotValue),
 		Label:       label,
 		Type:        resultType,
-		Format:      comp.Format,
+		Format:      col.spec.Computed.Format,
+		Display:     resolveDisplay(col, resultType, col.spec.Computed.Format),
 		Sensitivity: sensitivity,
 	}
 }
@@ -427,32 +472,62 @@ func (e *emitter) resultColumn(
 ) services.ReportResultColumn {
 	label := labelOverride
 	if label == "" {
-		label = col.ref.field.Label
+		label = defaultLabel(col)
 	}
 
-	resultType := col.ref.field.Type
 	format := col.ref.field.Format
-
-	if col.spec.Kind == report.ColumnKindMeasure {
-		resultType = measureResultType(col.spec.Agg, col.ref.field.Type)
-		if col.spec.Agg == reportcatalog.AggCount ||
-			col.spec.Agg == reportcatalog.AggCountDistinct {
-			format = reportcatalog.FormatCount
-		}
-	} else if col.spec.Bucket != report.DateBucketNone {
-		resultType = reportcatalog.FieldEpoch
+	if col.spec.Kind == report.ColumnKindMeasure &&
+		(col.spec.Agg == reportcatalog.AggCount ||
+			col.spec.Agg == reportcatalog.AggCountDistinct) {
+		format = reportcatalog.FormatCount
 	}
 
-	id := col.spec.ID
-	if pivotValue != "" {
-		id = col.spec.ID + ":" + pivotValue
-	}
+	resultType := columnValueType(e.v, col)
 
 	return services.ReportResultColumn{
-		ID:          id,
+		ID:          outputColumnID(col, pivotValue),
 		Label:       label,
 		Type:        resultType,
 		Format:      format,
+		Display:     resolveDisplay(col, resultType, format),
 		Sensitivity: e.fieldSensitivity(col),
+	}
+}
+
+func outputColumnID(col *validatedColumn, pivotValue string) string {
+	if pivotValue == "" {
+		return col.spec.ID
+	}
+	return col.spec.ID + pivotIDSeparator + pivotValue
+}
+
+func resolveDisplay(
+	col *validatedColumn,
+	resultType reportcatalog.FieldType,
+	hint reportcatalog.FormatHint,
+) reportfmt.Resolved {
+	return reportfmt.Resolve(reportfmt.ResolveInput{
+		Type:      resultType,
+		Hint:      hint,
+		DateStyle: bucketDateStyle(col.spec.Bucket),
+		Band:      col.spec.Band,
+		Spec:      col.spec.Display,
+	})
+}
+
+func bucketDateStyle(bucket report.DateBucket) reportfmt.DateStyle {
+	switch bucket {
+	case report.DateBucketDay, report.DateBucketWeek:
+		return reportfmt.DateStyleDate
+	case report.DateBucketMonth:
+		return reportfmt.DateStyleMonthYear
+	case report.DateBucketQuarter:
+		return reportfmt.DateStyleQuarter
+	case report.DateBucketYear:
+		return reportfmt.DateStyleYear
+	case report.DateBucketNone:
+		return reportfmt.DateStyleAuto
+	default:
+		return reportfmt.DateStyleAuto
 	}
 }

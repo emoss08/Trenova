@@ -80,8 +80,43 @@ func TestEveryEntityIsInternallyConsistent(t *testing.T) {
 			if edge.Cardinality == CardinalityM2M && edge.Through == nil {
 				t.Errorf("entity %q m2m edge %q has no through join", entity.Key, edge.Name)
 			}
-			if edge.Cardinality != CardinalityM2M && len(edge.Join) == 0 {
-				t.Errorf("entity %q edge %q has no join pairs", entity.Key, edge.Name)
+
+			// Every edge resolves exactly one way: a through table, a picked row
+			// of a to-many path, or a key pair. Two mechanisms on one edge means
+			// the compiler's choice between them decides what the edge returns.
+			mechanisms := 0
+			if edge.Through != nil {
+				mechanisms++
+			}
+			if edge.Pick != nil {
+				mechanisms++
+			}
+			if len(edge.Join) > 0 {
+				mechanisms++
+			}
+			if mechanisms != 1 {
+				t.Errorf("entity %q edge %q has %d join mechanisms, want exactly 1",
+					entity.Key, edge.Name, mechanisms)
+			}
+
+			if edge.Pick != nil {
+				if edge.Cardinality != CardinalityOne {
+					t.Errorf("entity %q pick edge %q is %q, want one",
+						entity.Key, edge.Name, edge.Cardinality)
+				}
+				if len(edge.Pick.Via) == 0 {
+					t.Errorf("entity %q pick edge %q has an empty via path", entity.Key, edge.Name)
+				}
+				if len(edge.Pick.OrderBy) == 0 {
+					t.Errorf("entity %q pick edge %q has no ordering, so its row is arbitrary",
+						entity.Key, edge.Name)
+				}
+				for _, term := range edge.Pick.OrderBy {
+					if term.Step < 0 || term.Step >= len(edge.Pick.Via) {
+						t.Errorf("entity %q pick edge %q orders by step %d of %d",
+							entity.Key, edge.Name, term.Step, len(edge.Pick.Via))
+					}
+				}
 			}
 		}
 	}

@@ -24,6 +24,219 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// Dashboard — table "report_dashboards", alias "rdash"
+// ---------------------------------------------------------------------------
+
+// DashboardTable holds the table name, alias, and primary key columns
+// for the "report_dashboards" table. The alias "rdash" is used in all generated
+// SQL fragments (e.g. "rdash.id = ?").
+var DashboardTable = TableInfo{
+	Name:       "report_dashboards",
+	Alias:      "rdash",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// DashboardColumns provides type-safe column references for the "report_dashboards" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(DashboardColumns.ID.String())
+//	// SELECT rdash.id FROM report_dashboards AS rdash
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(DashboardColumns.ID.Eq(), id)           // WHERE rdash.id = ?
+//	q.Order(DashboardColumns.CreatedAt.OrderDesc())  // ORDER BY rdash.created_at DESC
+var DashboardColumns = struct {
+	ID             Column // "id" → qualified: "rdash.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "rdash.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "rdash.organization_id"
+	Name           Column // "name" → qualified: "rdash.name"
+	Description    Column // "description" → qualified: "rdash.description"
+	Category       Column // "category" → qualified: "rdash.category"
+	Tags           Column // "tags" → qualified: "rdash.tags"
+	OwnerID        Column // "owner_id" → qualified: "rdash.owner_id"
+	Visibility     Column // "visibility" → qualified: "rdash.visibility"
+	Layout         Column // "layout" → qualified: "rdash.layout"
+	Version        Column // "version" → qualified: "rdash.version"
+	CreatedAt      Column // "created_at" → qualified: "rdash.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "rdash.updated_at"
+}{
+	ID:             NewColumn("id", "rdash"),
+	BusinessUnitID: NewColumn("business_unit_id", "rdash"),
+	OrganizationID: NewColumn("organization_id", "rdash"),
+	Name:           NewColumn("name", "rdash"),
+	Description:    NewColumn("description", "rdash"),
+	Category:       NewColumn("category", "rdash"),
+	Tags:           NewColumn("tags", "rdash"),
+	OwnerID:        NewColumn("owner_id", "rdash"),
+	Visibility:     NewColumn("visibility", "rdash"),
+	Layout:         NewColumn("layout", "rdash"),
+	Version:        NewColumn("version", "rdash"),
+	CreatedAt:      NewColumn("created_at", "rdash"),
+	UpdatedAt:      NewColumn("updated_at", "rdash"),
+}
+
+// DashboardFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Dashboard.GetStaticFieldMap().
+var DashboardFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"name":           "name",
+	"description":    "description",
+	"category":       "category",
+	"tags":           "tags",
+	"ownerId":        "owner_id",
+	"visibility":     "visibility",
+	"layout":         "layout",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// DashboardInsertableColumns lists column names suitable for INSERT statements on the "report_dashboards" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var DashboardInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"name",
+	"description",
+	"category",
+	"tags",
+	"owner_id",
+	"visibility",
+	"layout",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// DashboardRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(DashboardRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var DashboardRelations = struct {
+	Organization string
+	BusinessUnit string
+	Owner        string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	Owner:        "Owner",
+}
+
+// DashboardScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rdash.organization_id = ? AND rdash.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.DashboardScopeTenant(sq, ti).
+//		Where(buncolgen.DashboardColumns.ID.Eq(), id)
+func DashboardScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DashboardColumns.OrganizationID, DashboardColumns.BusinessUnitID, ti)
+}
+
+// DashboardScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.DashboardScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DashboardColumns.ID.In(), bun.List(ids))
+//	})
+func DashboardScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DashboardColumns.OrganizationID, DashboardColumns.BusinessUnitID, ti)
+}
+
+// DashboardScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.DashboardScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DashboardColumns.ID.Eq(), id)
+//	})
+func DashboardScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DashboardColumns.OrganizationID, DashboardColumns.BusinessUnitID, ti)
+}
+
+// DashboardApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.DashboardApplyTenant(tenantInfo))
+func DashboardApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DashboardColumns.OrganizationID, DashboardColumns.BusinessUnitID, ti)
+}
+
+// DashboardFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "report_dashboards" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	DashboardFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var DashboardFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Category       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "category" → DB: "category"
+	Tags           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
+	OwnerID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	Visibility     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "visibility" → DB: "visibility"
+	Layout         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "layout" → DB: "layout"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Category: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("category", op, value)
+	},
+	Tags: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tags", op, value)
+	},
+	OwnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerId", op, value)
+	},
+	Visibility: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("visibility", op, value)
+	},
+	Layout: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("layout", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // ReportDefinition — table "report_definitions", alias "rdef"
 // ---------------------------------------------------------------------------
 
@@ -864,6 +1077,8 @@ var ReportScheduleColumns = struct {
 	Timezone            Column // "timezone" → qualified: "rsch.timezone"
 	Formats             Column // "formats" → qualified: "rsch.formats"
 	Delivery            Column // "delivery" → qualified: "rsch.delivery"
+	Alert               Column // "alert" → qualified: "rsch.alert"
+	AlertFiring         Column // "alert_firing" → qualified: "rsch.alert_firing"
 	Enabled             Column // "enabled" → qualified: "rsch.enabled"
 	RunAsID             Column // "run_as_id" → qualified: "rsch.run_as_id"
 	LastRunID           Column // "last_run_id" → qualified: "rsch.last_run_id"
@@ -881,6 +1096,8 @@ var ReportScheduleColumns = struct {
 	Timezone:            NewColumn("timezone", "rsch"),
 	Formats:             NewColumn("formats", "rsch"),
 	Delivery:            NewColumn("delivery", "rsch"),
+	Alert:               NewColumn("alert", "rsch"),
+	AlertFiring:         NewColumn("alert_firing", "rsch"),
 	Enabled:             NewColumn("enabled", "rsch"),
 	RunAsID:             NewColumn("run_as_id", "rsch"),
 	LastRunID:           NewColumn("last_run_id", "rsch"),
@@ -904,6 +1121,8 @@ var ReportScheduleFieldMap = map[string]string{
 	"timezone":            "timezone",
 	"formats":             "formats",
 	"delivery":            "delivery",
+	"alert":               "alert",
+	"alertFiring":         "alert_firing",
 	"enabled":             "enabled",
 	"runAsId":             "run_as_id",
 	"lastRunId":           "last_run_id",
@@ -925,6 +1144,8 @@ var ReportScheduleInsertableColumns = []string{
 	"timezone",
 	"formats",
 	"delivery",
+	"alert",
+	"alert_firing",
 	"enabled",
 	"run_as_id",
 	"last_run_id",
@@ -1010,6 +1231,8 @@ var ReportScheduleFilter = struct {
 	Timezone            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
 	Formats             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formats" → DB: "formats"
 	Delivery            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delivery" → DB: "delivery"
+	Alert               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "alert" → DB: "alert"
+	AlertFiring         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "alertFiring" → DB: "alert_firing"
 	Enabled             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
 	RunAsID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runAsId" → DB: "run_as_id"
 	LastRunID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunId" → DB: "last_run_id"
@@ -1043,6 +1266,12 @@ var ReportScheduleFilter = struct {
 	Delivery: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("delivery", op, value)
 	},
+	Alert: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("alert", op, value)
+	},
+	AlertFiring: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("alertFiring", op, value)
+	},
 	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enabled", op, value)
 	},
@@ -1057,6 +1286,245 @@ var ReportScheduleFilter = struct {
 	},
 	ConsecutiveFailures: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("consecutiveFailures", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ReportView — table "report_views", alias "rview"
+// ---------------------------------------------------------------------------
+
+// ReportViewTable holds the table name, alias, and primary key columns
+// for the "report_views" table. The alias "rview" is used in all generated
+// SQL fragments (e.g. "rview.id = ?").
+var ReportViewTable = TableInfo{
+	Name:       "report_views",
+	Alias:      "rview",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ReportViewColumns provides type-safe column references for the "report_views" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ReportViewColumns.ID.String())
+//	// SELECT rview.id FROM report_views AS rview
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ReportViewColumns.ID.Eq(), id)           // WHERE rview.id = ?
+//	q.Order(ReportViewColumns.CreatedAt.OrderDesc())  // ORDER BY rview.created_at DESC
+var ReportViewColumns = struct {
+	ID             Column // "id" → qualified: "rview.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "rview.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "rview.organization_id"
+	DefinitionID   Column // "definition_id" → qualified: "rview.definition_id"
+	OwnerID        Column // "owner_id" → qualified: "rview.owner_id"
+	Name           Column // "name" → qualified: "rview.name"
+	Description    Column // "description" → qualified: "rview.description"
+	Params         Column // "params" → qualified: "rview.params"
+	Shared         Column // "shared" → qualified: "rview.shared"
+	Pinned         Column // "pinned" → qualified: "rview.pinned"
+	Format         Column // "format" → qualified: "rview.format"
+	LastRunAt      Column // "last_run_at" → qualified: "rview.last_run_at"
+	RunCount       Column // "run_count" → qualified: "rview.run_count"
+	Version        Column // "version" → qualified: "rview.version"
+	CreatedAt      Column // "created_at" → qualified: "rview.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "rview.updated_at"
+}{
+	ID:             NewColumn("id", "rview"),
+	BusinessUnitID: NewColumn("business_unit_id", "rview"),
+	OrganizationID: NewColumn("organization_id", "rview"),
+	DefinitionID:   NewColumn("definition_id", "rview"),
+	OwnerID:        NewColumn("owner_id", "rview"),
+	Name:           NewColumn("name", "rview"),
+	Description:    NewColumn("description", "rview"),
+	Params:         NewColumn("params", "rview"),
+	Shared:         NewColumn("shared", "rview"),
+	Pinned:         NewColumn("pinned", "rview"),
+	Format:         NewColumn("format", "rview"),
+	LastRunAt:      NewColumn("last_run_at", "rview"),
+	RunCount:       NewColumn("run_count", "rview"),
+	Version:        NewColumn("version", "rview"),
+	CreatedAt:      NewColumn("created_at", "rview"),
+	UpdatedAt:      NewColumn("updated_at", "rview"),
+}
+
+// ReportViewFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ReportView.GetStaticFieldMap().
+var ReportViewFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"definitionId":   "definition_id",
+	"ownerId":        "owner_id",
+	"name":           "name",
+	"description":    "description",
+	"params":         "params",
+	"shared":         "shared",
+	"pinned":         "pinned",
+	"format":         "format",
+	"lastRunAt":      "last_run_at",
+	"runCount":       "run_count",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// ReportViewInsertableColumns lists column names suitable for INSERT statements on the "report_views" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ReportViewInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"definition_id",
+	"owner_id",
+	"name",
+	"description",
+	"params",
+	"shared",
+	"pinned",
+	"format",
+	"last_run_at",
+	"run_count",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ReportViewRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ReportViewRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var ReportViewRelations = struct {
+	Organization     string
+	BusinessUnit     string
+	Owner            string
+	ReportDefinition string
+}{
+	Organization:     "Organization",
+	BusinessUnit:     "BusinessUnit",
+	Owner:            "Owner",
+	ReportDefinition: "ReportDefinition",
+}
+
+// ReportViewScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rview.organization_id = ? AND rview.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ReportViewScopeTenant(sq, ti).
+//		Where(buncolgen.ReportViewColumns.ID.Eq(), id)
+func ReportViewScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ReportViewColumns.OrganizationID, ReportViewColumns.BusinessUnitID, ti)
+}
+
+// ReportViewScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ReportViewScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ReportViewColumns.ID.In(), bun.List(ids))
+//	})
+func ReportViewScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ReportViewColumns.OrganizationID, ReportViewColumns.BusinessUnitID, ti)
+}
+
+// ReportViewScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ReportViewScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ReportViewColumns.ID.Eq(), id)
+//	})
+func ReportViewScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ReportViewColumns.OrganizationID, ReportViewColumns.BusinessUnitID, ti)
+}
+
+// ReportViewApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ReportViewApplyTenant(tenantInfo))
+func ReportViewApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ReportViewColumns.OrganizationID, ReportViewColumns.BusinessUnitID, ti)
+}
+
+// ReportViewFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "report_views" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ReportViewFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ReportViewFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	DefinitionID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "definitionId" → DB: "definition_id"
+	OwnerID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Params         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "params" → DB: "params"
+	Shared         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shared" → DB: "shared"
+	Pinned         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
+	Format         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "format" → DB: "format"
+	LastRunAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunAt" → DB: "last_run_at"
+	RunCount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runCount" → DB: "run_count"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	DefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("definitionId", op, value)
+	},
+	OwnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Params: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("params", op, value)
+	},
+	Shared: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shared", op, value)
+	},
+	Pinned: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pinned", op, value)
+	},
+	Format: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("format", op, value)
+	},
+	LastRunAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastRunAt", op, value)
+	},
+	RunCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runCount", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

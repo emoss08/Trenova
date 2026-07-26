@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,6 +27,7 @@ type ReportResultColumn struct {
 	Label       string
 	Type        reportcatalog.FieldType
 	Format      reportcatalog.FormatHint
+	Display     reportfmt.Resolved
 	Sensitivity permission.FieldSensitivity
 }
 
@@ -46,7 +48,14 @@ type CompiledReportQuery struct {
 	ReferencedEntities []string
 	ReferencedTables   []string
 	Limit              int
+
+	// TotalsSQL re-aggregates the same measures with the grouping removed. It
+	// is empty unless the definition asked for a grand-total row.
+	TotalsSQL  string
+	TotalsArgs []any
 }
+
+func (q *CompiledReportQuery) HasTotals() bool { return q.TotalsSQL != "" }
 
 type ReportValidationResult struct {
 	ReferencedEntities []string
@@ -75,6 +84,10 @@ type ReportRow []any
 type ReportDatasetReader interface {
 	Schema() []ReportResultColumn
 	Next(ctx context.Context) (ReportRow, error)
+	// Totals returns the grand-total row, or nil when the report does not have
+	// one. Dimension positions are nil; measures hold the aggregate computed
+	// over every row the filters matched, not only the rows that were streamed.
+	Totals(ctx context.Context) (ReportRow, error)
 	RowCount() int64
 	Truncated() bool
 	Close() error
@@ -119,12 +132,35 @@ type ReportRendererRegistry interface {
 	For(format report.Format) (ReportRenderer, error)
 }
 
+// MaxDigestRows bounds an inline digest. An email is a summary, not a data
+// export — past a couple of dozen rows it stops being readable and the
+// attachment or the download link is the right answer.
+const MaxDigestRows = 20
+
+// ReportDigest is a bounded sample of a finished result, carried alongside the
+// artifact so a scheduled email can show the answer itself rather than only a
+// link to it. It travels through the workflow and the result cache; it is
+// deliberately not persisted on the run, since it is only ever needed for the
+// delivery that immediately follows the run.
+type ReportDigest struct {
+	Columns []ReportResultColumn `json:"columns"`
+	Rows    []ReportRow          `json:"rows"`
+	Totals  ReportRow            `json:"totals,omitempty"`
+	// Truncated reports that the result had more rows than the digest carries.
+	Truncated bool `json:"truncated,omitempty"`
+}
+
+func (d *ReportDigest) IsEmpty() bool {
+	return d == nil || len(d.Columns) == 0
+}
+
 type ReportCacheEntry struct {
-	ArtifactKey       string `json:"artifactKey"`
-	RowCount          int64  `json:"rowCount"`
-	ByteSize          int64  `json:"byteSize"`
-	Truncated         bool   `json:"truncated"`
-	ArtifactExpiresAt int64  `json:"artifactExpiresAt"`
+	ArtifactKey       string        `json:"artifactKey"`
+	RowCount          int64         `json:"rowCount"`
+	ByteSize          int64         `json:"byteSize"`
+	Truncated         bool          `json:"truncated"`
+	ArtifactExpiresAt int64         `json:"artifactExpiresAt"`
+	Digest            *ReportDigest `json:"digest,omitempty"`
 }
 
 // ReportResultCache caches finished artifacts keyed by the compiled query, the

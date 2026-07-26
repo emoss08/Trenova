@@ -66,8 +66,10 @@ func ComputeVersion(catalog *reportcatalog.Catalog, manifestRaw []byte) string {
 		}
 		for j := range entity.Edges {
 			edge := &entity.Edges[j]
-			fmt.Fprintf(&dump, "  edge %s target=%s card=%s join=%v traversable=%t through=%v\n",
-				edge.Name, edge.Target, edge.Cardinality, edge.Join, edge.Traversable, edge.Through,
+			fmt.Fprintf(&dump,
+				"  edge %s target=%s card=%s join=%v traversable=%t through=%v pick=%v\n",
+				edge.Name, edge.Target, edge.Cardinality, edge.Join, edge.Traversable,
+				edge.Through, edge.Pick,
 			)
 		}
 	}
@@ -218,6 +220,17 @@ func emitEdge(out *strings.Builder, edge *reportcatalog.Edge) {
 			fmt.Fprintf(out, "\t\t\t\t\t\tTenant: TenantColumns{OrganizationID: %q, BusinessUnitID: %q},\n",
 				edge.Through.Tenant.OrganizationID, edge.Through.Tenant.BusinessUnitID)
 		}
+		out.WriteString("\t\t\t\t\t},\n")
+	}
+	if edge.Pick != nil {
+		out.WriteString("\t\t\t\t\tPick: &PickOne{\n")
+		fmt.Fprintf(out, "\t\t\t\t\t\tVia: %s,\n", stringSliceLiteral(edge.Pick.Via))
+		out.WriteString("\t\t\t\t\t\tOrderBy: []OrderTerm{\n")
+		for _, term := range edge.Pick.OrderBy {
+			fmt.Fprintf(out, "\t\t\t\t\t\t\t{Step: %d, Column: %q, Descending: %t},\n",
+				term.Step, term.Column, term.Descending)
+		}
+		out.WriteString("\t\t\t\t\t\t},\n")
 		out.WriteString("\t\t\t\t\t},\n")
 	}
 	if edge.Traversable {

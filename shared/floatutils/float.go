@@ -1,5 +1,14 @@
 package floatutils
 
+import "math"
+
+// IsFinite reports whether a float carries a usable number. Author-supplied
+// values arrive as JSON floats, where NaN and the infinities are reachable and
+// would otherwise poison every arithmetic result they touch.
+func IsFinite(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
+}
+
 func Clamp(value, minVal, maxVal float64) float64 {
 	switch {
 	case value < minVal:
