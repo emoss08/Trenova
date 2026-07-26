@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	obsmetrics "github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -57,6 +59,7 @@ func TestMonitoringServer_CustomPathsAndMetricsEnabled(t *testing.T) {
 	t.Parallel()
 
 	server, port := newTestMonitoringServer(t, true, nil)
+	withEDIMonitoring(t, server)
 	startTestMonitoringServer(t, server)
 
 	assert.Equal(t, fmt.Sprintf("127.0.0.1:%d", port), server.server.Addr)
@@ -82,6 +85,7 @@ func TestMonitoringServer_MetricsDisabledAndReadinessFails(t *testing.T) {
 	t.Parallel()
 
 	server, port := newTestMonitoringServer(t, false, errors.New("db unavailable"))
+	withEDIMonitoring(t, server)
 	startTestMonitoringServer(t, server)
 
 	metricsBody := mustGET(t, fmt.Sprintf("http://127.0.0.1:%d/internal/metricsz", port))
@@ -157,6 +161,32 @@ func newTestMonitoringServer(
 	return server, port
 }
 
+// withEDIMonitoring wires the EDI health dependencies for tests that exercise the
+// aggregate health endpoint. Each expectation is asserted, so callers must hit
+// the health path exactly once.
+func withEDIMonitoring(t *testing.T, server *MonitoringServer) {
+	t.Helper()
+
+	ediMessageRepo := mocks.NewMockEDIMessageRepository(t)
+	ediMessageRepo.On("CountDeadLetteredSince", mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
+
+	ediInboundRepo := mocks.NewMockEDIInboundFileRepository(t)
+	ediInboundRepo.On("CountQuarantinedSince", mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
+
+	ediProfileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	ediProfileRepo.On("CountStaleInboundPollingProfiles", mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
+
+	server.ediMessageRepo = ediMessageRepo
+	server.ediInboundRepo = ediInboundRepo
+	server.ediProfileRepo = ediProfileRepo
+}
+
 func startTestMonitoringServer(t *testing.T, server *MonitoringServer) {
 	t.Helper()
 
@@ -217,6 +247,17 @@ func TestMonitoringServer_DatabaseCheckWithoutConnection(t *testing.T) {
 
 	assert.Equal(t, "down", check.Status)
 	assert.True(t, strings.Contains(check.Message, "database connection is not configured"))
+}
+
+func TestMonitoringServer_EDICheckWithoutRepositories(t *testing.T) {
+	t.Parallel()
+
+	server, _ := newTestMonitoringServer(t, true, nil)
+
+	check := server.ediCheck(t.Context())
+
+	assert.Equal(t, "unknown", check.Status)
+	assert.Contains(t, check.Message, "EDI monitoring is not configured")
 }
 
 var _ ports.DBConnection = (*fakeDBConnection)(nil)

@@ -36,6 +36,10 @@ func (ura *UserRoleAssignment) BeforeAppendModel(_ context.Context, q bun.Query)
 	return nil
 }
 
+func (ura *UserRoleAssignment) GetCreatedAt() int64 {
+	return ura.AssignedAt
+}
+
 func (ura *UserRoleAssignment) IsExpired() bool {
 	if ura.ExpiresAt == nil {
 		return false

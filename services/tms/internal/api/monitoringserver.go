@@ -171,6 +171,13 @@ func (s *MonitoringServer) handleLiveness(w http.ResponseWriter, _ *http.Request
 }
 
 func (s *MonitoringServer) databaseCheck(ctx context.Context) monitoringCheck {
+	if s.database == nil {
+		return monitoringCheck{
+			Status:  "down",
+			Message: "database connection is not configured",
+		}
+	}
+
 	if err := s.database.HealthCheck(ctx); err != nil {
 		return monitoringCheck{
 			Status:  "down",
@@ -189,6 +196,13 @@ const (
 )
 
 func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
+	if s.ediMessageRepo == nil || s.ediInboundRepo == nil || s.ediProfileRepo == nil {
+		return monitoringCheck{
+			Status:  "unknown",
+			Message: "EDI monitoring is not configured",
+		}
+	}
+
 	now := time.Now()
 	issues := make([]string, 0, 3)
 
