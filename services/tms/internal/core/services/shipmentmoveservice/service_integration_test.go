@@ -44,7 +44,15 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, _, tenantInfo, fixture := newIntegrationService(t, ctx, db)
+	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	// Only the flows that recompute shipment state read the control record, so
+	// the expectation belongs to those tests rather than the shared harness.
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
+		Return(&tenant.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: int16Ptr(30),
+		}, nil)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,
@@ -87,7 +95,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, _, moveRepo, tenantInfo, fixture := newIntegrationService(t, ctx, db)
+	svc, _, moveRepo, tenantInfo, fixture, _ := newIntegrationService(t, ctx, db)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,
@@ -134,7 +142,15 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, _, tenantInfo, fixture := newIntegrationService(t, ctx, db)
+	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	// Only the flows that recompute shipment state read the control record, so
+	// the expectation belongs to those tests rather than the shared harness.
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
+		Return(&tenant.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: int16Ptr(30),
+		}, nil)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,
@@ -220,6 +236,7 @@ func newIntegrationService(
 	repositories.ShipmentMoveRepository,
 	pagination.TenantInfo,
 	*testutil.ShipmentIntegrationFixture,
+	*mocks.MockShipmentControlRepository,
 ) {
 	t.Helper()
 
@@ -255,15 +272,9 @@ func newIntegrationService(
 		CommodityRepository:        commodityRepo,
 	})
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{
-			AutoDelayShipments:          true,
-			AutoDelayShipmentsThreshold: int16Ptr(30),
-		}, nil).
-		Maybe()
 
 	registry := schema.NewRegistry()
+	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
 	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
 		Registry: registry,
@@ -308,7 +319,7 @@ func newIntegrationService(
 
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenantInfo)
 
-	return svc, shipmentRepo, moveRepo, tenantInfo, fixture
+	return svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo
 }
 
 func int16Ptr(value int16) *int16 {
