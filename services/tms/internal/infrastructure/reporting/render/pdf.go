@@ -190,6 +190,10 @@ func (r *PDFRenderer) Render(
 	}, nil
 }
 
+// browserStartTimeout bounds how long the renderer waits for headless chromium
+// to publish its DevTools websocket URL.
+const browserStartTimeout = 90 * time.Second
+
 func (r *PDFRenderer) printToPDF(ctx context.Context, html string) ([]byte, error) {
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(ctx,
 		append(chromedp.DefaultExecAllocatorOptions[:],
@@ -199,6 +203,9 @@ func (r *PDFRenderer) printToPDF(ctx context.Context, html string) ([]byte, erro
 			chromedp.Flag("disable-dev-shm-usage", true),
 			chromedp.Flag("disable-extensions", true),
 			chromedp.Flag("disable-background-networking", true),
+			// The default 20s is not enough for a cold browser start on a busy
+			// worker, and the failure surfaces as an opaque websocket timeout.
+			chromedp.WSURLReadTimeout(browserStartTimeout),
 		)...,
 	)
 	defer cancelAlloc()

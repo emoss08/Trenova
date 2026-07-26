@@ -51,7 +51,7 @@ server:
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
     credentials: true # Allow credentials
-  maxAge: 86400 # Preflight cache duration in seconds
+    maxAge: 86400 # Preflight cache duration in seconds
 
 monitoring:
   pprof:
@@ -160,18 +160,6 @@ logging:
     maxSize: 100 # Maximum file size in MB
     maxAge: 30 # Maximum file age in days
     maxBackups: 10 # Maximum number of backups
-
-# Samsara integration configuration (optional)
-samsara:
-  token: "" # Samsara API token with required scopes
-  baseURL: https://api.samsara.com # Override for EU/CA as needed
-  timeout: 30s
-  userAgent: trenova-tms/1.0
-  retry:
-    enabled: true
-    maxAttempts: 4
-    initialBackoff: 500ms
-    maxBackoff: 10s
 
 # Reporting configuration (optional — all keys have sensible defaults)
 reporting:

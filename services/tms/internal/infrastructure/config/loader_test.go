@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestNewLoader_Defaults(t *testing.T) {
@@ -1070,7 +1071,20 @@ storage:
 }
 
 func TestProductionConfigFileLoads(t *testing.T) {
-	l := NewLoader(WithConfigPath("../../../config"), WithEnvironment(EnvProduction))
+	// The point of this test is that config.prod.yaml applies its security
+	// hardening on top of a base file. config/config.yaml is gitignored, so a
+	// clean checkout has nothing to overlay; stage the tracked test config as
+	// the base so the assertion holds in any working copy.
+	configDir := t.TempDir()
+	copyTrackedConfig(t, "config.test.yaml", filepath.Join(configDir, "config.yaml"))
+	copyTrackedConfig(t, "config.prod.yaml", filepath.Join(configDir, "config.prod.yaml"))
+
+	// config.test.yaml omits sections a production deployment must supply, so
+	// fill them in to get a base the loader will accept. Viper's AutomaticEnv
+	// cannot substitute for them: it only resolves keys it already knows about.
+	stageProductionBase(t, filepath.Join(configDir, "config.yaml"))
+
+	l := NewLoader(WithConfigPath(configDir), WithEnvironment(EnvProduction))
 
 	cfg, err := l.Load()
 
@@ -1080,6 +1094,70 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
 	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
 	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")
+}
+
+// stageProductionBase fills in the sections config.test.yaml leaves out but a
+// production deployment must supply. Viper's AutomaticEnv cannot substitute for
+// them: it only resolves keys it already knows about.
+func stageProductionBase(t *testing.T, path string) {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	var staged map[string]any
+	require.NoError(t, yaml.Unmarshal(contents, &staged))
+
+	mergeInto(staged, map[string]any{
+		"app": map[string]any{"name": "trenova"},
+		"temporal": map[string]any{
+			"hostPort": "temporal:7233",
+			"security": map[string]any{"encryptionKeyId": "primary"},
+		},
+		"storage": map[string]any{
+			"accessKey": "storage-access-key",
+			"secretKey": "storage-secret-key",
+		},
+		"system": map[string]any{"systemUserPassword": "system-user-password"},
+		"foony":  map[string]any{"apiKey": "foony-api-key"},
+		"audit": map[string]any{
+			"batchSize":          100,
+			"maxEntriesPerFlush": 1000,
+			"dlqMaxRetries":      3,
+		},
+	})
+
+	merged, err := yaml.Marshal(staged)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, merged, 0o600))
+}
+
+// mergeInto deep-merges overlay into base, so adding a key to a section that
+// already exists does not replace the section.
+func mergeInto(base, overlay map[string]any) {
+	for key, value := range overlay {
+		nested, ok := value.(map[string]any)
+		if !ok {
+			base[key] = value
+			continue
+		}
+
+		existing, ok := base[key].(map[string]any)
+		if !ok {
+			base[key] = nested
+			continue
+		}
+
+		mergeInto(existing, nested)
+	}
+}
+
+func copyTrackedConfig(t *testing.T, name, dest string) {
+	t.Helper()
+
+	contents, err := os.ReadFile(filepath.Join("../../../config", name))
+	require.NoError(t, err, "tracked config %s must exist", name)
+	require.NoError(t, os.WriteFile(dest, contents, 0o600))
 }
 
 func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
