@@ -10,6 +10,9 @@ vars:
   DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
   CLIENT_DIR: "{{.ROOT_DIR}}/client"
   KAFKA_SCRIPTS: "{{.ROOT_DIR}}/scripts/kafka"
+  TEST_DB_CONTAINER: trenova-integration-postgres
+  TEST_DB_PORT: "55432"
+  TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
 
 tasks:
   default:
@@ -65,13 +68,53 @@ tasks:
 
   test-integration:
     desc: Run integration tests only
+    deps: [test-db-up]
+    env:
+      TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
+      APP_ENV: test
     cmds:
-      - go test -p 1 -v -tags=integration ./...
+      # Only the packages that carry integration-tagged files; the rest already
+      # run under `task test`.
+      - |
+        set -euo pipefail
+        packages=$(git grep -l 'go:build integration' -- '*_test.go' \
+          | xargs -n1 dirname | sort -u | sed 's|^|./|')
+        go test -p 4 -tags=integration $packages
 
   test-all:
     desc: Run all tests (unit + integration)
+    deps: [test-db-up]
+    env:
+      TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
+      APP_ENV: test
     cmds:
-      - go test -p 1 -v -tags=integration ./...
+      - go test -p 4 -tags=integration ./...
+
+  test-db-up:
+    desc: Start the shared Postgres the integration suite runs against
+    status:
+      - docker exec {{.TEST_DB_CONTAINER}} pg_isready -U postgres
+    cmds:
+      # One shared server means the migrated template database is built once for
+      # the whole run instead of once per package.
+      - docker rm -f {{.TEST_DB_CONTAINER}} 2>/dev/null || true
+      - >-
+        docker run -d --name {{.TEST_DB_CONTAINER}}
+        -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=trenova_test
+        -p {{.TEST_DB_PORT}}:5432 postgis/postgis:16-3.4-alpine
+        postgres -c max_connections=300
+      - |
+        for _ in $(seq 1 60); do
+          docker exec {{.TEST_DB_CONTAINER}} pg_isready -U postgres >/dev/null 2>&1 && exit 0
+          sleep 1
+        done
+        echo "test postgres did not become ready" >&2
+        exit 1
+
+  test-db-down:
+    desc: Stop the shared integration-test Postgres
+    cmds:
+      - docker rm -f {{.TEST_DB_CONTAINER}} 2>/dev/null || true
 
   test-coverage:
     desc: Run unit tests with coverage
@@ -81,8 +124,12 @@ tasks:
 
   test-coverage-all:
     desc: Run all tests with coverage
+    deps: [test-db-up]
+    env:
+      TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
+      APP_ENV: test
     cmds:
-      - go test -p 1 -v -tags=integration -coverprofile=coverage.out ./...
+      - go test -p 4 -tags=integration -coverprofile=coverage.out ./...
       - go tool cover -html=coverage.out -o coverage.html
 
   test-short:

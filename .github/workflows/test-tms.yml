@@ -1,4 +1,4 @@
-name: Test TMS
+name: Test Go
 
 on:
   push:
@@ -8,18 +8,26 @@ on:
       - develop
       - "claude/**"
     paths:
-      - "services/tms/**"
+      - "services/**"
       - "shared/**"
+      - "go.work"
+      - "go.work.sum"
+      - ".golangci.yml"
       - ".github/workflows/test-tms.yml"
+      - ".github/actions/setup-go/**"
   pull_request:
     branches:
       - master
       - main
       - develop
     paths:
-      - "services/tms/**"
+      - "services/**"
       - "shared/**"
+      - "go.work"
+      - "go.work.sum"
+      - ".golangci.yml"
       - ".github/workflows/test-tms.yml"
+      - ".github/actions/setup-go/**"
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
@@ -28,67 +36,57 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  # Both test harnesses reuse this server, so the migrated template database is
+  # built once for the whole run instead of once per package.
+  TRENOVA_TEST_POSTGRES_DSN: postgres://postgres:postgres@localhost:5432/trenova_test?sslmode=disable
+  TRENOVA_TEST_REDIS_ADDR: localhost:6379
+  APP_ENV: test
+
 jobs:
   unit-tests:
-    name: Run Unit Tests
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    name: Unit Tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.26"
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/tms/go.sum
-            shared/go.sum
-
-      - name: Download dependencies
-        run: |
-          cd services/tms && go mod download
-          cd ../../shared && go mod download
-
-      - name: Install gotestfmt
-        run: |
-          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-
-      - name: Run shared module tests
-        working-directory: ./shared
-        run: |
-          set -euo pipefail
-          go test -json -coverprofile=coverage-shared.out -covermode=atomic ./... 2>&1 | gotestfmt
+        uses: ./.github/actions/setup-go
 
       - name: Run unit tests
-        working-directory: ./services/tms
-        env:
-          APP_ENV: test
         run: |
           set -euo pipefail
-          go test -json -coverprofile=coverage-unit.out -covermode=atomic ./... 2>&1 | gotestfmt
+          for module in shared services/tms services/gtc services/samsara-sim services/edi-partner-sim; do
+            echo "::group::${module}"
+            (cd "$module" && go test -coverprofile=coverage-unit.out -covermode=atomic ./...)
+            echo "::endgroup::"
+          done
 
       - name: Upload unit coverage artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tms-unit-coverage
+          name: go-unit-coverage
           path: |
-            shared/coverage-shared.out
+            shared/coverage-unit.out
             services/tms/coverage-unit.out
+            services/gtc/coverage-unit.out
           if-no-files-found: error
 
   integration-tests:
-    name: Run Integration Tests
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    name: Integration Tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     services:
+      # PostGIS, not plain postgres: the migrations create spatial types.
       postgres:
-        image: postgres:16
+        image: postgis/postgis:16-3.4-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -97,152 +95,67 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
       redis:
-        image: redis:7
+        image: redis:8
         ports:
           - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.26"
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/tms/go.sum
-            shared/go.sum
-
-      - name: Download dependencies
-        run: |
-          cd services/tms && go mod download
-          cd ../../shared && go mod download
-
-      - name: Install gotestfmt
-        run: |
-          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          cache-key: integration
 
       - name: Run integration tests
         working-directory: ./services/tms
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/trenova_test?sslmode=disable
-          REDIS_URL: redis://localhost:6379/0
-          APP_ENV: test
-          TESTCONTAINERS_RYUK_DISABLED: true
         run: |
           set -euo pipefail
-          go test -json -tags=integration -coverprofile=coverage-integration.out -covermode=atomic ./... 2>&1 | gotestfmt
+          # Only packages that actually carry integration-tagged files; the rest
+          # already ran in the unit job and re-running them wastes minutes.
+          mapfile -t packages < <(
+            git grep -l 'go:build integration' -- '*_test.go' \
+              | xargs -n1 dirname | sort -u | sed 's|^|./|'
+          )
+          printf 'integration packages: %d\n' "${#packages[@]}"
+          # Cap package parallelism: every process creates databases on the one
+          # shared server, and the runner only has two cores anyway.
+          go test -p 4 -tags=integration -coverprofile=coverage-integration.out \
+            -covermode=atomic "${packages[@]}"
 
       - name: Upload integration coverage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tms-integration-coverage
+          name: go-integration-coverage
           path: services/tms/coverage-integration.out
           if-no-files-found: error
 
-  race-detection:
-    name: Race Detection
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: trenova_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.26"
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/tms/go.sum
-            shared/go.sum
-
-      - name: Download dependencies
-        run: |
-          cd services/tms && go mod download
-          cd ../../shared && go mod download
-
-      - name: Install gotestfmt
-        run: |
-          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-
-      - name: Run shared module race tests
-        working-directory: ./shared
-        run: |
-          set -euo pipefail
-          go test -json -race ./... 2>&1 | gotestfmt
-
-      - name: Run TMS race tests
-        working-directory: ./services/tms
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/trenova_test?sslmode=disable
-          REDIS_URL: redis://localhost:6379/0
-          APP_ENV: test
-          TESTCONTAINERS_RYUK_DISABLED: true
-        run: |
-          set -euo pipefail
-          go test -json -race -tags=integration ./... 2>&1 | gotestfmt
-
   lint:
-    name: Run Lint
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    name: Lint
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 2
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.26"
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/tms/go.sum
+          cache-key: lint
 
       - name: Determine lint base
         id: lint-base
@@ -257,59 +170,77 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12.2
           working-directory: ./services/tms
           verify: false
-          args: --timeout=5m --new-from-rev=${{ steps.lint-base.outputs.value }}
-
-  vet:
-    name: Run Vet
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.26"
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/tms/go.sum
-
-      - name: Download dependencies
-        working-directory: ./services/tms
-        run: go mod download
-
-      - name: Run go vet
-        working-directory: ./services/tms
-        run: go vet ./...
+          # Typechecking the whole module is unavoidable even with
+          # --new-from-rev, so the timeout has to cover a cold analysis cache.
+          args: --timeout=20m --new-from-rev=${{ steps.lint-base.outputs.value }}
 
   build:
     name: Build
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: ./.github/actions/setup-go
+
+      - name: Build every workspace module
+        run: |
+          set -euo pipefail
+          for module in shared services/tms services/gtc services/samsara-sim services/edi-partner-sim; do
+            echo "::group::${module}"
+            (cd "$module" && go build ./...)
+            echo "::endgroup::"
+          done
+
+  race-detection:
+    name: Race Detection
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trenova_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:8
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.26"
-          cache: true
-          cache-dependency-path: |
-            go.work.sum
-            services/tms/go.sum
+          cache-key: race
 
-      - name: Download dependencies
-        working-directory: ./services/tms
-        run: go mod download
+      - name: Run shared module race tests
+        working-directory: ./shared
+        run: go test -race ./...
 
-      - name: Build
+      - name: Run TMS race tests
         working-directory: ./services/tms
-        run: go build -v ./...
+        run: go test -p 4 -race -tags=integration ./...

@@ -1,0 +1,37 @@
+name: Setup Client
+description: >-
+  Installs pnpm and Node for the client Turborepo and restores the dependency
+  and Turborepo caches. Every client job needs the same setup, so it lives here
+  rather than being repeated per job.
+
+runs:
+  using: composite
+  steps:
+    # No version pin: action-setup reads packageManager from client/package.json,
+    # so CI cannot drift from what developers run locally.
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        package_json_file: client/package.json
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: "24"
+        cache: pnpm
+        cache-dependency-path: client/pnpm-lock.yaml
+
+    # Rolling key: the cache is saved on every run and restored from the newest
+    # prefix match, so a task whose inputs did not change is never re-run.
+    - name: Cache Turborepo
+      uses: actions/cache@v4
+      with:
+        path: client/.turbo/cache
+        key: turbo-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ./client
+      run: pnpm install --frozen-lockfile

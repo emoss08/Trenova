@@ -12,6 +12,7 @@ on:
       - "services/tms/internal/api/graphql/schema/**"
       - "services/tms/internal/api/graphql/persisted-documents.json"
       - ".github/workflows/test-client.yml"
+      - ".github/actions/setup-client/**"
   pull_request:
     branches:
       - master
@@ -22,6 +23,7 @@ on:
       - "services/tms/internal/api/graphql/schema/**"
       - "services/tms/internal/api/graphql/persisted-documents.json"
       - ".github/workflows/test-client.yml"
+      - ".github/actions/setup-client/**"
   workflow_dispatch:
 
 concurrency:
@@ -32,134 +34,78 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Run Tests
+  # Codegen is a prerequisite for typecheck and build, and it is the cheapest
+  # gate, so it runs once on its own instead of in every downstream job.
+  codegen:
+    name: GraphQL Codegen
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: client/pnpm-lock.yaml
-
-      - name: Install dependencies
-        working-directory: ./client
-        run: pnpm install --frozen-lockfile
+      - name: Set up client toolchain
+        uses: ./.github/actions/setup-client
 
       - name: Check GraphQL generated artifacts
         working-directory: ./client
-        run: pnpm graphql:codegen:check
+        run: pnpm --filter @trenova/graphql codegen:check
 
-      - name: Run tests
-        working-directory: ./client
-        run: pnpm test
-
-  build:
-    name: Build
+  verify:
+    name: ${{ matrix.task.name }}
     runs-on: ubuntu-latest
+    needs: codegen
+
+    strategy:
+      fail-fast: false
+      matrix:
+        task:
+          - name: Lint
+            run: pnpm lint --format=github
+          - name: Typecheck
+            run: pnpm typecheck
+          - name: Test
+            run: pnpm test
+          - name: Build
+            run: pnpm build
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+      - name: Set up client toolchain
+        uses: ./.github/actions/setup-client
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: client/pnpm-lock.yaml
-
-      - name: Install dependencies
+      - name: ${{ matrix.task.name }}
         working-directory: ./client
-        run: pnpm install --frozen-lockfile
-
-      - name: Check GraphQL generated artifacts
-        working-directory: ./client
-        run: pnpm graphql:codegen:check
-
-      - name: Build
-        working-directory: ./client
-        run: pnpm build
+        run: ${{ matrix.task.run }}
 
   storybook:
     name: Storybook
     runs-on: ubuntu-latest
+    needs: codegen
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Set up client toolchain
+        uses: ./.github/actions/setup-client
+
+      # Browsers are pinned by the lockfile, so keying on it avoids a ~100MB
+      # download on every run.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
         with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: client/pnpm-lock.yaml
-
-      - name: Install dependencies
-        working-directory: ./client
-        run: pnpm install --frozen-lockfile
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('client/pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       - name: Install Playwright Chromium
-        working-directory: ./client
+        working-directory: ./client/apps/web
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Build Storybook
-        working-directory: ./client
-        run: pnpm build-storybook
-
       - name: Run Storybook tests
-        working-directory: ./client
+        working-directory: ./client/apps/web
         run: pnpm test:storybook
-
-  lint:
-    name: Run Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: "pnpm"
-          cache-dependency-path: client/pnpm-lock.yaml
-
-      - name: Install dependencies
-        working-directory: ./client
-        run: pnpm install --frozen-lockfile
-
-      - name: Check GraphQL generated artifacts
-        working-directory: ./client
-        run: pnpm graphql:codegen:check
-
-      - name: Run lint
-        working-directory: ./client
-        run: pnpm lint --format=github

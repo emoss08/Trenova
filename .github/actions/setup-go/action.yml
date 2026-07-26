@@ -1,0 +1,56 @@
+name: Setup Go
+description: >-
+  Installs Go and restores the module and build caches. actions/setup-go only
+  saves its cache on a miss, so a long-lived key goes stale and every job pays
+  full compilation. A rolling key plus restore-keys keeps the build cache warm.
+
+inputs:
+  go-version:
+    description: Go version to install
+    required: false
+    default: "1.26"
+  cache-key:
+    description: >-
+      Distinguishes build caches that are not interchangeable, e.g. builds with
+      -race or with a different build tag produce different object files.
+    required: false
+    default: default
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: false
+
+    - name: Resolve cache paths
+      id: paths
+      shell: bash
+      run: |
+        echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+        echo "mod=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.paths.outputs.mod }}
+        key: gomod-${{ runner.os }}-${{ inputs.go-version }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          gomod-${{ runner.os }}-${{ inputs.go-version }}-
+
+    - name: Cache Go build output
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.paths.outputs.build }}
+        key: gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-${{ github.sha }}
+        restore-keys: |
+          gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-
+
+    - name: Download dependencies
+      shell: bash
+      run: |
+        for module in services/tms shared services/gtc services/samsara-sim services/edi-partner-sim; do
+          (cd "$module" && go mod download)
+        done
