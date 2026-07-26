@@ -84,11 +84,11 @@ export function EntityPicker({
             in related data through joins afterward.
           </p>
           <div className="relative mt-4">
-            <SearchIcon className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
             <Input
               autoFocus
               className="pl-8"
               placeholder="Search entities..."
+              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />

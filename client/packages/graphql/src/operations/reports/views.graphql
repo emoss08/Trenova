@@ -1,0 +1,38 @@
+fragment ReportViewFields on ReportView {
+  id
+  definitionId
+  ownerId
+  name
+  description
+  params
+  shared
+  pinned
+  format
+  lastRunAt
+  runCount
+  version
+  createdAt
+  updatedAt
+}
+
+query ReportViews($definitionId: ID) {
+  reportViews(definitionId: $definitionId) {
+    ...ReportViewFields
+  }
+}
+
+mutation CreateReportView($input: CreateReportViewInput!) {
+  createReportView(input: $input) {
+    ...ReportViewFields
+  }
+}
+
+mutation UpdateReportView($input: UpdateReportViewInput!) {
+  updateReportView(input: $input) {
+    ...ReportViewFields
+  }
+}
+
+mutation DeleteReportView($id: ID!) {
+  deleteReportView(id: $id)
+}

@@ -6,7 +6,16 @@ fragment ReportScheduleFields on ReportSchedule {
   formats
   emailRecipients
   emailAttach
+  emailInline
   notifyUserIds
+  alert {
+    operator
+    threshold
+    columnId
+    value
+    suppressWhileFiring
+  }
+  alertFiring
   enabled
   runAsId
   lastRunId

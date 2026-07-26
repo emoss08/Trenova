@@ -8,9 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import type { ReportIR, ReportSortSpec } from "@/types/report";
 import { PlusIcon, XIcon } from "lucide-react";
-import { columnDisplayLabel, type CatalogIndex } from "./builder-state";
+import { outputColumnChoices, type CatalogIndex } from "./builder-state";
 
 const DIRECTION_CHOICES = [
   { value: "asc", label: "Ascending" },
@@ -22,21 +23,26 @@ type SortLimitPanelProps = {
   ir: ReportIR;
   onSortChange: (sort: ReportSortSpec[]) => void;
   onLimitChange: (limit: number | undefined) => void;
+  onTotalsChange: (totals: boolean) => void;
 };
 
-export function SortLimitPanel({ index, ir, onSortChange, onLimitChange }: SortLimitPanelProps) {
+export function SortLimitPanel({
+  index,
+  ir,
+  onSortChange,
+  onLimitChange,
+  onTotalsChange,
+}: SortLimitPanelProps) {
   const sort = ir.sort ?? [];
+  // Sorting addresses output columns, so a pivoted measure appears once per
+  // bucket — sorting by the measure itself has nothing to point at.
+  const choices = outputColumnChoices(index, ir);
+  const items = choices.map((choice) => ({ value: choice.id, label: choice.label }));
 
-  const columnLabel = (columnId: string): string => {
-    const column = ir.columns.find((c) => c.id === columnId);
-    if (!column) return columnId;
-    return columnDisplayLabel(index, ir, column);
-  };
-
-  const columnChoices = ir.columns.map((column) => ({
-    value: column.id,
-    label: columnLabel(column.id),
-  }));
+  const hasMeasures = ir.columns.some((column) => column.kind !== "dimension");
+  const hasDimensions = ir.columns.some((column) => column.kind === "dimension");
+  const hasMeasureFilters = (ir.having?.filters?.length ?? 0) > 0;
+  const totalsAvailable = hasMeasures && hasDimensions && !hasMeasureFilters;
 
   return (
     <div className="flex flex-col gap-3">
@@ -49,15 +55,15 @@ export function SortLimitPanel({ index, ir, onSortChange, onLimitChange }: SortL
                 if (!columnId) return;
                 onSortChange(sort.map((s, i) => (i === sortIndex ? { ...s, columnId } : s)));
               }}
-              items={columnChoices}
+              items={items}
             >
               <SelectTrigger className="h-7 flex-1">
                 <SelectValue placeholder="Column" />
               </SelectTrigger>
               <SelectContent>
-                {ir.columns.map((column) => (
-                  <SelectItem key={column.id} value={column.id}>
-                    {columnLabel(column.id)}
+                {choices.map((choice) => (
+                  <SelectItem key={choice.id} value={choice.id}>
+                    {choice.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -93,8 +99,8 @@ export function SortLimitPanel({ index, ir, onSortChange, onLimitChange }: SortL
           variant="outline"
           size="sm"
           className="h-7 self-start"
-          disabled={ir.columns.length === 0}
-          onClick={() => onSortChange([...sort, { columnId: ir.columns[0].id, direction: "desc" }])}
+          disabled={choices.length === 0}
+          onClick={() => onSortChange([...sort, { columnId: choices[0].id, direction: "desc" }])}
         >
           <PlusIcon className="size-3.5" />
           Sort
@@ -116,6 +122,24 @@ export function SortLimitPanel({ index, ir, onSortChange, onLimitChange }: SortL
             onLimitChange(Number.isNaN(parsed) || parsed <= 0 ? undefined : parsed);
           }}
         />
+      </div>
+      <div className="flex flex-col gap-1 rounded-md border border-border p-2">
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="report-totals" className="text-xs text-muted-foreground">
+            Total row
+          </Label>
+          <Switch
+            id="report-totals"
+            checked={Boolean(ir.totals) && totalsAvailable}
+            disabled={!totalsAvailable}
+            onCheckedChange={onTotalsChange}
+          />
+        </div>
+        <p className="text-2xs text-muted-foreground">
+          {hasMeasureFilters
+            ? "Totals are unavailable while measure filters are set — the total would count groups the report excludes."
+            : "Totals are computed from every matching record, so an average stays an average instead of averaging the rows on screen."}
+        </p>
       </div>
     </div>
   );

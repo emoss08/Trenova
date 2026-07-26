@@ -188,11 +188,11 @@ export function CatalogFieldTree({
   return (
     <div className={cn("flex min-h-0 flex-col gap-2", className)}>
       <div className="relative">
-        <SearchIcon className="absolute top-2.5 left-2 size-3.5 text-muted-foreground" />
         <Input
           className="h-8 pl-7"
           placeholder="Search fields..."
           value={search}
+          leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>

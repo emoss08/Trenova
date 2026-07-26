@@ -27,11 +27,13 @@ import {
   emptyIR,
   irToInput,
   previewReady,
+  pruneOutputReferences,
   uniqueColumnId,
   withColumns,
   withParameters,
 } from "./builder-state";
 import { CatalogFieldTree, type FieldSelection } from "./catalog-field-tree";
+import { ChartsPanel } from "./charts-panel";
 import { ColumnsPanel } from "./columns-panel";
 import { EntityPicker } from "./entity-picker";
 import { FiltersPanel } from "./filters-panel";
@@ -49,11 +51,12 @@ type ReportBuilderProps = {
   definition?: ReportDefinition;
 };
 
-type InspectorTab = "columns" | "filters" | "options" | "params";
+type InspectorTab = "columns" | "filters" | "charts" | "options" | "params";
 
 const INSPECTOR_TABS: { key: InspectorTab; label: string }[] = [
   { key: "columns", label: "Columns" },
   { key: "filters", label: "Filters" },
+  { key: "charts", label: "Charts" },
   { key: "options", label: "Options" },
   { key: "params", label: "Params" },
 ];
@@ -110,15 +113,23 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
   const debouncedIR = useDebounce(ir, PREVIEW_DEBOUNCE_MS);
   const ready = previewReady(debouncedIR);
   const previewInput = useMemo(() => (ready ? irToInput(debouncedIR) : null), [ready, debouncedIR]);
-  const preview = useReportPreview(previewInput, defaultPreviewParams(debouncedIR));
+  // Each edit makes the previous preview irrelevant, so the builder is the one
+  // surface that supersedes its own in-flight query.
+  const preview = useReportPreview(previewInput, defaultPreviewParams(debouncedIR), {
+    supersede: true,
+  });
 
   const entity = index.entities.get(ir.entity);
   const parameters: ReportParameterDef[] = ir.parameters ?? [];
 
   const tabCounts: Record<InspectorTab, number> = {
     columns: ir.columns.length,
-    filters: countFilters(ir.filters) + (ir.having?.filters?.length ?? 0),
-    options: (ir.sort?.length ?? 0) + (ir.pivot ? 1 : 0),
+    filters:
+      countFilters(ir.filters) +
+      (ir.having?.filters?.length ?? 0) +
+      ir.columns.reduce((total, column) => total + countFilters(column.filter), 0),
+    charts: ir.charts?.length ?? 0,
+    options: (ir.sort?.length ?? 0) + (ir.pivot ? 1 : 0) + (ir.totals ? 1 : 0),
     params: parameters.length,
   };
 
@@ -263,6 +274,9 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
 
           <main className="min-h-0 bg-muted/20">
             <PreviewGrid
+              ir={ir}
+              previewInput={previewInput}
+              previewParams={defaultPreviewParams(debouncedIR)}
               preview={preview.data}
               loading={preview.isFetching}
               error={
@@ -341,15 +355,23 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                       </div>
                     </div>
                   )}
+                  {inspectorTab === "charts" && (
+                    <ChartsPanel
+                      index={index}
+                      ir={ir}
+                      onChange={(charts) => setIR((prev) => ({ ...prev, charts }))}
+                    />
+                  )}
                   {inspectorTab === "options" && (
                     <div className="flex flex-col gap-4">
                       <div>
-                        <SectionLabel>Sort & Limit</SectionLabel>
+                        <SectionLabel>Sort, Limit & Totals</SectionLabel>
                         <SortLimitPanel
                           index={index}
                           ir={ir}
                           onSortChange={(sort) => setIR((prev) => ({ ...prev, sort }))}
                           onLimitChange={(limit) => setIR((prev) => ({ ...prev, limit }))}
+                          onTotalsChange={(totals) => setIR((prev) => ({ ...prev, totals }))}
                         />
                       </div>
                       <div>
@@ -357,14 +379,16 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                         <PivotPanel
                           index={index}
                           ir={ir}
-                          onChange={(pivot) => setIR((prev) => ({ ...prev, pivot }))}
+                          onChange={(pivot) =>
+                            setIR((prev) => pruneOutputReferences({ ...prev, pivot }))
+                          }
                         />
                       </div>
                     </div>
                   )}
                   {inspectorTab === "params" && (
                     <ParametersPanel
-                      ir={ir}
+                      parameters={parameters}
                       onChange={(nextParameters, rename) =>
                         setIR((prev) => withParameters(prev, nextParameters, rename))
                       }

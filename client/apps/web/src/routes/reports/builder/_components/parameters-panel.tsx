@@ -9,17 +9,15 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
-import {
-  REPORT_PARAMETER_TYPE_CHOICES,
-  type ReportIR,
-  type ReportParameterDef,
-} from "@/types/report";
+import { REPORT_PARAMETER_TYPE_CHOICES, type ReportParameterDef } from "@/types/report";
 import { PlusIcon, XIcon } from "lucide-react";
 import { REPORT_REF_ENTITY_CHOICES } from "../../_components/report-ref-autocomplete";
 
 type ParametersPanelProps = {
-  ir: ReportIR;
+  parameters: ReportParameterDef[];
   onChange: (parameters: ReportParameterDef[], rename?: { from: string; to: string }) => void;
+  /** Overrides the copy for surfaces where parameters mean something else. */
+  emptyMessage?: string;
 };
 
 function coerceDefault(param: ReportParameterDef, raw: string): unknown {
@@ -48,14 +46,13 @@ function uniqueParamName(parameters: ReportParameterDef[]): string {
   return `param${suffix}`;
 }
 
-export function ParametersPanel({ ir, onChange }: ParametersPanelProps) {
-  const parameters = ir.parameters ?? [];
-
+export function ParametersPanel({ parameters, onChange, emptyMessage }: ParametersPanelProps) {
   return (
     <div className="flex flex-col gap-2">
       {parameters.length === 0 && (
         <p className="px-2 py-2 text-center text-sm text-muted-foreground">
-          Parameters prompt the runner for values — bind them to filters for reusable reports.
+          {emptyMessage ??
+            "Parameters prompt the runner for values — bind them to filters for reusable reports."}
         </p>
       )}
       {parameters.map((param, paramIndex) => {

@@ -747,6 +747,39 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/reports/explore",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportExplorePage } = await import("@/routes/reports/explore/page");
+              return { Component: ReportExplorePage };
+            },
+          },
+          {
+            path: "/reports/explore/:definitionId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportExplorePage } = await import("@/routes/reports/explore/page");
+              return { Component: ReportExplorePage };
+            },
+          },
+          {
+            path: "/reports/dashboards/:dashboardId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Report, Operation.Read),
+            ),
+            async lazy() {
+              const { ReportDashboardPage } = await import("@/routes/reports/dashboards/page");
+              return { Component: ReportDashboardPage };
+            },
+          },
+          {
             path: "/reports/builder",
             loader: combineLoaders(
               protectedLoader,

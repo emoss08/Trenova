@@ -11,8 +11,15 @@ import {
 } from "@trenova/shared/components/ui/select";
 import type { ReportCatalogField } from "@/lib/graphql/reports";
 import { operatorChoice } from "@/types/report";
-import { format } from "date-fns";
-import { ChevronDownIcon } from "lucide-react";
+import {
+  REPORT_REF_ENTITIES,
+  ReportRefAutocomplete,
+  ReportRefMultiAutocomplete,
+} from "../../_components/report-ref-autocomplete";
+import { cn } from "@trenova/shared/lib/utils";
+import { multiSelectVariants } from "@/lib/variants/async-multi-select";
+import { AutoCompleteDatePicker } from "@/components/fields/date-field/date-picker";
+import { ChevronDownIcon, XIcon } from "lucide-react";
 
 const BOOL_CHOICES = [
   { value: "true", label: "Yes" },
@@ -24,19 +31,18 @@ type FilterValueEditorProps = {
   operator: string;
   value: unknown;
   onChange: (value: unknown) => void;
+  /**
+   * The catalog entity a reference field points at. With it, filtering on an
+   * id offers real records instead of asking for a raw identifier.
+   */
+  refEntityKey?: string;
 };
 
-function toDateInput(value: unknown): string {
-  if (typeof value !== "number") return "";
-  return format(new Date(value * 1000), "yyyy-MM-dd");
-}
-
-function fromDateInput(raw: string): number | undefined {
-  if (!raw) return undefined;
-  const parsed = new Date(`${raw}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? undefined : Math.floor(parsed.getTime() / 1000);
-}
-
+/**
+ * The app's multi-select is remote-driven, so an enum with a fixed value list
+ * cannot use it directly — this matches its trigger and badge treatment via the
+ * shared `multiSelectVariants` tokens so the two read as one control.
+ */
 function EnumMultiSelect({
   field,
   value,
@@ -47,14 +53,46 @@ function EnumMultiSelect({
   onChange: (value: unknown) => void;
 }) {
   const selected = Array.isArray(value) ? (value as string[]) : [];
+  const byValue = new Map(field.enumValues.map((choice) => [choice.value, choice.label]));
+
+  const remove = (next: string) => onChange(selected.filter((v) => v !== next));
 
   return (
     <Popover>
       <PopoverTrigger
         render={
-          <Button variant="outline" className="h-7 justify-between font-normal">
-            {selected.length > 0 ? `${selected.length} selected` : "Select values"}
-            <ChevronDownIcon className="size-3.5" />
+          <Button
+            variant="outline"
+            role="combobox"
+            className={cn(
+              "h-auto min-h-7 w-full cursor-pointer gap-2 rounded-md border-muted-foreground/20 bg-muted px-2 py-1 font-normal",
+              "justify-between whitespace-nowrap hover:bg-muted-foreground/20",
+              "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/20 data-pressed:outline-hidden",
+              "transition-all duration-200 ease-in-out [&_svg]:size-3 [&_svg]:shrink-0",
+            )}
+          >
+            {selected.length > 0 ? (
+              <span className="flex min-w-0 flex-wrap items-center gap-1">
+                {selected.map((entry) => (
+                  <span
+                    key={entry}
+                    className={cn("min-w-0", multiSelectVariants({ variant: "default" }))}
+                  >
+                    <span className="min-w-0 truncate">{byValue.get(entry) ?? entry}</span>
+                    <XIcon
+                      className="size-4 shrink-0 cursor-pointer"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        remove(entry);
+                      }}
+                    />
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">Select values...</span>
+            )}
+            <ChevronDownIcon className="size-3.5 shrink-0 text-muted-foreground" />
           </Button>
         }
       />
@@ -81,7 +119,24 @@ function EnumMultiSelect({
   );
 }
 
-export function FilterValueEditor({ field, operator, value, onChange }: FilterValueEditorProps) {
+/** Epoch columns get the app's date picker rather than a bare date input. */
+function EpochValue({ value, onChange }: { value: unknown; onChange: (value: unknown) => void }) {
+  return (
+    <AutoCompleteDatePicker
+      date={typeof value === "number" ? new Date(value * 1000) : undefined}
+      setDate={(date) => onChange(date ? Math.floor(date.getTime() / 1000) : undefined)}
+      clearable
+    />
+  );
+}
+
+export function FilterValueEditor({
+  field,
+  operator,
+  value,
+  onChange,
+  refEntityKey,
+}: FilterValueEditorProps) {
   const choice = operatorChoice(operator);
   if (!choice || !choice.requiresValue || !field) return null;
 
@@ -89,19 +144,9 @@ export function FilterValueEditor({ field, operator, value, onChange }: FilterVa
     const range = Array.isArray(value) ? (value as unknown[]) : [undefined, undefined];
     return (
       <div className="flex items-center gap-1">
-        <Input
-          className="h-7"
-          type="date"
-          value={toDateInput(range[0])}
-          onChange={(event) => onChange([fromDateInput(event.target.value), range[1]])}
-        />
+        <EpochValue value={range[0]} onChange={(next) => onChange([next, range[1]])} />
         <span className="text-xs text-muted-foreground">to</span>
-        <Input
-          className="h-7"
-          type="date"
-          value={toDateInput(range[1])}
-          onChange={(event) => onChange([range[0], fromDateInput(event.target.value)])}
-        />
+        <EpochValue value={range[1]} onChange={(next) => onChange([range[0], next])} />
       </div>
     );
   }
@@ -122,9 +167,20 @@ export function FilterValueEditor({ field, operator, value, onChange }: FilterVa
     );
   }
 
+  const refEntity = refEntityKey && REPORT_REF_ENTITIES[refEntityKey] ? refEntityKey : undefined;
+
   if (choice.multiValue) {
     if (field.type === "enum" && field.enumValues.length > 0) {
       return <EnumMultiSelect field={field} value={value} onChange={onChange} />;
+    }
+    if (refEntity) {
+      return (
+        <ReportRefMultiAutocomplete
+          entityKey={refEntity}
+          values={Array.isArray(value) ? (value as unknown[]).map(String) : []}
+          onChange={(values) => onChange(values.length > 0 ? values : undefined)}
+        />
+      );
     }
     const joined = Array.isArray(value) ? (value as unknown[]).join(", ") : "";
     return (
@@ -143,6 +199,16 @@ export function FilterValueEditor({ field, operator, value, onChange }: FilterVa
               : values,
           );
         }}
+      />
+    );
+  }
+
+  if (refEntity) {
+    return (
+      <ReportRefAutocomplete
+        entityKey={refEntity}
+        value={typeof value === "string" ? value : ""}
+        onChange={(next) => onChange(next || undefined)}
       />
     );
   }
@@ -194,14 +260,7 @@ export function FilterValueEditor({ field, operator, value, onChange }: FilterVa
   }
 
   if (field.type === "epoch") {
-    return (
-      <Input
-        className="h-7"
-        type="date"
-        value={toDateInput(value)}
-        onChange={(event) => onChange(fromDateInput(event.target.value))}
-      />
-    );
+    return <EpochValue value={value} onChange={onChange} />;
   }
 
   if (field.type === "int" || field.type === "decimal") {

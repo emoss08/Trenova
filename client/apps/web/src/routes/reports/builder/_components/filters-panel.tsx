@@ -16,7 +16,7 @@ import {
 } from "@/types/report";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
-import { refLabel, resolveField, type CatalogIndex } from "./builder-state";
+import { refLabel, refTargetEntity, resolveField, type CatalogIndex } from "./builder-state";
 import { CatalogFieldTree, type FieldSelection } from "./catalog-field-tree";
 import { FilterValueEditor } from "./filter-value-editor";
 
@@ -170,6 +170,7 @@ function FilterRow({
           field={field}
           operator={filter.operator}
           value={filter.value}
+          refEntityKey={refTargetEntity(index, ir.entity, filter.ref)}
           onChange={(value) => onUpdate({ ...filter, value })}
         />
       )}
