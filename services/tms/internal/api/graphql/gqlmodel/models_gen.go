@@ -431,14 +431,26 @@ type CreateRecurringEarningInput struct {
 }
 
 type CreateReportScheduleInput struct {
-	DefinitionID    string   `json:"definitionId"`
-	CronExpression  string   `json:"cronExpression"`
-	Timezone        *string  `json:"timezone,omitempty"`
-	Formats         []string `json:"formats"`
-	EmailRecipients []string `json:"emailRecipients,omitempty"`
-	EmailAttach     *bool    `json:"emailAttach,omitempty"`
-	NotifyUserIds   []string `json:"notifyUserIds,omitempty"`
-	Enabled         bool     `json:"enabled"`
+	DefinitionID    string                    `json:"definitionId"`
+	CronExpression  string                    `json:"cronExpression"`
+	Timezone        *string                   `json:"timezone,omitempty"`
+	Formats         []string                  `json:"formats"`
+	EmailRecipients []string                  `json:"emailRecipients,omitempty"`
+	EmailAttach     *bool                     `json:"emailAttach,omitempty"`
+	EmailInline     *bool                     `json:"emailInline,omitempty"`
+	NotifyUserIds   []string                  `json:"notifyUserIds,omitempty"`
+	Alert           *ReportScheduleAlertInput `json:"alert,omitempty"`
+	Enabled         bool                      `json:"enabled"`
+}
+
+type CreateReportViewInput struct {
+	DefinitionID string         `json:"definitionId"`
+	Name         string         `json:"name"`
+	Description  *string        `json:"description,omitempty"`
+	Params       map[string]any `json:"params,omitempty"`
+	Shared       *bool          `json:"shared,omitempty"`
+	Pinned       *bool          `json:"pinned,omitempty"`
+	Format       *string        `json:"format,omitempty"`
 }
 
 type CreateSettlementDisputeInput struct {
@@ -1519,6 +1531,16 @@ type RemoveSettlementAdjustmentInput struct {
 	LineID       string `json:"lineId"`
 }
 
+type ReportBand struct {
+	Width float64   `json:"width"`
+	Edges []float64 `json:"edges"`
+}
+
+type ReportBandInput struct {
+	Width *float64  `json:"width,omitempty"`
+	Edges []float64 `json:"edges,omitempty"`
+}
+
 type ReportCatalog struct {
 	Version  string                 `json:"version"`
 	Entities []*ReportCatalogEntity `json:"entities"`
@@ -1564,21 +1586,115 @@ type ReportCatalogField struct {
 	Sensitivity  string                    `json:"sensitivity"`
 }
 
+type ReportChartGoalInput struct {
+	Value    *float64 `json:"value,omitempty"`
+	ColumnID *string  `json:"columnId,omitempty"`
+	Label    *string  `json:"label,omitempty"`
+}
+
+type ReportChartInput struct {
+	ID            string                `json:"id"`
+	Type          string                `json:"type"`
+	Title         *string               `json:"title,omitempty"`
+	XColumnID     *string               `json:"xColumnId,omitempty"`
+	SeriesIds     []string              `json:"seriesIds,omitempty"`
+	Stacked       *bool                 `json:"stacked,omitempty"`
+	HideLegend    *bool                 `json:"hideLegend,omitempty"`
+	ShowValues    *bool                 `json:"showValues,omitempty"`
+	Curved        *bool                 `json:"curved,omitempty"`
+	Limit         *int                  `json:"limit,omitempty"`
+	CompareID     *string               `json:"compareId,omitempty"`
+	Goal          *ReportChartGoalInput `json:"goal,omitempty"`
+	LatColumnID   *string               `json:"latColumnId,omitempty"`
+	LngColumnID   *string               `json:"lngColumnId,omitempty"`
+	LabelColumnID *string               `json:"labelColumnId,omitempty"`
+}
+
+type ReportColumnDisplay struct {
+	Style         string               `json:"style"`
+	Decimals      int                  `json:"decimals"`
+	Grouping      bool                 `json:"grouping"`
+	Currency      string               `json:"currency"`
+	Negative      string               `json:"negative"`
+	Notation      string               `json:"notation"`
+	Prefix        string               `json:"prefix"`
+	Suffix        string               `json:"suffix"`
+	DateStyle     string               `json:"dateStyle"`
+	BoolStyle     string               `json:"boolStyle"`
+	DurationUnit  string               `json:"durationUnit"`
+	DurationStyle string               `json:"durationStyle"`
+	NullText      string               `json:"nullText"`
+	Rules         []*ReportDisplayRule `json:"rules"`
+	Band          *ReportBand          `json:"band,omitempty"`
+}
+
 type ReportColumnInput struct {
-	ID       string               `json:"id"`
-	Ref      *ReportFieldRefInput `json:"ref,omitempty"`
-	Kind     string               `json:"kind"`
-	Agg      *string              `json:"agg,omitempty"`
-	Bucket   *string              `json:"bucket,omitempty"`
-	Label    *string              `json:"label,omitempty"`
-	Computed *ReportComputedInput `json:"computed,omitempty"`
+	ID        string                  `json:"id"`
+	Ref       *ReportFieldRefInput    `json:"ref,omitempty"`
+	Kind      string                  `json:"kind"`
+	Agg       *string                 `json:"agg,omitempty"`
+	Bucket    *string                 `json:"bucket,omitempty"`
+	Band      *ReportBandInput        `json:"band,omitempty"`
+	Label     *string                 `json:"label,omitempty"`
+	Computed  *ReportComputedInput    `json:"computed,omitempty"`
+	Transform *ReportTransformInput   `json:"transform,omitempty"`
+	Display   *ReportDisplayInput     `json:"display,omitempty"`
+	Filter    *ReportFilterGroupInput `json:"filter,omitempty"`
 }
 
 type ReportComputedInput struct {
-	Op      string  `json:"op"`
-	LeftID  string  `json:"leftId"`
-	RightID string  `json:"rightId"`
-	Format  *string `json:"format,omitempty"`
+	Op         string   `json:"op"`
+	LeftID     *string  `json:"leftId,omitempty"`
+	RightID    *string  `json:"rightId,omitempty"`
+	LeftValue  *float64 `json:"leftValue,omitempty"`
+	RightValue *float64 `json:"rightValue,omitempty"`
+	Format     *string  `json:"format,omitempty"`
+}
+
+type ReportDashboard struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Category    string         `json:"category"`
+	Tags        []string       `json:"tags"`
+	OwnerID     string         `json:"ownerId"`
+	Visibility  string         `json:"visibility"`
+	Layout      map[string]any `json:"layout"`
+	Version     int            `json:"version"`
+	CreatedAt   int            `json:"createdAt"`
+	UpdatedAt   int            `json:"updatedAt"`
+}
+
+type ReportDashboardFilterInput struct {
+	ID       string               `json:"id"`
+	Label    *string              `json:"label,omitempty"`
+	Entity   string               `json:"entity"`
+	Ref      *ReportFieldRefInput `json:"ref"`
+	Operator string               `json:"operator"`
+	Default  any                  `json:"default,omitempty"`
+}
+
+type ReportDashboardLayoutInput struct {
+	Tiles      []*ReportDashboardTileInput   `json:"tiles"`
+	Parameters []*ReportParameterDefInput    `json:"parameters,omitempty"`
+	Filters    []*ReportDashboardFilterInput `json:"filters,omitempty"`
+}
+
+type ReportDashboardTileInput struct {
+	ID            string         `json:"id"`
+	Kind          string         `json:"kind"`
+	Title         *string        `json:"title,omitempty"`
+	DefinitionID  *string        `json:"definitionId,omitempty"`
+	CannedKey     *string        `json:"cannedKey,omitempty"`
+	ChartID       *string        `json:"chartId,omitempty"`
+	ColumnID      *string        `json:"columnId,omitempty"`
+	Text          *string        `json:"text,omitempty"`
+	X             int            `json:"x"`
+	Y             int            `json:"y"`
+	W             int            `json:"w"`
+	H             int            `json:"h"`
+	Limit         *int           `json:"limit,omitempty"`
+	ParamBindings map[string]any `json:"paramBindings,omitempty"`
 }
 
 type ReportDefinition struct {
@@ -1625,6 +1741,50 @@ type ReportDefinitionRevision struct {
 	CreatedAt      int            `json:"createdAt"`
 }
 
+type ReportDisplayInput struct {
+	Style         *string                   `json:"style,omitempty"`
+	Decimals      *int                      `json:"decimals,omitempty"`
+	Grouping      *bool                     `json:"grouping,omitempty"`
+	Currency      *string                   `json:"currency,omitempty"`
+	Negative      *string                   `json:"negative,omitempty"`
+	Notation      *string                   `json:"notation,omitempty"`
+	Prefix        *string                   `json:"prefix,omitempty"`
+	Suffix        *string                   `json:"suffix,omitempty"`
+	DateStyle     *string                   `json:"dateStyle,omitempty"`
+	BoolStyle     *string                   `json:"boolStyle,omitempty"`
+	DurationUnit  *string                   `json:"durationUnit,omitempty"`
+	DurationStyle *string                   `json:"durationStyle,omitempty"`
+	NullText      *string                   `json:"nullText,omitempty"`
+	Rules         []*ReportDisplayRuleInput `json:"rules,omitempty"`
+}
+
+type ReportDisplayRule struct {
+	Op    string  `json:"op"`
+	Value float64 `json:"value"`
+	Upper float64 `json:"upper"`
+	Tone  string  `json:"tone"`
+}
+
+type ReportDisplayRuleInput struct {
+	Op    string   `json:"op"`
+	Value float64  `json:"value"`
+	Upper *float64 `json:"upper,omitempty"`
+	Tone  string   `json:"tone"`
+}
+
+type ReportDrillInput struct {
+	Definition *ReportIRInput           `json:"definition"`
+	Params     map[string]any           `json:"params,omitempty"`
+	Dimensions []*ReportDrillValueInput `json:"dimensions"`
+	ColumnID   *string                  `json:"columnId,omitempty"`
+	Limit      *int                     `json:"limit,omitempty"`
+}
+
+type ReportDrillValueInput struct {
+	ColumnID string `json:"columnId"`
+	Value    any    `json:"value,omitempty"`
+}
+
 type ReportFieldRefInput struct {
 	Path  []string `json:"path,omitempty"`
 	Field string   `json:"field"`
@@ -1637,11 +1797,12 @@ type ReportFilterGroupInput struct {
 }
 
 type ReportFilterInput struct {
-	Ref      *ReportFieldRefInput `json:"ref"`
-	Operator string               `json:"operator"`
-	Value    any                  `json:"value,omitempty"`
-	Param    *string              `json:"param,omitempty"`
-	Agg      *string              `json:"agg,omitempty"`
+	Ref       *ReportFieldRefInput  `json:"ref"`
+	Operator  string                `json:"operator"`
+	Value     any                   `json:"value,omitempty"`
+	Param     *string               `json:"param,omitempty"`
+	Agg       *string               `json:"agg,omitempty"`
+	Transform *ReportTransformInput `json:"transform,omitempty"`
 }
 
 type ReportIRInput struct {
@@ -1653,6 +1814,8 @@ type ReportIRInput struct {
 	Limit      *int                       `json:"limit,omitempty"`
 	Pivot      *ReportPivotInput          `json:"pivot,omitempty"`
 	Parameters []*ReportParameterDefInput `json:"parameters,omitempty"`
+	Totals     *bool                      `json:"totals,omitempty"`
+	Charts     []*ReportChartInput        `json:"charts,omitempty"`
 }
 
 type ReportParameterDefInput struct {
@@ -1669,6 +1832,7 @@ type ReportParameterDefInput struct {
 type ReportPivotInput struct {
 	Ref          *ReportFieldRefInput `json:"ref"`
 	Values       []string             `json:"values"`
+	Labels       []string             `json:"labels,omitempty"`
 	MeasureIds   []string             `json:"measureIds"`
 	IncludeOther *bool                `json:"includeOther,omitempty"`
 }
@@ -1676,14 +1840,16 @@ type ReportPivotInput struct {
 type ReportPreview struct {
 	Columns   []*ReportPreviewColumn `json:"columns"`
 	Rows      any                    `json:"rows"`
+	Totals    any                    `json:"totals,omitempty"`
 	Truncated bool                   `json:"truncated"`
 }
 
 type ReportPreviewColumn struct {
-	ID     string  `json:"id"`
-	Label  string  `json:"label"`
-	Type   string  `json:"type"`
-	Format *string `json:"format,omitempty"`
+	ID      string               `json:"id"`
+	Label   string               `json:"label"`
+	Type    string               `json:"type"`
+	Format  *string              `json:"format,omitempty"`
+	Display *ReportColumnDisplay `json:"display"`
 }
 
 type ReportRun struct {
@@ -1735,27 +1901,69 @@ type ReportRunsFilterInput struct {
 }
 
 type ReportSchedule struct {
-	ID                  string   `json:"id"`
-	DefinitionID        string   `json:"definitionId"`
-	CronExpression      string   `json:"cronExpression"`
-	Timezone            string   `json:"timezone"`
-	Formats             []string `json:"formats"`
-	EmailRecipients     []string `json:"emailRecipients"`
-	EmailAttach         bool     `json:"emailAttach"`
-	NotifyUserIds       []string `json:"notifyUserIds"`
-	Enabled             bool     `json:"enabled"`
-	RunAsID             string   `json:"runAsId"`
-	LastRunID           *string  `json:"lastRunId,omitempty"`
-	NextRunAt           *int     `json:"nextRunAt,omitempty"`
-	ConsecutiveFailures int      `json:"consecutiveFailures"`
-	Version             int      `json:"version"`
-	CreatedAt           int      `json:"createdAt"`
-	UpdatedAt           int      `json:"updatedAt"`
+	ID                  string               `json:"id"`
+	DefinitionID        string               `json:"definitionId"`
+	CronExpression      string               `json:"cronExpression"`
+	Timezone            string               `json:"timezone"`
+	Formats             []string             `json:"formats"`
+	EmailRecipients     []string             `json:"emailRecipients"`
+	EmailAttach         bool                 `json:"emailAttach"`
+	EmailInline         bool                 `json:"emailInline"`
+	NotifyUserIds       []string             `json:"notifyUserIds"`
+	Alert               *ReportScheduleAlert `json:"alert,omitempty"`
+	AlertFiring         bool                 `json:"alertFiring"`
+	Enabled             bool                 `json:"enabled"`
+	RunAsID             string               `json:"runAsId"`
+	LastRunID           *string              `json:"lastRunId,omitempty"`
+	NextRunAt           *int                 `json:"nextRunAt,omitempty"`
+	ConsecutiveFailures int                  `json:"consecutiveFailures"`
+	Version             int                  `json:"version"`
+	CreatedAt           int                  `json:"createdAt"`
+	UpdatedAt           int                  `json:"updatedAt"`
+}
+
+type ReportScheduleAlert struct {
+	Operator            string   `json:"operator"`
+	Threshold           int      `json:"threshold"`
+	ColumnID            *string  `json:"columnId,omitempty"`
+	Value               *float64 `json:"value,omitempty"`
+	SuppressWhileFiring bool     `json:"suppressWhileFiring"`
+}
+
+type ReportScheduleAlertInput struct {
+	Operator            string   `json:"operator"`
+	Threshold           int      `json:"threshold"`
+	ColumnID            *string  `json:"columnId,omitempty"`
+	Value               *float64 `json:"value,omitempty"`
+	SuppressWhileFiring *bool    `json:"suppressWhileFiring,omitempty"`
 }
 
 type ReportSortInput struct {
 	ColumnID  string `json:"columnId"`
 	Direction string `json:"direction"`
+}
+
+type ReportTransformInput struct {
+	Op        string   `json:"op"`
+	Precision *int     `json:"precision,omitempty"`
+	Factor    *float64 `json:"factor,omitempty"`
+}
+
+type ReportView struct {
+	ID           string         `json:"id"`
+	DefinitionID string         `json:"definitionId"`
+	OwnerID      string         `json:"ownerId"`
+	Name         string         `json:"name"`
+	Description  *string        `json:"description,omitempty"`
+	Params       map[string]any `json:"params,omitempty"`
+	Shared       bool           `json:"shared"`
+	Pinned       bool           `json:"pinned"`
+	Format       *string        `json:"format,omitempty"`
+	LastRunAt    *int           `json:"lastRunAt,omitempty"`
+	RunCount     int            `json:"runCount"`
+	Version      int            `json:"version"`
+	CreatedAt    int            `json:"createdAt"`
+	UpdatedAt    int            `json:"updatedAt"`
 }
 
 type RequestMyPtoInput struct {
@@ -1828,6 +2036,7 @@ type RunReportInput struct {
 	CannedKey    *string        `json:"cannedKey,omitempty"`
 	Format       string         `json:"format"`
 	Params       map[string]any `json:"params,omitempty"`
+	ViewID       *string        `json:"viewId,omitempty"`
 }
 
 type SCIMGroupRoleMappingConnection struct {
@@ -1839,6 +2048,15 @@ type SCIMGroupRoleMappingConnection struct {
 type SCIMGroupRoleMappingEdge struct {
 	Node   *iam.SCIMGroupRoleMapping `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+type SaveReportDashboardInput struct {
+	Name        string                      `json:"name"`
+	Description *string                     `json:"description,omitempty"`
+	Category    *string                     `json:"category,omitempty"`
+	Tags        []string                    `json:"tags,omitempty"`
+	Visibility  *string                     `json:"visibility,omitempty"`
+	Layout      *ReportDashboardLayoutInput `json:"layout"`
 }
 
 type SaveReportDefinitionInput struct {
@@ -3358,6 +3576,17 @@ type UpdateRecurringEarningInput struct {
 	CurrencyCode  *string                    `json:"currencyCode,omitempty"`
 }
 
+type UpdateReportDashboardInput struct {
+	ID          string                      `json:"id"`
+	Version     int                         `json:"version"`
+	Name        string                      `json:"name"`
+	Description *string                     `json:"description,omitempty"`
+	Category    *string                     `json:"category,omitempty"`
+	Tags        []string                    `json:"tags,omitempty"`
+	Visibility  *string                     `json:"visibility,omitempty"`
+	Layout      *ReportDashboardLayoutInput `json:"layout"`
+}
+
 type UpdateReportDefinitionInput struct {
 	ID            string         `json:"id"`
 	Version       int            `json:"version"`
@@ -3372,16 +3601,29 @@ type UpdateReportDefinitionInput struct {
 }
 
 type UpdateReportScheduleInput struct {
-	ID              string   `json:"id"`
-	Version         int      `json:"version"`
-	DefinitionID    string   `json:"definitionId"`
-	CronExpression  string   `json:"cronExpression"`
-	Timezone        *string  `json:"timezone,omitempty"`
-	Formats         []string `json:"formats"`
-	EmailRecipients []string `json:"emailRecipients,omitempty"`
-	EmailAttach     *bool    `json:"emailAttach,omitempty"`
-	NotifyUserIds   []string `json:"notifyUserIds,omitempty"`
-	Enabled         bool     `json:"enabled"`
+	ID              string                    `json:"id"`
+	Version         int                       `json:"version"`
+	DefinitionID    string                    `json:"definitionId"`
+	CronExpression  string                    `json:"cronExpression"`
+	Timezone        *string                   `json:"timezone,omitempty"`
+	Formats         []string                  `json:"formats"`
+	EmailRecipients []string                  `json:"emailRecipients,omitempty"`
+	EmailAttach     *bool                     `json:"emailAttach,omitempty"`
+	EmailInline     *bool                     `json:"emailInline,omitempty"`
+	NotifyUserIds   []string                  `json:"notifyUserIds,omitempty"`
+	Alert           *ReportScheduleAlertInput `json:"alert,omitempty"`
+	Enabled         bool                      `json:"enabled"`
+}
+
+type UpdateReportViewInput struct {
+	ID          string         `json:"id"`
+	Version     int            `json:"version"`
+	Name        string         `json:"name"`
+	Description *string        `json:"description,omitempty"`
+	Params      map[string]any `json:"params,omitempty"`
+	Shared      *bool          `json:"shared,omitempty"`
+	Pinned      *bool          `json:"pinned,omitempty"`
+	Format      *string        `json:"format,omitempty"`
 }
 
 type UpdateSettlementControlInput struct {

@@ -1,6 +1,6 @@
 {
-  "operationCount": 311,
-  "fragmentCount": 93,
+  "operationCount": 338,
+  "fragmentCount": 103,
   "operations": [
     {
       "name": "AccessorialChargeTable",
@@ -139,6 +139,161 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation AdjustEscrowAccount($input: AdjustEscrowAccountInput!) {\n  adjustEscrowAccount(input: $input) {\n    id\n    balanceMinor\n    version\n  }\n}"
+    },
+    {
+      "name": "AgentControlSettings",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/control.graphql",
+      "hash": "sha256:a0288f356c0efe08e5b5e03734dc189a623608a752569930855e8cbf64a92ec8",
+      "rootFields": [
+        "agentControl"
+      ],
+      "variables": [],
+      "fragments": [
+        "AgentControlFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentExceptionDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/exceptions.graphql",
+      "hash": "sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069",
+      "rootFields": [
+        "agentException"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvidenceRefFields",
+        "AgentExceptionDetailFields",
+        "AgentExceptionTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentExceptionDetail($id: ID!) {\n  agentException(id: $id) {\n    ...AgentExceptionDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentExceptionDetailFields on AgentException {\n  ...AgentExceptionTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentExceptionTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/exceptions.graphql",
+      "hash": "sha256:6ca01df4dedda29f596a6079ea752eb44d94031642868941c493cc82a2e701ce",
+      "rootFields": [
+        "agentExceptions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentExceptionTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentExceptionTable($input: DataTableConnectionInput!) {\n  agentExceptions(input: $input) {\n    edges {\n      node {\n        ...AgentExceptionTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentProposalDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/proposals.graphql",
+      "hash": "sha256:04b976a90448c11f4bcd6c48fa4cbb4395bbcd84206f529aa13c6fb8d02408ca",
+      "rootFields": [
+        "agentProposal"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvidenceRefFields",
+        "AgentProposalDetailFields",
+        "AgentProposalTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/proposals.graphql",
+      "hash": "sha256:3c11aad3dfa1f3578ba970eea3e6ab333257ad5d109d76fbb92539c1c55bfaba",
+      "rootFields": [
+        "agentProposals"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentProposalTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentRunDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/runs.graphql",
+      "hash": "sha256:1c4280969a19e8c0d0948fd97bb58d9d25538909c8f9a0224646c8813dfcdfa3",
+      "rootFields": [
+        "agentRun"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentRunTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentRunTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/runs.graphql",
+      "hash": "sha256:f8fd026d38bed827c34a8fa2bd95f81850a45f27a961b4981b7b06ba8017e072",
+      "rootFields": [
+        "agentRuns"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentRunTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentRunTable($input: DataTableConnectionInput!) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "ApiKeyTable",
@@ -1210,6 +1365,28 @@
       "sdl": "mutation CreateRecurringEarning($input: CreateRecurringEarningInput!) {\n  createRecurringEarning(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
+      "name": "CreateReportDashboard",
+      "kind": "mutation",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/dashboards.graphql",
+      "hash": "sha256:63539c84ad92d771c2e2aee365288dffc7a677c5933bb8140e4557ff544cf7d6",
+      "rootFields": [
+        "createReportDashboard"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SaveReportDashboardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportDashboardFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateReportDashboard($input: SaveReportDashboardInput!) {\n  createReportDashboard(input: $input) {\n    ...ReportDashboardFields\n  }\n}\n\nfragment ReportDashboardFields on ReportDashboard {\n  id\n  name\n  description\n  category\n  tags\n  ownerId\n  visibility\n  layout\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "CreateReportDefinition",
       "kind": "mutation",
       "domain": "reports",
@@ -1236,7 +1413,7 @@
       "kind": "mutation",
       "domain": "reports",
       "sourceFile": "src/operations/reports/schedules.graphql",
-      "hash": "sha256:ee897619e4e2b1caf4f1264ade16ce775982cf9c5cc88dc09ad205f30ccdd3b0",
+      "hash": "sha256:907de6b8f0e39ca398a1e197391b3674219741259c01eb7ed29cc3be47bcc952",
       "rootFields": [
         "createReportSchedule"
       ],
@@ -1251,7 +1428,29 @@
         "ReportScheduleFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateReportSchedule($input: CreateReportScheduleInput!) {\n  createReportSchedule(input: $input) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation CreateReportSchedule($input: CreateReportScheduleInput!) {\n  createReportSchedule(input: $input) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  emailInline\n  notifyUserIds\n  alert {\n    operator\n    threshold\n    columnId\n    value\n    suppressWhileFiring\n  }\n  alertFiring\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CreateReportView",
+      "kind": "mutation",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/views.graphql",
+      "hash": "sha256:98f7d9af3b3d8bd99781ee22198f1938a90f7739b986d704463e504d1b2c6b5b",
+      "rootFields": [
+        "createReportView"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateReportViewInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportViewFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateReportView($input: CreateReportViewInput!) {\n  createReportView(input: $input) {\n    ...ReportViewFields\n  }\n}\n\nfragment ReportViewFields on ReportView {\n  id\n  definitionId\n  ownerId\n  name\n  description\n  params\n  shared\n  pinned\n  format\n  lastRunAt\n  runCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CreateSettlementDispute",
@@ -1476,6 +1675,31 @@
       "sdl": "query DashControl {\n  dashControl {\n    id\n    requireLoadAcknowledgment\n    allowLoadRefusals\n    allowStopActions\n    allowLoadDocumentUpload\n    allowLoadComments\n    showLoadPay\n    showPayEstimates\n    allowExpenseSubmission\n    requireExpenseReceipt\n    allowSettlementDisputes\n    allowProfileDocumentUpload\n    allowContactInfoEdit\n    allowPtoRequests\n    sendCredentialReminders\n    enableDetentionAlerts\n    detentionAlertThresholdMinutes\n    version\n  }\n}"
     },
     {
+      "name": "DecideAgentProposal",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/proposals.graphql",
+      "hash": "sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836",
+      "rootFields": [
+        "decideAgentProposal"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "AgentProposalDecisionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideAgentProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+    },
+    {
       "name": "DefaultTableConfiguration",
       "kind": "query",
       "domain": "table-configuration",
@@ -1558,6 +1782,26 @@
       "sdl": "mutation DeleteFuelSurchargeProgram($id: ID!) {\n  deleteFuelSurchargeProgram(id: $id)\n}"
     },
     {
+      "name": "DeleteReportDashboard",
+      "kind": "mutation",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/dashboards.graphql",
+      "hash": "sha256:67202bb86983a8504070713cc489306fa4a88eb9a2d7476926a7bf482ebd0395",
+      "rootFields": [
+        "deleteReportDashboard"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteReportDashboard($id: ID!) {\n  deleteReportDashboard(id: $id)\n}"
+    },
+    {
       "name": "DeleteReportDefinition",
       "kind": "mutation",
       "domain": "reports",
@@ -1596,6 +1840,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation DeleteReportSchedule($id: ID!) {\n  deleteReportSchedule(id: $id)\n}"
+    },
+    {
+      "name": "DeleteReportView",
+      "kind": "mutation",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/views.graphql",
+      "hash": "sha256:3e58e3f6975d4537a51320fcbef5cd996c743d72d0006a8510d9791788e86966",
+      "rootFields": [
+        "deleteReportView"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteReportView($id: ID!) {\n  deleteReportView(id: $id)\n}"
     },
     {
       "name": "DeleteShipmentComment",
@@ -1710,6 +1974,26 @@
       "sdl": "mutation DetachPayEventFromSettlement($input: DetachPayEventInput!) {\n  detachPayEventFromSettlement(input: $input) {\n    id\n    status\n    grossEarningsMinor\n    netPayMinor\n    version\n  }\n}"
     },
     {
+      "name": "DismissMyNotifications",
+      "kind": "mutation",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:6cae1945265d9c230b3cff31c4045b71cc7332491be831de11ed0093396935ee",
+      "rootFields": [
+        "dismissMyNotifications"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DismissMyNotifications($ids: [ID!]!) {\n  dismissMyNotifications(ids: $ids)\n}"
+    },
+    {
       "name": "DismissNotifications",
       "kind": "mutation",
       "domain": "notification",
@@ -1821,6 +2105,28 @@
       ],
       "usages": [],
       "sdl": "query DocumentTypeTable($input: DataTableConnectionInput!) {\n  documentTypes(input: $input) {\n    edges {\n      node {\n        ...DocumentTypeTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment DocumentTypeTableRowFields on DocumentType {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  color\n  documentClassification\n  documentCategory\n  isSystem\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DrillThroughReport",
+      "kind": "query",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/preview.graphql",
+      "hash": "sha256:4dcc2a7446bfffed53694614a973a051d531d33ee0dc0696611fa2fdaf89351e",
+      "rootFields": [
+        "drillThroughReport"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ReportDrillInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query DrillThroughReport($input: ReportDrillInput!) {\n  drillThroughReport(input: $input) {\n    ...ReportPreviewFields\n  }\n}\n\nfragment ReportPreviewFields on ReportPreview {\n  columns {\n    id\n    label\n    type\n    format\n    display {\n      style\n      decimals\n      grouping\n      currency\n      negative\n      notation\n      prefix\n      suffix\n      dateStyle\n      boolStyle\n      durationUnit\n      durationStyle\n      nullText\n      rules {\n        op\n        value\n        upper\n        tone\n      }\n      band {\n        width\n        edges\n      }\n    }\n  }\n  rows\n  totals\n  truncated\n}"
     },
     {
       "name": "DriverExpenseDetail",
@@ -3131,6 +3437,20 @@
       "sdl": "query MapShipments($input: ShipmentsInput!) {\n  shipments(input: $input) {\n    edges {\n      node {\n        ...ShipmentFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...ShipmentPageInfoFields\n    }\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n}\n\nfragment ShipmentPageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "MarkAllMyNotificationsRead",
+      "kind": "mutation",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:e9902bd6a7ebb19a5be05f820482fe885b4ed3baf8ec9c159b054cb4448459f7",
+      "rootFields": [
+        "markAllMyNotificationsRead"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation MarkAllMyNotificationsRead {\n  markAllMyNotificationsRead\n}"
+    },
+    {
       "name": "MarkAllNotificationsRead",
       "kind": "mutation",
       "domain": "notification",
@@ -3163,6 +3483,46 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation MarkDriverSettlementPaid($input: MarkDriverSettlementPaidInput!) {\n  markDriverSettlementPaid(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "MarkMyNotificationsRead",
+      "kind": "mutation",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:729524debcb5ff3140bec03e8447c4bdd6929cbaae1c1c9940753533eb3da14b",
+      "rootFields": [
+        "markMyNotificationsRead"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation MarkMyNotificationsRead($ids: [ID!]!) {\n  markMyNotificationsRead(ids: $ids)\n}"
+    },
+    {
+      "name": "MarkMyNotificationsUnread",
+      "kind": "mutation",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:cf8016014675f422deed28de48142e48a8001d4eb8981be7cd93313d81d396d3",
+      "rootFields": [
+        "markMyNotificationsUnread"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation MarkMyNotificationsUnread($ids: [ID!]!) {\n  markMyNotificationsUnread(ids: $ids)\n}"
     },
     {
       "name": "MarkNotificationsRead",
@@ -3402,6 +3762,48 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyLoads($scope: PortalLoadScope!, $limit: Int) {\n  myLoads(scope: $scope, limit: $limit) {\n    assignmentId\n    moveId\n    shipmentId\n    proNumber\n    bol\n    status\n    isPrimary\n    tractorCode\n    trailerCode\n    pieces\n    weight\n    distanceMiles\n    payGrossMinor\n    payStatus\n    payOnHold\n    ackStatus\n    stops {\n      id\n      type\n      status\n      sequence\n      locationName\n      addressLine\n      scheduledWindowStart\n      scheduledWindowEnd\n      actualArrival\n      actualDeparture\n    }\n  }\n}"
+    },
+    {
+      "name": "MyNotificationList",
+      "kind": "query",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:6ce179e503ab31d1f1ab45a16721bbea615809e9a08d8668dad45ec9c81608f0",
+      "rootFields": [
+        "myNotifications"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "filter",
+          "type": "NotificationFilterInput",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "NotificationFields"
+      ],
+      "usages": [],
+      "sdl": "query MyNotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {\n  myNotifications(input: $input, filter: $filter) {\n    edges {\n      node {\n        ...NotificationFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment NotificationFields on Notification {\n  id\n  organizationId\n  businessUnitId\n  targetUserId\n  eventType\n  priority\n  channel\n  title\n  message\n  data\n  relatedEntities\n  source\n  readAt\n  dismissedAt\n  createdAt\n}"
+    },
+    {
+      "name": "MyNotificationUnreadCount",
+      "kind": "query",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:ad2ceb6f0515af73bb851c124af38bc7fcef461bdcb62803ce866504fb1a6751",
+      "rootFields": [
+        "myNotificationUnreadCount"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query MyNotificationUnreadCount {\n  myNotificationUnreadCount\n}"
     },
     {
       "name": "MyPeriodSummary",
@@ -4010,7 +4412,7 @@
       "kind": "query",
       "domain": "reports",
       "sourceFile": "src/operations/reports/preview.graphql",
-      "hash": "sha256:f1fe8109e84210a4d913215ba8b2bb2ad176112eef55cc94f38230d86c3c6582",
+      "hash": "sha256:8093eaf35edcef1de2de2366a7c65d3b3b6c12b432e8ceaf62d76c6e247a6f7d",
       "rootFields": [
         "previewReport"
       ],
@@ -4024,11 +4426,18 @@
           "name": "params",
           "type": "JSON",
           "defaultValue": null
+        },
+        {
+          "name": "supersede",
+          "type": "Boolean",
+          "defaultValue": null
         }
       ],
-      "fragments": [],
+      "fragments": [
+        "ReportPreviewFields"
+      ],
       "usages": [],
-      "sdl": "query PreviewReport($definition: ReportIRInput!, $params: JSON) {\n  previewReport(definition: $definition, params: $params) {\n    columns {\n      id\n      label\n      type\n      format\n    }\n    rows\n    truncated\n  }\n}"
+      "sdl": "query PreviewReport($definition: ReportIRInput!, $params: JSON, $supersede: Boolean) {\n  previewReport(definition: $definition, params: $params, supersede: $supersede) {\n    ...ReportPreviewFields\n  }\n}\n\nfragment ReportPreviewFields on ReportPreview {\n  columns {\n    id\n    label\n    type\n    format\n    display {\n      style\n      decimals\n      grouping\n      currency\n      negative\n      notation\n      prefix\n      suffix\n      dateStyle\n      boolStyle\n      durationUnit\n      durationStyle\n      nullText\n      rules {\n        op\n        value\n        upper\n        tone\n      }\n      band {\n        width\n        edges\n      }\n    }\n  }\n  rows\n  totals\n  truncated\n}"
     },
     {
       "name": "RateTableTable",
@@ -4330,6 +4739,44 @@
       "sdl": "query ReportCatalog {\n  reportCatalog {\n    version\n    entities {\n      key\n      resource\n      label\n      pluralLabel\n      description\n      category\n      ownScopeSupported\n      fields {\n        key\n        label\n        description\n        type\n        format\n        nullable\n        enumValues {\n          value\n          label\n        }\n        aggregations\n        filterable\n        groupable\n        accessible\n        sensitivity\n      }\n      edges {\n        name\n        label\n        target\n        cardinality\n        traversable\n      }\n    }\n  }\n}"
     },
     {
+      "name": "ReportDashboardById",
+      "kind": "query",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/dashboards.graphql",
+      "hash": "sha256:de2d6876d41ebd263d1936da997cb1ca41d0f92d79b248ad8ac08e86f28bd6df",
+      "rootFields": [
+        "reportDashboard"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportDashboardFields"
+      ],
+      "usages": [],
+      "sdl": "query ReportDashboardById($id: ID!) {\n  reportDashboard(id: $id) {\n    ...ReportDashboardFields\n  }\n}\n\nfragment ReportDashboardFields on ReportDashboard {\n  id\n  name\n  description\n  category\n  tags\n  ownerId\n  visibility\n  layout\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ReportDashboards",
+      "kind": "query",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/dashboards.graphql",
+      "hash": "sha256:618bd91da756dd1bf620c19604d5bb26ba4ce73841606ed814c47eadefb76229",
+      "rootFields": [
+        "reportDashboards"
+      ],
+      "variables": [],
+      "fragments": [
+        "ReportDashboardFields"
+      ],
+      "usages": [],
+      "sdl": "query ReportDashboards {\n  reportDashboards {\n    ...ReportDashboardFields\n  }\n}\n\nfragment ReportDashboardFields on ReportDashboard {\n  id\n  name\n  description\n  category\n  tags\n  ownerId\n  visibility\n  layout\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ReportDefinitionById",
       "kind": "query",
       "domain": "reports",
@@ -4454,7 +4901,7 @@
       "kind": "query",
       "domain": "reports",
       "sourceFile": "src/operations/reports/schedules.graphql",
-      "hash": "sha256:fb0abce2c56d49308309eb048fcef0541109551d0f8cca54338715dd93a42d09",
+      "hash": "sha256:2a556320ec0993ae682b12e9e882914106b10f1efad0d86978363d5c11ebb0eb",
       "rootFields": [
         "reportSchedules"
       ],
@@ -4469,7 +4916,29 @@
         "ReportScheduleFields"
       ],
       "usages": [],
-      "sdl": "query ReportSchedules($definitionId: ID) {\n  reportSchedules(definitionId: $definitionId) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query ReportSchedules($definitionId: ID) {\n  reportSchedules(definitionId: $definitionId) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  emailInline\n  notifyUserIds\n  alert {\n    operator\n    threshold\n    columnId\n    value\n    suppressWhileFiring\n  }\n  alertFiring\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ReportViews",
+      "kind": "query",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/views.graphql",
+      "hash": "sha256:600b2d0308c168f6ea3cc20979d60661695409e382b3563966bbbcdb9eba2c60",
+      "rootFields": [
+        "reportViews"
+      ],
+      "variables": [
+        {
+          "name": "definitionId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportViewFields"
+      ],
+      "usages": [],
+      "sdl": "query ReportViews($definitionId: ID) {\n  reportViews(definitionId: $definitionId) {\n    ...ReportViewFields\n  }\n}\n\nfragment ReportViewFields on ReportView {\n  id\n  definitionId\n  ownerId\n  name\n  description\n  params\n  shared\n  pinned\n  format\n  lastRunAt\n  runCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RequestMyPto",
@@ -4512,6 +4981,31 @@
       ],
       "usages": [],
       "sdl": "mutation ResetCannedFork($id: ID!) {\n  resetCannedFork(id: $id) {\n    ...ReportDefinitionFields\n  }\n}\n\nfragment ReportDefinitionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  tags\n  kind\n  cannedKey\n  cannedVersion\n  ownerId\n  visibility\n  status\n  diagnostics\n  catalogVersion\n  definition\n  defaultFormat\n  currentRevision\n  lastRunAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ResolveAgentException",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/exceptions.graphql",
+      "hash": "sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010",
+      "rootFields": [
+        "resolveAgentException"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "AgentExceptionResolveInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ResolveAgentException($id: ID!, $input: AgentExceptionResolveInput!) {\n  resolveAgentException(id: $id, input: $input) {\n    id\n    resolutionState\n    resolutionNotes\n    version\n    updatedAt\n  }\n}"
     },
     {
       "name": "ResolvedCostProfilePage",
@@ -4572,6 +5066,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation RespondToMyAssignment($input: RespondToMyAssignmentInput!) {\n  respondToMyAssignment(input: $input)\n}"
+    },
+    {
+      "name": "RestoreMyNotifications",
+      "kind": "mutation",
+      "domain": "notification",
+      "sourceFile": "src/operations/notification/operations.graphql",
+      "hash": "sha256:371399164c8a2f505fa278c9d27180d252d712e6c89b0d5b498e0c9f7429b6c9",
+      "rootFields": [
+        "restoreMyNotifications"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RestoreMyNotifications($ids: [ID!]!) {\n  restoreMyNotifications(ids: $ids)\n}"
     },
     {
       "name": "RestoreNotifications",
@@ -5866,6 +6380,28 @@
       "sdl": "query UpcomingWorkerPto($input: UpcomingWorkerPTOInput!) {\n  upcomingWorkerPTO(input: $input) {\n    edges {\n      node {\n        ...WorkerPtoRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...WorkerDataTablePageInfoFields\n    }\n  }\n}\n\nfragment WorkerDataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  status\n  type\n  startDate\n  endDate\n  reason\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "UpdateAgentControl",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/control.graphql",
+      "hash": "sha256:58093530f37a6c071acec43d9b2b1887de5e9e0dee5f701e95ae8772ff374946",
+      "rootFields": [
+        "updateAgentControl"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AgentControlInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentControlFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "UpdateBillingQueueStatus",
       "kind": "mutation",
       "domain": "billing-queue",
@@ -6245,6 +6781,28 @@
       "sdl": "mutation UpdateRecurringEarning($input: UpdateRecurringEarningInput!) {\n  updateRecurringEarning(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
+      "name": "UpdateReportDashboard",
+      "kind": "mutation",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/dashboards.graphql",
+      "hash": "sha256:db102e93d960dee77a8717c0905a53040d9796c3cc5608e76b769ca76543b918",
+      "rootFields": [
+        "updateReportDashboard"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateReportDashboardInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportDashboardFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateReportDashboard($input: UpdateReportDashboardInput!) {\n  updateReportDashboard(input: $input) {\n    ...ReportDashboardFields\n  }\n}\n\nfragment ReportDashboardFields on ReportDashboard {\n  id\n  name\n  description\n  category\n  tags\n  ownerId\n  visibility\n  layout\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "UpdateReportDefinition",
       "kind": "mutation",
       "domain": "reports",
@@ -6271,7 +6829,7 @@
       "kind": "mutation",
       "domain": "reports",
       "sourceFile": "src/operations/reports/schedules.graphql",
-      "hash": "sha256:a9575950d10c3f1a2351f3eaa0f4680bedbbbea15e4f29b1518f26542000f8e8",
+      "hash": "sha256:5bb42d52908ad8346bebbc9944d422dfb6f8b8604f7f7d80db6b3a2933f7369d",
       "rootFields": [
         "updateReportSchedule"
       ],
@@ -6286,7 +6844,29 @@
         "ReportScheduleFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {\n  updateReportSchedule(input: $input) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {\n  updateReportSchedule(input: $input) {\n    ...ReportScheduleFields\n  }\n}\n\nfragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  emailInline\n  notifyUserIds\n  alert {\n    operator\n    threshold\n    columnId\n    value\n    suppressWhileFiring\n  }\n  alertFiring\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateReportView",
+      "kind": "mutation",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/views.graphql",
+      "hash": "sha256:b2575a3fea359ee9b24c354d454aa68f5aa61298c45c180ccd79ba4dfcc7ae7d",
+      "rootFields": [
+        "updateReportView"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateReportViewInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ReportViewFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateReportView($input: UpdateReportViewInput!) {\n  updateReportView(input: $input) {\n    ...ReportViewFields\n  }\n}\n\nfragment ReportViewFields on ReportView {\n  id\n  definitionId\n  ownerId\n  name\n  description\n  params\n  shared\n  pinned\n  format\n  lastRunAt\n  runCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateSettlementControl",
@@ -6912,6 +7492,101 @@
       "sdl": "fragment AccountTypeTableRowFields on AccountType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  name\n  description\n  category\n  color\n  isSystem\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentControlFields",
+      "typeCondition": "AgentControl",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/control.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentControlSettings",
+        "UpdateAgentControl"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentEvidenceRefFields",
+      "typeCondition": "AgentEvidenceRef",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/proposals.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentExceptionDetail",
+        "AgentProposalDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}"
+    },
+    {
+      "name": "AgentExceptionDetailFields",
+      "typeCondition": "AgentException",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/exceptions.graphql",
+      "fragments": [
+        "AgentEvidenceRefFields",
+        "AgentExceptionTableRowFields"
+      ],
+      "usedByOperations": [
+        "AgentExceptionDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentExceptionDetailFields on AgentException {\n  ...AgentExceptionTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentExceptionTableRowFields",
+      "typeCondition": "AgentException",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/exceptions.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentExceptionDetail",
+        "AgentExceptionTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalDetailFields",
+      "typeCondition": "AgentProposal",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/proposals.graphql",
+      "fragments": [
+        "AgentEvidenceRefFields",
+        "AgentProposalTableRowFields"
+      ],
+      "usedByOperations": [
+        "AgentProposalDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalTableRowFields",
+      "typeCondition": "AgentProposal",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/proposals.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentProposalDetail",
+        "AgentProposalTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentRunTableRowFields",
+      "typeCondition": "AgentRun",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/runs.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentRunDetail",
+        "AgentRunTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ApiKeyTableRowFields",
       "typeCondition": "ApiKey",
       "domain": "api-key",
@@ -7020,6 +7695,9 @@
       "usedByOperations": [
         "AccessorialChargeTable",
         "AccountTypeTable",
+        "AgentExceptionTable",
+        "AgentProposalTable",
+        "AgentRunTable",
         "ApiKeyTable",
         "AuditLogTable",
         "CommodityTable",
@@ -7050,6 +7728,7 @@
         "LocationCategoryTable",
         "LocationTable",
         "ManualJournalTable",
+        "MyNotificationList",
         "NotificationList",
         "OrderTable",
         "PayAdvanceTable",
@@ -7509,6 +8188,7 @@
       "sourceFile": "src/operations/notification/operations.graphql",
       "fragments": [],
       "usedByOperations": [
+        "MyNotificationList",
         "NotificationList"
       ],
       "usages": [],
@@ -7597,6 +8277,21 @@
       "sdl": "fragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
     },
     {
+      "name": "ReportDashboardFields",
+      "typeCondition": "ReportDashboard",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/dashboards.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateReportDashboard",
+        "ReportDashboardById",
+        "ReportDashboards",
+        "UpdateReportDashboard"
+      ],
+      "usages": [],
+      "sdl": "fragment ReportDashboardFields on ReportDashboard {\n  id\n  name\n  description\n  category\n  tags\n  ownerId\n  visibility\n  layout\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ReportDefinitionFields",
       "typeCondition": "ReportDefinition",
       "domain": "reports",
@@ -7612,6 +8307,19 @@
       ],
       "usages": [],
       "sdl": "fragment ReportDefinitionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  tags\n  kind\n  cannedKey\n  cannedVersion\n  ownerId\n  visibility\n  status\n  diagnostics\n  catalogVersion\n  definition\n  defaultFormat\n  currentRevision\n  lastRunAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ReportPreviewFields",
+      "typeCondition": "ReportPreview",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/preview.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "DrillThroughReport",
+        "PreviewReport"
+      ],
+      "usages": [],
+      "sdl": "fragment ReportPreviewFields on ReportPreview {\n  columns {\n    id\n    label\n    type\n    format\n    display {\n      style\n      decimals\n      grouping\n      currency\n      negative\n      notation\n      prefix\n      suffix\n      dateStyle\n      boolStyle\n      durationUnit\n      durationStyle\n      nullText\n      rules {\n        op\n        value\n        upper\n        tone\n      }\n      band {\n        width\n        edges\n      }\n    }\n  }\n  rows\n  totals\n  truncated\n}"
     },
     {
       "name": "ReportRunFields",
@@ -7640,7 +8348,21 @@
         "UpdateReportSchedule"
       ],
       "usages": [],
-      "sdl": "fragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  notifyUserIds\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment ReportScheduleFields on ReportSchedule {\n  id\n  definitionId\n  cronExpression\n  timezone\n  formats\n  emailRecipients\n  emailAttach\n  emailInline\n  notifyUserIds\n  alert {\n    operator\n    threshold\n    columnId\n    value\n    suppressWhileFiring\n  }\n  alertFiring\n  enabled\n  runAsId\n  lastRunId\n  nextRunAt\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ReportViewFields",
+      "typeCondition": "ReportView",
+      "domain": "reports",
+      "sourceFile": "src/operations/reports/views.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateReportView",
+        "ReportViews",
+        "UpdateReportView"
+      ],
+      "usages": [],
+      "sdl": "fragment ReportViewFields on ReportView {\n  id\n  definitionId\n  ownerId\n  name\n  description\n  params\n  shared\n  pinned\n  format\n  lastRunAt\n  runCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RoleTableRowFields",
@@ -8351,6 +9073,64 @@
       ],
       "sdl": "input AdjustEscrowAccountInput {\n  accountId: ID!\n  amountMinor: Int!\n  description: String!\n  occurredDate: Int\n}"
     },
+    "AgentControlInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "billingAgentEnabled",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "decisionTimeoutSeconds",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "shadowMode",
+          "type": "Boolean!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentControlInput {\n  billingAgentEnabled: Boolean!\n  decisionTimeoutSeconds: Int!\n  shadowMode: Boolean!\n}"
+    },
+    "AgentExceptionResolveInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "resolutionNotes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "resolutionState",
+          "type": "AgentResolutionState!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentExceptionResolveInput {\n  resolutionNotes: String\n  resolutionState: AgentResolutionState!\n}"
+    },
+    "AgentProposalDecisionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "decision",
+          "type": "AgentDecisionType!",
+          "defaultValue": null
+        },
+        {
+          "name": "modifications",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "reasonCode",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  reasonCode: String!\n}"
+    },
     "ApplyCustomerPaymentInput": {
       "kind": "input",
       "fields": [
@@ -8838,6 +9618,11 @@
       "kind": "input",
       "fields": [
         {
+          "name": "alert",
+          "type": "ReportScheduleAlertInput",
+          "defaultValue": null
+        },
+        {
           "name": "cronExpression",
           "type": "String!",
           "defaultValue": null
@@ -8849,6 +9634,11 @@
         },
         {
           "name": "emailAttach",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "emailInline",
           "type": "Boolean",
           "defaultValue": null
         },
@@ -8878,7 +9668,48 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input CreateReportScheduleInput {\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  notifyUserIds: [ID!]\n  timezone: String\n}"
+      "sdl": "input CreateReportScheduleInput {\n  alert: ReportScheduleAlertInput\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailInline: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  notifyUserIds: [ID!]\n  timezone: String\n}"
+    },
+    "CreateReportViewInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "definitionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "format",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "params",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "pinned",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "shared",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateReportViewInput {\n  definitionId: ID!\n  description: String\n  format: String\n  name: String!\n  params: JSON\n  pinned: Boolean\n  shared: Boolean\n}"
     },
     "CreateSettlementDisputeInput": {
       "kind": "input",
@@ -9860,9 +10691,45 @@
       ],
       "sdl": "input RemoveSettlementAdjustmentInput {\n  lineId: ID!\n  settlementId: ID!\n}"
     },
+    "ReportDrillInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "columnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "definition",
+          "type": "ReportIRInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "dimensions",
+          "type": "[ReportDrillValueInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "params",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDrillInput {\n  columnId: String\n  definition: ReportIRInput!\n  dimensions: [ReportDrillValueInput!]!\n  limit: Int\n  params: JSON\n}"
+    },
     "ReportIRInput": {
       "kind": "input",
       "fields": [
+        {
+          "name": "charts",
+          "type": "[ReportChartInput!]",
+          "defaultValue": null
+        },
         {
           "name": "columns",
           "type": "[ReportColumnInput!]!",
@@ -9902,9 +10769,14 @@
           "name": "sort",
           "type": "[ReportSortInput!]",
           "defaultValue": null
+        },
+        {
+          "name": "totals",
+          "type": "Boolean",
+          "defaultValue": null
         }
       ],
-      "sdl": "input ReportIRInput {\n  columns: [ReportColumnInput!]!\n  entity: String!\n  filters: ReportFilterGroupInput\n  having: ReportFilterGroupInput\n  limit: Int\n  parameters: [ReportParameterDefInput!]\n  pivot: ReportPivotInput\n  sort: [ReportSortInput!]\n}"
+      "sdl": "input ReportIRInput {\n  charts: [ReportChartInput!]\n  columns: [ReportColumnInput!]!\n  entity: String!\n  filters: ReportFilterGroupInput\n  having: ReportFilterGroupInput\n  limit: Int\n  parameters: [ReportParameterDefInput!]\n  pivot: ReportPivotInput\n  sort: [ReportSortInput!]\n  totals: Boolean\n}"
     },
     "ReportRunsFilterInput": {
       "kind": "input",
@@ -10064,9 +10936,50 @@
           "name": "params",
           "type": "JSON",
           "defaultValue": null
+        },
+        {
+          "name": "viewId",
+          "type": "ID",
+          "defaultValue": null
         }
       ],
-      "sdl": "input RunReportInput {\n  cannedKey: String\n  definitionId: ID\n  format: String!\n  params: JSON\n}"
+      "sdl": "input RunReportInput {\n  cannedKey: String\n  definitionId: ID\n  format: String!\n  params: JSON\n  viewId: ID\n}"
+    },
+    "SaveReportDashboardInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "category",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "layout",
+          "type": "ReportDashboardLayoutInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "tags",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "visibility",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SaveReportDashboardInput {\n  category: String\n  description: String\n  layout: ReportDashboardLayoutInput!\n  name: String!\n  tags: [String!]\n  visibility: String\n}"
     },
     "SaveReportDefinitionInput": {
       "kind": "input",
@@ -11408,6 +12321,52 @@
       ],
       "sdl": "input UpdateRecurringEarningInput {\n  amountMinor: Int!\n  currencyCode: String\n  description: String!\n  endDate: Int\n  frequency: RecurringEarningFrequency!\n  id: ID!\n  payCodeId: ID!\n  startDate: Int!\n  status: RecurringEarningStatus!\n  totalCapMinor: Int\n  version: Int!\n  workerId: ID!\n}"
     },
+    "UpdateReportDashboardInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "category",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "layout",
+          "type": "ReportDashboardLayoutInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "tags",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "visibility",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateReportDashboardInput {\n  category: String\n  description: String\n  id: ID!\n  layout: ReportDashboardLayoutInput!\n  name: String!\n  tags: [String!]\n  version: Int!\n  visibility: String\n}"
+    },
     "UpdateReportDefinitionInput": {
       "kind": "input",
       "fields": [
@@ -11468,6 +12427,11 @@
       "kind": "input",
       "fields": [
         {
+          "name": "alert",
+          "type": "ReportScheduleAlertInput",
+          "defaultValue": null
+        },
+        {
           "name": "cronExpression",
           "type": "String!",
           "defaultValue": null
@@ -11479,6 +12443,11 @@
         },
         {
           "name": "emailAttach",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "emailInline",
           "type": "Boolean",
           "defaultValue": null
         },
@@ -11518,7 +12487,53 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input UpdateReportScheduleInput {\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  id: ID!\n  notifyUserIds: [ID!]\n  timezone: String\n  version: Int!\n}"
+      "sdl": "input UpdateReportScheduleInput {\n  alert: ReportScheduleAlertInput\n  cronExpression: String!\n  definitionId: ID!\n  emailAttach: Boolean\n  emailInline: Boolean\n  emailRecipients: [String!]\n  enabled: Boolean!\n  formats: [String!]!\n  id: ID!\n  notifyUserIds: [ID!]\n  timezone: String\n  version: Int!\n}"
+    },
+    "UpdateReportViewInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "format",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "params",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "pinned",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "shared",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateReportViewInput {\n  description: String\n  format: String\n  id: ID!\n  name: String!\n  params: JSON\n  pinned: Boolean\n  shared: Boolean\n  version: Int!\n}"
     },
     "UpdateSettlementControlInput": {
       "kind": "input",
@@ -11732,6 +12747,25 @@
       ],
       "sdl": "input WriteOffPayAdvanceInput {\n  advanceId: ID!\n  reason: String!\n}"
     },
+    "AgentResolutionState": {
+      "kind": "enum",
+      "values": [
+        "Dismissed",
+        "InReview",
+        "Open",
+        "Resolved"
+      ],
+      "sdl": "enum AgentResolutionState {\n  Dismissed\n  InReview\n  Open\n  Resolved\n}"
+    },
+    "AgentDecisionType": {
+      "kind": "enum",
+      "values": [
+        "Accepted",
+        "Modified",
+        "Rejected"
+      ],
+      "sdl": "enum AgentDecisionType {\n  Accepted\n  Modified\n  Rejected\n}"
+    },
     "CustomerPaymentApplicationInput": {
       "kind": "input",
       "fields": [
@@ -11897,6 +12931,37 @@
         "Monthly"
       ],
       "sdl": "enum RecurringEarningFrequency {\n  EverySettlement\n  Monthly\n}"
+    },
+    "ReportScheduleAlertInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "columnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "operator",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "suppressWhileFiring",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "threshold",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "Float",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportScheduleAlertInput {\n  columnId: String\n  operator: String!\n  suppressWhileFiring: Boolean\n  threshold: Int!\n  value: Float\n}"
     },
     "SettlementDisputeCategory": {
       "kind": "enum",
@@ -12099,12 +13164,114 @@
       ],
       "sdl": "enum PortalStopAction {\n  Arrive\n  Depart\n}"
     },
+    "ReportDrillValueInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "columnId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "Any",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDrillValueInput {\n  columnId: String!\n  value: Any\n}"
+    },
+    "ReportChartInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "compareId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "curved",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "goal",
+          "type": "ReportChartGoalInput",
+          "defaultValue": null
+        },
+        {
+          "name": "hideLegend",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "labelColumnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "latColumnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "lngColumnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "seriesIds",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "showValues",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "stacked",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "xColumnId",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportChartInput {\n  compareId: String\n  curved: Boolean\n  goal: ReportChartGoalInput\n  hideLegend: Boolean\n  id: String!\n  labelColumnId: String\n  latColumnId: String\n  limit: Int\n  lngColumnId: String\n  seriesIds: [String!]\n  showValues: Boolean\n  stacked: Boolean\n  title: String\n  type: String!\n  xColumnId: String\n}"
+    },
     "ReportColumnInput": {
       "kind": "input",
       "fields": [
         {
           "name": "agg",
           "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "band",
+          "type": "ReportBandInput",
           "defaultValue": null
         },
         {
@@ -12115,6 +13282,16 @@
         {
           "name": "computed",
           "type": "ReportComputedInput",
+          "defaultValue": null
+        },
+        {
+          "name": "display",
+          "type": "ReportDisplayInput",
+          "defaultValue": null
+        },
+        {
+          "name": "filter",
+          "type": "ReportFilterGroupInput",
           "defaultValue": null
         },
         {
@@ -12136,9 +13313,14 @@
           "name": "ref",
           "type": "ReportFieldRefInput",
           "defaultValue": null
+        },
+        {
+          "name": "transform",
+          "type": "ReportTransformInput",
+          "defaultValue": null
         }
       ],
-      "sdl": "input ReportColumnInput {\n  agg: String\n  bucket: String\n  computed: ReportComputedInput\n  id: String!\n  kind: String!\n  label: String\n  ref: ReportFieldRefInput\n}"
+      "sdl": "input ReportColumnInput {\n  agg: String\n  band: ReportBandInput\n  bucket: String\n  computed: ReportComputedInput\n  display: ReportDisplayInput\n  filter: ReportFilterGroupInput\n  id: String!\n  kind: String!\n  label: String\n  ref: ReportFieldRefInput\n  transform: ReportTransformInput\n}"
     },
     "ReportFilterGroupInput": {
       "kind": "input",
@@ -12216,6 +13398,11 @@
           "defaultValue": null
         },
         {
+          "name": "labels",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
           "name": "measureIds",
           "type": "[String!]!",
           "defaultValue": null
@@ -12231,7 +13418,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input ReportPivotInput {\n  includeOther: Boolean\n  measureIds: [String!]!\n  ref: ReportFieldRefInput!\n  values: [String!]!\n}"
+      "sdl": "input ReportPivotInput {\n  includeOther: Boolean\n  labels: [String!]\n  measureIds: [String!]!\n  ref: ReportFieldRefInput!\n  values: [String!]!\n}"
     },
     "ReportSortInput": {
       "kind": "input",
@@ -12282,6 +13469,27 @@
         }
       ],
       "sdl": "input DisputeAdjustmentInput {\n  amountMinor: Int!\n  description: String!\n  payCodeId: ID\n}"
+    },
+    "ReportDashboardLayoutInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "filters",
+          "type": "[ReportDashboardFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "parameters",
+          "type": "[ReportParameterDefInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "tiles",
+          "type": "[ReportDashboardTileInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDashboardLayoutInput {\n  filters: [ReportDashboardFilterInput!]\n  parameters: [ReportParameterDefInput!]\n  tiles: [ReportDashboardTileInput!]!\n}"
     },
     "TelematicsFormMappingItemInput": {
       "kind": "input",
@@ -12872,6 +14080,43 @@
       "kind": "scalar",
       "sdl": "scalar Any"
     },
+    "ReportChartGoalInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "columnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "Float",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportChartGoalInput {\n  columnId: String\n  label: String\n  value: Float\n}"
+    },
+    "ReportBandInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "edges",
+          "type": "[Float!]",
+          "defaultValue": null
+        },
+        {
+          "name": "width",
+          "type": "Float",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportBandInput {\n  edges: [Float!]\n  width: Float\n}"
+    },
     "ReportComputedInput": {
       "kind": "input",
       "fields": [
@@ -12882,7 +14127,12 @@
         },
         {
           "name": "leftId",
-          "type": "String!",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "leftValue",
+          "type": "Float",
           "defaultValue": null
         },
         {
@@ -12892,11 +14142,92 @@
         },
         {
           "name": "rightId",
-          "type": "String!",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rightValue",
+          "type": "Float",
           "defaultValue": null
         }
       ],
-      "sdl": "input ReportComputedInput {\n  format: String\n  leftId: String!\n  op: String!\n  rightId: String!\n}"
+      "sdl": "input ReportComputedInput {\n  format: String\n  leftId: String\n  leftValue: Float\n  op: String!\n  rightId: String\n  rightValue: Float\n}"
+    },
+    "ReportDisplayInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "boolStyle",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "currency",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "dateStyle",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "decimals",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "durationStyle",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "durationUnit",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "grouping",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "negative",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "notation",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "nullText",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "prefix",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rules",
+          "type": "[ReportDisplayRuleInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "style",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "suffix",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDisplayInput {\n  boolStyle: String\n  currency: String\n  dateStyle: String\n  decimals: Int\n  durationStyle: String\n  durationUnit: String\n  grouping: Boolean\n  negative: String\n  notation: String\n  nullText: String\n  prefix: String\n  rules: [ReportDisplayRuleInput!]\n  style: String\n  suffix: String\n}"
     },
     "ReportFieldRefInput": {
       "kind": "input",
@@ -12913,6 +14244,27 @@
         }
       ],
       "sdl": "input ReportFieldRefInput {\n  field: String!\n  path: [String!]\n}"
+    },
+    "ReportTransformInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "factor",
+          "type": "Float",
+          "defaultValue": null
+        },
+        {
+          "name": "op",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "precision",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportTransformInput {\n  factor: Float\n  op: String!\n  precision: Int\n}"
     },
     "ReportFilterInput": {
       "kind": "input",
@@ -12938,12 +14290,129 @@
           "defaultValue": null
         },
         {
+          "name": "transform",
+          "type": "ReportTransformInput",
+          "defaultValue": null
+        },
+        {
           "name": "value",
           "type": "Any",
           "defaultValue": null
         }
       ],
-      "sdl": "input ReportFilterInput {\n  agg: String\n  operator: String!\n  param: String\n  ref: ReportFieldRefInput!\n  value: Any\n}"
+      "sdl": "input ReportFilterInput {\n  agg: String\n  operator: String!\n  param: String\n  ref: ReportFieldRefInput!\n  transform: ReportTransformInput\n  value: Any\n}"
+    },
+    "ReportDashboardFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "default",
+          "type": "Any",
+          "defaultValue": null
+        },
+        {
+          "name": "entity",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "operator",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "ref",
+          "type": "ReportFieldRefInput!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDashboardFilterInput {\n  default: Any\n  entity: String!\n  id: String!\n  label: String\n  operator: String!\n  ref: ReportFieldRefInput!\n}"
+    },
+    "ReportDashboardTileInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cannedKey",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "chartId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "columnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "definitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "h",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "kind",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "paramBindings",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "w",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "x",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "y",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDashboardTileInput {\n  cannedKey: String\n  chartId: String\n  columnId: String\n  definitionId: ID\n  h: Int!\n  id: String!\n  kind: String!\n  limit: Int\n  paramBindings: JSON\n  text: String\n  title: String\n  w: Int!\n  x: Int!\n  y: Int!\n}"
     },
     "MoveStatus": {
       "kind": "enum",
@@ -13051,6 +14520,32 @@
         }
       ],
       "sdl": "input ShipmentStopInput {\n  actualArrival: Int\n  actualDeparture: Int\n  addressLine: String\n  countDetentionOverride: Boolean\n  countLateOverride: Boolean\n  id: ID\n  locationId: ID!\n  pieces: Int\n  scheduleType: StopScheduleType = Open\n  scheduledWindowEnd: Int\n  scheduledWindowStart: Int = 0\n  sequence: Int = 0\n  shipmentMoveId: ID\n  status: StopStatus = New\n  type: StopType = Pickup\n  version: Int\n  weight: Int\n}"
+    },
+    "ReportDisplayRuleInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "op",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "tone",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "upper",
+          "type": "Float",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "Float!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ReportDisplayRuleInput {\n  op: String!\n  tone: String!\n  upper: Float\n  value: Float!\n}"
     },
     "StopScheduleType": {
       "kind": "enum",

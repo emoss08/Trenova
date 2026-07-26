@@ -327,14 +327,26 @@ export type CreateRecurringEarningInput = {
 };
 
 export type CreateReportScheduleInput = {
+  alert?: ReportScheduleAlertInput | null | undefined;
   cronExpression: string;
   definitionId: string | number;
   emailAttach?: boolean | null | undefined;
+  emailInline?: boolean | null | undefined;
   emailRecipients?: Array<string> | null | undefined;
   enabled: boolean;
   formats: Array<string>;
   notifyUserIds?: Array<string | number> | null | undefined;
   timezone?: string | null | undefined;
+};
+
+export type CreateReportViewInput = {
+  definitionId: string | number;
+  description?: string | null | undefined;
+  format?: string | null | undefined;
+  name: string;
+  params?: unknown;
+  pinned?: boolean | null | undefined;
+  shared?: boolean | null | undefined;
 };
 
 export type CreateSettlementDisputeInput = {
@@ -1236,21 +1248,125 @@ export type RemoveSettlementAdjustmentInput = {
   settlementId: string | number;
 };
 
+export type ReportBandInput = {
+  edges?: Array<number> | null | undefined;
+  width?: number | null | undefined;
+};
+
+export type ReportChartGoalInput = {
+  columnId?: string | null | undefined;
+  label?: string | null | undefined;
+  value?: number | null | undefined;
+};
+
+export type ReportChartInput = {
+  compareId?: string | null | undefined;
+  curved?: boolean | null | undefined;
+  goal?: ReportChartGoalInput | null | undefined;
+  hideLegend?: boolean | null | undefined;
+  id: string;
+  labelColumnId?: string | null | undefined;
+  latColumnId?: string | null | undefined;
+  limit?: number | null | undefined;
+  lngColumnId?: string | null | undefined;
+  seriesIds?: Array<string> | null | undefined;
+  showValues?: boolean | null | undefined;
+  stacked?: boolean | null | undefined;
+  title?: string | null | undefined;
+  type: string;
+  xColumnId?: string | null | undefined;
+};
+
 export type ReportColumnInput = {
   agg?: string | null | undefined;
+  band?: ReportBandInput | null | undefined;
   bucket?: string | null | undefined;
   computed?: ReportComputedInput | null | undefined;
+  display?: ReportDisplayInput | null | undefined;
+  filter?: ReportFilterGroupInput | null | undefined;
   id: string;
   kind: string;
   label?: string | null | undefined;
   ref?: ReportFieldRefInput | null | undefined;
+  transform?: ReportTransformInput | null | undefined;
 };
 
 export type ReportComputedInput = {
   format?: string | null | undefined;
-  leftId: string;
+  leftId?: string | null | undefined;
+  leftValue?: number | null | undefined;
   op: string;
-  rightId: string;
+  rightId?: string | null | undefined;
+  rightValue?: number | null | undefined;
+};
+
+export type ReportDashboardFilterInput = {
+  default?: unknown;
+  entity: string;
+  id: string;
+  label?: string | null | undefined;
+  operator: string;
+  ref: ReportFieldRefInput;
+};
+
+export type ReportDashboardLayoutInput = {
+  filters?: Array<ReportDashboardFilterInput> | null | undefined;
+  parameters?: Array<ReportParameterDefInput> | null | undefined;
+  tiles: Array<ReportDashboardTileInput>;
+};
+
+export type ReportDashboardTileInput = {
+  cannedKey?: string | null | undefined;
+  chartId?: string | null | undefined;
+  columnId?: string | null | undefined;
+  definitionId?: string | number | null | undefined;
+  h: number;
+  id: string;
+  kind: string;
+  limit?: number | null | undefined;
+  paramBindings?: unknown;
+  text?: string | null | undefined;
+  title?: string | null | undefined;
+  w: number;
+  x: number;
+  y: number;
+};
+
+export type ReportDisplayInput = {
+  boolStyle?: string | null | undefined;
+  currency?: string | null | undefined;
+  dateStyle?: string | null | undefined;
+  decimals?: number | null | undefined;
+  durationStyle?: string | null | undefined;
+  durationUnit?: string | null | undefined;
+  grouping?: boolean | null | undefined;
+  negative?: string | null | undefined;
+  notation?: string | null | undefined;
+  nullText?: string | null | undefined;
+  prefix?: string | null | undefined;
+  rules?: Array<ReportDisplayRuleInput> | null | undefined;
+  style?: string | null | undefined;
+  suffix?: string | null | undefined;
+};
+
+export type ReportDisplayRuleInput = {
+  op: string;
+  tone: string;
+  upper?: number | null | undefined;
+  value: number;
+};
+
+export type ReportDrillInput = {
+  columnId?: string | null | undefined;
+  definition: ReportIrInput;
+  dimensions: Array<ReportDrillValueInput>;
+  limit?: number | null | undefined;
+  params?: unknown;
+};
+
+export type ReportDrillValueInput = {
+  columnId: string;
+  value?: unknown;
 };
 
 export type ReportFieldRefInput = {
@@ -1269,10 +1385,12 @@ export type ReportFilterInput = {
   operator: string;
   param?: string | null | undefined;
   ref: ReportFieldRefInput;
+  transform?: ReportTransformInput | null | undefined;
   value?: unknown;
 };
 
 export type ReportIrInput = {
+  charts?: Array<ReportChartInput> | null | undefined;
   columns: Array<ReportColumnInput>;
   entity: string;
   filters?: ReportFilterGroupInput | null | undefined;
@@ -1281,6 +1399,7 @@ export type ReportIrInput = {
   parameters?: Array<ReportParameterDefInput> | null | undefined;
   pivot?: ReportPivotInput | null | undefined;
   sort?: Array<ReportSortInput> | null | undefined;
+  totals?: boolean | null | undefined;
 };
 
 export type ReportParameterDefInput = {
@@ -1296,6 +1415,7 @@ export type ReportParameterDefInput = {
 
 export type ReportPivotInput = {
   includeOther?: boolean | null | undefined;
+  labels?: Array<string> | null | undefined;
   measureIds: Array<string>;
   ref: ReportFieldRefInput;
   values: Array<string>;
@@ -1307,9 +1427,23 @@ export type ReportRunsFilterInput = {
   statuses?: Array<string> | null | undefined;
 };
 
+export type ReportScheduleAlertInput = {
+  columnId?: string | null | undefined;
+  operator: string;
+  suppressWhileFiring?: boolean | null | undefined;
+  threshold: number;
+  value?: number | null | undefined;
+};
+
 export type ReportSortInput = {
   columnId: string;
   direction: string;
+};
+
+export type ReportTransformInput = {
+  factor?: number | null | undefined;
+  op: string;
+  precision?: number | null | undefined;
 };
 
 export type RequestMyPtoInput = {
@@ -1353,6 +1487,16 @@ export type RunReportInput = {
   definitionId?: string | number | null | undefined;
   format: string;
   params?: unknown;
+  viewId?: string | number | null | undefined;
+};
+
+export type SaveReportDashboardInput = {
+  category?: string | null | undefined;
+  description?: string | null | undefined;
+  layout: ReportDashboardLayoutInput;
+  name: string;
+  tags?: Array<string> | null | undefined;
+  visibility?: string | null | undefined;
 };
 
 export type SaveReportDefinitionInput = {
@@ -1978,6 +2122,17 @@ export type UpdateRecurringEarningInput = {
   workerId: string | number;
 };
 
+export type UpdateReportDashboardInput = {
+  category?: string | null | undefined;
+  description?: string | null | undefined;
+  id: string | number;
+  layout: ReportDashboardLayoutInput;
+  name: string;
+  tags?: Array<string> | null | undefined;
+  version: number;
+  visibility?: string | null | undefined;
+};
+
 export type UpdateReportDefinitionInput = {
   category?: string | null | undefined;
   defaultFormat?: string | null | undefined;
@@ -1992,15 +2147,28 @@ export type UpdateReportDefinitionInput = {
 };
 
 export type UpdateReportScheduleInput = {
+  alert?: ReportScheduleAlertInput | null | undefined;
   cronExpression: string;
   definitionId: string | number;
   emailAttach?: boolean | null | undefined;
+  emailInline?: boolean | null | undefined;
   emailRecipients?: Array<string> | null | undefined;
   enabled: boolean;
   formats: Array<string>;
   id: string | number;
   notifyUserIds?: Array<string | number> | null | undefined;
   timezone?: string | null | undefined;
+  version: number;
+};
+
+export type UpdateReportViewInput = {
+  description?: string | null | undefined;
+  format?: string | null | undefined;
+  id: string | number;
+  name: string;
+  params?: unknown;
+  pinned?: boolean | null | undefined;
+  shared?: boolean | null | undefined;
   version: number;
 };
 
@@ -3619,6 +3787,52 @@ export type NotificationUnreadCountQueryVariables = Exact<{ [key: string]: never
 
 export type NotificationUnreadCountQuery = { notificationUnreadCount: number };
 
+export type MyNotificationListQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: NotificationFilterInput | null | undefined;
+}>;
+
+
+export type MyNotificationListQuery = { myNotifications: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type MyNotificationUnreadCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyNotificationUnreadCountQuery = { myNotificationUnreadCount: number };
+
+export type MarkAllMyNotificationsReadMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MarkAllMyNotificationsReadMutation = { markAllMyNotificationsRead: boolean };
+
+export type MarkMyNotificationsReadMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type MarkMyNotificationsReadMutation = { markMyNotificationsRead: boolean };
+
+export type MarkMyNotificationsUnreadMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type MarkMyNotificationsUnreadMutation = { markMyNotificationsUnread: boolean };
+
+export type DismissMyNotificationsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type DismissMyNotificationsMutation = { dismissMyNotifications: boolean };
+
+export type RestoreMyNotificationsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type RestoreMyNotificationsMutation = { restoreMyNotifications: boolean };
+
 export type MarkNotificationsReadMutationVariables = Exact<{
   ids: Array<string | number> | string | number;
 }>;
@@ -3795,6 +4009,41 @@ export type ReportCatalogQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, accessible: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }> }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean }> }> } };
 
+export type ReportDashboardFieldsFragment = { id: string, name: string, description: string, category: string, tags: Array<string>, ownerId: string, visibility: string, layout: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportDashboardFieldsFragment' };
+
+export type ReportDashboardsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ReportDashboardsQuery = { reportDashboards: Array<{ ' $fragmentRefs'?: { 'ReportDashboardFieldsFragment': ReportDashboardFieldsFragment } }> };
+
+export type ReportDashboardByIdQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReportDashboardByIdQuery = { reportDashboard: { ' $fragmentRefs'?: { 'ReportDashboardFieldsFragment': ReportDashboardFieldsFragment } } };
+
+export type CreateReportDashboardMutationVariables = Exact<{
+  input: SaveReportDashboardInput;
+}>;
+
+
+export type CreateReportDashboardMutation = { createReportDashboard: { ' $fragmentRefs'?: { 'ReportDashboardFieldsFragment': ReportDashboardFieldsFragment } } };
+
+export type UpdateReportDashboardMutationVariables = Exact<{
+  input: UpdateReportDashboardInput;
+}>;
+
+
+export type UpdateReportDashboardMutation = { updateReportDashboard: { ' $fragmentRefs'?: { 'ReportDashboardFieldsFragment': ReportDashboardFieldsFragment } } };
+
+export type DeleteReportDashboardMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteReportDashboardMutation = { deleteReportDashboard: boolean };
+
 export type ReportDefinitionFieldsFragment = { id: string, name: string, description: string, category: string, tags: Array<string>, kind: string, cannedKey: string | null, cannedVersion: string | null, ownerId: string, visibility: string, status: string, diagnostics: Array<string>, catalogVersion: string, definition: unknown, defaultFormat: string, currentRevision: number, lastRunAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportDefinitionFieldsFragment' };
 
 export type ReportDefinitionsTableQueryVariables = Exact<{
@@ -3854,13 +4103,23 @@ export type ResetCannedForkMutationVariables = Exact<{
 
 export type ResetCannedForkMutation = { resetCannedFork: { ' $fragmentRefs'?: { 'ReportDefinitionFieldsFragment': ReportDefinitionFieldsFragment } } };
 
+export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
+
 export type PreviewReportQueryVariables = Exact<{
   definition: ReportIrInput;
   params?: unknown;
+  supersede?: boolean | null | undefined;
 }>;
 
 
-export type PreviewReportQuery = { previewReport: { rows: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null }> } };
+export type PreviewReportQuery = { previewReport: { ' $fragmentRefs'?: { 'ReportPreviewFieldsFragment': ReportPreviewFieldsFragment } } };
+
+export type DrillThroughReportQueryVariables = Exact<{
+  input: ReportDrillInput;
+}>;
+
+
+export type DrillThroughReportQuery = { drillThroughReport: { ' $fragmentRefs'?: { 'ReportPreviewFieldsFragment': ReportPreviewFieldsFragment } } };
 
 export type ReportRunFieldsFragment = { id: string, definitionId: string | null, revisionId: string | null, cannedKey: string | null, cannedVersion: string | null, requestedById: string, trigger: string, params: unknown, format: string, status: string, rowCount: number, byteSize: number, durationMs: number, truncated: boolean, artifactExpiresAt: number | null, cacheHit: boolean, queuedAt: number | null, startedAt: number | null, completedAt: number | null, version: number, createdAt: number, error: { code: string, message: string, detail: string | null } | null } & { ' $fragmentName'?: 'ReportRunFieldsFragment' };
 
@@ -3893,7 +4152,7 @@ export type CancelReportRunMutationVariables = Exact<{
 
 export type CancelReportRunMutation = { cancelReportRun: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } } };
 
-export type ReportScheduleFieldsFragment = { id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, emailAttach: boolean, notifyUserIds: Array<string>, enabled: boolean, runAsId: string, lastRunId: string | null, nextRunAt: number | null, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportScheduleFieldsFragment' };
+export type ReportScheduleFieldsFragment = { id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, emailAttach: boolean, emailInline: boolean, notifyUserIds: Array<string>, alertFiring: boolean, enabled: boolean, runAsId: string, lastRunId: string | null, nextRunAt: number | null, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, alert: { operator: string, threshold: number, columnId: string | null, value: number | null, suppressWhileFiring: boolean } | null } & { ' $fragmentName'?: 'ReportScheduleFieldsFragment' };
 
 export type ReportSchedulesQueryVariables = Exact<{
   definitionId?: string | number | null | undefined;
@@ -3922,6 +4181,36 @@ export type DeleteReportScheduleMutationVariables = Exact<{
 
 
 export type DeleteReportScheduleMutation = { deleteReportSchedule: boolean };
+
+export type ReportViewFieldsFragment = { id: string, definitionId: string, ownerId: string, name: string, description: string | null, params: unknown, shared: boolean, pinned: boolean, format: string | null, lastRunAt: number | null, runCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportViewFieldsFragment' };
+
+export type ReportViewsQueryVariables = Exact<{
+  definitionId?: string | number | null | undefined;
+}>;
+
+
+export type ReportViewsQuery = { reportViews: Array<{ ' $fragmentRefs'?: { 'ReportViewFieldsFragment': ReportViewFieldsFragment } }> };
+
+export type CreateReportViewMutationVariables = Exact<{
+  input: CreateReportViewInput;
+}>;
+
+
+export type CreateReportViewMutation = { createReportView: { ' $fragmentRefs'?: { 'ReportViewFieldsFragment': ReportViewFieldsFragment } } };
+
+export type UpdateReportViewMutationVariables = Exact<{
+  input: UpdateReportViewInput;
+}>;
+
+
+export type UpdateReportViewMutation = { updateReportView: { ' $fragmentRefs'?: { 'ReportViewFieldsFragment': ReportViewFieldsFragment } } };
+
+export type DeleteReportViewMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteReportViewMutation = { deleteReportView: boolean };
 
 export type RoleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, coreResponsibility: string | null, parentRoleIds: Array<string> | null, maxSensitivity: string, isSystem: boolean, createdBy: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RoleTableRowFieldsFragment' };
 
@@ -6162,6 +6451,21 @@ export const RecurringShipmentTableRowFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"RecurringShipmentTableRowFields"}) as unknown as TypedDocumentString<RecurringShipmentTableRowFieldsFragment, unknown>;
+export const ReportDashboardFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportDashboardFields on ReportDashboard {
+  id
+  name
+  description
+  category
+  tags
+  ownerId
+  visibility
+  layout
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ReportDashboardFields"}) as unknown as TypedDocumentString<ReportDashboardFieldsFragment, unknown>;
 export const ReportDefinitionFieldsFragmentDoc = new TypedDocumentString(`
     fragment ReportDefinitionFields on ReportDefinition {
   id
@@ -6186,6 +6490,44 @@ export const ReportDefinitionFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ReportDefinitionFields"}) as unknown as TypedDocumentString<ReportDefinitionFieldsFragment, unknown>;
+export const ReportPreviewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportPreviewFields on ReportPreview {
+  columns {
+    id
+    label
+    type
+    format
+    display {
+      style
+      decimals
+      grouping
+      currency
+      negative
+      notation
+      prefix
+      suffix
+      dateStyle
+      boolStyle
+      durationUnit
+      durationStyle
+      nullText
+      rules {
+        op
+        value
+        upper
+        tone
+      }
+      band {
+        width
+        edges
+      }
+    }
+  }
+  rows
+  totals
+  truncated
+}
+    `, {"fragmentName":"ReportPreviewFields"}) as unknown as TypedDocumentString<ReportPreviewFieldsFragment, unknown>;
 export const ReportRunFieldsFragmentDoc = new TypedDocumentString(`
     fragment ReportRunFields on ReportRun {
   id
@@ -6225,7 +6567,16 @@ export const ReportScheduleFieldsFragmentDoc = new TypedDocumentString(`
   formats
   emailRecipients
   emailAttach
+  emailInline
   notifyUserIds
+  alert {
+    operator
+    threshold
+    columnId
+    value
+    suppressWhileFiring
+  }
+  alertFiring
   enabled
   runAsId
   lastRunId
@@ -6236,6 +6587,24 @@ export const ReportScheduleFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ReportScheduleFields"}) as unknown as TypedDocumentString<ReportScheduleFieldsFragment, unknown>;
+export const ReportViewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ReportViewFields on ReportView {
+  id
+  definitionId
+  ownerId
+  name
+  description
+  params
+  shared
+  pinned
+  format
+  lastRunAt
+  runCount
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ReportViewFields"}) as unknown as TypedDocumentString<ReportViewFieldsFragment, unknown>;
 export const RoleTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment RoleTableRowFields on Role {
   id
@@ -12515,6 +12884,71 @@ export const NotificationUnreadCountDocument = new TypedDocumentString(`
   notificationUnreadCount
 }
     `, {"hash":"sha256:ed4fa686e9641b77e14b47a1c93d30e473f479f8cb960bc62def2000568e84a7"}) as unknown as TypedDocumentString<NotificationUnreadCountQuery, NotificationUnreadCountQueryVariables>;
+export const MyNotificationListDocument = new TypedDocumentString(`
+    query MyNotificationList($input: DataTableConnectionInput!, $filter: NotificationFilterInput) {
+  myNotifications(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...NotificationFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment NotificationFields on Notification {
+  id
+  organizationId
+  businessUnitId
+  targetUserId
+  eventType
+  priority
+  channel
+  title
+  message
+  data
+  relatedEntities
+  source
+  readAt
+  dismissedAt
+  createdAt
+}`, {"hash":"sha256:6ce179e503ab31d1f1ab45a16721bbea615809e9a08d8668dad45ec9c81608f0"}) as unknown as TypedDocumentString<MyNotificationListQuery, MyNotificationListQueryVariables>;
+export const MyNotificationUnreadCountDocument = new TypedDocumentString(`
+    query MyNotificationUnreadCount {
+  myNotificationUnreadCount
+}
+    `, {"hash":"sha256:ad2ceb6f0515af73bb851c124af38bc7fcef461bdcb62803ce866504fb1a6751"}) as unknown as TypedDocumentString<MyNotificationUnreadCountQuery, MyNotificationUnreadCountQueryVariables>;
+export const MarkAllMyNotificationsReadDocument = new TypedDocumentString(`
+    mutation MarkAllMyNotificationsRead {
+  markAllMyNotificationsRead
+}
+    `, {"hash":"sha256:e9902bd6a7ebb19a5be05f820482fe885b4ed3baf8ec9c159b054cb4448459f7"}) as unknown as TypedDocumentString<MarkAllMyNotificationsReadMutation, MarkAllMyNotificationsReadMutationVariables>;
+export const MarkMyNotificationsReadDocument = new TypedDocumentString(`
+    mutation MarkMyNotificationsRead($ids: [ID!]!) {
+  markMyNotificationsRead(ids: $ids)
+}
+    `, {"hash":"sha256:729524debcb5ff3140bec03e8447c4bdd6929cbaae1c1c9940753533eb3da14b"}) as unknown as TypedDocumentString<MarkMyNotificationsReadMutation, MarkMyNotificationsReadMutationVariables>;
+export const MarkMyNotificationsUnreadDocument = new TypedDocumentString(`
+    mutation MarkMyNotificationsUnread($ids: [ID!]!) {
+  markMyNotificationsUnread(ids: $ids)
+}
+    `, {"hash":"sha256:cf8016014675f422deed28de48142e48a8001d4eb8981be7cd93313d81d396d3"}) as unknown as TypedDocumentString<MarkMyNotificationsUnreadMutation, MarkMyNotificationsUnreadMutationVariables>;
+export const DismissMyNotificationsDocument = new TypedDocumentString(`
+    mutation DismissMyNotifications($ids: [ID!]!) {
+  dismissMyNotifications(ids: $ids)
+}
+    `, {"hash":"sha256:6cae1945265d9c230b3cff31c4045b71cc7332491be831de11ed0093396935ee"}) as unknown as TypedDocumentString<DismissMyNotificationsMutation, DismissMyNotificationsMutationVariables>;
+export const RestoreMyNotificationsDocument = new TypedDocumentString(`
+    mutation RestoreMyNotifications($ids: [ID!]!) {
+  restoreMyNotifications(ids: $ids)
+}
+    `, {"hash":"sha256:371399164c8a2f505fa278c9d27180d252d712e6c89b0d5b498e0c9f7429b6c9"}) as unknown as TypedDocumentString<RestoreMyNotificationsMutation, RestoreMyNotificationsMutationVariables>;
 export const MarkNotificationsReadDocument = new TypedDocumentString(`
     mutation MarkNotificationsRead($ids: [ID!]!) {
   markNotificationsRead(ids: $ids)
@@ -12957,6 +13391,87 @@ export const ReportCatalogDocument = new TypedDocumentString(`
   }
 }
     `, {"hash":"sha256:79e369a4fec3bb0d7d5c6975d5782adb517ddeb55868c86d31e6f644f12d2d39"}) as unknown as TypedDocumentString<ReportCatalogQuery, ReportCatalogQueryVariables>;
+export const ReportDashboardsDocument = new TypedDocumentString(`
+    query ReportDashboards {
+  reportDashboards {
+    ...ReportDashboardFields
+  }
+}
+    fragment ReportDashboardFields on ReportDashboard {
+  id
+  name
+  description
+  category
+  tags
+  ownerId
+  visibility
+  layout
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:618bd91da756dd1bf620c19604d5bb26ba4ce73841606ed814c47eadefb76229"}) as unknown as TypedDocumentString<ReportDashboardsQuery, ReportDashboardsQueryVariables>;
+export const ReportDashboardByIdDocument = new TypedDocumentString(`
+    query ReportDashboardById($id: ID!) {
+  reportDashboard(id: $id) {
+    ...ReportDashboardFields
+  }
+}
+    fragment ReportDashboardFields on ReportDashboard {
+  id
+  name
+  description
+  category
+  tags
+  ownerId
+  visibility
+  layout
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:de2d6876d41ebd263d1936da997cb1ca41d0f92d79b248ad8ac08e86f28bd6df"}) as unknown as TypedDocumentString<ReportDashboardByIdQuery, ReportDashboardByIdQueryVariables>;
+export const CreateReportDashboardDocument = new TypedDocumentString(`
+    mutation CreateReportDashboard($input: SaveReportDashboardInput!) {
+  createReportDashboard(input: $input) {
+    ...ReportDashboardFields
+  }
+}
+    fragment ReportDashboardFields on ReportDashboard {
+  id
+  name
+  description
+  category
+  tags
+  ownerId
+  visibility
+  layout
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:63539c84ad92d771c2e2aee365288dffc7a677c5933bb8140e4557ff544cf7d6"}) as unknown as TypedDocumentString<CreateReportDashboardMutation, CreateReportDashboardMutationVariables>;
+export const UpdateReportDashboardDocument = new TypedDocumentString(`
+    mutation UpdateReportDashboard($input: UpdateReportDashboardInput!) {
+  updateReportDashboard(input: $input) {
+    ...ReportDashboardFields
+  }
+}
+    fragment ReportDashboardFields on ReportDashboard {
+  id
+  name
+  description
+  category
+  tags
+  ownerId
+  visibility
+  layout
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:db102e93d960dee77a8717c0905a53040d9796c3cc5608e76b769ca76543b918"}) as unknown as TypedDocumentString<UpdateReportDashboardMutation, UpdateReportDashboardMutationVariables>;
+export const DeleteReportDashboardDocument = new TypedDocumentString(`
+    mutation DeleteReportDashboard($id: ID!) {
+  deleteReportDashboard(id: $id)
+}
+    `, {"hash":"sha256:67202bb86983a8504070713cc489306fa4a88eb9a2d7476926a7bf482ebd0395"}) as unknown as TypedDocumentString<DeleteReportDashboardMutation, DeleteReportDashboardMutationVariables>;
 export const ReportDefinitionsTableDocument = new TypedDocumentString(`
     query ReportDefinitionsTable($input: DataTableConnectionInput!) {
   reportDefinitions(input: $input) {
@@ -13157,19 +13672,89 @@ export const ResetCannedForkDocument = new TypedDocumentString(`
   updatedAt
 }`, {"hash":"sha256:fdfc8cd8949b329a08fe31e350c065b5be2e732678ee7494e897c729e99ff96c"}) as unknown as TypedDocumentString<ResetCannedForkMutation, ResetCannedForkMutationVariables>;
 export const PreviewReportDocument = new TypedDocumentString(`
-    query PreviewReport($definition: ReportIRInput!, $params: JSON) {
-  previewReport(definition: $definition, params: $params) {
-    columns {
-      id
-      label
-      type
-      format
-    }
-    rows
-    truncated
+    query PreviewReport($definition: ReportIRInput!, $params: JSON, $supersede: Boolean) {
+  previewReport(definition: $definition, params: $params, supersede: $supersede) {
+    ...ReportPreviewFields
   }
 }
-    `, {"hash":"sha256:f1fe8109e84210a4d913215ba8b2bb2ad176112eef55cc94f38230d86c3c6582"}) as unknown as TypedDocumentString<PreviewReportQuery, PreviewReportQueryVariables>;
+    fragment ReportPreviewFields on ReportPreview {
+  columns {
+    id
+    label
+    type
+    format
+    display {
+      style
+      decimals
+      grouping
+      currency
+      negative
+      notation
+      prefix
+      suffix
+      dateStyle
+      boolStyle
+      durationUnit
+      durationStyle
+      nullText
+      rules {
+        op
+        value
+        upper
+        tone
+      }
+      band {
+        width
+        edges
+      }
+    }
+  }
+  rows
+  totals
+  truncated
+}`, {"hash":"sha256:8093eaf35edcef1de2de2366a7c65d3b3b6c12b432e8ceaf62d76c6e247a6f7d"}) as unknown as TypedDocumentString<PreviewReportQuery, PreviewReportQueryVariables>;
+export const DrillThroughReportDocument = new TypedDocumentString(`
+    query DrillThroughReport($input: ReportDrillInput!) {
+  drillThroughReport(input: $input) {
+    ...ReportPreviewFields
+  }
+}
+    fragment ReportPreviewFields on ReportPreview {
+  columns {
+    id
+    label
+    type
+    format
+    display {
+      style
+      decimals
+      grouping
+      currency
+      negative
+      notation
+      prefix
+      suffix
+      dateStyle
+      boolStyle
+      durationUnit
+      durationStyle
+      nullText
+      rules {
+        op
+        value
+        upper
+        tone
+      }
+      band {
+        width
+        edges
+      }
+    }
+  }
+  rows
+  totals
+  truncated
+}`, {"hash":"sha256:4dcc2a7446bfffed53694614a973a051d531d33ee0dc0696611fa2fdaf89351e"}) as unknown as TypedDocumentString<DrillThroughReportQuery, DrillThroughReportQueryVariables>;
 export const ReportRunsTableDocument = new TypedDocumentString(`
     query ReportRunsTable($input: DataTableConnectionInput!, $filter: ReportRunsFilterInput) {
   reportRuns(input: $input, filter: $filter) {
@@ -13333,7 +13918,16 @@ export const ReportSchedulesDocument = new TypedDocumentString(`
   formats
   emailRecipients
   emailAttach
+  emailInline
   notifyUserIds
+  alert {
+    operator
+    threshold
+    columnId
+    value
+    suppressWhileFiring
+  }
+  alertFiring
   enabled
   runAsId
   lastRunId
@@ -13342,7 +13936,7 @@ export const ReportSchedulesDocument = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:fb0abce2c56d49308309eb048fcef0541109551d0f8cca54338715dd93a42d09"}) as unknown as TypedDocumentString<ReportSchedulesQuery, ReportSchedulesQueryVariables>;
+}`, {"hash":"sha256:2a556320ec0993ae682b12e9e882914106b10f1efad0d86978363d5c11ebb0eb"}) as unknown as TypedDocumentString<ReportSchedulesQuery, ReportSchedulesQueryVariables>;
 export const CreateReportScheduleDocument = new TypedDocumentString(`
     mutation CreateReportSchedule($input: CreateReportScheduleInput!) {
   createReportSchedule(input: $input) {
@@ -13357,7 +13951,16 @@ export const CreateReportScheduleDocument = new TypedDocumentString(`
   formats
   emailRecipients
   emailAttach
+  emailInline
   notifyUserIds
+  alert {
+    operator
+    threshold
+    columnId
+    value
+    suppressWhileFiring
+  }
+  alertFiring
   enabled
   runAsId
   lastRunId
@@ -13366,7 +13969,7 @@ export const CreateReportScheduleDocument = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:ee897619e4e2b1caf4f1264ade16ce775982cf9c5cc88dc09ad205f30ccdd3b0"}) as unknown as TypedDocumentString<CreateReportScheduleMutation, CreateReportScheduleMutationVariables>;
+}`, {"hash":"sha256:907de6b8f0e39ca398a1e197391b3674219741259c01eb7ed29cc3be47bcc952"}) as unknown as TypedDocumentString<CreateReportScheduleMutation, CreateReportScheduleMutationVariables>;
 export const UpdateReportScheduleDocument = new TypedDocumentString(`
     mutation UpdateReportSchedule($input: UpdateReportScheduleInput!) {
   updateReportSchedule(input: $input) {
@@ -13381,7 +13984,16 @@ export const UpdateReportScheduleDocument = new TypedDocumentString(`
   formats
   emailRecipients
   emailAttach
+  emailInline
   notifyUserIds
+  alert {
+    operator
+    threshold
+    columnId
+    value
+    suppressWhileFiring
+  }
+  alertFiring
   enabled
   runAsId
   lastRunId
@@ -13390,12 +14002,83 @@ export const UpdateReportScheduleDocument = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:a9575950d10c3f1a2351f3eaa0f4680bedbbbea15e4f29b1518f26542000f8e8"}) as unknown as TypedDocumentString<UpdateReportScheduleMutation, UpdateReportScheduleMutationVariables>;
+}`, {"hash":"sha256:5bb42d52908ad8346bebbc9944d422dfb6f8b8604f7f7d80db6b3a2933f7369d"}) as unknown as TypedDocumentString<UpdateReportScheduleMutation, UpdateReportScheduleMutationVariables>;
 export const DeleteReportScheduleDocument = new TypedDocumentString(`
     mutation DeleteReportSchedule($id: ID!) {
   deleteReportSchedule(id: $id)
 }
     `, {"hash":"sha256:dfe8e966e00cda20ec071774d07a7c9d7f28d22648db9faa0ece2d7e233c2bf6"}) as unknown as TypedDocumentString<DeleteReportScheduleMutation, DeleteReportScheduleMutationVariables>;
+export const ReportViewsDocument = new TypedDocumentString(`
+    query ReportViews($definitionId: ID) {
+  reportViews(definitionId: $definitionId) {
+    ...ReportViewFields
+  }
+}
+    fragment ReportViewFields on ReportView {
+  id
+  definitionId
+  ownerId
+  name
+  description
+  params
+  shared
+  pinned
+  format
+  lastRunAt
+  runCount
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:600b2d0308c168f6ea3cc20979d60661695409e382b3563966bbbcdb9eba2c60"}) as unknown as TypedDocumentString<ReportViewsQuery, ReportViewsQueryVariables>;
+export const CreateReportViewDocument = new TypedDocumentString(`
+    mutation CreateReportView($input: CreateReportViewInput!) {
+  createReportView(input: $input) {
+    ...ReportViewFields
+  }
+}
+    fragment ReportViewFields on ReportView {
+  id
+  definitionId
+  ownerId
+  name
+  description
+  params
+  shared
+  pinned
+  format
+  lastRunAt
+  runCount
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:98f7d9af3b3d8bd99781ee22198f1938a90f7739b986d704463e504d1b2c6b5b"}) as unknown as TypedDocumentString<CreateReportViewMutation, CreateReportViewMutationVariables>;
+export const UpdateReportViewDocument = new TypedDocumentString(`
+    mutation UpdateReportView($input: UpdateReportViewInput!) {
+  updateReportView(input: $input) {
+    ...ReportViewFields
+  }
+}
+    fragment ReportViewFields on ReportView {
+  id
+  definitionId
+  ownerId
+  name
+  description
+  params
+  shared
+  pinned
+  format
+  lastRunAt
+  runCount
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:b2575a3fea359ee9b24c354d454aa68f5aa61298c45c180ccd79ba4dfcc7ae7d"}) as unknown as TypedDocumentString<UpdateReportViewMutation, UpdateReportViewMutationVariables>;
+export const DeleteReportViewDocument = new TypedDocumentString(`
+    mutation DeleteReportView($id: ID!) {
+  deleteReportView(id: $id)
+}
+    `, {"hash":"sha256:3e58e3f6975d4537a51320fcbef5cd996c743d72d0006a8510d9791788e86966"}) as unknown as TypedDocumentString<DeleteReportViewMutation, DeleteReportViewMutationVariables>;
 export const RoleTableDocument = new TypedDocumentString(`
     query RoleTable($input: DataTableConnectionInput!) {
   roles(input: $input) {

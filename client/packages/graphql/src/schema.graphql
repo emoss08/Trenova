@@ -994,14 +994,26 @@ input CreateRecurringEarningInput {
 }
 
 input CreateReportScheduleInput {
+  alert: ReportScheduleAlertInput
   cronExpression: String!
   definitionId: ID!
   emailAttach: Boolean
+  emailInline: Boolean
   emailRecipients: [String!]
   enabled: Boolean!
   formats: [String!]!
   notifyUserIds: [ID!]
   timezone: String
+}
+
+input CreateReportViewInput {
+  definitionId: ID!
+  description: String
+  format: String
+  name: String!
+  params: JSON
+  pinned: Boolean
+  shared: Boolean
 }
 
 input CreateSettlementDisputeInput {
@@ -3599,8 +3611,10 @@ type Mutation {
   createPayProfile(input: CreatePayProfileInput!): PayProfile!
   createRecurringDeduction(input: CreateRecurringDeductionInput!): RecurringDeduction!
   createRecurringEarning(input: CreateRecurringEarningInput!): RecurringEarning!
+  createReportDashboard(input: SaveReportDashboardInput!): ReportDashboard!
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
   createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
+  createReportView(input: CreateReportViewInput!): ReportView!
   """
   Files a dispute against one of the signed-in driver's issued settlements.
   """
@@ -3614,8 +3628,10 @@ type Mutation {
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
+  deleteReportDashboard(id: ID!): Boolean!
   deleteReportDefinition(id: ID!): Boolean!
   deleteReportSchedule(id: ID!): Boolean!
+  deleteReportView(id: ID!): Boolean!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
   deleteTelematicsFormMapping(id: ID!): Boolean!
@@ -3624,6 +3640,7 @@ type Mutation {
   Remove a pay event from a draft settlement, returning it to the unsettled pool.
   """
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
+  dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
@@ -3639,8 +3656,19 @@ type Mutation {
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  """
+  Marks all of the signed-in driver's personally targeted notifications as read.
+  """
+  markAllMyNotificationsRead: Boolean!
   markAllNotificationsRead: Boolean!
   markDriverSettlementPaid(input: MarkDriverSettlementPaidInput!): DriverSettlement!
+  """
+  Notification state changes for the signed-in driver. Each only ever touches
+  notifications targeted at the driver; organization-wide notifications are
+  never affected.
+  """
+  markMyNotificationsRead(ids: [ID!]!): Boolean!
+  markMyNotificationsUnread(ids: [ID!]!): Boolean!
   markNotificationsRead(ids: [ID!]!): Boolean!
   markNotificationsUnread(ids: [ID!]!): Boolean!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
@@ -3685,6 +3713,7 @@ type Mutation {
   requires a reason and alerts dispatch.
   """
   respondToMyAssignment(input: RespondToMyAssignmentInput!): Boolean!
+  restoreMyNotifications(ids: [ID!]!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   """
@@ -3731,8 +3760,10 @@ type Mutation {
   updatePayProfile(input: UpdatePayProfileInput!): PayProfile!
   updateRecurringDeduction(input: UpdateRecurringDeductionInput!): RecurringDeduction!
   updateRecurringEarning(input: UpdateRecurringEarningInput!): RecurringEarning!
+  updateReportDashboard(input: UpdateReportDashboardInput!): ReportDashboard!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
+  updateReportView(input: UpdateReportViewInput!): ReportView!
   updateSettlementControl(input: UpdateSettlementControlInput!): SettlementControl!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
@@ -4562,6 +4593,7 @@ type Query {
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
+  drillThroughReport(input: ReportDrillInput!): ReportPreview!
   driverExpense(id: ID!): DriverExpense!
   """Driver expense review queue (back office)."""
   driverExpenses(input: DataTableConnectionInput!): DriverExpenseConnection!
@@ -4650,6 +4682,16 @@ type Query {
   """Estimated driver pay for one of the signed-in driver's own moves."""
   myLoadPayEstimate(moveId: ID!, shipmentId: ID!): PortalPayEstimate!
   myLoads(limit: Int, scope: PortalLoadScope!): [PortalLoad!]!
+  """
+  Count of the signed-in driver's unread, personally targeted notifications.
+  """
+  myNotificationUnreadCount: Int!
+  """
+  The signed-in driver's notification feed. Scoped strictly to notifications
+  targeted at the driver; organization-wide (global) notifications are never
+  returned.
+  """
+  myNotifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
   myPeriodSummary: PortalPeriodSummary!
   """Feature toggles for the signed-in driver's carrier."""
   myPortalFeatures: PortalFeatures!
@@ -4686,7 +4728,7 @@ type Query {
   payProfiles(input: DataTableConnectionInput!): PayProfileConnection!
   pendingDriverExpenseCount: Int!
   previewDriverSettlement(periodEnd: Int, periodStart: Int, workerId: ID!): DriverSettlement!
-  previewReport(definition: ReportIRInput!, params: JSON): ReportPreview!
+  previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
   recurringDeduction(id: ID!): RecurringDeduction
@@ -4696,12 +4738,16 @@ type Query {
   recurringShipment(id: ID!): RecurringShipment
   recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
   reportCatalog: ReportCatalog!
+  reportDashboard(id: ID!): ReportDashboard!
+  reportDashboards: [ReportDashboard!]!
   reportDefinition(id: ID!): ReportDefinition!
   reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
   reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
   reportRun(id: ID!): ReportRun!
   reportRuns(filter: ReportRunsFilterInput, input: DataTableConnectionInput!): ReportRunConnection!
   reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportView(id: ID!): ReportView!
+  reportViews(definitionId: ID): [ReportView!]!
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
   role(id: ID!): Role
   roles(input: DataTableConnectionInput!): RoleConnection!
@@ -5006,6 +5052,16 @@ input RemoveSettlementAdjustmentInput {
   settlementId: ID!
 }
 
+type ReportBand {
+  edges: [Float!]!
+  width: Float!
+}
+
+input ReportBandInput {
+  edges: [Float!]
+  width: Float
+}
+
 type ReportCatalog {
   entities: [ReportCatalogEntity!]!
   version: String!
@@ -5051,21 +5107,115 @@ type ReportCatalogField {
   type: String!
 }
 
+input ReportChartGoalInput {
+  columnId: String
+  label: String
+  value: Float
+}
+
+input ReportChartInput {
+  compareId: String
+  curved: Boolean
+  goal: ReportChartGoalInput
+  hideLegend: Boolean
+  id: String!
+  labelColumnId: String
+  latColumnId: String
+  limit: Int
+  lngColumnId: String
+  seriesIds: [String!]
+  showValues: Boolean
+  stacked: Boolean
+  title: String
+  type: String!
+  xColumnId: String
+}
+
+type ReportColumnDisplay {
+  band: ReportBand
+  boolStyle: String!
+  currency: String!
+  dateStyle: String!
+  decimals: Int!
+  durationStyle: String!
+  durationUnit: String!
+  grouping: Boolean!
+  negative: String!
+  notation: String!
+  nullText: String!
+  prefix: String!
+  rules: [ReportDisplayRule!]!
+  style: String!
+  suffix: String!
+}
+
 input ReportColumnInput {
   agg: String
+  band: ReportBandInput
   bucket: String
   computed: ReportComputedInput
+  display: ReportDisplayInput
+  filter: ReportFilterGroupInput
   id: String!
   kind: String!
   label: String
   ref: ReportFieldRefInput
+  transform: ReportTransformInput
 }
 
 input ReportComputedInput {
   format: String
-  leftId: String!
+  leftId: String
+  leftValue: Float
   op: String!
-  rightId: String!
+  rightId: String
+  rightValue: Float
+}
+
+type ReportDashboard {
+  category: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  layout: JSON!
+  name: String!
+  ownerId: ID!
+  tags: [String!]!
+  updatedAt: Int!
+  version: Int!
+  visibility: String!
+}
+
+input ReportDashboardFilterInput {
+  default: Any
+  entity: String!
+  id: String!
+  label: String
+  operator: String!
+  ref: ReportFieldRefInput!
+}
+
+input ReportDashboardLayoutInput {
+  filters: [ReportDashboardFilterInput!]
+  parameters: [ReportParameterDefInput!]
+  tiles: [ReportDashboardTileInput!]!
+}
+
+input ReportDashboardTileInput {
+  cannedKey: String
+  chartId: String
+  columnId: String
+  definitionId: ID
+  h: Int!
+  id: String!
+  kind: String!
+  limit: Int
+  paramBindings: JSON
+  text: String
+  title: String
+  w: Int!
+  x: Int!
+  y: Int!
 }
 
 type ReportDefinition {
@@ -5112,6 +5262,50 @@ type ReportDefinitionRevision {
   revisionNumber: Int!
 }
 
+input ReportDisplayInput {
+  boolStyle: String
+  currency: String
+  dateStyle: String
+  decimals: Int
+  durationStyle: String
+  durationUnit: String
+  grouping: Boolean
+  negative: String
+  notation: String
+  nullText: String
+  prefix: String
+  rules: [ReportDisplayRuleInput!]
+  style: String
+  suffix: String
+}
+
+type ReportDisplayRule {
+  op: String!
+  tone: String!
+  upper: Float!
+  value: Float!
+}
+
+input ReportDisplayRuleInput {
+  op: String!
+  tone: String!
+  upper: Float
+  value: Float!
+}
+
+input ReportDrillInput {
+  columnId: String
+  definition: ReportIRInput!
+  dimensions: [ReportDrillValueInput!]!
+  limit: Int
+  params: JSON
+}
+
+input ReportDrillValueInput {
+  columnId: String!
+  value: Any
+}
+
 input ReportFieldRefInput {
   field: String!
   path: [String!]
@@ -5128,10 +5322,12 @@ input ReportFilterInput {
   operator: String!
   param: String
   ref: ReportFieldRefInput!
+  transform: ReportTransformInput
   value: Any
 }
 
 input ReportIRInput {
+  charts: [ReportChartInput!]
   columns: [ReportColumnInput!]!
   entity: String!
   filters: ReportFilterGroupInput
@@ -5140,6 +5336,7 @@ input ReportIRInput {
   parameters: [ReportParameterDefInput!]
   pivot: ReportPivotInput
   sort: [ReportSortInput!]
+  totals: Boolean
 }
 
 input ReportParameterDefInput {
@@ -5155,6 +5352,7 @@ input ReportParameterDefInput {
 
 input ReportPivotInput {
   includeOther: Boolean
+  labels: [String!]
   measureIds: [String!]!
   ref: ReportFieldRefInput!
   values: [String!]!
@@ -5163,10 +5361,12 @@ input ReportPivotInput {
 type ReportPreview {
   columns: [ReportPreviewColumn!]!
   rows: Any!
+  totals: Any
   truncated: Boolean!
 }
 
 type ReportPreviewColumn {
+  display: ReportColumnDisplay!
   format: String
   id: String!
   label: String!
@@ -5222,11 +5422,14 @@ input ReportRunsFilterInput {
 }
 
 type ReportSchedule {
+  alert: ReportScheduleAlert
+  alertFiring: Boolean!
   consecutiveFailures: Int!
   createdAt: Int!
   cronExpression: String!
   definitionId: ID!
   emailAttach: Boolean!
+  emailInline: Boolean!
   emailRecipients: [String!]!
   enabled: Boolean!
   formats: [String!]!
@@ -5240,9 +5443,48 @@ type ReportSchedule {
   version: Int!
 }
 
+type ReportScheduleAlert {
+  columnId: String
+  operator: String!
+  suppressWhileFiring: Boolean!
+  threshold: Int!
+  value: Float
+}
+
+input ReportScheduleAlertInput {
+  columnId: String
+  operator: String!
+  suppressWhileFiring: Boolean
+  threshold: Int!
+  value: Float
+}
+
 input ReportSortInput {
   columnId: String!
   direction: String!
+}
+
+input ReportTransformInput {
+  factor: Float
+  op: String!
+  precision: Int
+}
+
+type ReportView {
+  createdAt: Int!
+  definitionId: ID!
+  description: String
+  format: String
+  id: ID!
+  lastRunAt: Int
+  name: String!
+  ownerId: ID!
+  params: JSON
+  pinned: Boolean!
+  runCount: Int!
+  shared: Boolean!
+  updatedAt: Int!
+  version: Int!
 }
 
 input RequestMyPtoInput {
@@ -5332,6 +5574,7 @@ input RunReportInput {
   definitionId: ID
   format: String!
   params: JSON
+  viewId: ID
 }
 
 type SCIMGroupRoleMapping {
@@ -5357,6 +5600,15 @@ type SCIMGroupRoleMappingConnection {
 type SCIMGroupRoleMappingEdge {
   cursor: String!
   node: SCIMGroupRoleMapping!
+}
+
+input SaveReportDashboardInput {
+  category: String
+  description: String
+  layout: ReportDashboardLayoutInput!
+  name: String!
+  tags: [String!]
+  visibility: String
 }
 
 input SaveReportDefinitionInput {
@@ -7528,6 +7780,17 @@ input UpdateRecurringEarningInput {
   workerId: ID!
 }
 
+input UpdateReportDashboardInput {
+  category: String
+  description: String
+  id: ID!
+  layout: ReportDashboardLayoutInput!
+  name: String!
+  tags: [String!]
+  version: Int!
+  visibility: String
+}
+
 input UpdateReportDefinitionInput {
   category: String
   defaultFormat: String
@@ -7542,15 +7805,28 @@ input UpdateReportDefinitionInput {
 }
 
 input UpdateReportScheduleInput {
+  alert: ReportScheduleAlertInput
   cronExpression: String!
   definitionId: ID!
   emailAttach: Boolean
+  emailInline: Boolean
   emailRecipients: [String!]
   enabled: Boolean!
   formats: [String!]!
   id: ID!
   notifyUserIds: [ID!]
   timezone: String
+  version: Int!
+}
+
+input UpdateReportViewInput {
+  description: String
+  format: String
+  id: ID!
+  name: String!
+  params: JSON
+  pinned: Boolean
+  shared: Boolean
   version: Int!
 }
 
