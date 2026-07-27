@@ -36,6 +36,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
+	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distancecalculationservice"
 	"github.com/emoss08/trenova/internal/core/services/distancecontrolservice"
@@ -211,6 +213,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentexceptionservice.New,
 	agentdecisionservice.New,
 	assignmentservice.New,
+	dispatchcandidateservice.New,
+	dispatchconsoleservice.New,
 	fx.Annotate(
 		bankreceiptbatchservice.New,
 		fx.As(new(services.BankReceiptBatchService)),
