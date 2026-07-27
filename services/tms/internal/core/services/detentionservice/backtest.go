@@ -32,6 +32,7 @@ type BacktestRequest struct {
 // BacktestBucket is one grouped slice of the backtest result.
 type BacktestBucket struct {
 	Key             string          `json:"key"`
+	Label           string          `json:"label"`
 	StopCount       int             `json:"stopCount"`
 	BillableCount   int             `json:"billableCount"`
 	ProposedAmount  decimal.Decimal `json:"proposedAmount"`
@@ -225,7 +226,69 @@ func (s *Service) Backtest(
 	result.ByCustomer = rankBuckets(byCustomer)
 	result.ByFacility = rankBuckets(byFacility)
 
+	if err = s.labelBuckets(ctx, tenantInfo, result); err != nil {
+		return nil, err
+	}
+
 	return result, nil
+}
+
+// labelBuckets swaps raw IDs for display names so a backtest reads as
+// "Acme Foods −$1,240", not a PULID. A bucket whose entity has been deleted
+// keeps its key as the label.
+func (s *Service) labelBuckets(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	result *BacktestResult,
+) error {
+	if len(result.ByCustomer) == 0 && len(result.ByFacility) == 0 {
+		return nil
+	}
+
+	customerIDs := make([]pulid.ID, 0, len(result.ByCustomer))
+	for i := range result.ByCustomer {
+		if id, err := pulid.MustParse(result.ByCustomer[i].Key); err == nil {
+			customerIDs = append(customerIDs, id)
+		}
+	}
+
+	locationIDs := make([]pulid.ID, 0, len(result.ByFacility))
+	for i := range result.ByFacility {
+		if id, err := pulid.MustParse(result.ByFacility[i].Key); err == nil {
+			locationIDs = append(locationIDs, id)
+		}
+	}
+
+	names, err := s.analyticsRepo.EntityNames(ctx, &repositories.DetentionEntityNamesRequest{
+		TenantInfo:  tenantInfo,
+		LocationIDs: locationIDs,
+		CustomerIDs: customerIDs,
+	})
+	if err != nil {
+		return err
+	}
+
+	for i := range result.ByCustomer {
+		bucket := &result.ByCustomer[i]
+		bucket.Label = bucket.Key
+		if id, pErr := pulid.MustParse(bucket.Key); pErr == nil {
+			if name, ok := names.Customers[id]; ok && name != "" {
+				bucket.Label = name
+			}
+		}
+	}
+
+	for i := range result.ByFacility {
+		bucket := &result.ByFacility[i]
+		bucket.Label = bucket.Key
+		if id, pErr := pulid.MustParse(bucket.Key); pErr == nil {
+			if name, ok := names.Locations[id]; ok && name != "" {
+				bucket.Label = name
+			}
+		}
+	}
+
+	return nil
 }
 
 // baselineByStop maps each stop to what it actually billed, so the backtest

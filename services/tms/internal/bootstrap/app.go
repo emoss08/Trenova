@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
@@ -70,6 +71,7 @@ func Options() fx.Option {
 		schedule.Module,
 		auditjobs.Module,
 		billingjobs.Module,
+		detentionjobs.Module,
 		distancemileagejobs.Module,
 		documentintelligencejobs.Module,
 		documentuploadjobs.Module,

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
@@ -878,6 +879,19 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	CustomerDetentionStat struct {
+		BilledAmount    func(childComplexity int) int
+		BreachCount     func(childComplexity int) int
+		CustomerID      func(childComplexity int) int
+		CustomerName    func(childComplexity int) int
+		DisputeCount    func(childComplexity int) int
+		DriverPayAmount func(childComplexity int) int
+		NetMargin       func(childComplexity int) int
+		StopCount       func(childComplexity int) int
+		SuppressedCount func(childComplexity int) int
+		WaivedAmount    func(childComplexity int) int
+	}
+
 	CustomerEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
@@ -979,6 +993,286 @@ type ComplexityRoot struct {
 		ShowPayEstimates               func(childComplexity int) int
 		UpdatedAt                      func(childComplexity int) int
 		Version                        func(childComplexity int) int
+	}
+
+	DetentionBacktestBucket struct {
+		BaselineAmount  func(childComplexity int) int
+		BillableCount   func(childComplexity int) int
+		Delta           func(childComplexity int) int
+		DriverPayAmount func(childComplexity int) int
+		Key             func(childComplexity int) int
+		Label           func(childComplexity int) int
+		NetMargin       func(childComplexity int) int
+		ProposedAmount  func(childComplexity int) int
+		StopCount       func(childComplexity int) int
+	}
+
+	DetentionBacktestResult struct {
+		BaselineRevenue     func(childComplexity int) int
+		ByCustomer          func(childComplexity int) int
+		ByFacility          func(childComplexity int) int
+		From                func(childComplexity int) int
+		NegativeMarginStops func(childComplexity int) int
+		ProposedDriverPay   func(childComplexity int) int
+		ProposedNetMargin   func(childComplexity int) int
+		ProposedRevenue     func(childComplexity int) int
+		RevenueDelta        func(childComplexity int) int
+		StopsBillable       func(childComplexity int) int
+		StopsEvaluated      func(childComplexity int) int
+		StopsForfeited      func(childComplexity int) int
+		StopsMatched        func(childComplexity int) int
+		StopsSuppressed     func(childComplexity int) int
+		To                  func(childComplexity int) int
+		Truncated           func(childComplexity int) int
+	}
+
+	DetentionCollectability struct {
+		Band       func(childComplexity int) int
+		ChainValid func(childComplexity int) int
+		Factors    func(childComplexity int) int
+		Score      func(childComplexity int) int
+		Summary    func(childComplexity int) int
+	}
+
+	DetentionDeskEntry struct {
+		AmountAtRisk          func(childComplexity int) int
+		MinutesUntilFreeEnds  func(childComplexity int) int
+		MinutesUntilNoticeDue func(childComplexity int) int
+		NoticeWindowOpen      func(childComplexity int) int
+		Occurrence            func(childComplexity int) int
+		Urgency               func(childComplexity int) int
+	}
+
+	DetentionDisputePacket struct {
+		Collectability func(childComplexity int) int
+		Evidence       func(childComplexity int) int
+		GeneratedAt    func(childComplexity int) int
+		Notices        func(childComplexity int) int
+		Occurrence     func(childComplexity int) int
+		PolicySnapshot func(childComplexity int) int
+		Receipt        func(childComplexity int) int
+	}
+
+	DetentionEvidence struct {
+		CreatedAt             func(childComplexity int) int
+		DetentionOccurrenceID func(childComplexity int) int
+		DocumentID            func(childComplexity int) int
+		Hash                  func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Kind                  func(childComplexity int) int
+		ObservedAt            func(childComplexity int) int
+		Payload               func(childComplexity int) int
+		PrevHash              func(childComplexity int) int
+		RecordedAt            func(childComplexity int) int
+		RecordedByID          func(childComplexity int) int
+		Sequence              func(childComplexity int) int
+		Source                func(childComplexity int) int
+		Summary               func(childComplexity int) int
+	}
+
+	DetentionNotice struct {
+		Body                  func(childComplexity int) int
+		Channel               func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		DeliveredAt           func(childComplexity int) int
+		DeliveryStatus        func(childComplexity int) int
+		DetentionOccurrenceID func(childComplexity int) int
+		FailedAt              func(childComplexity int) int
+		FailureReason         func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Kind                  func(childComplexity int) int
+		OpenedAt              func(childComplexity int) int
+		QuotedAmount          func(childComplexity int) int
+		QuotedFreeMinutes     func(childComplexity int) int
+		QuotedRate            func(childComplexity int) int
+		Recipients            func(childComplexity int) int
+		SatisfiesRequirement  func(childComplexity int) int
+		ScheduledFor          func(childComplexity int) int
+		SentAt                func(childComplexity int) int
+		SentByID              func(childComplexity int) int
+		Subject               func(childComplexity int) int
+		ThreadKey             func(childComplexity int) int
+		WasAutomatic          func(childComplexity int) int
+	}
+
+	DetentionOccurrence struct {
+		AdditionalChargeID  func(childComplexity int) int
+		AppointmentEnd      func(childComplexity int) int
+		AppointmentStart    func(childComplexity int) int
+		ArrivedAt           func(childComplexity int) int
+		ArrivedLate         func(childComplexity int) int
+		BillableAmount      func(childComplexity int) int
+		BillableMinutes     func(childComplexity int) int
+		BillableUnits       func(childComplexity int) int
+		BusinessUnitID      func(childComplexity int) int
+		CalculationTrace    func(childComplexity int) int
+		CapApplied          func(childComplexity int) int
+		ClockStartAt        func(childComplexity int) int
+		ClockStopAt         func(childComplexity int) int
+		CollectabilityScore func(childComplexity int) int
+		ConvertedToLayover  func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		Currency            func(childComplexity int) int
+		CustomerID          func(childComplexity int) int
+		CustomerName        func(childComplexity int) int
+		DepartedAt          func(childComplexity int) int
+		DetentionPolicyID   func(childComplexity int) int
+		DisputeNote         func(childComplexity int) int
+		DisputedAt          func(childComplexity int) int
+		DriverPayAmount     func(childComplexity int) int
+		DriverPayMinutes    func(childComplexity int) int
+		EvidenceHead        func(childComplexity int) int
+		FreeMinutesGranted  func(childComplexity int) int
+		FreeTimeExpiresAt   func(childComplexity int) int
+		GrossAmount         func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		IsOpen              func(childComplexity int) int
+		LateByMinutes       func(childComplexity int) int
+		LocationID          func(childComplexity int) int
+		LocationName        func(childComplexity int) int
+		NetMargin           func(childComplexity int) int
+		NoticeDeadlineAt    func(childComplexity int) int
+		NoticeDueAt         func(childComplexity int) int
+		NoticeSentAt        func(childComplexity int) int
+		NotificationStatus  func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		PolicySnapshot      func(childComplexity int) int
+		RawDwellMinutes     func(childComplexity int) int
+		RequiresApproval    func(childComplexity int) int
+		RoundedMinutes      func(childComplexity int) int
+		ScheduleType        func(childComplexity int) int
+		ShipmentID          func(childComplexity int) int
+		ShipmentMoveID      func(childComplexity int) int
+		ShipmentProNumber   func(childComplexity int) int
+		Status              func(childComplexity int) int
+		StopID              func(childComplexity int) int
+		StopType            func(childComplexity int) int
+		SuppressedByGate    func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
+		Version             func(childComplexity int) int
+		WaivedAmount        func(childComplexity int) int
+		WaivedAt            func(childComplexity int) int
+		WaiverNote          func(childComplexity int) int
+		WaiverReason        func(childComplexity int) int
+	}
+
+	DetentionOccurrenceDetail struct {
+		Collectability func(childComplexity int) int
+		Evidence       func(childComplexity int) int
+		Notices        func(childComplexity int) int
+		Occurrence     func(childComplexity int) int
+		Receipt        func(childComplexity int) int
+	}
+
+	DetentionPolicy struct {
+		AccessorialChargeID         func(childComplexity int) int
+		AppointmentStopsOnly        func(childComplexity int) int
+		AutoApproveUnderAmount      func(childComplexity int) int
+		AutoSendNotice              func(childComplexity int) int
+		BillingFreeMinutes          func(childComplexity int) int
+		BillingIncrementMinutes     func(childComplexity int) int
+		BusinessUnitID              func(childComplexity int) int
+		ClockStartBasis             func(childComplexity int) int
+		Code                        func(childComplexity int) int
+		Comments                    func(childComplexity int) int
+		CommodityIds                func(childComplexity int) int
+		ConvertToLayoverAtMinutes   func(childComplexity int) int
+		CreatedAt                   func(childComplexity int) int
+		Currency                    func(childComplexity int) int
+		CustomerID                  func(childComplexity int) int
+		DayBoundaryMode             func(childComplexity int) int
+		DeliveryFreeMinutes         func(childComplexity int) int
+		Description                 func(childComplexity int) int
+		EffectiveEndDate            func(childComplexity int) int
+		EffectiveStartDate          func(childComplexity int) int
+		ID                          func(childComplexity int) int
+		IsOrgDefault                func(childComplexity int) int
+		LateArrivalGraceMinutes     func(childComplexity int) int
+		LateArrivalRule             func(childComplexity int) int
+		LayoverAccessorialChargeID  func(childComplexity int) int
+		LocationID                  func(childComplexity int) int
+		MaxBillableMinutesPerStop   func(childComplexity int) int
+		MaxChargePerDay             func(childComplexity int) int
+		MaxChargePerShipment        func(childComplexity int) int
+		MaxChargePerStop            func(childComplexity int) int
+		MinimumBillableMinutes      func(childComplexity int) int
+		Name                        func(childComplexity int) int
+		NotificationDeadlineMinutes func(childComplexity int) int
+		NotificationLeadMinutes     func(childComplexity int) int
+		NotificationRequirement     func(childComplexity int) int
+		OrganizationID              func(childComplexity int) int
+		PayFreeMinutes              func(childComplexity int) int
+		PickupFreeMinutes           func(childComplexity int) int
+		Priority                    func(childComplexity int) int
+		RateSource                  func(childComplexity int) int
+		RequireApprovalOverAmount   func(childComplexity int) int
+		RoundingMode                func(childComplexity int) int
+		SendDepartureSummary        func(childComplexity int) int
+		ServiceTypeIds              func(childComplexity int) int
+		ShipmentTypeIds             func(childComplexity int) int
+		SpecificityScore            func(childComplexity int) int
+		Status                      func(childComplexity int) int
+		StopTypes                   func(childComplexity int) int
+		Tiers                       func(childComplexity int) int
+		UnnotifiedBehavior          func(childComplexity int) int
+		UpdatedAt                   func(childComplexity int) int
+		Version                     func(childComplexity int) int
+	}
+
+	DetentionPolicyConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	DetentionPolicyEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	DetentionPolicyTier struct {
+		FromMinute func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Label      func(childComplexity int) int
+		Rate       func(childComplexity int) int
+		RateUnit   func(childComplexity int) int
+		SortOrder  func(childComplexity int) int
+		ToMinute   func(childComplexity int) int
+	}
+
+	DetentionPreviewResult struct {
+		ArrivedLate        func(childComplexity int) int
+		BillableAmount     func(childComplexity int) int
+		BillableMinutes    func(childComplexity int) int
+		CalculationTrace   func(childComplexity int) int
+		CapApplied         func(childComplexity int) int
+		DriverPayAmount    func(childComplexity int) int
+		FreeMinutesGranted func(childComplexity int) int
+		GrossAmount        func(childComplexity int) int
+		NetMargin          func(childComplexity int) int
+		NotificationStatus func(childComplexity int) int
+		PolicySnapshot     func(childComplexity int) int
+		RawDwellMinutes    func(childComplexity int) int
+		Receipt            func(childComplexity int) int
+		RoundedMinutes     func(childComplexity int) int
+		Status             func(childComplexity int) int
+		SuppressedByGate   func(childComplexity int) int
+	}
+
+	DetentionScoreFactor struct {
+		Detail   func(childComplexity int) int
+		Earned   func(childComplexity int) int
+		Key      func(childComplexity int) int
+		Label    func(childComplexity int) int
+		Possible func(childComplexity int) int
+		Remedy   func(childComplexity int) int
+	}
+
+	DetentionWaiverLeakageStat struct {
+		ApproverCount func(childComplexity int) int
+		Reason        func(childComplexity int) int
+		WaivedAmount  func(childComplexity int) int
+		WaiverCount   func(childComplexity int) int
 	}
 
 	DispatchAssignResult struct {
@@ -2056,6 +2350,22 @@ type ComplexityRoot struct {
 		Type              func(childComplexity int) int
 	}
 
+	FacilityDetentionStat struct {
+		AvgDwellMinutes    func(childComplexity int) int
+		BilledAmount       func(childComplexity int) int
+		BreachCount        func(childComplexity int) int
+		DisputeCount       func(childComplexity int) int
+		DriverPayAmount    func(childComplexity int) int
+		LocationID         func(childComplexity int) int
+		LocationName       func(childComplexity int) int
+		MedianDwellMinutes func(childComplexity int) int
+		NetMargin          func(childComplexity int) int
+		P90DwellMinutes    func(childComplexity int) int
+		StopCount          func(childComplexity int) int
+		SuppressedCount    func(childComplexity int) int
+		WaivedAmount       func(childComplexity int) int
+	}
+
 	FiscalPeriod struct {
 		AdjustmentDeadline    func(childComplexity int) int
 		AllowAdjustingEntries func(childComplexity int) int
@@ -2828,6 +3138,7 @@ type ComplexityRoot struct {
 		AddOrderCharge                        func(childComplexity int, orderID string, description string, amount string) int
 		AdjustEscrowAccount                   func(childComplexity int, input gqlmodel.AdjustEscrowAccountInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
+		ApproveDetentionOccurrence            func(childComplexity int, occurrenceID string) int
 		ApproveDriverSettlement               func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		ApproveWorkerPto                      func(childComplexity int, id string) int
 		AssignBillingQueueBiller              func(childComplexity int, id string, input gqlmodel.BillingQueueAssignInput) int
@@ -2852,6 +3163,7 @@ type ComplexityRoot struct {
 		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
 		CloseEscrowAccount                    func(childComplexity int, accountID string) int
 		CloseOrder                            func(childComplexity int, id string) int
+		CreateDetentionPolicy                 func(childComplexity int, input gqlmodel.DetentionPolicyInput) int
 		CreateEquipmentManufacturer           func(childComplexity int, input gqlmodel.EquipmentManufacturerInput) int
 		CreateEquipmentType                   func(childComplexity int, input gqlmodel.EquipmentTypeInput) int
 		CreateFuelIndex                       func(childComplexity int, input gqlmodel.FuelIndexInput) int
@@ -2876,6 +3188,7 @@ type ComplexityRoot struct {
 		CreateTractor                         func(childComplexity int, input gqlmodel.TractorInput) int
 		CreateTrailer                         func(childComplexity int, input gqlmodel.TrailerInput) int
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
+		DeleteDetentionPolicy                 func(childComplexity int, id string) int
 		DeleteFuelIndex                       func(childComplexity int, id string) int
 		DeleteFuelIndexPrice                  func(childComplexity int, id string) int
 		DeleteFuelSurchargeProgram            func(childComplexity int, id string) int
@@ -2889,11 +3202,13 @@ type ComplexityRoot struct {
 		DeleteTelematicsFormMapping           func(childComplexity int, id string) int
 		DetachOrderShipment                   func(childComplexity int, orderID string, shipmentID string) int
 		DetachPayEventFromSettlement          func(childComplexity int, input gqlmodel.DetachPayEventInput) int
+		DetentionBacktest                     func(childComplexity int, input gqlmodel.DetentionBacktestInput) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
 		DispatchAssignMoves                   func(childComplexity int, input []*gqlmodel.DispatchAssignMoveInput) int
 		DispatchPlanAutoAssign                func(childComplexity int, input gqlmodel.DispatchPlanInput) int
 		DispatchUnassignMoves                 func(childComplexity int, moveIds []string) int
+		DisputeDetentionOccurrence            func(childComplexity int, input gqlmodel.DetentionDisputeInput) int
 		DuplicateShipment                     func(childComplexity int, input gqlmodel.ShipmentDuplicateInput) int
 		EndWorkerPayAssignment                func(childComplexity int, input gqlmodel.EndWorkerPayAssignmentInput) int
 		ForkCannedReport                      func(childComplexity int, input gqlmodel.ForkCannedReportInput) int
@@ -2942,6 +3257,7 @@ type ComplexityRoot struct {
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
 		SaveTelematicsFormMapping             func(childComplexity int, input gqlmodel.SaveTelematicsFormMappingInput) int
+		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
 		StartSettlementDisputeReview          func(childComplexity int, id string) int
@@ -2955,6 +3271,7 @@ type ComplexityRoot struct {
 		UpdateCostCategory                    func(childComplexity int, input gqlmodel.CostCategoryUpdateInput) int
 		UpdateCostingControl                  func(childComplexity int, input gqlmodel.CostingControlInput) int
 		UpdateDashControl                     func(childComplexity int, input gqlmodel.UpdateDashControlInput) int
+		UpdateDetentionPolicy                 func(childComplexity int, id string, input gqlmodel.DetentionPolicyInput) int
 		UpdateEquipmentManufacturer           func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerInput) int
 		UpdateEquipmentType                   func(childComplexity int, id string, input gqlmodel.EquipmentTypeInput) int
 		UpdateEscrowAccount                   func(childComplexity int, input gqlmodel.UpdateEscrowAccountInput) int
@@ -2983,6 +3300,7 @@ type ComplexityRoot struct {
 		UpdateTractor                         func(childComplexity int, id string, input gqlmodel.TractorInput) int
 		UpdateTrailer                         func(childComplexity int, id string, input gqlmodel.TrailerInput) int
 		VoidDriverSettlement                  func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
+		WaiveDetentionOccurrence              func(childComplexity int, input gqlmodel.DetentionWaiveInput) int
 		WithdrawSettlementDispute             func(childComplexity int, id string) int
 		WriteOffPayAdvance                    func(childComplexity int, input gqlmodel.WriteOffPayAdvanceInput) int
 	}
@@ -3437,6 +3755,15 @@ type ComplexityRoot struct {
 		Customers                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		DashControl                  func(childComplexity int) int
 		DefaultTableConfiguration    func(childComplexity int, resource string) int
+		DetentionCustomerStats       func(childComplexity int, input gqlmodel.DetentionStatsInput) int
+		DetentionDesk                func(childComplexity int) int
+		DetentionDisputePacket       func(childComplexity int, occurrenceID string) int
+		DetentionFacilityStats       func(childComplexity int, input gqlmodel.DetentionStatsInput) int
+		DetentionOccurrence          func(childComplexity int, id string) int
+		DetentionPolicies            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DetentionPolicy              func(childComplexity int, id string) int
+		DetentionPolicyPreview       func(childComplexity int, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) int
+		DetentionWaiverStats         func(childComplexity int, input gqlmodel.DetentionStatsInput) int
 		DispatchAssignmentPreview    func(childComplexity int, input gqlmodel.DispatchAssignmentPreviewInput) int
 		DispatchBoard                func(childComplexity int, input gqlmodel.DispatchBoardInput) int
 		DispatchDriverMoves          func(childComplexity int, input gqlmodel.DispatchDriverMovesInput) int
@@ -3597,6 +3924,7 @@ type ComplexityRoot struct {
 		ShipmentBillingReadiness     func(childComplexity int, shipmentID string) int
 		ShipmentCommentCount         func(childComplexity int, shipmentID string) int
 		ShipmentComments             func(childComplexity int, shipmentID string, first *int, after *string) int
+		ShipmentDetention            func(childComplexity int, shipmentID string) int
 		ShipmentDriverFeasibility    func(childComplexity int, shipmentID string) int
 		ShipmentEvents               func(childComplexity int, input gqlmodel.ShipmentEventsInput) int
 		ShipmentFormSubmissions      func(childComplexity int, shipmentID string) int
@@ -5900,6 +6228,14 @@ type MutationResolver interface {
 	PostAndApplyCustomerPayment(ctx context.Context, input gqlmodel.PostCustomerPaymentInput) (*customerpayment.Payment, error)
 	ApplyUnappliedCustomerPayment(ctx context.Context, input gqlmodel.ApplyCustomerPaymentInput) (*customerpayment.Payment, error)
 	ReverseCustomerPayment(ctx context.Context, input gqlmodel.ReverseCustomerPaymentInput) (*customerpayment.Payment, error)
+	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
+	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
+	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
+	DetentionBacktest(ctx context.Context, input gqlmodel.DetentionBacktestInput) (*gqlmodel.DetentionBacktestResult, error)
+	WaiveDetentionOccurrence(ctx context.Context, input gqlmodel.DetentionWaiveInput) (*gqlmodel.DetentionOccurrence, error)
+	ApproveDetentionOccurrence(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionOccurrence, error)
+	DisputeDetentionOccurrence(ctx context.Context, input gqlmodel.DetentionDisputeInput) (*gqlmodel.DetentionOccurrence, error)
+	SendDetentionNotice(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionOccurrence, error)
 	DispatchAssignMoves(ctx context.Context, input []*gqlmodel.DispatchAssignMoveInput) (*gqlmodel.DispatchBulkAssignResult, error)
 	DispatchUnassignMoves(ctx context.Context, moveIds []string) (*gqlmodel.DispatchBulkAssignResult, error)
 	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
@@ -6121,6 +6457,16 @@ type QueryResolver interface {
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
+	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
+	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
+	DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error)
+	DetentionOccurrence(ctx context.Context, id string) (*gqlmodel.DetentionOccurrenceDetail, error)
+	ShipmentDetention(ctx context.Context, shipmentID string) ([]*gqlmodel.DetentionOccurrence, error)
+	DetentionDisputePacket(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionDisputePacket, error)
+	DetentionFacilityStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.FacilityDetentionStat, error)
+	DetentionCustomerStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.CustomerDetentionStat, error)
+	DetentionWaiverStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.DetentionWaiverLeakageStat, error)
+	DetentionPolicyPreview(ctx context.Context, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) (*gqlmodel.DetentionPreviewResult, error)
 	DispatchBoard(ctx context.Context, input gqlmodel.DispatchBoardInput) (*gqlmodel.DispatchBoard, error)
 	DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error)
 	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)
@@ -9743,6 +10089,67 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CustomerConnection.TotalCount(childComplexity), true
 
+	case "CustomerDetentionStat.billedAmount":
+		if e.ComplexityRoot.CustomerDetentionStat.BilledAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.BilledAmount(childComplexity), true
+	case "CustomerDetentionStat.breachCount":
+		if e.ComplexityRoot.CustomerDetentionStat.BreachCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.BreachCount(childComplexity), true
+	case "CustomerDetentionStat.customerId":
+		if e.ComplexityRoot.CustomerDetentionStat.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.CustomerID(childComplexity), true
+	case "CustomerDetentionStat.customerName":
+		if e.ComplexityRoot.CustomerDetentionStat.CustomerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.CustomerName(childComplexity), true
+	case "CustomerDetentionStat.disputeCount":
+		if e.ComplexityRoot.CustomerDetentionStat.DisputeCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.DisputeCount(childComplexity), true
+	case "CustomerDetentionStat.driverPayAmount":
+		if e.ComplexityRoot.CustomerDetentionStat.DriverPayAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.DriverPayAmount(childComplexity), true
+	case "CustomerDetentionStat.netMargin":
+		if e.ComplexityRoot.CustomerDetentionStat.NetMargin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.NetMargin(childComplexity), true
+	case "CustomerDetentionStat.stopCount":
+		if e.ComplexityRoot.CustomerDetentionStat.StopCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.StopCount(childComplexity), true
+	case "CustomerDetentionStat.suppressedCount":
+		if e.ComplexityRoot.CustomerDetentionStat.SuppressedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.SuppressedCount(childComplexity), true
+	case "CustomerDetentionStat.waivedAmount":
+		if e.ComplexityRoot.CustomerDetentionStat.WaivedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerDetentionStat.WaivedAmount(childComplexity), true
+
 	case "CustomerEdge.cursor":
 		if e.ComplexityRoot.CustomerEdge.Cursor == nil {
 			break
@@ -10241,6 +10648,1414 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DashControl.Version(childComplexity), true
+
+	case "DetentionBacktestBucket.baselineAmount":
+		if e.ComplexityRoot.DetentionBacktestBucket.BaselineAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.BaselineAmount(childComplexity), true
+	case "DetentionBacktestBucket.billableCount":
+		if e.ComplexityRoot.DetentionBacktestBucket.BillableCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.BillableCount(childComplexity), true
+	case "DetentionBacktestBucket.delta":
+		if e.ComplexityRoot.DetentionBacktestBucket.Delta == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.Delta(childComplexity), true
+	case "DetentionBacktestBucket.driverPayAmount":
+		if e.ComplexityRoot.DetentionBacktestBucket.DriverPayAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.DriverPayAmount(childComplexity), true
+	case "DetentionBacktestBucket.key":
+		if e.ComplexityRoot.DetentionBacktestBucket.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.Key(childComplexity), true
+	case "DetentionBacktestBucket.label":
+		if e.ComplexityRoot.DetentionBacktestBucket.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.Label(childComplexity), true
+	case "DetentionBacktestBucket.netMargin":
+		if e.ComplexityRoot.DetentionBacktestBucket.NetMargin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.NetMargin(childComplexity), true
+	case "DetentionBacktestBucket.proposedAmount":
+		if e.ComplexityRoot.DetentionBacktestBucket.ProposedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.ProposedAmount(childComplexity), true
+	case "DetentionBacktestBucket.stopCount":
+		if e.ComplexityRoot.DetentionBacktestBucket.StopCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestBucket.StopCount(childComplexity), true
+
+	case "DetentionBacktestResult.baselineRevenue":
+		if e.ComplexityRoot.DetentionBacktestResult.BaselineRevenue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.BaselineRevenue(childComplexity), true
+	case "DetentionBacktestResult.byCustomer":
+		if e.ComplexityRoot.DetentionBacktestResult.ByCustomer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.ByCustomer(childComplexity), true
+	case "DetentionBacktestResult.byFacility":
+		if e.ComplexityRoot.DetentionBacktestResult.ByFacility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.ByFacility(childComplexity), true
+	case "DetentionBacktestResult.from":
+		if e.ComplexityRoot.DetentionBacktestResult.From == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.From(childComplexity), true
+	case "DetentionBacktestResult.negativeMarginStops":
+		if e.ComplexityRoot.DetentionBacktestResult.NegativeMarginStops == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.NegativeMarginStops(childComplexity), true
+	case "DetentionBacktestResult.proposedDriverPay":
+		if e.ComplexityRoot.DetentionBacktestResult.ProposedDriverPay == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.ProposedDriverPay(childComplexity), true
+	case "DetentionBacktestResult.proposedNetMargin":
+		if e.ComplexityRoot.DetentionBacktestResult.ProposedNetMargin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.ProposedNetMargin(childComplexity), true
+	case "DetentionBacktestResult.proposedRevenue":
+		if e.ComplexityRoot.DetentionBacktestResult.ProposedRevenue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.ProposedRevenue(childComplexity), true
+	case "DetentionBacktestResult.revenueDelta":
+		if e.ComplexityRoot.DetentionBacktestResult.RevenueDelta == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.RevenueDelta(childComplexity), true
+	case "DetentionBacktestResult.stopsBillable":
+		if e.ComplexityRoot.DetentionBacktestResult.StopsBillable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.StopsBillable(childComplexity), true
+	case "DetentionBacktestResult.stopsEvaluated":
+		if e.ComplexityRoot.DetentionBacktestResult.StopsEvaluated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.StopsEvaluated(childComplexity), true
+	case "DetentionBacktestResult.stopsForfeited":
+		if e.ComplexityRoot.DetentionBacktestResult.StopsForfeited == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.StopsForfeited(childComplexity), true
+	case "DetentionBacktestResult.stopsMatched":
+		if e.ComplexityRoot.DetentionBacktestResult.StopsMatched == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.StopsMatched(childComplexity), true
+	case "DetentionBacktestResult.stopsSuppressed":
+		if e.ComplexityRoot.DetentionBacktestResult.StopsSuppressed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.StopsSuppressed(childComplexity), true
+	case "DetentionBacktestResult.to":
+		if e.ComplexityRoot.DetentionBacktestResult.To == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.To(childComplexity), true
+	case "DetentionBacktestResult.truncated":
+		if e.ComplexityRoot.DetentionBacktestResult.Truncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionBacktestResult.Truncated(childComplexity), true
+
+	case "DetentionCollectability.band":
+		if e.ComplexityRoot.DetentionCollectability.Band == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionCollectability.Band(childComplexity), true
+	case "DetentionCollectability.chainValid":
+		if e.ComplexityRoot.DetentionCollectability.ChainValid == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionCollectability.ChainValid(childComplexity), true
+	case "DetentionCollectability.factors":
+		if e.ComplexityRoot.DetentionCollectability.Factors == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionCollectability.Factors(childComplexity), true
+	case "DetentionCollectability.score":
+		if e.ComplexityRoot.DetentionCollectability.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionCollectability.Score(childComplexity), true
+	case "DetentionCollectability.summary":
+		if e.ComplexityRoot.DetentionCollectability.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionCollectability.Summary(childComplexity), true
+
+	case "DetentionDeskEntry.amountAtRisk":
+		if e.ComplexityRoot.DetentionDeskEntry.AmountAtRisk == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDeskEntry.AmountAtRisk(childComplexity), true
+	case "DetentionDeskEntry.minutesUntilFreeEnds":
+		if e.ComplexityRoot.DetentionDeskEntry.MinutesUntilFreeEnds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDeskEntry.MinutesUntilFreeEnds(childComplexity), true
+	case "DetentionDeskEntry.minutesUntilNoticeDue":
+		if e.ComplexityRoot.DetentionDeskEntry.MinutesUntilNoticeDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDeskEntry.MinutesUntilNoticeDue(childComplexity), true
+	case "DetentionDeskEntry.noticeWindowOpen":
+		if e.ComplexityRoot.DetentionDeskEntry.NoticeWindowOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDeskEntry.NoticeWindowOpen(childComplexity), true
+	case "DetentionDeskEntry.occurrence":
+		if e.ComplexityRoot.DetentionDeskEntry.Occurrence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDeskEntry.Occurrence(childComplexity), true
+	case "DetentionDeskEntry.urgency":
+		if e.ComplexityRoot.DetentionDeskEntry.Urgency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDeskEntry.Urgency(childComplexity), true
+
+	case "DetentionDisputePacket.collectability":
+		if e.ComplexityRoot.DetentionDisputePacket.Collectability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.Collectability(childComplexity), true
+	case "DetentionDisputePacket.evidence":
+		if e.ComplexityRoot.DetentionDisputePacket.Evidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.Evidence(childComplexity), true
+	case "DetentionDisputePacket.generatedAt":
+		if e.ComplexityRoot.DetentionDisputePacket.GeneratedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.GeneratedAt(childComplexity), true
+	case "DetentionDisputePacket.notices":
+		if e.ComplexityRoot.DetentionDisputePacket.Notices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.Notices(childComplexity), true
+	case "DetentionDisputePacket.occurrence":
+		if e.ComplexityRoot.DetentionDisputePacket.Occurrence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.Occurrence(childComplexity), true
+	case "DetentionDisputePacket.policySnapshot":
+		if e.ComplexityRoot.DetentionDisputePacket.PolicySnapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.PolicySnapshot(childComplexity), true
+	case "DetentionDisputePacket.receipt":
+		if e.ComplexityRoot.DetentionDisputePacket.Receipt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.Receipt(childComplexity), true
+
+	case "DetentionEvidence.createdAt":
+		if e.ComplexityRoot.DetentionEvidence.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.CreatedAt(childComplexity), true
+	case "DetentionEvidence.detentionOccurrenceId":
+		if e.ComplexityRoot.DetentionEvidence.DetentionOccurrenceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.DetentionOccurrenceID(childComplexity), true
+	case "DetentionEvidence.documentId":
+		if e.ComplexityRoot.DetentionEvidence.DocumentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.DocumentID(childComplexity), true
+	case "DetentionEvidence.hash":
+		if e.ComplexityRoot.DetentionEvidence.Hash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.Hash(childComplexity), true
+	case "DetentionEvidence.id":
+		if e.ComplexityRoot.DetentionEvidence.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.ID(childComplexity), true
+	case "DetentionEvidence.kind":
+		if e.ComplexityRoot.DetentionEvidence.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.Kind(childComplexity), true
+	case "DetentionEvidence.observedAt":
+		if e.ComplexityRoot.DetentionEvidence.ObservedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.ObservedAt(childComplexity), true
+	case "DetentionEvidence.payload":
+		if e.ComplexityRoot.DetentionEvidence.Payload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.Payload(childComplexity), true
+	case "DetentionEvidence.prevHash":
+		if e.ComplexityRoot.DetentionEvidence.PrevHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.PrevHash(childComplexity), true
+	case "DetentionEvidence.recordedAt":
+		if e.ComplexityRoot.DetentionEvidence.RecordedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.RecordedAt(childComplexity), true
+	case "DetentionEvidence.recordedById":
+		if e.ComplexityRoot.DetentionEvidence.RecordedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.RecordedByID(childComplexity), true
+	case "DetentionEvidence.sequence":
+		if e.ComplexityRoot.DetentionEvidence.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.Sequence(childComplexity), true
+	case "DetentionEvidence.source":
+		if e.ComplexityRoot.DetentionEvidence.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.Source(childComplexity), true
+	case "DetentionEvidence.summary":
+		if e.ComplexityRoot.DetentionEvidence.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionEvidence.Summary(childComplexity), true
+
+	case "DetentionNotice.body":
+		if e.ComplexityRoot.DetentionNotice.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.Body(childComplexity), true
+	case "DetentionNotice.channel":
+		if e.ComplexityRoot.DetentionNotice.Channel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.Channel(childComplexity), true
+	case "DetentionNotice.createdAt":
+		if e.ComplexityRoot.DetentionNotice.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.CreatedAt(childComplexity), true
+	case "DetentionNotice.deliveredAt":
+		if e.ComplexityRoot.DetentionNotice.DeliveredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.DeliveredAt(childComplexity), true
+	case "DetentionNotice.deliveryStatus":
+		if e.ComplexityRoot.DetentionNotice.DeliveryStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.DeliveryStatus(childComplexity), true
+	case "DetentionNotice.detentionOccurrenceId":
+		if e.ComplexityRoot.DetentionNotice.DetentionOccurrenceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.DetentionOccurrenceID(childComplexity), true
+	case "DetentionNotice.failedAt":
+		if e.ComplexityRoot.DetentionNotice.FailedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.FailedAt(childComplexity), true
+	case "DetentionNotice.failureReason":
+		if e.ComplexityRoot.DetentionNotice.FailureReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.FailureReason(childComplexity), true
+	case "DetentionNotice.id":
+		if e.ComplexityRoot.DetentionNotice.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.ID(childComplexity), true
+	case "DetentionNotice.kind":
+		if e.ComplexityRoot.DetentionNotice.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.Kind(childComplexity), true
+	case "DetentionNotice.openedAt":
+		if e.ComplexityRoot.DetentionNotice.OpenedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.OpenedAt(childComplexity), true
+	case "DetentionNotice.quotedAmount":
+		if e.ComplexityRoot.DetentionNotice.QuotedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.QuotedAmount(childComplexity), true
+	case "DetentionNotice.quotedFreeMinutes":
+		if e.ComplexityRoot.DetentionNotice.QuotedFreeMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.QuotedFreeMinutes(childComplexity), true
+	case "DetentionNotice.quotedRate":
+		if e.ComplexityRoot.DetentionNotice.QuotedRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.QuotedRate(childComplexity), true
+	case "DetentionNotice.recipients":
+		if e.ComplexityRoot.DetentionNotice.Recipients == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.Recipients(childComplexity), true
+	case "DetentionNotice.satisfiesRequirement":
+		if e.ComplexityRoot.DetentionNotice.SatisfiesRequirement == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.SatisfiesRequirement(childComplexity), true
+	case "DetentionNotice.scheduledFor":
+		if e.ComplexityRoot.DetentionNotice.ScheduledFor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.ScheduledFor(childComplexity), true
+	case "DetentionNotice.sentAt":
+		if e.ComplexityRoot.DetentionNotice.SentAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.SentAt(childComplexity), true
+	case "DetentionNotice.sentById":
+		if e.ComplexityRoot.DetentionNotice.SentByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.SentByID(childComplexity), true
+	case "DetentionNotice.subject":
+		if e.ComplexityRoot.DetentionNotice.Subject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.Subject(childComplexity), true
+	case "DetentionNotice.threadKey":
+		if e.ComplexityRoot.DetentionNotice.ThreadKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.ThreadKey(childComplexity), true
+	case "DetentionNotice.wasAutomatic":
+		if e.ComplexityRoot.DetentionNotice.WasAutomatic == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionNotice.WasAutomatic(childComplexity), true
+
+	case "DetentionOccurrence.additionalChargeId":
+		if e.ComplexityRoot.DetentionOccurrence.AdditionalChargeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.AdditionalChargeID(childComplexity), true
+	case "DetentionOccurrence.appointmentEnd":
+		if e.ComplexityRoot.DetentionOccurrence.AppointmentEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.AppointmentEnd(childComplexity), true
+	case "DetentionOccurrence.appointmentStart":
+		if e.ComplexityRoot.DetentionOccurrence.AppointmentStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.AppointmentStart(childComplexity), true
+	case "DetentionOccurrence.arrivedAt":
+		if e.ComplexityRoot.DetentionOccurrence.ArrivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ArrivedAt(childComplexity), true
+	case "DetentionOccurrence.arrivedLate":
+		if e.ComplexityRoot.DetentionOccurrence.ArrivedLate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ArrivedLate(childComplexity), true
+	case "DetentionOccurrence.billableAmount":
+		if e.ComplexityRoot.DetentionOccurrence.BillableAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.BillableAmount(childComplexity), true
+	case "DetentionOccurrence.billableMinutes":
+		if e.ComplexityRoot.DetentionOccurrence.BillableMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.BillableMinutes(childComplexity), true
+	case "DetentionOccurrence.billableUnits":
+		if e.ComplexityRoot.DetentionOccurrence.BillableUnits == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.BillableUnits(childComplexity), true
+	case "DetentionOccurrence.businessUnitId":
+		if e.ComplexityRoot.DetentionOccurrence.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.BusinessUnitID(childComplexity), true
+	case "DetentionOccurrence.calculationTrace":
+		if e.ComplexityRoot.DetentionOccurrence.CalculationTrace == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.CalculationTrace(childComplexity), true
+	case "DetentionOccurrence.capApplied":
+		if e.ComplexityRoot.DetentionOccurrence.CapApplied == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.CapApplied(childComplexity), true
+	case "DetentionOccurrence.clockStartAt":
+		if e.ComplexityRoot.DetentionOccurrence.ClockStartAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ClockStartAt(childComplexity), true
+	case "DetentionOccurrence.clockStopAt":
+		if e.ComplexityRoot.DetentionOccurrence.ClockStopAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ClockStopAt(childComplexity), true
+	case "DetentionOccurrence.collectabilityScore":
+		if e.ComplexityRoot.DetentionOccurrence.CollectabilityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.CollectabilityScore(childComplexity), true
+	case "DetentionOccurrence.convertedToLayover":
+		if e.ComplexityRoot.DetentionOccurrence.ConvertedToLayover == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ConvertedToLayover(childComplexity), true
+	case "DetentionOccurrence.createdAt":
+		if e.ComplexityRoot.DetentionOccurrence.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.CreatedAt(childComplexity), true
+	case "DetentionOccurrence.currency":
+		if e.ComplexityRoot.DetentionOccurrence.Currency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.Currency(childComplexity), true
+	case "DetentionOccurrence.customerId":
+		if e.ComplexityRoot.DetentionOccurrence.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.CustomerID(childComplexity), true
+	case "DetentionOccurrence.customerName":
+		if e.ComplexityRoot.DetentionOccurrence.CustomerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.CustomerName(childComplexity), true
+	case "DetentionOccurrence.departedAt":
+		if e.ComplexityRoot.DetentionOccurrence.DepartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.DepartedAt(childComplexity), true
+	case "DetentionOccurrence.detentionPolicyId":
+		if e.ComplexityRoot.DetentionOccurrence.DetentionPolicyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.DetentionPolicyID(childComplexity), true
+	case "DetentionOccurrence.disputeNote":
+		if e.ComplexityRoot.DetentionOccurrence.DisputeNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.DisputeNote(childComplexity), true
+	case "DetentionOccurrence.disputedAt":
+		if e.ComplexityRoot.DetentionOccurrence.DisputedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.DisputedAt(childComplexity), true
+	case "DetentionOccurrence.driverPayAmount":
+		if e.ComplexityRoot.DetentionOccurrence.DriverPayAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.DriverPayAmount(childComplexity), true
+	case "DetentionOccurrence.driverPayMinutes":
+		if e.ComplexityRoot.DetentionOccurrence.DriverPayMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.DriverPayMinutes(childComplexity), true
+	case "DetentionOccurrence.evidenceHead":
+		if e.ComplexityRoot.DetentionOccurrence.EvidenceHead == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.EvidenceHead(childComplexity), true
+	case "DetentionOccurrence.freeMinutesGranted":
+		if e.ComplexityRoot.DetentionOccurrence.FreeMinutesGranted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.FreeMinutesGranted(childComplexity), true
+	case "DetentionOccurrence.freeTimeExpiresAt":
+		if e.ComplexityRoot.DetentionOccurrence.FreeTimeExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.FreeTimeExpiresAt(childComplexity), true
+	case "DetentionOccurrence.grossAmount":
+		if e.ComplexityRoot.DetentionOccurrence.GrossAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.GrossAmount(childComplexity), true
+	case "DetentionOccurrence.id":
+		if e.ComplexityRoot.DetentionOccurrence.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ID(childComplexity), true
+	case "DetentionOccurrence.isOpen":
+		if e.ComplexityRoot.DetentionOccurrence.IsOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.IsOpen(childComplexity), true
+	case "DetentionOccurrence.lateByMinutes":
+		if e.ComplexityRoot.DetentionOccurrence.LateByMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.LateByMinutes(childComplexity), true
+	case "DetentionOccurrence.locationId":
+		if e.ComplexityRoot.DetentionOccurrence.LocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.LocationID(childComplexity), true
+	case "DetentionOccurrence.locationName":
+		if e.ComplexityRoot.DetentionOccurrence.LocationName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.LocationName(childComplexity), true
+	case "DetentionOccurrence.netMargin":
+		if e.ComplexityRoot.DetentionOccurrence.NetMargin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.NetMargin(childComplexity), true
+	case "DetentionOccurrence.noticeDeadlineAt":
+		if e.ComplexityRoot.DetentionOccurrence.NoticeDeadlineAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.NoticeDeadlineAt(childComplexity), true
+	case "DetentionOccurrence.noticeDueAt":
+		if e.ComplexityRoot.DetentionOccurrence.NoticeDueAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.NoticeDueAt(childComplexity), true
+	case "DetentionOccurrence.noticeSentAt":
+		if e.ComplexityRoot.DetentionOccurrence.NoticeSentAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.NoticeSentAt(childComplexity), true
+	case "DetentionOccurrence.notificationStatus":
+		if e.ComplexityRoot.DetentionOccurrence.NotificationStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.NotificationStatus(childComplexity), true
+	case "DetentionOccurrence.organizationId":
+		if e.ComplexityRoot.DetentionOccurrence.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.OrganizationID(childComplexity), true
+	case "DetentionOccurrence.policySnapshot":
+		if e.ComplexityRoot.DetentionOccurrence.PolicySnapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.PolicySnapshot(childComplexity), true
+	case "DetentionOccurrence.rawDwellMinutes":
+		if e.ComplexityRoot.DetentionOccurrence.RawDwellMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.RawDwellMinutes(childComplexity), true
+	case "DetentionOccurrence.requiresApproval":
+		if e.ComplexityRoot.DetentionOccurrence.RequiresApproval == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.RequiresApproval(childComplexity), true
+	case "DetentionOccurrence.roundedMinutes":
+		if e.ComplexityRoot.DetentionOccurrence.RoundedMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.RoundedMinutes(childComplexity), true
+	case "DetentionOccurrence.scheduleType":
+		if e.ComplexityRoot.DetentionOccurrence.ScheduleType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ScheduleType(childComplexity), true
+	case "DetentionOccurrence.shipmentId":
+		if e.ComplexityRoot.DetentionOccurrence.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ShipmentID(childComplexity), true
+	case "DetentionOccurrence.shipmentMoveId":
+		if e.ComplexityRoot.DetentionOccurrence.ShipmentMoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ShipmentMoveID(childComplexity), true
+	case "DetentionOccurrence.shipmentProNumber":
+		if e.ComplexityRoot.DetentionOccurrence.ShipmentProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.ShipmentProNumber(childComplexity), true
+	case "DetentionOccurrence.status":
+		if e.ComplexityRoot.DetentionOccurrence.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.Status(childComplexity), true
+	case "DetentionOccurrence.stopId":
+		if e.ComplexityRoot.DetentionOccurrence.StopID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.StopID(childComplexity), true
+	case "DetentionOccurrence.stopType":
+		if e.ComplexityRoot.DetentionOccurrence.StopType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.StopType(childComplexity), true
+	case "DetentionOccurrence.suppressedByGate":
+		if e.ComplexityRoot.DetentionOccurrence.SuppressedByGate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.SuppressedByGate(childComplexity), true
+	case "DetentionOccurrence.updatedAt":
+		if e.ComplexityRoot.DetentionOccurrence.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.UpdatedAt(childComplexity), true
+	case "DetentionOccurrence.version":
+		if e.ComplexityRoot.DetentionOccurrence.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.Version(childComplexity), true
+	case "DetentionOccurrence.waivedAmount":
+		if e.ComplexityRoot.DetentionOccurrence.WaivedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.WaivedAmount(childComplexity), true
+	case "DetentionOccurrence.waivedAt":
+		if e.ComplexityRoot.DetentionOccurrence.WaivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.WaivedAt(childComplexity), true
+	case "DetentionOccurrence.waiverNote":
+		if e.ComplexityRoot.DetentionOccurrence.WaiverNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.WaiverNote(childComplexity), true
+	case "DetentionOccurrence.waiverReason":
+		if e.ComplexityRoot.DetentionOccurrence.WaiverReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrence.WaiverReason(childComplexity), true
+
+	case "DetentionOccurrenceDetail.collectability":
+		if e.ComplexityRoot.DetentionOccurrenceDetail.Collectability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrenceDetail.Collectability(childComplexity), true
+	case "DetentionOccurrenceDetail.evidence":
+		if e.ComplexityRoot.DetentionOccurrenceDetail.Evidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrenceDetail.Evidence(childComplexity), true
+	case "DetentionOccurrenceDetail.notices":
+		if e.ComplexityRoot.DetentionOccurrenceDetail.Notices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrenceDetail.Notices(childComplexity), true
+	case "DetentionOccurrenceDetail.occurrence":
+		if e.ComplexityRoot.DetentionOccurrenceDetail.Occurrence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrenceDetail.Occurrence(childComplexity), true
+	case "DetentionOccurrenceDetail.receipt":
+		if e.ComplexityRoot.DetentionOccurrenceDetail.Receipt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionOccurrenceDetail.Receipt(childComplexity), true
+
+	case "DetentionPolicy.accessorialChargeId":
+		if e.ComplexityRoot.DetentionPolicy.AccessorialChargeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.AccessorialChargeID(childComplexity), true
+	case "DetentionPolicy.appointmentStopsOnly":
+		if e.ComplexityRoot.DetentionPolicy.AppointmentStopsOnly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.AppointmentStopsOnly(childComplexity), true
+	case "DetentionPolicy.autoApproveUnderAmount":
+		if e.ComplexityRoot.DetentionPolicy.AutoApproveUnderAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.AutoApproveUnderAmount(childComplexity), true
+	case "DetentionPolicy.autoSendNotice":
+		if e.ComplexityRoot.DetentionPolicy.AutoSendNotice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.AutoSendNotice(childComplexity), true
+	case "DetentionPolicy.billingFreeMinutes":
+		if e.ComplexityRoot.DetentionPolicy.BillingFreeMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.BillingFreeMinutes(childComplexity), true
+	case "DetentionPolicy.billingIncrementMinutes":
+		if e.ComplexityRoot.DetentionPolicy.BillingIncrementMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.BillingIncrementMinutes(childComplexity), true
+	case "DetentionPolicy.businessUnitId":
+		if e.ComplexityRoot.DetentionPolicy.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.BusinessUnitID(childComplexity), true
+	case "DetentionPolicy.clockStartBasis":
+		if e.ComplexityRoot.DetentionPolicy.ClockStartBasis == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.ClockStartBasis(childComplexity), true
+	case "DetentionPolicy.code":
+		if e.ComplexityRoot.DetentionPolicy.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Code(childComplexity), true
+	case "DetentionPolicy.comments":
+		if e.ComplexityRoot.DetentionPolicy.Comments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Comments(childComplexity), true
+	case "DetentionPolicy.commodityIds":
+		if e.ComplexityRoot.DetentionPolicy.CommodityIds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.CommodityIds(childComplexity), true
+	case "DetentionPolicy.convertToLayoverAtMinutes":
+		if e.ComplexityRoot.DetentionPolicy.ConvertToLayoverAtMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.ConvertToLayoverAtMinutes(childComplexity), true
+	case "DetentionPolicy.createdAt":
+		if e.ComplexityRoot.DetentionPolicy.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.CreatedAt(childComplexity), true
+	case "DetentionPolicy.currency":
+		if e.ComplexityRoot.DetentionPolicy.Currency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Currency(childComplexity), true
+	case "DetentionPolicy.customerId":
+		if e.ComplexityRoot.DetentionPolicy.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.CustomerID(childComplexity), true
+	case "DetentionPolicy.dayBoundaryMode":
+		if e.ComplexityRoot.DetentionPolicy.DayBoundaryMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.DayBoundaryMode(childComplexity), true
+	case "DetentionPolicy.deliveryFreeMinutes":
+		if e.ComplexityRoot.DetentionPolicy.DeliveryFreeMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.DeliveryFreeMinutes(childComplexity), true
+	case "DetentionPolicy.description":
+		if e.ComplexityRoot.DetentionPolicy.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Description(childComplexity), true
+	case "DetentionPolicy.effectiveEndDate":
+		if e.ComplexityRoot.DetentionPolicy.EffectiveEndDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.EffectiveEndDate(childComplexity), true
+	case "DetentionPolicy.effectiveStartDate":
+		if e.ComplexityRoot.DetentionPolicy.EffectiveStartDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.EffectiveStartDate(childComplexity), true
+	case "DetentionPolicy.id":
+		if e.ComplexityRoot.DetentionPolicy.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.ID(childComplexity), true
+	case "DetentionPolicy.isOrgDefault":
+		if e.ComplexityRoot.DetentionPolicy.IsOrgDefault == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.IsOrgDefault(childComplexity), true
+	case "DetentionPolicy.lateArrivalGraceMinutes":
+		if e.ComplexityRoot.DetentionPolicy.LateArrivalGraceMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.LateArrivalGraceMinutes(childComplexity), true
+	case "DetentionPolicy.lateArrivalRule":
+		if e.ComplexityRoot.DetentionPolicy.LateArrivalRule == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.LateArrivalRule(childComplexity), true
+	case "DetentionPolicy.layoverAccessorialChargeId":
+		if e.ComplexityRoot.DetentionPolicy.LayoverAccessorialChargeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.LayoverAccessorialChargeID(childComplexity), true
+	case "DetentionPolicy.locationId":
+		if e.ComplexityRoot.DetentionPolicy.LocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.LocationID(childComplexity), true
+	case "DetentionPolicy.maxBillableMinutesPerStop":
+		if e.ComplexityRoot.DetentionPolicy.MaxBillableMinutesPerStop == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.MaxBillableMinutesPerStop(childComplexity), true
+	case "DetentionPolicy.maxChargePerDay":
+		if e.ComplexityRoot.DetentionPolicy.MaxChargePerDay == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.MaxChargePerDay(childComplexity), true
+	case "DetentionPolicy.maxChargePerShipment":
+		if e.ComplexityRoot.DetentionPolicy.MaxChargePerShipment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.MaxChargePerShipment(childComplexity), true
+	case "DetentionPolicy.maxChargePerStop":
+		if e.ComplexityRoot.DetentionPolicy.MaxChargePerStop == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.MaxChargePerStop(childComplexity), true
+	case "DetentionPolicy.minimumBillableMinutes":
+		if e.ComplexityRoot.DetentionPolicy.MinimumBillableMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.MinimumBillableMinutes(childComplexity), true
+	case "DetentionPolicy.name":
+		if e.ComplexityRoot.DetentionPolicy.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Name(childComplexity), true
+	case "DetentionPolicy.notificationDeadlineMinutes":
+		if e.ComplexityRoot.DetentionPolicy.NotificationDeadlineMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.NotificationDeadlineMinutes(childComplexity), true
+	case "DetentionPolicy.notificationLeadMinutes":
+		if e.ComplexityRoot.DetentionPolicy.NotificationLeadMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.NotificationLeadMinutes(childComplexity), true
+	case "DetentionPolicy.notificationRequirement":
+		if e.ComplexityRoot.DetentionPolicy.NotificationRequirement == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.NotificationRequirement(childComplexity), true
+	case "DetentionPolicy.organizationId":
+		if e.ComplexityRoot.DetentionPolicy.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.OrganizationID(childComplexity), true
+	case "DetentionPolicy.payFreeMinutes":
+		if e.ComplexityRoot.DetentionPolicy.PayFreeMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.PayFreeMinutes(childComplexity), true
+	case "DetentionPolicy.pickupFreeMinutes":
+		if e.ComplexityRoot.DetentionPolicy.PickupFreeMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.PickupFreeMinutes(childComplexity), true
+	case "DetentionPolicy.priority":
+		if e.ComplexityRoot.DetentionPolicy.Priority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Priority(childComplexity), true
+	case "DetentionPolicy.rateSource":
+		if e.ComplexityRoot.DetentionPolicy.RateSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.RateSource(childComplexity), true
+	case "DetentionPolicy.requireApprovalOverAmount":
+		if e.ComplexityRoot.DetentionPolicy.RequireApprovalOverAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.RequireApprovalOverAmount(childComplexity), true
+	case "DetentionPolicy.roundingMode":
+		if e.ComplexityRoot.DetentionPolicy.RoundingMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.RoundingMode(childComplexity), true
+	case "DetentionPolicy.sendDepartureSummary":
+		if e.ComplexityRoot.DetentionPolicy.SendDepartureSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.SendDepartureSummary(childComplexity), true
+	case "DetentionPolicy.serviceTypeIds":
+		if e.ComplexityRoot.DetentionPolicy.ServiceTypeIds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.ServiceTypeIds(childComplexity), true
+	case "DetentionPolicy.shipmentTypeIds":
+		if e.ComplexityRoot.DetentionPolicy.ShipmentTypeIds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.ShipmentTypeIds(childComplexity), true
+	case "DetentionPolicy.specificityScore":
+		if e.ComplexityRoot.DetentionPolicy.SpecificityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.SpecificityScore(childComplexity), true
+	case "DetentionPolicy.status":
+		if e.ComplexityRoot.DetentionPolicy.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Status(childComplexity), true
+	case "DetentionPolicy.stopTypes":
+		if e.ComplexityRoot.DetentionPolicy.StopTypes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.StopTypes(childComplexity), true
+	case "DetentionPolicy.tiers":
+		if e.ComplexityRoot.DetentionPolicy.Tiers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Tiers(childComplexity), true
+	case "DetentionPolicy.unnotifiedBehavior":
+		if e.ComplexityRoot.DetentionPolicy.UnnotifiedBehavior == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.UnnotifiedBehavior(childComplexity), true
+	case "DetentionPolicy.updatedAt":
+		if e.ComplexityRoot.DetentionPolicy.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.UpdatedAt(childComplexity), true
+	case "DetentionPolicy.version":
+		if e.ComplexityRoot.DetentionPolicy.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.Version(childComplexity), true
+
+	case "DetentionPolicyConnection.edges":
+		if e.ComplexityRoot.DetentionPolicyConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyConnection.Edges(childComplexity), true
+	case "DetentionPolicyConnection.pageInfo":
+		if e.ComplexityRoot.DetentionPolicyConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyConnection.PageInfo(childComplexity), true
+	case "DetentionPolicyConnection.totalCount":
+		if e.ComplexityRoot.DetentionPolicyConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyConnection.TotalCount(childComplexity), true
+
+	case "DetentionPolicyEdge.cursor":
+		if e.ComplexityRoot.DetentionPolicyEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyEdge.Cursor(childComplexity), true
+	case "DetentionPolicyEdge.node":
+		if e.ComplexityRoot.DetentionPolicyEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyEdge.Node(childComplexity), true
+
+	case "DetentionPolicyTier.fromMinute":
+		if e.ComplexityRoot.DetentionPolicyTier.FromMinute == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.FromMinute(childComplexity), true
+	case "DetentionPolicyTier.id":
+		if e.ComplexityRoot.DetentionPolicyTier.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.ID(childComplexity), true
+	case "DetentionPolicyTier.label":
+		if e.ComplexityRoot.DetentionPolicyTier.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.Label(childComplexity), true
+	case "DetentionPolicyTier.rate":
+		if e.ComplexityRoot.DetentionPolicyTier.Rate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.Rate(childComplexity), true
+	case "DetentionPolicyTier.rateUnit":
+		if e.ComplexityRoot.DetentionPolicyTier.RateUnit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.RateUnit(childComplexity), true
+	case "DetentionPolicyTier.sortOrder":
+		if e.ComplexityRoot.DetentionPolicyTier.SortOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.SortOrder(childComplexity), true
+	case "DetentionPolicyTier.toMinute":
+		if e.ComplexityRoot.DetentionPolicyTier.ToMinute == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicyTier.ToMinute(childComplexity), true
+
+	case "DetentionPreviewResult.arrivedLate":
+		if e.ComplexityRoot.DetentionPreviewResult.ArrivedLate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.ArrivedLate(childComplexity), true
+	case "DetentionPreviewResult.billableAmount":
+		if e.ComplexityRoot.DetentionPreviewResult.BillableAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.BillableAmount(childComplexity), true
+	case "DetentionPreviewResult.billableMinutes":
+		if e.ComplexityRoot.DetentionPreviewResult.BillableMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.BillableMinutes(childComplexity), true
+	case "DetentionPreviewResult.calculationTrace":
+		if e.ComplexityRoot.DetentionPreviewResult.CalculationTrace == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.CalculationTrace(childComplexity), true
+	case "DetentionPreviewResult.capApplied":
+		if e.ComplexityRoot.DetentionPreviewResult.CapApplied == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.CapApplied(childComplexity), true
+	case "DetentionPreviewResult.driverPayAmount":
+		if e.ComplexityRoot.DetentionPreviewResult.DriverPayAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.DriverPayAmount(childComplexity), true
+	case "DetentionPreviewResult.freeMinutesGranted":
+		if e.ComplexityRoot.DetentionPreviewResult.FreeMinutesGranted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.FreeMinutesGranted(childComplexity), true
+	case "DetentionPreviewResult.grossAmount":
+		if e.ComplexityRoot.DetentionPreviewResult.GrossAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.GrossAmount(childComplexity), true
+	case "DetentionPreviewResult.netMargin":
+		if e.ComplexityRoot.DetentionPreviewResult.NetMargin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.NetMargin(childComplexity), true
+	case "DetentionPreviewResult.notificationStatus":
+		if e.ComplexityRoot.DetentionPreviewResult.NotificationStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.NotificationStatus(childComplexity), true
+	case "DetentionPreviewResult.policySnapshot":
+		if e.ComplexityRoot.DetentionPreviewResult.PolicySnapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.PolicySnapshot(childComplexity), true
+	case "DetentionPreviewResult.rawDwellMinutes":
+		if e.ComplexityRoot.DetentionPreviewResult.RawDwellMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.RawDwellMinutes(childComplexity), true
+	case "DetentionPreviewResult.receipt":
+		if e.ComplexityRoot.DetentionPreviewResult.Receipt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.Receipt(childComplexity), true
+	case "DetentionPreviewResult.roundedMinutes":
+		if e.ComplexityRoot.DetentionPreviewResult.RoundedMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.RoundedMinutes(childComplexity), true
+	case "DetentionPreviewResult.status":
+		if e.ComplexityRoot.DetentionPreviewResult.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.Status(childComplexity), true
+	case "DetentionPreviewResult.suppressedByGate":
+		if e.ComplexityRoot.DetentionPreviewResult.SuppressedByGate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPreviewResult.SuppressedByGate(childComplexity), true
+
+	case "DetentionScoreFactor.detail":
+		if e.ComplexityRoot.DetentionScoreFactor.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionScoreFactor.Detail(childComplexity), true
+	case "DetentionScoreFactor.earned":
+		if e.ComplexityRoot.DetentionScoreFactor.Earned == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionScoreFactor.Earned(childComplexity), true
+	case "DetentionScoreFactor.key":
+		if e.ComplexityRoot.DetentionScoreFactor.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionScoreFactor.Key(childComplexity), true
+	case "DetentionScoreFactor.label":
+		if e.ComplexityRoot.DetentionScoreFactor.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionScoreFactor.Label(childComplexity), true
+	case "DetentionScoreFactor.possible":
+		if e.ComplexityRoot.DetentionScoreFactor.Possible == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionScoreFactor.Possible(childComplexity), true
+	case "DetentionScoreFactor.remedy":
+		if e.ComplexityRoot.DetentionScoreFactor.Remedy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionScoreFactor.Remedy(childComplexity), true
+
+	case "DetentionWaiverLeakageStat.approverCount":
+		if e.ComplexityRoot.DetentionWaiverLeakageStat.ApproverCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionWaiverLeakageStat.ApproverCount(childComplexity), true
+	case "DetentionWaiverLeakageStat.reason":
+		if e.ComplexityRoot.DetentionWaiverLeakageStat.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionWaiverLeakageStat.Reason(childComplexity), true
+	case "DetentionWaiverLeakageStat.waivedAmount":
+		if e.ComplexityRoot.DetentionWaiverLeakageStat.WaivedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionWaiverLeakageStat.WaivedAmount(childComplexity), true
+	case "DetentionWaiverLeakageStat.waiverCount":
+		if e.ComplexityRoot.DetentionWaiverLeakageStat.WaiverCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionWaiverLeakageStat.WaiverCount(childComplexity), true
 
 	case "DispatchAssignResult.assignmentId":
 		if e.ComplexityRoot.DispatchAssignResult.AssignmentID == nil {
@@ -15145,6 +16960,85 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.EscrowTransaction.Type(childComplexity), true
 
+	case "FacilityDetentionStat.avgDwellMinutes":
+		if e.ComplexityRoot.FacilityDetentionStat.AvgDwellMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.AvgDwellMinutes(childComplexity), true
+	case "FacilityDetentionStat.billedAmount":
+		if e.ComplexityRoot.FacilityDetentionStat.BilledAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.BilledAmount(childComplexity), true
+	case "FacilityDetentionStat.breachCount":
+		if e.ComplexityRoot.FacilityDetentionStat.BreachCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.BreachCount(childComplexity), true
+	case "FacilityDetentionStat.disputeCount":
+		if e.ComplexityRoot.FacilityDetentionStat.DisputeCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.DisputeCount(childComplexity), true
+	case "FacilityDetentionStat.driverPayAmount":
+		if e.ComplexityRoot.FacilityDetentionStat.DriverPayAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.DriverPayAmount(childComplexity), true
+	case "FacilityDetentionStat.locationId":
+		if e.ComplexityRoot.FacilityDetentionStat.LocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.LocationID(childComplexity), true
+	case "FacilityDetentionStat.locationName":
+		if e.ComplexityRoot.FacilityDetentionStat.LocationName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.LocationName(childComplexity), true
+	case "FacilityDetentionStat.medianDwellMinutes":
+		if e.ComplexityRoot.FacilityDetentionStat.MedianDwellMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.MedianDwellMinutes(childComplexity), true
+	case "FacilityDetentionStat.netMargin":
+		if e.ComplexityRoot.FacilityDetentionStat.NetMargin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.NetMargin(childComplexity), true
+	case "FacilityDetentionStat.p90DwellMinutes":
+		if e.ComplexityRoot.FacilityDetentionStat.P90DwellMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.P90DwellMinutes(childComplexity), true
+	case "FacilityDetentionStat.stopCount":
+		if e.ComplexityRoot.FacilityDetentionStat.StopCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.StopCount(childComplexity), true
+	case "FacilityDetentionStat.suppressedCount":
+		if e.ComplexityRoot.FacilityDetentionStat.SuppressedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.SuppressedCount(childComplexity), true
+	case "FacilityDetentionStat.waivedAmount":
+		if e.ComplexityRoot.FacilityDetentionStat.WaivedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FacilityDetentionStat.WaivedAmount(childComplexity), true
+
 	case "FiscalPeriod.adjustmentDeadline":
 		if e.ComplexityRoot.FiscalPeriod.AdjustmentDeadline == nil {
 			break
@@ -18674,6 +20568,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ApplyUnappliedCustomerPayment(childComplexity, args["input"].(gqlmodel.ApplyCustomerPaymentInput)), true
+	case "Mutation.approveDetentionOccurrence":
+		if e.ComplexityRoot.Mutation.ApproveDetentionOccurrence == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_approveDetentionOccurrence_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApproveDetentionOccurrence(childComplexity, args["occurrenceId"].(string)), true
 	case "Mutation.approveDriverSettlement":
 		if e.ComplexityRoot.Mutation.ApproveDriverSettlement == nil {
 			break
@@ -18938,6 +20843,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CloseOrder(childComplexity, args["id"].(string)), true
+	case "Mutation.createDetentionPolicy":
+		if e.ComplexityRoot.Mutation.CreateDetentionPolicy == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDetentionPolicy_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateDetentionPolicy(childComplexity, args["input"].(gqlmodel.DetentionPolicyInput)), true
 	case "Mutation.createEquipmentManufacturer":
 		if e.ComplexityRoot.Mutation.CreateEquipmentManufacturer == nil {
 			break
@@ -19202,6 +21118,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DecideAgentProposal(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentProposalDecisionInput)), true
+	case "Mutation.deleteDetentionPolicy":
+		if e.ComplexityRoot.Mutation.DeleteDetentionPolicy == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDetentionPolicy_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteDetentionPolicy(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteFuelIndex":
 		if e.ComplexityRoot.Mutation.DeleteFuelIndex == nil {
 			break
@@ -19345,6 +21272,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DetachPayEventFromSettlement(childComplexity, args["input"].(gqlmodel.DetachPayEventInput)), true
+	case "Mutation.detentionBacktest":
+		if e.ComplexityRoot.Mutation.DetentionBacktest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_detentionBacktest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DetentionBacktest(childComplexity, args["input"].(gqlmodel.DetentionBacktestInput)), true
 	case "Mutation.dismissMyNotifications":
 		if e.ComplexityRoot.Mutation.DismissMyNotifications == nil {
 			break
@@ -19400,6 +21338,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DispatchUnassignMoves(childComplexity, args["moveIds"].([]string)), true
+	case "Mutation.disputeDetentionOccurrence":
+		if e.ComplexityRoot.Mutation.DisputeDetentionOccurrence == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_disputeDetentionOccurrence_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DisputeDetentionOccurrence(childComplexity, args["input"].(gqlmodel.DetentionDisputeInput)), true
 	case "Mutation.duplicateShipment":
 		if e.ComplexityRoot.Mutation.DuplicateShipment == nil {
 			break
@@ -19913,6 +21862,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SaveTelematicsFormMapping(childComplexity, args["input"].(gqlmodel.SaveTelematicsFormMappingInput)), true
+	case "Mutation.sendDetentionNotice":
+		if e.ComplexityRoot.Mutation.SendDetentionNotice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendDetentionNotice_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SendDetentionNotice(childComplexity, args["occurrenceId"].(string)), true
 	case "Mutation.setDefaultTableConfiguration":
 		if e.ComplexityRoot.Mutation.SetDefaultTableConfiguration == nil {
 			break
@@ -20056,6 +22016,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateDashControl(childComplexity, args["input"].(gqlmodel.UpdateDashControlInput)), true
+	case "Mutation.updateDetentionPolicy":
+		if e.ComplexityRoot.Mutation.UpdateDetentionPolicy == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDetentionPolicy_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateDetentionPolicy(childComplexity, args["id"].(string), args["input"].(gqlmodel.DetentionPolicyInput)), true
 	case "Mutation.updateEquipmentManufacturer":
 		if e.ComplexityRoot.Mutation.UpdateEquipmentManufacturer == nil {
 			break
@@ -20364,6 +22335,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.VoidDriverSettlement(childComplexity, args["input"].(gqlmodel.DriverSettlementActionInput)), true
+	case "Mutation.waiveDetentionOccurrence":
+		if e.ComplexityRoot.Mutation.WaiveDetentionOccurrence == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_waiveDetentionOccurrence_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.WaiveDetentionOccurrence(childComplexity, args["input"].(gqlmodel.DetentionWaiveInput)), true
 	case "Mutation.withdrawSettlementDispute":
 		if e.ComplexityRoot.Mutation.WithdrawSettlementDispute == nil {
 			break
@@ -22644,6 +24626,100 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.DefaultTableConfiguration(childComplexity, args["resource"].(string)), true
+	case "Query.detentionCustomerStats":
+		if e.ComplexityRoot.Query.DetentionCustomerStats == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionCustomerStats_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionCustomerStats(childComplexity, args["input"].(gqlmodel.DetentionStatsInput)), true
+	case "Query.detentionDesk":
+		if e.ComplexityRoot.Query.DetentionDesk == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.DetentionDesk(childComplexity), true
+	case "Query.detentionDisputePacket":
+		if e.ComplexityRoot.Query.DetentionDisputePacket == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionDisputePacket_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionDisputePacket(childComplexity, args["occurrenceId"].(string)), true
+	case "Query.detentionFacilityStats":
+		if e.ComplexityRoot.Query.DetentionFacilityStats == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionFacilityStats_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionFacilityStats(childComplexity, args["input"].(gqlmodel.DetentionStatsInput)), true
+	case "Query.detentionOccurrence":
+		if e.ComplexityRoot.Query.DetentionOccurrence == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionOccurrence_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionOccurrence(childComplexity, args["id"].(string)), true
+	case "Query.detentionPolicies":
+		if e.ComplexityRoot.Query.DetentionPolicies == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionPolicies_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionPolicies(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.detentionPolicy":
+		if e.ComplexityRoot.Query.DetentionPolicy == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionPolicy_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionPolicy(childComplexity, args["id"].(string)), true
+	case "Query.detentionPolicyPreview":
+		if e.ComplexityRoot.Query.DetentionPolicyPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionPolicyPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionPolicyPreview(childComplexity, args["policy"].(gqlmodel.DetentionPolicyInput), args["scenario"].(gqlmodel.DetentionPreviewScenarioInput)), true
+	case "Query.detentionWaiverStats":
+		if e.ComplexityRoot.Query.DetentionWaiverStats == nil {
+			break
+		}
+
+		args, err := ec.field_Query_detentionWaiverStats_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DetentionWaiverStats(childComplexity, args["input"].(gqlmodel.DetentionStatsInput)), true
 	case "Query.dispatchAssignmentPreview":
 		if e.ComplexityRoot.Query.DispatchAssignmentPreview == nil {
 			break
@@ -24290,6 +26366,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ShipmentComments(childComplexity, args["shipmentId"].(string), args["first"].(*int), args["after"].(*string)), true
+	case "Query.shipmentDetention":
+		if e.ComplexityRoot.Query.ShipmentDetention == nil {
+			break
+		}
+
+		args, err := ec.field_Query_shipmentDetention_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ShipmentDetention(childComplexity, args["shipmentId"].(string)), true
 	case "Query.shipmentDriverFeasibility":
 		if e.ComplexityRoot.Query.ShipmentDriverFeasibility == nil {
 			break
@@ -34392,6 +36479,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCustomerPaymentApplicationInput,
 		ec.unmarshalInputDataTableConnectionInput,
 		ec.unmarshalInputDetachPayEventInput,
+		ec.unmarshalInputDetentionBacktestInput,
+		ec.unmarshalInputDetentionDisputeInput,
+		ec.unmarshalInputDetentionPolicyInput,
+		ec.unmarshalInputDetentionPreviewScenarioInput,
+		ec.unmarshalInputDetentionStatsInput,
+		ec.unmarshalInputDetentionTierInput,
+		ec.unmarshalInputDetentionWaiveInput,
 		ec.unmarshalInputDispatchAssignMoveInput,
 		ec.unmarshalInputDispatchAssignmentPreviewInput,
 		ec.unmarshalInputDispatchBoardInput,
@@ -35838,6 +37932,593 @@ extend type Mutation {
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+}
+`, BuiltIn: false},
+	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {
+  Active
+  Inactive
+  Draft
+}
+
+enum DetentionClockStartBasis {
+  Arrival
+  Appointment
+  LaterOfArrivalOrAppointment
+  EarlierOfArrivalOrAppointment
+}
+
+enum DetentionLateArrivalRule {
+  NoEffect
+  Forfeit
+  ClockFromAppointment
+  ReduceFreeTime
+}
+
+enum DetentionRoundingMode {
+  Up
+  Down
+  Nearest
+  Exact
+}
+
+enum DetentionRateSource {
+  Accessorial
+  Tiers
+}
+
+enum DetentionTierRateUnit {
+  Hour
+  Day
+  Flat
+}
+
+enum DetentionNotificationRequirement {
+  None
+  Advisory
+  Required
+}
+
+enum DetentionUnnotifiedBehavior {
+  Bill
+  Flag
+  Suppress
+}
+
+enum DetentionCapScope {
+  PerStop
+  PerDay
+  PerShipment
+}
+
+enum DetentionOccurrenceStatus {
+  Accruing
+  Pending
+  Approved
+  Billed
+  Waived
+  Disputed
+  NotBillable
+}
+
+enum DetentionNotificationStatus {
+  NotRequired
+  Pending
+  Sent
+  Late
+  Missed
+  Failed
+}
+
+enum DetentionCapKind {
+  None
+  MaxBillableMinutes
+  MaxChargePerStop
+  MaxChargePerDay
+  MaxChargePerShipment
+  LayoverBoundary
+}
+
+enum DetentionWaiverReason {
+  Weather
+  FacilityClosure
+  CarrierFault
+  EquipmentIssue
+  CustomerGoodwill
+  DataCorrection
+  ForceMajeure
+  Other
+}
+
+enum DetentionScoreBand {
+  Strong
+  Adequate
+  Weak
+  AtRisk
+}
+
+enum DetentionDeskUrgency {
+  Lost
+  NoticeOverdue
+  NoticeDueSoon
+  Accruing
+  FreeTimeEnding
+  Normal
+}
+
+enum DetentionNoticeKind {
+  Warning
+  Started
+  Update
+  Final
+}
+
+enum DetentionNoticeChannel {
+  Email
+  EDI
+  Portal
+  Manual
+}
+
+enum DetentionNoticeDeliveryStatus {
+  Queued
+  Sent
+  Delivered
+  Opened
+  Bounced
+  Failed
+}
+
+enum DetentionEvidenceKind {
+  Arrival
+  Departure
+  Appointment
+  Notice
+  Document
+  StatusChange
+  Recalculated
+  Waiver
+  Dispute
+}
+
+enum DetentionEvidenceSource {
+  Telematics
+  Geofence
+  DriverApp
+  EDI
+  Document
+  Manual
+  System
+}
+
+type DetentionPolicyTier {
+  id: ID
+  fromMinute: Int!
+  toMinute: Int
+  rate: String!
+  rateUnit: DetentionTierRateUnit!
+  label: String!
+  sortOrder: Int!
+}
+
+type DetentionPolicy {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  code: String!
+  description: String!
+  status: DetentionPolicyStatus!
+  isOrgDefault: Boolean!
+  priority: Int!
+  specificityScore: Int!
+  customerId: ID
+  locationId: ID
+  shipmentTypeIds: [ID!]
+  serviceTypeIds: [ID!]
+  commodityIds: [ID!]
+  stopTypes: [StopType!]
+  appointmentStopsOnly: Boolean!
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+  clockStartBasis: DetentionClockStartBasis!
+  lateArrivalRule: DetentionLateArrivalRule!
+  lateArrivalGraceMinutes: Int!
+  billingFreeMinutes: Int!
+  pickupFreeMinutes: Int
+  deliveryFreeMinutes: Int
+  payFreeMinutes: Int
+  minimumBillableMinutes: Int!
+  billingIncrementMinutes: Int!
+  roundingMode: DetentionRoundingMode!
+  rateSource: DetentionRateSource!
+  accessorialChargeId: ID!
+  tiers: [DetentionPolicyTier!]
+  maxBillableMinutesPerStop: Int
+  maxChargePerStop: String
+  maxChargePerDay: String
+  maxChargePerShipment: String
+  dayBoundaryMode: DetentionCapScope!
+  convertToLayoverAtMinutes: Int
+  layoverAccessorialChargeId: ID
+  notificationRequirement: DetentionNotificationRequirement!
+  notificationLeadMinutes: Int!
+  notificationDeadlineMinutes: Int!
+  unnotifiedBehavior: DetentionUnnotifiedBehavior!
+  autoSendNotice: Boolean!
+  sendDepartureSummary: Boolean!
+  requireApprovalOverAmount: String
+  autoApproveUnderAmount: String
+  currency: String!
+  comments: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type DetentionPolicyEdge {
+  node: DetentionPolicy!
+  cursor: String!
+}
+
+type DetentionPolicyConnection {
+  edges: [DetentionPolicyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input DetentionTierInput {
+  fromMinute: Int!
+  toMinute: Int
+  rate: String!
+  rateUnit: DetentionTierRateUnit = Hour
+  label: String
+  sortOrder: Int
+}
+
+input DetentionPolicyInput {
+  name: String!
+  code: String!
+  description: String
+  status: DetentionPolicyStatus = Draft
+  isOrgDefault: Boolean = false
+  priority: Int = 0
+  customerId: ID
+  locationId: ID
+  shipmentTypeIds: [ID!]
+  serviceTypeIds: [ID!]
+  commodityIds: [ID!]
+  stopTypes: [StopType!]
+  appointmentStopsOnly: Boolean = false
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+  clockStartBasis: DetentionClockStartBasis = LaterOfArrivalOrAppointment
+  lateArrivalRule: DetentionLateArrivalRule = NoEffect
+  lateArrivalGraceMinutes: Int = 0
+  billingFreeMinutes: Int = 120
+  pickupFreeMinutes: Int
+  deliveryFreeMinutes: Int
+  payFreeMinutes: Int
+  minimumBillableMinutes: Int = 0
+  billingIncrementMinutes: Int = 15
+  roundingMode: DetentionRoundingMode = Up
+  rateSource: DetentionRateSource = Accessorial
+  accessorialChargeId: ID!
+  tiers: [DetentionTierInput!]
+  maxBillableMinutesPerStop: Int
+  maxChargePerStop: String
+  maxChargePerDay: String
+  maxChargePerShipment: String
+  dayBoundaryMode: DetentionCapScope = PerStop
+  convertToLayoverAtMinutes: Int
+  layoverAccessorialChargeId: ID
+  notificationRequirement: DetentionNotificationRequirement = None
+  notificationLeadMinutes: Int = 30
+  notificationDeadlineMinutes: Int = 0
+  unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill
+  autoSendNotice: Boolean = false
+  sendDepartureSummary: Boolean = false
+  requireApprovalOverAmount: String
+  autoApproveUnderAmount: String
+  currency: String = "USD"
+  comments: String
+  version: Int
+}
+
+type DetentionOccurrence {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  stopId: ID!
+  customerId: ID!
+  locationId: ID!
+  detentionPolicyId: ID
+  policySnapshot: JSON
+  calculationTrace: JSON
+  stopType: String!
+  scheduleType: String!
+  appointmentStart: Int
+  appointmentEnd: Int
+  arrivedAt: Int
+  departedAt: Int
+  clockStartAt: Int!
+  clockStopAt: Int
+  freeTimeExpiresAt: Int!
+  noticeDueAt: Int
+  noticeDeadlineAt: Int
+  isOpen: Boolean!
+  arrivedLate: Boolean!
+  lateByMinutes: Int!
+  freeMinutesGranted: Int!
+  rawDwellMinutes: Int!
+  billableMinutes: Int!
+  roundedMinutes: Int!
+  billableUnits: String!
+  grossAmount: String!
+  billableAmount: String!
+  driverPayMinutes: Int!
+  driverPayAmount: String!
+  netMargin: String!
+  capApplied: DetentionCapKind!
+  convertedToLayover: Boolean!
+  currency: String!
+  status: DetentionOccurrenceStatus!
+  notificationStatus: DetentionNotificationStatus!
+  noticeSentAt: Int
+  suppressedByGate: Boolean!
+  requiresApproval: Boolean!
+  waiverReason: DetentionWaiverReason
+  waiverNote: String!
+  waivedAt: Int
+  waivedAmount: String!
+  disputeNote: String!
+  disputedAt: Int
+  collectabilityScore: Int!
+  evidenceHead: String!
+  additionalChargeId: ID
+  locationName: String!
+  customerName: String!
+  shipmentProNumber: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type DetentionEvidence {
+  id: ID!
+  detentionOccurrenceId: ID!
+  sequence: Int!
+  kind: DetentionEvidenceKind!
+  source: DetentionEvidenceSource!
+  summary: String!
+  observedAt: Int!
+  recordedAt: Int!
+  recordedById: ID
+  documentId: ID
+  payload: JSON
+  prevHash: String!
+  hash: String!
+  createdAt: Int!
+}
+
+type DetentionNotice {
+  id: ID!
+  detentionOccurrenceId: ID!
+  threadKey: String!
+  kind: DetentionNoticeKind!
+  channel: DetentionNoticeChannel!
+  deliveryStatus: DetentionNoticeDeliveryStatus!
+  recipients: [String!]
+  subject: String!
+  body: String!
+  scheduledFor: Int!
+  sentAt: Int
+  deliveredAt: Int
+  openedAt: Int
+  failedAt: Int
+  failureReason: String!
+  sentById: ID
+  wasAutomatic: Boolean!
+  satisfiesRequirement: Boolean!
+  quotedFreeMinutes: Int!
+  quotedRate: String
+  quotedAmount: String
+  createdAt: Int!
+}
+
+type DetentionScoreFactor {
+  key: String!
+  label: String!
+  earned: Int!
+  possible: Int!
+  detail: String!
+  remedy: String!
+}
+
+type DetentionCollectability {
+  score: Int!
+  band: DetentionScoreBand!
+  factors: [DetentionScoreFactor!]!
+  chainValid: Boolean!
+  summary: String!
+}
+
+type DetentionOccurrenceDetail {
+  occurrence: DetentionOccurrence!
+  evidence: [DetentionEvidence!]
+  notices: [DetentionNotice!]
+  collectability: DetentionCollectability!
+  receipt: String!
+}
+
+type DetentionDeskEntry {
+  occurrence: DetentionOccurrence!
+  minutesUntilFreeEnds: Int!
+  minutesUntilNoticeDue: Int
+  noticeWindowOpen: Boolean!
+  amountAtRisk: String!
+  urgency: DetentionDeskUrgency!
+}
+
+type DetentionDisputePacket {
+  occurrence: DetentionOccurrence!
+  policySnapshot: JSON
+  receipt: String!
+  evidence: [DetentionEvidence!]
+  notices: [DetentionNotice!]
+  collectability: DetentionCollectability!
+  generatedAt: Int!
+}
+
+type FacilityDetentionStat {
+  locationId: ID!
+  locationName: String!
+  stopCount: Int!
+  breachCount: Int!
+  avgDwellMinutes: Int!
+  medianDwellMinutes: Float!
+  p90DwellMinutes: Float!
+  billedAmount: String!
+  driverPayAmount: String!
+  netMargin: String!
+  waivedAmount: String!
+  disputeCount: Int!
+  suppressedCount: Int!
+}
+
+type CustomerDetentionStat {
+  customerId: ID!
+  customerName: String!
+  stopCount: Int!
+  breachCount: Int!
+  billedAmount: String!
+  driverPayAmount: String!
+  netMargin: String!
+  waivedAmount: String!
+  disputeCount: Int!
+  suppressedCount: Int!
+}
+
+type DetentionWaiverLeakageStat {
+  reason: String!
+  waiverCount: Int!
+  approverCount: Int!
+  waivedAmount: String!
+}
+
+input DetentionPreviewScenarioInput {
+  arrivedAt: Int!
+  departedAt: Int
+  appointmentStart: Int
+  appointmentEnd: Int
+  stopType: StopType!
+  scheduleType: StopScheduleType!
+  noticeSentAt: Int
+  driverPayRate: String
+}
+
+type DetentionPreviewResult {
+  policySnapshot: JSON!
+  rawDwellMinutes: Int!
+  freeMinutesGranted: Int!
+  billableMinutes: Int!
+  roundedMinutes: Int!
+  billableAmount: String!
+  grossAmount: String!
+  driverPayAmount: String!
+  netMargin: String!
+  arrivedLate: Boolean!
+  capApplied: DetentionCapKind!
+  status: DetentionOccurrenceStatus!
+  notificationStatus: DetentionNotificationStatus!
+  suppressedByGate: Boolean!
+  calculationTrace: JSON
+  receipt: String!
+}
+
+input DetentionBacktestInput {
+  policy: DetentionPolicyInput!
+  from: Int!
+  to: Int!
+  limit: Int
+  driverPayRate: String
+  assumeNoticeCompliance: Boolean
+}
+
+type DetentionBacktestBucket {
+  key: String!
+  label: String!
+  stopCount: Int!
+  billableCount: Int!
+  proposedAmount: String!
+  baselineAmount: String!
+  delta: String!
+  driverPayAmount: String!
+  netMargin: String!
+}
+
+type DetentionBacktestResult {
+  stopsEvaluated: Int!
+  stopsMatched: Int!
+  stopsBillable: Int!
+  stopsForfeited: Int!
+  stopsSuppressed: Int!
+  proposedRevenue: String!
+  baselineRevenue: String!
+  revenueDelta: String!
+  proposedDriverPay: String!
+  proposedNetMargin: String!
+  negativeMarginStops: Int!
+  byCustomer: [DetentionBacktestBucket!]!
+  byFacility: [DetentionBacktestBucket!]!
+  from: Int!
+  to: Int!
+  truncated: Boolean!
+}
+
+input DetentionWaiveInput {
+  occurrenceId: ID!
+  reason: DetentionWaiverReason!
+  note: String!
+}
+
+input DetentionDisputeInput {
+  occurrenceId: ID!
+  note: String!
+}
+
+input DetentionStatsInput {
+  from: Int!
+  to: Int!
+  limit: Int
+}
+
+extend type Query {
+  detentionPolicies(input: DataTableConnectionInput!): DetentionPolicyConnection!
+  detentionPolicy(id: ID!): DetentionPolicy
+  detentionDesk: [DetentionDeskEntry!]!
+  detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
+  shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
+  detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
+  detentionFacilityStats(input: DetentionStatsInput!): [FacilityDetentionStat!]!
+  detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
+  detentionWaiverStats(input: DetentionStatsInput!): [DetentionWaiverLeakageStat!]!
+  detentionPolicyPreview(
+    policy: DetentionPolicyInput!
+    scenario: DetentionPreviewScenarioInput!
+  ): DetentionPreviewResult!
+}
+
+extend type Mutation {
+  createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
+  updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
+  deleteDetentionPolicy(id: ID!): Boolean!
+  detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
+  waiveDetentionOccurrence(input: DetentionWaiveInput!): DetentionOccurrence!
+  approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
+  disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
+  sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
 }
 `, BuiltIn: false},
 	{Name: "../schema/dispatch_console.graphqls", Input: `"""
@@ -45152,6 +47833,32 @@ func (ec *executionContext) childFields_CustomerConnection(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type CustomerConnection", field.Name)
 }
 
+func (ec *executionContext) childFields_CustomerDetentionStat(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "customerId":
+		return ec.fieldContext_CustomerDetentionStat_customerId(ctx, field)
+	case "customerName":
+		return ec.fieldContext_CustomerDetentionStat_customerName(ctx, field)
+	case "stopCount":
+		return ec.fieldContext_CustomerDetentionStat_stopCount(ctx, field)
+	case "breachCount":
+		return ec.fieldContext_CustomerDetentionStat_breachCount(ctx, field)
+	case "billedAmount":
+		return ec.fieldContext_CustomerDetentionStat_billedAmount(ctx, field)
+	case "driverPayAmount":
+		return ec.fieldContext_CustomerDetentionStat_driverPayAmount(ctx, field)
+	case "netMargin":
+		return ec.fieldContext_CustomerDetentionStat_netMargin(ctx, field)
+	case "waivedAmount":
+		return ec.fieldContext_CustomerDetentionStat_waivedAmount(ctx, field)
+	case "disputeCount":
+		return ec.fieldContext_CustomerDetentionStat_disputeCount(ctx, field)
+	case "suppressedCount":
+		return ec.fieldContext_CustomerDetentionStat_suppressedCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CustomerDetentionStat", field.Name)
+}
+
 func (ec *executionContext) childFields_CustomerEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "node":
@@ -45356,6 +48063,566 @@ func (ec *executionContext) childFields_DashControl(ctx context.Context, field g
 		return ec.fieldContext_DashControl_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DashControl", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionBacktestBucket(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_DetentionBacktestBucket_key(ctx, field)
+	case "label":
+		return ec.fieldContext_DetentionBacktestBucket_label(ctx, field)
+	case "stopCount":
+		return ec.fieldContext_DetentionBacktestBucket_stopCount(ctx, field)
+	case "billableCount":
+		return ec.fieldContext_DetentionBacktestBucket_billableCount(ctx, field)
+	case "proposedAmount":
+		return ec.fieldContext_DetentionBacktestBucket_proposedAmount(ctx, field)
+	case "baselineAmount":
+		return ec.fieldContext_DetentionBacktestBucket_baselineAmount(ctx, field)
+	case "delta":
+		return ec.fieldContext_DetentionBacktestBucket_delta(ctx, field)
+	case "driverPayAmount":
+		return ec.fieldContext_DetentionBacktestBucket_driverPayAmount(ctx, field)
+	case "netMargin":
+		return ec.fieldContext_DetentionBacktestBucket_netMargin(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionBacktestBucket", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionBacktestResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "stopsEvaluated":
+		return ec.fieldContext_DetentionBacktestResult_stopsEvaluated(ctx, field)
+	case "stopsMatched":
+		return ec.fieldContext_DetentionBacktestResult_stopsMatched(ctx, field)
+	case "stopsBillable":
+		return ec.fieldContext_DetentionBacktestResult_stopsBillable(ctx, field)
+	case "stopsForfeited":
+		return ec.fieldContext_DetentionBacktestResult_stopsForfeited(ctx, field)
+	case "stopsSuppressed":
+		return ec.fieldContext_DetentionBacktestResult_stopsSuppressed(ctx, field)
+	case "proposedRevenue":
+		return ec.fieldContext_DetentionBacktestResult_proposedRevenue(ctx, field)
+	case "baselineRevenue":
+		return ec.fieldContext_DetentionBacktestResult_baselineRevenue(ctx, field)
+	case "revenueDelta":
+		return ec.fieldContext_DetentionBacktestResult_revenueDelta(ctx, field)
+	case "proposedDriverPay":
+		return ec.fieldContext_DetentionBacktestResult_proposedDriverPay(ctx, field)
+	case "proposedNetMargin":
+		return ec.fieldContext_DetentionBacktestResult_proposedNetMargin(ctx, field)
+	case "negativeMarginStops":
+		return ec.fieldContext_DetentionBacktestResult_negativeMarginStops(ctx, field)
+	case "byCustomer":
+		return ec.fieldContext_DetentionBacktestResult_byCustomer(ctx, field)
+	case "byFacility":
+		return ec.fieldContext_DetentionBacktestResult_byFacility(ctx, field)
+	case "from":
+		return ec.fieldContext_DetentionBacktestResult_from(ctx, field)
+	case "to":
+		return ec.fieldContext_DetentionBacktestResult_to(ctx, field)
+	case "truncated":
+		return ec.fieldContext_DetentionBacktestResult_truncated(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionBacktestResult", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionCollectability(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "score":
+		return ec.fieldContext_DetentionCollectability_score(ctx, field)
+	case "band":
+		return ec.fieldContext_DetentionCollectability_band(ctx, field)
+	case "factors":
+		return ec.fieldContext_DetentionCollectability_factors(ctx, field)
+	case "chainValid":
+		return ec.fieldContext_DetentionCollectability_chainValid(ctx, field)
+	case "summary":
+		return ec.fieldContext_DetentionCollectability_summary(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionCollectability", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionDeskEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "occurrence":
+		return ec.fieldContext_DetentionDeskEntry_occurrence(ctx, field)
+	case "minutesUntilFreeEnds":
+		return ec.fieldContext_DetentionDeskEntry_minutesUntilFreeEnds(ctx, field)
+	case "minutesUntilNoticeDue":
+		return ec.fieldContext_DetentionDeskEntry_minutesUntilNoticeDue(ctx, field)
+	case "noticeWindowOpen":
+		return ec.fieldContext_DetentionDeskEntry_noticeWindowOpen(ctx, field)
+	case "amountAtRisk":
+		return ec.fieldContext_DetentionDeskEntry_amountAtRisk(ctx, field)
+	case "urgency":
+		return ec.fieldContext_DetentionDeskEntry_urgency(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionDeskEntry", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionDisputePacket(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "occurrence":
+		return ec.fieldContext_DetentionDisputePacket_occurrence(ctx, field)
+	case "policySnapshot":
+		return ec.fieldContext_DetentionDisputePacket_policySnapshot(ctx, field)
+	case "receipt":
+		return ec.fieldContext_DetentionDisputePacket_receipt(ctx, field)
+	case "evidence":
+		return ec.fieldContext_DetentionDisputePacket_evidence(ctx, field)
+	case "notices":
+		return ec.fieldContext_DetentionDisputePacket_notices(ctx, field)
+	case "collectability":
+		return ec.fieldContext_DetentionDisputePacket_collectability(ctx, field)
+	case "generatedAt":
+		return ec.fieldContext_DetentionDisputePacket_generatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionDisputePacket", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionEvidence(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DetentionEvidence_id(ctx, field)
+	case "detentionOccurrenceId":
+		return ec.fieldContext_DetentionEvidence_detentionOccurrenceId(ctx, field)
+	case "sequence":
+		return ec.fieldContext_DetentionEvidence_sequence(ctx, field)
+	case "kind":
+		return ec.fieldContext_DetentionEvidence_kind(ctx, field)
+	case "source":
+		return ec.fieldContext_DetentionEvidence_source(ctx, field)
+	case "summary":
+		return ec.fieldContext_DetentionEvidence_summary(ctx, field)
+	case "observedAt":
+		return ec.fieldContext_DetentionEvidence_observedAt(ctx, field)
+	case "recordedAt":
+		return ec.fieldContext_DetentionEvidence_recordedAt(ctx, field)
+	case "recordedById":
+		return ec.fieldContext_DetentionEvidence_recordedById(ctx, field)
+	case "documentId":
+		return ec.fieldContext_DetentionEvidence_documentId(ctx, field)
+	case "payload":
+		return ec.fieldContext_DetentionEvidence_payload(ctx, field)
+	case "prevHash":
+		return ec.fieldContext_DetentionEvidence_prevHash(ctx, field)
+	case "hash":
+		return ec.fieldContext_DetentionEvidence_hash(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DetentionEvidence_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionEvidence", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionNotice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DetentionNotice_id(ctx, field)
+	case "detentionOccurrenceId":
+		return ec.fieldContext_DetentionNotice_detentionOccurrenceId(ctx, field)
+	case "threadKey":
+		return ec.fieldContext_DetentionNotice_threadKey(ctx, field)
+	case "kind":
+		return ec.fieldContext_DetentionNotice_kind(ctx, field)
+	case "channel":
+		return ec.fieldContext_DetentionNotice_channel(ctx, field)
+	case "deliveryStatus":
+		return ec.fieldContext_DetentionNotice_deliveryStatus(ctx, field)
+	case "recipients":
+		return ec.fieldContext_DetentionNotice_recipients(ctx, field)
+	case "subject":
+		return ec.fieldContext_DetentionNotice_subject(ctx, field)
+	case "body":
+		return ec.fieldContext_DetentionNotice_body(ctx, field)
+	case "scheduledFor":
+		return ec.fieldContext_DetentionNotice_scheduledFor(ctx, field)
+	case "sentAt":
+		return ec.fieldContext_DetentionNotice_sentAt(ctx, field)
+	case "deliveredAt":
+		return ec.fieldContext_DetentionNotice_deliveredAt(ctx, field)
+	case "openedAt":
+		return ec.fieldContext_DetentionNotice_openedAt(ctx, field)
+	case "failedAt":
+		return ec.fieldContext_DetentionNotice_failedAt(ctx, field)
+	case "failureReason":
+		return ec.fieldContext_DetentionNotice_failureReason(ctx, field)
+	case "sentById":
+		return ec.fieldContext_DetentionNotice_sentById(ctx, field)
+	case "wasAutomatic":
+		return ec.fieldContext_DetentionNotice_wasAutomatic(ctx, field)
+	case "satisfiesRequirement":
+		return ec.fieldContext_DetentionNotice_satisfiesRequirement(ctx, field)
+	case "quotedFreeMinutes":
+		return ec.fieldContext_DetentionNotice_quotedFreeMinutes(ctx, field)
+	case "quotedRate":
+		return ec.fieldContext_DetentionNotice_quotedRate(ctx, field)
+	case "quotedAmount":
+		return ec.fieldContext_DetentionNotice_quotedAmount(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DetentionNotice_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionNotice", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionOccurrence(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DetentionOccurrence_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_DetentionOccurrence_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_DetentionOccurrence_organizationId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_DetentionOccurrence_shipmentId(ctx, field)
+	case "shipmentMoveId":
+		return ec.fieldContext_DetentionOccurrence_shipmentMoveId(ctx, field)
+	case "stopId":
+		return ec.fieldContext_DetentionOccurrence_stopId(ctx, field)
+	case "customerId":
+		return ec.fieldContext_DetentionOccurrence_customerId(ctx, field)
+	case "locationId":
+		return ec.fieldContext_DetentionOccurrence_locationId(ctx, field)
+	case "detentionPolicyId":
+		return ec.fieldContext_DetentionOccurrence_detentionPolicyId(ctx, field)
+	case "policySnapshot":
+		return ec.fieldContext_DetentionOccurrence_policySnapshot(ctx, field)
+	case "calculationTrace":
+		return ec.fieldContext_DetentionOccurrence_calculationTrace(ctx, field)
+	case "stopType":
+		return ec.fieldContext_DetentionOccurrence_stopType(ctx, field)
+	case "scheduleType":
+		return ec.fieldContext_DetentionOccurrence_scheduleType(ctx, field)
+	case "appointmentStart":
+		return ec.fieldContext_DetentionOccurrence_appointmentStart(ctx, field)
+	case "appointmentEnd":
+		return ec.fieldContext_DetentionOccurrence_appointmentEnd(ctx, field)
+	case "arrivedAt":
+		return ec.fieldContext_DetentionOccurrence_arrivedAt(ctx, field)
+	case "departedAt":
+		return ec.fieldContext_DetentionOccurrence_departedAt(ctx, field)
+	case "clockStartAt":
+		return ec.fieldContext_DetentionOccurrence_clockStartAt(ctx, field)
+	case "clockStopAt":
+		return ec.fieldContext_DetentionOccurrence_clockStopAt(ctx, field)
+	case "freeTimeExpiresAt":
+		return ec.fieldContext_DetentionOccurrence_freeTimeExpiresAt(ctx, field)
+	case "noticeDueAt":
+		return ec.fieldContext_DetentionOccurrence_noticeDueAt(ctx, field)
+	case "noticeDeadlineAt":
+		return ec.fieldContext_DetentionOccurrence_noticeDeadlineAt(ctx, field)
+	case "isOpen":
+		return ec.fieldContext_DetentionOccurrence_isOpen(ctx, field)
+	case "arrivedLate":
+		return ec.fieldContext_DetentionOccurrence_arrivedLate(ctx, field)
+	case "lateByMinutes":
+		return ec.fieldContext_DetentionOccurrence_lateByMinutes(ctx, field)
+	case "freeMinutesGranted":
+		return ec.fieldContext_DetentionOccurrence_freeMinutesGranted(ctx, field)
+	case "rawDwellMinutes":
+		return ec.fieldContext_DetentionOccurrence_rawDwellMinutes(ctx, field)
+	case "billableMinutes":
+		return ec.fieldContext_DetentionOccurrence_billableMinutes(ctx, field)
+	case "roundedMinutes":
+		return ec.fieldContext_DetentionOccurrence_roundedMinutes(ctx, field)
+	case "billableUnits":
+		return ec.fieldContext_DetentionOccurrence_billableUnits(ctx, field)
+	case "grossAmount":
+		return ec.fieldContext_DetentionOccurrence_grossAmount(ctx, field)
+	case "billableAmount":
+		return ec.fieldContext_DetentionOccurrence_billableAmount(ctx, field)
+	case "driverPayMinutes":
+		return ec.fieldContext_DetentionOccurrence_driverPayMinutes(ctx, field)
+	case "driverPayAmount":
+		return ec.fieldContext_DetentionOccurrence_driverPayAmount(ctx, field)
+	case "netMargin":
+		return ec.fieldContext_DetentionOccurrence_netMargin(ctx, field)
+	case "capApplied":
+		return ec.fieldContext_DetentionOccurrence_capApplied(ctx, field)
+	case "convertedToLayover":
+		return ec.fieldContext_DetentionOccurrence_convertedToLayover(ctx, field)
+	case "currency":
+		return ec.fieldContext_DetentionOccurrence_currency(ctx, field)
+	case "status":
+		return ec.fieldContext_DetentionOccurrence_status(ctx, field)
+	case "notificationStatus":
+		return ec.fieldContext_DetentionOccurrence_notificationStatus(ctx, field)
+	case "noticeSentAt":
+		return ec.fieldContext_DetentionOccurrence_noticeSentAt(ctx, field)
+	case "suppressedByGate":
+		return ec.fieldContext_DetentionOccurrence_suppressedByGate(ctx, field)
+	case "requiresApproval":
+		return ec.fieldContext_DetentionOccurrence_requiresApproval(ctx, field)
+	case "waiverReason":
+		return ec.fieldContext_DetentionOccurrence_waiverReason(ctx, field)
+	case "waiverNote":
+		return ec.fieldContext_DetentionOccurrence_waiverNote(ctx, field)
+	case "waivedAt":
+		return ec.fieldContext_DetentionOccurrence_waivedAt(ctx, field)
+	case "waivedAmount":
+		return ec.fieldContext_DetentionOccurrence_waivedAmount(ctx, field)
+	case "disputeNote":
+		return ec.fieldContext_DetentionOccurrence_disputeNote(ctx, field)
+	case "disputedAt":
+		return ec.fieldContext_DetentionOccurrence_disputedAt(ctx, field)
+	case "collectabilityScore":
+		return ec.fieldContext_DetentionOccurrence_collectabilityScore(ctx, field)
+	case "evidenceHead":
+		return ec.fieldContext_DetentionOccurrence_evidenceHead(ctx, field)
+	case "additionalChargeId":
+		return ec.fieldContext_DetentionOccurrence_additionalChargeId(ctx, field)
+	case "locationName":
+		return ec.fieldContext_DetentionOccurrence_locationName(ctx, field)
+	case "customerName":
+		return ec.fieldContext_DetentionOccurrence_customerName(ctx, field)
+	case "shipmentProNumber":
+		return ec.fieldContext_DetentionOccurrence_shipmentProNumber(ctx, field)
+	case "version":
+		return ec.fieldContext_DetentionOccurrence_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DetentionOccurrence_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_DetentionOccurrence_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionOccurrence", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionOccurrenceDetail(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "occurrence":
+		return ec.fieldContext_DetentionOccurrenceDetail_occurrence(ctx, field)
+	case "evidence":
+		return ec.fieldContext_DetentionOccurrenceDetail_evidence(ctx, field)
+	case "notices":
+		return ec.fieldContext_DetentionOccurrenceDetail_notices(ctx, field)
+	case "collectability":
+		return ec.fieldContext_DetentionOccurrenceDetail_collectability(ctx, field)
+	case "receipt":
+		return ec.fieldContext_DetentionOccurrenceDetail_receipt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionOccurrenceDetail", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionPolicy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DetentionPolicy_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_DetentionPolicy_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_DetentionPolicy_organizationId(ctx, field)
+	case "name":
+		return ec.fieldContext_DetentionPolicy_name(ctx, field)
+	case "code":
+		return ec.fieldContext_DetentionPolicy_code(ctx, field)
+	case "description":
+		return ec.fieldContext_DetentionPolicy_description(ctx, field)
+	case "status":
+		return ec.fieldContext_DetentionPolicy_status(ctx, field)
+	case "isOrgDefault":
+		return ec.fieldContext_DetentionPolicy_isOrgDefault(ctx, field)
+	case "priority":
+		return ec.fieldContext_DetentionPolicy_priority(ctx, field)
+	case "specificityScore":
+		return ec.fieldContext_DetentionPolicy_specificityScore(ctx, field)
+	case "customerId":
+		return ec.fieldContext_DetentionPolicy_customerId(ctx, field)
+	case "locationId":
+		return ec.fieldContext_DetentionPolicy_locationId(ctx, field)
+	case "shipmentTypeIds":
+		return ec.fieldContext_DetentionPolicy_shipmentTypeIds(ctx, field)
+	case "serviceTypeIds":
+		return ec.fieldContext_DetentionPolicy_serviceTypeIds(ctx, field)
+	case "commodityIds":
+		return ec.fieldContext_DetentionPolicy_commodityIds(ctx, field)
+	case "stopTypes":
+		return ec.fieldContext_DetentionPolicy_stopTypes(ctx, field)
+	case "appointmentStopsOnly":
+		return ec.fieldContext_DetentionPolicy_appointmentStopsOnly(ctx, field)
+	case "effectiveStartDate":
+		return ec.fieldContext_DetentionPolicy_effectiveStartDate(ctx, field)
+	case "effectiveEndDate":
+		return ec.fieldContext_DetentionPolicy_effectiveEndDate(ctx, field)
+	case "clockStartBasis":
+		return ec.fieldContext_DetentionPolicy_clockStartBasis(ctx, field)
+	case "lateArrivalRule":
+		return ec.fieldContext_DetentionPolicy_lateArrivalRule(ctx, field)
+	case "lateArrivalGraceMinutes":
+		return ec.fieldContext_DetentionPolicy_lateArrivalGraceMinutes(ctx, field)
+	case "billingFreeMinutes":
+		return ec.fieldContext_DetentionPolicy_billingFreeMinutes(ctx, field)
+	case "pickupFreeMinutes":
+		return ec.fieldContext_DetentionPolicy_pickupFreeMinutes(ctx, field)
+	case "deliveryFreeMinutes":
+		return ec.fieldContext_DetentionPolicy_deliveryFreeMinutes(ctx, field)
+	case "payFreeMinutes":
+		return ec.fieldContext_DetentionPolicy_payFreeMinutes(ctx, field)
+	case "minimumBillableMinutes":
+		return ec.fieldContext_DetentionPolicy_minimumBillableMinutes(ctx, field)
+	case "billingIncrementMinutes":
+		return ec.fieldContext_DetentionPolicy_billingIncrementMinutes(ctx, field)
+	case "roundingMode":
+		return ec.fieldContext_DetentionPolicy_roundingMode(ctx, field)
+	case "rateSource":
+		return ec.fieldContext_DetentionPolicy_rateSource(ctx, field)
+	case "accessorialChargeId":
+		return ec.fieldContext_DetentionPolicy_accessorialChargeId(ctx, field)
+	case "tiers":
+		return ec.fieldContext_DetentionPolicy_tiers(ctx, field)
+	case "maxBillableMinutesPerStop":
+		return ec.fieldContext_DetentionPolicy_maxBillableMinutesPerStop(ctx, field)
+	case "maxChargePerStop":
+		return ec.fieldContext_DetentionPolicy_maxChargePerStop(ctx, field)
+	case "maxChargePerDay":
+		return ec.fieldContext_DetentionPolicy_maxChargePerDay(ctx, field)
+	case "maxChargePerShipment":
+		return ec.fieldContext_DetentionPolicy_maxChargePerShipment(ctx, field)
+	case "dayBoundaryMode":
+		return ec.fieldContext_DetentionPolicy_dayBoundaryMode(ctx, field)
+	case "convertToLayoverAtMinutes":
+		return ec.fieldContext_DetentionPolicy_convertToLayoverAtMinutes(ctx, field)
+	case "layoverAccessorialChargeId":
+		return ec.fieldContext_DetentionPolicy_layoverAccessorialChargeId(ctx, field)
+	case "notificationRequirement":
+		return ec.fieldContext_DetentionPolicy_notificationRequirement(ctx, field)
+	case "notificationLeadMinutes":
+		return ec.fieldContext_DetentionPolicy_notificationLeadMinutes(ctx, field)
+	case "notificationDeadlineMinutes":
+		return ec.fieldContext_DetentionPolicy_notificationDeadlineMinutes(ctx, field)
+	case "unnotifiedBehavior":
+		return ec.fieldContext_DetentionPolicy_unnotifiedBehavior(ctx, field)
+	case "autoSendNotice":
+		return ec.fieldContext_DetentionPolicy_autoSendNotice(ctx, field)
+	case "sendDepartureSummary":
+		return ec.fieldContext_DetentionPolicy_sendDepartureSummary(ctx, field)
+	case "requireApprovalOverAmount":
+		return ec.fieldContext_DetentionPolicy_requireApprovalOverAmount(ctx, field)
+	case "autoApproveUnderAmount":
+		return ec.fieldContext_DetentionPolicy_autoApproveUnderAmount(ctx, field)
+	case "currency":
+		return ec.fieldContext_DetentionPolicy_currency(ctx, field)
+	case "comments":
+		return ec.fieldContext_DetentionPolicy_comments(ctx, field)
+	case "version":
+		return ec.fieldContext_DetentionPolicy_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DetentionPolicy_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_DetentionPolicy_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionPolicy", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionPolicyConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_DetentionPolicyConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_DetentionPolicyConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_DetentionPolicyConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionPolicyConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionPolicyEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_DetentionPolicyEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_DetentionPolicyEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionPolicyEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionPolicyTier(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DetentionPolicyTier_id(ctx, field)
+	case "fromMinute":
+		return ec.fieldContext_DetentionPolicyTier_fromMinute(ctx, field)
+	case "toMinute":
+		return ec.fieldContext_DetentionPolicyTier_toMinute(ctx, field)
+	case "rate":
+		return ec.fieldContext_DetentionPolicyTier_rate(ctx, field)
+	case "rateUnit":
+		return ec.fieldContext_DetentionPolicyTier_rateUnit(ctx, field)
+	case "label":
+		return ec.fieldContext_DetentionPolicyTier_label(ctx, field)
+	case "sortOrder":
+		return ec.fieldContext_DetentionPolicyTier_sortOrder(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionPolicyTier", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionPreviewResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "policySnapshot":
+		return ec.fieldContext_DetentionPreviewResult_policySnapshot(ctx, field)
+	case "rawDwellMinutes":
+		return ec.fieldContext_DetentionPreviewResult_rawDwellMinutes(ctx, field)
+	case "freeMinutesGranted":
+		return ec.fieldContext_DetentionPreviewResult_freeMinutesGranted(ctx, field)
+	case "billableMinutes":
+		return ec.fieldContext_DetentionPreviewResult_billableMinutes(ctx, field)
+	case "roundedMinutes":
+		return ec.fieldContext_DetentionPreviewResult_roundedMinutes(ctx, field)
+	case "billableAmount":
+		return ec.fieldContext_DetentionPreviewResult_billableAmount(ctx, field)
+	case "grossAmount":
+		return ec.fieldContext_DetentionPreviewResult_grossAmount(ctx, field)
+	case "driverPayAmount":
+		return ec.fieldContext_DetentionPreviewResult_driverPayAmount(ctx, field)
+	case "netMargin":
+		return ec.fieldContext_DetentionPreviewResult_netMargin(ctx, field)
+	case "arrivedLate":
+		return ec.fieldContext_DetentionPreviewResult_arrivedLate(ctx, field)
+	case "capApplied":
+		return ec.fieldContext_DetentionPreviewResult_capApplied(ctx, field)
+	case "status":
+		return ec.fieldContext_DetentionPreviewResult_status(ctx, field)
+	case "notificationStatus":
+		return ec.fieldContext_DetentionPreviewResult_notificationStatus(ctx, field)
+	case "suppressedByGate":
+		return ec.fieldContext_DetentionPreviewResult_suppressedByGate(ctx, field)
+	case "calculationTrace":
+		return ec.fieldContext_DetentionPreviewResult_calculationTrace(ctx, field)
+	case "receipt":
+		return ec.fieldContext_DetentionPreviewResult_receipt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionPreviewResult", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionScoreFactor(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_DetentionScoreFactor_key(ctx, field)
+	case "label":
+		return ec.fieldContext_DetentionScoreFactor_label(ctx, field)
+	case "earned":
+		return ec.fieldContext_DetentionScoreFactor_earned(ctx, field)
+	case "possible":
+		return ec.fieldContext_DetentionScoreFactor_possible(ctx, field)
+	case "detail":
+		return ec.fieldContext_DetentionScoreFactor_detail(ctx, field)
+	case "remedy":
+		return ec.fieldContext_DetentionScoreFactor_remedy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionScoreFactor", field.Name)
+}
+
+func (ec *executionContext) childFields_DetentionWaiverLeakageStat(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "reason":
+		return ec.fieldContext_DetentionWaiverLeakageStat_reason(ctx, field)
+	case "waiverCount":
+		return ec.fieldContext_DetentionWaiverLeakageStat_waiverCount(ctx, field)
+	case "approverCount":
+		return ec.fieldContext_DetentionWaiverLeakageStat_approverCount(ctx, field)
+	case "waivedAmount":
+		return ec.fieldContext_DetentionWaiverLeakageStat_waivedAmount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DetentionWaiverLeakageStat", field.Name)
 }
 
 func (ec *executionContext) childFields_DispatchAssignResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -47506,6 +50773,38 @@ func (ec *executionContext) childFields_EscrowTransaction(ctx context.Context, f
 		return ec.fieldContext_EscrowTransaction_createdAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type EscrowTransaction", field.Name)
+}
+
+func (ec *executionContext) childFields_FacilityDetentionStat(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "locationId":
+		return ec.fieldContext_FacilityDetentionStat_locationId(ctx, field)
+	case "locationName":
+		return ec.fieldContext_FacilityDetentionStat_locationName(ctx, field)
+	case "stopCount":
+		return ec.fieldContext_FacilityDetentionStat_stopCount(ctx, field)
+	case "breachCount":
+		return ec.fieldContext_FacilityDetentionStat_breachCount(ctx, field)
+	case "avgDwellMinutes":
+		return ec.fieldContext_FacilityDetentionStat_avgDwellMinutes(ctx, field)
+	case "medianDwellMinutes":
+		return ec.fieldContext_FacilityDetentionStat_medianDwellMinutes(ctx, field)
+	case "p90DwellMinutes":
+		return ec.fieldContext_FacilityDetentionStat_p90DwellMinutes(ctx, field)
+	case "billedAmount":
+		return ec.fieldContext_FacilityDetentionStat_billedAmount(ctx, field)
+	case "driverPayAmount":
+		return ec.fieldContext_FacilityDetentionStat_driverPayAmount(ctx, field)
+	case "netMargin":
+		return ec.fieldContext_FacilityDetentionStat_netMargin(ctx, field)
+	case "waivedAmount":
+		return ec.fieldContext_FacilityDetentionStat_waivedAmount(ctx, field)
+	case "disputeCount":
+		return ec.fieldContext_FacilityDetentionStat_disputeCount(ctx, field)
+	case "suppressedCount":
+		return ec.fieldContext_FacilityDetentionStat_suppressedCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FacilityDetentionStat", field.Name)
 }
 
 func (ec *executionContext) childFields_FiscalPeriod(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -54312,6 +57611,20 @@ func (ec *executionContext) field_Mutation_applyUnappliedCustomerPayment_args(ct
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_approveDetentionOccurrence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "occurrenceId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["occurrenceId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_approveDriverSettlement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -54680,6 +57993,20 @@ func (ec *executionContext) field_Mutation_closeOrder_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createDetentionPolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionPolicyInput, error) {
+			return ec.unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createEquipmentManufacturer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -55032,6 +58359,20 @@ func (ec *executionContext) field_Mutation_decideAgentProposal_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteDetentionPolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteFuelIndexPrice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -55230,6 +58571,20 @@ func (ec *executionContext) field_Mutation_detachPayEventFromSettlement_args(ctx
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_detentionBacktest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionBacktestInput, error) {
+			return ec.unmarshalNDetentionBacktestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_dismissMyNotifications_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -55297,6 +58652,20 @@ func (ec *executionContext) field_Mutation_dispatchUnassignMoves_args(ctx contex
 		return nil, err
 	}
 	args["moveIds"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_disputeDetentionOccurrence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionDisputeInput, error) {
+			return ec.unmarshalNDetentionDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDisputeInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -55994,6 +59363,20 @@ func (ec *executionContext) field_Mutation_saveTelematicsFormMapping_args(ctx co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_sendDetentionNotice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "occurrenceId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["occurrenceId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_setDefaultTableConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -56197,6 +59580,28 @@ func (ec *executionContext) field_Mutation_updateDashControl_args(ctx context.Co
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDetentionPolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionPolicyInput, error) {
+			return ec.unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -56680,6 +60085,20 @@ func (ec *executionContext) field_Mutation_voidDriverSettlement_args(ctx context
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DriverSettlementActionInput, error) {
 			return ec.unmarshalNDriverSettlementActionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDriverSettlementActionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_waiveDetentionOccurrence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionWaiveInput, error) {
+			return ec.unmarshalNDetentionWaiveInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiveInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -57257,6 +60676,126 @@ func (ec *executionContext) field_Query_defaultTableConfiguration_args(ctx conte
 		return nil, err
 	}
 	args["resource"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionCustomerStats_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionStatsInput, error) {
+			return ec.unmarshalNDetentionStatsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStatsInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionDisputePacket_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "occurrenceId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["occurrenceId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionFacilityStats_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionStatsInput, error) {
+			return ec.unmarshalNDetentionStatsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStatsInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionOccurrence_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionPolicies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionPolicyPreview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "policy",
+		func(ctx context.Context, v any) (gqlmodel.DetentionPolicyInput, error) {
+			return ec.unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["policy"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "scenario",
+		func(ctx context.Context, v any) (gqlmodel.DetentionPreviewScenarioInput, error) {
+			return ec.unmarshalNDetentionPreviewScenarioInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewScenarioInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["scenario"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionPolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_detentionWaiverStats_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DetentionStatsInput, error) {
+			return ec.unmarshalNDetentionStatsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStatsInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -59473,6 +63012,20 @@ func (ec *executionContext) field_Query_shipmentComments_args(ctx context.Contex
 		return nil, err
 	}
 	args["after"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_shipmentDetention_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
 	return args, nil
 }
 
@@ -73383,6 +76936,236 @@ func (ec *executionContext) fieldContext_CustomerConnection_totalCount(_ context
 	return graphql.NewScalarFieldContext("CustomerConnection", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _CustomerDetentionStat_customerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_customerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_customerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_customerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_stopCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_stopCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_stopCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_breachCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_breachCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BreachCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_breachCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_billedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_billedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BilledAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_billedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_driverPayAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_driverPayAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverPayAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_driverPayAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_netMargin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_netMargin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NetMargin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_netMargin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_waivedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_waivedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaivedAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_waivedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_disputeCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_disputeCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisputeCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_disputeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerDetentionStat_suppressedCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerDetentionStat_suppressedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuppressedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerDetentionStat_suppressedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _CustomerEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -75330,6 +79113,5486 @@ func (ec *executionContext) _DashControl_updatedAt(ctx context.Context, field gr
 }
 func (ec *executionContext) fieldContext_DashControl_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DashControl", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_stopCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_stopCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_stopCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_billableCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_billableCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillableCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_billableCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_proposedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_proposedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProposedAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_proposedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_baselineAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_baselineAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BaselineAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_baselineAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_delta(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_delta(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Delta, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_delta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_driverPayAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_driverPayAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverPayAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_driverPayAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestBucket_netMargin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestBucket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestBucket_netMargin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NetMargin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestBucket_netMargin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestBucket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_stopsEvaluated(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_stopsEvaluated(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopsEvaluated, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_stopsEvaluated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_stopsMatched(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_stopsMatched(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopsMatched, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_stopsMatched(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_stopsBillable(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_stopsBillable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopsBillable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_stopsBillable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_stopsForfeited(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_stopsForfeited(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopsForfeited, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_stopsForfeited(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_stopsSuppressed(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_stopsSuppressed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopsSuppressed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_stopsSuppressed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_proposedRevenue(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_proposedRevenue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProposedRevenue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_proposedRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_baselineRevenue(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_baselineRevenue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BaselineRevenue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_baselineRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_revenueDelta(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_revenueDelta(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RevenueDelta, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_revenueDelta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_proposedDriverPay(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_proposedDriverPay(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProposedDriverPay, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_proposedDriverPay(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_proposedNetMargin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_proposedNetMargin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProposedNetMargin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_proposedNetMargin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_negativeMarginStops(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_negativeMarginStops(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NegativeMarginStops, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_negativeMarginStops(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_byCustomer(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_byCustomer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ByCustomer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionBacktestBucket) graphql.Marshaler {
+			return ec.marshalNDetentionBacktestBucket2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestBucketᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_byCustomer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionBacktestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionBacktestBucket(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionBacktestResult_byFacility(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_byFacility(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ByFacility, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionBacktestBucket) graphql.Marshaler {
+			return ec.marshalNDetentionBacktestBucket2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestBucketᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_byFacility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionBacktestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionBacktestBucket(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionBacktestResult_from(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_from(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.From, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_from(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_to(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_to(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.To, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_to(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionBacktestResult_truncated(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionBacktestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionBacktestResult_truncated(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Truncated, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionBacktestResult_truncated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionBacktestResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionCollectability_score(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionCollectability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionCollectability_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionCollectability_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionCollectability", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionCollectability_band(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionCollectability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionCollectability_band(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Band, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.ScoreBand) graphql.Marshaler {
+			return ec.marshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐScoreBand(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionCollectability_band(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionCollectability", field, false, false, errors.New("field of type DetentionScoreBand does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionCollectability_factors(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionCollectability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionCollectability_factors(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Factors, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionScoreFactor) graphql.Marshaler {
+			return ec.marshalNDetentionScoreFactor2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionScoreFactorᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionCollectability_factors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionCollectability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionScoreFactor(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionCollectability_chainValid(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionCollectability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionCollectability_chainValid(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChainValid, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionCollectability_chainValid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionCollectability", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionCollectability_summary(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionCollectability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionCollectability_summary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Summary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionCollectability_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionCollectability", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDeskEntry_occurrence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDeskEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDeskEntry_occurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Occurrence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDeskEntry_occurrence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionDeskEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionDeskEntry_minutesUntilFreeEnds(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDeskEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDeskEntry_minutesUntilFreeEnds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinutesUntilFreeEnds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDeskEntry_minutesUntilFreeEnds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDeskEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDeskEntry_minutesUntilNoticeDue(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDeskEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDeskEntry_minutesUntilNoticeDue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinutesUntilNoticeDue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDeskEntry_minutesUntilNoticeDue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDeskEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDeskEntry_noticeWindowOpen(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDeskEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDeskEntry_noticeWindowOpen(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NoticeWindowOpen, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDeskEntry_noticeWindowOpen(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDeskEntry", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDeskEntry_amountAtRisk(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDeskEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDeskEntry_amountAtRisk(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AmountAtRisk, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDeskEntry_amountAtRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDeskEntry", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDeskEntry_urgency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDeskEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDeskEntry_urgency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Urgency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.DetentionDeskUrgency) graphql.Marshaler {
+			return ec.marshalNDetentionDeskUrgency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskUrgency(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDeskEntry_urgency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDeskEntry", field, false, false, errors.New("field of type DetentionDeskUrgency does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDisputePacket_occurrence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_occurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Occurrence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_occurrence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionDisputePacket",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionDisputePacket_policySnapshot(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_policySnapshot(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PolicySnapshot, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_policySnapshot(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDisputePacket", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDisputePacket_receipt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_receipt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Receipt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_receipt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDisputePacket", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionDisputePacket_evidence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_evidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Evidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionEvidence) graphql.Marshaler {
+			return ec.marshalODetentionEvidence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionEvidenceᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_evidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionDisputePacket",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionEvidence(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionDisputePacket_notices(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_notices(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notices, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionNotice) graphql.Marshaler {
+			return ec.marshalODetentionNotice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNoticeᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_notices(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionDisputePacket",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionNotice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionDisputePacket_collectability(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_collectability(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Collectability, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionCollectability) graphql.Marshaler {
+			return ec.marshalNDetentionCollectability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCollectability(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_collectability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionDisputePacket",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionCollectability(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionDisputePacket_generatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_generatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GeneratedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_generatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDisputePacket", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_detentionOccurrenceId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_detentionOccurrenceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DetentionOccurrenceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_detentionOccurrenceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_sequence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_sequence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sequence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_sequence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_kind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.EvidenceKind) graphql.Marshaler {
+			return ec.marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type DetentionEvidenceKind does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_source(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.EvidenceSource) graphql.Marshaler {
+			return ec.marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type DetentionEvidenceSource does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_summary(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_summary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Summary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_observedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_observedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObservedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_observedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_recordedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_recordedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RecordedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_recordedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_recordedById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_recordedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RecordedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_recordedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_documentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_documentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_documentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_payload(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_payload(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Payload, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_payload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_prevHash(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_prevHash(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PrevHash, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_prevHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_hash(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_hash(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Hash, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_hash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionEvidence_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionEvidence_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionEvidence_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_detentionOccurrenceId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_detentionOccurrenceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DetentionOccurrenceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_detentionOccurrenceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_threadKey(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_threadKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ThreadKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_threadKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_kind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.NoticeKind) graphql.Marshaler {
+			return ec.marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type DetentionNoticeKind does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_channel(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_channel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Channel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.NoticeChannel) graphql.Marshaler {
+			return ec.marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeChannel(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_channel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type DetentionNoticeChannel does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_deliveryStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_deliveryStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.NoticeDeliveryStatus) graphql.Marshaler {
+			return ec.marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeDeliveryStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_deliveryStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type DetentionNoticeDeliveryStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_recipients(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_recipients(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Recipients, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalOString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_recipients(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_subject(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_subject(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Subject, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_subject(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_body(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_scheduledFor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_scheduledFor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ScheduledFor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_scheduledFor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_sentAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_sentAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SentAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_sentAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_deliveredAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_deliveredAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveredAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_deliveredAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_openedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_openedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_openedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_failedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_failedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FailedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_failedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_failureReason(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_failureReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FailureReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_failureReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_sentById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_sentById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SentByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_sentById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_wasAutomatic(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_wasAutomatic(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WasAutomatic, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_wasAutomatic(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_satisfiesRequirement(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_satisfiesRequirement(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SatisfiesRequirement, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_satisfiesRequirement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_quotedFreeMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_quotedFreeMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.QuotedFreeMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_quotedFreeMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_quotedRate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_quotedRate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.QuotedRate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_quotedRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_quotedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_quotedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.QuotedAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_quotedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionNotice_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionNotice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionNotice_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionNotice_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionNotice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_organizationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_shipmentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_shipmentMoveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_shipmentMoveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentMoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_shipmentMoveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_stopId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_stopId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_stopId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_customerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_locationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_locationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_locationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_detentionPolicyId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_detentionPolicyId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DetentionPolicyID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_detentionPolicyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_policySnapshot(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_policySnapshot(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PolicySnapshot, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_policySnapshot(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_calculationTrace(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_calculationTrace(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CalculationTrace, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_calculationTrace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_stopType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_stopType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_stopType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_scheduleType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_scheduleType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ScheduleType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_scheduleType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_appointmentStart(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_appointmentStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppointmentStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_appointmentStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_appointmentEnd(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_appointmentEnd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppointmentEnd, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_appointmentEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_arrivedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_arrivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArrivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_arrivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_departedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_departedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DepartedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_departedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_clockStartAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_clockStartAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ClockStartAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_clockStartAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_clockStopAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_clockStopAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ClockStopAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_clockStopAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_freeTimeExpiresAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_freeTimeExpiresAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreeTimeExpiresAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_freeTimeExpiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_noticeDueAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_noticeDueAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NoticeDueAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_noticeDueAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_noticeDeadlineAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_noticeDeadlineAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NoticeDeadlineAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_noticeDeadlineAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_isOpen(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_isOpen(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsOpen, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_isOpen(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_arrivedLate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_arrivedLate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArrivedLate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_arrivedLate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_lateByMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_lateByMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LateByMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_lateByMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_freeMinutesGranted(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_freeMinutesGranted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreeMinutesGranted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_freeMinutesGranted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_rawDwellMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_rawDwellMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RawDwellMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_rawDwellMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_billableMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_billableMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillableMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_billableMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_roundedMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_roundedMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoundedMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_roundedMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_billableUnits(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_billableUnits(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillableUnits, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_billableUnits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_grossAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_grossAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GrossAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_grossAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_billableAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_billableAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillableAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_billableAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_driverPayMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_driverPayMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverPayMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_driverPayMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_driverPayAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_driverPayAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverPayAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_driverPayAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_netMargin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_netMargin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NetMargin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_netMargin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_capApplied(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_capApplied(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CapApplied, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.CapKind) graphql.Marshaler {
+			return ec.marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_capApplied(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type DetentionCapKind does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_convertedToLayover(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_convertedToLayover(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConvertedToLayover, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_convertedToLayover(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_currency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_currency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Currency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.OccurrenceStatus) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type DetentionOccurrenceStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_notificationStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_notificationStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NotificationStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.NotificationStatus) graphql.Marshaler {
+			return ec.marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_notificationStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type DetentionNotificationStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_noticeSentAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_noticeSentAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NoticeSentAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_noticeSentAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_suppressedByGate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_suppressedByGate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuppressedByGate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_suppressedByGate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_requiresApproval(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_requiresApproval(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresApproval, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_requiresApproval(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_waiverReason(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_waiverReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaiverReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *detention.WaiverReason) graphql.Marshaler {
+			return ec.marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_waiverReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type DetentionWaiverReason does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_waiverNote(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_waiverNote(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaiverNote, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_waiverNote(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_waivedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_waivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_waivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_waivedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_waivedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaivedAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_waivedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_disputeNote(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_disputeNote(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisputeNote, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_disputeNote(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_disputedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_disputedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisputedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_disputedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_collectabilityScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_collectabilityScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CollectabilityScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_collectabilityScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_evidenceHead(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_evidenceHead(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EvidenceHead, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_evidenceHead(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_additionalChargeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_additionalChargeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AdditionalChargeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_additionalChargeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_locationName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_locationName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_locationName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_customerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_customerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_customerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_shipmentProNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_shipmentProNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_shipmentProNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrence_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrence_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrence_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionOccurrenceDetail_occurrence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrenceDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrenceDetail_occurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Occurrence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrenceDetail_occurrence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionOccurrenceDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionOccurrenceDetail_evidence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrenceDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrenceDetail_evidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Evidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionEvidence) graphql.Marshaler {
+			return ec.marshalODetentionEvidence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionEvidenceᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrenceDetail_evidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionOccurrenceDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionEvidence(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionOccurrenceDetail_notices(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrenceDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrenceDetail_notices(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notices, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionNotice) graphql.Marshaler {
+			return ec.marshalODetentionNotice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNoticeᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrenceDetail_notices(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionOccurrenceDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionNotice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionOccurrenceDetail_collectability(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrenceDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrenceDetail_collectability(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Collectability, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionCollectability) graphql.Marshaler {
+			return ec.marshalNDetentionCollectability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCollectability(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrenceDetail_collectability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionOccurrenceDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionCollectability(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionOccurrenceDetail_receipt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionOccurrenceDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionOccurrenceDetail_receipt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Receipt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionOccurrenceDetail_receipt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionOccurrenceDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_organizationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_code(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.PolicyStatus) graphql.Marshaler {
+			return ec.marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionPolicyStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_isOrgDefault(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_isOrgDefault(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsOrgDefault, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_isOrgDefault(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_priority(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_priority(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Priority, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_priority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_specificityScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_specificityScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SpecificityScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_specificityScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_customerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_locationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_locationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_locationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_shipmentTypeIds(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_shipmentTypeIds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentTypeIds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalOID2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_shipmentTypeIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_serviceTypeIds(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_serviceTypeIds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ServiceTypeIds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalOID2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_serviceTypeIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_commodityIds(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_commodityIds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CommodityIds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalOID2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_commodityIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_stopTypes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_stopTypes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopTypes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []gqlmodel.StopType) graphql.Marshaler {
+			return ec.marshalOStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_stopTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type StopType does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_appointmentStopsOnly(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_appointmentStopsOnly(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppointmentStopsOnly, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_appointmentStopsOnly(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_effectiveStartDate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_effectiveStartDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveStartDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_effectiveStartDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_effectiveEndDate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_effectiveEndDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveEndDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_effectiveEndDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_clockStartBasis(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_clockStartBasis(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ClockStartBasis, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.ClockStartBasis) graphql.Marshaler {
+			return ec.marshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_clockStartBasis(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionClockStartBasis does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_lateArrivalRule(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_lateArrivalRule(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LateArrivalRule, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.LateArrivalRule) graphql.Marshaler {
+			return ec.marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_lateArrivalRule(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionLateArrivalRule does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_lateArrivalGraceMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_lateArrivalGraceMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LateArrivalGraceMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_lateArrivalGraceMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_billingFreeMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_billingFreeMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingFreeMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_billingFreeMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_pickupFreeMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_pickupFreeMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PickupFreeMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_pickupFreeMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_deliveryFreeMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_deliveryFreeMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryFreeMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_deliveryFreeMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_payFreeMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_payFreeMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PayFreeMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_payFreeMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_minimumBillableMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_minimumBillableMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinimumBillableMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_minimumBillableMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_billingIncrementMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_billingIncrementMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingIncrementMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_billingIncrementMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_roundingMode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_roundingMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoundingMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.RoundingMode) graphql.Marshaler {
+			return ec.marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_roundingMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionRoundingMode does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_rateSource(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_rateSource(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateSource, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.RateSource) graphql.Marshaler {
+			return ec.marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_rateSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionRateSource does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_accessorialChargeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_accessorialChargeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AccessorialChargeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_accessorialChargeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_tiers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_tiers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tiers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionPolicyTier) graphql.Marshaler {
+			return ec.marshalODetentionPolicyTier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTierᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_tiers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionPolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicyTier(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionPolicy_maxBillableMinutesPerStop(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_maxBillableMinutesPerStop(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxBillableMinutesPerStop, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_maxBillableMinutesPerStop(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_maxChargePerStop(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_maxChargePerStop(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxChargePerStop, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_maxChargePerStop(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_maxChargePerDay(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_maxChargePerDay(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxChargePerDay, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_maxChargePerDay(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_maxChargePerShipment(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_maxChargePerShipment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxChargePerShipment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_maxChargePerShipment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_dayBoundaryMode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_dayBoundaryMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DayBoundaryMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.CapScope) graphql.Marshaler {
+			return ec.marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_dayBoundaryMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionCapScope does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_convertToLayoverAtMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_convertToLayoverAtMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConvertToLayoverAtMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_convertToLayoverAtMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_layoverAccessorialChargeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_layoverAccessorialChargeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LayoverAccessorialChargeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_layoverAccessorialChargeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_notificationRequirement(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_notificationRequirement(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NotificationRequirement, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.NotificationRequirement) graphql.Marshaler {
+			return ec.marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_notificationRequirement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionNotificationRequirement does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_notificationLeadMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_notificationLeadMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NotificationLeadMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_notificationLeadMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_notificationDeadlineMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_notificationDeadlineMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NotificationDeadlineMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_notificationDeadlineMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_unnotifiedBehavior(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_unnotifiedBehavior(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnnotifiedBehavior, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.UnnotifiedBehavior) graphql.Marshaler {
+			return ec.marshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_unnotifiedBehavior(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type DetentionUnnotifiedBehavior does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_autoSendNotice(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_autoSendNotice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutoSendNotice, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_autoSendNotice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_sendDepartureSummary(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_sendDepartureSummary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SendDepartureSummary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_sendDepartureSummary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_requireApprovalOverAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_requireApprovalOverAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequireApprovalOverAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_requireApprovalOverAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_autoApproveUnderAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_autoApproveUnderAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutoApproveUnderAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_autoApproveUnderAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_currency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_currency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Currency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_comments(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_comments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Comments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionPolicyEdge) graphql.Marshaler {
+			return ec.marshalNDetentionPolicyEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionPolicyConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicyEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionPolicyConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionPolicyConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionPolicyConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionPolicy) graphql.Marshaler {
+			return ec.marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DetentionPolicyEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicy(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DetentionPolicyEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_fromMinute(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_fromMinute(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FromMinute, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_fromMinute(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_toMinute(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_toMinute(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ToMinute, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_toMinute(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_rate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_rate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Rate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_rate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_rateUnit(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_rateUnit(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateUnit, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.TierRateUnit) graphql.Marshaler {
+			return ec.marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_rateUnit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type DetentionTierRateUnit does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicyTier_sortOrder(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicyTier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicyTier_sortOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SortOrder, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicyTier_sortOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicyTier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_policySnapshot(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_policySnapshot(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PolicySnapshot, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalNJSON2map(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_policySnapshot(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_rawDwellMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_rawDwellMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RawDwellMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_rawDwellMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_freeMinutesGranted(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_freeMinutesGranted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreeMinutesGranted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_freeMinutesGranted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_billableMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_billableMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillableMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_billableMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_roundedMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_roundedMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoundedMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_roundedMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_billableAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_billableAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillableAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_billableAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_grossAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_grossAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GrossAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_grossAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_driverPayAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_driverPayAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverPayAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_driverPayAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_netMargin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_netMargin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NetMargin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_netMargin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_arrivedLate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_arrivedLate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArrivedLate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_arrivedLate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_capApplied(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_capApplied(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CapApplied, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.CapKind) graphql.Marshaler {
+			return ec.marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_capApplied(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type DetentionCapKind does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.OccurrenceStatus) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type DetentionOccurrenceStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_notificationStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_notificationStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NotificationStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v detention.NotificationStatus) graphql.Marshaler {
+			return ec.marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_notificationStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type DetentionNotificationStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_suppressedByGate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_suppressedByGate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuppressedByGate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_suppressedByGate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_calculationTrace(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_calculationTrace(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CalculationTrace, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_calculationTrace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPreviewResult_receipt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPreviewResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPreviewResult_receipt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Receipt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPreviewResult_receipt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPreviewResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionScoreFactor_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionScoreFactor_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionScoreFactor_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionScoreFactor_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionScoreFactor_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionScoreFactor_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionScoreFactor_earned(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionScoreFactor_earned(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Earned, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionScoreFactor_earned(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionScoreFactor", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionScoreFactor_possible(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionScoreFactor_possible(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Possible, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionScoreFactor_possible(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionScoreFactor", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionScoreFactor_detail(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionScoreFactor_detail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Detail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionScoreFactor_detail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionScoreFactor_remedy(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionScoreFactor_remedy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Remedy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionScoreFactor_remedy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionWaiverLeakageStat_reason(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionWaiverLeakageStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionWaiverLeakageStat_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionWaiverLeakageStat_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionWaiverLeakageStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionWaiverLeakageStat_waiverCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionWaiverLeakageStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionWaiverLeakageStat_waiverCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaiverCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionWaiverLeakageStat_waiverCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionWaiverLeakageStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionWaiverLeakageStat_approverCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionWaiverLeakageStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionWaiverLeakageStat_approverCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ApproverCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionWaiverLeakageStat_approverCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionWaiverLeakageStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionWaiverLeakageStat_waivedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionWaiverLeakageStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionWaiverLeakageStat_waivedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaivedAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionWaiverLeakageStat_waivedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionWaiverLeakageStat", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _DispatchAssignResult_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignResult) (ret graphql.Marshaler) {
@@ -94867,6 +104130,305 @@ func (ec *executionContext) fieldContext_EscrowTransaction_createdAt(_ context.C
 	return graphql.NewScalarFieldContext("EscrowTransaction", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _FacilityDetentionStat_locationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_locationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_locationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_locationName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_locationName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_locationName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_stopCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_stopCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StopCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_stopCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_breachCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_breachCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BreachCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_breachCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_avgDwellMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_avgDwellMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AvgDwellMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_avgDwellMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_medianDwellMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_medianDwellMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MedianDwellMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_medianDwellMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_p90DwellMinutes(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_p90DwellMinutes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.P90DwellMinutes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_p90DwellMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_billedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_billedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BilledAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_billedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_driverPayAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_driverPayAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverPayAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_driverPayAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_netMargin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_netMargin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.NetMargin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_netMargin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_waivedAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_waivedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WaivedAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_waivedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_disputeCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_disputeCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisputeCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_disputeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _FacilityDetentionStat_suppressedCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.FacilityDetentionStat) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FacilityDetentionStat_suppressedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuppressedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FacilityDetentionStat_suppressedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FacilityDetentionStat", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _FiscalPeriod_id(ctx context.Context, field graphql.CollectedField, obj *fiscalperiod.FiscalPeriod) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -109314,6 +118876,358 @@ func (ec *executionContext) fieldContext_Mutation_reverseCustomerPayment(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_reverseCustomerPayment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createDetentionPolicy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createDetentionPolicy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateDetentionPolicy(ctx, fc.Args["input"].(gqlmodel.DetentionPolicyInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionPolicy) graphql.Marshaler {
+			return ec.marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createDetentionPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicy(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createDetentionPolicy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateDetentionPolicy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateDetentionPolicy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateDetentionPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DetentionPolicyInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionPolicy) graphql.Marshaler {
+			return ec.marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateDetentionPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicy(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDetentionPolicy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDetentionPolicy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteDetentionPolicy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteDetentionPolicy(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteDetentionPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDetentionPolicy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_detentionBacktest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_detentionBacktest(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DetentionBacktest(ctx, fc.Args["input"].(gqlmodel.DetentionBacktestInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionBacktestResult) graphql.Marshaler {
+			return ec.marshalNDetentionBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_detentionBacktest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionBacktestResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_detentionBacktest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_waiveDetentionOccurrence(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_waiveDetentionOccurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().WaiveDetentionOccurrence(ctx, fc.Args["input"].(gqlmodel.DetentionWaiveInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_waiveDetentionOccurrence(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_waiveDetentionOccurrence_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_approveDetentionOccurrence(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_approveDetentionOccurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ApproveDetentionOccurrence(ctx, fc.Args["occurrenceId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_approveDetentionOccurrence(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_approveDetentionOccurrence_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_disputeDetentionOccurrence(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_disputeDetentionOccurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DisputeDetentionOccurrence(ctx, fc.Args["input"].(gqlmodel.DetentionDisputeInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_disputeDetentionOccurrence(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_disputeDetentionOccurrence_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_sendDetentionNotice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_sendDetentionNotice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SendDetentionNotice(ctx, fc.Args["occurrenceId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_sendDetentionNotice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendDetentionNotice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -124746,6 +134660,434 @@ func (ec *executionContext) fieldContext_Query_customerPayment(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_customerPayment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionPolicies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionPolicies(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionPolicies(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionPolicyConnection) graphql.Marshaler {
+			return ec.marshalNDetentionPolicyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionPolicies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicyConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionPolicies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionPolicy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionPolicy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionPolicy(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionPolicy) graphql.Marshaler {
+			return ec.marshalODetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPolicy(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionPolicy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionDesk(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionDesk(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().DetentionDesk(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionDeskEntry) graphql.Marshaler {
+			return ec.marshalNDetentionDeskEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionDesk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionDeskEntry(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionOccurrence(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionOccurrence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionOccurrence(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionOccurrenceDetail) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrenceDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceDetail(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionOccurrence(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrenceDetail(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionOccurrence_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_shipmentDetention(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_shipmentDetention(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ShipmentDetention(ctx, fc.Args["shipmentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionOccurrence) graphql.Marshaler {
+			return ec.marshalNDetentionOccurrence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_shipmentDetention(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionOccurrence(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_shipmentDetention_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionDisputePacket(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionDisputePacket(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionDisputePacket(ctx, fc.Args["occurrenceId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionDisputePacket) graphql.Marshaler {
+			return ec.marshalNDetentionDisputePacket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDisputePacket(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionDisputePacket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionDisputePacket(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionDisputePacket_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionFacilityStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionFacilityStats(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionFacilityStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.FacilityDetentionStat) graphql.Marshaler {
+			return ec.marshalNFacilityDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStatᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionFacilityStats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FacilityDetentionStat(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionFacilityStats_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionCustomerStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionCustomerStats(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionCustomerStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.CustomerDetentionStat) graphql.Marshaler {
+			return ec.marshalNCustomerDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStatᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionCustomerStats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CustomerDetentionStat(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionCustomerStats_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionWaiverStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionWaiverStats(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionWaiverStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionWaiverLeakageStat) graphql.Marshaler {
+			return ec.marshalNDetentionWaiverLeakageStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStatᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionWaiverStats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionWaiverLeakageStat(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionWaiverStats_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_detentionPolicyPreview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_detentionPolicyPreview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DetentionPolicyPreview(ctx, fc.Args["policy"].(gqlmodel.DetentionPolicyInput), fc.Args["scenario"].(gqlmodel.DetentionPreviewScenarioInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DetentionPreviewResult) graphql.Marshaler {
+			return ec.marshalNDetentionPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_detentionPolicyPreview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DetentionPreviewResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_detentionPolicyPreview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -174148,6 +184490,750 @@ func (ec *executionContext) unmarshalInputDetachPayEventInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDetentionBacktestInput(ctx context.Context, obj any) (gqlmodel.DetentionBacktestInput, error) {
+	var it gqlmodel.DetentionBacktestInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"policy", "from", "to", "limit", "driverPayRate", "assumeNoticeCompliance"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "policy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policy"))
+			data, err := ec.unmarshalNDetentionPolicyInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Policy = data
+		case "from":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.From = data
+		case "to":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.To = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		case "driverPayRate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverPayRate"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DriverPayRate = data
+		case "assumeNoticeCompliance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assumeNoticeCompliance"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssumeNoticeCompliance = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDetentionDisputeInput(ctx context.Context, obj any) (gqlmodel.DetentionDisputeInput, error) {
+	var it gqlmodel.DetentionDisputeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"occurrenceId", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "occurrenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("occurrenceId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OccurrenceID = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDetentionPolicyInput(ctx context.Context, obj any) (gqlmodel.DetentionPolicyInput, error) {
+	var it gqlmodel.DetentionPolicyInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["status"]; !present {
+		asMap["status"] = "Draft"
+	}
+	if _, present := asMap["isOrgDefault"]; !present {
+		asMap["isOrgDefault"] = false
+	}
+	if _, present := asMap["priority"]; !present {
+		asMap["priority"] = 0
+	}
+	if _, present := asMap["appointmentStopsOnly"]; !present {
+		asMap["appointmentStopsOnly"] = false
+	}
+	if _, present := asMap["clockStartBasis"]; !present {
+		asMap["clockStartBasis"] = "LaterOfArrivalOrAppointment"
+	}
+	if _, present := asMap["lateArrivalRule"]; !present {
+		asMap["lateArrivalRule"] = "NoEffect"
+	}
+	if _, present := asMap["lateArrivalGraceMinutes"]; !present {
+		asMap["lateArrivalGraceMinutes"] = 0
+	}
+	if _, present := asMap["billingFreeMinutes"]; !present {
+		asMap["billingFreeMinutes"] = 120
+	}
+	if _, present := asMap["minimumBillableMinutes"]; !present {
+		asMap["minimumBillableMinutes"] = 0
+	}
+	if _, present := asMap["billingIncrementMinutes"]; !present {
+		asMap["billingIncrementMinutes"] = 15
+	}
+	if _, present := asMap["roundingMode"]; !present {
+		asMap["roundingMode"] = "Up"
+	}
+	if _, present := asMap["rateSource"]; !present {
+		asMap["rateSource"] = "Accessorial"
+	}
+	if _, present := asMap["dayBoundaryMode"]; !present {
+		asMap["dayBoundaryMode"] = "PerStop"
+	}
+	if _, present := asMap["notificationRequirement"]; !present {
+		asMap["notificationRequirement"] = "None"
+	}
+	if _, present := asMap["notificationLeadMinutes"]; !present {
+		asMap["notificationLeadMinutes"] = 30
+	}
+	if _, present := asMap["notificationDeadlineMinutes"]; !present {
+		asMap["notificationDeadlineMinutes"] = 0
+	}
+	if _, present := asMap["unnotifiedBehavior"]; !present {
+		asMap["unnotifiedBehavior"] = "Bill"
+	}
+	if _, present := asMap["autoSendNotice"]; !present {
+		asMap["autoSendNotice"] = false
+	}
+	if _, present := asMap["sendDepartureSummary"]; !present {
+		asMap["sendDepartureSummary"] = false
+	}
+	if _, present := asMap["currency"]; !present {
+		asMap["currency"] = "USD"
+	}
+
+	fieldsInOrder := [...]string{"name", "code", "description", "status", "isOrgDefault", "priority", "customerId", "locationId", "shipmentTypeIds", "serviceTypeIds", "commodityIds", "stopTypes", "appointmentStopsOnly", "effectiveStartDate", "effectiveEndDate", "clockStartBasis", "lateArrivalRule", "lateArrivalGraceMinutes", "billingFreeMinutes", "pickupFreeMinutes", "deliveryFreeMinutes", "payFreeMinutes", "minimumBillableMinutes", "billingIncrementMinutes", "roundingMode", "rateSource", "accessorialChargeId", "tiers", "maxBillableMinutesPerStop", "maxChargePerStop", "maxChargePerDay", "maxChargePerShipment", "dayBoundaryMode", "convertToLayoverAtMinutes", "layoverAccessorialChargeId", "notificationRequirement", "notificationLeadMinutes", "notificationDeadlineMinutes", "unnotifiedBehavior", "autoSendNotice", "sendDepartureSummary", "requireApprovalOverAmount", "autoApproveUnderAmount", "currency", "comments", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "isOrgDefault":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isOrgDefault"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsOrgDefault = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "locationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationID = data
+		case "shipmentTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentTypeIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentTypeIds = data
+		case "serviceTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceTypeIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceTypeIds = data
+		case "commodityIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commodityIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CommodityIds = data
+		case "stopTypes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stopTypes"))
+			data, err := ec.unmarshalOStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StopTypes = data
+		case "appointmentStopsOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appointmentStopsOnly"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AppointmentStopsOnly = data
+		case "effectiveStartDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveStartDate"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveStartDate = data
+		case "effectiveEndDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveEndDate"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveEndDate = data
+		case "clockStartBasis":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clockStartBasis"))
+			data, err := ec.unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClockStartBasis = data
+		case "lateArrivalRule":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lateArrivalRule"))
+			data, err := ec.unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LateArrivalRule = data
+		case "lateArrivalGraceMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lateArrivalGraceMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LateArrivalGraceMinutes = data
+		case "billingFreeMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingFreeMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingFreeMinutes = data
+		case "pickupFreeMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pickupFreeMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PickupFreeMinutes = data
+		case "deliveryFreeMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deliveryFreeMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DeliveryFreeMinutes = data
+		case "payFreeMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("payFreeMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PayFreeMinutes = data
+		case "minimumBillableMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minimumBillableMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinimumBillableMinutes = data
+		case "billingIncrementMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingIncrementMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingIncrementMinutes = data
+		case "roundingMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roundingMode"))
+			data, err := ec.unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoundingMode = data
+		case "rateSource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateSource"))
+			data, err := ec.unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RateSource = data
+		case "accessorialChargeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessorialChargeId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessorialChargeID = data
+		case "tiers":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tiers"))
+			data, err := ec.unmarshalODetentionTierInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionTierInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tiers = data
+		case "maxBillableMinutesPerStop":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxBillableMinutesPerStop"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxBillableMinutesPerStop = data
+		case "maxChargePerStop":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxChargePerStop"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxChargePerStop = data
+		case "maxChargePerDay":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxChargePerDay"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxChargePerDay = data
+		case "maxChargePerShipment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxChargePerShipment"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxChargePerShipment = data
+		case "dayBoundaryMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dayBoundaryMode"))
+			data, err := ec.unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DayBoundaryMode = data
+		case "convertToLayoverAtMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("convertToLayoverAtMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConvertToLayoverAtMinutes = data
+		case "layoverAccessorialChargeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("layoverAccessorialChargeId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LayoverAccessorialChargeID = data
+		case "notificationRequirement":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notificationRequirement"))
+			data, err := ec.unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotificationRequirement = data
+		case "notificationLeadMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notificationLeadMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotificationLeadMinutes = data
+		case "notificationDeadlineMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notificationDeadlineMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotificationDeadlineMinutes = data
+		case "unnotifiedBehavior":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unnotifiedBehavior"))
+			data, err := ec.unmarshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UnnotifiedBehavior = data
+		case "autoSendNotice":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSendNotice"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoSendNotice = data
+		case "sendDepartureSummary":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sendDepartureSummary"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SendDepartureSummary = data
+		case "requireApprovalOverAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requireApprovalOverAmount"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequireApprovalOverAmount = data
+		case "autoApproveUnderAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoApproveUnderAmount"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoApproveUnderAmount = data
+		case "currency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currency"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Currency = data
+		case "comments":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comments"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Comments = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDetentionPreviewScenarioInput(ctx context.Context, obj any) (gqlmodel.DetentionPreviewScenarioInput, error) {
+	var it gqlmodel.DetentionPreviewScenarioInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"arrivedAt", "departedAt", "appointmentStart", "appointmentEnd", "stopType", "scheduleType", "noticeSentAt", "driverPayRate"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "arrivedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("arrivedAt"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ArrivedAt = data
+		case "departedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("departedAt"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DepartedAt = data
+		case "appointmentStart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appointmentStart"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AppointmentStart = data
+		case "appointmentEnd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appointmentEnd"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AppointmentEnd = data
+		case "stopType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stopType"))
+			data, err := ec.unmarshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StopType = data
+		case "scheduleType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scheduleType"))
+			data, err := ec.unmarshalNStopScheduleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopScheduleType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScheduleType = data
+		case "noticeSentAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("noticeSentAt"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NoticeSentAt = data
+		case "driverPayRate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverPayRate"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DriverPayRate = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDetentionStatsInput(ctx context.Context, obj any) (gqlmodel.DetentionStatsInput, error) {
+	var it gqlmodel.DetentionStatsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"from", "to", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "from":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("from"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.From = data
+		case "to":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("to"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.To = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDetentionTierInput(ctx context.Context, obj any) (gqlmodel.DetentionTierInput, error) {
+	var it gqlmodel.DetentionTierInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["rateUnit"]; !present {
+		asMap["rateUnit"] = "Hour"
+	}
+
+	fieldsInOrder := [...]string{"fromMinute", "toMinute", "rate", "rateUnit", "label", "sortOrder"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fromMinute":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromMinute"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FromMinute = data
+		case "toMinute":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toMinute"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToMinute = data
+		case "rate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rate"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rate = data
+		case "rateUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateUnit"))
+			data, err := ec.unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RateUnit = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "sortOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortOrder = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDetentionWaiveInput(ctx context.Context, obj any) (gqlmodel.DetentionWaiveInput, error) {
+	var it gqlmodel.DetentionWaiveInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"occurrenceId", "reason", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "occurrenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("occurrenceId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OccurrenceID = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := ec.unmarshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDispatchAssignMoveInput(ctx context.Context, obj any) (gqlmodel.DispatchAssignMoveInput, error) {
 	var it gqlmodel.DispatchAssignMoveInput
 	if obj == nil {
@@ -188631,6 +199717,89 @@ func (ec *executionContext) _CustomerConnection(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var customerDetentionStatImplementors = []string{"CustomerDetentionStat"}
+
+func (ec *executionContext) _CustomerDetentionStat(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.CustomerDetentionStat) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, customerDetentionStatImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CustomerDetentionStat")
+		case "customerId":
+			out.Values[i] = ec._CustomerDetentionStat_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerName":
+			out.Values[i] = ec._CustomerDetentionStat_customerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopCount":
+			out.Values[i] = ec._CustomerDetentionStat_stopCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "breachCount":
+			out.Values[i] = ec._CustomerDetentionStat_breachCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billedAmount":
+			out.Values[i] = ec._CustomerDetentionStat_billedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverPayAmount":
+			out.Values[i] = ec._CustomerDetentionStat_driverPayAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "netMargin":
+			out.Values[i] = ec._CustomerDetentionStat_netMargin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waivedAmount":
+			out.Values[i] = ec._CustomerDetentionStat_waivedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputeCount":
+			out.Values[i] = ec._CustomerDetentionStat_disputeCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "suppressedCount":
+			out.Values[i] = ec._CustomerDetentionStat_suppressedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var customerEdgeImplementors = []string{"CustomerEdge"}
 
 func (ec *executionContext) _CustomerEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.CustomerEdge) graphql.Marshaler {
@@ -189349,6 +200518,1694 @@ func (ec *executionContext) _DashControl(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._DashControl_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionBacktestBucketImplementors = []string{"DetentionBacktestBucket"}
+
+func (ec *executionContext) _DetentionBacktestBucket(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionBacktestBucket) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionBacktestBucketImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionBacktestBucket")
+		case "key":
+			out.Values[i] = ec._DetentionBacktestBucket_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._DetentionBacktestBucket_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopCount":
+			out.Values[i] = ec._DetentionBacktestBucket_stopCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billableCount":
+			out.Values[i] = ec._DetentionBacktestBucket_billableCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proposedAmount":
+			out.Values[i] = ec._DetentionBacktestBucket_proposedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "baselineAmount":
+			out.Values[i] = ec._DetentionBacktestBucket_baselineAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "delta":
+			out.Values[i] = ec._DetentionBacktestBucket_delta(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverPayAmount":
+			out.Values[i] = ec._DetentionBacktestBucket_driverPayAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "netMargin":
+			out.Values[i] = ec._DetentionBacktestBucket_netMargin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionBacktestResultImplementors = []string{"DetentionBacktestResult"}
+
+func (ec *executionContext) _DetentionBacktestResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionBacktestResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionBacktestResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionBacktestResult")
+		case "stopsEvaluated":
+			out.Values[i] = ec._DetentionBacktestResult_stopsEvaluated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopsMatched":
+			out.Values[i] = ec._DetentionBacktestResult_stopsMatched(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopsBillable":
+			out.Values[i] = ec._DetentionBacktestResult_stopsBillable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopsForfeited":
+			out.Values[i] = ec._DetentionBacktestResult_stopsForfeited(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopsSuppressed":
+			out.Values[i] = ec._DetentionBacktestResult_stopsSuppressed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proposedRevenue":
+			out.Values[i] = ec._DetentionBacktestResult_proposedRevenue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "baselineRevenue":
+			out.Values[i] = ec._DetentionBacktestResult_baselineRevenue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "revenueDelta":
+			out.Values[i] = ec._DetentionBacktestResult_revenueDelta(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proposedDriverPay":
+			out.Values[i] = ec._DetentionBacktestResult_proposedDriverPay(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proposedNetMargin":
+			out.Values[i] = ec._DetentionBacktestResult_proposedNetMargin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "negativeMarginStops":
+			out.Values[i] = ec._DetentionBacktestResult_negativeMarginStops(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "byCustomer":
+			out.Values[i] = ec._DetentionBacktestResult_byCustomer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "byFacility":
+			out.Values[i] = ec._DetentionBacktestResult_byFacility(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "from":
+			out.Values[i] = ec._DetentionBacktestResult_from(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "to":
+			out.Values[i] = ec._DetentionBacktestResult_to(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "truncated":
+			out.Values[i] = ec._DetentionBacktestResult_truncated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionCollectabilityImplementors = []string{"DetentionCollectability"}
+
+func (ec *executionContext) _DetentionCollectability(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionCollectability) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionCollectabilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionCollectability")
+		case "score":
+			out.Values[i] = ec._DetentionCollectability_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "band":
+			out.Values[i] = ec._DetentionCollectability_band(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "factors":
+			out.Values[i] = ec._DetentionCollectability_factors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chainValid":
+			out.Values[i] = ec._DetentionCollectability_chainValid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summary":
+			out.Values[i] = ec._DetentionCollectability_summary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionDeskEntryImplementors = []string{"DetentionDeskEntry"}
+
+func (ec *executionContext) _DetentionDeskEntry(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionDeskEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionDeskEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionDeskEntry")
+		case "occurrence":
+			out.Values[i] = ec._DetentionDeskEntry_occurrence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minutesUntilFreeEnds":
+			out.Values[i] = ec._DetentionDeskEntry_minutesUntilFreeEnds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minutesUntilNoticeDue":
+			out.Values[i] = ec._DetentionDeskEntry_minutesUntilNoticeDue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "noticeWindowOpen":
+			out.Values[i] = ec._DetentionDeskEntry_noticeWindowOpen(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "amountAtRisk":
+			out.Values[i] = ec._DetentionDeskEntry_amountAtRisk(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "urgency":
+			out.Values[i] = ec._DetentionDeskEntry_urgency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionDisputePacketImplementors = []string{"DetentionDisputePacket"}
+
+func (ec *executionContext) _DetentionDisputePacket(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionDisputePacket) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionDisputePacketImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionDisputePacket")
+		case "occurrence":
+			out.Values[i] = ec._DetentionDisputePacket_occurrence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "policySnapshot":
+			out.Values[i] = ec._DetentionDisputePacket_policySnapshot(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "receipt":
+			out.Values[i] = ec._DetentionDisputePacket_receipt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "evidence":
+			out.Values[i] = ec._DetentionDisputePacket_evidence(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "notices":
+			out.Values[i] = ec._DetentionDisputePacket_notices(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "collectability":
+			out.Values[i] = ec._DetentionDisputePacket_collectability(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "generatedAt":
+			out.Values[i] = ec._DetentionDisputePacket_generatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionEvidenceImplementors = []string{"DetentionEvidence"}
+
+func (ec *executionContext) _DetentionEvidence(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionEvidence) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionEvidenceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionEvidence")
+		case "id":
+			out.Values[i] = ec._DetentionEvidence_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detentionOccurrenceId":
+			out.Values[i] = ec._DetentionEvidence_detentionOccurrenceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sequence":
+			out.Values[i] = ec._DetentionEvidence_sequence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._DetentionEvidence_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._DetentionEvidence_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summary":
+			out.Values[i] = ec._DetentionEvidence_summary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "observedAt":
+			out.Values[i] = ec._DetentionEvidence_observedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recordedAt":
+			out.Values[i] = ec._DetentionEvidence_recordedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recordedById":
+			out.Values[i] = ec._DetentionEvidence_recordedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "documentId":
+			out.Values[i] = ec._DetentionEvidence_documentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "payload":
+			out.Values[i] = ec._DetentionEvidence_payload(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "prevHash":
+			out.Values[i] = ec._DetentionEvidence_prevHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hash":
+			out.Values[i] = ec._DetentionEvidence_hash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DetentionEvidence_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionNoticeImplementors = []string{"DetentionNotice"}
+
+func (ec *executionContext) _DetentionNotice(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionNotice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionNoticeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionNotice")
+		case "id":
+			out.Values[i] = ec._DetentionNotice_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detentionOccurrenceId":
+			out.Values[i] = ec._DetentionNotice_detentionOccurrenceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "threadKey":
+			out.Values[i] = ec._DetentionNotice_threadKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._DetentionNotice_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "channel":
+			out.Values[i] = ec._DetentionNotice_channel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deliveryStatus":
+			out.Values[i] = ec._DetentionNotice_deliveryStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recipients":
+			out.Values[i] = ec._DetentionNotice_recipients(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "subject":
+			out.Values[i] = ec._DetentionNotice_subject(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._DetentionNotice_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "scheduledFor":
+			out.Values[i] = ec._DetentionNotice_scheduledFor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sentAt":
+			out.Values[i] = ec._DetentionNotice_sentAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "deliveredAt":
+			out.Values[i] = ec._DetentionNotice_deliveredAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "openedAt":
+			out.Values[i] = ec._DetentionNotice_openedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "failedAt":
+			out.Values[i] = ec._DetentionNotice_failedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "failureReason":
+			out.Values[i] = ec._DetentionNotice_failureReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sentById":
+			out.Values[i] = ec._DetentionNotice_sentById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "wasAutomatic":
+			out.Values[i] = ec._DetentionNotice_wasAutomatic(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "satisfiesRequirement":
+			out.Values[i] = ec._DetentionNotice_satisfiesRequirement(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quotedFreeMinutes":
+			out.Values[i] = ec._DetentionNotice_quotedFreeMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quotedRate":
+			out.Values[i] = ec._DetentionNotice_quotedRate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "quotedAmount":
+			out.Values[i] = ec._DetentionNotice_quotedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DetentionNotice_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionOccurrenceImplementors = []string{"DetentionOccurrence"}
+
+func (ec *executionContext) _DetentionOccurrence(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionOccurrenceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionOccurrence")
+		case "id":
+			out.Values[i] = ec._DetentionOccurrence_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._DetentionOccurrence_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._DetentionOccurrence_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentId":
+			out.Values[i] = ec._DetentionOccurrence_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentMoveId":
+			out.Values[i] = ec._DetentionOccurrence_shipmentMoveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopId":
+			out.Values[i] = ec._DetentionOccurrence_stopId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerId":
+			out.Values[i] = ec._DetentionOccurrence_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locationId":
+			out.Values[i] = ec._DetentionOccurrence_locationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detentionPolicyId":
+			out.Values[i] = ec._DetentionOccurrence_detentionPolicyId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "policySnapshot":
+			out.Values[i] = ec._DetentionOccurrence_policySnapshot(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "calculationTrace":
+			out.Values[i] = ec._DetentionOccurrence_calculationTrace(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "stopType":
+			out.Values[i] = ec._DetentionOccurrence_stopType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "scheduleType":
+			out.Values[i] = ec._DetentionOccurrence_scheduleType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "appointmentStart":
+			out.Values[i] = ec._DetentionOccurrence_appointmentStart(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "appointmentEnd":
+			out.Values[i] = ec._DetentionOccurrence_appointmentEnd(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "arrivedAt":
+			out.Values[i] = ec._DetentionOccurrence_arrivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "departedAt":
+			out.Values[i] = ec._DetentionOccurrence_departedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "clockStartAt":
+			out.Values[i] = ec._DetentionOccurrence_clockStartAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "clockStopAt":
+			out.Values[i] = ec._DetentionOccurrence_clockStopAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "freeTimeExpiresAt":
+			out.Values[i] = ec._DetentionOccurrence_freeTimeExpiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "noticeDueAt":
+			out.Values[i] = ec._DetentionOccurrence_noticeDueAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "noticeDeadlineAt":
+			out.Values[i] = ec._DetentionOccurrence_noticeDeadlineAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isOpen":
+			out.Values[i] = ec._DetentionOccurrence_isOpen(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "arrivedLate":
+			out.Values[i] = ec._DetentionOccurrence_arrivedLate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lateByMinutes":
+			out.Values[i] = ec._DetentionOccurrence_lateByMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freeMinutesGranted":
+			out.Values[i] = ec._DetentionOccurrence_freeMinutesGranted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rawDwellMinutes":
+			out.Values[i] = ec._DetentionOccurrence_rawDwellMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billableMinutes":
+			out.Values[i] = ec._DetentionOccurrence_billableMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roundedMinutes":
+			out.Values[i] = ec._DetentionOccurrence_roundedMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billableUnits":
+			out.Values[i] = ec._DetentionOccurrence_billableUnits(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "grossAmount":
+			out.Values[i] = ec._DetentionOccurrence_grossAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billableAmount":
+			out.Values[i] = ec._DetentionOccurrence_billableAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverPayMinutes":
+			out.Values[i] = ec._DetentionOccurrence_driverPayMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverPayAmount":
+			out.Values[i] = ec._DetentionOccurrence_driverPayAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "netMargin":
+			out.Values[i] = ec._DetentionOccurrence_netMargin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "capApplied":
+			out.Values[i] = ec._DetentionOccurrence_capApplied(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "convertedToLayover":
+			out.Values[i] = ec._DetentionOccurrence_convertedToLayover(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._DetentionOccurrence_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._DetentionOccurrence_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notificationStatus":
+			out.Values[i] = ec._DetentionOccurrence_notificationStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "noticeSentAt":
+			out.Values[i] = ec._DetentionOccurrence_noticeSentAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "suppressedByGate":
+			out.Values[i] = ec._DetentionOccurrence_suppressedByGate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requiresApproval":
+			out.Values[i] = ec._DetentionOccurrence_requiresApproval(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waiverReason":
+			out.Values[i] = ec._DetentionOccurrence_waiverReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "waiverNote":
+			out.Values[i] = ec._DetentionOccurrence_waiverNote(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waivedAt":
+			out.Values[i] = ec._DetentionOccurrence_waivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "waivedAmount":
+			out.Values[i] = ec._DetentionOccurrence_waivedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputeNote":
+			out.Values[i] = ec._DetentionOccurrence_disputeNote(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputedAt":
+			out.Values[i] = ec._DetentionOccurrence_disputedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "collectabilityScore":
+			out.Values[i] = ec._DetentionOccurrence_collectabilityScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "evidenceHead":
+			out.Values[i] = ec._DetentionOccurrence_evidenceHead(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "additionalChargeId":
+			out.Values[i] = ec._DetentionOccurrence_additionalChargeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "locationName":
+			out.Values[i] = ec._DetentionOccurrence_locationName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerName":
+			out.Values[i] = ec._DetentionOccurrence_customerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentProNumber":
+			out.Values[i] = ec._DetentionOccurrence_shipmentProNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._DetentionOccurrence_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DetentionOccurrence_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DetentionOccurrence_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionOccurrenceDetailImplementors = []string{"DetentionOccurrenceDetail"}
+
+func (ec *executionContext) _DetentionOccurrenceDetail(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionOccurrenceDetail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionOccurrenceDetailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionOccurrenceDetail")
+		case "occurrence":
+			out.Values[i] = ec._DetentionOccurrenceDetail_occurrence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "evidence":
+			out.Values[i] = ec._DetentionOccurrenceDetail_evidence(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "notices":
+			out.Values[i] = ec._DetentionOccurrenceDetail_notices(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "collectability":
+			out.Values[i] = ec._DetentionOccurrenceDetail_collectability(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "receipt":
+			out.Values[i] = ec._DetentionOccurrenceDetail_receipt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionPolicyImplementors = []string{"DetentionPolicy"}
+
+func (ec *executionContext) _DetentionPolicy(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionPolicy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionPolicyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionPolicy")
+		case "id":
+			out.Values[i] = ec._DetentionPolicy_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._DetentionPolicy_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._DetentionPolicy_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._DetentionPolicy_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._DetentionPolicy_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._DetentionPolicy_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._DetentionPolicy_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isOrgDefault":
+			out.Values[i] = ec._DetentionPolicy_isOrgDefault(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "priority":
+			out.Values[i] = ec._DetentionPolicy_priority(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "specificityScore":
+			out.Values[i] = ec._DetentionPolicy_specificityScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerId":
+			out.Values[i] = ec._DetentionPolicy_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "locationId":
+			out.Values[i] = ec._DetentionPolicy_locationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "shipmentTypeIds":
+			out.Values[i] = ec._DetentionPolicy_shipmentTypeIds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "serviceTypeIds":
+			out.Values[i] = ec._DetentionPolicy_serviceTypeIds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "commodityIds":
+			out.Values[i] = ec._DetentionPolicy_commodityIds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "stopTypes":
+			out.Values[i] = ec._DetentionPolicy_stopTypes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "appointmentStopsOnly":
+			out.Values[i] = ec._DetentionPolicy_appointmentStopsOnly(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "effectiveStartDate":
+			out.Values[i] = ec._DetentionPolicy_effectiveStartDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "effectiveEndDate":
+			out.Values[i] = ec._DetentionPolicy_effectiveEndDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "clockStartBasis":
+			out.Values[i] = ec._DetentionPolicy_clockStartBasis(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lateArrivalRule":
+			out.Values[i] = ec._DetentionPolicy_lateArrivalRule(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lateArrivalGraceMinutes":
+			out.Values[i] = ec._DetentionPolicy_lateArrivalGraceMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billingFreeMinutes":
+			out.Values[i] = ec._DetentionPolicy_billingFreeMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pickupFreeMinutes":
+			out.Values[i] = ec._DetentionPolicy_pickupFreeMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "deliveryFreeMinutes":
+			out.Values[i] = ec._DetentionPolicy_deliveryFreeMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "payFreeMinutes":
+			out.Values[i] = ec._DetentionPolicy_payFreeMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "minimumBillableMinutes":
+			out.Values[i] = ec._DetentionPolicy_minimumBillableMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billingIncrementMinutes":
+			out.Values[i] = ec._DetentionPolicy_billingIncrementMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roundingMode":
+			out.Values[i] = ec._DetentionPolicy_roundingMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rateSource":
+			out.Values[i] = ec._DetentionPolicy_rateSource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "accessorialChargeId":
+			out.Values[i] = ec._DetentionPolicy_accessorialChargeId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tiers":
+			out.Values[i] = ec._DetentionPolicy_tiers(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxBillableMinutesPerStop":
+			out.Values[i] = ec._DetentionPolicy_maxBillableMinutesPerStop(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxChargePerStop":
+			out.Values[i] = ec._DetentionPolicy_maxChargePerStop(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxChargePerDay":
+			out.Values[i] = ec._DetentionPolicy_maxChargePerDay(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxChargePerShipment":
+			out.Values[i] = ec._DetentionPolicy_maxChargePerShipment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "dayBoundaryMode":
+			out.Values[i] = ec._DetentionPolicy_dayBoundaryMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "convertToLayoverAtMinutes":
+			out.Values[i] = ec._DetentionPolicy_convertToLayoverAtMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "layoverAccessorialChargeId":
+			out.Values[i] = ec._DetentionPolicy_layoverAccessorialChargeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "notificationRequirement":
+			out.Values[i] = ec._DetentionPolicy_notificationRequirement(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notificationLeadMinutes":
+			out.Values[i] = ec._DetentionPolicy_notificationLeadMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notificationDeadlineMinutes":
+			out.Values[i] = ec._DetentionPolicy_notificationDeadlineMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unnotifiedBehavior":
+			out.Values[i] = ec._DetentionPolicy_unnotifiedBehavior(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "autoSendNotice":
+			out.Values[i] = ec._DetentionPolicy_autoSendNotice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendDepartureSummary":
+			out.Values[i] = ec._DetentionPolicy_sendDepartureSummary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requireApprovalOverAmount":
+			out.Values[i] = ec._DetentionPolicy_requireApprovalOverAmount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "autoApproveUnderAmount":
+			out.Values[i] = ec._DetentionPolicy_autoApproveUnderAmount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._DetentionPolicy_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "comments":
+			out.Values[i] = ec._DetentionPolicy_comments(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._DetentionPolicy_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DetentionPolicy_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DetentionPolicy_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionPolicyConnectionImplementors = []string{"DetentionPolicyConnection"}
+
+func (ec *executionContext) _DetentionPolicyConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionPolicyConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionPolicyConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionPolicyConnection")
+		case "edges":
+			out.Values[i] = ec._DetentionPolicyConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DetentionPolicyConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._DetentionPolicyConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionPolicyEdgeImplementors = []string{"DetentionPolicyEdge"}
+
+func (ec *executionContext) _DetentionPolicyEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionPolicyEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionPolicyEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionPolicyEdge")
+		case "node":
+			out.Values[i] = ec._DetentionPolicyEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._DetentionPolicyEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionPolicyTierImplementors = []string{"DetentionPolicyTier"}
+
+func (ec *executionContext) _DetentionPolicyTier(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionPolicyTier) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionPolicyTierImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionPolicyTier")
+		case "id":
+			out.Values[i] = ec._DetentionPolicyTier_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "fromMinute":
+			out.Values[i] = ec._DetentionPolicyTier_fromMinute(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "toMinute":
+			out.Values[i] = ec._DetentionPolicyTier_toMinute(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "rate":
+			out.Values[i] = ec._DetentionPolicyTier_rate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rateUnit":
+			out.Values[i] = ec._DetentionPolicyTier_rateUnit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._DetentionPolicyTier_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortOrder":
+			out.Values[i] = ec._DetentionPolicyTier_sortOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionPreviewResultImplementors = []string{"DetentionPreviewResult"}
+
+func (ec *executionContext) _DetentionPreviewResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionPreviewResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionPreviewResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionPreviewResult")
+		case "policySnapshot":
+			out.Values[i] = ec._DetentionPreviewResult_policySnapshot(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rawDwellMinutes":
+			out.Values[i] = ec._DetentionPreviewResult_rawDwellMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freeMinutesGranted":
+			out.Values[i] = ec._DetentionPreviewResult_freeMinutesGranted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billableMinutes":
+			out.Values[i] = ec._DetentionPreviewResult_billableMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roundedMinutes":
+			out.Values[i] = ec._DetentionPreviewResult_roundedMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billableAmount":
+			out.Values[i] = ec._DetentionPreviewResult_billableAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "grossAmount":
+			out.Values[i] = ec._DetentionPreviewResult_grossAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverPayAmount":
+			out.Values[i] = ec._DetentionPreviewResult_driverPayAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "netMargin":
+			out.Values[i] = ec._DetentionPreviewResult_netMargin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "arrivedLate":
+			out.Values[i] = ec._DetentionPreviewResult_arrivedLate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "capApplied":
+			out.Values[i] = ec._DetentionPreviewResult_capApplied(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._DetentionPreviewResult_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notificationStatus":
+			out.Values[i] = ec._DetentionPreviewResult_notificationStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "suppressedByGate":
+			out.Values[i] = ec._DetentionPreviewResult_suppressedByGate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "calculationTrace":
+			out.Values[i] = ec._DetentionPreviewResult_calculationTrace(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "receipt":
+			out.Values[i] = ec._DetentionPreviewResult_receipt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionScoreFactorImplementors = []string{"DetentionScoreFactor"}
+
+func (ec *executionContext) _DetentionScoreFactor(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionScoreFactor) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionScoreFactorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionScoreFactor")
+		case "key":
+			out.Values[i] = ec._DetentionScoreFactor_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._DetentionScoreFactor_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "earned":
+			out.Values[i] = ec._DetentionScoreFactor_earned(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "possible":
+			out.Values[i] = ec._DetentionScoreFactor_possible(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detail":
+			out.Values[i] = ec._DetentionScoreFactor_detail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remedy":
+			out.Values[i] = ec._DetentionScoreFactor_remedy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var detentionWaiverLeakageStatImplementors = []string{"DetentionWaiverLeakageStat"}
+
+func (ec *executionContext) _DetentionWaiverLeakageStat(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DetentionWaiverLeakageStat) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, detentionWaiverLeakageStatImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DetentionWaiverLeakageStat")
+		case "reason":
+			out.Values[i] = ec._DetentionWaiverLeakageStat_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waiverCount":
+			out.Values[i] = ec._DetentionWaiverLeakageStat_waiverCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "approverCount":
+			out.Values[i] = ec._DetentionWaiverLeakageStat_approverCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waivedAmount":
+			out.Values[i] = ec._DetentionWaiverLeakageStat_waivedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -196978,6 +209835,104 @@ func (ec *executionContext) _EscrowTransaction(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var facilityDetentionStatImplementors = []string{"FacilityDetentionStat"}
+
+func (ec *executionContext) _FacilityDetentionStat(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.FacilityDetentionStat) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, facilityDetentionStatImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FacilityDetentionStat")
+		case "locationId":
+			out.Values[i] = ec._FacilityDetentionStat_locationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locationName":
+			out.Values[i] = ec._FacilityDetentionStat_locationName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stopCount":
+			out.Values[i] = ec._FacilityDetentionStat_stopCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "breachCount":
+			out.Values[i] = ec._FacilityDetentionStat_breachCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "avgDwellMinutes":
+			out.Values[i] = ec._FacilityDetentionStat_avgDwellMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "medianDwellMinutes":
+			out.Values[i] = ec._FacilityDetentionStat_medianDwellMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "p90DwellMinutes":
+			out.Values[i] = ec._FacilityDetentionStat_p90DwellMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billedAmount":
+			out.Values[i] = ec._FacilityDetentionStat_billedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverPayAmount":
+			out.Values[i] = ec._FacilityDetentionStat_driverPayAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "netMargin":
+			out.Values[i] = ec._FacilityDetentionStat_netMargin(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waivedAmount":
+			out.Values[i] = ec._FacilityDetentionStat_waivedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputeCount":
+			out.Values[i] = ec._FacilityDetentionStat_disputeCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "suppressedCount":
+			out.Values[i] = ec._FacilityDetentionStat_suppressedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var fiscalPeriodImplementors = []string{"FiscalPeriod"}
 
 func (ec *executionContext) _FiscalPeriod(ctx context.Context, sel ast.SelectionSet, obj *fiscalperiod.FiscalPeriod) graphql.Marshaler {
@@ -202484,6 +215439,62 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createDetentionPolicy":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDetentionPolicy(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateDetentionPolicy":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDetentionPolicy(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDetentionPolicy":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDetentionPolicy(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detentionBacktest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_detentionBacktest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "waiveDetentionOccurrence":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_waiveDetentionOccurrence(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "approveDetentionOccurrence":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_approveDetentionOccurrence(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputeDetentionOccurrence":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_disputeDetentionOccurrence(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendDetentionNotice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendDetentionNotice(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "dispatchAssignMoves":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_dispatchAssignMoves(ctx, field)
@@ -207585,6 +220596,226 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_customerPayment(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionPolicies":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionPolicies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionPolicy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionPolicy(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionDesk":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionDesk(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionOccurrence":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionOccurrence(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "shipmentDetention":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_shipmentDetention(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionDisputePacket":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionDisputePacket(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionFacilityStats":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionFacilityStats(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionCustomerStats":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionCustomerStats(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionWaiverStats":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionWaiverStats(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "detentionPolicyPreview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_detentionPolicyPreview(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -229331,6 +242562,32 @@ func (ec *executionContext) marshalNCustomerCreditStatus2githubᚗcomᚋemoss08�
 	return res
 }
 
+func (ec *executionContext) marshalNCustomerDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStatᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.CustomerDetentionStat) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCustomerDetentionStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStat(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCustomerDetentionStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStat(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.CustomerDetentionStat) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CustomerDetentionStat(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNCustomerEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.CustomerEdge) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -229581,6 +242838,663 @@ func (ec *executionContext) unmarshalNDataTableConnectionInput2githubᚗcomᚋem
 func (ec *executionContext) unmarshalNDetachPayEventInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetachPayEventInput(ctx context.Context, v any) (gqlmodel.DetachPayEventInput, error) {
 	res, err := ec.unmarshalInputDetachPayEventInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionBacktestBucket2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestBucketᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionBacktestBucket) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionBacktestBucket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestBucket(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDetentionBacktestBucket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestBucket(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionBacktestBucket) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionBacktestBucket(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionBacktestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestInput(ctx context.Context, v any) (gqlmodel.DetentionBacktestInput, error) {
+	res, err := ec.unmarshalInputDetentionBacktestInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionBacktestResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestResult(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionBacktestResult) graphql.Marshaler {
+	return ec._DetentionBacktestResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestResult(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionBacktestResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionBacktestResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind(ctx context.Context, v any) (detention.CapKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.CapKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionCapKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapKind(ctx context.Context, sel ast.SelectionSet, v detention.CapKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx context.Context, v any) (detention.CapScope, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.CapScope(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionCapScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx context.Context, sel ast.SelectionSet, v detention.CapScope) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, v any) (detention.ClockStartBasis, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.ClockStartBasis(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionClockStartBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, sel ast.SelectionSet, v detention.ClockStartBasis) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDetentionCollectability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCollectability(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionCollectability) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionCollectability(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDetentionDeskEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionDeskEntry) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionDeskEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntry(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDetentionDeskEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntry(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionDeskEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionDeskEntry(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionDeskUrgency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskUrgency(ctx context.Context, v any) (gqlmodel.DetentionDeskUrgency, error) {
+	var res gqlmodel.DetentionDeskUrgency
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionDeskUrgency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskUrgency(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionDeskUrgency) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNDetentionDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDisputeInput(ctx context.Context, v any) (gqlmodel.DetentionDisputeInput, error) {
+	res, err := ec.unmarshalInputDetentionDisputeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionDisputePacket2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDisputePacket(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionDisputePacket) graphql.Marshaler {
+	return ec._DetentionDisputePacket(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionDisputePacket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDisputePacket(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionDisputePacket) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionDisputePacket(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDetentionEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionEvidence(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionEvidence) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionEvidence(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceKind(ctx context.Context, v any) (detention.EvidenceKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.EvidenceKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionEvidenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceKind(ctx context.Context, sel ast.SelectionSet, v detention.EvidenceKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceSource(ctx context.Context, v any) (detention.EvidenceSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.EvidenceSource(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐEvidenceSource(ctx context.Context, sel ast.SelectionSet, v detention.EvidenceSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, v any) (detention.LateArrivalRule, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.LateArrivalRule(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, sel ast.SelectionSet, v detention.LateArrivalRule) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDetentionNotice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNotice(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionNotice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionNotice(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeChannel(ctx context.Context, v any) (detention.NoticeChannel, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.NoticeChannel(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionNoticeChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeChannel(ctx context.Context, sel ast.SelectionSet, v detention.NoticeChannel) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeDeliveryStatus(ctx context.Context, v any) (detention.NoticeDeliveryStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.NoticeDeliveryStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionNoticeDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeDeliveryStatus(ctx context.Context, sel ast.SelectionSet, v detention.NoticeDeliveryStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeKind(ctx context.Context, v any) (detention.NoticeKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.NoticeKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionNoticeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNoticeKind(ctx context.Context, sel ast.SelectionSet, v detention.NoticeKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, v any) (detention.NotificationRequirement, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.NotificationRequirement(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionNotificationRequirement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, sel ast.SelectionSet, v detention.NotificationRequirement) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus(ctx context.Context, v any) (detention.NotificationStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.NotificationStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionNotificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationStatus(ctx context.Context, sel ast.SelectionSet, v detention.NotificationStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDetentionOccurrence2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionOccurrence) graphql.Marshaler {
+	return ec._DetentionOccurrence(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionOccurrence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionOccurrence) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDetentionOccurrence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrence(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionOccurrence) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionOccurrence(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDetentionOccurrenceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceDetail(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionOccurrenceDetail) graphql.Marshaler {
+	return ec._DetentionOccurrenceDetail(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionOccurrenceDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionOccurrenceDetail(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionOccurrenceDetail) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionOccurrenceDetail(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus(ctx context.Context, v any) (detention.OccurrenceStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.OccurrenceStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionOccurrenceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐOccurrenceStatus(ctx context.Context, sel ast.SelectionSet, v detention.OccurrenceStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDetentionPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionPolicy) graphql.Marshaler {
+	return ec._DetentionPolicy(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPolicy) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionPolicy(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDetentionPolicyConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionPolicyConnection) graphql.Marshaler {
+	return ec._DetentionPolicyConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionPolicyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPolicyConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionPolicyConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDetentionPolicyEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionPolicyEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionPolicyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDetentionPolicyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPolicyEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionPolicyEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx context.Context, v any) (gqlmodel.DetentionPolicyInput, error) {
+	res, err := ec.unmarshalInputDetentionPolicyInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDetentionPolicyInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx context.Context, v any) (*gqlmodel.DetentionPolicyInput, error) {
+	res, err := ec.unmarshalInputDetentionPolicyInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, v any) (detention.PolicyStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.PolicyStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, sel ast.SelectionSet, v detention.PolicyStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDetentionPolicyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTier(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPolicyTier) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionPolicyTier(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDetentionPreviewResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewResult(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DetentionPreviewResult) graphql.Marshaler {
+	return ec._DetentionPreviewResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDetentionPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewResult(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPreviewResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionPreviewResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionPreviewScenarioInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPreviewScenarioInput(ctx context.Context, v any) (gqlmodel.DetentionPreviewScenarioInput, error) {
+	res, err := ec.unmarshalInputDetentionPreviewScenarioInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, v any) (detention.RateSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.RateSource(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, sel ast.SelectionSet, v detention.RateSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, v any) (detention.RoundingMode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.RoundingMode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, sel ast.SelectionSet, v detention.RoundingMode) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐScoreBand(ctx context.Context, v any) (detention.ScoreBand, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.ScoreBand(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionScoreBand2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐScoreBand(ctx context.Context, sel ast.SelectionSet, v detention.ScoreBand) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDetentionScoreFactor2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionScoreFactorᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionScoreFactor) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionScoreFactor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionScoreFactor(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDetentionScoreFactor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionScoreFactor(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionScoreFactor) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionScoreFactor(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionStatsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStatsInput(ctx context.Context, v any) (gqlmodel.DetentionStatsInput, error) {
+	res, err := ec.unmarshalInputDetentionStatsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDetentionTierInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionTierInput(ctx context.Context, v any) (*gqlmodel.DetentionTierInput, error) {
+	res, err := ec.unmarshalInputDetentionTierInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, v any) (detention.TierRateUnit, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.TierRateUnit(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, sel ast.SelectionSet, v detention.TierRateUnit) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, v any) (detention.UnnotifiedBehavior, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.UnnotifiedBehavior(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionUnnotifiedBehavior2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, sel ast.SelectionSet, v detention.UnnotifiedBehavior) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDetentionWaiveInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiveInput(ctx context.Context, v any) (gqlmodel.DetentionWaiveInput, error) {
+	res, err := ec.unmarshalInputDetentionWaiveInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionWaiverLeakageStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStatᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionWaiverLeakageStat) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionWaiverLeakageStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStat(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDetentionWaiverLeakageStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStat(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionWaiverLeakageStat) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DetentionWaiverLeakageStat(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, v any) (detention.WaiverReason, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.WaiverReason(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDetentionWaiverReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, sel ast.SelectionSet, v detention.WaiverReason) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNDispatchAssignMoveInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignMoveInputᚄ(ctx context.Context, v any) ([]*gqlmodel.DispatchAssignMoveInput, error) {
@@ -231783,6 +245697,32 @@ func (ec *executionContext) marshalNEscrowTransactionType2githubᚗcomᚋemoss08
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNFacilityDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStatᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.FacilityDetentionStat) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNFacilityDetentionStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStat(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFacilityDetentionStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStat(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.FacilityDetentionStat) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._FacilityDetentionStat(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNFieldFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFieldFilterInputᚄ(ctx context.Context, v any) ([]*gqlmodel.FieldFilterInput, error) {
@@ -239272,6 +253212,277 @@ func (ec *executionContext) unmarshalOCustomerPaymentApplicationInput2ᚕᚖgith
 	return res, nil
 }
 
+func (ec *executionContext) unmarshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx context.Context, v any) (*detention.CapScope, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.CapScope(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionCapScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐCapScope(ctx context.Context, sel ast.SelectionSet, v *detention.CapScope) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, v any) (*detention.ClockStartBasis, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.ClockStartBasis(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐClockStartBasis(ctx context.Context, sel ast.SelectionSet, v *detention.ClockStartBasis) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalODetentionEvidence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionEvidenceᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionEvidence) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionEvidence(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, v any) (*detention.LateArrivalRule, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.LateArrivalRule(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, sel ast.SelectionSet, v *detention.LateArrivalRule) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalODetentionNotice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNoticeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionNotice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionNotice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNotice(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, v any) (*detention.NotificationRequirement, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.NotificationRequirement(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionNotificationRequirement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐNotificationRequirement(ctx context.Context, sel ast.SelectionSet, v *detention.NotificationRequirement) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalODetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicy(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPolicy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DetentionPolicy(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, v any) (*detention.PolicyStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.PolicyStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐPolicyStatus(ctx context.Context, sel ast.SelectionSet, v *detention.PolicyStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalODetentionPolicyTier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTierᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionPolicyTier) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionPolicyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTier(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, v any) (*detention.RateSource, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.RateSource(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, sel ast.SelectionSet, v *detention.RateSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, v any) (*detention.RoundingMode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.RoundingMode(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionRoundingMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRoundingMode(ctx context.Context, sel ast.SelectionSet, v *detention.RoundingMode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODetentionTierInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionTierInputᚄ(ctx context.Context, v any) ([]*gqlmodel.DetentionTierInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*gqlmodel.DetentionTierInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNDetentionTierInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionTierInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, v any) (*detention.TierRateUnit, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.TierRateUnit(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionTierRateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐTierRateUnit(ctx context.Context, sel ast.SelectionSet, v *detention.TierRateUnit) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, v any) (*detention.UnnotifiedBehavior, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.UnnotifiedBehavior(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionUnnotifiedBehavior2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐUnnotifiedBehavior(ctx context.Context, sel ast.SelectionSet, v *detention.UnnotifiedBehavior) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, v any) (*detention.WaiverReason, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := detention.WaiverReason(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, sel ast.SelectionSet, v *detention.WaiverReason) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) unmarshalODisputeAdjustmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDisputeAdjustmentInput(ctx context.Context, v any) (*gqlmodel.DisputeAdjustmentInput, error) {
 	if v == nil {
 		return nil, nil
@@ -241659,6 +255870,42 @@ func (ec *executionContext) marshalOStopStatus2ᚖgithubᚗcomᚋemoss08ᚋtreno
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx context.Context, v any) ([]gqlmodel.StopType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]gqlmodel.StopType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []gqlmodel.StopType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOStopType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx context.Context, v any) (*gqlmodel.StopType, error) {

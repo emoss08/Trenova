@@ -372,6 +372,63 @@ models:
   FuelSurchargeProgramStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/fuelsurcharge.ProgramStatus
+  DetentionPolicyStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.PolicyStatus
+  DetentionClockStartBasis:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.ClockStartBasis
+  DetentionLateArrivalRule:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.LateArrivalRule
+  DetentionRoundingMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.RoundingMode
+  DetentionRateSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.RateSource
+  DetentionTierRateUnit:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.TierRateUnit
+  DetentionNotificationRequirement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.NotificationRequirement
+  DetentionUnnotifiedBehavior:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.UnnotifiedBehavior
+  DetentionCapScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.CapScope
+  DetentionOccurrenceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.OccurrenceStatus
+  DetentionNotificationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.NotificationStatus
+  DetentionCapKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.CapKind
+  DetentionWaiverReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.WaiverReason
+  DetentionScoreBand:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.ScoreBand
+  DetentionNoticeKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.NoticeKind
+  DetentionNoticeChannel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.NoticeChannel
+  DetentionNoticeDeliveryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.NoticeDeliveryStatus
+  DetentionEvidenceKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.EvidenceKind
+  DetentionEvidenceSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/detention.EvidenceSource
   EmailProvider:
     model:
       - github.com/emoss08/trenova/internal/core/domain/email.Provider

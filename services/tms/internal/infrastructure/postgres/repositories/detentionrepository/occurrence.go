@@ -37,6 +37,34 @@ func NewOccurrenceRepository(
 	}
 }
 
+func withOccurrenceNames(q *bun.SelectQuery) *bun.SelectQuery {
+	occCols := buncolgen.DetentionOccurrenceColumns
+	locCols := buncolgen.LocationColumns
+	cusCols := buncolgen.CustomerColumns
+	shipCols := buncolgen.ShipmentColumns
+
+	return q.
+		ColumnExpr("dto.*").
+		ColumnExpr("COALESCE(?, '') AS location_name", bun.Safe(locCols.Name.Qualified())).
+		ColumnExpr("COALESCE(?, '') AS customer_name", bun.Safe(cusCols.Name.Qualified())).
+		ColumnExpr(
+			"COALESCE(?, '') AS shipment_pro_number",
+			bun.Safe(shipCols.ProNumber.Qualified()),
+		).
+		Join("LEFT JOIN locations AS loc ON ?", bun.Safe(
+			locCols.ID.EqColumn(occCols.LocationID)+
+				" AND "+locCols.OrganizationID.EqColumn(occCols.OrganizationID),
+		)).
+		Join("LEFT JOIN customers AS cus ON ?", bun.Safe(
+			cusCols.ID.EqColumn(occCols.CustomerID)+
+				" AND "+cusCols.OrganizationID.EqColumn(occCols.OrganizationID),
+		)).
+		Join("LEFT JOIN shipments AS sp ON ?", bun.Safe(
+			shipCols.ID.EqColumn(occCols.ShipmentID)+
+				" AND "+shipCols.OrganizationID.EqColumn(occCols.OrganizationID),
+		))
+}
+
 func (r *occurrenceRepository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListDetentionOccurrencesRequest,
@@ -83,6 +111,7 @@ func (r *occurrenceRepository) List(
 	total, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		Apply(withOccurrenceNames).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return r.filterQuery(sq, req)
 		}).ScanAndCount(ctx)
@@ -112,6 +141,7 @@ func (r *occurrenceRepository) GetByID(
 	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
+		Apply(withOccurrenceNames).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 				Where(cols.ID.Eq(), req.OccurrenceID)
@@ -175,6 +205,7 @@ func (r *occurrenceRepository) GetByShipment(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		Apply(withOccurrenceNames).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 				Where(cols.ShipmentID.Eq(), req.ShipmentID)
@@ -199,6 +230,7 @@ func (r *occurrenceRepository) ListOpen(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		Apply(withOccurrenceNames).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo).
 				Where(cols.IsOpen.IsTrue())
@@ -225,6 +257,7 @@ func (r *occurrenceRepository) ListNoticesDue(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		Apply(withOccurrenceNames).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 				Where(cols.NotificationStatus.Eq(), detention.NotificationStatusPending).

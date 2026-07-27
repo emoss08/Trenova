@@ -20,4 +20,8 @@ type ShipmentControlRepository interface {
 		ctx context.Context,
 		sc *tenant.ShipmentControl,
 	) (*tenant.ShipmentControl, error)
+	ListDetentionEngineTenants(
+		ctx context.Context,
+		limit int,
+	) ([]pagination.TenantInfo, error)
 }

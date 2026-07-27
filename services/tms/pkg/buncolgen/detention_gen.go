@@ -639,6 +639,9 @@ var DetentionOccurrenceColumns = struct {
 	Version             Column // "version" → qualified: "dto.version"
 	CreatedAt           Column // "created_at" → qualified: "dto.created_at"
 	UpdatedAt           Column // "updated_at" → qualified: "dto.updated_at"
+	LocationName        Column // "location_name" → qualified: "dto.location_name"
+	CustomerName        Column // "customer_name" → qualified: "dto.customer_name"
+	ShipmentProNumber   Column // "shipment_pro_number" → qualified: "dto.shipment_pro_number"
 }{
 	ID:                  NewColumn("id", "dto"),
 	BusinessUnitID:      NewColumn("business_unit_id", "dto"),
@@ -698,6 +701,9 @@ var DetentionOccurrenceColumns = struct {
 	Version:             NewColumn("version", "dto"),
 	CreatedAt:           NewColumn("created_at", "dto"),
 	UpdatedAt:           NewColumn("updated_at", "dto"),
+	LocationName:        NewColumn("location_name", "dto"),
+	CustomerName:        NewColumn("customer_name", "dto"),
+	ShipmentProNumber:   NewColumn("shipment_pro_number", "dto"),
 }
 
 // DetentionOccurrenceFieldMap maps JSON API field names to database column names.
@@ -763,6 +769,9 @@ var DetentionOccurrenceFieldMap = map[string]string{
 	"version":             "version",
 	"createdAt":           "created_at",
 	"updatedAt":           "updated_at",
+	"locationName":        "location_name",
+	"customerName":        "customer_name",
+	"shipmentProNumber":   "shipment_pro_number",
 }
 
 // DetentionOccurrenceInsertableColumns lists column names suitable for INSERT statements on the "detention_occurrences" table.

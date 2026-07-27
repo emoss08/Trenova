@@ -284,6 +284,7 @@ type DetentionStatsRequest struct {
 
 type FacilityDetentionStat struct {
 	LocationID         pulid.ID        `bun:"location_id"         json:"locationId"`
+	LocationName       string          `bun:"location_name"       json:"locationName"`
 	StopCount          int             `bun:"stop_count"          json:"stopCount"`
 	BreachCount        int             `bun:"breach_count"        json:"breachCount"`
 	AvgDwellMinutes    int             `bun:"avg_dwell_minutes"   json:"avgDwellMinutes"`
@@ -299,6 +300,7 @@ type FacilityDetentionStat struct {
 
 type CustomerDetentionStat struct {
 	CustomerID      pulid.ID        `bun:"customer_id"       json:"customerId"`
+	CustomerName    string          `bun:"customer_name"     json:"customerName"`
 	StopCount       int             `bun:"stop_count"        json:"stopCount"`
 	BreachCount     int             `bun:"breach_count"      json:"breachCount"`
 	BilledAmount    decimal.Decimal `bun:"billed_amount"     json:"billedAmount"`
@@ -341,4 +343,20 @@ type DetentionAnalyticsRepository interface {
 	) ([]*CustomerDetentionStat, error)
 
 	WaiverStats(ctx context.Context, req *DetentionStatsRequest) ([]*WaiverLeakageStat, error)
+
+	EntityNames(
+		ctx context.Context,
+		req *DetentionEntityNamesRequest,
+	) (*DetentionEntityNames, error)
+}
+
+type DetentionEntityNamesRequest struct {
+	TenantInfo  pagination.TenantInfo
+	LocationIDs []pulid.ID
+	CustomerIDs []pulid.ID
+}
+
+type DetentionEntityNames struct {
+	Locations map[pulid.ID]string
+	Customers map[pulid.ID]string
 }

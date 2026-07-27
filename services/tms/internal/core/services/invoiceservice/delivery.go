@@ -2011,13 +2011,7 @@ func providerLimit(profile *email.Profile) int64 {
 }
 
 func splitRecipients(raw string) []string {
-	if strings.TrimSpace(raw) == "" {
-		return nil
-	}
-	parts := strings.FieldsFunc(raw, func(r rune) bool {
-		return r == ',' || r == ';' || r == '\n' || r == '\t'
-	})
-	return normalizeRecipients(parts)
+	return stringutils.SplitEmailList(raw)
 }
 
 func normalizeRecipients(input []string) []string {

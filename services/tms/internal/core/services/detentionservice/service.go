@@ -30,6 +30,7 @@ type Params struct {
 	OrgCacheRepo      repositories.OrganizationCacheRepository
 	NoticeRepo        repositories.DetentionNoticeRepository
 	AnalyticsRepo     repositories.DetentionAnalyticsRepository
+	CustomerRepo      repositories.CustomerRepository
 	EmailService      services.EmailService
 	AuditService      services.AuditService
 }
@@ -45,6 +46,7 @@ type Service struct {
 	orgCacheRepo      repositories.OrganizationCacheRepository
 	noticeRepo        repositories.DetentionNoticeRepository
 	analyticsRepo     repositories.DetentionAnalyticsRepository
+	customerRepo      repositories.CustomerRepository
 	emailService      services.EmailService
 	auditService      services.AuditService
 	now               func() int64
@@ -62,6 +64,7 @@ func New(p Params) *Service {
 		orgCacheRepo:      p.OrgCacheRepo,
 		noticeRepo:        p.NoticeRepo,
 		analyticsRepo:     p.AnalyticsRepo,
+		customerRepo:      p.CustomerRepo,
 		emailService:      p.EmailService,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,

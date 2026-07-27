@@ -128,6 +128,11 @@ func billingQuickActions() []QuickActionDefinition {
 		),
 		createQuickAction("create-rate-table", "Create Rate Table", permission.ResourceRateTable),
 		createQuickAction(
+			"create-detention-policy",
+			"Create Detention Policy",
+			permission.ResourceDetentionPolicy,
+		),
+		createQuickAction(
 			"create-account-type",
 			"Create Account Type",
 			permission.ResourceAccountType,

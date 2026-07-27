@@ -3,11 +3,14 @@ package detentionrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -141,12 +144,21 @@ func (r *analyticsRepository) FacilityStats(
 	req *repositories.DetentionStatsRequest,
 ) ([]*repositories.FacilityDetentionStat, error) {
 	cols := buncolgen.DetentionOccurrenceColumns
+	locCols := buncolgen.LocationColumns
 	stats := make([]*repositories.FacilityDetentionStat, 0, 64)
 
 	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*detention.DetentionOccurrence)(nil)).
 		ColumnExpr(cols.LocationID.As("location_id")).
+		ColumnExpr(
+			"COALESCE(?, '') AS location_name",
+			bun.Safe(locCols.Name.Qualified()),
+		).
+		Join("LEFT JOIN locations AS loc ON ?", bun.Safe(
+			locCols.ID.EqColumn(cols.LocationID)+
+				" AND "+locCols.OrganizationID.EqColumn(cols.OrganizationID),
+		)).
 		ColumnExpr("COUNT(*) AS stop_count").
 		ColumnExpr("COUNT(*) FILTER (WHERE ? > 0) AS breach_count",
 			bun.Safe(cols.RoundedMinutes.Qualified())).
@@ -175,6 +187,7 @@ func (r *analyticsRepository) FacilityStats(
 				Where(cols.IsOpen.IsFalse())
 		}).
 		GroupExpr(cols.LocationID.Qualified()).
+		GroupExpr(locCols.Name.Qualified()).
 		OrderExpr("billed_amount DESC")
 
 	if req.From > 0 {
@@ -202,12 +215,21 @@ func (r *analyticsRepository) CustomerStats(
 	req *repositories.DetentionStatsRequest,
 ) ([]*repositories.CustomerDetentionStat, error) {
 	cols := buncolgen.DetentionOccurrenceColumns
+	cusCols := buncolgen.CustomerColumns
 	stats := make([]*repositories.CustomerDetentionStat, 0, 64)
 
 	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*detention.DetentionOccurrence)(nil)).
 		ColumnExpr(cols.CustomerID.As("customer_id")).
+		ColumnExpr(
+			"COALESCE(?, '') AS customer_name",
+			bun.Safe(cusCols.Name.Qualified()),
+		).
+		Join("LEFT JOIN customers AS cus ON ?", bun.Safe(
+			cusCols.ID.EqColumn(cols.CustomerID)+
+				" AND "+cusCols.OrganizationID.EqColumn(cols.OrganizationID),
+		)).
 		ColumnExpr("COUNT(*) AS stop_count").
 		ColumnExpr("COUNT(*) FILTER (WHERE ? > 0) AS breach_count",
 			bun.Safe(cols.RoundedMinutes.Qualified())).
@@ -228,6 +250,7 @@ func (r *analyticsRepository) CustomerStats(
 				Where(cols.IsOpen.IsFalse())
 		}).
 		GroupExpr(cols.CustomerID.Qualified()).
+		GroupExpr(cusCols.Name.Qualified()).
 		OrderExpr("billed_amount DESC")
 
 	if req.From > 0 {
@@ -286,4 +309,71 @@ func (r *analyticsRepository) WaiverStats(
 	}
 
 	return stats, nil
+}
+
+type entityNameRow struct {
+	ID   pulid.ID `bun:"id"`
+	Name string   `bun:"name"`
+}
+
+// EntityNames resolves display names for the location and customer IDs a
+// backtest groups by, so its buckets can be labeled without a query per row.
+func (r *analyticsRepository) EntityNames(
+	ctx context.Context,
+	req *repositories.DetentionEntityNamesRequest,
+) (*repositories.DetentionEntityNames, error) {
+	names := &repositories.DetentionEntityNames{
+		Locations: make(map[pulid.ID]string, len(req.LocationIDs)),
+		Customers: make(map[pulid.ID]string, len(req.CustomerIDs)),
+	}
+
+	if len(req.LocationIDs) > 0 {
+		locCols := buncolgen.LocationColumns
+		rows := make([]entityNameRow, 0, len(req.LocationIDs))
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*location.Location)(nil)).
+			ColumnExpr(locCols.ID.As("id")).
+			ColumnExpr(locCols.Name.As("name")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
+					Where(locCols.ID.In(), bun.In(req.LocationIDs))
+			}).
+			Scan(ctx, &rows)
+		if err != nil {
+			r.l.Error("failed to resolve location names", zap.Error(err))
+			return nil, err
+		}
+
+		for _, row := range rows {
+			names.Locations[row.ID] = row.Name
+		}
+	}
+
+	if len(req.CustomerIDs) > 0 {
+		cusCols := buncolgen.CustomerColumns
+		rows := make([]entityNameRow, 0, len(req.CustomerIDs))
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*customer.Customer)(nil)).
+			ColumnExpr(cusCols.ID.As("id")).
+			ColumnExpr(cusCols.Name.As("name")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
+					Where(cusCols.ID.In(), bun.In(req.CustomerIDs))
+			}).
+			Scan(ctx, &rows)
+		if err != nil {
+			r.l.Error("failed to resolve customer names", zap.Error(err))
+			return nil, err
+		}
+
+		for _, row := range rows {
+			names.Customers[row.ID] = row.Name
+		}
+	}
+
+	return names, nil
 }

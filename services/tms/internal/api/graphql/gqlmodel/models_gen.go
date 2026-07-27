@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
@@ -477,6 +478,19 @@ type CustomerConnection struct {
 	TotalCount *int            `json:"totalCount,omitempty"`
 }
 
+type CustomerDetentionStat struct {
+	CustomerID      string `json:"customerId"`
+	CustomerName    string `json:"customerName"`
+	StopCount       int    `json:"stopCount"`
+	BreachCount     int    `json:"breachCount"`
+	BilledAmount    string `json:"billedAmount"`
+	DriverPayAmount string `json:"driverPayAmount"`
+	NetMargin       string `json:"netMargin"`
+	WaivedAmount    string `json:"waivedAmount"`
+	DisputeCount    int    `json:"disputeCount"`
+	SuppressedCount int    `json:"suppressedCount"`
+}
+
 type CustomerEdge struct {
 	Node   *customer.Customer `json:"node"`
 	Cursor string             `json:"cursor"`
@@ -511,6 +525,381 @@ type DataTableConnectionInput struct {
 type DetachPayEventInput struct {
 	SettlementID string `json:"settlementId"`
 	PayEventID   string `json:"payEventId"`
+}
+
+type DetentionBacktestBucket struct {
+	Key             string `json:"key"`
+	Label           string `json:"label"`
+	StopCount       int    `json:"stopCount"`
+	BillableCount   int    `json:"billableCount"`
+	ProposedAmount  string `json:"proposedAmount"`
+	BaselineAmount  string `json:"baselineAmount"`
+	Delta           string `json:"delta"`
+	DriverPayAmount string `json:"driverPayAmount"`
+	NetMargin       string `json:"netMargin"`
+}
+
+type DetentionBacktestInput struct {
+	Policy                 *DetentionPolicyInput `json:"policy"`
+	From                   int                   `json:"from"`
+	To                     int                   `json:"to"`
+	Limit                  *int                  `json:"limit,omitempty"`
+	DriverPayRate          *string               `json:"driverPayRate,omitempty"`
+	AssumeNoticeCompliance *bool                 `json:"assumeNoticeCompliance,omitempty"`
+}
+
+type DetentionBacktestResult struct {
+	StopsEvaluated      int                        `json:"stopsEvaluated"`
+	StopsMatched        int                        `json:"stopsMatched"`
+	StopsBillable       int                        `json:"stopsBillable"`
+	StopsForfeited      int                        `json:"stopsForfeited"`
+	StopsSuppressed     int                        `json:"stopsSuppressed"`
+	ProposedRevenue     string                     `json:"proposedRevenue"`
+	BaselineRevenue     string                     `json:"baselineRevenue"`
+	RevenueDelta        string                     `json:"revenueDelta"`
+	ProposedDriverPay   string                     `json:"proposedDriverPay"`
+	ProposedNetMargin   string                     `json:"proposedNetMargin"`
+	NegativeMarginStops int                        `json:"negativeMarginStops"`
+	ByCustomer          []*DetentionBacktestBucket `json:"byCustomer"`
+	ByFacility          []*DetentionBacktestBucket `json:"byFacility"`
+	From                int                        `json:"from"`
+	To                  int                        `json:"to"`
+	Truncated           bool                       `json:"truncated"`
+}
+
+type DetentionCollectability struct {
+	Score      int                     `json:"score"`
+	Band       detention.ScoreBand     `json:"band"`
+	Factors    []*DetentionScoreFactor `json:"factors"`
+	ChainValid bool                    `json:"chainValid"`
+	Summary    string                  `json:"summary"`
+}
+
+type DetentionDeskEntry struct {
+	Occurrence            *DetentionOccurrence `json:"occurrence"`
+	MinutesUntilFreeEnds  int                  `json:"minutesUntilFreeEnds"`
+	MinutesUntilNoticeDue *int                 `json:"minutesUntilNoticeDue,omitempty"`
+	NoticeWindowOpen      bool                 `json:"noticeWindowOpen"`
+	AmountAtRisk          string               `json:"amountAtRisk"`
+	Urgency               DetentionDeskUrgency `json:"urgency"`
+}
+
+type DetentionDisputeInput struct {
+	OccurrenceID string `json:"occurrenceId"`
+	Note         string `json:"note"`
+}
+
+type DetentionDisputePacket struct {
+	Occurrence     *DetentionOccurrence     `json:"occurrence"`
+	PolicySnapshot map[string]any           `json:"policySnapshot,omitempty"`
+	Receipt        string                   `json:"receipt"`
+	Evidence       []*DetentionEvidence     `json:"evidence,omitempty"`
+	Notices        []*DetentionNotice       `json:"notices,omitempty"`
+	Collectability *DetentionCollectability `json:"collectability"`
+	GeneratedAt    int                      `json:"generatedAt"`
+}
+
+type DetentionEvidence struct {
+	ID                    string                   `json:"id"`
+	DetentionOccurrenceID string                   `json:"detentionOccurrenceId"`
+	Sequence              int                      `json:"sequence"`
+	Kind                  detention.EvidenceKind   `json:"kind"`
+	Source                detention.EvidenceSource `json:"source"`
+	Summary               string                   `json:"summary"`
+	ObservedAt            int                      `json:"observedAt"`
+	RecordedAt            int                      `json:"recordedAt"`
+	RecordedByID          *string                  `json:"recordedById,omitempty"`
+	DocumentID            *string                  `json:"documentId,omitempty"`
+	Payload               map[string]any           `json:"payload,omitempty"`
+	PrevHash              string                   `json:"prevHash"`
+	Hash                  string                   `json:"hash"`
+	CreatedAt             int                      `json:"createdAt"`
+}
+
+type DetentionNotice struct {
+	ID                    string                         `json:"id"`
+	DetentionOccurrenceID string                         `json:"detentionOccurrenceId"`
+	ThreadKey             string                         `json:"threadKey"`
+	Kind                  detention.NoticeKind           `json:"kind"`
+	Channel               detention.NoticeChannel        `json:"channel"`
+	DeliveryStatus        detention.NoticeDeliveryStatus `json:"deliveryStatus"`
+	Recipients            []string                       `json:"recipients,omitempty"`
+	Subject               string                         `json:"subject"`
+	Body                  string                         `json:"body"`
+	ScheduledFor          int                            `json:"scheduledFor"`
+	SentAt                *int                           `json:"sentAt,omitempty"`
+	DeliveredAt           *int                           `json:"deliveredAt,omitempty"`
+	OpenedAt              *int                           `json:"openedAt,omitempty"`
+	FailedAt              *int                           `json:"failedAt,omitempty"`
+	FailureReason         string                         `json:"failureReason"`
+	SentByID              *string                        `json:"sentById,omitempty"`
+	WasAutomatic          bool                           `json:"wasAutomatic"`
+	SatisfiesRequirement  bool                           `json:"satisfiesRequirement"`
+	QuotedFreeMinutes     int                            `json:"quotedFreeMinutes"`
+	QuotedRate            *string                        `json:"quotedRate,omitempty"`
+	QuotedAmount          *string                        `json:"quotedAmount,omitempty"`
+	CreatedAt             int                            `json:"createdAt"`
+}
+
+type DetentionOccurrence struct {
+	ID                  string                       `json:"id"`
+	BusinessUnitID      string                       `json:"businessUnitId"`
+	OrganizationID      string                       `json:"organizationId"`
+	ShipmentID          string                       `json:"shipmentId"`
+	ShipmentMoveID      string                       `json:"shipmentMoveId"`
+	StopID              string                       `json:"stopId"`
+	CustomerID          string                       `json:"customerId"`
+	LocationID          string                       `json:"locationId"`
+	DetentionPolicyID   *string                      `json:"detentionPolicyId,omitempty"`
+	PolicySnapshot      map[string]any               `json:"policySnapshot,omitempty"`
+	CalculationTrace    map[string]any               `json:"calculationTrace,omitempty"`
+	StopType            string                       `json:"stopType"`
+	ScheduleType        string                       `json:"scheduleType"`
+	AppointmentStart    *int                         `json:"appointmentStart,omitempty"`
+	AppointmentEnd      *int                         `json:"appointmentEnd,omitempty"`
+	ArrivedAt           *int                         `json:"arrivedAt,omitempty"`
+	DepartedAt          *int                         `json:"departedAt,omitempty"`
+	ClockStartAt        int                          `json:"clockStartAt"`
+	ClockStopAt         *int                         `json:"clockStopAt,omitempty"`
+	FreeTimeExpiresAt   int                          `json:"freeTimeExpiresAt"`
+	NoticeDueAt         *int                         `json:"noticeDueAt,omitempty"`
+	NoticeDeadlineAt    *int                         `json:"noticeDeadlineAt,omitempty"`
+	IsOpen              bool                         `json:"isOpen"`
+	ArrivedLate         bool                         `json:"arrivedLate"`
+	LateByMinutes       int                          `json:"lateByMinutes"`
+	FreeMinutesGranted  int                          `json:"freeMinutesGranted"`
+	RawDwellMinutes     int                          `json:"rawDwellMinutes"`
+	BillableMinutes     int                          `json:"billableMinutes"`
+	RoundedMinutes      int                          `json:"roundedMinutes"`
+	BillableUnits       string                       `json:"billableUnits"`
+	GrossAmount         string                       `json:"grossAmount"`
+	BillableAmount      string                       `json:"billableAmount"`
+	DriverPayMinutes    int                          `json:"driverPayMinutes"`
+	DriverPayAmount     string                       `json:"driverPayAmount"`
+	NetMargin           string                       `json:"netMargin"`
+	CapApplied          detention.CapKind            `json:"capApplied"`
+	ConvertedToLayover  bool                         `json:"convertedToLayover"`
+	Currency            string                       `json:"currency"`
+	Status              detention.OccurrenceStatus   `json:"status"`
+	NotificationStatus  detention.NotificationStatus `json:"notificationStatus"`
+	NoticeSentAt        *int                         `json:"noticeSentAt,omitempty"`
+	SuppressedByGate    bool                         `json:"suppressedByGate"`
+	RequiresApproval    bool                         `json:"requiresApproval"`
+	WaiverReason        *detention.WaiverReason      `json:"waiverReason,omitempty"`
+	WaiverNote          string                       `json:"waiverNote"`
+	WaivedAt            *int                         `json:"waivedAt,omitempty"`
+	WaivedAmount        string                       `json:"waivedAmount"`
+	DisputeNote         string                       `json:"disputeNote"`
+	DisputedAt          *int                         `json:"disputedAt,omitempty"`
+	CollectabilityScore int                          `json:"collectabilityScore"`
+	EvidenceHead        string                       `json:"evidenceHead"`
+	AdditionalChargeID  *string                      `json:"additionalChargeId,omitempty"`
+	LocationName        string                       `json:"locationName"`
+	CustomerName        string                       `json:"customerName"`
+	ShipmentProNumber   string                       `json:"shipmentProNumber"`
+	Version             int                          `json:"version"`
+	CreatedAt           int                          `json:"createdAt"`
+	UpdatedAt           int                          `json:"updatedAt"`
+}
+
+type DetentionOccurrenceDetail struct {
+	Occurrence     *DetentionOccurrence     `json:"occurrence"`
+	Evidence       []*DetentionEvidence     `json:"evidence,omitempty"`
+	Notices        []*DetentionNotice       `json:"notices,omitempty"`
+	Collectability *DetentionCollectability `json:"collectability"`
+	Receipt        string                   `json:"receipt"`
+}
+
+type DetentionPolicy struct {
+	ID                          string                            `json:"id"`
+	BusinessUnitID              string                            `json:"businessUnitId"`
+	OrganizationID              string                            `json:"organizationId"`
+	Name                        string                            `json:"name"`
+	Code                        string                            `json:"code"`
+	Description                 string                            `json:"description"`
+	Status                      detention.PolicyStatus            `json:"status"`
+	IsOrgDefault                bool                              `json:"isOrgDefault"`
+	Priority                    int                               `json:"priority"`
+	SpecificityScore            int                               `json:"specificityScore"`
+	CustomerID                  *string                           `json:"customerId,omitempty"`
+	LocationID                  *string                           `json:"locationId,omitempty"`
+	ShipmentTypeIds             []string                          `json:"shipmentTypeIds,omitempty"`
+	ServiceTypeIds              []string                          `json:"serviceTypeIds,omitempty"`
+	CommodityIds                []string                          `json:"commodityIds,omitempty"`
+	StopTypes                   []StopType                        `json:"stopTypes,omitempty"`
+	AppointmentStopsOnly        bool                              `json:"appointmentStopsOnly"`
+	EffectiveStartDate          *int                              `json:"effectiveStartDate,omitempty"`
+	EffectiveEndDate            *int                              `json:"effectiveEndDate,omitempty"`
+	ClockStartBasis             detention.ClockStartBasis         `json:"clockStartBasis"`
+	LateArrivalRule             detention.LateArrivalRule         `json:"lateArrivalRule"`
+	LateArrivalGraceMinutes     int                               `json:"lateArrivalGraceMinutes"`
+	BillingFreeMinutes          int                               `json:"billingFreeMinutes"`
+	PickupFreeMinutes           *int                              `json:"pickupFreeMinutes,omitempty"`
+	DeliveryFreeMinutes         *int                              `json:"deliveryFreeMinutes,omitempty"`
+	PayFreeMinutes              *int                              `json:"payFreeMinutes,omitempty"`
+	MinimumBillableMinutes      int                               `json:"minimumBillableMinutes"`
+	BillingIncrementMinutes     int                               `json:"billingIncrementMinutes"`
+	RoundingMode                detention.RoundingMode            `json:"roundingMode"`
+	RateSource                  detention.RateSource              `json:"rateSource"`
+	AccessorialChargeID         string                            `json:"accessorialChargeId"`
+	Tiers                       []*DetentionPolicyTier            `json:"tiers,omitempty"`
+	MaxBillableMinutesPerStop   *int                              `json:"maxBillableMinutesPerStop,omitempty"`
+	MaxChargePerStop            *string                           `json:"maxChargePerStop,omitempty"`
+	MaxChargePerDay             *string                           `json:"maxChargePerDay,omitempty"`
+	MaxChargePerShipment        *string                           `json:"maxChargePerShipment,omitempty"`
+	DayBoundaryMode             detention.CapScope                `json:"dayBoundaryMode"`
+	ConvertToLayoverAtMinutes   *int                              `json:"convertToLayoverAtMinutes,omitempty"`
+	LayoverAccessorialChargeID  *string                           `json:"layoverAccessorialChargeId,omitempty"`
+	NotificationRequirement     detention.NotificationRequirement `json:"notificationRequirement"`
+	NotificationLeadMinutes     int                               `json:"notificationLeadMinutes"`
+	NotificationDeadlineMinutes int                               `json:"notificationDeadlineMinutes"`
+	UnnotifiedBehavior          detention.UnnotifiedBehavior      `json:"unnotifiedBehavior"`
+	AutoSendNotice              bool                              `json:"autoSendNotice"`
+	SendDepartureSummary        bool                              `json:"sendDepartureSummary"`
+	RequireApprovalOverAmount   *string                           `json:"requireApprovalOverAmount,omitempty"`
+	AutoApproveUnderAmount      *string                           `json:"autoApproveUnderAmount,omitempty"`
+	Currency                    string                            `json:"currency"`
+	Comments                    string                            `json:"comments"`
+	Version                     int                               `json:"version"`
+	CreatedAt                   int                               `json:"createdAt"`
+	UpdatedAt                   int                               `json:"updatedAt"`
+}
+
+type DetentionPolicyConnection struct {
+	Edges      []*DetentionPolicyEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type DetentionPolicyEdge struct {
+	Node   *DetentionPolicy `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type DetentionPolicyInput struct {
+	Name                        string                             `json:"name"`
+	Code                        string                             `json:"code"`
+	Description                 *string                            `json:"description,omitempty"`
+	Status                      *detention.PolicyStatus            `json:"status,omitempty"`
+	IsOrgDefault                *bool                              `json:"isOrgDefault,omitempty"`
+	Priority                    *int                               `json:"priority,omitempty"`
+	CustomerID                  *string                            `json:"customerId,omitempty"`
+	LocationID                  *string                            `json:"locationId,omitempty"`
+	ShipmentTypeIds             []string                           `json:"shipmentTypeIds,omitempty"`
+	ServiceTypeIds              []string                           `json:"serviceTypeIds,omitempty"`
+	CommodityIds                []string                           `json:"commodityIds,omitempty"`
+	StopTypes                   []StopType                         `json:"stopTypes,omitempty"`
+	AppointmentStopsOnly        *bool                              `json:"appointmentStopsOnly,omitempty"`
+	EffectiveStartDate          *int                               `json:"effectiveStartDate,omitempty"`
+	EffectiveEndDate            *int                               `json:"effectiveEndDate,omitempty"`
+	ClockStartBasis             *detention.ClockStartBasis         `json:"clockStartBasis,omitempty"`
+	LateArrivalRule             *detention.LateArrivalRule         `json:"lateArrivalRule,omitempty"`
+	LateArrivalGraceMinutes     *int                               `json:"lateArrivalGraceMinutes,omitempty"`
+	BillingFreeMinutes          *int                               `json:"billingFreeMinutes,omitempty"`
+	PickupFreeMinutes           *int                               `json:"pickupFreeMinutes,omitempty"`
+	DeliveryFreeMinutes         *int                               `json:"deliveryFreeMinutes,omitempty"`
+	PayFreeMinutes              *int                               `json:"payFreeMinutes,omitempty"`
+	MinimumBillableMinutes      *int                               `json:"minimumBillableMinutes,omitempty"`
+	BillingIncrementMinutes     *int                               `json:"billingIncrementMinutes,omitempty"`
+	RoundingMode                *detention.RoundingMode            `json:"roundingMode,omitempty"`
+	RateSource                  *detention.RateSource              `json:"rateSource,omitempty"`
+	AccessorialChargeID         string                             `json:"accessorialChargeId"`
+	Tiers                       []*DetentionTierInput              `json:"tiers,omitempty"`
+	MaxBillableMinutesPerStop   *int                               `json:"maxBillableMinutesPerStop,omitempty"`
+	MaxChargePerStop            *string                            `json:"maxChargePerStop,omitempty"`
+	MaxChargePerDay             *string                            `json:"maxChargePerDay,omitempty"`
+	MaxChargePerShipment        *string                            `json:"maxChargePerShipment,omitempty"`
+	DayBoundaryMode             *detention.CapScope                `json:"dayBoundaryMode,omitempty"`
+	ConvertToLayoverAtMinutes   *int                               `json:"convertToLayoverAtMinutes,omitempty"`
+	LayoverAccessorialChargeID  *string                            `json:"layoverAccessorialChargeId,omitempty"`
+	NotificationRequirement     *detention.NotificationRequirement `json:"notificationRequirement,omitempty"`
+	NotificationLeadMinutes     *int                               `json:"notificationLeadMinutes,omitempty"`
+	NotificationDeadlineMinutes *int                               `json:"notificationDeadlineMinutes,omitempty"`
+	UnnotifiedBehavior          *detention.UnnotifiedBehavior      `json:"unnotifiedBehavior,omitempty"`
+	AutoSendNotice              *bool                              `json:"autoSendNotice,omitempty"`
+	SendDepartureSummary        *bool                              `json:"sendDepartureSummary,omitempty"`
+	RequireApprovalOverAmount   *string                            `json:"requireApprovalOverAmount,omitempty"`
+	AutoApproveUnderAmount      *string                            `json:"autoApproveUnderAmount,omitempty"`
+	Currency                    *string                            `json:"currency,omitempty"`
+	Comments                    *string                            `json:"comments,omitempty"`
+	Version                     *int                               `json:"version,omitempty"`
+}
+
+type DetentionPolicyTier struct {
+	ID         *string                `json:"id,omitempty"`
+	FromMinute int                    `json:"fromMinute"`
+	ToMinute   *int                   `json:"toMinute,omitempty"`
+	Rate       string                 `json:"rate"`
+	RateUnit   detention.TierRateUnit `json:"rateUnit"`
+	Label      string                 `json:"label"`
+	SortOrder  int                    `json:"sortOrder"`
+}
+
+type DetentionPreviewResult struct {
+	PolicySnapshot     map[string]any               `json:"policySnapshot"`
+	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
+	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
+	BillableMinutes    int                          `json:"billableMinutes"`
+	RoundedMinutes     int                          `json:"roundedMinutes"`
+	BillableAmount     string                       `json:"billableAmount"`
+	GrossAmount        string                       `json:"grossAmount"`
+	DriverPayAmount    string                       `json:"driverPayAmount"`
+	NetMargin          string                       `json:"netMargin"`
+	ArrivedLate        bool                         `json:"arrivedLate"`
+	CapApplied         detention.CapKind            `json:"capApplied"`
+	Status             detention.OccurrenceStatus   `json:"status"`
+	NotificationStatus detention.NotificationStatus `json:"notificationStatus"`
+	SuppressedByGate   bool                         `json:"suppressedByGate"`
+	CalculationTrace   map[string]any               `json:"calculationTrace,omitempty"`
+	Receipt            string                       `json:"receipt"`
+}
+
+type DetentionPreviewScenarioInput struct {
+	ArrivedAt        int              `json:"arrivedAt"`
+	DepartedAt       *int             `json:"departedAt,omitempty"`
+	AppointmentStart *int             `json:"appointmentStart,omitempty"`
+	AppointmentEnd   *int             `json:"appointmentEnd,omitempty"`
+	StopType         StopType         `json:"stopType"`
+	ScheduleType     StopScheduleType `json:"scheduleType"`
+	NoticeSentAt     *int             `json:"noticeSentAt,omitempty"`
+	DriverPayRate    *string          `json:"driverPayRate,omitempty"`
+}
+
+type DetentionScoreFactor struct {
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Earned   int    `json:"earned"`
+	Possible int    `json:"possible"`
+	Detail   string `json:"detail"`
+	Remedy   string `json:"remedy"`
+}
+
+type DetentionStatsInput struct {
+	From  int  `json:"from"`
+	To    int  `json:"to"`
+	Limit *int `json:"limit,omitempty"`
+}
+
+type DetentionTierInput struct {
+	FromMinute int                     `json:"fromMinute"`
+	ToMinute   *int                    `json:"toMinute,omitempty"`
+	Rate       string                  `json:"rate"`
+	RateUnit   *detention.TierRateUnit `json:"rateUnit,omitempty"`
+	Label      *string                 `json:"label,omitempty"`
+	SortOrder  *int                    `json:"sortOrder,omitempty"`
+}
+
+type DetentionWaiveInput struct {
+	OccurrenceID string                 `json:"occurrenceId"`
+	Reason       detention.WaiverReason `json:"reason"`
+	Note         string                 `json:"note"`
+}
+
+type DetentionWaiverLeakageStat struct {
+	Reason        string `json:"reason"`
+	WaiverCount   int    `json:"waiverCount"`
+	ApproverCount int    `json:"approverCount"`
+	WaivedAmount  string `json:"waivedAmount"`
 }
 
 type DispatchAssignMoveInput struct {
@@ -1162,6 +1551,22 @@ type EscrowAccountConnection struct {
 type EscrowAccountEdge struct {
 	Node   *driverpay.EscrowAccount `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type FacilityDetentionStat struct {
+	LocationID         string  `json:"locationId"`
+	LocationName       string  `json:"locationName"`
+	StopCount          int     `json:"stopCount"`
+	BreachCount        int     `json:"breachCount"`
+	AvgDwellMinutes    int     `json:"avgDwellMinutes"`
+	MedianDwellMinutes float64 `json:"medianDwellMinutes"`
+	P90DwellMinutes    float64 `json:"p90DwellMinutes"`
+	BilledAmount       string  `json:"billedAmount"`
+	DriverPayAmount    string  `json:"driverPayAmount"`
+	NetMargin          string  `json:"netMargin"`
+	WaivedAmount       string  `json:"waivedAmount"`
+	DisputeCount       int     `json:"disputeCount"`
+	SuppressedCount    int     `json:"suppressedCount"`
 }
 
 type FieldFilterInput struct {
@@ -4512,6 +4917,69 @@ func (e *CostRateSource) UnmarshalJSON(b []byte) error {
 }
 
 func (e CostRateSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DetentionDeskUrgency string
+
+const (
+	DetentionDeskUrgencyLost           DetentionDeskUrgency = "Lost"
+	DetentionDeskUrgencyNoticeOverdue  DetentionDeskUrgency = "NoticeOverdue"
+	DetentionDeskUrgencyNoticeDueSoon  DetentionDeskUrgency = "NoticeDueSoon"
+	DetentionDeskUrgencyAccruing       DetentionDeskUrgency = "Accruing"
+	DetentionDeskUrgencyFreeTimeEnding DetentionDeskUrgency = "FreeTimeEnding"
+	DetentionDeskUrgencyNormal         DetentionDeskUrgency = "Normal"
+)
+
+var AllDetentionDeskUrgency = []DetentionDeskUrgency{
+	DetentionDeskUrgencyLost,
+	DetentionDeskUrgencyNoticeOverdue,
+	DetentionDeskUrgencyNoticeDueSoon,
+	DetentionDeskUrgencyAccruing,
+	DetentionDeskUrgencyFreeTimeEnding,
+	DetentionDeskUrgencyNormal,
+}
+
+func (e DetentionDeskUrgency) IsValid() bool {
+	switch e {
+	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal:
+		return true
+	}
+	return false
+}
+
+func (e DetentionDeskUrgency) String() string {
+	return string(e)
+}
+
+func (e *DetentionDeskUrgency) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionDeskUrgency(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionDeskUrgency", str)
+	}
+	return nil
+}
+
+func (e DetentionDeskUrgency) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionDeskUrgency) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionDeskUrgency) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

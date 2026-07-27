@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
@@ -117,6 +119,8 @@ type Params struct {
 	RateTableService             *ratetableservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
+	DetentionService             *detentionservice.Service
+	DetentionPolicyService       *detentionpolicyservice.Service
 	FuelIndexRepo                repositories.FuelIndexRepository
 	FuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
@@ -214,6 +218,8 @@ type Resolver struct {
 	rateTableService             *ratetableservice.Service
 	fuelSurchargeService         *fuelsurchargeservice.Service
 	costingService               *costingservice.Service
+	detentionService             *detentionservice.Service
+	detentionPolicyService       *detentionpolicyservice.Service
 	fuelIndexRepo                repositories.FuelIndexRepository
 	fuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	fuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
@@ -312,6 +318,8 @@ func New(p Params) *Resolver {
 		rateTableService:             p.RateTableService,
 		fuelSurchargeService:         p.FuelSurchargeService,
 		costingService:               p.CostingService,
+		detentionService:             p.DetentionService,
+		detentionPolicyService:       p.DetentionPolicyService,
 		fuelIndexRepo:                p.FuelIndexRepo,
 		fuelIndexPriceRepo:           p.FuelIndexPriceRepo,
 		fuelSurchargeProgramRepo:     p.FuelSurchargeProgramRepo,

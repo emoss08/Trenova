@@ -2,6 +2,7 @@ package detentionservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -362,6 +364,238 @@ func noticeOutcomeVerb(notice *detention.DetentionNotice) string {
 	default:
 		return "sent after the contractual deadline"
 	}
+}
+
+type SendOccurrenceNoticeParams struct {
+	OccurrenceID pulid.ID
+	TenantInfo   pagination.TenantInfo
+	UserID       pulid.ID
+	Automatic    bool
+}
+
+// SendOccurrenceNotice schedules and delivers a customer notice for one
+// occurrence in a single step: the desk's "Send notice" action and the
+// automated sweep both land here. Recipients come from the customer's email
+// profile, because the notice must reach whoever receives the invoice.
+func (s *Service) SendOccurrenceNotice(
+	ctx context.Context,
+	p SendOccurrenceNoticeParams,
+) (*detention.DetentionOccurrence, error) {
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if occurrence.NotificationStatus == detention.NotificationStatusNotRequired {
+		return nil, errortypes.NewValidationError(
+			"occurrenceId", errortypes.ErrInvalidOperation,
+			"The governing policy does not require a customer notice for this stop")
+	}
+
+	recipients, err := s.noticeRecipients(ctx, occurrence, p.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	now := s.now()
+	original := *occurrence
+
+	var sentBy *pulid.ID
+	if !p.Automatic && !p.UserID.IsNil() {
+		sentBy = &p.UserID
+	}
+
+	notice, err := s.ScheduleNotice(ctx, ScheduleNoticeParams{
+		Occurrence:   occurrence,
+		Kind:         noticeKindFor(occurrence, now),
+		ScheduledFor: now,
+		Recipients:   recipients,
+		Automatic:    p.Automatic,
+		SentByID:     sentBy,
+		FacilityName: occurrence.LocationName,
+		ShipmentRef:  occurrence.ShipmentProNumber,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = s.SendNotice(ctx, notice, occurrence); err != nil {
+		return nil, err
+	}
+
+	s.audit(&original, occurrence, p.UserID, "Detention notice sent")
+
+	return occurrence, nil
+}
+
+// noticeKindFor picks the message the moment calls for: a warning while free
+// time is still running, a start-of-charges notice once it lapses, an update on
+// a repeat send, and a final summary after the clock has stopped.
+func noticeKindFor(occurrence *detention.DetentionOccurrence, now int64) detention.NoticeKind {
+	switch {
+	case occurrence.ClockStopAt != nil:
+		return detention.NoticeKindFinal
+	case now < occurrence.FreeTimeExpiresAt:
+		return detention.NoticeKindWarning
+	case occurrence.NoticeSentAt == nil:
+		return detention.NoticeKindStarted
+	default:
+		return detention.NoticeKindUpdate
+	}
+}
+
+func (s *Service) noticeRecipients(
+	ctx context.Context,
+	occurrence *detention.DetentionOccurrence,
+	tenantInfo pagination.TenantInfo,
+) ([]string, error) {
+	if s.customerRepo == nil {
+		return nil, errortypes.NewValidationError(
+			"occurrenceId", errortypes.ErrSystemError,
+			"Customer lookup is not available")
+	}
+
+	entity, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         occurrence.CustomerID,
+		TenantInfo: tenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeEmailProfile: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var recipients []string
+	if entity.EmailProfile != nil {
+		recipients = stringutils.SplitEmailList(entity.EmailProfile.ToRecipients)
+	}
+
+	if len(recipients) == 0 {
+		return nil, errortypes.NewValidationError(
+			"occurrenceId", errortypes.ErrInvalidOperation,
+			"The customer has no notice recipients configured — add a customer email profile first")
+	}
+
+	return recipients, nil
+}
+
+type NoticeSweepResult struct {
+	Due     int `json:"due"`
+	Sent    int `json:"sent"`
+	Skipped int `json:"skipped"`
+	Failed  int `json:"failed"`
+}
+
+// SweepNoticesDue delivers every pending notice whose window has opened, for
+// policies that opted into automatic sending. Policies that leave sending to a
+// human stay on the desk with their countdown; the sweep never overrides that
+// choice. A configuration failure (no recipients) is stamped onto the
+// occurrence so it stops re-queuing and surfaces to a person instead.
+func (s *Service) SweepNoticesDue(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*NoticeSweepResult, error) {
+	now := s.now()
+
+	occurrences, err := s.occurrenceRepo.ListNoticesDue(ctx, &repositories.ListNoticesDueRequest{
+		TenantInfo: tenantInfo,
+		Before:     now,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := &NoticeSweepResult{Due: len(occurrences)}
+	autoSendByPolicy := make(map[pulid.ID]bool, 4)
+
+	for _, occurrence := range occurrences {
+		if occurrence == nil {
+			continue
+		}
+
+		if !s.policyAutoSends(ctx, occurrence, tenantInfo, autoSendByPolicy) {
+			result.Skipped++
+			continue
+		}
+
+		if _, sendErr := s.SendOccurrenceNotice(ctx, SendOccurrenceNoticeParams{
+			OccurrenceID: occurrence.ID,
+			TenantInfo:   tenantInfo,
+			Automatic:    true,
+		}); sendErr != nil {
+			result.Failed++
+			s.l.Warn("automatic detention notice failed",
+				zap.String("occurrenceId", occurrence.ID.String()),
+				zap.Error(sendErr))
+
+			var validationErr *errortypes.Error
+			if errors.As(sendErr, &validationErr) {
+				s.markNoticeUnsendable(ctx, occurrence, validationErr.Message, now)
+			}
+			continue
+		}
+
+		result.Sent++
+	}
+
+	return result, nil
+}
+
+func (s *Service) policyAutoSends(
+	ctx context.Context,
+	occurrence *detention.DetentionOccurrence,
+	tenantInfo pagination.TenantInfo,
+	cache map[pulid.ID]bool,
+) bool {
+	if occurrence.DetentionPolicyID == nil || occurrence.DetentionPolicyID.IsNil() {
+		return false
+	}
+
+	policyID := *occurrence.DetentionPolicyID
+	if autoSend, ok := cache[policyID]; ok {
+		return autoSend
+	}
+
+	policy, err := s.policyRepo.GetByID(ctx, &repositories.GetDetentionPolicyByIDRequest{
+		DetentionPolicyID: policyID,
+		TenantInfo:        tenantInfo,
+	})
+	if err != nil {
+		s.l.Warn("failed to load policy for notice sweep",
+			zap.String("policyId", policyID.String()),
+			zap.Error(err))
+		cache[policyID] = false
+		return false
+	}
+
+	cache[policyID] = policy.AutoSendNotice
+	return policy.AutoSendNotice
+}
+
+func (s *Service) markNoticeUnsendable(
+	ctx context.Context,
+	occurrence *detention.DetentionOccurrence,
+	reason string,
+	now int64,
+) {
+	occurrence.NotificationStatus = detention.NotificationStatusFailed
+	if _, err := s.occurrenceRepo.Update(ctx, occurrence); err != nil {
+		s.l.Error("failed to mark detention notice unsendable",
+			zap.String("occurrenceId", occurrence.ID.String()),
+			zap.Error(err))
+		return
+	}
+
+	s.appendEvidence(ctx, occurrence, detention.EvidenceKindNotice,
+		detention.EvidenceSourceSystem,
+		"Automatic notice could not be sent: "+reason, now)
 }
 
 // RecordNoticeDelivery folds a provider webhook back into the claim file.

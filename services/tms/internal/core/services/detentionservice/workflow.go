@@ -62,6 +62,13 @@ func (s *Service) ListOccurrences(
 	return s.occurrenceRepo.List(ctx, req)
 }
 
+func (s *Service) ListByShipment(
+	ctx context.Context,
+	req *repositories.GetOccurrencesByShipmentRequest,
+) ([]*detention.DetentionOccurrence, error) {
+	return s.occurrenceRepo.GetByShipment(ctx, req)
+}
+
 // DeskEntry is one card on the live detention board.
 type DeskEntry struct {
 	Occurrence            *detention.DetentionOccurrence `json:"occurrence"`

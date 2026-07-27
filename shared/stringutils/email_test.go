@@ -28,3 +28,14 @@ func TestFormatEmailAddress(t *testing.T) {
 	require.Equal(t, "Billing <billing@example.com>", FormatEmailAddress(" Billing ", " billing@example.com "))
 	require.Equal(t, "billing@example.com", FormatEmailAddress("", " billing@example.com "))
 }
+
+func TestSplitEmailList(t *testing.T) {
+	t.Parallel()
+
+	require.Nil(t, SplitEmailList("   "))
+	require.Equal(
+		t,
+		[]string{"billing@example.com", "ops@example.com", "ap@example.com"},
+		SplitEmailList("Billing@Example.COM, ops@example.com;\nap@example.com\tbilling@example.com"),
+	)
+}

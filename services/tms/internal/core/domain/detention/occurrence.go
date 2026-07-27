@@ -89,6 +89,10 @@ type DetentionOccurrence struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
+	LocationName      string `json:"locationName,omitempty"      bun:"location_name,scanonly"`
+	CustomerName      string `json:"customerName,omitempty"      bun:"customer_name,scanonly"`
+	ShipmentProNumber string `json:"shipmentProNumber,omitempty" bun:"shipment_pro_number,scanonly"`
+
 	BusinessUnit    *tenant.BusinessUnit `json:"-"                         bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization    *tenant.Organization `json:"-"                         bun:"rel:belongs-to,join:organization_id=id"`
 	DetentionPolicy *DetentionPolicy     `json:"detentionPolicy,omitempty" bun:"rel:belongs-to,join:detention_policy_id=id"`

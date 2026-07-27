@@ -715,6 +715,36 @@ func (rr *RouteRegistry) registerBillingRoutes() {
 		DisplayName: "Formula Templates",
 		Category:    "Billing",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/configuration-files/detention-policies",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDetentionPolicy, Operation: OpRead},
+		},
+		DisplayName: "Detention Policies",
+		Category:    "Billing",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/detention-desk",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDetentionPolicy, Operation: OpRead},
+		},
+		DisplayName: "Detention Desk",
+		Category:    "Billing",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/detention-intelligence",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDetentionPolicy, Operation: OpRead},
+		},
+		DisplayName: "Detention Intelligence",
+		Category:    "Billing",
+	})
 }
 
 func (rr *RouteRegistry) registerCustomerRoutes() {
