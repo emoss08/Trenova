@@ -256,10 +256,6 @@ func mapDispatchFindings(
 	return mapped
 }
 
-
-
-
-
 func mapDispatchPlan(plan *dispatchautoassignservice.Plan) *gqlmodel.DispatchPlan {
 	if plan == nil {
 		return nil

@@ -60,22 +60,22 @@ type BoardDriver struct {
 	FormattedLocation string   `json:"formattedLocation"`
 	PositionAt        int64    `json:"positionRecordedAt"`
 
-	ProjectedTimeAvailable int64                             `json:"projectedTimeAvailable"`
-	Commitments            []*repositories.WorkerCommitment  `json:"commitments"`
-	TimeOff                []*repositories.WorkerTimeOff     `json:"timeOff"`
-	Findings               []dispatcheligibility.Finding     `json:"findings"`
-	CommittedMiles         float64                           `json:"committedMiles"`
-	CommittedRevenue       float64                           `json:"committedRevenue"`
+	ProjectedTimeAvailable int64                            `json:"projectedTimeAvailable"`
+	Commitments            []*repositories.WorkerCommitment `json:"commitments"`
+	TimeOff                []*repositories.WorkerTimeOff    `json:"timeOff"`
+	Findings               []dispatcheligibility.Finding    `json:"findings"`
+	CommittedMiles         float64                          `json:"committedMiles"`
+	CommittedRevenue       float64                          `json:"committedRevenue"`
 }
 
 // Board is everything one console render needs, in one response.
 type Board struct {
-	Moves       []*BoardMove                 `json:"moves"`
-	Drivers     []*BoardDriver               `json:"drivers"`
-	Summary     *repositories.BoardSummary   `json:"summary"`
-	WindowStart int64                        `json:"windowStart"`
-	WindowEnd   int64                        `json:"windowEnd"`
-	GeneratedAt int64                        `json:"generatedAt"`
+	Moves       []*BoardMove               `json:"moves"`
+	Drivers     []*BoardDriver             `json:"drivers"`
+	Summary     *repositories.BoardSummary `json:"summary"`
+	WindowStart int64                      `json:"windowStart"`
+	WindowEnd   int64                      `json:"windowEnd"`
+	GeneratedAt int64                      `json:"generatedAt"`
 }
 
 type GetBoardRequest struct {
@@ -103,7 +103,7 @@ type MoveCandidatesRequest struct {
 // carries the same score object so both directions of matching explain themselves
 // identically.
 type DriverMoveMatch struct {
-	Move  *BoardMove                              `json:"move"`
+	Move  *BoardMove                               `json:"move"`
 	Score *dispatchcandidateservice.CandidateScore `json:"score"`
 }
 

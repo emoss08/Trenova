@@ -28,7 +28,7 @@ type PlannedAssignment struct {
 	Rationale  string                                   `json:"rationale"`
 	// AutoExecutable is true only when the organization allows unattended execution and
 	// this pairing clears its confidence threshold with no blocking findings.
-	AutoExecutable bool `json:"autoExecutable"`
+	AutoExecutable bool     `json:"autoExecutable"`
 	ProposalID     pulid.ID `json:"proposalId"`
 }
 

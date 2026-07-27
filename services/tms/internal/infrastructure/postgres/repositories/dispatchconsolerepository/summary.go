@@ -64,16 +64,16 @@ func (r *repository) scanMoveSummary(
 		Model((*shipment.ShipmentMove)(nil)).
 		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL)::int AS uncovered_moves").
 		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NOT NULL)::int AS covered_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL " +
-			"AND COALESCE(win.window_start, 0) > 0 " +
+		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL "+
+			"AND COALESCE(win.window_start, 0) > 0 "+
 			"AND win.window_start < ?)::int AS late_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL " +
-			"AND COALESCE(win.window_start, 0) > 0 " +
+		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL "+
+			"AND COALESCE(win.window_start, 0) > 0 "+
 			"AND win.window_start >= ? AND win.window_start <= ?)::int AS at_risk_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NOT NULL AND a.created_at >= ?)::int " +
+		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NOT NULL AND a.created_at >= ?)::int "+
 			"AS assigned_today").
-		Join("LEFT JOIN assignments AS a ON " + asnCols.ShipmentMoveID.EqColumn(moveCols.ID) +
-			" AND " + asnCols.ArchivedAt.IsNull()).
+		Join("LEFT JOIN assignments AS a ON "+asnCols.ShipmentMoveID.EqColumn(moveCols.ID)+
+			" AND "+asnCols.ArchivedAt.IsNull()).
 		Join(windowJoin).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo).
@@ -121,7 +121,7 @@ func (r *repository) scanDriverSummary(
 	err := r.db.DB().NewSelect().
 		Model((*worker.Worker)(nil)).
 		ColumnExpr("COUNT(*)::int AS available_drivers").
-		ColumnExpr("COUNT(*) FILTER (WHERE COALESCE(oa.open_assignments, 0) = 0)::int " +
+		ColumnExpr("COUNT(*) FILTER (WHERE COALESCE(oa.open_assignments, 0) = 0)::int "+
 			"AS unseated_drivers").
 		Join(openAssignmentJoin).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

@@ -32,27 +32,27 @@ type DispatchBoardFilter struct {
 // the origin and destination a dispatcher needs to judge coverage without a second
 // round trip into stops or locations.
 type BoardMove struct {
-	MoveID                pulid.ID           `bun:"move_id"                  json:"moveId"`
-	ShipmentID            pulid.ID           `bun:"shipment_id"              json:"shipmentId"`
-	ProNumber             string             `bun:"pro_number"               json:"proNumber"`
-	BOL                   string             `bun:"bol"                      json:"bol"`
+	MoveID                pulid.ID            `bun:"move_id"                  json:"moveId"`
+	ShipmentID            pulid.ID            `bun:"shipment_id"              json:"shipmentId"`
+	ProNumber             string              `bun:"pro_number"               json:"proNumber"`
+	BOL                   string              `bun:"bol"                      json:"bol"`
 	MoveStatus            shipment.MoveStatus `bun:"move_status"             json:"moveStatus"`
-	ShipmentStatus        shipment.Status    `bun:"shipment_status"          json:"shipmentStatus"`
-	Sequence              int64              `bun:"sequence"                 json:"sequence"`
-	MoveCount             int                `bun:"move_count"               json:"moveCount"`
-	Loaded                bool               `bun:"loaded"                   json:"loaded"`
-	Distance              *float64           `bun:"distance"                 json:"distance"`
-	CustomerID            pulid.ID           `bun:"customer_id"              json:"customerId"`
-	CustomerName          string             `bun:"customer_name"            json:"customerName"`
-	ServiceTypeID         pulid.ID           `bun:"service_type_id"          json:"serviceTypeId"`
-	ServiceTypeCode       string             `bun:"service_type_code"        json:"serviceTypeCode"`
-	RequiredTractorTypeID pulid.ID           `bun:"tractor_type_id"          json:"requiredTractorTypeId"`
-	RequiredTrailerTypeID pulid.ID           `bun:"trailer_type_id"          json:"requiredTrailerTypeId"`
-	TemperatureMin        *int16             `bun:"temperature_min"          json:"temperatureMin"`
-	TemperatureMax        *int16             `bun:"temperature_max"          json:"temperatureMax"`
-	HasHazmat             bool               `bun:"has_hazmat"               json:"hasHazmat"`
-	HasActiveHold         bool               `bun:"has_active_hold"          json:"hasActiveHold"`
-	Revenue               *float64           `bun:"revenue"                  json:"revenue"`
+	ShipmentStatus        shipment.Status     `bun:"shipment_status"          json:"shipmentStatus"`
+	Sequence              int64               `bun:"sequence"                 json:"sequence"`
+	MoveCount             int                 `bun:"move_count"               json:"moveCount"`
+	Loaded                bool                `bun:"loaded"                   json:"loaded"`
+	Distance              *float64            `bun:"distance"                 json:"distance"`
+	CustomerID            pulid.ID            `bun:"customer_id"              json:"customerId"`
+	CustomerName          string              `bun:"customer_name"            json:"customerName"`
+	ServiceTypeID         pulid.ID            `bun:"service_type_id"          json:"serviceTypeId"`
+	ServiceTypeCode       string              `bun:"service_type_code"        json:"serviceTypeCode"`
+	RequiredTractorTypeID pulid.ID            `bun:"tractor_type_id"          json:"requiredTractorTypeId"`
+	RequiredTrailerTypeID pulid.ID            `bun:"trailer_type_id"          json:"requiredTrailerTypeId"`
+	TemperatureMin        *int16              `bun:"temperature_min"          json:"temperatureMin"`
+	TemperatureMax        *int16              `bun:"temperature_max"          json:"temperatureMax"`
+	HasHazmat             bool                `bun:"has_hazmat"               json:"hasHazmat"`
+	HasActiveHold         bool                `bun:"has_active_hold"          json:"hasActiveHold"`
+	Revenue               *float64            `bun:"revenue"                  json:"revenue"`
 
 	OriginStopID       pulid.ID `bun:"origin_stop_id"       json:"originStopId"`
 	OriginLocationID   pulid.ID `bun:"origin_location_id"   json:"originLocationId"`
@@ -75,33 +75,33 @@ type BoardMove struct {
 	DestinationWindowStart int64    `bun:"destination_window_start" json:"destinationWindowStart"`
 	DestinationWindowEnd   *int64   `bun:"destination_window_end"   json:"destinationWindowEnd"`
 
-	AssignmentID          pulid.ID              `bun:"assignment_id"           json:"assignmentId"`
-	AssignedWorkerID      pulid.ID              `bun:"assigned_worker_id"      json:"assignedWorkerId"`
-	AssignedWorkerName    string                `bun:"assigned_worker_name"    json:"assignedWorkerName"`
-	AssignedTractorID     pulid.ID              `bun:"assigned_tractor_id"     json:"assignedTractorId"`
-	AssignedTractorCode   string                `bun:"assigned_tractor_code"   json:"assignedTractorCode"`
-	AssignedTrailerID     pulid.ID              `bun:"assigned_trailer_id"     json:"assignedTrailerId"`
-	AssignedTrailerCode   string                `bun:"assigned_trailer_code"   json:"assignedTrailerCode"`
+	AssignmentID          pulid.ID               `bun:"assignment_id"           json:"assignmentId"`
+	AssignedWorkerID      pulid.ID               `bun:"assigned_worker_id"      json:"assignedWorkerId"`
+	AssignedWorkerName    string                 `bun:"assigned_worker_name"    json:"assignedWorkerName"`
+	AssignedTractorID     pulid.ID               `bun:"assigned_tractor_id"     json:"assignedTractorId"`
+	AssignedTractorCode   string                 `bun:"assigned_tractor_code"   json:"assignedTractorCode"`
+	AssignedTrailerID     pulid.ID               `bun:"assigned_trailer_id"     json:"assignedTrailerId"`
+	AssignedTrailerCode   string                 `bun:"assigned_trailer_code"   json:"assignedTrailerCode"`
 	AssignmentAckStatus   shipment.AssignmentAck `bun:"assignment_ack_status"  json:"assignmentAckStatus"`
-	PreviousMoveTrailerID pulid.ID              `bun:"previous_trailer_id"     json:"previousMoveTrailerId"`
+	PreviousMoveTrailerID pulid.ID               `bun:"previous_trailer_id"     json:"previousMoveTrailerId"`
 }
 
 // BoardDriver is one row in the capacity rail: who the driver is, what they drive, and
 // what the telematics feed last said about them.
 type BoardDriver struct {
-	WorkerID       pulid.ID          `bun:"worker_id"        json:"workerId"`
-	FirstName      string            `bun:"first_name"       json:"firstName"`
-	LastName       string            `bun:"last_name"        json:"lastName"`
-	WorkerType     worker.WorkerType `bun:"worker_type"      json:"workerType"`
-	DriverType     worker.DriverType `bun:"driver_type"      json:"driverType"`
-	FleetCodeID    pulid.ID          `bun:"fleet_code_id"    json:"fleetCodeId"`
-	FleetCodeName  string            `bun:"fleet_code_name"  json:"fleetCodeName"`
-	City           string            `bun:"city"             json:"city"`
-	StateAbbr      string            `bun:"state_abbr"       json:"stateAbbreviation"`
-	PostalCode     string            `bun:"postal_code"      json:"postalCode"`
-	ProfilePicURL  string            `bun:"profile_pic_url"  json:"profilePicUrl"`
-	AssignmentNote string            `bun:"assignment_note"  json:"assignmentBlocked"`
-	AvailableForDispatch bool        `bun:"available_for_dispatch" json:"availableForDispatch"`
+	WorkerID             pulid.ID          `bun:"worker_id"        json:"workerId"`
+	FirstName            string            `bun:"first_name"       json:"firstName"`
+	LastName             string            `bun:"last_name"        json:"lastName"`
+	WorkerType           worker.WorkerType `bun:"worker_type"      json:"workerType"`
+	DriverType           worker.DriverType `bun:"driver_type"      json:"driverType"`
+	FleetCodeID          pulid.ID          `bun:"fleet_code_id"    json:"fleetCodeId"`
+	FleetCodeName        string            `bun:"fleet_code_name"  json:"fleetCodeName"`
+	City                 string            `bun:"city"             json:"city"`
+	StateAbbr            string            `bun:"state_abbr"       json:"stateAbbreviation"`
+	PostalCode           string            `bun:"postal_code"      json:"postalCode"`
+	ProfilePicURL        string            `bun:"profile_pic_url"  json:"profilePicUrl"`
+	AssignmentNote       string            `bun:"assignment_note"  json:"assignmentBlocked"`
+	AvailableForDispatch bool              `bun:"available_for_dispatch" json:"availableForDispatch"`
 
 	TractorID       pulid.ID `bun:"tractor_id"        json:"tractorId"`
 	TractorCode     string   `bun:"tractor_code"      json:"tractorCode"`

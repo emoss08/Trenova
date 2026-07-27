@@ -73,9 +73,9 @@ func (r *repository) ListBoardDrivers(
 		ColumnExpr("COALESCE(wtrac.fleet_code_id, '') AS tractor_fleet_id").
 		ColumnExpr("COALESCE(wtrac.status = 'Available', FALSE) AS tractor_status_ok").
 		ColumnExpr("COALESCE(oa.open_assignments, 0) AS open_assignments").
-		Join("LEFT JOIN fleet_codes AS fc ON " +
+		Join("LEFT JOIN fleet_codes AS fc ON "+
 			buncolgen.FleetCodeColumns.ID.EqColumn(cols.FleetCodeID)).
-		Join("LEFT JOIN us_states AS ust ON " +
+		Join("LEFT JOIN us_states AS ust ON "+
 			buncolgen.UsStateColumns.ID.EqColumn(cols.StateID)).
 		Join(tractorJoin).
 		Join(openAssignmentJoin).
@@ -167,8 +167,8 @@ func (r *repository) ListWorkerCommitments(
 		ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_st").
 		ColumnExpr("dest.latitude AS dest_latitude").
 		ColumnExpr("dest.longitude AS dest_longitude").
-		Join("JOIN shipment_moves AS sm ON " + moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
-		Join("LEFT JOIN shipments AS sp ON " +
+		Join("JOIN shipment_moves AS sm ON "+moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
+		Join("LEFT JOIN shipments AS sp ON "+
 			buncolgen.ShipmentColumns.ID.EqColumn(moveCols.ShipmentID)).
 		Join(windowJoin).
 		Join(destinationJoin).
@@ -258,9 +258,9 @@ func (r *repository) ListWorkerWorkload(
 		ColumnExpr("COUNT(*)::int AS move_count").
 		ColumnExpr("COALESCE(SUM(sm.distance), 0)::float8 AS total_miles").
 		ColumnExpr("COALESCE(SUM(sp.total_charge_amount), 0)::float8 AS total_revenue").
-		ColumnExpr("COALESCE(MAX(" + asnCols.UpdatedAt.Qualified() + "), 0) AS last_ended_at").
-		Join("JOIN shipment_moves AS sm ON " + moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
-		Join("LEFT JOIN shipments AS sp ON " +
+		ColumnExpr("COALESCE(MAX("+asnCols.UpdatedAt.Qualified()+"), 0) AS last_ended_at").
+		Join("JOIN shipment_moves AS sm ON "+moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
+		Join("LEFT JOIN shipments AS sp ON "+
 			buncolgen.ShipmentColumns.ID.EqColumn(moveCols.ShipmentID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
@@ -300,8 +300,8 @@ func (r *repository) ListWorkerLaneExperience(
 		ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
 		ColumnExpr(shipCols.CustomerID.As("customer_id")).
 		ColumnExpr("COUNT(*)::int AS move_count").
-		Join("JOIN shipment_moves AS sm ON " + moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
-		Join("JOIN shipments AS sp ON " + shipCols.ID.EqColumn(moveCols.ShipmentID)).
+		Join("JOIN shipment_moves AS sm ON "+moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
+		Join("JOIN shipments AS sp ON "+shipCols.ID.EqColumn(moveCols.ShipmentID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
 				Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).

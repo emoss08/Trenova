@@ -62,12 +62,12 @@ func New(p Params) *Service {
 // move. Loading it once and scoring every move against it is what keeps the console a
 // handful of queries instead of one per candidate pairing.
 type FleetSnapshot struct {
-	Drivers     []*repositories.BoardDriver
-	WorkersByID map[pulid.ID]*worker.Worker
-	TractorByID map[pulid.ID]*tractor.Tractor
-	TrailerByID map[pulid.ID]*trailer.Trailer
-	HOSByWorker map[pulid.ID]*telematics.WorkerHOSState
-	PosByTractor map[pulid.ID]*telematics.VehiclePosition
+	Drivers             []*repositories.BoardDriver
+	WorkersByID         map[pulid.ID]*worker.Worker
+	TractorByID         map[pulid.ID]*tractor.Tractor
+	TrailerByID         map[pulid.ID]*trailer.Trailer
+	HOSByWorker         map[pulid.ID]*telematics.WorkerHOSState
+	PosByTractor        map[pulid.ID]*telematics.VehiclePosition
 	CommitmentsByWorker map[pulid.ID][]*repositories.WorkerCommitment
 	TimeOffByWorker     map[pulid.ID][]*repositories.WorkerTimeOff
 	WorkloadByWorker    map[pulid.ID]*repositories.WorkerWorkload

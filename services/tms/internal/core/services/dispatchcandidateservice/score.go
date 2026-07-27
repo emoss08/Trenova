@@ -26,23 +26,23 @@ type ScoreFactor struct {
 
 // CandidateScore is one driver-and-equipment pairing judged against one move.
 type CandidateScore struct {
-	WorkerID   pulid.ID  `json:"workerId"`
-	WorkerName string    `json:"workerName"`
-	TractorID  pulid.ID  `json:"tractorId"`
-	TrailerID  pulid.ID  `json:"trailerId"`
-	MoveID     pulid.ID  `json:"moveId"`
+	WorkerID   pulid.ID `json:"workerId"`
+	WorkerName string   `json:"workerName"`
+	TractorID  pulid.ID `json:"tractorId"`
+	TrailerID  pulid.ID `json:"trailerId"`
+	MoveID     pulid.ID `json:"moveId"`
 
 	Score   int    `json:"score"`
 	Verdict string `json:"verdict"`
 
-	DeadheadMiles     *float64 `json:"deadheadMiles"`
-	EstimatedDriveMs  int64    `json:"estimatedDriveMs"`
-	ProjectedArrival  int64    `json:"projectedArrival"`
-	MinutesOfSlack    int64    `json:"minutesOfSlack"`
-	DriveRemainingMs  int64    `json:"driveRemainingMs"`
-	ShiftRemainingMs  int64    `json:"shiftRemainingMs"`
-	CycleRemainingMs  int64    `json:"cycleRemainingMs"`
-	ProjectedAvailable int64   `json:"projectedTimeAvailable"`
+	DeadheadMiles      *float64 `json:"deadheadMiles"`
+	EstimatedDriveMs   int64    `json:"estimatedDriveMs"`
+	ProjectedArrival   int64    `json:"projectedArrival"`
+	MinutesOfSlack     int64    `json:"minutesOfSlack"`
+	DriveRemainingMs   int64    `json:"driveRemainingMs"`
+	ShiftRemainingMs   int64    `json:"shiftRemainingMs"`
+	CycleRemainingMs   int64    `json:"cycleRemainingMs"`
+	ProjectedAvailable int64    `json:"projectedTimeAvailable"`
 
 	Findings []dispatcheligibility.Finding `json:"findings"`
 	Factors  []ScoreFactor                 `json:"factors"`
