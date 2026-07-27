@@ -409,6 +409,17 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/configuration-files/detention-policies",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DetentionPolicy),
+            ),
+            async lazy() {
+              const { DetentionPolicyPage } = await import("@/routes/detention-policy/page");
+              return { Component: DetentionPolicyPage };
+            },
+          },
+          {
             path: "/billing/detention-desk",
             loader: combineLoaders(
               protectedLoader,
