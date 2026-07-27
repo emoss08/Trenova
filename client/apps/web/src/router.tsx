@@ -810,6 +810,17 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/dispatch/console",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.ShipmentMove),
+            ),
+            async lazy() {
+              const { DispatchConsolePage } = await import("@/routes/dispatch-console/page");
+              return { Component: DispatchConsolePage };
+            },
+          },
+          {
             path: "/dispatch/workers",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Worker)),
             async lazy() {
