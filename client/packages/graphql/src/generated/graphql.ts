@@ -2561,7 +2561,7 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
-export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, detentionBillingEnabled: boolean, detentionFreeMinutes: number, detentionRatePerHour: string | null, countLateOnlyOnAppointmentStops: boolean, countDetentionOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
@@ -5169,11 +5169,7 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
@@ -5283,11 +5279,7 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
@@ -9000,11 +8992,7 @@ export const CustomerTableDocument = new TypedDocumentString(`
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
@@ -9078,7 +9066,7 @@ fragment CustomerTableRowFields on Customer {
 fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:5a193fd06a8c6ee5b581c9fad145441766cfbb218821bc3ee33b0b4dfefb4322"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+}`, {"hash":"sha256:e806c5ef7e06c26211a40d494eb2ba6db6e1ca2da88582d1a4c9496e61ee4200"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DistanceOverrideTableDocument = new TypedDocumentString(`
     query DistanceOverrideTable($input: DataTableConnectionInput!) {
   distanceOverrides(input: $input) {
