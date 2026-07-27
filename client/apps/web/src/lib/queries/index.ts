@@ -18,6 +18,7 @@ import { dataEntryControl } from "./data-entry-control";
 import { distanceControl } from "./distance-control";
 import { documentControl } from "./document-control";
 import { documentParsingRule } from "./document-parsing-rule";
+import { detention } from "./detention";
 import { dispatchControl } from "./dispatch-control";
 import { edi } from "./edi";
 import { email } from "./email";
@@ -78,6 +79,7 @@ const financialQueries = mergeQueryKeys(
 const operationsQueries = mergeQueryKeys(
   dataEntryControl,
   distanceControl,
+  detention,
   dispatchControl,
   edi,
   email,
