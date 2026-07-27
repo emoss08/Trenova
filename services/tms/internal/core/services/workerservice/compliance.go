@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -331,8 +332,5 @@ func validateHazmatCompliance(
 }
 
 func getComplianceErrorCode(level dispatchcontrol.ComplianceEnforcementLevel) errortypes.ErrorCode {
-	if level.ShouldBlock() {
-		return errortypes.ErrComplianceViolation
-	}
-	return errortypes.ErrInvalid
+	return dispatcheligibility.ComplianceErrorCode(level)
 }

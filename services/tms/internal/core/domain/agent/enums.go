@@ -3,12 +3,13 @@ package agent
 type Type string
 
 const (
-	TypeBillingException = Type("BillingException")
+	TypeBillingException   = Type("BillingException")
+	TypeDispatchAssignment = Type("DispatchAssignment")
 )
 
 func (t Type) IsValid() bool {
 	switch t {
-	case TypeBillingException:
+	case TypeBillingException, TypeDispatchAssignment:
 		return true
 	default:
 		return false
@@ -19,11 +20,12 @@ type SubjectType string
 
 const (
 	SubjectBillingQueueItem = SubjectType("BillingQueueItem")
+	SubjectShipmentMove     = SubjectType("ShipmentMove")
 )
 
 func (s SubjectType) IsValid() bool {
 	switch s {
-	case SubjectBillingQueueItem:
+	case SubjectBillingQueueItem, SubjectShipmentMove:
 		return true
 	default:
 		return false
