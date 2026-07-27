@@ -10,7 +10,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/order"
@@ -718,9 +717,9 @@ func (r *queryResolver) ShipmentEvents(ctx context.Context, input gqlmodel.Shipm
 
 // ShipmentAnalytics is the resolver for the shipmentAnalytics field.
 func (r *queryResolver) ShipmentAnalytics(ctx context.Context, input gqlmodel.ShipmentAnalyticsInput) (*gqlmodel.ShipmentAnalytics, error) {
-	authCtx, ok := gqlctx.AuthContext(ctx)
-	if !ok || authCtx == nil {
-		return nil, errortypes.NewAuthenticationError("Authentication required")
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
 	}
 
 	data, err := r.analyticsService.GetAnalytics(ctx, &services.AnalyticsRequestOptions{
