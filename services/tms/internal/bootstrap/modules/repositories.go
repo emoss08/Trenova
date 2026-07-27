@@ -87,6 +87,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazardousmaterialrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/holdreasonrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/homelayoutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iamrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
@@ -165,6 +166,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	reportrepository.NewScheduleRepository,
 	reportrepository.NewViewRepository,
 	sidebarpreferencerepository.New,
+	homelayoutrepository.New,
 	billingqueuefilterpresetrepository.New,
 	equipmentmanufacturerrepository.New,
 	equipmenttyperepository.New,

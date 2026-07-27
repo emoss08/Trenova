@@ -75,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
@@ -146,6 +147,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,
+	homelayoutservice.New,
 	fx.Annotate(
 		reportingcompiler.New,
 		fx.As(new(services.ReportCompiler)),

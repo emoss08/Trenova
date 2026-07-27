@@ -2212,6 +2212,91 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	HomeLayout struct {
+		CanCustomize  func(childComplexity int) int
+		Density       func(childComplexity int) int
+		Locked        func(childComplexity int) int
+		PresetID      func(childComplexity int) int
+		PresetName    func(childComplexity int) int
+		SchemaVersion func(childComplexity int) int
+		Source        func(childComplexity int) int
+		Version       func(childComplexity int) int
+		Widgets       func(childComplexity int) int
+	}
+
+	HomeLayoutPreset struct {
+		AssignedUserCount  func(childComplexity int) int
+		CoreResponsibility func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		Description        func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		IsOrgDefault       func(childComplexity int) int
+		Locked             func(childComplexity int) int
+		Name               func(childComplexity int) int
+		Priority           func(childComplexity int) int
+		RoleIds            func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+		Widgets            func(childComplexity int) int
+	}
+
+	HomeMetricOption struct {
+		Key   func(childComplexity int) int
+		Label func(childComplexity int) int
+	}
+
+	HomeWidget struct {
+		Config func(childComplexity int) int
+		H      func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Key    func(childComplexity int) int
+		Title  func(childComplexity int) int
+		W      func(childComplexity int) int
+	}
+
+	HomeWidgetCatalog struct {
+		Categories  func(childComplexity int) int
+		Densities   func(childComplexity int) int
+		GridColumns func(childComplexity int) int
+		MaxWidgets  func(childComplexity int) int
+		Metrics     func(childComplexity int) int
+		Widgets     func(childComplexity int) int
+	}
+
+	HomeWidgetCategory struct {
+		Description func(childComplexity int) int
+		Key         func(childComplexity int) int
+		Label       func(childComplexity int) int
+	}
+
+	HomeWidgetConfig struct {
+		CannedKey    func(childComplexity int) int
+		ChartID      func(childComplexity int) int
+		ColumnID     func(childComplexity int) int
+		DashboardID  func(childComplexity int) int
+		DefinitionID func(childComplexity int) int
+		Limit        func(childComplexity int) int
+		Metric       func(childComplexity int) int
+		Metrics      func(childComplexity int) int
+		Text         func(childComplexity int) int
+		WindowDays   func(childComplexity int) int
+	}
+
+	HomeWidgetOption struct {
+		AnalyticsInclude func(childComplexity int) int
+		Category         func(childComplexity int) int
+		ConfigKind       func(childComplexity int) int
+		DefaultH         func(childComplexity int) int
+		DefaultW         func(childComplexity int) int
+		Description      func(childComplexity int) int
+		Key              func(childComplexity int) int
+		Label            func(childComplexity int) int
+		MaxH             func(childComplexity int) int
+		MaxW             func(childComplexity int) int
+		MinH             func(childComplexity int) int
+		MinW             func(childComplexity int) int
+	}
+
 	HosCertificationSummary struct {
 		TotalDays       func(childComplexity int) int
 		UncertifiedDays func(childComplexity int) int
@@ -2538,6 +2623,7 @@ type ComplexityRoot struct {
 		CreateEquipmentType                   func(childComplexity int, input gqlmodel.EquipmentTypeInput) int
 		CreateFuelIndex                       func(childComplexity int, input gqlmodel.FuelIndexInput) int
 		CreateFuelSurchargeProgram            func(childComplexity int, input gqlmodel.FuelSurchargeProgramInput) int
+		CreateHomeLayoutPreset                func(childComplexity int, input gqlmodel.SaveHomeLayoutPresetInput) int
 		CreateInvoiceFromOrder                func(childComplexity int, orderID string) int
 		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string) int
 		CreateMyLoadComment                   func(childComplexity int, input gqlmodel.CreateMyLoadCommentInput) int
@@ -2560,6 +2646,7 @@ type ComplexityRoot struct {
 		DeleteFuelIndex                       func(childComplexity int, id string) int
 		DeleteFuelIndexPrice                  func(childComplexity int, id string) int
 		DeleteFuelSurchargeProgram            func(childComplexity int, id string) int
+		DeleteHomeLayoutPreset                func(childComplexity int, id string) int
 		DeleteReportDashboard                 func(childComplexity int, id string) int
 		DeleteReportDefinition                func(childComplexity int, id string) int
 		DeleteReportSchedule                  func(childComplexity int, id string) int
@@ -2608,6 +2695,7 @@ type ComplexityRoot struct {
 		RemoveOrderCharge                     func(childComplexity int, input gqlmodel.RemoveOrderChargeInput) int
 		RequestMyPto                          func(childComplexity int, input gqlmodel.RequestMyPtoInput) int
 		ResetCannedFork                       func(childComplexity int, id string) int
+		ResetHomeLayout                       func(childComplexity int) int
 		ResolveAgentException                 func(childComplexity int, id string, input gqlmodel.AgentExceptionResolveInput) int
 		ResolveSettlementDispute              func(childComplexity int, input gqlmodel.ResolveSettlementDisputeInput) int
 		RespondToMyAssignment                 func(childComplexity int, input gqlmodel.RespondToMyAssignmentInput) int
@@ -2637,6 +2725,8 @@ type ComplexityRoot struct {
 		UpdateFuelIndex                       func(childComplexity int, id string, input gqlmodel.FuelIndexInput) int
 		UpdateFuelIndexPrice                  func(childComplexity int, input gqlmodel.UpdateFuelIndexPriceInput) int
 		UpdateFuelSurchargeProgram            func(childComplexity int, id string, input gqlmodel.FuelSurchargeProgramInput) int
+		UpdateHomeLayout                      func(childComplexity int, input gqlmodel.HomeLayoutInput) int
+		UpdateHomeLayoutPreset                func(childComplexity int, input gqlmodel.UpdateHomeLayoutPresetInput) int
 		UpdateMyContactInfo                   func(childComplexity int, input gqlmodel.UpdateMyContactInfoInput) int
 		UpdateOrder                           func(childComplexity int, id string, input gqlmodel.OrderInput) int
 		UpdateOrderCharge                     func(childComplexity int, input gqlmodel.UpdateOrderChargeInput) int
@@ -3169,6 +3259,11 @@ type ComplexityRoot struct {
 		HazmatSegregationRules       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		HoldReason                   func(childComplexity int, id string) int
 		HoldReasons                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		HomeLayout                   func(childComplexity int) int
+		HomeLayoutPreset             func(childComplexity int, id string) int
+		HomeLayoutPresets            func(childComplexity int) int
+		HomeLayoutPreview            func(childComplexity int, presetID *string, roleID *string) int
+		HomeWidgetCatalog            func(childComplexity int) int
 		HosCertificationSummary      func(childComplexity int, startDate string, endDate string) int
 		Invoice                      func(childComplexity int, id string) int
 		Invoices                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -5637,6 +5732,11 @@ type MutationResolver interface {
 	CreateFuelSurchargeProgram(ctx context.Context, input gqlmodel.FuelSurchargeProgramInput) (*gqlmodel.FuelSurchargeProgram, error)
 	UpdateFuelSurchargeProgram(ctx context.Context, id string, input gqlmodel.FuelSurchargeProgramInput) (*gqlmodel.FuelSurchargeProgram, error)
 	DeleteFuelSurchargeProgram(ctx context.Context, id string) (bool, error)
+	UpdateHomeLayout(ctx context.Context, input gqlmodel.HomeLayoutInput) (*gqlmodel.HomeLayout, error)
+	ResetHomeLayout(ctx context.Context) (*gqlmodel.HomeLayout, error)
+	CreateHomeLayoutPreset(ctx context.Context, input gqlmodel.SaveHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error)
+	UpdateHomeLayoutPreset(ctx context.Context, input gqlmodel.UpdateHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error)
+	DeleteHomeLayoutPreset(ctx context.Context, id string) (bool, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string) (*invoice.Invoice, error)
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
@@ -5884,6 +5984,11 @@ type QueryResolver interface {
 	HazmatSegregationRule(ctx context.Context, id string) (*hazmatsegregationrule.HazmatSegregationRule, error)
 	HoldReasons(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.HoldReasonConnection, error)
 	HoldReason(ctx context.Context, id string) (*holdreason.HoldReason, error)
+	HomeLayout(ctx context.Context) (*gqlmodel.HomeLayout, error)
+	HomeWidgetCatalog(ctx context.Context) (*gqlmodel.HomeWidgetCatalog, error)
+	HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.HomeLayoutPreset, error)
+	HomeLayoutPreset(ctx context.Context, id string) (*gqlmodel.HomeLayoutPreset, error)
+	HomeLayoutPreview(ctx context.Context, presetID *string, roleID *string) (*gqlmodel.HomeLayout, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.Entry, error)
@@ -15406,6 +15511,380 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.HoldReasonEdge.Node(childComplexity), true
 
+	case "HomeLayout.canCustomize":
+		if e.ComplexityRoot.HomeLayout.CanCustomize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.CanCustomize(childComplexity), true
+	case "HomeLayout.density":
+		if e.ComplexityRoot.HomeLayout.Density == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.Density(childComplexity), true
+	case "HomeLayout.locked":
+		if e.ComplexityRoot.HomeLayout.Locked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.Locked(childComplexity), true
+	case "HomeLayout.presetId":
+		if e.ComplexityRoot.HomeLayout.PresetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.PresetID(childComplexity), true
+	case "HomeLayout.presetName":
+		if e.ComplexityRoot.HomeLayout.PresetName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.PresetName(childComplexity), true
+	case "HomeLayout.schemaVersion":
+		if e.ComplexityRoot.HomeLayout.SchemaVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.SchemaVersion(childComplexity), true
+	case "HomeLayout.source":
+		if e.ComplexityRoot.HomeLayout.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.Source(childComplexity), true
+	case "HomeLayout.version":
+		if e.ComplexityRoot.HomeLayout.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.Version(childComplexity), true
+	case "HomeLayout.widgets":
+		if e.ComplexityRoot.HomeLayout.Widgets == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayout.Widgets(childComplexity), true
+
+	case "HomeLayoutPreset.assignedUserCount":
+		if e.ComplexityRoot.HomeLayoutPreset.AssignedUserCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.AssignedUserCount(childComplexity), true
+	case "HomeLayoutPreset.coreResponsibility":
+		if e.ComplexityRoot.HomeLayoutPreset.CoreResponsibility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.CoreResponsibility(childComplexity), true
+	case "HomeLayoutPreset.createdAt":
+		if e.ComplexityRoot.HomeLayoutPreset.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.CreatedAt(childComplexity), true
+	case "HomeLayoutPreset.description":
+		if e.ComplexityRoot.HomeLayoutPreset.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.Description(childComplexity), true
+	case "HomeLayoutPreset.id":
+		if e.ComplexityRoot.HomeLayoutPreset.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.ID(childComplexity), true
+	case "HomeLayoutPreset.isOrgDefault":
+		if e.ComplexityRoot.HomeLayoutPreset.IsOrgDefault == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.IsOrgDefault(childComplexity), true
+	case "HomeLayoutPreset.locked":
+		if e.ComplexityRoot.HomeLayoutPreset.Locked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.Locked(childComplexity), true
+	case "HomeLayoutPreset.name":
+		if e.ComplexityRoot.HomeLayoutPreset.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.Name(childComplexity), true
+	case "HomeLayoutPreset.priority":
+		if e.ComplexityRoot.HomeLayoutPreset.Priority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.Priority(childComplexity), true
+	case "HomeLayoutPreset.roleIds":
+		if e.ComplexityRoot.HomeLayoutPreset.RoleIds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.RoleIds(childComplexity), true
+	case "HomeLayoutPreset.updatedAt":
+		if e.ComplexityRoot.HomeLayoutPreset.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.UpdatedAt(childComplexity), true
+	case "HomeLayoutPreset.version":
+		if e.ComplexityRoot.HomeLayoutPreset.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.Version(childComplexity), true
+	case "HomeLayoutPreset.widgets":
+		if e.ComplexityRoot.HomeLayoutPreset.Widgets == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeLayoutPreset.Widgets(childComplexity), true
+
+	case "HomeMetricOption.key":
+		if e.ComplexityRoot.HomeMetricOption.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeMetricOption.Key(childComplexity), true
+	case "HomeMetricOption.label":
+		if e.ComplexityRoot.HomeMetricOption.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeMetricOption.Label(childComplexity), true
+
+	case "HomeWidget.config":
+		if e.ComplexityRoot.HomeWidget.Config == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidget.Config(childComplexity), true
+	case "HomeWidget.h":
+		if e.ComplexityRoot.HomeWidget.H == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidget.H(childComplexity), true
+	case "HomeWidget.id":
+		if e.ComplexityRoot.HomeWidget.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidget.ID(childComplexity), true
+	case "HomeWidget.key":
+		if e.ComplexityRoot.HomeWidget.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidget.Key(childComplexity), true
+	case "HomeWidget.title":
+		if e.ComplexityRoot.HomeWidget.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidget.Title(childComplexity), true
+	case "HomeWidget.w":
+		if e.ComplexityRoot.HomeWidget.W == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidget.W(childComplexity), true
+
+	case "HomeWidgetCatalog.categories":
+		if e.ComplexityRoot.HomeWidgetCatalog.Categories == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCatalog.Categories(childComplexity), true
+	case "HomeWidgetCatalog.densities":
+		if e.ComplexityRoot.HomeWidgetCatalog.Densities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCatalog.Densities(childComplexity), true
+	case "HomeWidgetCatalog.gridColumns":
+		if e.ComplexityRoot.HomeWidgetCatalog.GridColumns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCatalog.GridColumns(childComplexity), true
+	case "HomeWidgetCatalog.maxWidgets":
+		if e.ComplexityRoot.HomeWidgetCatalog.MaxWidgets == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCatalog.MaxWidgets(childComplexity), true
+	case "HomeWidgetCatalog.metrics":
+		if e.ComplexityRoot.HomeWidgetCatalog.Metrics == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCatalog.Metrics(childComplexity), true
+	case "HomeWidgetCatalog.widgets":
+		if e.ComplexityRoot.HomeWidgetCatalog.Widgets == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCatalog.Widgets(childComplexity), true
+
+	case "HomeWidgetCategory.description":
+		if e.ComplexityRoot.HomeWidgetCategory.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCategory.Description(childComplexity), true
+	case "HomeWidgetCategory.key":
+		if e.ComplexityRoot.HomeWidgetCategory.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCategory.Key(childComplexity), true
+	case "HomeWidgetCategory.label":
+		if e.ComplexityRoot.HomeWidgetCategory.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetCategory.Label(childComplexity), true
+
+	case "HomeWidgetConfig.cannedKey":
+		if e.ComplexityRoot.HomeWidgetConfig.CannedKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.CannedKey(childComplexity), true
+	case "HomeWidgetConfig.chartId":
+		if e.ComplexityRoot.HomeWidgetConfig.ChartID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.ChartID(childComplexity), true
+	case "HomeWidgetConfig.columnId":
+		if e.ComplexityRoot.HomeWidgetConfig.ColumnID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.ColumnID(childComplexity), true
+	case "HomeWidgetConfig.dashboardId":
+		if e.ComplexityRoot.HomeWidgetConfig.DashboardID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.DashboardID(childComplexity), true
+	case "HomeWidgetConfig.definitionId":
+		if e.ComplexityRoot.HomeWidgetConfig.DefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.DefinitionID(childComplexity), true
+	case "HomeWidgetConfig.limit":
+		if e.ComplexityRoot.HomeWidgetConfig.Limit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.Limit(childComplexity), true
+	case "HomeWidgetConfig.metric":
+		if e.ComplexityRoot.HomeWidgetConfig.Metric == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.Metric(childComplexity), true
+	case "HomeWidgetConfig.metrics":
+		if e.ComplexityRoot.HomeWidgetConfig.Metrics == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.Metrics(childComplexity), true
+	case "HomeWidgetConfig.text":
+		if e.ComplexityRoot.HomeWidgetConfig.Text == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.Text(childComplexity), true
+	case "HomeWidgetConfig.windowDays":
+		if e.ComplexityRoot.HomeWidgetConfig.WindowDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetConfig.WindowDays(childComplexity), true
+
+	case "HomeWidgetOption.analyticsInclude":
+		if e.ComplexityRoot.HomeWidgetOption.AnalyticsInclude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.AnalyticsInclude(childComplexity), true
+	case "HomeWidgetOption.category":
+		if e.ComplexityRoot.HomeWidgetOption.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.Category(childComplexity), true
+	case "HomeWidgetOption.configKind":
+		if e.ComplexityRoot.HomeWidgetOption.ConfigKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.ConfigKind(childComplexity), true
+	case "HomeWidgetOption.defaultH":
+		if e.ComplexityRoot.HomeWidgetOption.DefaultH == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.DefaultH(childComplexity), true
+	case "HomeWidgetOption.defaultW":
+		if e.ComplexityRoot.HomeWidgetOption.DefaultW == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.DefaultW(childComplexity), true
+	case "HomeWidgetOption.description":
+		if e.ComplexityRoot.HomeWidgetOption.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.Description(childComplexity), true
+	case "HomeWidgetOption.key":
+		if e.ComplexityRoot.HomeWidgetOption.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.Key(childComplexity), true
+	case "HomeWidgetOption.label":
+		if e.ComplexityRoot.HomeWidgetOption.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.Label(childComplexity), true
+	case "HomeWidgetOption.maxH":
+		if e.ComplexityRoot.HomeWidgetOption.MaxH == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.MaxH(childComplexity), true
+	case "HomeWidgetOption.maxW":
+		if e.ComplexityRoot.HomeWidgetOption.MaxW == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.MaxW(childComplexity), true
+	case "HomeWidgetOption.minH":
+		if e.ComplexityRoot.HomeWidgetOption.MinH == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.MinH(childComplexity), true
+	case "HomeWidgetOption.minW":
+		if e.ComplexityRoot.HomeWidgetOption.MinW == nil {
+			break
+		}
+
+		return e.ComplexityRoot.HomeWidgetOption.MinW(childComplexity), true
+
 	case "HosCertificationSummary.totalDays":
 		if e.ComplexityRoot.HosCertificationSummary.TotalDays == nil {
 			break
@@ -17130,6 +17609,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFuelSurchargeProgram(childComplexity, args["input"].(gqlmodel.FuelSurchargeProgramInput)), true
+	case "Mutation.createHomeLayoutPreset":
+		if e.ComplexityRoot.Mutation.CreateHomeLayoutPreset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createHomeLayoutPreset_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateHomeLayoutPreset(childComplexity, args["input"].(gqlmodel.SaveHomeLayoutPresetInput)), true
 	case "Mutation.createInvoiceFromOrder":
 		if e.ComplexityRoot.Mutation.CreateInvoiceFromOrder == nil {
 			break
@@ -17372,6 +17862,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteFuelSurchargeProgram(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteHomeLayoutPreset":
+		if e.ComplexityRoot.Mutation.DeleteHomeLayoutPreset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteHomeLayoutPreset_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteHomeLayoutPreset(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteReportDashboard":
 		if e.ComplexityRoot.Mutation.DeleteReportDashboard == nil {
 			break
@@ -17890,6 +18391,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResetCannedFork(childComplexity, args["id"].(string)), true
+	case "Mutation.resetHomeLayout":
+		if e.ComplexityRoot.Mutation.ResetHomeLayout == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.ResetHomeLayout(childComplexity), true
 	case "Mutation.resolveAgentException":
 		if e.ComplexityRoot.Mutation.ResolveAgentException == nil {
 			break
@@ -18209,6 +18716,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateFuelSurchargeProgram(childComplexity, args["id"].(string), args["input"].(gqlmodel.FuelSurchargeProgramInput)), true
+	case "Mutation.updateHomeLayout":
+		if e.ComplexityRoot.Mutation.UpdateHomeLayout == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateHomeLayout_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateHomeLayout(childComplexity, args["input"].(gqlmodel.HomeLayoutInput)), true
+	case "Mutation.updateHomeLayoutPreset":
+		if e.ComplexityRoot.Mutation.UpdateHomeLayoutPreset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateHomeLayoutPreset_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateHomeLayoutPreset(childComplexity, args["input"].(gqlmodel.UpdateHomeLayoutPresetInput)), true
 	case "Mutation.updateMyContactInfo":
 		if e.ComplexityRoot.Mutation.UpdateMyContactInfo == nil {
 			break
@@ -21332,6 +21861,46 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.HoldReasons(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.homeLayout":
+		if e.ComplexityRoot.Query.HomeLayout == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.HomeLayout(childComplexity), true
+	case "Query.homeLayoutPreset":
+		if e.ComplexityRoot.Query.HomeLayoutPreset == nil {
+			break
+		}
+
+		args, err := ec.field_Query_homeLayoutPreset_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.HomeLayoutPreset(childComplexity, args["id"].(string)), true
+	case "Query.homeLayoutPresets":
+		if e.ComplexityRoot.Query.HomeLayoutPresets == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.HomeLayoutPresets(childComplexity), true
+	case "Query.homeLayoutPreview":
+		if e.ComplexityRoot.Query.HomeLayoutPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_homeLayoutPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.HomeLayoutPreview(childComplexity, args["presetId"].(*string), args["roleId"].(*string)), true
+	case "Query.homeWidgetCatalog":
+		if e.ComplexityRoot.Query.HomeWidgetCatalog == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.HomeWidgetCatalog(childComplexity), true
 	case "Query.hosCertificationSummary":
 		if e.ComplexityRoot.Query.HosCertificationSummary == nil {
 			break
@@ -32391,6 +32960,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGenerateFuelTableInput,
 		ec.unmarshalInputGenerateSettlementBatchInput,
 		ec.unmarshalInputHoldPayEventInput,
+		ec.unmarshalInputHomeLayoutInput,
+		ec.unmarshalInputHomeWidgetConfigInput,
+		ec.unmarshalInputHomeWidgetInput,
 		ec.unmarshalInputInviteWorkerToPortalInput,
 		ec.unmarshalInputIssuePayAdvanceInput,
 		ec.unmarshalInputLocateTractorInput,
@@ -32436,6 +33008,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReverseCustomerPaymentInput,
 		ec.unmarshalInputReviewDriverExpenseInput,
 		ec.unmarshalInputRunReportInput,
+		ec.unmarshalInputSaveHomeLayoutPresetInput,
 		ec.unmarshalInputSaveReportDashboardInput,
 		ec.unmarshalInputSaveReportDefinitionInput,
 		ec.unmarshalInputSaveTelematicsFormMappingInput,
@@ -32478,6 +33051,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateDashControlInput,
 		ec.unmarshalInputUpdateEscrowAccountInput,
 		ec.unmarshalInputUpdateFuelIndexPriceInput,
+		ec.unmarshalInputUpdateHomeLayoutPresetInput,
 		ec.unmarshalInputUpdateMyContactInfoInput,
 		ec.unmarshalInputUpdateOrderChargeInput,
 		ec.unmarshalInputUpdatePayCodeInput,
@@ -37173,6 +37747,185 @@ type HoldReasonConnection {
 extend type Query {
   holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
   holdReason(id: ID!): HoldReason
+}
+`, BuiltIn: false},
+	{Name: "../schema/home_layout.graphqls", Input: `"""
+Which tier of the resolution chain produced the home screen on display.
+"""
+enum HomeLayoutSource {
+  USER
+  ROLE_PRESET
+  ORG_DEFAULT
+  BUILT_IN
+}
+
+"""
+Configuration for one widget. Which fields are meaningful depends on the
+widget's configKind; the server discards the rest rather than rejecting them.
+"""
+type HomeWidgetConfig {
+  metric: String
+  metrics: [String!]
+  definitionId: ID
+  cannedKey: String
+  chartId: String
+  columnId: String
+  dashboardId: ID
+  text: String
+  limit: Int
+  windowDays: Int
+}
+
+"""
+One card on the home canvas. Position is not stored: widgets are an ordered
+list that the client packs into the grid, so order alone defines the layout.
+"""
+type HomeWidget {
+  id: String!
+  key: String!
+  title: String
+  w: Int!
+  h: Int!
+  config: HomeWidgetConfig!
+}
+
+type HomeLayout {
+  schemaVersion: Int!
+  version: Int!
+  source: HomeLayoutSource!
+  presetId: ID
+  presetName: String
+  locked: Boolean!
+  canCustomize: Boolean!
+  density: String!
+  widgets: [HomeWidget!]!
+}
+
+type HomeWidgetOption {
+  key: String!
+  label: String!
+  description: String!
+  category: String!
+  configKind: String!
+  analyticsInclude: String
+  defaultW: Int!
+  defaultH: Int!
+  minW: Int!
+  minH: Int!
+  maxW: Int!
+  maxH: Int!
+}
+
+type HomeWidgetCategory {
+  key: String!
+  label: String!
+  description: String!
+}
+
+type HomeMetricOption {
+  key: String!
+  label: String!
+}
+
+type HomeWidgetCatalog {
+  widgets: [HomeWidgetOption!]!
+  metrics: [HomeMetricOption!]!
+  categories: [HomeWidgetCategory!]!
+  densities: [String!]!
+  gridColumns: Int!
+  maxWidgets: Int!
+}
+
+type HomeLayoutPreset {
+  id: ID!
+  name: String!
+  description: String
+  widgets: [HomeWidget!]!
+  roleIds: [ID!]!
+  coreResponsibility: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  priority: Int!
+  assignedUserCount: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input HomeWidgetConfigInput {
+  metric: String
+  metrics: [String!]
+  definitionId: ID
+  cannedKey: String
+  chartId: String
+  columnId: String
+  dashboardId: ID
+  text: String
+  limit: Int
+  windowDays: Int
+}
+
+input HomeWidgetInput {
+  id: String!
+  key: String!
+  title: String
+  w: Int!
+  h: Int!
+  config: HomeWidgetConfigInput
+}
+
+input HomeLayoutInput {
+  version: Int!
+  """
+  When false the viewer follows their assigned preset and widgets is ignored.
+  """
+  customized: Boolean!
+  density: String!
+  widgets: [HomeWidgetInput!]!
+}
+
+input SaveHomeLayoutPresetInput {
+  name: String!
+  description: String
+  widgets: [HomeWidgetInput!]!
+  roleIds: [ID!]
+  coreResponsibility: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  priority: Int!
+}
+
+input UpdateHomeLayoutPresetInput {
+  id: ID!
+  version: Int!
+  name: String!
+  description: String
+  widgets: [HomeWidgetInput!]!
+  roleIds: [ID!]
+  coreResponsibility: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  priority: Int!
+}
+
+extend type Query {
+  homeLayout: HomeLayout!
+  homeWidgetCatalog: HomeWidgetCatalog!
+  homeLayoutPresets: [HomeLayoutPreset!]!
+  homeLayoutPreset(id: ID!): HomeLayoutPreset!
+  """
+  Renders a preset, or whatever a member of the given role would resolve to,
+  without saving anything.
+  """
+  homeLayoutPreview(presetId: ID, roleId: ID): HomeLayout!
+}
+
+extend type Mutation {
+  updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
+  resetHomeLayout: HomeLayout!
+  createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
+  updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
+  deleteHomeLayoutPreset(id: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
@@ -45250,6 +46003,176 @@ func (ec *executionContext) childFields_HoldReasonEdge(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type HoldReasonEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_HomeLayout(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "schemaVersion":
+		return ec.fieldContext_HomeLayout_schemaVersion(ctx, field)
+	case "version":
+		return ec.fieldContext_HomeLayout_version(ctx, field)
+	case "source":
+		return ec.fieldContext_HomeLayout_source(ctx, field)
+	case "presetId":
+		return ec.fieldContext_HomeLayout_presetId(ctx, field)
+	case "presetName":
+		return ec.fieldContext_HomeLayout_presetName(ctx, field)
+	case "locked":
+		return ec.fieldContext_HomeLayout_locked(ctx, field)
+	case "canCustomize":
+		return ec.fieldContext_HomeLayout_canCustomize(ctx, field)
+	case "density":
+		return ec.fieldContext_HomeLayout_density(ctx, field)
+	case "widgets":
+		return ec.fieldContext_HomeLayout_widgets(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeLayout", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_HomeLayoutPreset_id(ctx, field)
+	case "name":
+		return ec.fieldContext_HomeLayoutPreset_name(ctx, field)
+	case "description":
+		return ec.fieldContext_HomeLayoutPreset_description(ctx, field)
+	case "widgets":
+		return ec.fieldContext_HomeLayoutPreset_widgets(ctx, field)
+	case "roleIds":
+		return ec.fieldContext_HomeLayoutPreset_roleIds(ctx, field)
+	case "coreResponsibility":
+		return ec.fieldContext_HomeLayoutPreset_coreResponsibility(ctx, field)
+	case "isOrgDefault":
+		return ec.fieldContext_HomeLayoutPreset_isOrgDefault(ctx, field)
+	case "locked":
+		return ec.fieldContext_HomeLayoutPreset_locked(ctx, field)
+	case "priority":
+		return ec.fieldContext_HomeLayoutPreset_priority(ctx, field)
+	case "assignedUserCount":
+		return ec.fieldContext_HomeLayoutPreset_assignedUserCount(ctx, field)
+	case "version":
+		return ec.fieldContext_HomeLayoutPreset_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_HomeLayoutPreset_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_HomeLayoutPreset_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeLayoutPreset", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeMetricOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_HomeMetricOption_key(ctx, field)
+	case "label":
+		return ec.fieldContext_HomeMetricOption_label(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeMetricOption", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeWidget(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_HomeWidget_id(ctx, field)
+	case "key":
+		return ec.fieldContext_HomeWidget_key(ctx, field)
+	case "title":
+		return ec.fieldContext_HomeWidget_title(ctx, field)
+	case "w":
+		return ec.fieldContext_HomeWidget_w(ctx, field)
+	case "h":
+		return ec.fieldContext_HomeWidget_h(ctx, field)
+	case "config":
+		return ec.fieldContext_HomeWidget_config(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeWidget", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeWidgetCatalog(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "widgets":
+		return ec.fieldContext_HomeWidgetCatalog_widgets(ctx, field)
+	case "metrics":
+		return ec.fieldContext_HomeWidgetCatalog_metrics(ctx, field)
+	case "categories":
+		return ec.fieldContext_HomeWidgetCatalog_categories(ctx, field)
+	case "densities":
+		return ec.fieldContext_HomeWidgetCatalog_densities(ctx, field)
+	case "gridColumns":
+		return ec.fieldContext_HomeWidgetCatalog_gridColumns(ctx, field)
+	case "maxWidgets":
+		return ec.fieldContext_HomeWidgetCatalog_maxWidgets(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeWidgetCatalog", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeWidgetCategory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_HomeWidgetCategory_key(ctx, field)
+	case "label":
+		return ec.fieldContext_HomeWidgetCategory_label(ctx, field)
+	case "description":
+		return ec.fieldContext_HomeWidgetCategory_description(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeWidgetCategory", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeWidgetConfig(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "metric":
+		return ec.fieldContext_HomeWidgetConfig_metric(ctx, field)
+	case "metrics":
+		return ec.fieldContext_HomeWidgetConfig_metrics(ctx, field)
+	case "definitionId":
+		return ec.fieldContext_HomeWidgetConfig_definitionId(ctx, field)
+	case "cannedKey":
+		return ec.fieldContext_HomeWidgetConfig_cannedKey(ctx, field)
+	case "chartId":
+		return ec.fieldContext_HomeWidgetConfig_chartId(ctx, field)
+	case "columnId":
+		return ec.fieldContext_HomeWidgetConfig_columnId(ctx, field)
+	case "dashboardId":
+		return ec.fieldContext_HomeWidgetConfig_dashboardId(ctx, field)
+	case "text":
+		return ec.fieldContext_HomeWidgetConfig_text(ctx, field)
+	case "limit":
+		return ec.fieldContext_HomeWidgetConfig_limit(ctx, field)
+	case "windowDays":
+		return ec.fieldContext_HomeWidgetConfig_windowDays(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeWidgetConfig", field.Name)
+}
+
+func (ec *executionContext) childFields_HomeWidgetOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_HomeWidgetOption_key(ctx, field)
+	case "label":
+		return ec.fieldContext_HomeWidgetOption_label(ctx, field)
+	case "description":
+		return ec.fieldContext_HomeWidgetOption_description(ctx, field)
+	case "category":
+		return ec.fieldContext_HomeWidgetOption_category(ctx, field)
+	case "configKind":
+		return ec.fieldContext_HomeWidgetOption_configKind(ctx, field)
+	case "analyticsInclude":
+		return ec.fieldContext_HomeWidgetOption_analyticsInclude(ctx, field)
+	case "defaultW":
+		return ec.fieldContext_HomeWidgetOption_defaultW(ctx, field)
+	case "defaultH":
+		return ec.fieldContext_HomeWidgetOption_defaultH(ctx, field)
+	case "minW":
+		return ec.fieldContext_HomeWidgetOption_minW(ctx, field)
+	case "minH":
+		return ec.fieldContext_HomeWidgetOption_minH(ctx, field)
+	case "maxW":
+		return ec.fieldContext_HomeWidgetOption_maxW(ctx, field)
+	case "maxH":
+		return ec.fieldContext_HomeWidgetOption_maxH(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type HomeWidgetOption", field.Name)
+}
+
 func (ec *executionContext) childFields_HosCertificationSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "workerId":
@@ -51530,6 +52453,20 @@ func (ec *executionContext) field_Mutation_createFuelSurchargeProgram_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createHomeLayoutPreset_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SaveHomeLayoutPresetInput, error) {
+			return ec.unmarshalNSaveHomeLayoutPresetInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveHomeLayoutPresetInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createInvoiceFromOrder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -51841,6 +52778,20 @@ func (ec *executionContext) field_Mutation_deleteFuelIndex_args(ctx context.Cont
 }
 
 func (ec *executionContext) field_Mutation_deleteFuelSurchargeProgram_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteHomeLayoutPreset_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
@@ -53037,6 +53988,34 @@ func (ec *executionContext) field_Mutation_updateFuelSurchargeProgram_args(ctx c
 		return nil, err
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateHomeLayoutPreset_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateHomeLayoutPresetInput, error) {
+			return ec.unmarshalNUpdateHomeLayoutPresetInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateHomeLayoutPresetInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateHomeLayout_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HomeLayoutInput, error) {
+			return ec.unmarshalNHomeLayoutInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -54851,6 +55830,42 @@ func (ec *executionContext) field_Query_holdReasons_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_homeLayoutPreset_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_homeLayoutPreview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "presetId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["presetId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "roleId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["roleId"] = arg1
 	return args, nil
 }
 
@@ -94018,6 +95033,1463 @@ func (ec *executionContext) fieldContext_HoldReasonEdge_cursor(_ context.Context
 	return graphql.NewScalarFieldContext("HoldReasonEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _HomeLayout_schemaVersion(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_schemaVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SchemaVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_schemaVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_source(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.HomeLayoutSource) graphql.Marshaler {
+			return ec.marshalNHomeLayoutSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type HomeLayoutSource does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_presetId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_presetId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PresetID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_presetId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_presetName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_presetName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PresetName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_presetName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_locked(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_locked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Locked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_locked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_canCustomize(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_canCustomize(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanCustomize, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_canCustomize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_density(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_density(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Density, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_density(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayout", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayout_widgets(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayout_widgets(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Widgets, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.HomeWidget) graphql.Marshaler {
+			return ec.marshalNHomeWidget2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayout_widgets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HomeLayout",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeWidget(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HomeLayoutPreset_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_widgets(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_widgets(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Widgets, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.HomeWidget) graphql.Marshaler {
+			return ec.marshalNHomeWidget2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_widgets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HomeLayoutPreset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeWidget(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HomeLayoutPreset_roleIds(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_roleIds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoleIds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNID2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_roleIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_coreResponsibility(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_coreResponsibility(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CoreResponsibility, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_coreResponsibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_isOrgDefault(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_isOrgDefault(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsOrgDefault, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_isOrgDefault(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_locked(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_locked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Locked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_locked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_priority(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_priority(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Priority, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_priority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_assignedUserCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_assignedUserCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedUserCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_assignedUserCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeLayoutPreset_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeLayoutPreset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeLayoutPreset_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeLayoutPreset_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeLayoutPreset", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeMetricOption_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeMetricOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeMetricOption_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeMetricOption_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeMetricOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeMetricOption_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeMetricOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeMetricOption_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeMetricOption_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeMetricOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidget_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidget) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidget_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidget_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidget", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidget_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidget) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidget_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidget_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidget", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidget_title(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidget) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidget_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidget_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidget", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidget_w(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidget) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidget_w(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.W, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidget_w(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidget", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidget_h(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidget) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidget_h(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.H, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidget_h(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidget", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidget_config(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidget) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidget_config(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Config, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeWidgetConfig) graphql.Marshaler {
+			return ec.marshalNHomeWidgetConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetConfig(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidget_config(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HomeWidget",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeWidgetConfig(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HomeWidgetCatalog_widgets(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCatalog) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCatalog_widgets(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Widgets, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.HomeWidgetOption) graphql.Marshaler {
+			return ec.marshalNHomeWidgetOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetOptionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCatalog_widgets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HomeWidgetCatalog",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeWidgetOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HomeWidgetCatalog_metrics(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCatalog) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCatalog_metrics(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metrics, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.HomeMetricOption) graphql.Marshaler {
+			return ec.marshalNHomeMetricOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeMetricOptionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCatalog_metrics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HomeWidgetCatalog",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeMetricOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HomeWidgetCatalog_categories(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCatalog) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCatalog_categories(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Categories, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.HomeWidgetCategory) graphql.Marshaler {
+			return ec.marshalNHomeWidgetCategory2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCategoryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCatalog_categories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HomeWidgetCatalog",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeWidgetCategory(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HomeWidgetCatalog_densities(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCatalog) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCatalog_densities(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Densities, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCatalog_densities(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetCatalog", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetCatalog_gridColumns(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCatalog) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCatalog_gridColumns(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GridColumns, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCatalog_gridColumns(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetCatalog", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetCatalog_maxWidgets(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCatalog) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCatalog_maxWidgets(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxWidgets, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCatalog_maxWidgets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetCatalog", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetCategory_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCategory_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCategory_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetCategory_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCategory_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCategory_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetCategory_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetCategory_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetCategory_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_metric(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_metric(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metric, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_metric(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_metrics(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_metrics(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metrics, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalOString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_metrics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_definitionId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_definitionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefinitionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_definitionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_cannedKey(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_cannedKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CannedKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_cannedKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_chartId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_chartId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChartID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_chartId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_columnId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_columnId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ColumnID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_columnId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_dashboardId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_dashboardId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DashboardID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_dashboardId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_text(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_text(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Text, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_limit(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_limit(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Limit, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_limit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetConfig_windowDays(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetConfig_windowDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WindowDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetConfig_windowDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetConfig", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_category(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_category(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_configKind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_configKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConfigKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_configKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_analyticsInclude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_analyticsInclude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AnalyticsInclude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_analyticsInclude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_defaultW(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_defaultW(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultW, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_defaultW(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_defaultH(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_defaultH(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultH, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_defaultH(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_minW(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_minW(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinW, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_minW(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_minH(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_minH(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinH, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_minH(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_maxW(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_maxW(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxW, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_maxW(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _HomeWidgetOption_maxH(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HomeWidgetOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_HomeWidgetOption_maxH(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxH, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_HomeWidgetOption_maxH(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("HomeWidgetOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _HosCertificationSummary_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.HosCertificationSummary) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -103200,6 +105672,214 @@ func (ec *executionContext) fieldContext_Mutation_deleteFuelSurchargeProgram(ctx
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteFuelSurchargeProgram_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateHomeLayout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateHomeLayout(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateHomeLayout(ctx, fc.Args["input"].(gqlmodel.HomeLayoutInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayout) graphql.Marshaler {
+			return ec.marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateHomeLayout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayout(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateHomeLayout_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resetHomeLayout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_resetHomeLayout(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().ResetHomeLayout(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayout) graphql.Marshaler {
+			return ec.marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_resetHomeLayout(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayout(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createHomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createHomeLayoutPreset(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateHomeLayoutPreset(ctx, fc.Args["input"].(gqlmodel.SaveHomeLayoutPresetInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+			return ec.marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createHomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayoutPreset(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createHomeLayoutPreset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateHomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateHomeLayoutPreset(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateHomeLayoutPreset(ctx, fc.Args["input"].(gqlmodel.UpdateHomeLayoutPresetInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+			return ec.marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateHomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayoutPreset(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateHomeLayoutPreset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteHomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteHomeLayoutPreset(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteHomeLayoutPreset(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteHomeLayoutPreset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteHomeLayoutPreset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -119554,6 +122234,190 @@ func (ec *executionContext) fieldContext_Query_holdReason(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_holdReason_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_homeLayout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_homeLayout(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().HomeLayout(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayout) graphql.Marshaler {
+			return ec.marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_homeLayout(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayout(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_homeWidgetCatalog(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_homeWidgetCatalog(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().HomeWidgetCatalog(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeWidgetCatalog) graphql.Marshaler {
+			return ec.marshalNHomeWidgetCatalog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCatalog(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_homeWidgetCatalog(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeWidgetCatalog(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_homeLayoutPresets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_homeLayoutPresets(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().HomeLayoutPresets(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+			return ec.marshalNHomeLayoutPreset2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPresetᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_homeLayoutPresets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayoutPreset(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_homeLayoutPreset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_homeLayoutPreset(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().HomeLayoutPreset(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+			return ec.marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_homeLayoutPreset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayoutPreset(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_homeLayoutPreset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_homeLayoutPreview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_homeLayoutPreview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().HomeLayoutPreview(ctx, fc.Args["presetId"].(*string), fc.Args["roleId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.HomeLayout) graphql.Marshaler {
+			return ec.marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_homeLayoutPreview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_HomeLayout(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_homeLayoutPreview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -165274,6 +168138,215 @@ func (ec *executionContext) unmarshalInputHoldPayEventInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputHomeLayoutInput(ctx context.Context, obj any) (gqlmodel.HomeLayoutInput, error) {
+	var it gqlmodel.HomeLayoutInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"version", "customized", "density", "widgets"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "customized":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customized"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Customized = data
+		case "density":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("density"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Density = data
+		case "widgets":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("widgets"))
+			data, err := ec.unmarshalNHomeWidgetInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Widgets = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputHomeWidgetConfigInput(ctx context.Context, obj any) (gqlmodel.HomeWidgetConfigInput, error) {
+	var it gqlmodel.HomeWidgetConfigInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"metric", "metrics", "definitionId", "cannedKey", "chartId", "columnId", "dashboardId", "text", "limit", "windowDays"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "metric":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metric"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metric = data
+		case "metrics":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metrics"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metrics = data
+		case "definitionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("definitionId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefinitionID = data
+		case "cannedKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cannedKey"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CannedKey = data
+		case "chartId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChartID = data
+		case "columnId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("columnId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ColumnID = data
+		case "dashboardId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dashboardId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DashboardID = data
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		case "windowDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowDays"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowDays = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputHomeWidgetInput(ctx context.Context, obj any) (gqlmodel.HomeWidgetInput, error) {
+	var it gqlmodel.HomeWidgetInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "key", "title", "w", "h", "config"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "w":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("w"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.W = data
+		case "h":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("h"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.H = data
+		case "config":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			data, err := ec.unmarshalOHomeWidgetConfigInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetConfigInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Config = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputInviteWorkerToPortalInput(ctx context.Context, obj any) (gqlmodel.InviteWorkerToPortalInput, error) {
 	var it gqlmodel.InviteWorkerToPortalInput
 	if obj == nil {
@@ -167949,6 +171022,85 @@ func (ec *executionContext) unmarshalInputRunReportInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ViewID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSaveHomeLayoutPresetInput(ctx context.Context, obj any) (gqlmodel.SaveHomeLayoutPresetInput, error) {
+	var it gqlmodel.SaveHomeLayoutPresetInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "widgets", "roleIds", "coreResponsibility", "isOrgDefault", "locked", "priority"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "widgets":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("widgets"))
+			data, err := ec.unmarshalNHomeWidgetInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Widgets = data
+		case "roleIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoleIds = data
+		case "coreResponsibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coreResponsibility"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoreResponsibility = data
+		case "isOrgDefault":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isOrgDefault"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsOrgDefault = data
+		case "locked":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locked"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Locked = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
 		}
 	}
 	return it, nil
@@ -171316,6 +174468,99 @@ func (ec *executionContext) unmarshalInputUpdateFuelIndexPriceInput(ctx context.
 				return it, err
 			}
 			it.Price = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateHomeLayoutPresetInput(ctx context.Context, obj any) (gqlmodel.UpdateHomeLayoutPresetInput, error) {
+	var it gqlmodel.UpdateHomeLayoutPresetInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "version", "name", "description", "widgets", "roleIds", "coreResponsibility", "isOrgDefault", "locked", "priority"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "widgets":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("widgets"))
+			data, err := ec.unmarshalNHomeWidgetInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Widgets = data
+		case "roleIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoleIds = data
+		case "coreResponsibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coreResponsibility"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoreResponsibility = data
+		case "isOrgDefault":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isOrgDefault"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsOrgDefault = data
+		case "locked":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locked"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Locked = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
 		}
 	}
 	return it, nil
@@ -187429,6 +190674,575 @@ func (ec *executionContext) _HoldReasonEdge(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var homeLayoutImplementors = []string{"HomeLayout"}
+
+func (ec *executionContext) _HomeLayout(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeLayout) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeLayoutImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeLayout")
+		case "schemaVersion":
+			out.Values[i] = ec._HomeLayout_schemaVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._HomeLayout_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._HomeLayout_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "presetId":
+			out.Values[i] = ec._HomeLayout_presetId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "presetName":
+			out.Values[i] = ec._HomeLayout_presetName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "locked":
+			out.Values[i] = ec._HomeLayout_locked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canCustomize":
+			out.Values[i] = ec._HomeLayout_canCustomize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "density":
+			out.Values[i] = ec._HomeLayout_density(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "widgets":
+			out.Values[i] = ec._HomeLayout_widgets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeLayoutPresetImplementors = []string{"HomeLayoutPreset"}
+
+func (ec *executionContext) _HomeLayoutPreset(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeLayoutPresetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeLayoutPreset")
+		case "id":
+			out.Values[i] = ec._HomeLayoutPreset_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._HomeLayoutPreset_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._HomeLayoutPreset_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "widgets":
+			out.Values[i] = ec._HomeLayoutPreset_widgets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roleIds":
+			out.Values[i] = ec._HomeLayoutPreset_roleIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "coreResponsibility":
+			out.Values[i] = ec._HomeLayoutPreset_coreResponsibility(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isOrgDefault":
+			out.Values[i] = ec._HomeLayoutPreset_isOrgDefault(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locked":
+			out.Values[i] = ec._HomeLayoutPreset_locked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "priority":
+			out.Values[i] = ec._HomeLayoutPreset_priority(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignedUserCount":
+			out.Values[i] = ec._HomeLayoutPreset_assignedUserCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._HomeLayoutPreset_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._HomeLayoutPreset_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._HomeLayoutPreset_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeMetricOptionImplementors = []string{"HomeMetricOption"}
+
+func (ec *executionContext) _HomeMetricOption(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeMetricOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeMetricOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeMetricOption")
+		case "key":
+			out.Values[i] = ec._HomeMetricOption_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._HomeMetricOption_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeWidgetImplementors = []string{"HomeWidget"}
+
+func (ec *executionContext) _HomeWidget(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeWidget) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeWidgetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeWidget")
+		case "id":
+			out.Values[i] = ec._HomeWidget_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "key":
+			out.Values[i] = ec._HomeWidget_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._HomeWidget_title(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "w":
+			out.Values[i] = ec._HomeWidget_w(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "h":
+			out.Values[i] = ec._HomeWidget_h(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "config":
+			out.Values[i] = ec._HomeWidget_config(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeWidgetCatalogImplementors = []string{"HomeWidgetCatalog"}
+
+func (ec *executionContext) _HomeWidgetCatalog(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeWidgetCatalog) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeWidgetCatalogImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeWidgetCatalog")
+		case "widgets":
+			out.Values[i] = ec._HomeWidgetCatalog_widgets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "metrics":
+			out.Values[i] = ec._HomeWidgetCatalog_metrics(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "categories":
+			out.Values[i] = ec._HomeWidgetCatalog_categories(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "densities":
+			out.Values[i] = ec._HomeWidgetCatalog_densities(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "gridColumns":
+			out.Values[i] = ec._HomeWidgetCatalog_gridColumns(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxWidgets":
+			out.Values[i] = ec._HomeWidgetCatalog_maxWidgets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeWidgetCategoryImplementors = []string{"HomeWidgetCategory"}
+
+func (ec *executionContext) _HomeWidgetCategory(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeWidgetCategory) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeWidgetCategoryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeWidgetCategory")
+		case "key":
+			out.Values[i] = ec._HomeWidgetCategory_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._HomeWidgetCategory_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._HomeWidgetCategory_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeWidgetConfigImplementors = []string{"HomeWidgetConfig"}
+
+func (ec *executionContext) _HomeWidgetConfig(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeWidgetConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeWidgetConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeWidgetConfig")
+		case "metric":
+			out.Values[i] = ec._HomeWidgetConfig_metric(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "metrics":
+			out.Values[i] = ec._HomeWidgetConfig_metrics(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "definitionId":
+			out.Values[i] = ec._HomeWidgetConfig_definitionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "cannedKey":
+			out.Values[i] = ec._HomeWidgetConfig_cannedKey(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "chartId":
+			out.Values[i] = ec._HomeWidgetConfig_chartId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "columnId":
+			out.Values[i] = ec._HomeWidgetConfig_columnId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "dashboardId":
+			out.Values[i] = ec._HomeWidgetConfig_dashboardId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "text":
+			out.Values[i] = ec._HomeWidgetConfig_text(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "limit":
+			out.Values[i] = ec._HomeWidgetConfig_limit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "windowDays":
+			out.Values[i] = ec._HomeWidgetConfig_windowDays(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var homeWidgetOptionImplementors = []string{"HomeWidgetOption"}
+
+func (ec *executionContext) _HomeWidgetOption(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HomeWidgetOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeWidgetOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeWidgetOption")
+		case "key":
+			out.Values[i] = ec._HomeWidgetOption_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._HomeWidgetOption_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._HomeWidgetOption_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "category":
+			out.Values[i] = ec._HomeWidgetOption_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "configKind":
+			out.Values[i] = ec._HomeWidgetOption_configKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "analyticsInclude":
+			out.Values[i] = ec._HomeWidgetOption_analyticsInclude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "defaultW":
+			out.Values[i] = ec._HomeWidgetOption_defaultW(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "defaultH":
+			out.Values[i] = ec._HomeWidgetOption_defaultH(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minW":
+			out.Values[i] = ec._HomeWidgetOption_minW(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minH":
+			out.Values[i] = ec._HomeWidgetOption_minH(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxW":
+			out.Values[i] = ec._HomeWidgetOption_maxW(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxH":
+			out.Values[i] = ec._HomeWidgetOption_maxH(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var hosCertificationSummaryImplementors = []string{"HosCertificationSummary"}
 
 func (ec *executionContext) _HosCertificationSummary(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.HosCertificationSummary) graphql.Marshaler {
@@ -190258,6 +194072,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteFuelSurchargeProgram":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteFuelSurchargeProgram(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateHomeLayout":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateHomeLayout(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resetHomeLayout":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resetHomeLayout(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createHomeLayoutPreset":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createHomeLayoutPreset(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateHomeLayoutPreset":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateHomeLayoutPreset(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteHomeLayoutPreset":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteHomeLayoutPreset(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -197135,6 +200984,116 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_holdReason(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "homeLayout":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_homeLayout(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "homeWidgetCatalog":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_homeWidgetCatalog(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "homeLayoutPresets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_homeLayoutPresets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "homeLayoutPreset":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_homeLayoutPreset(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "homeLayoutPreview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_homeLayoutPreview(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -219424,6 +223383,212 @@ func (ec *executionContext) marshalNHoldType2githubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return res
 }
 
+func (ec *executionContext) marshalNHomeLayout2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout(ctx context.Context, sel ast.SelectionSet, v gqlmodel.HomeLayout) graphql.Marshaler {
+	return ec._HomeLayout(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHomeLayout2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayout(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeLayout) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeLayout(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNHomeLayoutInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutInput(ctx context.Context, v any) (gqlmodel.HomeLayoutInput, error) {
+	res, err := ec.unmarshalInputHomeLayoutInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNHomeLayoutPreset2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset(ctx context.Context, sel ast.SelectionSet, v gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+	return ec._HomeLayoutPreset(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHomeLayoutPreset2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPresetᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHomeLayoutPreset2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutPreset(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeLayoutPreset) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeLayoutPreset(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNHomeLayoutSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutSource(ctx context.Context, v any) (gqlmodel.HomeLayoutSource, error) {
+	var res gqlmodel.HomeLayoutSource
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNHomeLayoutSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLayoutSource(ctx context.Context, sel ast.SelectionSet, v gqlmodel.HomeLayoutSource) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNHomeMetricOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeMetricOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.HomeMetricOption) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNHomeMetricOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeMetricOption(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHomeMetricOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeMetricOption(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeMetricOption) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeMetricOption(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNHomeWidget2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.HomeWidget) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNHomeWidget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidget(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHomeWidget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidget(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeWidget) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeWidget(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNHomeWidgetCatalog2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCatalog(ctx context.Context, sel ast.SelectionSet, v gqlmodel.HomeWidgetCatalog) graphql.Marshaler {
+	return ec._HomeWidgetCatalog(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNHomeWidgetCatalog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCatalog(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeWidgetCatalog) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeWidgetCatalog(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNHomeWidgetCategory2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.HomeWidgetCategory) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNHomeWidgetCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCategory(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHomeWidgetCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetCategory(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeWidgetCategory) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeWidgetCategory(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNHomeWidgetConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetConfig(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeWidgetConfig) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeWidgetConfig(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNHomeWidgetInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetInputᚄ(ctx context.Context, v any) ([]*gqlmodel.HomeWidgetInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*gqlmodel.HomeWidgetInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNHomeWidgetInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNHomeWidgetInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetInput(ctx context.Context, v any) (*gqlmodel.HomeWidgetInput, error) {
+	res, err := ec.unmarshalInputHomeWidgetInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNHomeWidgetOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.HomeWidgetOption) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNHomeWidgetOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetOption(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNHomeWidgetOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetOption(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.HomeWidgetOption) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._HomeWidgetOption(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNHosCertificationSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHosCertificationSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.HosCertificationSummary) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -222254,6 +226419,11 @@ func (ec *executionContext) marshalNSCIMGroupRoleMappingEdge2ᚖgithubᚗcomᚋe
 	return ec._SCIMGroupRoleMappingEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNSaveHomeLayoutPresetInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveHomeLayoutPresetInput(ctx context.Context, v any) (gqlmodel.SaveHomeLayoutPresetInput, error) {
+	res, err := ec.unmarshalInputSaveHomeLayoutPresetInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNSaveReportDashboardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveReportDashboardInput(ctx context.Context, v any) (gqlmodel.SaveReportDashboardInput, error) {
 	res, err := ec.unmarshalInputSaveReportDashboardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -224764,6 +228934,11 @@ func (ec *executionContext) unmarshalNUpdateFuelIndexPriceInput2githubᚗcomᚋe
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUpdateHomeLayoutPresetInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateHomeLayoutPresetInput(ctx context.Context, v any) (gqlmodel.UpdateHomeLayoutPresetInput, error) {
+	res, err := ec.unmarshalInputUpdateHomeLayoutPresetInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNUpdateMyContactInfoInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMyContactInfoInput(ctx context.Context, v any) (gqlmodel.UpdateMyContactInfoInput, error) {
 	res, err := ec.unmarshalInputUpdateMyContactInfoInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -226534,6 +230709,14 @@ func (ec *executionContext) marshalOHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtreno
 		return graphql.Null
 	}
 	return ec._HoldReason(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOHomeWidgetConfigInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetConfigInput(ctx context.Context, v any) (*gqlmodel.HomeWidgetConfigInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputHomeWidgetConfigInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, v any) (pulid.ID, error) {
