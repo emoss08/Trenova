@@ -254,12 +254,42 @@ func TestTimeWindowOverlaps(t *testing.T) {
 		b      dispatcheligibility.TimeWindow
 		expect bool
 	}{
-		{"disjoint before", dispatcheligibility.TimeWindow{Start: 100, End: 200}, dispatcheligibility.TimeWindow{Start: 200, End: 300}, false},
-		{"disjoint after", dispatcheligibility.TimeWindow{Start: 300, End: 400}, dispatcheligibility.TimeWindow{Start: 100, End: 300}, false},
-		{"partial overlap", dispatcheligibility.TimeWindow{Start: 100, End: 250}, dispatcheligibility.TimeWindow{Start: 200, End: 300}, true},
-		{"contained", dispatcheligibility.TimeWindow{Start: 150, End: 175}, dispatcheligibility.TimeWindow{Start: 100, End: 300}, true},
-		{"open ended overlaps", dispatcheligibility.TimeWindow{Start: 100}, dispatcheligibility.TimeWindow{Start: 500, End: 600}, true},
-		{"zero window never overlaps", dispatcheligibility.TimeWindow{}, dispatcheligibility.TimeWindow{Start: 100, End: 200}, false},
+		{
+			"disjoint before",
+			dispatcheligibility.TimeWindow{Start: 100, End: 200},
+			dispatcheligibility.TimeWindow{Start: 200, End: 300},
+			false,
+		},
+		{
+			"disjoint after",
+			dispatcheligibility.TimeWindow{Start: 300, End: 400},
+			dispatcheligibility.TimeWindow{Start: 100, End: 300},
+			false,
+		},
+		{
+			"partial overlap",
+			dispatcheligibility.TimeWindow{Start: 100, End: 250},
+			dispatcheligibility.TimeWindow{Start: 200, End: 300},
+			true,
+		},
+		{
+			"contained",
+			dispatcheligibility.TimeWindow{Start: 150, End: 175},
+			dispatcheligibility.TimeWindow{Start: 100, End: 300},
+			true,
+		},
+		{
+			"open ended overlaps",
+			dispatcheligibility.TimeWindow{Start: 100},
+			dispatcheligibility.TimeWindow{Start: 500, End: 600},
+			true,
+		},
+		{
+			"zero window never overlaps",
+			dispatcheligibility.TimeWindow{},
+			dispatcheligibility.TimeWindow{Start: 100, End: 200},
+			false,
+		},
 	}
 
 	for _, tc := range cases {

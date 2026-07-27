@@ -16,7 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func score(value int, findings ...dispatcheligibility.Finding) *dispatchcandidateservice.CandidateScore {
+func score(
+	value int,
+	findings ...dispatcheligibility.Finding,
+) *dispatchcandidateservice.CandidateScore {
 	return &dispatchcandidateservice.CandidateScore{
 		WorkerID:   pulid.MustNew("wrk_"),
 		WorkerName: "Test Driver",

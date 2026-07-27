@@ -106,7 +106,10 @@ type factorInput struct {
 // organization's weights, and returns both the total and the per-factor breakdown.
 // Factors with no data are omitted rather than scored as zero, so a missing telematics
 // feed does not quietly push a good driver down the list.
-func buildFactors(in factorInput, weights map[dispatchcontrol.ScoringFactor]float64) (int, []ScoreFactor) {
+func buildFactors(
+	in factorInput,
+	weights map[dispatchcontrol.ScoringFactor]float64,
+) (int, []ScoreFactor) {
 	factors := make([]ScoreFactor, 0, len(dispatchcontrol.AllScoringFactors()))
 
 	add := func(key dispatchcontrol.ScoringFactor, label string, raw float64, detail string) {
@@ -239,9 +242,23 @@ func driverTypeFit(driverType worker.DriverType, tripMiles float64) (float64, st
 
 	switch driverType {
 	case worker.DriverTypeLocal:
-		return rampFit(tripMiles, 150, 300), fmt.Sprintf("Local driver on a %.0f mile run", tripMiles)
+		return rampFit(
+				tripMiles,
+				150,
+				300,
+			), fmt.Sprintf(
+				"Local driver on a %.0f mile run",
+				tripMiles,
+			)
 	case worker.DriverTypeRegional:
-		return rampFit(tripMiles, 500, 800), fmt.Sprintf("Regional driver on a %.0f mile run", tripMiles)
+		return rampFit(
+				tripMiles,
+				500,
+				800,
+			), fmt.Sprintf(
+				"Regional driver on a %.0f mile run",
+				tripMiles,
+			)
 	case worker.DriverTypeOTR, worker.DriverTypeTeam:
 		if tripMiles < 100 {
 			return 0.4, fmt.Sprintf("Over-the-road driver on a short %.0f mile run", tripMiles)
