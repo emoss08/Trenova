@@ -53,11 +53,7 @@ type CustomerBillingProfile struct {
 	AutoTransfer                              bool                                      `json:"autoTransfer"                              bun:"auto_transfer,type:BOOLEAN,notnull,default:true"`
 	AutoMarkReadyToBill                       bool                                      `json:"autoMarkReadyToBill"                       bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"`
 	AutoBill                                  bool                                      `json:"autoBill"                                  bun:"auto_bill,type:BOOLEAN,notnull,default:true"`
-	DetentionBillingEnabled                   bool                                      `json:"detentionBillingEnabled"                   bun:"detention_billing_enabled,type:BOOLEAN,notnull,default:false"`
-	DetentionFreeMinutes                      int8                                      `json:"detentionFreeMinutes"                      bun:"detention_free_minutes,type:SMALLINT,notnull,default:120"`
-	DetentionRatePerHour                      decimal.NullDecimal                       `json:"detentionRatePerHour"                      bun:"detention_rate_per_hour,type:NUMERIC(8,2),nullzero"`
 	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull,default:false"`
-	CountDetentionOnlyOnAppointmentStops      bool                                      `json:"countDetentionOnlyOnAppointmentStops"      bun:"count_detention_only_on_appointment_stops,type:BOOLEAN,notnull,default:false"`
 	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull,default:true"`
 	BillingCurrency                           string                                    `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
 	RequirePONumber                           bool                                      `json:"requirePONumber"                           bun:"require_po_number,type:BOOLEAN,notnull,default:false"`

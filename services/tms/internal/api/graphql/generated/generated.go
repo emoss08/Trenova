@@ -837,7 +837,6 @@ type ComplexityRoot struct {
 		BusinessUnitID                            func(childComplexity int) int
 		ConsolidationGroupBy                      func(childComplexity int) int
 		ConsolidationPeriodDays                   func(childComplexity int) int
-		CountDetentionOnlyOnAppointmentStops      func(childComplexity int) int
 		CountLateOnlyOnAppointmentStops           func(childComplexity int) int
 		CreatedAt                                 func(childComplexity int) int
 		CreditBalance                             func(childComplexity int) int
@@ -847,9 +846,6 @@ type ComplexityRoot struct {
 		CustomerID                                func(childComplexity int) int
 		CustomerInvoicePrefix                     func(childComplexity int) int
 		DefaultBillerID                           func(childComplexity int) int
-		DetentionBillingEnabled                   func(childComplexity int) int
-		DetentionFreeMinutes                      func(childComplexity int) int
-		DetentionRatePerHour                      func(childComplexity int) int
 		DocumentTypes                             func(childComplexity int) int
 		EnforceCreditLimit                        func(childComplexity int) int
 		EnforceCustomerBillingReq                 func(childComplexity int) int
@@ -5480,9 +5476,6 @@ type CustomerBillingProfileResolver interface {
 
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
-
-	DetentionFreeMinutes(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
-	DetentionRatePerHour(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 }
 type CustomerPaymentResolver interface {
 	Customer(ctx context.Context, obj *customerpayment.Payment) (*customer.Customer, error)
@@ -9180,12 +9173,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.ConsolidationPeriodDays(childComplexity), true
-	case "CustomerBillingProfile.countDetentionOnlyOnAppointmentStops":
-		if e.ComplexityRoot.CustomerBillingProfile.CountDetentionOnlyOnAppointmentStops == nil {
-			break
-		}
-
-		return e.ComplexityRoot.CustomerBillingProfile.CountDetentionOnlyOnAppointmentStops(childComplexity), true
 	case "CustomerBillingProfile.countLateOnlyOnAppointmentStops":
 		if e.ComplexityRoot.CustomerBillingProfile.CountLateOnlyOnAppointmentStops == nil {
 			break
@@ -9240,24 +9227,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.DefaultBillerID(childComplexity), true
-	case "CustomerBillingProfile.detentionBillingEnabled":
-		if e.ComplexityRoot.CustomerBillingProfile.DetentionBillingEnabled == nil {
-			break
-		}
-
-		return e.ComplexityRoot.CustomerBillingProfile.DetentionBillingEnabled(childComplexity), true
-	case "CustomerBillingProfile.detentionFreeMinutes":
-		if e.ComplexityRoot.CustomerBillingProfile.DetentionFreeMinutes == nil {
-			break
-		}
-
-		return e.ComplexityRoot.CustomerBillingProfile.DetentionFreeMinutes(childComplexity), true
-	case "CustomerBillingProfile.detentionRatePerHour":
-		if e.ComplexityRoot.CustomerBillingProfile.DetentionRatePerHour == nil {
-			break
-		}
-
-		return e.ComplexityRoot.CustomerBillingProfile.DetentionRatePerHour(childComplexity), true
 	case "CustomerBillingProfile.documentTypes":
 		if e.ComplexityRoot.CustomerBillingProfile.DocumentTypes == nil {
 			break
@@ -33650,11 +33619,7 @@ type CustomerBillingProfile {
   autoTransfer: Boolean!
   autoMarkReadyToBill: Boolean!
   autoBill: Boolean!
-  detentionBillingEnabled: Boolean!
-  detentionFreeMinutes: Int!
-  detentionRatePerHour: String
   countLateOnlyOnAppointmentStops: Boolean!
-  countDetentionOnlyOnAppointmentStops: Boolean!
   autoApplyAccessorials: Boolean!
   billingCurrency: String!
   requirePONumber: Boolean!
@@ -42571,16 +42536,8 @@ func (ec *executionContext) childFields_CustomerBillingProfile(ctx context.Conte
 		return ec.fieldContext_CustomerBillingProfile_autoMarkReadyToBill(ctx, field)
 	case "autoBill":
 		return ec.fieldContext_CustomerBillingProfile_autoBill(ctx, field)
-	case "detentionBillingEnabled":
-		return ec.fieldContext_CustomerBillingProfile_detentionBillingEnabled(ctx, field)
-	case "detentionFreeMinutes":
-		return ec.fieldContext_CustomerBillingProfile_detentionFreeMinutes(ctx, field)
-	case "detentionRatePerHour":
-		return ec.fieldContext_CustomerBillingProfile_detentionRatePerHour(ctx, field)
 	case "countLateOnlyOnAppointmentStops":
 		return ec.fieldContext_CustomerBillingProfile_countLateOnlyOnAppointmentStops(ctx, field)
-	case "countDetentionOnlyOnAppointmentStops":
-		return ec.fieldContext_CustomerBillingProfile_countDetentionOnlyOnAppointmentStops(ctx, field)
 	case "autoApplyAccessorials":
 		return ec.fieldContext_CustomerBillingProfile_autoApplyAccessorials(ctx, field)
 	case "billingCurrency":
@@ -69589,75 +69546,6 @@ func (ec *executionContext) fieldContext_CustomerBillingProfile_autoBill(_ conte
 	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
-func (ec *executionContext) _CustomerBillingProfile_detentionBillingEnabled(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_CustomerBillingProfile_detentionBillingEnabled(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.DetentionBillingEnabled, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
-			return ec.marshalNBoolean2bool(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_CustomerBillingProfile_detentionBillingEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
-}
-
-func (ec *executionContext) _CustomerBillingProfile_detentionFreeMinutes(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_CustomerBillingProfile_detentionFreeMinutes(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.CustomerBillingProfile().DetentionFreeMinutes(ctx, obj)
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_CustomerBillingProfile_detentionFreeMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type Int does not have child fields"))
-}
-
-func (ec *executionContext) _CustomerBillingProfile_detentionRatePerHour(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_CustomerBillingProfile_detentionRatePerHour(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.CustomerBillingProfile().DetentionRatePerHour(ctx, obj)
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
-			return ec.marshalOString2ᚖstring(ctx, selections, v)
-		},
-		true,
-		false,
-	)
-}
-func (ec *executionContext) fieldContext_CustomerBillingProfile_detentionRatePerHour(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type String does not have child fields"))
-}
-
 func (ec *executionContext) _CustomerBillingProfile_countLateOnlyOnAppointmentStops(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -69678,29 +69566,6 @@ func (ec *executionContext) _CustomerBillingProfile_countLateOnlyOnAppointmentSt
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_countLateOnlyOnAppointmentStops(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
-}
-
-func (ec *executionContext) _CustomerBillingProfile_countDetentionOnlyOnAppointmentStops(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_CustomerBillingProfile_countDetentionOnlyOnAppointmentStops(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.CountDetentionOnlyOnAppointmentStops, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
-			return ec.marshalNBoolean2bool(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_CustomerBillingProfile_countDetentionOnlyOnAppointmentStops(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
@@ -177918,94 +177783,8 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "detentionBillingEnabled":
-			out.Values[i] = ec._CustomerBillingProfile_detentionBillingEnabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "detentionFreeMinutes":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CustomerBillingProfile_detentionFreeMinutes(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "detentionRatePerHour":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CustomerBillingProfile_detentionRatePerHour(ctx, field, obj)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "countLateOnlyOnAppointmentStops":
 			out.Values[i] = ec._CustomerBillingProfile_countLateOnlyOnAppointmentStops(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "countDetentionOnlyOnAppointmentStops":
-			out.Values[i] = ec._CustomerBillingProfile_countDetentionOnlyOnAppointmentStops(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
