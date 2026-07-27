@@ -513,6 +513,266 @@ type DetachPayEventInput struct {
 	PayEventID   string `json:"payEventId"`
 }
 
+type DispatchAssignMoveInput struct {
+	MoveID            string  `json:"moveId"`
+	PrimaryWorkerID   string  `json:"primaryWorkerId"`
+	TractorID         string  `json:"tractorId"`
+	TrailerID         *string `json:"trailerId,omitempty"`
+	SecondaryWorkerID *string `json:"secondaryWorkerId,omitempty"`
+	// Replace an existing assignment rather than creating one. The console sets this when a
+	// dispatcher drags a driver onto a move that is already covered.
+	Reassign *bool `json:"reassign,omitempty"`
+}
+
+// Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
+// the batch: covering nine of ten moves and saying which one failed beats covering none.
+type DispatchAssignResult struct {
+	MoveID       string             `json:"moveId"`
+	Success      bool               `json:"success"`
+	AssignmentID *string            `json:"assignmentId,omitempty"`
+	Error        *string            `json:"error,omitempty"`
+	Findings     []*DispatchFinding `json:"findings"`
+}
+
+// The pre-flight a dispatcher sees before a drag-and-drop assignment commits.
+// requiresOverride is true when the pairing trips a rule the organization enforces as a
+// hard block, so the confirm action can be labelled honestly.
+type DispatchAssignmentPreview struct {
+	MoveID           string             `json:"moveId"`
+	WorkerID         string             `json:"workerId"`
+	TractorID        *string            `json:"tractorId,omitempty"`
+	TrailerID        *string            `json:"trailerId,omitempty"`
+	Blocked          bool               `json:"blocked"`
+	RequiresOverride bool               `json:"requiresOverride"`
+	Score            *DispatchCandidate `json:"score"`
+}
+
+type DispatchAssignmentPreviewInput struct {
+	MoveID    string  `json:"moveId"`
+	WorkerID  string  `json:"workerId"`
+	TractorID *string `json:"tractorId,omitempty"`
+	TrailerID *string `json:"trailerId,omitempty"`
+}
+
+type DispatchBoard struct {
+	Moves       []*DispatchBoardMove   `json:"moves"`
+	Drivers     []*DispatchBoardDriver `json:"drivers"`
+	Summary     *DispatchBoardSummary  `json:"summary"`
+	WindowStart int                    `json:"windowStart"`
+	WindowEnd   int                    `json:"windowEnd"`
+	GeneratedAt int                    `json:"generatedAt"`
+}
+
+type DispatchBoardDriver struct {
+	WorkerID               string                `json:"workerId"`
+	FirstName              string                `json:"firstName"`
+	LastName               string                `json:"lastName"`
+	WorkerType             string                `json:"workerType"`
+	DriverType             string                `json:"driverType"`
+	FleetCodeID            *string               `json:"fleetCodeId,omitempty"`
+	FleetCodeName          string                `json:"fleetCodeName"`
+	City                   string                `json:"city"`
+	StateAbbreviation      string                `json:"stateAbbreviation"`
+	PostalCode             string                `json:"postalCode"`
+	ProfilePicURL          string                `json:"profilePicUrl"`
+	AssignmentBlocked      string                `json:"assignmentBlocked"`
+	AvailableForDispatch   bool                  `json:"availableForDispatch"`
+	TractorID              *string               `json:"tractorId,omitempty"`
+	TractorCode            string                `json:"tractorCode"`
+	TractorTypeID          *string               `json:"tractorTypeId,omitempty"`
+	TractorAvailable       bool                  `json:"tractorAvailable"`
+	OpenAssignments        int                   `json:"openAssignments"`
+	Availability           string                `json:"availability"`
+	DutyStatus             string                `json:"dutyStatus"`
+	DriveRemainingMs       int                   `json:"driveRemainingMs"`
+	ShiftRemainingMs       int                   `json:"shiftRemainingMs"`
+	CycleRemainingMs       int                   `json:"cycleRemainingMs"`
+	BreakRemainingMs       int                   `json:"breakRemainingMs"`
+	HosRecordedAt          int                   `json:"hosRecordedAt"`
+	HosIsStale             bool                  `json:"hosIsStale"`
+	Latitude               *float64              `json:"latitude,omitempty"`
+	Longitude              *float64              `json:"longitude,omitempty"`
+	FormattedLocation      string                `json:"formattedLocation"`
+	PositionRecordedAt     int                   `json:"positionRecordedAt"`
+	ProjectedTimeAvailable int                   `json:"projectedTimeAvailable"`
+	CommittedMiles         float64               `json:"committedMiles"`
+	CommittedRevenue       float64               `json:"committedRevenue"`
+	Commitments            []*DispatchCommitment `json:"commitments"`
+	TimeOff                []*DispatchTimeOff    `json:"timeOff"`
+	Findings               []*DispatchFinding    `json:"findings"`
+}
+
+type DispatchBoardInput struct {
+	WindowStart    *int     `json:"windowStart,omitempty"`
+	WindowEnd      *int     `json:"windowEnd,omitempty"`
+	FleetCodeIds   []string `json:"fleetCodeIds,omitempty"`
+	CustomerIds    []string `json:"customerIds,omitempty"`
+	ServiceTypeIds []string `json:"serviceTypeIds,omitempty"`
+	WorkerIds      []string `json:"workerIds,omitempty"`
+	Query          *string  `json:"query,omitempty"`
+	IncludeCovered *bool    `json:"includeCovered,omitempty"`
+	Limit          *int     `json:"limit,omitempty"`
+}
+
+type DispatchBoardMove struct {
+	MoveID                 string   `json:"moveId"`
+	ShipmentID             string   `json:"shipmentId"`
+	ProNumber              string   `json:"proNumber"`
+	Bol                    string   `json:"bol"`
+	MoveStatus             string   `json:"moveStatus"`
+	ShipmentStatus         string   `json:"shipmentStatus"`
+	Sequence               int      `json:"sequence"`
+	MoveCount              int      `json:"moveCount"`
+	Loaded                 bool     `json:"loaded"`
+	Distance               *float64 `json:"distance,omitempty"`
+	Revenue                *float64 `json:"revenue,omitempty"`
+	CustomerID             *string  `json:"customerId,omitempty"`
+	CustomerName           string   `json:"customerName"`
+	ServiceTypeID          *string  `json:"serviceTypeId,omitempty"`
+	ServiceTypeCode        string   `json:"serviceTypeCode"`
+	RequiredTractorTypeID  *string  `json:"requiredTractorTypeId,omitempty"`
+	RequiredTrailerTypeID  *string  `json:"requiredTrailerTypeId,omitempty"`
+	TemperatureMin         *int     `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int     `json:"temperatureMax,omitempty"`
+	HasHazmat              bool     `json:"hasHazmat"`
+	HasActiveHold          bool     `json:"hasActiveHold"`
+	Urgency                string   `json:"urgency"`
+	MinutesToPickup        int      `json:"minutesToPickup"`
+	IsCovered              bool     `json:"isCovered"`
+	OriginStopID           *string  `json:"originStopId,omitempty"`
+	OriginLocationID       *string  `json:"originLocationId,omitempty"`
+	OriginName             string   `json:"originName"`
+	OriginCity             string   `json:"originCity"`
+	OriginState            string   `json:"originState"`
+	OriginLatitude         *float64 `json:"originLatitude,omitempty"`
+	OriginLongitude        *float64 `json:"originLongitude,omitempty"`
+	OriginWindowStart      int      `json:"originWindowStart"`
+	OriginWindowEnd        *int     `json:"originWindowEnd,omitempty"`
+	OriginActualArrival    *int     `json:"originActualArrival,omitempty"`
+	DestinationStopID      *string  `json:"destinationStopId,omitempty"`
+	DestinationLocationID  *string  `json:"destinationLocationId,omitempty"`
+	DestinationName        string   `json:"destinationName"`
+	DestinationCity        string   `json:"destinationCity"`
+	DestinationState       string   `json:"destinationState"`
+	DestinationLatitude    *float64 `json:"destinationLatitude,omitempty"`
+	DestinationLongitude   *float64 `json:"destinationLongitude,omitempty"`
+	DestinationWindowStart int      `json:"destinationWindowStart"`
+	DestinationWindowEnd   *int     `json:"destinationWindowEnd,omitempty"`
+	AssignmentID           *string  `json:"assignmentId,omitempty"`
+	AssignedWorkerID       *string  `json:"assignedWorkerId,omitempty"`
+	AssignedWorkerName     string   `json:"assignedWorkerName"`
+	AssignedTractorID      *string  `json:"assignedTractorId,omitempty"`
+	AssignedTractorCode    string   `json:"assignedTractorCode"`
+	AssignedTrailerID      *string  `json:"assignedTrailerId,omitempty"`
+	AssignedTrailerCode    string   `json:"assignedTrailerCode"`
+	AssignmentAckStatus    string   `json:"assignmentAckStatus"`
+	PreviousMoveTrailerID  *string  `json:"previousMoveTrailerId,omitempty"`
+}
+
+// The metrics strip at the top of the console: the numbers a dispatcher is measured on.
+type DispatchBoardSummary struct {
+	UncoveredMoves       int     `json:"uncoveredMoves"`
+	CoveredMoves         int     `json:"coveredMoves"`
+	LateMoves            int     `json:"lateMoves"`
+	AtRiskMoves          int     `json:"atRiskMoves"`
+	UnseatedDrivers      int     `json:"unseatedDrivers"`
+	AvailableDrivers     int     `json:"availableDrivers"`
+	AssignedToday        int     `json:"assignedToday"`
+	AverageDeadheadMiles float64 `json:"averageDeadheadMiles"`
+	UtilizationPercent   float64 `json:"utilizationPercent"`
+}
+
+type DispatchBulkAssignResult struct {
+	Succeeded int                     `json:"succeeded"`
+	Failed    int                     `json:"failed"`
+	Results   []*DispatchAssignResult `json:"results"`
+}
+
+// A driver-and-equipment pairing judged against one move.
+type DispatchCandidate struct {
+	WorkerID               string                 `json:"workerId"`
+	WorkerName             string                 `json:"workerName"`
+	TractorID              *string                `json:"tractorId,omitempty"`
+	TrailerID              *string                `json:"trailerId,omitempty"`
+	MoveID                 string                 `json:"moveId"`
+	Score                  int                    `json:"score"`
+	Verdict                string                 `json:"verdict"`
+	Blocked                bool                   `json:"blocked"`
+	DeadheadMiles          *float64               `json:"deadheadMiles,omitempty"`
+	EstimatedDriveMs       int                    `json:"estimatedDriveMs"`
+	ProjectedArrival       int                    `json:"projectedArrival"`
+	MinutesOfSlack         int                    `json:"minutesOfSlack"`
+	DriveRemainingMs       int                    `json:"driveRemainingMs"`
+	ShiftRemainingMs       int                    `json:"shiftRemainingMs"`
+	CycleRemainingMs       int                    `json:"cycleRemainingMs"`
+	ProjectedTimeAvailable int                    `json:"projectedTimeAvailable"`
+	Findings               []*DispatchFinding     `json:"findings"`
+	Factors                []*DispatchScoreFactor `json:"factors"`
+}
+
+// An assignment a driver already holds inside the planning horizon. The console draws these
+// as committed blocks on the timeline.
+type DispatchCommitment struct {
+	MoveID               string   `json:"moveId"`
+	ShipmentID           string   `json:"shipmentId"`
+	ProNumber            string   `json:"proNumber"`
+	MoveStatus           string   `json:"moveStatus"`
+	WindowStart          int      `json:"windowStart"`
+	WindowEnd            int      `json:"windowEnd"`
+	DestinationCity      string   `json:"destinationCity"`
+	DestinationState     string   `json:"destinationState"`
+	DestinationLatitude  *float64 `json:"destinationLatitude,omitempty"`
+	DestinationLongitude *float64 `json:"destinationLongitude,omitempty"`
+	TrailerID            *string  `json:"trailerId,omitempty"`
+}
+
+type DispatchDriverMoveMatch struct {
+	Move  *DispatchBoardMove `json:"move"`
+	Score *DispatchCandidate `json:"score"`
+}
+
+type DispatchDriverMovesInput struct {
+	WorkerID    string `json:"workerId"`
+	WindowStart *int   `json:"windowStart,omitempty"`
+	WindowEnd   *int   `json:"windowEnd,omitempty"`
+	Limit       *int   `json:"limit,omitempty"`
+}
+
+// A single eligibility observation about pairing a driver with a move. Block findings
+// disqualify the pairing; Warn findings are advisory; Info findings describe gaps in the
+// telematics feed rather than problems with the driver.
+type DispatchFinding struct {
+	Code       string  `json:"code"`
+	Severity   string  `json:"severity"`
+	Field      string  `json:"field"`
+	Message    string  `json:"message"`
+	Regulation *string `json:"regulation,omitempty"`
+}
+
+type DispatchMoveCandidatesInput struct {
+	MoveID         string   `json:"moveId"`
+	FleetCodeIds   []string `json:"fleetCodeIds,omitempty"`
+	Limit          *int     `json:"limit,omitempty"`
+	IncludeBlocked *bool    `json:"includeBlocked,omitempty"`
+}
+
+// One weighted dimension of a candidate's score, carrying both its numeric contribution and
+// the sentence a dispatcher reads to understand it.
+type DispatchScoreFactor struct {
+	Key          string  `json:"key"`
+	Label        string  `json:"label"`
+	Raw          float64 `json:"raw"`
+	Weight       float64 `json:"weight"`
+	Contribution float64 `json:"contribution"`
+	Detail       string  `json:"detail"`
+}
+
+type DispatchTimeOff struct {
+	StartDate int    `json:"startDate"`
+	EndDate   int    `json:"endDate"`
+	Type      string `json:"type"`
+}
+
 type DisputeAdjustmentInput struct {
 	Description string  `json:"description"`
 	AmountMinor int     `json:"amountMinor"`

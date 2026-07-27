@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
@@ -121,6 +122,8 @@ type Params struct {
 	FiscalPeriodRepo             repositories.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	TelematicsService            *telematicsservice.Service
+	DispatchConsoleService       *dispatchconsoleservice.Service
+	AssignmentService            services.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
@@ -214,6 +217,8 @@ type Resolver struct {
 	fiscalPeriodRepo             repositories.FiscalPeriodRepository
 	emailService                 *emailservice.Service
 	telematicsService            *telematicsservice.Service
+	dispatchConsoleService       *dispatchconsoleservice.Service
+	assignmentService            services.AssignmentService
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
 	distanceProfileService       *distanceprofileservice.Service
@@ -308,6 +313,8 @@ func New(p Params) *Resolver {
 		fiscalPeriodRepo:             p.FiscalPeriodRepo,
 		emailService:                 p.EmailService,
 		telematicsService:            p.TelematicsService,
+		dispatchConsoleService:       p.DispatchConsoleService,
+		assignmentService:            p.AssignmentService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
 		distanceOverrideService:      p.DistanceOverrideService,
 		distanceProfileService:       p.DistanceProfileService,
