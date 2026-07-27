@@ -102,18 +102,17 @@ func (r *repository) UpdatePreset(
 	ov := entity.Version
 	entity.Version++
 
+	// Neither OmitZero nor an explicit Set list is usable here. OmitZero would
+	// silently skip is_org_default, locked, and priority whenever they are
+	// being set back to false or zero — exactly the demotions an administrator
+	// means. And bun ignores the model's fields entirely once any Set() is
+	// present, which would drop name and layout. Writing every column from the
+	// row we just loaded is the only shape that saves all of them.
 	result, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
 		Where(buncolgen.PresetColumns.Version.Eq(), ov).
-		Set(buncolgen.PresetColumns.Description.Set()).
-		Set(buncolgen.PresetColumns.RoleIDs.Set()).
-		Set(buncolgen.PresetColumns.CoreResponsibility.Set()).
-		Set(buncolgen.PresetColumns.IsOrgDefault.Set()).
-		Set(buncolgen.PresetColumns.Locked.Set()).
-		Set(buncolgen.PresetColumns.Priority.Set()).
-		OmitZero().
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
