@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
@@ -123,6 +124,7 @@ type Params struct {
 	EmailService                 *emailservice.Service
 	TelematicsService            *telematicsservice.Service
 	DispatchConsoleService       *dispatchconsoleservice.Service
+	DispatchAutoAssignService    *dispatchautoassignservice.Service
 	AssignmentService            services.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
@@ -218,6 +220,7 @@ type Resolver struct {
 	emailService                 *emailservice.Service
 	telematicsService            *telematicsservice.Service
 	dispatchConsoleService       *dispatchconsoleservice.Service
+	dispatchAutoAssignService    *dispatchautoassignservice.Service
 	assignmentService            services.AssignmentService
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
@@ -314,6 +317,7 @@ func New(p Params) *Resolver {
 		emailService:                 p.EmailService,
 		telematicsService:            p.TelematicsService,
 		dispatchConsoleService:       p.DispatchConsoleService,
+		dispatchAutoAssignService:    p.DispatchAutoAssignService,
 		assignmentService:            p.AssignmentService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
 		distanceOverrideService:      p.DistanceOverrideService,

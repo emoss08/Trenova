@@ -295,3 +295,66 @@ extend type Mutation {
   dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
 }
+
+"""
+One move-to-driver pairing the optimizer chose, carrying the same explainable score a
+dispatcher sees when they pick a driver by hand.
+"""
+type DispatchPlannedAssignment {
+  moveId: ID!
+  proNumber: String!
+  workerId: ID!
+  workerName: String!
+  tractorId: ID
+  trailerId: ID
+  confidence: Float!
+  rationale: String!
+  """
+  True only when the organization allows unattended execution and this pairing cleared
+  its confidence threshold with no blocking findings.
+  """
+  autoExecutable: Boolean!
+  proposalId: ID
+  score: DispatchCandidate!
+}
+
+"""
+A move the optimizer could not cover. Reporting these matters more than the successes: a
+move that silently vanishes from a plan is a load nobody is watching.
+"""
+type DispatchUncoveredMove {
+  moveId: ID!
+  proNumber: String!
+  reason: String!
+  bestBlockedFindings: [DispatchFinding!]!
+}
+
+type DispatchPlan {
+  runId: ID
+  assignments: [DispatchPlannedAssignment!]!
+  uncovered: [DispatchUncoveredMove!]!
+  """
+  True when the organization is watching what the agent would do without letting it act;
+  nothing was written.
+  """
+  shadowMode: Boolean!
+  autonomyTier: String!
+  totalScore: Int!
+  generatedAt: Int!
+}
+
+input DispatchPlanInput {
+  windowStart: Int
+  windowEnd: Int
+  fleetCodeIds: [ID!]
+  moveIds: [ID!]
+  """
+  Commit the plan immediately where the organization's autonomy tier allows it. When
+  false the plan is only proposed, whatever the tier.
+  """
+  apply: Boolean
+}
+
+extend type Mutation {
+  dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
+}

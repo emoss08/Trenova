@@ -41,3 +41,10 @@ ALTER TABLE "dispatch_controls"
         "auto_assign_max_deadhead_miles" IS NULL
         OR "auto_assign_max_deadhead_miles" > 0
     );
+
+--bun:split
+-- The dispatch agent is opt-in per organization, separately from the billing agent, so
+-- turning one on never turns the other on.
+ALTER TABLE "agent_controls"
+    ADD COLUMN IF NOT EXISTS "dispatch_agent_enabled" BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS "dispatch_autonomy_tier" agent_autonomy_tier_enum NOT NULL DEFAULT 'Propose';

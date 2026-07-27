@@ -3,6 +3,7 @@ package resolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
@@ -258,3 +259,47 @@ func mapDispatchFindings(
 
 
 
+
+func mapDispatchPlan(plan *dispatchautoassignservice.Plan) *gqlmodel.DispatchPlan {
+	if plan == nil {
+		return nil
+	}
+
+	assignments := make([]*gqlmodel.DispatchPlannedAssignment, 0, len(plan.Assignments))
+	for _, planned := range plan.Assignments {
+		confidence, _ := planned.Confidence.Float64()
+		assignments = append(assignments, &gqlmodel.DispatchPlannedAssignment{
+			MoveID:         planned.MoveID.String(),
+			ProNumber:      planned.ProNumber,
+			WorkerID:       planned.WorkerID.String(),
+			WorkerName:     planned.WorkerName,
+			TractorID:      idPtr(planned.TractorID),
+			TrailerID:      idPtr(planned.TrailerID),
+			Confidence:     confidence,
+			Rationale:      planned.Rationale,
+			AutoExecutable: planned.AutoExecutable,
+			ProposalID:     idPtr(planned.ProposalID),
+			Score:          mapDispatchCandidate(planned.Score),
+		})
+	}
+
+	uncovered := make([]*gqlmodel.DispatchUncoveredMove, 0, len(plan.Uncovered))
+	for _, item := range plan.Uncovered {
+		uncovered = append(uncovered, &gqlmodel.DispatchUncoveredMove{
+			MoveID:              item.MoveID.String(),
+			ProNumber:           item.ProNumber,
+			Reason:              item.Reason,
+			BestBlockedFindings: mapDispatchFindings(item.BestBlockedFindings),
+		})
+	}
+
+	return &gqlmodel.DispatchPlan{
+		RunID:        idPtr(plan.RunID),
+		Assignments:  assignments,
+		Uncovered:    uncovered,
+		ShadowMode:   plan.ShadowMode,
+		AutonomyTier: string(plan.AutonomyTier),
+		TotalScore:   plan.TotalScore,
+		GeneratedAt:  int(plan.GeneratedAt),
+	}
+}

@@ -513,6 +513,8 @@ var AgentControlColumns = struct {
 	OrganizationID         Column // "organization_id" → qualified: "agc.organization_id"
 	ShadowMode             Column // "shadow_mode" → qualified: "agc.shadow_mode"
 	BillingAgentEnabled    Column // "billing_agent_enabled" → qualified: "agc.billing_agent_enabled"
+	DispatchAgentEnabled   Column // "dispatch_agent_enabled" → qualified: "agc.dispatch_agent_enabled"
+	DispatchAutonomyTier   Column // "dispatch_autonomy_tier" → qualified: "agc.dispatch_autonomy_tier"
 	DecisionTimeoutSeconds Column // "decision_timeout_seconds" → qualified: "agc.decision_timeout_seconds"
 	Version                Column // "version" → qualified: "agc.version"
 	CreatedAt              Column // "created_at" → qualified: "agc.created_at"
@@ -523,6 +525,8 @@ var AgentControlColumns = struct {
 	OrganizationID:         NewColumn("organization_id", "agc"),
 	ShadowMode:             NewColumn("shadow_mode", "agc"),
 	BillingAgentEnabled:    NewColumn("billing_agent_enabled", "agc"),
+	DispatchAgentEnabled:   NewColumn("dispatch_agent_enabled", "agc"),
+	DispatchAutonomyTier:   NewColumn("dispatch_autonomy_tier", "agc"),
 	DecisionTimeoutSeconds: NewColumn("decision_timeout_seconds", "agc"),
 	Version:                NewColumn("version", "agc"),
 	CreatedAt:              NewColumn("created_at", "agc"),
@@ -539,6 +543,8 @@ var AgentControlFieldMap = map[string]string{
 	"organizationId":         "organization_id",
 	"shadowMode":             "shadow_mode",
 	"billingAgentEnabled":    "billing_agent_enabled",
+	"dispatchAgentEnabled":   "dispatch_agent_enabled",
+	"dispatchAutonomyTier":   "dispatch_autonomy_tier",
 	"decisionTimeoutSeconds": "decision_timeout_seconds",
 	"version":                "version",
 	"createdAt":              "created_at",
@@ -553,6 +559,8 @@ var AgentControlInsertableColumns = []string{
 	"organization_id",
 	"shadow_mode",
 	"billing_agent_enabled",
+	"dispatch_agent_enabled",
+	"dispatch_autonomy_tier",
 	"decision_timeout_seconds",
 	"version",
 	"created_at",
@@ -627,6 +635,8 @@ var AgentControlFilter = struct {
 	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	ShadowMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
 	BillingAgentEnabled    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingAgentEnabled" → DB: "billing_agent_enabled"
+	DispatchAgentEnabled   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dispatchAgentEnabled" → DB: "dispatch_agent_enabled"
+	DispatchAutonomyTier   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dispatchAutonomyTier" → DB: "dispatch_autonomy_tier"
 	DecisionTimeoutSeconds func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionTimeoutSeconds" → DB: "decision_timeout_seconds"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -646,6 +656,12 @@ var AgentControlFilter = struct {
 	},
 	BillingAgentEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("billingAgentEnabled", op, value)
+	},
+	DispatchAgentEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dispatchAgentEnabled", op, value)
+	},
+	DispatchAutonomyTier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dispatchAutonomyTier", op, value)
 	},
 	DecisionTimeoutSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("decisionTimeoutSeconds", op, value)

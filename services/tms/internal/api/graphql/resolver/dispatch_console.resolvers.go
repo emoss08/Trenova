@@ -7,27 +7,19 @@ package resolver
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// maxBulkAssignBatch bounds a single bulk assignment. A dispatcher acting by hand never
-// approaches this; it exists so a malformed client cannot ask for unbounded work.
-const maxBulkAssignBatch = 200
-
 // DispatchAssignMoves is the resolver for the dispatchAssignMoves field.
-func (r *mutationResolver) DispatchAssignMoves(
-	ctx context.Context,
-	input []*gqlmodel.DispatchAssignMoveInput,
-) (*gqlmodel.DispatchBulkAssignResult, error) {
+func (r *mutationResolver) DispatchAssignMoves(ctx context.Context, input []*gqlmodel.DispatchAssignMoveInput) (*gqlmodel.DispatchBulkAssignResult, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -60,136 +52,8 @@ func (r *mutationResolver) DispatchAssignMoves(
 	return summarizeBulkResults(results), nil
 }
 
-func (r *mutationResolver) assignOneMove(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	item *gqlmodel.DispatchAssignMoveInput,
-) *gqlmodel.DispatchAssignResult {
-	result := &gqlmodel.DispatchAssignResult{
-		MoveID:   item.MoveID,
-		Findings: []*gqlmodel.DispatchFinding{},
-	}
-
-	moveID, err := pulid.Parse(item.MoveID)
-	if err != nil {
-		result.Error = errorMessage(err)
-		return result
-	}
-	workerID, err := pulid.Parse(item.PrimaryWorkerID)
-	if err != nil {
-		result.Error = errorMessage(err)
-		return result
-	}
-	tractorID, err := pulid.Parse(item.TractorID)
-	if err != nil {
-		result.Error = errorMessage(err)
-		return result
-	}
-
-	trailerID, err := optionalPulid(item.TrailerID)
-	if err != nil {
-		result.Error = errorMessage(err)
-		return result
-	}
-	secondaryWorkerID, err := optionalPulid(item.SecondaryWorkerID)
-	if err != nil {
-		result.Error = errorMessage(err)
-		return result
-	}
-
-	// Both paths go through the assignment service so events, audit, validation, and the
-	// driver notification behave identically to an assignment made from a shipment.
-	var assignment *assignmentResult
-	if item.Reassign != nil && *item.Reassign {
-		assignment, err = r.reassignThroughService(ctx, &assignmentArgs{
-			TenantInfo:        tenant,
-			MoveID:            moveID,
-			PrimaryWorkerID:   workerID,
-			TractorID:         tractorID,
-			TrailerID:         trailerID,
-			SecondaryWorkerID: secondaryWorkerID,
-		})
-	} else {
-		assignment, err = r.assignThroughService(ctx, &assignmentArgs{
-			TenantInfo:        tenant,
-			MoveID:            moveID,
-			PrimaryWorkerID:   workerID,
-			TractorID:         tractorID,
-			TrailerID:         trailerID,
-			SecondaryWorkerID: secondaryWorkerID,
-		})
-	}
-	if err != nil {
-		result.Error = errorMessage(err)
-		result.Findings = findingsFromError(err)
-		return result
-	}
-
-	result.Success = true
-	result.AssignmentID = &assignment.ID
-	return result
-}
-
-type assignmentArgs struct {
-	TenantInfo        pagination.TenantInfo
-	MoveID            pulid.ID
-	PrimaryWorkerID   pulid.ID
-	TractorID         pulid.ID
-	TrailerID         *pulid.ID
-	SecondaryWorkerID *pulid.ID
-}
-
-type assignmentResult struct {
-	ID string
-}
-
-func (r *mutationResolver) assignThroughService(
-	ctx context.Context,
-	args *assignmentArgs,
-) (*assignmentResult, error) {
-	entity, err := r.assignmentService.AssignToMove(
-		ctx,
-		&repositories.AssignShipmentMoveRequest{
-			TenantInfo:        args.TenantInfo,
-			ShipmentMoveID:    args.MoveID,
-			PrimaryWorkerID:   args.PrimaryWorkerID,
-			TractorID:         args.TractorID,
-			TrailerID:         args.TrailerID,
-			SecondaryWorkerID: args.SecondaryWorkerID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &assignmentResult{ID: entity.ID.String()}, nil
-}
-
-func (r *mutationResolver) reassignThroughService(
-	ctx context.Context,
-	args *assignmentArgs,
-) (*assignmentResult, error) {
-	entity, err := r.assignmentService.Reassign(
-		ctx,
-		&repositories.ReassignShipmentMoveRequest{
-			TenantInfo:        args.TenantInfo,
-			ShipmentMoveID:    args.MoveID,
-			PrimaryWorkerID:   args.PrimaryWorkerID,
-			TractorID:         args.TractorID,
-			TrailerID:         args.TrailerID,
-			SecondaryWorkerID: args.SecondaryWorkerID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &assignmentResult{ID: entity.ID.String()}, nil
-}
-
 // DispatchUnassignMoves is the resolver for the dispatchUnassignMoves field.
-func (r *mutationResolver) DispatchUnassignMoves(
-	ctx context.Context,
-	moveIds []string,
-) (*gqlmodel.DispatchBulkAssignResult, error) {
+func (r *mutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []string) (*gqlmodel.DispatchBulkAssignResult, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -242,11 +106,46 @@ func (r *mutationResolver) DispatchUnassignMoves(
 	return summarizeBulkResults(results), nil
 }
 
-// DispatchBoard is the resolver for the dispatchBoard field.
-func (r *queryResolver) DispatchBoard(
+// DispatchPlanAutoAssign is the resolver for the dispatchPlanAutoAssign field.
+func (r *mutationResolver) DispatchPlanAutoAssign(
 	ctx context.Context,
-	input gqlmodel.DispatchBoardInput,
-) (*gqlmodel.DispatchBoard, error) {
+	input gqlmodel.DispatchPlanInput,
+) (*gqlmodel.DispatchPlan, error) {
+	// Producing a plan is a read, but applying it assigns work. Requiring the assign
+	// permission for both keeps a reader from triggering writes through the apply flag.
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpAssign,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &dispatchautoassignservice.PlanRequest{
+		TenantInfo:  tenantInfo(authCtx),
+		WindowStart: int64(intValue(input.WindowStart)),
+		WindowEnd:   int64(intValue(input.WindowEnd)),
+		Apply:       input.Apply != nil && *input.Apply,
+	}
+
+	if req.FleetCodeIDs, err = parseIDs(input.FleetCodeIds); err != nil {
+		return nil, err
+	}
+	if req.MoveIDs, err = parseIDs(input.MoveIds); err != nil {
+		return nil, err
+	}
+
+	plan, err := r.dispatchAutoAssignService.Plan(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchPlan(plan), nil
+}
+
+// DispatchBoard is the resolver for the dispatchBoard field.
+func (r *queryResolver) DispatchBoard(ctx context.Context, input gqlmodel.DispatchBoardInput) (*gqlmodel.DispatchBoard, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -287,10 +186,7 @@ func (r *queryResolver) DispatchBoard(
 }
 
 // DispatchMoveCandidates is the resolver for the dispatchMoveCandidates field.
-func (r *queryResolver) DispatchMoveCandidates(
-	ctx context.Context,
-	input gqlmodel.DispatchMoveCandidatesInput,
-) ([]*gqlmodel.DispatchCandidate, error) {
+func (r *queryResolver) DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -333,10 +229,7 @@ func (r *queryResolver) DispatchMoveCandidates(
 }
 
 // DispatchDriverMoves is the resolver for the dispatchDriverMoves field.
-func (r *queryResolver) DispatchDriverMoves(
-	ctx context.Context,
-	input gqlmodel.DispatchDriverMovesInput,
-) ([]*gqlmodel.DispatchDriverMoveMatch, error) {
+func (r *queryResolver) DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -377,10 +270,7 @@ func (r *queryResolver) DispatchDriverMoves(
 }
 
 // DispatchAssignmentPreview is the resolver for the dispatchAssignmentPreview field.
-func (r *queryResolver) DispatchAssignmentPreview(
-	ctx context.Context,
-	input gqlmodel.DispatchAssignmentPreviewInput,
-) (*gqlmodel.DispatchAssignmentPreview, error) {
+func (r *queryResolver) DispatchAssignmentPreview(ctx context.Context, input gqlmodel.DispatchAssignmentPreviewInput) (*gqlmodel.DispatchAssignmentPreview, error) {
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -432,69 +322,9 @@ func (r *queryResolver) DispatchAssignmentPreview(
 	}, nil
 }
 
-func summarizeBulkResults(
-	results []*gqlmodel.DispatchAssignResult,
-) *gqlmodel.DispatchBulkAssignResult {
-	succeeded, failed := 0, 0
-	for _, result := range results {
-		if result.Success {
-			succeeded++
-			continue
-		}
-		failed++
-	}
-
-	return &gqlmodel.DispatchBulkAssignResult{
-		Succeeded: succeeded,
-		Failed:    failed,
-		Results:   results,
-	}
-}
-
-// findingsFromError surfaces field-level validation errors as findings so the console can
-// render a failed assignment with the same badges it uses for a pre-flight.
-func findingsFromError(err error) []*gqlmodel.DispatchFinding {
-	var multiErr *errortypes.MultiError
-	if !errors.As(err, &multiErr) {
-		return []*gqlmodel.DispatchFinding{}
-	}
-
-	findings := make([]*gqlmodel.DispatchFinding, 0, len(multiErr.Errors))
-	for i := range multiErr.Errors {
-		item := multiErr.Errors[i]
-		severity := "Warn"
-		if item.Code == errortypes.ErrComplianceViolation {
-			severity = "Block"
-		}
-		findings = append(findings, &gqlmodel.DispatchFinding{
-			Code:     string(item.Code),
-			Severity: severity,
-			Field:    item.Field,
-			Message:  item.Message,
-		})
-	}
-
-	return findings
-}
-
-func errorMessage(err error) *string {
-	if err == nil {
-		return nil
-	}
-	message := err.Error()
-	return &message
-}
-
-
-func optionalPulid(raw *string) (*pulid.ID, error) {
-	if raw == nil || *raw == "" {
-		return nil, nil //nolint:nilnil // an absent optional ID is not an error
-	}
-	id, err := pulid.Parse(*raw)
-	if err != nil {
-		return nil, err
-	}
-	return &id, nil
-}
-
-
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.

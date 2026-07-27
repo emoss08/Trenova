@@ -3,6 +3,11 @@
 -- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 -- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
 --
+ALTER TABLE "agent_controls"
+    DROP COLUMN IF EXISTS "dispatch_autonomy_tier",
+    DROP COLUMN IF EXISTS "dispatch_agent_enabled";
+
+--bun:split
 ALTER TABLE "dispatch_controls"
     DROP CONSTRAINT IF EXISTS "chk_dispatch_controls_max_deadhead";
 

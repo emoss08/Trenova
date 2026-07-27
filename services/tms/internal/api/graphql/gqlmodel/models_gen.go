@@ -756,6 +756,46 @@ type DispatchMoveCandidatesInput struct {
 	IncludeBlocked *bool    `json:"includeBlocked,omitempty"`
 }
 
+type DispatchPlan struct {
+	RunID       *string                      `json:"runId,omitempty"`
+	Assignments []*DispatchPlannedAssignment `json:"assignments"`
+	Uncovered   []*DispatchUncoveredMove     `json:"uncovered"`
+	// True when the organization is watching what the agent would do without letting it act;
+	// nothing was written.
+	ShadowMode   bool   `json:"shadowMode"`
+	AutonomyTier string `json:"autonomyTier"`
+	TotalScore   int    `json:"totalScore"`
+	GeneratedAt  int    `json:"generatedAt"`
+}
+
+type DispatchPlanInput struct {
+	WindowStart  *int     `json:"windowStart,omitempty"`
+	WindowEnd    *int     `json:"windowEnd,omitempty"`
+	FleetCodeIds []string `json:"fleetCodeIds,omitempty"`
+	MoveIds      []string `json:"moveIds,omitempty"`
+	// Commit the plan immediately where the organization's autonomy tier allows it. When
+	// false the plan is only proposed, whatever the tier.
+	Apply *bool `json:"apply,omitempty"`
+}
+
+// One move-to-driver pairing the optimizer chose, carrying the same explainable score a
+// dispatcher sees when they pick a driver by hand.
+type DispatchPlannedAssignment struct {
+	MoveID     string  `json:"moveId"`
+	ProNumber  string  `json:"proNumber"`
+	WorkerID   string  `json:"workerId"`
+	WorkerName string  `json:"workerName"`
+	TractorID  *string `json:"tractorId,omitempty"`
+	TrailerID  *string `json:"trailerId,omitempty"`
+	Confidence float64 `json:"confidence"`
+	Rationale  string  `json:"rationale"`
+	// True only when the organization allows unattended execution and this pairing cleared
+	// its confidence threshold with no blocking findings.
+	AutoExecutable bool               `json:"autoExecutable"`
+	ProposalID     *string            `json:"proposalId,omitempty"`
+	Score          *DispatchCandidate `json:"score"`
+}
+
 // One weighted dimension of a candidate's score, carrying both its numeric contribution and
 // the sentence a dispatcher reads to understand it.
 type DispatchScoreFactor struct {
@@ -771,6 +811,15 @@ type DispatchTimeOff struct {
 	StartDate int    `json:"startDate"`
 	EndDate   int    `json:"endDate"`
 	Type      string `json:"type"`
+}
+
+// A move the optimizer could not cover. Reporting these matters more than the successes: a
+// move that silently vanishes from a plan is a load nobody is watching.
+type DispatchUncoveredMove struct {
+	MoveID              string             `json:"moveId"`
+	ProNumber           string             `json:"proNumber"`
+	Reason              string             `json:"reason"`
+	BestBlockedFindings []*DispatchFinding `json:"bestBlockedFindings"`
 }
 
 type DisputeAdjustmentInput struct {
