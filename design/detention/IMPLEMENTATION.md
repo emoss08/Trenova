@@ -229,20 +229,40 @@ Max 63. Surfaced in the UI as the "why this policy won" explainer.
 
 ## Phase 3 — Client
 
-- [ ] `@trenova/shared` types (Zod) for policy, tier, occurrence, evidence, notice
-- [ ] API client + TanStack Query hooks
-- [ ] **Detention Desk**: live board, ticking clocks, budget bars, notice countdown,
+- [x] `@trenova/shared` types (Zod) for policy, tier, occurrence, evidence, notice
+- [x] API client + TanStack Query hooks
+- [x] **Detention Desk**: live board, ticking clocks, budget bars, notice countdown,
       color states, sort by money-at-risk / notice deadline, one-click actions
 - [ ] **Policy builder**: form + tier editor + live worked-example preview
       + precedence explainer
 - [ ] **Shipment detention tab**: occurrence list + calculation receipt waterfall
       + evidence status + dispute packet export
-- [ ] Phase 3 tests: vitest on calculation-receipt rendering, countdown logic,
+- [x] Phase 3 tests: vitest on calculation-receipt rendering, countdown logic,
       budget-bar math
 
 ---
 
+### Phase 3 status: PARTIAL
+**Done:** Zod types for the whole domain, API services + query keys, the live
+Detention Desk (ticking clocks, budget bars, notice countdowns, urgency
+ranking, collectable-vs-lost summary), the copyable calculation-receipt
+waterfall component, shared desk helpers with unit tests, and a server-side
+`POST /detention-policies/preview` endpoint that runs the **production
+calculator** against a hypothetical stop (so the builder's live preview never
+re-derives the math on the client).
+
+**Not done:**
+- [ ] Policy builder form UI (create/edit + tier editor) wired to the preview
+      endpoint — the endpoint and types exist, the form does not.
+- [ ] Precedence explainer UI (resolver already returns per-candidate verdicts).
+- [ ] Shipment detention tab (receipt component exists and is reusable).
+- [ ] Dispute packet export UI (endpoint returns structured JSON today).
+
 ## Phase 4 — Intelligence
+
+### Phase 4 status: NOT STARTED
+The preview endpoint (Phase 3) is the foundation the backtest builds on: it
+already proves the calculator can be driven from arbitrary scenario inputs.
 
 - [ ] Policy backtesting engine (replay against historical stops)
 - [ ] Backtest UI: revenue delta, affected customers/facilities
