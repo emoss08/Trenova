@@ -1362,6 +1362,339 @@ input DetachPayEventInput {
   settlementId: ID!
 }
 
+input DispatchAssignMoveInput {
+  moveId: ID!
+  primaryWorkerId: ID!
+  """
+  Replace an existing assignment rather than creating one. The console sets this when a
+  dispatcher drags a driver onto a move that is already covered.
+  """
+  reassign: Boolean
+  secondaryWorkerId: ID
+  tractorId: ID!
+  trailerId: ID
+}
+
+"""
+Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
+the batch: covering nine of ten moves and saying which one failed beats covering none.
+"""
+type DispatchAssignResult {
+  assignmentId: ID
+  error: String
+  findings: [DispatchFinding!]!
+  moveId: ID!
+  success: Boolean!
+}
+
+"""
+The pre-flight a dispatcher sees before a drag-and-drop assignment commits.
+requiresOverride is true when the pairing trips a rule the organization enforces as a
+hard block, so the confirm action can be labelled honestly.
+"""
+type DispatchAssignmentPreview {
+  blocked: Boolean!
+  moveId: ID!
+  requiresOverride: Boolean!
+  score: DispatchCandidate!
+  tractorId: ID
+  trailerId: ID
+  workerId: ID!
+}
+
+input DispatchAssignmentPreviewInput {
+  moveId: ID!
+  tractorId: ID
+  trailerId: ID
+  workerId: ID!
+}
+
+type DispatchBoard {
+  drivers: [DispatchBoardDriver!]!
+  generatedAt: Int!
+  moves: [DispatchBoardMove!]!
+  summary: DispatchBoardSummary!
+  windowEnd: Int!
+  windowStart: Int!
+}
+
+type DispatchBoardDriver {
+  assignmentBlocked: String!
+  availability: String!
+  availableForDispatch: Boolean!
+  breakRemainingMs: Int!
+  city: String!
+  commitments: [DispatchCommitment!]!
+  committedMiles: Float!
+  committedRevenue: Float!
+  cycleRemainingMs: Int!
+  driveRemainingMs: Int!
+  driverType: String!
+  dutyStatus: String!
+  findings: [DispatchFinding!]!
+  firstName: String!
+  fleetCodeId: ID
+  fleetCodeName: String!
+  formattedLocation: String!
+  hosIsStale: Boolean!
+  hosRecordedAt: Int!
+  lastName: String!
+  latitude: Float
+  longitude: Float
+  openAssignments: Int!
+  positionRecordedAt: Int!
+  postalCode: String!
+  profilePicUrl: String!
+  projectedTimeAvailable: Int!
+  shiftRemainingMs: Int!
+  stateAbbreviation: String!
+  timeOff: [DispatchTimeOff!]!
+  tractorAvailable: Boolean!
+  tractorCode: String!
+  tractorId: ID
+  tractorTypeId: ID
+  workerId: ID!
+  workerType: String!
+}
+
+input DispatchBoardInput {
+  customerIds: [ID!]
+  fleetCodeIds: [ID!]
+  includeCovered: Boolean
+  limit: Int
+  query: String
+  serviceTypeIds: [ID!]
+  windowEnd: Int
+  windowStart: Int
+  workerIds: [ID!]
+}
+
+type DispatchBoardMove {
+  assignedTractorCode: String!
+  assignedTractorId: ID
+  assignedTrailerCode: String!
+  assignedTrailerId: ID
+  assignedWorkerId: ID
+  assignedWorkerName: String!
+  assignmentAckStatus: String!
+  assignmentId: ID
+  bol: String!
+  customerId: ID
+  customerName: String!
+  destinationCity: String!
+  destinationLatitude: Float
+  destinationLocationId: ID
+  destinationLongitude: Float
+  destinationName: String!
+  destinationState: String!
+  destinationStopId: ID
+  destinationWindowEnd: Int
+  destinationWindowStart: Int!
+  distance: Float
+  hasActiveHold: Boolean!
+  hasHazmat: Boolean!
+  isCovered: Boolean!
+  loaded: Boolean!
+  minutesToPickup: Int!
+  moveCount: Int!
+  moveId: ID!
+  moveStatus: String!
+  originActualArrival: Int
+  originCity: String!
+  originLatitude: Float
+  originLocationId: ID
+  originLongitude: Float
+  originName: String!
+  originState: String!
+  originStopId: ID
+  originWindowEnd: Int
+  originWindowStart: Int!
+  previousMoveTrailerId: ID
+  proNumber: String!
+  requiredTractorTypeId: ID
+  requiredTrailerTypeId: ID
+  revenue: Float
+  sequence: Int!
+  serviceTypeCode: String!
+  serviceTypeId: ID
+  shipmentId: ID!
+  shipmentStatus: String!
+  temperatureMax: Int
+  temperatureMin: Int
+  urgency: String!
+}
+
+"""
+The metrics strip at the top of the console: the numbers a dispatcher is measured on.
+"""
+type DispatchBoardSummary {
+  assignedToday: Int!
+  atRiskMoves: Int!
+  availableDrivers: Int!
+  averageDeadheadMiles: Float!
+  coveredMoves: Int!
+  lateMoves: Int!
+  uncoveredMoves: Int!
+  unseatedDrivers: Int!
+  utilizationPercent: Float!
+}
+
+type DispatchBulkAssignResult {
+  failed: Int!
+  results: [DispatchAssignResult!]!
+  succeeded: Int!
+}
+
+"""A driver-and-equipment pairing judged against one move."""
+type DispatchCandidate {
+  blocked: Boolean!
+  cycleRemainingMs: Int!
+  deadheadMiles: Float
+  driveRemainingMs: Int!
+  estimatedDriveMs: Int!
+  factors: [DispatchScoreFactor!]!
+  findings: [DispatchFinding!]!
+  minutesOfSlack: Int!
+  moveId: ID!
+  projectedArrival: Int!
+  projectedTimeAvailable: Int!
+  score: Int!
+  shiftRemainingMs: Int!
+  tractorId: ID
+  trailerId: ID
+  verdict: String!
+  workerId: ID!
+  workerName: String!
+}
+
+"""
+An assignment a driver already holds inside the planning horizon. The console draws these
+as committed blocks on the timeline.
+"""
+type DispatchCommitment {
+  destinationCity: String!
+  destinationLatitude: Float
+  destinationLongitude: Float
+  destinationState: String!
+  moveId: ID!
+  moveStatus: String!
+  proNumber: String!
+  shipmentId: ID!
+  trailerId: ID
+  windowEnd: Int!
+  windowStart: Int!
+}
+
+type DispatchDriverMoveMatch {
+  move: DispatchBoardMove!
+  score: DispatchCandidate!
+}
+
+input DispatchDriverMovesInput {
+  limit: Int
+  windowEnd: Int
+  windowStart: Int
+  workerId: ID!
+}
+
+"""
+A single eligibility observation about pairing a driver with a move. Block findings
+disqualify the pairing; Warn findings are advisory; Info findings describe gaps in the
+telematics feed rather than problems with the driver.
+"""
+type DispatchFinding {
+  code: String!
+  field: String!
+  message: String!
+  regulation: String
+  severity: String!
+}
+
+input DispatchMoveCandidatesInput {
+  fleetCodeIds: [ID!]
+  includeBlocked: Boolean
+  limit: Int
+  moveId: ID!
+}
+
+type DispatchPlan {
+  assignments: [DispatchPlannedAssignment!]!
+  autonomyTier: String!
+  generatedAt: Int!
+  runId: ID
+  """
+  True when the organization is watching what the agent would do without letting it act;
+  nothing was written.
+  """
+  shadowMode: Boolean!
+  totalScore: Int!
+  uncovered: [DispatchUncoveredMove!]!
+}
+
+input DispatchPlanInput {
+  """
+  Commit the plan immediately where the organization's autonomy tier allows it. When
+  false the plan is only proposed, whatever the tier.
+  """
+  apply: Boolean
+  fleetCodeIds: [ID!]
+  moveIds: [ID!]
+  windowEnd: Int
+  windowStart: Int
+}
+
+"""
+One move-to-driver pairing the optimizer chose, carrying the same explainable score a
+dispatcher sees when they pick a driver by hand.
+"""
+type DispatchPlannedAssignment {
+  """
+  True only when the organization allows unattended execution and this pairing cleared
+  its confidence threshold with no blocking findings.
+  """
+  autoExecutable: Boolean!
+  confidence: Float!
+  moveId: ID!
+  proNumber: String!
+  proposalId: ID
+  rationale: String!
+  score: DispatchCandidate!
+  tractorId: ID
+  trailerId: ID
+  workerId: ID!
+  workerName: String!
+}
+
+"""
+One weighted dimension of a candidate's score, carrying both its numeric contribution and
+the sentence a dispatcher reads to understand it.
+"""
+type DispatchScoreFactor {
+  contribution: Float!
+  detail: String!
+  key: String!
+  label: String!
+  raw: Float!
+  weight: Float!
+}
+
+type DispatchTimeOff {
+  endDate: Int!
+  startDate: Int!
+  type: String!
+}
+
+"""
+A move the optimizer could not cover. Reporting these matters more than the successes: a
+move that silently vanishes from a plan is a load nobody is watching.
+"""
+type DispatchUncoveredMove {
+  bestBlockedFindings: [DispatchFinding!]!
+  moveId: ID!
+  proNumber: String!
+  reason: String!
+}
+
 input DisputeAdjustmentInput {
   amountMinor: Int!
   description: String!
@@ -3775,6 +4108,9 @@ type Mutation {
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
+  dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
+  dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
+  dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
@@ -4721,6 +5057,10 @@ type Query {
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
   defaultTableConfiguration(resource: String!): TableConfiguration
+  dispatchAssignmentPreview(input: DispatchAssignmentPreviewInput!): DispatchAssignmentPreview!
+  dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
+  dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
+  dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceProfile(id: ID!): DistanceProfile

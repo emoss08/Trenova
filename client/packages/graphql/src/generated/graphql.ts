@@ -440,6 +440,64 @@ export type DetachPayEventInput = {
   settlementId: string | number;
 };
 
+export type DispatchAssignMoveInput = {
+  moveId: string | number;
+  primaryWorkerId: string | number;
+  /**
+   * Replace an existing assignment rather than creating one. The console sets this when a
+   * dispatcher drags a driver onto a move that is already covered.
+   */
+  reassign?: boolean | null | undefined;
+  secondaryWorkerId?: string | number | null | undefined;
+  tractorId: string | number;
+  trailerId?: string | number | null | undefined;
+};
+
+export type DispatchAssignmentPreviewInput = {
+  moveId: string | number;
+  tractorId?: string | number | null | undefined;
+  trailerId?: string | number | null | undefined;
+  workerId: string | number;
+};
+
+export type DispatchBoardInput = {
+  customerIds?: Array<string | number> | null | undefined;
+  fleetCodeIds?: Array<string | number> | null | undefined;
+  includeCovered?: boolean | null | undefined;
+  limit?: number | null | undefined;
+  query?: string | null | undefined;
+  serviceTypeIds?: Array<string | number> | null | undefined;
+  windowEnd?: number | null | undefined;
+  windowStart?: number | null | undefined;
+  workerIds?: Array<string | number> | null | undefined;
+};
+
+export type DispatchDriverMovesInput = {
+  limit?: number | null | undefined;
+  windowEnd?: number | null | undefined;
+  windowStart?: number | null | undefined;
+  workerId: string | number;
+};
+
+export type DispatchMoveCandidatesInput = {
+  fleetCodeIds?: Array<string | number> | null | undefined;
+  includeBlocked?: boolean | null | undefined;
+  limit?: number | null | undefined;
+  moveId: string | number;
+};
+
+export type DispatchPlanInput = {
+  /**
+   * Commit the plan immediately where the organization's autonomy tier allows it. When
+   * false the plan is only proposed, whatever the tier.
+   */
+  apply?: boolean | null | undefined;
+  fleetCodeIds?: Array<string | number> | null | undefined;
+  moveIds?: Array<string | number> | null | undefined;
+  windowEnd?: number | null | undefined;
+  windowStart?: number | null | undefined;
+};
+
 export type DisputeAdjustmentInput = {
   amountMinor: number;
   description: string;
@@ -2634,6 +2692,55 @@ export type CustomerTableQueryVariables = Exact<{
 
 
 export type CustomerTableQuery = { customers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomerTableRowFieldsFragment': CustomerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DispatchBoardQueryVariables = Exact<{
+  input: DispatchBoardInput;
+}>;
+
+
+export type DispatchBoardQuery = { dispatchBoard: { windowStart: number, windowEnd: number, generatedAt: number, summary: { uncoveredMoves: number, coveredMoves: number, lateMoves: number, atRiskMoves: number, unseatedDrivers: number, availableDrivers: number, assignedToday: number, averageDeadheadMiles: number, utilizationPercent: number }, moves: Array<{ moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null }>, drivers: Array<{ workerId: string, firstName: string, lastName: string, workerType: string, driverType: string, fleetCodeId: string | null, fleetCodeName: string, city: string, stateAbbreviation: string, postalCode: string, profilePicUrl: string, assignmentBlocked: string, availableForDispatch: boolean, tractorId: string | null, tractorCode: string, tractorTypeId: string | null, tractorAvailable: boolean, openAssignments: number, availability: string, dutyStatus: string, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, breakRemainingMs: number, hosRecordedAt: number, hosIsStale: boolean, latitude: number | null, longitude: number | null, formattedLocation: string, positionRecordedAt: number, projectedTimeAvailable: number, committedMiles: number, committedRevenue: number, commitments: Array<{ moveId: string, shipmentId: string, proNumber: string, moveStatus: string, windowStart: number, windowEnd: number, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, trailerId: string | null }>, timeOff: Array<{ startDate: number, endDate: number, type: string }>, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+
+export type DispatchMoveCandidatesQueryVariables = Exact<{
+  input: DispatchMoveCandidatesInput;
+}>;
+
+
+export type DispatchMoveCandidatesQuery = { dispatchMoveCandidates: Array<{ workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> }> };
+
+export type DispatchDriverMovesQueryVariables = Exact<{
+  input: DispatchDriverMovesInput;
+}>;
+
+
+export type DispatchDriverMovesQuery = { dispatchDriverMoves: Array<{ move: { moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null }, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }> };
+
+export type DispatchAssignmentPreviewQueryVariables = Exact<{
+  input: DispatchAssignmentPreviewInput;
+}>;
+
+
+export type DispatchAssignmentPreviewQuery = { dispatchAssignmentPreview: { moveId: string, workerId: string, tractorId: string | null, trailerId: string | null, blocked: boolean, requiresOverride: boolean, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } } };
+
+export type DispatchAssignMovesMutationVariables = Exact<{
+  input: Array<DispatchAssignMoveInput> | DispatchAssignMoveInput;
+}>;
+
+
+export type DispatchAssignMovesMutation = { dispatchAssignMoves: { succeeded: number, failed: number, results: Array<{ moveId: string, success: boolean, assignmentId: string | null, error: string | null, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+
+export type DispatchUnassignMovesMutationVariables = Exact<{
+  moveIds: Array<string | number> | string | number;
+}>;
+
+
+export type DispatchUnassignMovesMutation = { dispatchUnassignMoves: { succeeded: number, failed: number, results: Array<{ moveId: string, success: boolean, assignmentId: string | null, error: string | null, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+
+export type DispatchPlanAutoAssignMutationVariables = Exact<{
+  input: DispatchPlanInput;
+}>;
+
+
+export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, totalScore: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }>, uncovered: Array<{ moveId: string, proNumber: string, reason: string, bestBlockedFindings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
 
 export type DistanceOverrideLocationFieldsFragment = { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'DistanceOverrideLocationFieldsFragment' };
 
@@ -9288,6 +9395,425 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:e806c5ef7e06c26211a40d494eb2ba6db6e1ca2da88582d1a4c9496e61ee4200"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const DispatchBoardDocument = new TypedDocumentString(`
+    query DispatchBoard($input: DispatchBoardInput!) {
+  dispatchBoard(input: $input) {
+    windowStart
+    windowEnd
+    generatedAt
+    summary {
+      uncoveredMoves
+      coveredMoves
+      lateMoves
+      atRiskMoves
+      unseatedDrivers
+      availableDrivers
+      assignedToday
+      averageDeadheadMiles
+      utilizationPercent
+    }
+    moves {
+      moveId
+      shipmentId
+      proNumber
+      bol
+      moveStatus
+      shipmentStatus
+      sequence
+      moveCount
+      loaded
+      distance
+      revenue
+      customerId
+      customerName
+      serviceTypeId
+      serviceTypeCode
+      requiredTractorTypeId
+      requiredTrailerTypeId
+      temperatureMin
+      temperatureMax
+      hasHazmat
+      hasActiveHold
+      urgency
+      minutesToPickup
+      isCovered
+      originStopId
+      originLocationId
+      originName
+      originCity
+      originState
+      originLatitude
+      originLongitude
+      originWindowStart
+      originWindowEnd
+      originActualArrival
+      destinationStopId
+      destinationLocationId
+      destinationName
+      destinationCity
+      destinationState
+      destinationLatitude
+      destinationLongitude
+      destinationWindowStart
+      destinationWindowEnd
+      assignmentId
+      assignedWorkerId
+      assignedWorkerName
+      assignedTractorId
+      assignedTractorCode
+      assignedTrailerId
+      assignedTrailerCode
+      assignmentAckStatus
+      previousMoveTrailerId
+    }
+    drivers {
+      workerId
+      firstName
+      lastName
+      workerType
+      driverType
+      fleetCodeId
+      fleetCodeName
+      city
+      stateAbbreviation
+      postalCode
+      profilePicUrl
+      assignmentBlocked
+      availableForDispatch
+      tractorId
+      tractorCode
+      tractorTypeId
+      tractorAvailable
+      openAssignments
+      availability
+      dutyStatus
+      driveRemainingMs
+      shiftRemainingMs
+      cycleRemainingMs
+      breakRemainingMs
+      hosRecordedAt
+      hosIsStale
+      latitude
+      longitude
+      formattedLocation
+      positionRecordedAt
+      projectedTimeAvailable
+      committedMiles
+      committedRevenue
+      commitments {
+        moveId
+        shipmentId
+        proNumber
+        moveStatus
+        windowStart
+        windowEnd
+        destinationCity
+        destinationState
+        destinationLatitude
+        destinationLongitude
+        trailerId
+      }
+      timeOff {
+        startDate
+        endDate
+        type
+      }
+      findings {
+        code
+        severity
+        field
+        message
+        regulation
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:3c41d05289a29fa433e0fd8f90e39a64c7ff099425b70e56aff83c7c9141f1eb"}) as unknown as TypedDocumentString<DispatchBoardQuery, DispatchBoardQueryVariables>;
+export const DispatchMoveCandidatesDocument = new TypedDocumentString(`
+    query DispatchMoveCandidates($input: DispatchMoveCandidatesInput!) {
+  dispatchMoveCandidates(input: $input) {
+    workerId
+    workerName
+    tractorId
+    trailerId
+    moveId
+    score
+    verdict
+    blocked
+    deadheadMiles
+    estimatedDriveMs
+    projectedArrival
+    minutesOfSlack
+    driveRemainingMs
+    shiftRemainingMs
+    cycleRemainingMs
+    projectedTimeAvailable
+    findings {
+      code
+      severity
+      field
+      message
+      regulation
+    }
+    factors {
+      key
+      label
+      raw
+      weight
+      contribution
+      detail
+    }
+  }
+}
+    `, {"hash":"sha256:ac1f24fd4e006f3ebbffe72c7fa8dd5681f70096bce1ce4fd8c3e492e256351c"}) as unknown as TypedDocumentString<DispatchMoveCandidatesQuery, DispatchMoveCandidatesQueryVariables>;
+export const DispatchDriverMovesDocument = new TypedDocumentString(`
+    query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
+  dispatchDriverMoves(input: $input) {
+    move {
+      moveId
+      shipmentId
+      proNumber
+      bol
+      moveStatus
+      shipmentStatus
+      sequence
+      moveCount
+      loaded
+      distance
+      revenue
+      customerId
+      customerName
+      serviceTypeId
+      serviceTypeCode
+      requiredTractorTypeId
+      requiredTrailerTypeId
+      temperatureMin
+      temperatureMax
+      hasHazmat
+      hasActiveHold
+      urgency
+      minutesToPickup
+      isCovered
+      originStopId
+      originLocationId
+      originName
+      originCity
+      originState
+      originLatitude
+      originLongitude
+      originWindowStart
+      originWindowEnd
+      originActualArrival
+      destinationStopId
+      destinationLocationId
+      destinationName
+      destinationCity
+      destinationState
+      destinationLatitude
+      destinationLongitude
+      destinationWindowStart
+      destinationWindowEnd
+      assignmentId
+      assignedWorkerId
+      assignedWorkerName
+      assignedTractorId
+      assignedTractorCode
+      assignedTrailerId
+      assignedTrailerCode
+      assignmentAckStatus
+      previousMoveTrailerId
+    }
+    score {
+      workerId
+      workerName
+      tractorId
+      trailerId
+      moveId
+      score
+      verdict
+      blocked
+      deadheadMiles
+      estimatedDriveMs
+      projectedArrival
+      minutesOfSlack
+      driveRemainingMs
+      shiftRemainingMs
+      cycleRemainingMs
+      projectedTimeAvailable
+      findings {
+        code
+        severity
+        field
+        message
+        regulation
+      }
+      factors {
+        key
+        label
+        raw
+        weight
+        contribution
+        detail
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:c56503d211aa26d5315098d60556f1e8c779e205d2191d3affc4855641adeb57"}) as unknown as TypedDocumentString<DispatchDriverMovesQuery, DispatchDriverMovesQueryVariables>;
+export const DispatchAssignmentPreviewDocument = new TypedDocumentString(`
+    query DispatchAssignmentPreview($input: DispatchAssignmentPreviewInput!) {
+  dispatchAssignmentPreview(input: $input) {
+    moveId
+    workerId
+    tractorId
+    trailerId
+    blocked
+    requiresOverride
+    score {
+      workerId
+      workerName
+      tractorId
+      trailerId
+      moveId
+      score
+      verdict
+      blocked
+      deadheadMiles
+      estimatedDriveMs
+      projectedArrival
+      minutesOfSlack
+      driveRemainingMs
+      shiftRemainingMs
+      cycleRemainingMs
+      projectedTimeAvailable
+      findings {
+        code
+        severity
+        field
+        message
+        regulation
+      }
+      factors {
+        key
+        label
+        raw
+        weight
+        contribution
+        detail
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:3e022be5bb770c34dd2371495b95dd98d102c3c01508c8bd478297f7591e07fb"}) as unknown as TypedDocumentString<DispatchAssignmentPreviewQuery, DispatchAssignmentPreviewQueryVariables>;
+export const DispatchAssignMovesDocument = new TypedDocumentString(`
+    mutation DispatchAssignMoves($input: [DispatchAssignMoveInput!]!) {
+  dispatchAssignMoves(input: $input) {
+    succeeded
+    failed
+    results {
+      moveId
+      success
+      assignmentId
+      error
+      findings {
+        code
+        severity
+        field
+        message
+        regulation
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:42f79a523ad939739ca9bdf31d4accd65bb426270dc846d2d28c60123919ab4f"}) as unknown as TypedDocumentString<DispatchAssignMovesMutation, DispatchAssignMovesMutationVariables>;
+export const DispatchUnassignMovesDocument = new TypedDocumentString(`
+    mutation DispatchUnassignMoves($moveIds: [ID!]!) {
+  dispatchUnassignMoves(moveIds: $moveIds) {
+    succeeded
+    failed
+    results {
+      moveId
+      success
+      assignmentId
+      error
+      findings {
+        code
+        severity
+        field
+        message
+        regulation
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:efe06714ee634572b3eb36d985bd6cd8fdf400b9e481e3107da70d9b105dcc22"}) as unknown as TypedDocumentString<DispatchUnassignMovesMutation, DispatchUnassignMovesMutationVariables>;
+export const DispatchPlanAutoAssignDocument = new TypedDocumentString(`
+    mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {
+  dispatchPlanAutoAssign(input: $input) {
+    runId
+    shadowMode
+    autonomyTier
+    totalScore
+    generatedAt
+    assignments {
+      moveId
+      proNumber
+      workerId
+      workerName
+      tractorId
+      trailerId
+      confidence
+      rationale
+      autoExecutable
+      proposalId
+      score {
+        workerId
+        workerName
+        tractorId
+        trailerId
+        moveId
+        score
+        verdict
+        blocked
+        deadheadMiles
+        estimatedDriveMs
+        projectedArrival
+        minutesOfSlack
+        driveRemainingMs
+        shiftRemainingMs
+        cycleRemainingMs
+        projectedTimeAvailable
+        findings {
+          code
+          severity
+          field
+          message
+          regulation
+        }
+        factors {
+          key
+          label
+          raw
+          weight
+          contribution
+          detail
+        }
+      }
+    }
+    uncovered {
+      moveId
+      proNumber
+      reason
+      bestBlockedFindings {
+        code
+        severity
+        field
+        message
+        regulation
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:06b43cad3bd05f4d4b879b84d9a30393bf7bc8de404b968d0c4cc33951fc0362"}) as unknown as TypedDocumentString<DispatchPlanAutoAssignMutation, DispatchPlanAutoAssignMutationVariables>;
 export const DistanceOverrideTableDocument = new TypedDocumentString(`
     query DistanceOverrideTable($input: DataTableConnectionInput!) {
   distanceOverrides(input: $input) {

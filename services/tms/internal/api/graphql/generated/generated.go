@@ -981,6 +981,239 @@ type ComplexityRoot struct {
 		Version                        func(childComplexity int) int
 	}
 
+	DispatchAssignResult struct {
+		AssignmentID func(childComplexity int) int
+		Error        func(childComplexity int) int
+		Findings     func(childComplexity int) int
+		MoveID       func(childComplexity int) int
+		Success      func(childComplexity int) int
+	}
+
+	DispatchAssignmentPreview struct {
+		Blocked          func(childComplexity int) int
+		MoveID           func(childComplexity int) int
+		RequiresOverride func(childComplexity int) int
+		Score            func(childComplexity int) int
+		TractorID        func(childComplexity int) int
+		TrailerID        func(childComplexity int) int
+		WorkerID         func(childComplexity int) int
+	}
+
+	DispatchBoard struct {
+		Drivers     func(childComplexity int) int
+		GeneratedAt func(childComplexity int) int
+		Moves       func(childComplexity int) int
+		Summary     func(childComplexity int) int
+		WindowEnd   func(childComplexity int) int
+		WindowStart func(childComplexity int) int
+	}
+
+	DispatchBoardDriver struct {
+		AssignmentBlocked      func(childComplexity int) int
+		Availability           func(childComplexity int) int
+		AvailableForDispatch   func(childComplexity int) int
+		BreakRemainingMs       func(childComplexity int) int
+		City                   func(childComplexity int) int
+		Commitments            func(childComplexity int) int
+		CommittedMiles         func(childComplexity int) int
+		CommittedRevenue       func(childComplexity int) int
+		CycleRemainingMs       func(childComplexity int) int
+		DriveRemainingMs       func(childComplexity int) int
+		DriverType             func(childComplexity int) int
+		DutyStatus             func(childComplexity int) int
+		Findings               func(childComplexity int) int
+		FirstName              func(childComplexity int) int
+		FleetCodeID            func(childComplexity int) int
+		FleetCodeName          func(childComplexity int) int
+		FormattedLocation      func(childComplexity int) int
+		HosIsStale             func(childComplexity int) int
+		HosRecordedAt          func(childComplexity int) int
+		LastName               func(childComplexity int) int
+		Latitude               func(childComplexity int) int
+		Longitude              func(childComplexity int) int
+		OpenAssignments        func(childComplexity int) int
+		PositionRecordedAt     func(childComplexity int) int
+		PostalCode             func(childComplexity int) int
+		ProfilePicURL          func(childComplexity int) int
+		ProjectedTimeAvailable func(childComplexity int) int
+		ShiftRemainingMs       func(childComplexity int) int
+		StateAbbreviation      func(childComplexity int) int
+		TimeOff                func(childComplexity int) int
+		TractorAvailable       func(childComplexity int) int
+		TractorCode            func(childComplexity int) int
+		TractorID              func(childComplexity int) int
+		TractorTypeID          func(childComplexity int) int
+		WorkerID               func(childComplexity int) int
+		WorkerType             func(childComplexity int) int
+	}
+
+	DispatchBoardMove struct {
+		AssignedTractorCode    func(childComplexity int) int
+		AssignedTractorID      func(childComplexity int) int
+		AssignedTrailerCode    func(childComplexity int) int
+		AssignedTrailerID      func(childComplexity int) int
+		AssignedWorkerID       func(childComplexity int) int
+		AssignedWorkerName     func(childComplexity int) int
+		AssignmentAckStatus    func(childComplexity int) int
+		AssignmentID           func(childComplexity int) int
+		Bol                    func(childComplexity int) int
+		CustomerID             func(childComplexity int) int
+		CustomerName           func(childComplexity int) int
+		DestinationCity        func(childComplexity int) int
+		DestinationLatitude    func(childComplexity int) int
+		DestinationLocationID  func(childComplexity int) int
+		DestinationLongitude   func(childComplexity int) int
+		DestinationName        func(childComplexity int) int
+		DestinationState       func(childComplexity int) int
+		DestinationStopID      func(childComplexity int) int
+		DestinationWindowEnd   func(childComplexity int) int
+		DestinationWindowStart func(childComplexity int) int
+		Distance               func(childComplexity int) int
+		HasActiveHold          func(childComplexity int) int
+		HasHazmat              func(childComplexity int) int
+		IsCovered              func(childComplexity int) int
+		Loaded                 func(childComplexity int) int
+		MinutesToPickup        func(childComplexity int) int
+		MoveCount              func(childComplexity int) int
+		MoveID                 func(childComplexity int) int
+		MoveStatus             func(childComplexity int) int
+		OriginActualArrival    func(childComplexity int) int
+		OriginCity             func(childComplexity int) int
+		OriginLatitude         func(childComplexity int) int
+		OriginLocationID       func(childComplexity int) int
+		OriginLongitude        func(childComplexity int) int
+		OriginName             func(childComplexity int) int
+		OriginState            func(childComplexity int) int
+		OriginStopID           func(childComplexity int) int
+		OriginWindowEnd        func(childComplexity int) int
+		OriginWindowStart      func(childComplexity int) int
+		PreviousMoveTrailerID  func(childComplexity int) int
+		ProNumber              func(childComplexity int) int
+		RequiredTractorTypeID  func(childComplexity int) int
+		RequiredTrailerTypeID  func(childComplexity int) int
+		Revenue                func(childComplexity int) int
+		Sequence               func(childComplexity int) int
+		ServiceTypeCode        func(childComplexity int) int
+		ServiceTypeID          func(childComplexity int) int
+		ShipmentID             func(childComplexity int) int
+		ShipmentStatus         func(childComplexity int) int
+		TemperatureMax         func(childComplexity int) int
+		TemperatureMin         func(childComplexity int) int
+		Urgency                func(childComplexity int) int
+	}
+
+	DispatchBoardSummary struct {
+		AssignedToday        func(childComplexity int) int
+		AtRiskMoves          func(childComplexity int) int
+		AvailableDrivers     func(childComplexity int) int
+		AverageDeadheadMiles func(childComplexity int) int
+		CoveredMoves         func(childComplexity int) int
+		LateMoves            func(childComplexity int) int
+		UncoveredMoves       func(childComplexity int) int
+		UnseatedDrivers      func(childComplexity int) int
+		UtilizationPercent   func(childComplexity int) int
+	}
+
+	DispatchBulkAssignResult struct {
+		Failed    func(childComplexity int) int
+		Results   func(childComplexity int) int
+		Succeeded func(childComplexity int) int
+	}
+
+	DispatchCandidate struct {
+		Blocked                func(childComplexity int) int
+		CycleRemainingMs       func(childComplexity int) int
+		DeadheadMiles          func(childComplexity int) int
+		DriveRemainingMs       func(childComplexity int) int
+		EstimatedDriveMs       func(childComplexity int) int
+		Factors                func(childComplexity int) int
+		Findings               func(childComplexity int) int
+		MinutesOfSlack         func(childComplexity int) int
+		MoveID                 func(childComplexity int) int
+		ProjectedArrival       func(childComplexity int) int
+		ProjectedTimeAvailable func(childComplexity int) int
+		Score                  func(childComplexity int) int
+		ShiftRemainingMs       func(childComplexity int) int
+		TractorID              func(childComplexity int) int
+		TrailerID              func(childComplexity int) int
+		Verdict                func(childComplexity int) int
+		WorkerID               func(childComplexity int) int
+		WorkerName             func(childComplexity int) int
+	}
+
+	DispatchCommitment struct {
+		DestinationCity      func(childComplexity int) int
+		DestinationLatitude  func(childComplexity int) int
+		DestinationLongitude func(childComplexity int) int
+		DestinationState     func(childComplexity int) int
+		MoveID               func(childComplexity int) int
+		MoveStatus           func(childComplexity int) int
+		ProNumber            func(childComplexity int) int
+		ShipmentID           func(childComplexity int) int
+		TrailerID            func(childComplexity int) int
+		WindowEnd            func(childComplexity int) int
+		WindowStart          func(childComplexity int) int
+	}
+
+	DispatchDriverMoveMatch struct {
+		Move  func(childComplexity int) int
+		Score func(childComplexity int) int
+	}
+
+	DispatchFinding struct {
+		Code       func(childComplexity int) int
+		Field      func(childComplexity int) int
+		Message    func(childComplexity int) int
+		Regulation func(childComplexity int) int
+		Severity   func(childComplexity int) int
+	}
+
+	DispatchPlan struct {
+		Assignments  func(childComplexity int) int
+		AutonomyTier func(childComplexity int) int
+		GeneratedAt  func(childComplexity int) int
+		RunID        func(childComplexity int) int
+		ShadowMode   func(childComplexity int) int
+		TotalScore   func(childComplexity int) int
+		Uncovered    func(childComplexity int) int
+	}
+
+	DispatchPlannedAssignment struct {
+		AutoExecutable func(childComplexity int) int
+		Confidence     func(childComplexity int) int
+		MoveID         func(childComplexity int) int
+		ProNumber      func(childComplexity int) int
+		ProposalID     func(childComplexity int) int
+		Rationale      func(childComplexity int) int
+		Score          func(childComplexity int) int
+		TractorID      func(childComplexity int) int
+		TrailerID      func(childComplexity int) int
+		WorkerID       func(childComplexity int) int
+		WorkerName     func(childComplexity int) int
+	}
+
+	DispatchScoreFactor struct {
+		Contribution func(childComplexity int) int
+		Detail       func(childComplexity int) int
+		Key          func(childComplexity int) int
+		Label        func(childComplexity int) int
+		Raw          func(childComplexity int) int
+		Weight       func(childComplexity int) int
+	}
+
+	DispatchTimeOff struct {
+		EndDate   func(childComplexity int) int
+		StartDate func(childComplexity int) int
+		Type      func(childComplexity int) int
+	}
+
+	DispatchUncoveredMove struct {
+		BestBlockedFindings func(childComplexity int) int
+		MoveID              func(childComplexity int) int
+		ProNumber           func(childComplexity int) int
+		Reason              func(childComplexity int) int
+	}
+
 	DistanceOverride struct {
 		BusinessUnit          func(childComplexity int) int
 		BusinessUnitID        func(childComplexity int) int
@@ -2658,6 +2891,9 @@ type ComplexityRoot struct {
 		DetachPayEventFromSettlement          func(childComplexity int, input gqlmodel.DetachPayEventInput) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
+		DispatchAssignMoves                   func(childComplexity int, input []*gqlmodel.DispatchAssignMoveInput) int
+		DispatchPlanAutoAssign                func(childComplexity int, input gqlmodel.DispatchPlanInput) int
+		DispatchUnassignMoves                 func(childComplexity int, moveIds []string) int
 		DuplicateShipment                     func(childComplexity int, input gqlmodel.ShipmentDuplicateInput) int
 		EndWorkerPayAssignment                func(childComplexity int, input gqlmodel.EndWorkerPayAssignmentInput) int
 		ForkCannedReport                      func(childComplexity int, input gqlmodel.ForkCannedReportInput) int
@@ -3201,6 +3437,10 @@ type ComplexityRoot struct {
 		Customers                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		DashControl                  func(childComplexity int) int
 		DefaultTableConfiguration    func(childComplexity int, resource string) int
+		DispatchAssignmentPreview    func(childComplexity int, input gqlmodel.DispatchAssignmentPreviewInput) int
+		DispatchBoard                func(childComplexity int, input gqlmodel.DispatchBoardInput) int
+		DispatchDriverMoves          func(childComplexity int, input gqlmodel.DispatchDriverMovesInput) int
+		DispatchMoveCandidates       func(childComplexity int, input gqlmodel.DispatchMoveCandidatesInput) int
 		DistanceOverride             func(childComplexity int, id string) int
 		DistanceOverrides            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		DistanceProfile              func(childComplexity int, id string) int
@@ -5660,6 +5900,9 @@ type MutationResolver interface {
 	PostAndApplyCustomerPayment(ctx context.Context, input gqlmodel.PostCustomerPaymentInput) (*customerpayment.Payment, error)
 	ApplyUnappliedCustomerPayment(ctx context.Context, input gqlmodel.ApplyCustomerPaymentInput) (*customerpayment.Payment, error)
 	ReverseCustomerPayment(ctx context.Context, input gqlmodel.ReverseCustomerPaymentInput) (*customerpayment.Payment, error)
+	DispatchAssignMoves(ctx context.Context, input []*gqlmodel.DispatchAssignMoveInput) (*gqlmodel.DispatchBulkAssignResult, error)
+	DispatchUnassignMoves(ctx context.Context, moveIds []string) (*gqlmodel.DispatchBulkAssignResult, error)
+	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
 	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error)
 	RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error)
 	UpdateMyContactInfo(ctx context.Context, input gqlmodel.UpdateMyContactInfoInput) (*driverportalservice.PortalComplianceProfile, error)
@@ -5878,6 +6121,10 @@ type QueryResolver interface {
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
+	DispatchBoard(ctx context.Context, input gqlmodel.DispatchBoardInput) (*gqlmodel.DispatchBoard, error)
+	DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error)
+	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)
+	DispatchAssignmentPreview(ctx context.Context, input gqlmodel.DispatchAssignmentPreviewInput) (*gqlmodel.DispatchAssignmentPreview, error)
 	DistanceOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceOverrideConnection, error)
 	DistanceOverride(ctx context.Context, id string) (*distanceoverride.DistanceOverride, error)
 	DistanceProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceProfileConnection, error)
@@ -9994,6 +10241,1132 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DashControl.Version(childComplexity), true
+
+	case "DispatchAssignResult.assignmentId":
+		if e.ComplexityRoot.DispatchAssignResult.AssignmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignResult.AssignmentID(childComplexity), true
+	case "DispatchAssignResult.error":
+		if e.ComplexityRoot.DispatchAssignResult.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignResult.Error(childComplexity), true
+	case "DispatchAssignResult.findings":
+		if e.ComplexityRoot.DispatchAssignResult.Findings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignResult.Findings(childComplexity), true
+	case "DispatchAssignResult.moveId":
+		if e.ComplexityRoot.DispatchAssignResult.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignResult.MoveID(childComplexity), true
+	case "DispatchAssignResult.success":
+		if e.ComplexityRoot.DispatchAssignResult.Success == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignResult.Success(childComplexity), true
+
+	case "DispatchAssignmentPreview.blocked":
+		if e.ComplexityRoot.DispatchAssignmentPreview.Blocked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.Blocked(childComplexity), true
+	case "DispatchAssignmentPreview.moveId":
+		if e.ComplexityRoot.DispatchAssignmentPreview.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.MoveID(childComplexity), true
+	case "DispatchAssignmentPreview.requiresOverride":
+		if e.ComplexityRoot.DispatchAssignmentPreview.RequiresOverride == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.RequiresOverride(childComplexity), true
+	case "DispatchAssignmentPreview.score":
+		if e.ComplexityRoot.DispatchAssignmentPreview.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.Score(childComplexity), true
+	case "DispatchAssignmentPreview.tractorId":
+		if e.ComplexityRoot.DispatchAssignmentPreview.TractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.TractorID(childComplexity), true
+	case "DispatchAssignmentPreview.trailerId":
+		if e.ComplexityRoot.DispatchAssignmentPreview.TrailerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.TrailerID(childComplexity), true
+	case "DispatchAssignmentPreview.workerId":
+		if e.ComplexityRoot.DispatchAssignmentPreview.WorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchAssignmentPreview.WorkerID(childComplexity), true
+
+	case "DispatchBoard.drivers":
+		if e.ComplexityRoot.DispatchBoard.Drivers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoard.Drivers(childComplexity), true
+	case "DispatchBoard.generatedAt":
+		if e.ComplexityRoot.DispatchBoard.GeneratedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoard.GeneratedAt(childComplexity), true
+	case "DispatchBoard.moves":
+		if e.ComplexityRoot.DispatchBoard.Moves == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoard.Moves(childComplexity), true
+	case "DispatchBoard.summary":
+		if e.ComplexityRoot.DispatchBoard.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoard.Summary(childComplexity), true
+	case "DispatchBoard.windowEnd":
+		if e.ComplexityRoot.DispatchBoard.WindowEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoard.WindowEnd(childComplexity), true
+	case "DispatchBoard.windowStart":
+		if e.ComplexityRoot.DispatchBoard.WindowStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoard.WindowStart(childComplexity), true
+
+	case "DispatchBoardDriver.assignmentBlocked":
+		if e.ComplexityRoot.DispatchBoardDriver.AssignmentBlocked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.AssignmentBlocked(childComplexity), true
+	case "DispatchBoardDriver.availability":
+		if e.ComplexityRoot.DispatchBoardDriver.Availability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.Availability(childComplexity), true
+	case "DispatchBoardDriver.availableForDispatch":
+		if e.ComplexityRoot.DispatchBoardDriver.AvailableForDispatch == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.AvailableForDispatch(childComplexity), true
+	case "DispatchBoardDriver.breakRemainingMs":
+		if e.ComplexityRoot.DispatchBoardDriver.BreakRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.BreakRemainingMs(childComplexity), true
+	case "DispatchBoardDriver.city":
+		if e.ComplexityRoot.DispatchBoardDriver.City == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.City(childComplexity), true
+	case "DispatchBoardDriver.commitments":
+		if e.ComplexityRoot.DispatchBoardDriver.Commitments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.Commitments(childComplexity), true
+	case "DispatchBoardDriver.committedMiles":
+		if e.ComplexityRoot.DispatchBoardDriver.CommittedMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.CommittedMiles(childComplexity), true
+	case "DispatchBoardDriver.committedRevenue":
+		if e.ComplexityRoot.DispatchBoardDriver.CommittedRevenue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.CommittedRevenue(childComplexity), true
+	case "DispatchBoardDriver.cycleRemainingMs":
+		if e.ComplexityRoot.DispatchBoardDriver.CycleRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.CycleRemainingMs(childComplexity), true
+	case "DispatchBoardDriver.driveRemainingMs":
+		if e.ComplexityRoot.DispatchBoardDriver.DriveRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.DriveRemainingMs(childComplexity), true
+	case "DispatchBoardDriver.driverType":
+		if e.ComplexityRoot.DispatchBoardDriver.DriverType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.DriverType(childComplexity), true
+	case "DispatchBoardDriver.dutyStatus":
+		if e.ComplexityRoot.DispatchBoardDriver.DutyStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.DutyStatus(childComplexity), true
+	case "DispatchBoardDriver.findings":
+		if e.ComplexityRoot.DispatchBoardDriver.Findings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.Findings(childComplexity), true
+	case "DispatchBoardDriver.firstName":
+		if e.ComplexityRoot.DispatchBoardDriver.FirstName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.FirstName(childComplexity), true
+	case "DispatchBoardDriver.fleetCodeId":
+		if e.ComplexityRoot.DispatchBoardDriver.FleetCodeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.FleetCodeID(childComplexity), true
+	case "DispatchBoardDriver.fleetCodeName":
+		if e.ComplexityRoot.DispatchBoardDriver.FleetCodeName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.FleetCodeName(childComplexity), true
+	case "DispatchBoardDriver.formattedLocation":
+		if e.ComplexityRoot.DispatchBoardDriver.FormattedLocation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.FormattedLocation(childComplexity), true
+	case "DispatchBoardDriver.hosIsStale":
+		if e.ComplexityRoot.DispatchBoardDriver.HosIsStale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.HosIsStale(childComplexity), true
+	case "DispatchBoardDriver.hosRecordedAt":
+		if e.ComplexityRoot.DispatchBoardDriver.HosRecordedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.HosRecordedAt(childComplexity), true
+	case "DispatchBoardDriver.lastName":
+		if e.ComplexityRoot.DispatchBoardDriver.LastName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.LastName(childComplexity), true
+	case "DispatchBoardDriver.latitude":
+		if e.ComplexityRoot.DispatchBoardDriver.Latitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.Latitude(childComplexity), true
+	case "DispatchBoardDriver.longitude":
+		if e.ComplexityRoot.DispatchBoardDriver.Longitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.Longitude(childComplexity), true
+	case "DispatchBoardDriver.openAssignments":
+		if e.ComplexityRoot.DispatchBoardDriver.OpenAssignments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.OpenAssignments(childComplexity), true
+	case "DispatchBoardDriver.positionRecordedAt":
+		if e.ComplexityRoot.DispatchBoardDriver.PositionRecordedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.PositionRecordedAt(childComplexity), true
+	case "DispatchBoardDriver.postalCode":
+		if e.ComplexityRoot.DispatchBoardDriver.PostalCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.PostalCode(childComplexity), true
+	case "DispatchBoardDriver.profilePicUrl":
+		if e.ComplexityRoot.DispatchBoardDriver.ProfilePicURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.ProfilePicURL(childComplexity), true
+	case "DispatchBoardDriver.projectedTimeAvailable":
+		if e.ComplexityRoot.DispatchBoardDriver.ProjectedTimeAvailable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.ProjectedTimeAvailable(childComplexity), true
+	case "DispatchBoardDriver.shiftRemainingMs":
+		if e.ComplexityRoot.DispatchBoardDriver.ShiftRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.ShiftRemainingMs(childComplexity), true
+	case "DispatchBoardDriver.stateAbbreviation":
+		if e.ComplexityRoot.DispatchBoardDriver.StateAbbreviation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.StateAbbreviation(childComplexity), true
+	case "DispatchBoardDriver.timeOff":
+		if e.ComplexityRoot.DispatchBoardDriver.TimeOff == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.TimeOff(childComplexity), true
+	case "DispatchBoardDriver.tractorAvailable":
+		if e.ComplexityRoot.DispatchBoardDriver.TractorAvailable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.TractorAvailable(childComplexity), true
+	case "DispatchBoardDriver.tractorCode":
+		if e.ComplexityRoot.DispatchBoardDriver.TractorCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.TractorCode(childComplexity), true
+	case "DispatchBoardDriver.tractorId":
+		if e.ComplexityRoot.DispatchBoardDriver.TractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.TractorID(childComplexity), true
+	case "DispatchBoardDriver.tractorTypeId":
+		if e.ComplexityRoot.DispatchBoardDriver.TractorTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.TractorTypeID(childComplexity), true
+	case "DispatchBoardDriver.workerId":
+		if e.ComplexityRoot.DispatchBoardDriver.WorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.WorkerID(childComplexity), true
+	case "DispatchBoardDriver.workerType":
+		if e.ComplexityRoot.DispatchBoardDriver.WorkerType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardDriver.WorkerType(childComplexity), true
+
+	case "DispatchBoardMove.assignedTractorCode":
+		if e.ComplexityRoot.DispatchBoardMove.AssignedTractorCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignedTractorCode(childComplexity), true
+	case "DispatchBoardMove.assignedTractorId":
+		if e.ComplexityRoot.DispatchBoardMove.AssignedTractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignedTractorID(childComplexity), true
+	case "DispatchBoardMove.assignedTrailerCode":
+		if e.ComplexityRoot.DispatchBoardMove.AssignedTrailerCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignedTrailerCode(childComplexity), true
+	case "DispatchBoardMove.assignedTrailerId":
+		if e.ComplexityRoot.DispatchBoardMove.AssignedTrailerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignedTrailerID(childComplexity), true
+	case "DispatchBoardMove.assignedWorkerId":
+		if e.ComplexityRoot.DispatchBoardMove.AssignedWorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignedWorkerID(childComplexity), true
+	case "DispatchBoardMove.assignedWorkerName":
+		if e.ComplexityRoot.DispatchBoardMove.AssignedWorkerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignedWorkerName(childComplexity), true
+	case "DispatchBoardMove.assignmentAckStatus":
+		if e.ComplexityRoot.DispatchBoardMove.AssignmentAckStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignmentAckStatus(childComplexity), true
+	case "DispatchBoardMove.assignmentId":
+		if e.ComplexityRoot.DispatchBoardMove.AssignmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.AssignmentID(childComplexity), true
+	case "DispatchBoardMove.bol":
+		if e.ComplexityRoot.DispatchBoardMove.Bol == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.Bol(childComplexity), true
+	case "DispatchBoardMove.customerId":
+		if e.ComplexityRoot.DispatchBoardMove.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.CustomerID(childComplexity), true
+	case "DispatchBoardMove.customerName":
+		if e.ComplexityRoot.DispatchBoardMove.CustomerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.CustomerName(childComplexity), true
+	case "DispatchBoardMove.destinationCity":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationCity(childComplexity), true
+	case "DispatchBoardMove.destinationLatitude":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationLatitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationLatitude(childComplexity), true
+	case "DispatchBoardMove.destinationLocationId":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationLocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationLocationID(childComplexity), true
+	case "DispatchBoardMove.destinationLongitude":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationLongitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationLongitude(childComplexity), true
+	case "DispatchBoardMove.destinationName":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationName(childComplexity), true
+	case "DispatchBoardMove.destinationState":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationState(childComplexity), true
+	case "DispatchBoardMove.destinationStopId":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationStopID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationStopID(childComplexity), true
+	case "DispatchBoardMove.destinationWindowEnd":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationWindowEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationWindowEnd(childComplexity), true
+	case "DispatchBoardMove.destinationWindowStart":
+		if e.ComplexityRoot.DispatchBoardMove.DestinationWindowStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.DestinationWindowStart(childComplexity), true
+	case "DispatchBoardMove.distance":
+		if e.ComplexityRoot.DispatchBoardMove.Distance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.Distance(childComplexity), true
+	case "DispatchBoardMove.hasActiveHold":
+		if e.ComplexityRoot.DispatchBoardMove.HasActiveHold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.HasActiveHold(childComplexity), true
+	case "DispatchBoardMove.hasHazmat":
+		if e.ComplexityRoot.DispatchBoardMove.HasHazmat == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.HasHazmat(childComplexity), true
+	case "DispatchBoardMove.isCovered":
+		if e.ComplexityRoot.DispatchBoardMove.IsCovered == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.IsCovered(childComplexity), true
+	case "DispatchBoardMove.loaded":
+		if e.ComplexityRoot.DispatchBoardMove.Loaded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.Loaded(childComplexity), true
+	case "DispatchBoardMove.minutesToPickup":
+		if e.ComplexityRoot.DispatchBoardMove.MinutesToPickup == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.MinutesToPickup(childComplexity), true
+	case "DispatchBoardMove.moveCount":
+		if e.ComplexityRoot.DispatchBoardMove.MoveCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.MoveCount(childComplexity), true
+	case "DispatchBoardMove.moveId":
+		if e.ComplexityRoot.DispatchBoardMove.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.MoveID(childComplexity), true
+	case "DispatchBoardMove.moveStatus":
+		if e.ComplexityRoot.DispatchBoardMove.MoveStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.MoveStatus(childComplexity), true
+	case "DispatchBoardMove.originActualArrival":
+		if e.ComplexityRoot.DispatchBoardMove.OriginActualArrival == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginActualArrival(childComplexity), true
+	case "DispatchBoardMove.originCity":
+		if e.ComplexityRoot.DispatchBoardMove.OriginCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginCity(childComplexity), true
+	case "DispatchBoardMove.originLatitude":
+		if e.ComplexityRoot.DispatchBoardMove.OriginLatitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginLatitude(childComplexity), true
+	case "DispatchBoardMove.originLocationId":
+		if e.ComplexityRoot.DispatchBoardMove.OriginLocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginLocationID(childComplexity), true
+	case "DispatchBoardMove.originLongitude":
+		if e.ComplexityRoot.DispatchBoardMove.OriginLongitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginLongitude(childComplexity), true
+	case "DispatchBoardMove.originName":
+		if e.ComplexityRoot.DispatchBoardMove.OriginName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginName(childComplexity), true
+	case "DispatchBoardMove.originState":
+		if e.ComplexityRoot.DispatchBoardMove.OriginState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginState(childComplexity), true
+	case "DispatchBoardMove.originStopId":
+		if e.ComplexityRoot.DispatchBoardMove.OriginStopID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginStopID(childComplexity), true
+	case "DispatchBoardMove.originWindowEnd":
+		if e.ComplexityRoot.DispatchBoardMove.OriginWindowEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginWindowEnd(childComplexity), true
+	case "DispatchBoardMove.originWindowStart":
+		if e.ComplexityRoot.DispatchBoardMove.OriginWindowStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.OriginWindowStart(childComplexity), true
+	case "DispatchBoardMove.previousMoveTrailerId":
+		if e.ComplexityRoot.DispatchBoardMove.PreviousMoveTrailerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.PreviousMoveTrailerID(childComplexity), true
+	case "DispatchBoardMove.proNumber":
+		if e.ComplexityRoot.DispatchBoardMove.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.ProNumber(childComplexity), true
+	case "DispatchBoardMove.requiredTractorTypeId":
+		if e.ComplexityRoot.DispatchBoardMove.RequiredTractorTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.RequiredTractorTypeID(childComplexity), true
+	case "DispatchBoardMove.requiredTrailerTypeId":
+		if e.ComplexityRoot.DispatchBoardMove.RequiredTrailerTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.RequiredTrailerTypeID(childComplexity), true
+	case "DispatchBoardMove.revenue":
+		if e.ComplexityRoot.DispatchBoardMove.Revenue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.Revenue(childComplexity), true
+	case "DispatchBoardMove.sequence":
+		if e.ComplexityRoot.DispatchBoardMove.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.Sequence(childComplexity), true
+	case "DispatchBoardMove.serviceTypeCode":
+		if e.ComplexityRoot.DispatchBoardMove.ServiceTypeCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.ServiceTypeCode(childComplexity), true
+	case "DispatchBoardMove.serviceTypeId":
+		if e.ComplexityRoot.DispatchBoardMove.ServiceTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.ServiceTypeID(childComplexity), true
+	case "DispatchBoardMove.shipmentId":
+		if e.ComplexityRoot.DispatchBoardMove.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.ShipmentID(childComplexity), true
+	case "DispatchBoardMove.shipmentStatus":
+		if e.ComplexityRoot.DispatchBoardMove.ShipmentStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.ShipmentStatus(childComplexity), true
+	case "DispatchBoardMove.temperatureMax":
+		if e.ComplexityRoot.DispatchBoardMove.TemperatureMax == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.TemperatureMax(childComplexity), true
+	case "DispatchBoardMove.temperatureMin":
+		if e.ComplexityRoot.DispatchBoardMove.TemperatureMin == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.TemperatureMin(childComplexity), true
+	case "DispatchBoardMove.urgency":
+		if e.ComplexityRoot.DispatchBoardMove.Urgency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.Urgency(childComplexity), true
+
+	case "DispatchBoardSummary.assignedToday":
+		if e.ComplexityRoot.DispatchBoardSummary.AssignedToday == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.AssignedToday(childComplexity), true
+	case "DispatchBoardSummary.atRiskMoves":
+		if e.ComplexityRoot.DispatchBoardSummary.AtRiskMoves == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.AtRiskMoves(childComplexity), true
+	case "DispatchBoardSummary.availableDrivers":
+		if e.ComplexityRoot.DispatchBoardSummary.AvailableDrivers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.AvailableDrivers(childComplexity), true
+	case "DispatchBoardSummary.averageDeadheadMiles":
+		if e.ComplexityRoot.DispatchBoardSummary.AverageDeadheadMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.AverageDeadheadMiles(childComplexity), true
+	case "DispatchBoardSummary.coveredMoves":
+		if e.ComplexityRoot.DispatchBoardSummary.CoveredMoves == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.CoveredMoves(childComplexity), true
+	case "DispatchBoardSummary.lateMoves":
+		if e.ComplexityRoot.DispatchBoardSummary.LateMoves == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.LateMoves(childComplexity), true
+	case "DispatchBoardSummary.uncoveredMoves":
+		if e.ComplexityRoot.DispatchBoardSummary.UncoveredMoves == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.UncoveredMoves(childComplexity), true
+	case "DispatchBoardSummary.unseatedDrivers":
+		if e.ComplexityRoot.DispatchBoardSummary.UnseatedDrivers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.UnseatedDrivers(childComplexity), true
+	case "DispatchBoardSummary.utilizationPercent":
+		if e.ComplexityRoot.DispatchBoardSummary.UtilizationPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardSummary.UtilizationPercent(childComplexity), true
+
+	case "DispatchBulkAssignResult.failed":
+		if e.ComplexityRoot.DispatchBulkAssignResult.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBulkAssignResult.Failed(childComplexity), true
+	case "DispatchBulkAssignResult.results":
+		if e.ComplexityRoot.DispatchBulkAssignResult.Results == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBulkAssignResult.Results(childComplexity), true
+	case "DispatchBulkAssignResult.succeeded":
+		if e.ComplexityRoot.DispatchBulkAssignResult.Succeeded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBulkAssignResult.Succeeded(childComplexity), true
+
+	case "DispatchCandidate.blocked":
+		if e.ComplexityRoot.DispatchCandidate.Blocked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.Blocked(childComplexity), true
+	case "DispatchCandidate.cycleRemainingMs":
+		if e.ComplexityRoot.DispatchCandidate.CycleRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.CycleRemainingMs(childComplexity), true
+	case "DispatchCandidate.deadheadMiles":
+		if e.ComplexityRoot.DispatchCandidate.DeadheadMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.DeadheadMiles(childComplexity), true
+	case "DispatchCandidate.driveRemainingMs":
+		if e.ComplexityRoot.DispatchCandidate.DriveRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.DriveRemainingMs(childComplexity), true
+	case "DispatchCandidate.estimatedDriveMs":
+		if e.ComplexityRoot.DispatchCandidate.EstimatedDriveMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.EstimatedDriveMs(childComplexity), true
+	case "DispatchCandidate.factors":
+		if e.ComplexityRoot.DispatchCandidate.Factors == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.Factors(childComplexity), true
+	case "DispatchCandidate.findings":
+		if e.ComplexityRoot.DispatchCandidate.Findings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.Findings(childComplexity), true
+	case "DispatchCandidate.minutesOfSlack":
+		if e.ComplexityRoot.DispatchCandidate.MinutesOfSlack == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.MinutesOfSlack(childComplexity), true
+	case "DispatchCandidate.moveId":
+		if e.ComplexityRoot.DispatchCandidate.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.MoveID(childComplexity), true
+	case "DispatchCandidate.projectedArrival":
+		if e.ComplexityRoot.DispatchCandidate.ProjectedArrival == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.ProjectedArrival(childComplexity), true
+	case "DispatchCandidate.projectedTimeAvailable":
+		if e.ComplexityRoot.DispatchCandidate.ProjectedTimeAvailable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.ProjectedTimeAvailable(childComplexity), true
+	case "DispatchCandidate.score":
+		if e.ComplexityRoot.DispatchCandidate.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.Score(childComplexity), true
+	case "DispatchCandidate.shiftRemainingMs":
+		if e.ComplexityRoot.DispatchCandidate.ShiftRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.ShiftRemainingMs(childComplexity), true
+	case "DispatchCandidate.tractorId":
+		if e.ComplexityRoot.DispatchCandidate.TractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.TractorID(childComplexity), true
+	case "DispatchCandidate.trailerId":
+		if e.ComplexityRoot.DispatchCandidate.TrailerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.TrailerID(childComplexity), true
+	case "DispatchCandidate.verdict":
+		if e.ComplexityRoot.DispatchCandidate.Verdict == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.Verdict(childComplexity), true
+	case "DispatchCandidate.workerId":
+		if e.ComplexityRoot.DispatchCandidate.WorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.WorkerID(childComplexity), true
+	case "DispatchCandidate.workerName":
+		if e.ComplexityRoot.DispatchCandidate.WorkerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.WorkerName(childComplexity), true
+
+	case "DispatchCommitment.destinationCity":
+		if e.ComplexityRoot.DispatchCommitment.DestinationCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.DestinationCity(childComplexity), true
+	case "DispatchCommitment.destinationLatitude":
+		if e.ComplexityRoot.DispatchCommitment.DestinationLatitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.DestinationLatitude(childComplexity), true
+	case "DispatchCommitment.destinationLongitude":
+		if e.ComplexityRoot.DispatchCommitment.DestinationLongitude == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.DestinationLongitude(childComplexity), true
+	case "DispatchCommitment.destinationState":
+		if e.ComplexityRoot.DispatchCommitment.DestinationState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.DestinationState(childComplexity), true
+	case "DispatchCommitment.moveId":
+		if e.ComplexityRoot.DispatchCommitment.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.MoveID(childComplexity), true
+	case "DispatchCommitment.moveStatus":
+		if e.ComplexityRoot.DispatchCommitment.MoveStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.MoveStatus(childComplexity), true
+	case "DispatchCommitment.proNumber":
+		if e.ComplexityRoot.DispatchCommitment.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.ProNumber(childComplexity), true
+	case "DispatchCommitment.shipmentId":
+		if e.ComplexityRoot.DispatchCommitment.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.ShipmentID(childComplexity), true
+	case "DispatchCommitment.trailerId":
+		if e.ComplexityRoot.DispatchCommitment.TrailerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.TrailerID(childComplexity), true
+	case "DispatchCommitment.windowEnd":
+		if e.ComplexityRoot.DispatchCommitment.WindowEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.WindowEnd(childComplexity), true
+	case "DispatchCommitment.windowStart":
+		if e.ComplexityRoot.DispatchCommitment.WindowStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCommitment.WindowStart(childComplexity), true
+
+	case "DispatchDriverMoveMatch.move":
+		if e.ComplexityRoot.DispatchDriverMoveMatch.Move == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchDriverMoveMatch.Move(childComplexity), true
+	case "DispatchDriverMoveMatch.score":
+		if e.ComplexityRoot.DispatchDriverMoveMatch.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchDriverMoveMatch.Score(childComplexity), true
+
+	case "DispatchFinding.code":
+		if e.ComplexityRoot.DispatchFinding.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchFinding.Code(childComplexity), true
+	case "DispatchFinding.field":
+		if e.ComplexityRoot.DispatchFinding.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchFinding.Field(childComplexity), true
+	case "DispatchFinding.message":
+		if e.ComplexityRoot.DispatchFinding.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchFinding.Message(childComplexity), true
+	case "DispatchFinding.regulation":
+		if e.ComplexityRoot.DispatchFinding.Regulation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchFinding.Regulation(childComplexity), true
+	case "DispatchFinding.severity":
+		if e.ComplexityRoot.DispatchFinding.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchFinding.Severity(childComplexity), true
+
+	case "DispatchPlan.assignments":
+		if e.ComplexityRoot.DispatchPlan.Assignments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.Assignments(childComplexity), true
+	case "DispatchPlan.autonomyTier":
+		if e.ComplexityRoot.DispatchPlan.AutonomyTier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.AutonomyTier(childComplexity), true
+	case "DispatchPlan.generatedAt":
+		if e.ComplexityRoot.DispatchPlan.GeneratedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.GeneratedAt(childComplexity), true
+	case "DispatchPlan.runId":
+		if e.ComplexityRoot.DispatchPlan.RunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.RunID(childComplexity), true
+	case "DispatchPlan.shadowMode":
+		if e.ComplexityRoot.DispatchPlan.ShadowMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.ShadowMode(childComplexity), true
+	case "DispatchPlan.totalScore":
+		if e.ComplexityRoot.DispatchPlan.TotalScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.TotalScore(childComplexity), true
+	case "DispatchPlan.uncovered":
+		if e.ComplexityRoot.DispatchPlan.Uncovered == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.Uncovered(childComplexity), true
+
+	case "DispatchPlannedAssignment.autoExecutable":
+		if e.ComplexityRoot.DispatchPlannedAssignment.AutoExecutable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.AutoExecutable(childComplexity), true
+	case "DispatchPlannedAssignment.confidence":
+		if e.ComplexityRoot.DispatchPlannedAssignment.Confidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.Confidence(childComplexity), true
+	case "DispatchPlannedAssignment.moveId":
+		if e.ComplexityRoot.DispatchPlannedAssignment.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.MoveID(childComplexity), true
+	case "DispatchPlannedAssignment.proNumber":
+		if e.ComplexityRoot.DispatchPlannedAssignment.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.ProNumber(childComplexity), true
+	case "DispatchPlannedAssignment.proposalId":
+		if e.ComplexityRoot.DispatchPlannedAssignment.ProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.ProposalID(childComplexity), true
+	case "DispatchPlannedAssignment.rationale":
+		if e.ComplexityRoot.DispatchPlannedAssignment.Rationale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.Rationale(childComplexity), true
+	case "DispatchPlannedAssignment.score":
+		if e.ComplexityRoot.DispatchPlannedAssignment.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.Score(childComplexity), true
+	case "DispatchPlannedAssignment.tractorId":
+		if e.ComplexityRoot.DispatchPlannedAssignment.TractorID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.TractorID(childComplexity), true
+	case "DispatchPlannedAssignment.trailerId":
+		if e.ComplexityRoot.DispatchPlannedAssignment.TrailerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.TrailerID(childComplexity), true
+	case "DispatchPlannedAssignment.workerId":
+		if e.ComplexityRoot.DispatchPlannedAssignment.WorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.WorkerID(childComplexity), true
+	case "DispatchPlannedAssignment.workerName":
+		if e.ComplexityRoot.DispatchPlannedAssignment.WorkerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.WorkerName(childComplexity), true
+
+	case "DispatchScoreFactor.contribution":
+		if e.ComplexityRoot.DispatchScoreFactor.Contribution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchScoreFactor.Contribution(childComplexity), true
+	case "DispatchScoreFactor.detail":
+		if e.ComplexityRoot.DispatchScoreFactor.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchScoreFactor.Detail(childComplexity), true
+	case "DispatchScoreFactor.key":
+		if e.ComplexityRoot.DispatchScoreFactor.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchScoreFactor.Key(childComplexity), true
+	case "DispatchScoreFactor.label":
+		if e.ComplexityRoot.DispatchScoreFactor.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchScoreFactor.Label(childComplexity), true
+	case "DispatchScoreFactor.raw":
+		if e.ComplexityRoot.DispatchScoreFactor.Raw == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchScoreFactor.Raw(childComplexity), true
+	case "DispatchScoreFactor.weight":
+		if e.ComplexityRoot.DispatchScoreFactor.Weight == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchScoreFactor.Weight(childComplexity), true
+
+	case "DispatchTimeOff.endDate":
+		if e.ComplexityRoot.DispatchTimeOff.EndDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTimeOff.EndDate(childComplexity), true
+	case "DispatchTimeOff.startDate":
+		if e.ComplexityRoot.DispatchTimeOff.StartDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTimeOff.StartDate(childComplexity), true
+	case "DispatchTimeOff.type":
+		if e.ComplexityRoot.DispatchTimeOff.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTimeOff.Type(childComplexity), true
+
+	case "DispatchUncoveredMove.bestBlockedFindings":
+		if e.ComplexityRoot.DispatchUncoveredMove.BestBlockedFindings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchUncoveredMove.BestBlockedFindings(childComplexity), true
+	case "DispatchUncoveredMove.moveId":
+		if e.ComplexityRoot.DispatchUncoveredMove.MoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchUncoveredMove.MoveID(childComplexity), true
+	case "DispatchUncoveredMove.proNumber":
+		if e.ComplexityRoot.DispatchUncoveredMove.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchUncoveredMove.ProNumber(childComplexity), true
+	case "DispatchUncoveredMove.reason":
+		if e.ComplexityRoot.DispatchUncoveredMove.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchUncoveredMove.Reason(childComplexity), true
 
 	case "DistanceOverride.businessUnit":
 		if e.ComplexityRoot.DistanceOverride.BusinessUnit == nil {
@@ -17994,6 +19367,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DismissNotifications(childComplexity, args["ids"].([]string)), true
+	case "Mutation.dispatchAssignMoves":
+		if e.ComplexityRoot.Mutation.DispatchAssignMoves == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dispatchAssignMoves_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DispatchAssignMoves(childComplexity, args["input"].([]*gqlmodel.DispatchAssignMoveInput)), true
+	case "Mutation.dispatchPlanAutoAssign":
+		if e.ComplexityRoot.Mutation.DispatchPlanAutoAssign == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dispatchPlanAutoAssign_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DispatchPlanAutoAssign(childComplexity, args["input"].(gqlmodel.DispatchPlanInput)), true
+	case "Mutation.dispatchUnassignMoves":
+		if e.ComplexityRoot.Mutation.DispatchUnassignMoves == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dispatchUnassignMoves_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DispatchUnassignMoves(childComplexity, args["moveIds"].([]string)), true
 	case "Mutation.duplicateShipment":
 		if e.ComplexityRoot.Mutation.DuplicateShipment == nil {
 			break
@@ -21238,6 +22644,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.DefaultTableConfiguration(childComplexity, args["resource"].(string)), true
+	case "Query.dispatchAssignmentPreview":
+		if e.ComplexityRoot.Query.DispatchAssignmentPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_dispatchAssignmentPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DispatchAssignmentPreview(childComplexity, args["input"].(gqlmodel.DispatchAssignmentPreviewInput)), true
+	case "Query.dispatchBoard":
+		if e.ComplexityRoot.Query.DispatchBoard == nil {
+			break
+		}
+
+		args, err := ec.field_Query_dispatchBoard_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DispatchBoard(childComplexity, args["input"].(gqlmodel.DispatchBoardInput)), true
+	case "Query.dispatchDriverMoves":
+		if e.ComplexityRoot.Query.DispatchDriverMoves == nil {
+			break
+		}
+
+		args, err := ec.field_Query_dispatchDriverMoves_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DispatchDriverMoves(childComplexity, args["input"].(gqlmodel.DispatchDriverMovesInput)), true
+	case "Query.dispatchMoveCandidates":
+		if e.ComplexityRoot.Query.DispatchMoveCandidates == nil {
+			break
+		}
+
+		args, err := ec.field_Query_dispatchMoveCandidates_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DispatchMoveCandidates(childComplexity, args["input"].(gqlmodel.DispatchMoveCandidatesInput)), true
 	case "Query.distanceOverride":
 		if e.ComplexityRoot.Query.DistanceOverride == nil {
 			break
@@ -32942,6 +34392,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCustomerPaymentApplicationInput,
 		ec.unmarshalInputDataTableConnectionInput,
 		ec.unmarshalInputDetachPayEventInput,
+		ec.unmarshalInputDispatchAssignMoveInput,
+		ec.unmarshalInputDispatchAssignmentPreviewInput,
+		ec.unmarshalInputDispatchBoardInput,
+		ec.unmarshalInputDispatchDriverMovesInput,
+		ec.unmarshalInputDispatchMoveCandidatesInput,
+		ec.unmarshalInputDispatchPlanInput,
 		ec.unmarshalInputDisputeAdjustmentInput,
 		ec.unmarshalInputDriverSettlementActionInput,
 		ec.unmarshalInputEndWorkerPayAssignmentInput,
@@ -34382,6 +35838,367 @@ extend type Mutation {
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+}
+`, BuiltIn: false},
+	{Name: "../schema/dispatch_console.graphqls", Input: `"""
+A single eligibility observation about pairing a driver with a move. Block findings
+disqualify the pairing; Warn findings are advisory; Info findings describe gaps in the
+telematics feed rather than problems with the driver.
+"""
+type DispatchFinding {
+  code: String!
+  severity: String!
+  field: String!
+  message: String!
+  regulation: String
+}
+
+"""
+One weighted dimension of a candidate's score, carrying both its numeric contribution and
+the sentence a dispatcher reads to understand it.
+"""
+type DispatchScoreFactor {
+  key: String!
+  label: String!
+  raw: Float!
+  weight: Float!
+  contribution: Float!
+  detail: String!
+}
+
+"""
+A driver-and-equipment pairing judged against one move.
+"""
+type DispatchCandidate {
+  workerId: ID!
+  workerName: String!
+  tractorId: ID
+  trailerId: ID
+  moveId: ID!
+  score: Int!
+  verdict: String!
+  blocked: Boolean!
+  deadheadMiles: Float
+  estimatedDriveMs: Int!
+  projectedArrival: Int!
+  minutesOfSlack: Int!
+  driveRemainingMs: Int!
+  shiftRemainingMs: Int!
+  cycleRemainingMs: Int!
+  projectedTimeAvailable: Int!
+  findings: [DispatchFinding!]!
+  factors: [DispatchScoreFactor!]!
+}
+
+type DispatchBoardMove {
+  moveId: ID!
+  shipmentId: ID!
+  proNumber: String!
+  bol: String!
+  moveStatus: String!
+  shipmentStatus: String!
+  sequence: Int!
+  moveCount: Int!
+  loaded: Boolean!
+  distance: Float
+  revenue: Float
+  customerId: ID
+  customerName: String!
+  serviceTypeId: ID
+  serviceTypeCode: String!
+  requiredTractorTypeId: ID
+  requiredTrailerTypeId: ID
+  temperatureMin: Int
+  temperatureMax: Int
+  hasHazmat: Boolean!
+  hasActiveHold: Boolean!
+
+  urgency: String!
+  minutesToPickup: Int!
+  isCovered: Boolean!
+
+  originStopId: ID
+  originLocationId: ID
+  originName: String!
+  originCity: String!
+  originState: String!
+  originLatitude: Float
+  originLongitude: Float
+  originWindowStart: Int!
+  originWindowEnd: Int
+  originActualArrival: Int
+
+  destinationStopId: ID
+  destinationLocationId: ID
+  destinationName: String!
+  destinationCity: String!
+  destinationState: String!
+  destinationLatitude: Float
+  destinationLongitude: Float
+  destinationWindowStart: Int!
+  destinationWindowEnd: Int
+
+  assignmentId: ID
+  assignedWorkerId: ID
+  assignedWorkerName: String!
+  assignedTractorId: ID
+  assignedTractorCode: String!
+  assignedTrailerId: ID
+  assignedTrailerCode: String!
+  assignmentAckStatus: String!
+  previousMoveTrailerId: ID
+}
+
+"""
+An assignment a driver already holds inside the planning horizon. The console draws these
+as committed blocks on the timeline.
+"""
+type DispatchCommitment {
+  moveId: ID!
+  shipmentId: ID!
+  proNumber: String!
+  moveStatus: String!
+  windowStart: Int!
+  windowEnd: Int!
+  destinationCity: String!
+  destinationState: String!
+  destinationLatitude: Float
+  destinationLongitude: Float
+  trailerId: ID
+}
+
+type DispatchTimeOff {
+  startDate: Int!
+  endDate: Int!
+  type: String!
+}
+
+type DispatchBoardDriver {
+  workerId: ID!
+  firstName: String!
+  lastName: String!
+  workerType: String!
+  driverType: String!
+  fleetCodeId: ID
+  fleetCodeName: String!
+  city: String!
+  stateAbbreviation: String!
+  postalCode: String!
+  profilePicUrl: String!
+  assignmentBlocked: String!
+  availableForDispatch: Boolean!
+
+  tractorId: ID
+  tractorCode: String!
+  tractorTypeId: ID
+  tractorAvailable: Boolean!
+  openAssignments: Int!
+
+  availability: String!
+  dutyStatus: String!
+  driveRemainingMs: Int!
+  shiftRemainingMs: Int!
+  cycleRemainingMs: Int!
+  breakRemainingMs: Int!
+  hosRecordedAt: Int!
+  hosIsStale: Boolean!
+
+  latitude: Float
+  longitude: Float
+  formattedLocation: String!
+  positionRecordedAt: Int!
+
+  projectedTimeAvailable: Int!
+  committedMiles: Float!
+  committedRevenue: Float!
+  commitments: [DispatchCommitment!]!
+  timeOff: [DispatchTimeOff!]!
+  findings: [DispatchFinding!]!
+}
+
+"""
+The metrics strip at the top of the console: the numbers a dispatcher is measured on.
+"""
+type DispatchBoardSummary {
+  uncoveredMoves: Int!
+  coveredMoves: Int!
+  lateMoves: Int!
+  atRiskMoves: Int!
+  unseatedDrivers: Int!
+  availableDrivers: Int!
+  assignedToday: Int!
+  averageDeadheadMiles: Float!
+  utilizationPercent: Float!
+}
+
+type DispatchBoard {
+  moves: [DispatchBoardMove!]!
+  drivers: [DispatchBoardDriver!]!
+  summary: DispatchBoardSummary!
+  windowStart: Int!
+  windowEnd: Int!
+  generatedAt: Int!
+}
+
+type DispatchDriverMoveMatch {
+  move: DispatchBoardMove!
+  score: DispatchCandidate!
+}
+
+"""
+The pre-flight a dispatcher sees before a drag-and-drop assignment commits.
+requiresOverride is true when the pairing trips a rule the organization enforces as a
+hard block, so the confirm action can be labelled honestly.
+"""
+type DispatchAssignmentPreview {
+  moveId: ID!
+  workerId: ID!
+  tractorId: ID
+  trailerId: ID
+  blocked: Boolean!
+  requiresOverride: Boolean!
+  score: DispatchCandidate!
+}
+
+"""
+Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
+the batch: covering nine of ten moves and saying which one failed beats covering none.
+"""
+type DispatchAssignResult {
+  moveId: ID!
+  success: Boolean!
+  assignmentId: ID
+  error: String
+  findings: [DispatchFinding!]!
+}
+
+type DispatchBulkAssignResult {
+  succeeded: Int!
+  failed: Int!
+  results: [DispatchAssignResult!]!
+}
+
+input DispatchBoardInput {
+  windowStart: Int
+  windowEnd: Int
+  fleetCodeIds: [ID!]
+  customerIds: [ID!]
+  serviceTypeIds: [ID!]
+  workerIds: [ID!]
+  query: String
+  includeCovered: Boolean
+  limit: Int
+}
+
+input DispatchMoveCandidatesInput {
+  moveId: ID!
+  fleetCodeIds: [ID!]
+  limit: Int
+  includeBlocked: Boolean
+}
+
+input DispatchDriverMovesInput {
+  workerId: ID!
+  windowStart: Int
+  windowEnd: Int
+  limit: Int
+}
+
+input DispatchAssignmentPreviewInput {
+  moveId: ID!
+  workerId: ID!
+  tractorId: ID
+  trailerId: ID
+}
+
+input DispatchAssignMoveInput {
+  moveId: ID!
+  primaryWorkerId: ID!
+  tractorId: ID!
+  trailerId: ID
+  secondaryWorkerId: ID
+  """
+  Replace an existing assignment rather than creating one. The console sets this when a
+  dispatcher drags a driver onto a move that is already covered.
+  """
+  reassign: Boolean
+}
+
+extend type Query {
+  dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
+  dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
+  dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
+  dispatchAssignmentPreview(
+    input: DispatchAssignmentPreviewInput!
+  ): DispatchAssignmentPreview!
+}
+
+extend type Mutation {
+  dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
+  dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
+}
+
+"""
+One move-to-driver pairing the optimizer chose, carrying the same explainable score a
+dispatcher sees when they pick a driver by hand.
+"""
+type DispatchPlannedAssignment {
+  moveId: ID!
+  proNumber: String!
+  workerId: ID!
+  workerName: String!
+  tractorId: ID
+  trailerId: ID
+  confidence: Float!
+  rationale: String!
+  """
+  True only when the organization allows unattended execution and this pairing cleared
+  its confidence threshold with no blocking findings.
+  """
+  autoExecutable: Boolean!
+  proposalId: ID
+  score: DispatchCandidate!
+}
+
+"""
+A move the optimizer could not cover. Reporting these matters more than the successes: a
+move that silently vanishes from a plan is a load nobody is watching.
+"""
+type DispatchUncoveredMove {
+  moveId: ID!
+  proNumber: String!
+  reason: String!
+  bestBlockedFindings: [DispatchFinding!]!
+}
+
+type DispatchPlan {
+  runId: ID
+  assignments: [DispatchPlannedAssignment!]!
+  uncovered: [DispatchUncoveredMove!]!
+  """
+  True when the organization is watching what the agent would do without letting it act;
+  nothing was written.
+  """
+  shadowMode: Boolean!
+  autonomyTier: String!
+  totalScore: Int!
+  generatedAt: Int!
+}
+
+input DispatchPlanInput {
+  windowStart: Int
+  windowEnd: Int
+  fleetCodeIds: [ID!]
+  moveIds: [ID!]
+  """
+  Commit the plan immediately where the organization's autonomy tier allows it. When
+  false the plan is only proposed, whatever the tier.
+  """
+  apply: Boolean
+}
+
+extend type Mutation {
+  dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
 }
 `, BuiltIn: false},
 	{Name: "../schema/distance_override.graphqls", Input: `type DistanceOverrideStop {
@@ -43539,6 +45356,472 @@ func (ec *executionContext) childFields_DashControl(ctx context.Context, field g
 		return ec.fieldContext_DashControl_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DashControl", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchAssignResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moveId":
+		return ec.fieldContext_DispatchAssignResult_moveId(ctx, field)
+	case "success":
+		return ec.fieldContext_DispatchAssignResult_success(ctx, field)
+	case "assignmentId":
+		return ec.fieldContext_DispatchAssignResult_assignmentId(ctx, field)
+	case "error":
+		return ec.fieldContext_DispatchAssignResult_error(ctx, field)
+	case "findings":
+		return ec.fieldContext_DispatchAssignResult_findings(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchAssignResult", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchAssignmentPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moveId":
+		return ec.fieldContext_DispatchAssignmentPreview_moveId(ctx, field)
+	case "workerId":
+		return ec.fieldContext_DispatchAssignmentPreview_workerId(ctx, field)
+	case "tractorId":
+		return ec.fieldContext_DispatchAssignmentPreview_tractorId(ctx, field)
+	case "trailerId":
+		return ec.fieldContext_DispatchAssignmentPreview_trailerId(ctx, field)
+	case "blocked":
+		return ec.fieldContext_DispatchAssignmentPreview_blocked(ctx, field)
+	case "requiresOverride":
+		return ec.fieldContext_DispatchAssignmentPreview_requiresOverride(ctx, field)
+	case "score":
+		return ec.fieldContext_DispatchAssignmentPreview_score(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchAssignmentPreview", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchBoard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moves":
+		return ec.fieldContext_DispatchBoard_moves(ctx, field)
+	case "drivers":
+		return ec.fieldContext_DispatchBoard_drivers(ctx, field)
+	case "summary":
+		return ec.fieldContext_DispatchBoard_summary(ctx, field)
+	case "windowStart":
+		return ec.fieldContext_DispatchBoard_windowStart(ctx, field)
+	case "windowEnd":
+		return ec.fieldContext_DispatchBoard_windowEnd(ctx, field)
+	case "generatedAt":
+		return ec.fieldContext_DispatchBoard_generatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchBoard", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchBoardDriver(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "workerId":
+		return ec.fieldContext_DispatchBoardDriver_workerId(ctx, field)
+	case "firstName":
+		return ec.fieldContext_DispatchBoardDriver_firstName(ctx, field)
+	case "lastName":
+		return ec.fieldContext_DispatchBoardDriver_lastName(ctx, field)
+	case "workerType":
+		return ec.fieldContext_DispatchBoardDriver_workerType(ctx, field)
+	case "driverType":
+		return ec.fieldContext_DispatchBoardDriver_driverType(ctx, field)
+	case "fleetCodeId":
+		return ec.fieldContext_DispatchBoardDriver_fleetCodeId(ctx, field)
+	case "fleetCodeName":
+		return ec.fieldContext_DispatchBoardDriver_fleetCodeName(ctx, field)
+	case "city":
+		return ec.fieldContext_DispatchBoardDriver_city(ctx, field)
+	case "stateAbbreviation":
+		return ec.fieldContext_DispatchBoardDriver_stateAbbreviation(ctx, field)
+	case "postalCode":
+		return ec.fieldContext_DispatchBoardDriver_postalCode(ctx, field)
+	case "profilePicUrl":
+		return ec.fieldContext_DispatchBoardDriver_profilePicUrl(ctx, field)
+	case "assignmentBlocked":
+		return ec.fieldContext_DispatchBoardDriver_assignmentBlocked(ctx, field)
+	case "availableForDispatch":
+		return ec.fieldContext_DispatchBoardDriver_availableForDispatch(ctx, field)
+	case "tractorId":
+		return ec.fieldContext_DispatchBoardDriver_tractorId(ctx, field)
+	case "tractorCode":
+		return ec.fieldContext_DispatchBoardDriver_tractorCode(ctx, field)
+	case "tractorTypeId":
+		return ec.fieldContext_DispatchBoardDriver_tractorTypeId(ctx, field)
+	case "tractorAvailable":
+		return ec.fieldContext_DispatchBoardDriver_tractorAvailable(ctx, field)
+	case "openAssignments":
+		return ec.fieldContext_DispatchBoardDriver_openAssignments(ctx, field)
+	case "availability":
+		return ec.fieldContext_DispatchBoardDriver_availability(ctx, field)
+	case "dutyStatus":
+		return ec.fieldContext_DispatchBoardDriver_dutyStatus(ctx, field)
+	case "driveRemainingMs":
+		return ec.fieldContext_DispatchBoardDriver_driveRemainingMs(ctx, field)
+	case "shiftRemainingMs":
+		return ec.fieldContext_DispatchBoardDriver_shiftRemainingMs(ctx, field)
+	case "cycleRemainingMs":
+		return ec.fieldContext_DispatchBoardDriver_cycleRemainingMs(ctx, field)
+	case "breakRemainingMs":
+		return ec.fieldContext_DispatchBoardDriver_breakRemainingMs(ctx, field)
+	case "hosRecordedAt":
+		return ec.fieldContext_DispatchBoardDriver_hosRecordedAt(ctx, field)
+	case "hosIsStale":
+		return ec.fieldContext_DispatchBoardDriver_hosIsStale(ctx, field)
+	case "latitude":
+		return ec.fieldContext_DispatchBoardDriver_latitude(ctx, field)
+	case "longitude":
+		return ec.fieldContext_DispatchBoardDriver_longitude(ctx, field)
+	case "formattedLocation":
+		return ec.fieldContext_DispatchBoardDriver_formattedLocation(ctx, field)
+	case "positionRecordedAt":
+		return ec.fieldContext_DispatchBoardDriver_positionRecordedAt(ctx, field)
+	case "projectedTimeAvailable":
+		return ec.fieldContext_DispatchBoardDriver_projectedTimeAvailable(ctx, field)
+	case "committedMiles":
+		return ec.fieldContext_DispatchBoardDriver_committedMiles(ctx, field)
+	case "committedRevenue":
+		return ec.fieldContext_DispatchBoardDriver_committedRevenue(ctx, field)
+	case "commitments":
+		return ec.fieldContext_DispatchBoardDriver_commitments(ctx, field)
+	case "timeOff":
+		return ec.fieldContext_DispatchBoardDriver_timeOff(ctx, field)
+	case "findings":
+		return ec.fieldContext_DispatchBoardDriver_findings(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchBoardDriver", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchBoardMove(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moveId":
+		return ec.fieldContext_DispatchBoardMove_moveId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_DispatchBoardMove_shipmentId(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_DispatchBoardMove_proNumber(ctx, field)
+	case "bol":
+		return ec.fieldContext_DispatchBoardMove_bol(ctx, field)
+	case "moveStatus":
+		return ec.fieldContext_DispatchBoardMove_moveStatus(ctx, field)
+	case "shipmentStatus":
+		return ec.fieldContext_DispatchBoardMove_shipmentStatus(ctx, field)
+	case "sequence":
+		return ec.fieldContext_DispatchBoardMove_sequence(ctx, field)
+	case "moveCount":
+		return ec.fieldContext_DispatchBoardMove_moveCount(ctx, field)
+	case "loaded":
+		return ec.fieldContext_DispatchBoardMove_loaded(ctx, field)
+	case "distance":
+		return ec.fieldContext_DispatchBoardMove_distance(ctx, field)
+	case "revenue":
+		return ec.fieldContext_DispatchBoardMove_revenue(ctx, field)
+	case "customerId":
+		return ec.fieldContext_DispatchBoardMove_customerId(ctx, field)
+	case "customerName":
+		return ec.fieldContext_DispatchBoardMove_customerName(ctx, field)
+	case "serviceTypeId":
+		return ec.fieldContext_DispatchBoardMove_serviceTypeId(ctx, field)
+	case "serviceTypeCode":
+		return ec.fieldContext_DispatchBoardMove_serviceTypeCode(ctx, field)
+	case "requiredTractorTypeId":
+		return ec.fieldContext_DispatchBoardMove_requiredTractorTypeId(ctx, field)
+	case "requiredTrailerTypeId":
+		return ec.fieldContext_DispatchBoardMove_requiredTrailerTypeId(ctx, field)
+	case "temperatureMin":
+		return ec.fieldContext_DispatchBoardMove_temperatureMin(ctx, field)
+	case "temperatureMax":
+		return ec.fieldContext_DispatchBoardMove_temperatureMax(ctx, field)
+	case "hasHazmat":
+		return ec.fieldContext_DispatchBoardMove_hasHazmat(ctx, field)
+	case "hasActiveHold":
+		return ec.fieldContext_DispatchBoardMove_hasActiveHold(ctx, field)
+	case "urgency":
+		return ec.fieldContext_DispatchBoardMove_urgency(ctx, field)
+	case "minutesToPickup":
+		return ec.fieldContext_DispatchBoardMove_minutesToPickup(ctx, field)
+	case "isCovered":
+		return ec.fieldContext_DispatchBoardMove_isCovered(ctx, field)
+	case "originStopId":
+		return ec.fieldContext_DispatchBoardMove_originStopId(ctx, field)
+	case "originLocationId":
+		return ec.fieldContext_DispatchBoardMove_originLocationId(ctx, field)
+	case "originName":
+		return ec.fieldContext_DispatchBoardMove_originName(ctx, field)
+	case "originCity":
+		return ec.fieldContext_DispatchBoardMove_originCity(ctx, field)
+	case "originState":
+		return ec.fieldContext_DispatchBoardMove_originState(ctx, field)
+	case "originLatitude":
+		return ec.fieldContext_DispatchBoardMove_originLatitude(ctx, field)
+	case "originLongitude":
+		return ec.fieldContext_DispatchBoardMove_originLongitude(ctx, field)
+	case "originWindowStart":
+		return ec.fieldContext_DispatchBoardMove_originWindowStart(ctx, field)
+	case "originWindowEnd":
+		return ec.fieldContext_DispatchBoardMove_originWindowEnd(ctx, field)
+	case "originActualArrival":
+		return ec.fieldContext_DispatchBoardMove_originActualArrival(ctx, field)
+	case "destinationStopId":
+		return ec.fieldContext_DispatchBoardMove_destinationStopId(ctx, field)
+	case "destinationLocationId":
+		return ec.fieldContext_DispatchBoardMove_destinationLocationId(ctx, field)
+	case "destinationName":
+		return ec.fieldContext_DispatchBoardMove_destinationName(ctx, field)
+	case "destinationCity":
+		return ec.fieldContext_DispatchBoardMove_destinationCity(ctx, field)
+	case "destinationState":
+		return ec.fieldContext_DispatchBoardMove_destinationState(ctx, field)
+	case "destinationLatitude":
+		return ec.fieldContext_DispatchBoardMove_destinationLatitude(ctx, field)
+	case "destinationLongitude":
+		return ec.fieldContext_DispatchBoardMove_destinationLongitude(ctx, field)
+	case "destinationWindowStart":
+		return ec.fieldContext_DispatchBoardMove_destinationWindowStart(ctx, field)
+	case "destinationWindowEnd":
+		return ec.fieldContext_DispatchBoardMove_destinationWindowEnd(ctx, field)
+	case "assignmentId":
+		return ec.fieldContext_DispatchBoardMove_assignmentId(ctx, field)
+	case "assignedWorkerId":
+		return ec.fieldContext_DispatchBoardMove_assignedWorkerId(ctx, field)
+	case "assignedWorkerName":
+		return ec.fieldContext_DispatchBoardMove_assignedWorkerName(ctx, field)
+	case "assignedTractorId":
+		return ec.fieldContext_DispatchBoardMove_assignedTractorId(ctx, field)
+	case "assignedTractorCode":
+		return ec.fieldContext_DispatchBoardMove_assignedTractorCode(ctx, field)
+	case "assignedTrailerId":
+		return ec.fieldContext_DispatchBoardMove_assignedTrailerId(ctx, field)
+	case "assignedTrailerCode":
+		return ec.fieldContext_DispatchBoardMove_assignedTrailerCode(ctx, field)
+	case "assignmentAckStatus":
+		return ec.fieldContext_DispatchBoardMove_assignmentAckStatus(ctx, field)
+	case "previousMoveTrailerId":
+		return ec.fieldContext_DispatchBoardMove_previousMoveTrailerId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchBoardMove", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchBoardSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "uncoveredMoves":
+		return ec.fieldContext_DispatchBoardSummary_uncoveredMoves(ctx, field)
+	case "coveredMoves":
+		return ec.fieldContext_DispatchBoardSummary_coveredMoves(ctx, field)
+	case "lateMoves":
+		return ec.fieldContext_DispatchBoardSummary_lateMoves(ctx, field)
+	case "atRiskMoves":
+		return ec.fieldContext_DispatchBoardSummary_atRiskMoves(ctx, field)
+	case "unseatedDrivers":
+		return ec.fieldContext_DispatchBoardSummary_unseatedDrivers(ctx, field)
+	case "availableDrivers":
+		return ec.fieldContext_DispatchBoardSummary_availableDrivers(ctx, field)
+	case "assignedToday":
+		return ec.fieldContext_DispatchBoardSummary_assignedToday(ctx, field)
+	case "averageDeadheadMiles":
+		return ec.fieldContext_DispatchBoardSummary_averageDeadheadMiles(ctx, field)
+	case "utilizationPercent":
+		return ec.fieldContext_DispatchBoardSummary_utilizationPercent(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchBoardSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchBulkAssignResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "succeeded":
+		return ec.fieldContext_DispatchBulkAssignResult_succeeded(ctx, field)
+	case "failed":
+		return ec.fieldContext_DispatchBulkAssignResult_failed(ctx, field)
+	case "results":
+		return ec.fieldContext_DispatchBulkAssignResult_results(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchBulkAssignResult", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchCandidate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "workerId":
+		return ec.fieldContext_DispatchCandidate_workerId(ctx, field)
+	case "workerName":
+		return ec.fieldContext_DispatchCandidate_workerName(ctx, field)
+	case "tractorId":
+		return ec.fieldContext_DispatchCandidate_tractorId(ctx, field)
+	case "trailerId":
+		return ec.fieldContext_DispatchCandidate_trailerId(ctx, field)
+	case "moveId":
+		return ec.fieldContext_DispatchCandidate_moveId(ctx, field)
+	case "score":
+		return ec.fieldContext_DispatchCandidate_score(ctx, field)
+	case "verdict":
+		return ec.fieldContext_DispatchCandidate_verdict(ctx, field)
+	case "blocked":
+		return ec.fieldContext_DispatchCandidate_blocked(ctx, field)
+	case "deadheadMiles":
+		return ec.fieldContext_DispatchCandidate_deadheadMiles(ctx, field)
+	case "estimatedDriveMs":
+		return ec.fieldContext_DispatchCandidate_estimatedDriveMs(ctx, field)
+	case "projectedArrival":
+		return ec.fieldContext_DispatchCandidate_projectedArrival(ctx, field)
+	case "minutesOfSlack":
+		return ec.fieldContext_DispatchCandidate_minutesOfSlack(ctx, field)
+	case "driveRemainingMs":
+		return ec.fieldContext_DispatchCandidate_driveRemainingMs(ctx, field)
+	case "shiftRemainingMs":
+		return ec.fieldContext_DispatchCandidate_shiftRemainingMs(ctx, field)
+	case "cycleRemainingMs":
+		return ec.fieldContext_DispatchCandidate_cycleRemainingMs(ctx, field)
+	case "projectedTimeAvailable":
+		return ec.fieldContext_DispatchCandidate_projectedTimeAvailable(ctx, field)
+	case "findings":
+		return ec.fieldContext_DispatchCandidate_findings(ctx, field)
+	case "factors":
+		return ec.fieldContext_DispatchCandidate_factors(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchCandidate", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchCommitment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moveId":
+		return ec.fieldContext_DispatchCommitment_moveId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_DispatchCommitment_shipmentId(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_DispatchCommitment_proNumber(ctx, field)
+	case "moveStatus":
+		return ec.fieldContext_DispatchCommitment_moveStatus(ctx, field)
+	case "windowStart":
+		return ec.fieldContext_DispatchCommitment_windowStart(ctx, field)
+	case "windowEnd":
+		return ec.fieldContext_DispatchCommitment_windowEnd(ctx, field)
+	case "destinationCity":
+		return ec.fieldContext_DispatchCommitment_destinationCity(ctx, field)
+	case "destinationState":
+		return ec.fieldContext_DispatchCommitment_destinationState(ctx, field)
+	case "destinationLatitude":
+		return ec.fieldContext_DispatchCommitment_destinationLatitude(ctx, field)
+	case "destinationLongitude":
+		return ec.fieldContext_DispatchCommitment_destinationLongitude(ctx, field)
+	case "trailerId":
+		return ec.fieldContext_DispatchCommitment_trailerId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchCommitment", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchDriverMoveMatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "move":
+		return ec.fieldContext_DispatchDriverMoveMatch_move(ctx, field)
+	case "score":
+		return ec.fieldContext_DispatchDriverMoveMatch_score(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchDriverMoveMatch", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchFinding(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_DispatchFinding_code(ctx, field)
+	case "severity":
+		return ec.fieldContext_DispatchFinding_severity(ctx, field)
+	case "field":
+		return ec.fieldContext_DispatchFinding_field(ctx, field)
+	case "message":
+		return ec.fieldContext_DispatchFinding_message(ctx, field)
+	case "regulation":
+		return ec.fieldContext_DispatchFinding_regulation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchFinding", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "runId":
+		return ec.fieldContext_DispatchPlan_runId(ctx, field)
+	case "assignments":
+		return ec.fieldContext_DispatchPlan_assignments(ctx, field)
+	case "uncovered":
+		return ec.fieldContext_DispatchPlan_uncovered(ctx, field)
+	case "shadowMode":
+		return ec.fieldContext_DispatchPlan_shadowMode(ctx, field)
+	case "autonomyTier":
+		return ec.fieldContext_DispatchPlan_autonomyTier(ctx, field)
+	case "totalScore":
+		return ec.fieldContext_DispatchPlan_totalScore(ctx, field)
+	case "generatedAt":
+		return ec.fieldContext_DispatchPlan_generatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchPlan", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchPlannedAssignment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moveId":
+		return ec.fieldContext_DispatchPlannedAssignment_moveId(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_DispatchPlannedAssignment_proNumber(ctx, field)
+	case "workerId":
+		return ec.fieldContext_DispatchPlannedAssignment_workerId(ctx, field)
+	case "workerName":
+		return ec.fieldContext_DispatchPlannedAssignment_workerName(ctx, field)
+	case "tractorId":
+		return ec.fieldContext_DispatchPlannedAssignment_tractorId(ctx, field)
+	case "trailerId":
+		return ec.fieldContext_DispatchPlannedAssignment_trailerId(ctx, field)
+	case "confidence":
+		return ec.fieldContext_DispatchPlannedAssignment_confidence(ctx, field)
+	case "rationale":
+		return ec.fieldContext_DispatchPlannedAssignment_rationale(ctx, field)
+	case "autoExecutable":
+		return ec.fieldContext_DispatchPlannedAssignment_autoExecutable(ctx, field)
+	case "proposalId":
+		return ec.fieldContext_DispatchPlannedAssignment_proposalId(ctx, field)
+	case "score":
+		return ec.fieldContext_DispatchPlannedAssignment_score(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchPlannedAssignment", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchScoreFactor(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_DispatchScoreFactor_key(ctx, field)
+	case "label":
+		return ec.fieldContext_DispatchScoreFactor_label(ctx, field)
+	case "raw":
+		return ec.fieldContext_DispatchScoreFactor_raw(ctx, field)
+	case "weight":
+		return ec.fieldContext_DispatchScoreFactor_weight(ctx, field)
+	case "contribution":
+		return ec.fieldContext_DispatchScoreFactor_contribution(ctx, field)
+	case "detail":
+		return ec.fieldContext_DispatchScoreFactor_detail(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchScoreFactor", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchTimeOff(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "startDate":
+		return ec.fieldContext_DispatchTimeOff_startDate(ctx, field)
+	case "endDate":
+		return ec.fieldContext_DispatchTimeOff_endDate(ctx, field)
+	case "type":
+		return ec.fieldContext_DispatchTimeOff_type(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchTimeOff", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchUncoveredMove(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "moveId":
+		return ec.fieldContext_DispatchUncoveredMove_moveId(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_DispatchUncoveredMove_proNumber(ctx, field)
+	case "reason":
+		return ec.fieldContext_DispatchUncoveredMove_reason(ctx, field)
+	case "bestBlockedFindings":
+		return ec.fieldContext_DispatchUncoveredMove_bestBlockedFindings(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchUncoveredMove", field.Name)
 }
 
 func (ec *executionContext) childFields_DistanceOverride(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -52975,6 +55258,48 @@ func (ec *executionContext) field_Mutation_dismissNotifications_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_dispatchAssignMoves_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) ([]*gqlmodel.DispatchAssignMoveInput, error) {
+			return ec.unmarshalNDispatchAssignMoveInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignMoveInputᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_dispatchPlanAutoAssign_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DispatchPlanInput, error) {
+			return ec.unmarshalNDispatchPlanInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlanInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_dispatchUnassignMoves_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "moveIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["moveIds"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_duplicateShipment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -54932,6 +57257,62 @@ func (ec *executionContext) field_Query_defaultTableConfiguration_args(ctx conte
 		return nil, err
 	}
 	args["resource"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dispatchAssignmentPreview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DispatchAssignmentPreviewInput, error) {
+			return ec.unmarshalNDispatchAssignmentPreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignmentPreviewInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dispatchBoard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DispatchBoardInput, error) {
+			return ec.unmarshalNDispatchBoardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dispatchDriverMoves_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DispatchDriverMovesInput, error) {
+			return ec.unmarshalNDispatchDriverMovesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMovesInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_dispatchMoveCandidates_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DispatchMoveCandidatesInput, error) {
+			return ec.unmarshalNDispatchMoveCandidatesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveCandidatesInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -72949,6 +75330,4414 @@ func (ec *executionContext) _DashControl_updatedAt(ctx context.Context, field gr
 }
 func (ec *executionContext) fieldContext_DashControl_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DashControl", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignResult_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignResult_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignResult_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignResult", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignResult_success(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignResult_success(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignResult_assignmentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignResult_assignmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignResult_assignmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignResult", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignResult_error(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignResult_error(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignResult_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignResult_findings(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignResult_findings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Findings, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchFinding) graphql.Marshaler {
+			return ec.marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignResult_findings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchAssignResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchFinding(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignmentPreview", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_workerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_workerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignmentPreview", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_tractorId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_tractorId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_tractorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignmentPreview", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_trailerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_trailerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TrailerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_trailerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignmentPreview", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_blocked(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_blocked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Blocked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_blocked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignmentPreview", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_requiresOverride(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_requiresOverride(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresOverride, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_requiresOverride(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchAssignmentPreview", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchAssignmentPreview_score(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchAssignmentPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchAssignmentPreview_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchCandidate) graphql.Marshaler {
+			return ec.marshalNDispatchCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchAssignmentPreview_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchAssignmentPreview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchCandidate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoard_moves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoard_moves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Moves, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchBoardMove) graphql.Marshaler {
+			return ec.marshalNDispatchBoardMove2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMoveᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoard_moves(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBoardMove(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoard_drivers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoard_drivers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Drivers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchBoardDriver) graphql.Marshaler {
+			return ec.marshalNDispatchBoardDriver2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardDriverᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoard_drivers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBoardDriver(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoard_summary(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoard_summary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Summary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchBoardSummary) graphql.Marshaler {
+			return ec.marshalNDispatchBoardSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardSummary(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoard_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBoardSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoard_windowStart(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoard_windowStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WindowStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoard_windowStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoard_windowEnd(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoard_windowEnd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WindowEnd, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoard_windowEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoard_generatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoard_generatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GeneratedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoard_generatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_workerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_workerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_firstName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_firstName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FirstName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_firstName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_lastName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_lastName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_lastName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_workerType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_workerType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_workerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_driverType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_driverType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_driverType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_fleetCodeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_fleetCodeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FleetCodeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_fleetCodeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_fleetCodeName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_fleetCodeName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FleetCodeName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_fleetCodeName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_city(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_city(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.City, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_city(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_stateAbbreviation(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_stateAbbreviation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StateAbbreviation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_stateAbbreviation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_postalCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_postalCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PostalCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_postalCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_profilePicUrl(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_profilePicUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProfilePicURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_profilePicUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_assignmentBlocked(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_assignmentBlocked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignmentBlocked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_assignmentBlocked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_availableForDispatch(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_availableForDispatch(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AvailableForDispatch, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_availableForDispatch(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_tractorId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_tractorId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_tractorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_tractorCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_tractorCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_tractorCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_tractorTypeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_tractorTypeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorTypeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_tractorTypeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_tractorAvailable(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_tractorAvailable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorAvailable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_tractorAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_openAssignments(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_openAssignments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenAssignments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_openAssignments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_availability(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_availability(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Availability, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_availability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_dutyStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_dutyStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DutyStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_dutyStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_driveRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_driveRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriveRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_driveRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_shiftRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_shiftRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShiftRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_shiftRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_cycleRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_cycleRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CycleRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_cycleRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_breakRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_breakRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BreakRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_breakRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_hosRecordedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_hosRecordedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosRecordedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_hosRecordedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_hosIsStale(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_hosIsStale(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosIsStale, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_hosIsStale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_latitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_latitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Latitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_latitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_longitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_longitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Longitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_longitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_formattedLocation(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_formattedLocation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FormattedLocation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_formattedLocation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_positionRecordedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_positionRecordedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PositionRecordedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_positionRecordedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_projectedTimeAvailable(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_projectedTimeAvailable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectedTimeAvailable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_projectedTimeAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_committedMiles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_committedMiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CommittedMiles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_committedMiles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_committedRevenue(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_committedRevenue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CommittedRevenue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_committedRevenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardDriver", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardDriver_commitments(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_commitments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Commitments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchCommitment) graphql.Marshaler {
+			return ec.marshalNDispatchCommitment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCommitmentᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_commitments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoardDriver",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchCommitment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoardDriver_timeOff(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_timeOff(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TimeOff, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchTimeOff) graphql.Marshaler {
+			return ec.marshalNDispatchTimeOff2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTimeOffᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_timeOff(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoardDriver",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchTimeOff(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoardDriver_findings(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardDriver_findings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Findings, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchFinding) graphql.Marshaler {
+			return ec.marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardDriver_findings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoardDriver",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchFinding(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchBoardMove_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_shipmentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_proNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_proNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_proNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_bol(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_bol(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Bol, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_bol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_moveStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_moveStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_moveStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_shipmentStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_shipmentStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_shipmentStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_sequence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_sequence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sequence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_sequence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_moveCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_moveCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_moveCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_loaded(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_loaded(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Loaded, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_loaded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_distance(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_distance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Distance, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_distance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_revenue(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_revenue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Revenue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_revenue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_customerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_customerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_customerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_customerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_serviceTypeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_serviceTypeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ServiceTypeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_serviceTypeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_serviceTypeCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_serviceTypeCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ServiceTypeCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_serviceTypeCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_requiredTractorTypeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_requiredTractorTypeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiredTractorTypeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_requiredTractorTypeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_requiredTrailerTypeId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_requiredTrailerTypeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiredTrailerTypeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_requiredTrailerTypeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_temperatureMin(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_temperatureMin(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemperatureMin, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_temperatureMin(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_temperatureMax(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_temperatureMax(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemperatureMax, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_temperatureMax(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_hasHazmat(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_hasHazmat(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HasHazmat, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_hasHazmat(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_hasActiveHold(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_hasActiveHold(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HasActiveHold, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_hasActiveHold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_urgency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_urgency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Urgency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_urgency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_minutesToPickup(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_minutesToPickup(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinutesToPickup, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_minutesToPickup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_isCovered(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_isCovered(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsCovered, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_isCovered(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originStopId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originStopId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginStopID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originStopId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originLocationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originLocationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginLocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originLocationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originCity(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originState(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originLatitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originLatitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginLatitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originLatitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originLongitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originLongitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginLongitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originLongitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originWindowStart(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originWindowStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginWindowStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originWindowStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originWindowEnd(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originWindowEnd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginWindowEnd, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originWindowEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_originActualArrival(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_originActualArrival(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginActualArrival, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_originActualArrival(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationStopId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationStopId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationStopID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationStopId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationLocationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationLocationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationLocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationLocationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationCity(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationState(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationLatitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationLatitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationLatitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationLatitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationLongitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationLongitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationLongitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationLongitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationWindowStart(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationWindowStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationWindowStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationWindowStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_destinationWindowEnd(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_destinationWindowEnd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationWindowEnd, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_destinationWindowEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignmentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignedWorkerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignedWorkerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedWorkerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignedWorkerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignedWorkerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignedWorkerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedWorkerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignedWorkerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignedTractorId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignedTractorId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedTractorID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignedTractorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignedTractorCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignedTractorCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedTractorCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignedTractorCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignedTrailerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignedTrailerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedTrailerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignedTrailerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignedTrailerCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignedTrailerCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedTrailerCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignedTrailerCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_assignmentAckStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_assignmentAckStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignmentAckStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_assignmentAckStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardMove_previousMoveTrailerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_previousMoveTrailerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreviousMoveTrailerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_previousMoveTrailerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_uncoveredMoves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_uncoveredMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UncoveredMoves, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_uncoveredMoves(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_coveredMoves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_coveredMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CoveredMoves, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_coveredMoves(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_lateMoves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_lateMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LateMoves, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_lateMoves(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_atRiskMoves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_atRiskMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AtRiskMoves, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_atRiskMoves(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_unseatedDrivers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_unseatedDrivers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnseatedDrivers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_unseatedDrivers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_availableDrivers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_availableDrivers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AvailableDrivers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_availableDrivers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_assignedToday(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_assignedToday(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedToday, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_assignedToday(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_averageDeadheadMiles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_averageDeadheadMiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AverageDeadheadMiles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_averageDeadheadMiles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardSummary_utilizationPercent(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardSummary_utilizationPercent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UtilizationPercent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardSummary_utilizationPercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBulkAssignResult_succeeded(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBulkAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBulkAssignResult_succeeded(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Succeeded, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBulkAssignResult_succeeded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBulkAssignResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBulkAssignResult_failed(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBulkAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBulkAssignResult_failed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Failed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBulkAssignResult_failed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBulkAssignResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBulkAssignResult_results(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBulkAssignResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBulkAssignResult_results(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Results, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchAssignResult) graphql.Marshaler {
+			return ec.marshalNDispatchAssignResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignResultᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBulkAssignResult_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBulkAssignResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchAssignResult(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchCandidate_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_workerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_workerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_workerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_workerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_workerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_tractorId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_tractorId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_tractorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_trailerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_trailerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TrailerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_trailerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_score(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_verdict(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_verdict(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Verdict, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_verdict(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_blocked(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_blocked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Blocked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_blocked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_deadheadMiles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_deadheadMiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeadheadMiles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_deadheadMiles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_estimatedDriveMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_estimatedDriveMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EstimatedDriveMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_estimatedDriveMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_projectedArrival(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_projectedArrival(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectedArrival, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_projectedArrival(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_minutesOfSlack(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_minutesOfSlack(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinutesOfSlack, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_minutesOfSlack(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_driveRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_driveRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriveRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_driveRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_shiftRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_shiftRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShiftRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_shiftRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_cycleRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_cycleRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CycleRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_cycleRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_projectedTimeAvailable(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_projectedTimeAvailable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectedTimeAvailable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_projectedTimeAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_findings(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_findings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Findings, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchFinding) graphql.Marshaler {
+			return ec.marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_findings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchCandidate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchFinding(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchCandidate_factors(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_factors(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Factors, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchScoreFactor) graphql.Marshaler {
+			return ec.marshalNDispatchScoreFactor2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchScoreFactorᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_factors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchCandidate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchScoreFactor(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchCommitment_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_shipmentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_proNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_proNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_proNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_moveStatus(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_moveStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_moveStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_windowStart(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_windowStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WindowStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_windowStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_windowEnd(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_windowEnd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WindowEnd, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_windowEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_destinationCity(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_destinationCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_destinationCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_destinationState(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_destinationState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_destinationState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_destinationLatitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_destinationLatitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationLatitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_destinationLatitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_destinationLongitude(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_destinationLongitude(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationLongitude, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_destinationLongitude(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCommitment_trailerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCommitment_trailerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TrailerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCommitment_trailerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCommitment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchDriverMoveMatch_move(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchDriverMoveMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchDriverMoveMatch_move(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Move, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchBoardMove) graphql.Marshaler {
+			return ec.marshalNDispatchBoardMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMove(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchDriverMoveMatch_move(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchDriverMoveMatch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBoardMove(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchDriverMoveMatch_score(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchDriverMoveMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchDriverMoveMatch_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchCandidate) graphql.Marshaler {
+			return ec.marshalNDispatchCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchDriverMoveMatch_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchDriverMoveMatch",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchCandidate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchFinding_code(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchFinding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchFinding_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchFinding_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchFinding", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchFinding_severity(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchFinding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchFinding_severity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Severity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchFinding_severity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchFinding", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchFinding_field(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchFinding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchFinding_field(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Field, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchFinding_field(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchFinding", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchFinding_message(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchFinding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchFinding_message(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchFinding_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchFinding", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchFinding_regulation(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchFinding) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchFinding_regulation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Regulation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchFinding_regulation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchFinding", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlan_runId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_runId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RunID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_runId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlan", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlan_assignments(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_assignments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Assignments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchPlannedAssignment) graphql.Marshaler {
+			return ec.marshalNDispatchPlannedAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlannedAssignmentᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_assignments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchPlan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchPlannedAssignment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchPlan_uncovered(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_uncovered(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Uncovered, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchUncoveredMove) graphql.Marshaler {
+			return ec.marshalNDispatchUncoveredMove2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchUncoveredMoveᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_uncovered(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchPlan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchUncoveredMove(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchPlan_shadowMode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_shadowMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShadowMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_shadowMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlan", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlan_autonomyTier(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_autonomyTier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutonomyTier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_autonomyTier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlan", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlan_totalScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_totalScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_totalScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlan", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlan_generatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_generatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GeneratedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_generatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlan", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_proNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_proNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_proNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_workerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_workerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_workerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_workerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_workerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_tractorId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_tractorId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TractorID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_tractorId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_trailerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_trailerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TrailerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_trailerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_confidence(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_confidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Confidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_confidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_rationale(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_rationale(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Rationale, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_rationale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_autoExecutable(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_autoExecutable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutoExecutable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_autoExecutable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_proposalId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_proposalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProposalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_proposalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_score(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchCandidate) graphql.Marshaler {
+			return ec.marshalNDispatchCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchPlannedAssignment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchCandidate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchScoreFactor_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchScoreFactor_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchScoreFactor_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchScoreFactor_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchScoreFactor_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchScoreFactor_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchScoreFactor_raw(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchScoreFactor_raw(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Raw, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchScoreFactor_raw(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchScoreFactor", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchScoreFactor_weight(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchScoreFactor_weight(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Weight, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchScoreFactor_weight(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchScoreFactor", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchScoreFactor_contribution(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchScoreFactor_contribution(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Contribution, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchScoreFactor_contribution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchScoreFactor", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchScoreFactor_detail(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchScoreFactor_detail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Detail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchScoreFactor_detail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchScoreFactor", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTimeOff_startDate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTimeOff) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTimeOff_startDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTimeOff_startDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTimeOff", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTimeOff_endDate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTimeOff) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTimeOff_endDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTimeOff_endDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTimeOff", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTimeOff_type(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTimeOff) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTimeOff_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTimeOff_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTimeOff", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchUncoveredMove_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchUncoveredMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchUncoveredMove_moveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchUncoveredMove_moveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchUncoveredMove", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchUncoveredMove_proNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchUncoveredMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchUncoveredMove_proNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchUncoveredMove_proNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchUncoveredMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchUncoveredMove_reason(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchUncoveredMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchUncoveredMove_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchUncoveredMove_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchUncoveredMove", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchUncoveredMove_bestBlockedFindings(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchUncoveredMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchUncoveredMove_bestBlockedFindings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BestBlockedFindings, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchFinding) graphql.Marshaler {
+			return ec.marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchUncoveredMove_bestBlockedFindings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchUncoveredMove",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchFinding(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _DistanceOverride_id(ctx context.Context, field graphql.CollectedField, obj *distanceoverride.DistanceOverride) (ret graphql.Marshaler) {
@@ -102531,6 +109320,138 @@ func (ec *executionContext) fieldContext_Mutation_reverseCustomerPayment(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_dispatchAssignMoves(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_dispatchAssignMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DispatchAssignMoves(ctx, fc.Args["input"].([]*gqlmodel.DispatchAssignMoveInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchBulkAssignResult) graphql.Marshaler {
+			return ec.marshalNDispatchBulkAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBulkAssignResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_dispatchAssignMoves(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBulkAssignResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_dispatchAssignMoves_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_dispatchUnassignMoves(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_dispatchUnassignMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DispatchUnassignMoves(ctx, fc.Args["moveIds"].([]string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchBulkAssignResult) graphql.Marshaler {
+			return ec.marshalNDispatchBulkAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBulkAssignResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_dispatchUnassignMoves(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBulkAssignResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_dispatchUnassignMoves_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_dispatchPlanAutoAssign(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_dispatchPlanAutoAssign(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DispatchPlanAutoAssign(ctx, fc.Args["input"].(gqlmodel.DispatchPlanInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchPlan) graphql.Marshaler {
+			return ec.marshalNDispatchPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlan(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_dispatchPlanAutoAssign(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchPlan(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_dispatchPlanAutoAssign_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_inviteWorkerToPortal(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -117825,6 +124746,182 @@ func (ec *executionContext) fieldContext_Query_customerPayment(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_customerPayment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_dispatchBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_dispatchBoard(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DispatchBoard(ctx, fc.Args["input"].(gqlmodel.DispatchBoardInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchBoard) graphql.Marshaler {
+			return ec.marshalNDispatchBoard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoard(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_dispatchBoard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBoard(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_dispatchBoard_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_dispatchMoveCandidates(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_dispatchMoveCandidates(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DispatchMoveCandidates(ctx, fc.Args["input"].(gqlmodel.DispatchMoveCandidatesInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchCandidate) graphql.Marshaler {
+			return ec.marshalNDispatchCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidateᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_dispatchMoveCandidates(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchCandidate(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_dispatchMoveCandidates_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_dispatchDriverMoves(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_dispatchDriverMoves(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DispatchDriverMoves(ctx, fc.Args["input"].(gqlmodel.DispatchDriverMovesInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchDriverMoveMatch) graphql.Marshaler {
+			return ec.marshalNDispatchDriverMoveMatch2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMoveMatchᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_dispatchDriverMoves(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchDriverMoveMatch(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_dispatchDriverMoves_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_dispatchAssignmentPreview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_dispatchAssignmentPreview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DispatchAssignmentPreview(ctx, fc.Args["input"].(gqlmodel.DispatchAssignmentPreviewInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchAssignmentPreview) graphql.Marshaler {
+			return ec.marshalNDispatchAssignmentPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignmentPreview(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_dispatchAssignmentPreview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchAssignmentPreview(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_dispatchAssignmentPreview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -167051,6 +174148,368 @@ func (ec *executionContext) unmarshalInputDetachPayEventInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDispatchAssignMoveInput(ctx context.Context, obj any) (gqlmodel.DispatchAssignMoveInput, error) {
+	var it gqlmodel.DispatchAssignMoveInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"moveId", "primaryWorkerId", "tractorId", "trailerId", "secondaryWorkerId", "reassign"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "moveId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("moveId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MoveID = data
+		case "primaryWorkerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryWorkerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PrimaryWorkerID = data
+		case "tractorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tractorId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TractorID = data
+		case "trailerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trailerId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrailerID = data
+		case "secondaryWorkerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secondaryWorkerId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SecondaryWorkerID = data
+		case "reassign":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reassign"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reassign = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDispatchAssignmentPreviewInput(ctx context.Context, obj any) (gqlmodel.DispatchAssignmentPreviewInput, error) {
+	var it gqlmodel.DispatchAssignmentPreviewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"moveId", "workerId", "tractorId", "trailerId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "moveId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("moveId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MoveID = data
+		case "workerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkerID = data
+		case "tractorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tractorId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TractorID = data
+		case "trailerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trailerId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrailerID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDispatchBoardInput(ctx context.Context, obj any) (gqlmodel.DispatchBoardInput, error) {
+	var it gqlmodel.DispatchBoardInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"windowStart", "windowEnd", "fleetCodeIds", "customerIds", "serviceTypeIds", "workerIds", "query", "includeCovered", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "windowStart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowStart"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowStart = data
+		case "windowEnd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowEnd"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowEnd = data
+		case "fleetCodeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fleetCodeIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FleetCodeIds = data
+		case "customerIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerIds = data
+		case "serviceTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceTypeIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceTypeIds = data
+		case "workerIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workerIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkerIds = data
+		case "query":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
+		case "includeCovered":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeCovered"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludeCovered = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDispatchDriverMovesInput(ctx context.Context, obj any) (gqlmodel.DispatchDriverMovesInput, error) {
+	var it gqlmodel.DispatchDriverMovesInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"workerId", "windowStart", "windowEnd", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "workerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkerID = data
+		case "windowStart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowStart"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowStart = data
+		case "windowEnd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowEnd"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowEnd = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDispatchMoveCandidatesInput(ctx context.Context, obj any) (gqlmodel.DispatchMoveCandidatesInput, error) {
+	var it gqlmodel.DispatchMoveCandidatesInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"moveId", "fleetCodeIds", "limit", "includeBlocked"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "moveId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("moveId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MoveID = data
+		case "fleetCodeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fleetCodeIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FleetCodeIds = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		case "includeBlocked":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeBlocked"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludeBlocked = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDispatchPlanInput(ctx context.Context, obj any) (gqlmodel.DispatchPlanInput, error) {
+	var it gqlmodel.DispatchPlanInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"windowStart", "windowEnd", "fleetCodeIds", "moveIds", "apply"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "windowStart":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowStart"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowStart = data
+		case "windowEnd":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("windowEnd"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WindowEnd = data
+		case "fleetCodeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fleetCodeIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FleetCodeIds = data
+		case "moveIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("moveIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MoveIds = data
+		case "apply":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apply"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Apply = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDisputeAdjustmentInput(ctx context.Context, obj any) (gqlmodel.DisputeAdjustmentInput, error) {
 	var it gqlmodel.DisputeAdjustmentInput
 	if obj == nil {
@@ -181912,6 +189371,1459 @@ func (ec *executionContext) _DashControl(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var dispatchAssignResultImplementors = []string{"DispatchAssignResult"}
+
+func (ec *executionContext) _DispatchAssignResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchAssignResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchAssignResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchAssignResult")
+		case "moveId":
+			out.Values[i] = ec._DispatchAssignResult_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "success":
+			out.Values[i] = ec._DispatchAssignResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignmentId":
+			out.Values[i] = ec._DispatchAssignResult_assignmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._DispatchAssignResult_error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "findings":
+			out.Values[i] = ec._DispatchAssignResult_findings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchAssignmentPreviewImplementors = []string{"DispatchAssignmentPreview"}
+
+func (ec *executionContext) _DispatchAssignmentPreview(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchAssignmentPreview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchAssignmentPreviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchAssignmentPreview")
+		case "moveId":
+			out.Values[i] = ec._DispatchAssignmentPreview_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerId":
+			out.Values[i] = ec._DispatchAssignmentPreview_workerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tractorId":
+			out.Values[i] = ec._DispatchAssignmentPreview_tractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "trailerId":
+			out.Values[i] = ec._DispatchAssignmentPreview_trailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "blocked":
+			out.Values[i] = ec._DispatchAssignmentPreview_blocked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requiresOverride":
+			out.Values[i] = ec._DispatchAssignmentPreview_requiresOverride(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "score":
+			out.Values[i] = ec._DispatchAssignmentPreview_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchBoardImplementors = []string{"DispatchBoard"}
+
+func (ec *executionContext) _DispatchBoard(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchBoard) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchBoardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchBoard")
+		case "moves":
+			out.Values[i] = ec._DispatchBoard_moves(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "drivers":
+			out.Values[i] = ec._DispatchBoard_drivers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summary":
+			out.Values[i] = ec._DispatchBoard_summary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "windowStart":
+			out.Values[i] = ec._DispatchBoard_windowStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "windowEnd":
+			out.Values[i] = ec._DispatchBoard_windowEnd(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "generatedAt":
+			out.Values[i] = ec._DispatchBoard_generatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchBoardDriverImplementors = []string{"DispatchBoardDriver"}
+
+func (ec *executionContext) _DispatchBoardDriver(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchBoardDriver) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchBoardDriverImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchBoardDriver")
+		case "workerId":
+			out.Values[i] = ec._DispatchBoardDriver_workerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "firstName":
+			out.Values[i] = ec._DispatchBoardDriver_firstName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastName":
+			out.Values[i] = ec._DispatchBoardDriver_lastName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerType":
+			out.Values[i] = ec._DispatchBoardDriver_workerType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driverType":
+			out.Values[i] = ec._DispatchBoardDriver_driverType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fleetCodeId":
+			out.Values[i] = ec._DispatchBoardDriver_fleetCodeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "fleetCodeName":
+			out.Values[i] = ec._DispatchBoardDriver_fleetCodeName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "city":
+			out.Values[i] = ec._DispatchBoardDriver_city(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stateAbbreviation":
+			out.Values[i] = ec._DispatchBoardDriver_stateAbbreviation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "postalCode":
+			out.Values[i] = ec._DispatchBoardDriver_postalCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "profilePicUrl":
+			out.Values[i] = ec._DispatchBoardDriver_profilePicUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignmentBlocked":
+			out.Values[i] = ec._DispatchBoardDriver_assignmentBlocked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "availableForDispatch":
+			out.Values[i] = ec._DispatchBoardDriver_availableForDispatch(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tractorId":
+			out.Values[i] = ec._DispatchBoardDriver_tractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "tractorCode":
+			out.Values[i] = ec._DispatchBoardDriver_tractorCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tractorTypeId":
+			out.Values[i] = ec._DispatchBoardDriver_tractorTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "tractorAvailable":
+			out.Values[i] = ec._DispatchBoardDriver_tractorAvailable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "openAssignments":
+			out.Values[i] = ec._DispatchBoardDriver_openAssignments(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "availability":
+			out.Values[i] = ec._DispatchBoardDriver_availability(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dutyStatus":
+			out.Values[i] = ec._DispatchBoardDriver_dutyStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driveRemainingMs":
+			out.Values[i] = ec._DispatchBoardDriver_driveRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shiftRemainingMs":
+			out.Values[i] = ec._DispatchBoardDriver_shiftRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cycleRemainingMs":
+			out.Values[i] = ec._DispatchBoardDriver_cycleRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "breakRemainingMs":
+			out.Values[i] = ec._DispatchBoardDriver_breakRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosRecordedAt":
+			out.Values[i] = ec._DispatchBoardDriver_hosRecordedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosIsStale":
+			out.Values[i] = ec._DispatchBoardDriver_hosIsStale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "latitude":
+			out.Values[i] = ec._DispatchBoardDriver_latitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "longitude":
+			out.Values[i] = ec._DispatchBoardDriver_longitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "formattedLocation":
+			out.Values[i] = ec._DispatchBoardDriver_formattedLocation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "positionRecordedAt":
+			out.Values[i] = ec._DispatchBoardDriver_positionRecordedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectedTimeAvailable":
+			out.Values[i] = ec._DispatchBoardDriver_projectedTimeAvailable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "committedMiles":
+			out.Values[i] = ec._DispatchBoardDriver_committedMiles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "committedRevenue":
+			out.Values[i] = ec._DispatchBoardDriver_committedRevenue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "commitments":
+			out.Values[i] = ec._DispatchBoardDriver_commitments(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "timeOff":
+			out.Values[i] = ec._DispatchBoardDriver_timeOff(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "findings":
+			out.Values[i] = ec._DispatchBoardDriver_findings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchBoardMoveImplementors = []string{"DispatchBoardMove"}
+
+func (ec *executionContext) _DispatchBoardMove(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchBoardMove) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchBoardMoveImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchBoardMove")
+		case "moveId":
+			out.Values[i] = ec._DispatchBoardMove_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentId":
+			out.Values[i] = ec._DispatchBoardMove_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proNumber":
+			out.Values[i] = ec._DispatchBoardMove_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bol":
+			out.Values[i] = ec._DispatchBoardMove_bol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveStatus":
+			out.Values[i] = ec._DispatchBoardMove_moveStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentStatus":
+			out.Values[i] = ec._DispatchBoardMove_shipmentStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sequence":
+			out.Values[i] = ec._DispatchBoardMove_sequence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveCount":
+			out.Values[i] = ec._DispatchBoardMove_moveCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "loaded":
+			out.Values[i] = ec._DispatchBoardMove_loaded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "distance":
+			out.Values[i] = ec._DispatchBoardMove_distance(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "revenue":
+			out.Values[i] = ec._DispatchBoardMove_revenue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "customerId":
+			out.Values[i] = ec._DispatchBoardMove_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "customerName":
+			out.Values[i] = ec._DispatchBoardMove_customerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "serviceTypeId":
+			out.Values[i] = ec._DispatchBoardMove_serviceTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "serviceTypeCode":
+			out.Values[i] = ec._DispatchBoardMove_serviceTypeCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requiredTractorTypeId":
+			out.Values[i] = ec._DispatchBoardMove_requiredTractorTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "requiredTrailerTypeId":
+			out.Values[i] = ec._DispatchBoardMove_requiredTrailerTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "temperatureMin":
+			out.Values[i] = ec._DispatchBoardMove_temperatureMin(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "temperatureMax":
+			out.Values[i] = ec._DispatchBoardMove_temperatureMax(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "hasHazmat":
+			out.Values[i] = ec._DispatchBoardMove_hasHazmat(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasActiveHold":
+			out.Values[i] = ec._DispatchBoardMove_hasActiveHold(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "urgency":
+			out.Values[i] = ec._DispatchBoardMove_urgency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minutesToPickup":
+			out.Values[i] = ec._DispatchBoardMove_minutesToPickup(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isCovered":
+			out.Values[i] = ec._DispatchBoardMove_isCovered(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originStopId":
+			out.Values[i] = ec._DispatchBoardMove_originStopId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "originLocationId":
+			out.Values[i] = ec._DispatchBoardMove_originLocationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "originName":
+			out.Values[i] = ec._DispatchBoardMove_originName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originCity":
+			out.Values[i] = ec._DispatchBoardMove_originCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originState":
+			out.Values[i] = ec._DispatchBoardMove_originState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originLatitude":
+			out.Values[i] = ec._DispatchBoardMove_originLatitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "originLongitude":
+			out.Values[i] = ec._DispatchBoardMove_originLongitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "originWindowStart":
+			out.Values[i] = ec._DispatchBoardMove_originWindowStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originWindowEnd":
+			out.Values[i] = ec._DispatchBoardMove_originWindowEnd(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "originActualArrival":
+			out.Values[i] = ec._DispatchBoardMove_originActualArrival(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationStopId":
+			out.Values[i] = ec._DispatchBoardMove_destinationStopId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationLocationId":
+			out.Values[i] = ec._DispatchBoardMove_destinationLocationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationName":
+			out.Values[i] = ec._DispatchBoardMove_destinationName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationCity":
+			out.Values[i] = ec._DispatchBoardMove_destinationCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationState":
+			out.Values[i] = ec._DispatchBoardMove_destinationState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationLatitude":
+			out.Values[i] = ec._DispatchBoardMove_destinationLatitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationLongitude":
+			out.Values[i] = ec._DispatchBoardMove_destinationLongitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationWindowStart":
+			out.Values[i] = ec._DispatchBoardMove_destinationWindowStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationWindowEnd":
+			out.Values[i] = ec._DispatchBoardMove_destinationWindowEnd(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "assignmentId":
+			out.Values[i] = ec._DispatchBoardMove_assignmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "assignedWorkerId":
+			out.Values[i] = ec._DispatchBoardMove_assignedWorkerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "assignedWorkerName":
+			out.Values[i] = ec._DispatchBoardMove_assignedWorkerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignedTractorId":
+			out.Values[i] = ec._DispatchBoardMove_assignedTractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "assignedTractorCode":
+			out.Values[i] = ec._DispatchBoardMove_assignedTractorCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignedTrailerId":
+			out.Values[i] = ec._DispatchBoardMove_assignedTrailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "assignedTrailerCode":
+			out.Values[i] = ec._DispatchBoardMove_assignedTrailerCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignmentAckStatus":
+			out.Values[i] = ec._DispatchBoardMove_assignmentAckStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "previousMoveTrailerId":
+			out.Values[i] = ec._DispatchBoardMove_previousMoveTrailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchBoardSummaryImplementors = []string{"DispatchBoardSummary"}
+
+func (ec *executionContext) _DispatchBoardSummary(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchBoardSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchBoardSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchBoardSummary")
+		case "uncoveredMoves":
+			out.Values[i] = ec._DispatchBoardSummary_uncoveredMoves(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "coveredMoves":
+			out.Values[i] = ec._DispatchBoardSummary_coveredMoves(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lateMoves":
+			out.Values[i] = ec._DispatchBoardSummary_lateMoves(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "atRiskMoves":
+			out.Values[i] = ec._DispatchBoardSummary_atRiskMoves(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unseatedDrivers":
+			out.Values[i] = ec._DispatchBoardSummary_unseatedDrivers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "availableDrivers":
+			out.Values[i] = ec._DispatchBoardSummary_availableDrivers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignedToday":
+			out.Values[i] = ec._DispatchBoardSummary_assignedToday(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "averageDeadheadMiles":
+			out.Values[i] = ec._DispatchBoardSummary_averageDeadheadMiles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "utilizationPercent":
+			out.Values[i] = ec._DispatchBoardSummary_utilizationPercent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchBulkAssignResultImplementors = []string{"DispatchBulkAssignResult"}
+
+func (ec *executionContext) _DispatchBulkAssignResult(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchBulkAssignResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchBulkAssignResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchBulkAssignResult")
+		case "succeeded":
+			out.Values[i] = ec._DispatchBulkAssignResult_succeeded(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "failed":
+			out.Values[i] = ec._DispatchBulkAssignResult_failed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "results":
+			out.Values[i] = ec._DispatchBulkAssignResult_results(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchCandidateImplementors = []string{"DispatchCandidate"}
+
+func (ec *executionContext) _DispatchCandidate(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchCandidate) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchCandidateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchCandidate")
+		case "workerId":
+			out.Values[i] = ec._DispatchCandidate_workerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerName":
+			out.Values[i] = ec._DispatchCandidate_workerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tractorId":
+			out.Values[i] = ec._DispatchCandidate_tractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "trailerId":
+			out.Values[i] = ec._DispatchCandidate_trailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "moveId":
+			out.Values[i] = ec._DispatchCandidate_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "score":
+			out.Values[i] = ec._DispatchCandidate_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "verdict":
+			out.Values[i] = ec._DispatchCandidate_verdict(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "blocked":
+			out.Values[i] = ec._DispatchCandidate_blocked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deadheadMiles":
+			out.Values[i] = ec._DispatchCandidate_deadheadMiles(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "estimatedDriveMs":
+			out.Values[i] = ec._DispatchCandidate_estimatedDriveMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectedArrival":
+			out.Values[i] = ec._DispatchCandidate_projectedArrival(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minutesOfSlack":
+			out.Values[i] = ec._DispatchCandidate_minutesOfSlack(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driveRemainingMs":
+			out.Values[i] = ec._DispatchCandidate_driveRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shiftRemainingMs":
+			out.Values[i] = ec._DispatchCandidate_shiftRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cycleRemainingMs":
+			out.Values[i] = ec._DispatchCandidate_cycleRemainingMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectedTimeAvailable":
+			out.Values[i] = ec._DispatchCandidate_projectedTimeAvailable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "findings":
+			out.Values[i] = ec._DispatchCandidate_findings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "factors":
+			out.Values[i] = ec._DispatchCandidate_factors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchCommitmentImplementors = []string{"DispatchCommitment"}
+
+func (ec *executionContext) _DispatchCommitment(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchCommitment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchCommitmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchCommitment")
+		case "moveId":
+			out.Values[i] = ec._DispatchCommitment_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentId":
+			out.Values[i] = ec._DispatchCommitment_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proNumber":
+			out.Values[i] = ec._DispatchCommitment_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveStatus":
+			out.Values[i] = ec._DispatchCommitment_moveStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "windowStart":
+			out.Values[i] = ec._DispatchCommitment_windowStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "windowEnd":
+			out.Values[i] = ec._DispatchCommitment_windowEnd(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationCity":
+			out.Values[i] = ec._DispatchCommitment_destinationCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationState":
+			out.Values[i] = ec._DispatchCommitment_destinationState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationLatitude":
+			out.Values[i] = ec._DispatchCommitment_destinationLatitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationLongitude":
+			out.Values[i] = ec._DispatchCommitment_destinationLongitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "trailerId":
+			out.Values[i] = ec._DispatchCommitment_trailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchDriverMoveMatchImplementors = []string{"DispatchDriverMoveMatch"}
+
+func (ec *executionContext) _DispatchDriverMoveMatch(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchDriverMoveMatch) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchDriverMoveMatchImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchDriverMoveMatch")
+		case "move":
+			out.Values[i] = ec._DispatchDriverMoveMatch_move(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "score":
+			out.Values[i] = ec._DispatchDriverMoveMatch_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchFindingImplementors = []string{"DispatchFinding"}
+
+func (ec *executionContext) _DispatchFinding(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchFinding) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchFindingImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchFinding")
+		case "code":
+			out.Values[i] = ec._DispatchFinding_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "severity":
+			out.Values[i] = ec._DispatchFinding_severity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "field":
+			out.Values[i] = ec._DispatchFinding_field(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._DispatchFinding_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "regulation":
+			out.Values[i] = ec._DispatchFinding_regulation(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchPlanImplementors = []string{"DispatchPlan"}
+
+func (ec *executionContext) _DispatchPlan(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchPlan) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchPlanImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchPlan")
+		case "runId":
+			out.Values[i] = ec._DispatchPlan_runId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "assignments":
+			out.Values[i] = ec._DispatchPlan_assignments(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uncovered":
+			out.Values[i] = ec._DispatchPlan_uncovered(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shadowMode":
+			out.Values[i] = ec._DispatchPlan_shadowMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "autonomyTier":
+			out.Values[i] = ec._DispatchPlan_autonomyTier(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalScore":
+			out.Values[i] = ec._DispatchPlan_totalScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "generatedAt":
+			out.Values[i] = ec._DispatchPlan_generatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchPlannedAssignmentImplementors = []string{"DispatchPlannedAssignment"}
+
+func (ec *executionContext) _DispatchPlannedAssignment(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchPlannedAssignment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchPlannedAssignmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchPlannedAssignment")
+		case "moveId":
+			out.Values[i] = ec._DispatchPlannedAssignment_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proNumber":
+			out.Values[i] = ec._DispatchPlannedAssignment_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerId":
+			out.Values[i] = ec._DispatchPlannedAssignment_workerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerName":
+			out.Values[i] = ec._DispatchPlannedAssignment_workerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tractorId":
+			out.Values[i] = ec._DispatchPlannedAssignment_tractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "trailerId":
+			out.Values[i] = ec._DispatchPlannedAssignment_trailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "confidence":
+			out.Values[i] = ec._DispatchPlannedAssignment_confidence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rationale":
+			out.Values[i] = ec._DispatchPlannedAssignment_rationale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "autoExecutable":
+			out.Values[i] = ec._DispatchPlannedAssignment_autoExecutable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proposalId":
+			out.Values[i] = ec._DispatchPlannedAssignment_proposalId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "score":
+			out.Values[i] = ec._DispatchPlannedAssignment_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchScoreFactorImplementors = []string{"DispatchScoreFactor"}
+
+func (ec *executionContext) _DispatchScoreFactor(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchScoreFactor) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchScoreFactorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchScoreFactor")
+		case "key":
+			out.Values[i] = ec._DispatchScoreFactor_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._DispatchScoreFactor_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "raw":
+			out.Values[i] = ec._DispatchScoreFactor_raw(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "weight":
+			out.Values[i] = ec._DispatchScoreFactor_weight(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contribution":
+			out.Values[i] = ec._DispatchScoreFactor_contribution(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detail":
+			out.Values[i] = ec._DispatchScoreFactor_detail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchTimeOffImplementors = []string{"DispatchTimeOff"}
+
+func (ec *executionContext) _DispatchTimeOff(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchTimeOff) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchTimeOffImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchTimeOff")
+		case "startDate":
+			out.Values[i] = ec._DispatchTimeOff_startDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endDate":
+			out.Values[i] = ec._DispatchTimeOff_endDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._DispatchTimeOff_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchUncoveredMoveImplementors = []string{"DispatchUncoveredMove"}
+
+func (ec *executionContext) _DispatchUncoveredMove(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchUncoveredMove) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchUncoveredMoveImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchUncoveredMove")
+		case "moveId":
+			out.Values[i] = ec._DispatchUncoveredMove_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proNumber":
+			out.Values[i] = ec._DispatchUncoveredMove_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._DispatchUncoveredMove_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bestBlockedFindings":
+			out.Values[i] = ec._DispatchUncoveredMove_bestBlockedFindings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var distanceOverrideImplementors = []string{"DistanceOverride"}
 
 func (ec *executionContext) _DistanceOverride(ctx context.Context, sel ast.SelectionSet, obj *distanceoverride.DistanceOverride) graphql.Marshaler {
@@ -193572,6 +202484,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "dispatchAssignMoves":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_dispatchAssignMoves(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dispatchUnassignMoves":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_dispatchUnassignMoves(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dispatchPlanAutoAssign":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_dispatchPlanAutoAssign(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "inviteWorkerToPortal":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_inviteWorkerToPortal(ctx, field)
@@ -198652,6 +207585,94 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_customerPayment(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dispatchBoard":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dispatchBoard(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dispatchMoveCandidates":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dispatchMoveCandidates(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dispatchDriverMoves":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dispatchDriverMoves(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dispatchAssignmentPreview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dispatchAssignmentPreview(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -220560,6 +229581,402 @@ func (ec *executionContext) unmarshalNDataTableConnectionInput2githubᚗcomᚋem
 func (ec *executionContext) unmarshalNDetachPayEventInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetachPayEventInput(ctx context.Context, v any) (gqlmodel.DetachPayEventInput, error) {
 	res, err := ec.unmarshalInputDetachPayEventInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDispatchAssignMoveInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignMoveInputᚄ(ctx context.Context, v any) ([]*gqlmodel.DispatchAssignMoveInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*gqlmodel.DispatchAssignMoveInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNDispatchAssignMoveInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignMoveInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNDispatchAssignMoveInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignMoveInput(ctx context.Context, v any) (*gqlmodel.DispatchAssignMoveInput, error) {
+	res, err := ec.unmarshalInputDispatchAssignMoveInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDispatchAssignResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchAssignResult) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignResult(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignResult(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchAssignResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchAssignResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchAssignmentPreview2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignmentPreview(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DispatchAssignmentPreview) graphql.Marshaler {
+	return ec._DispatchAssignmentPreview(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDispatchAssignmentPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignmentPreview(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchAssignmentPreview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchAssignmentPreview(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDispatchAssignmentPreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchAssignmentPreviewInput(ctx context.Context, v any) (gqlmodel.DispatchAssignmentPreviewInput, error) {
+	res, err := ec.unmarshalInputDispatchAssignmentPreviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDispatchBoard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoard(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DispatchBoard) graphql.Marshaler {
+	return ec._DispatchBoard(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDispatchBoard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoard(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchBoard) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchBoard(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchBoardDriver2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardDriverᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchBoardDriver) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchBoardDriver2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardDriver(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchBoardDriver2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardDriver(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchBoardDriver) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchBoardDriver(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDispatchBoardInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardInput(ctx context.Context, v any) (gqlmodel.DispatchBoardInput, error) {
+	res, err := ec.unmarshalInputDispatchBoardInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDispatchBoardMove2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMoveᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchBoardMove) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchBoardMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMove(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchBoardMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMove(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchBoardMove) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchBoardMove(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchBoardSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardSummary(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchBoardSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchBoardSummary(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchBulkAssignResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBulkAssignResult(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DispatchBulkAssignResult) graphql.Marshaler {
+	return ec._DispatchBulkAssignResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDispatchBulkAssignResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBulkAssignResult(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchBulkAssignResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchBulkAssignResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidateᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchCandidate) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidate(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidate(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchCandidate) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchCandidate(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchCommitment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCommitmentᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchCommitment) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchCommitment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCommitment(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchCommitment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCommitment(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchCommitment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchCommitment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchDriverMoveMatch2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMoveMatchᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchDriverMoveMatch) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchDriverMoveMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMoveMatch(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchDriverMoveMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMoveMatch(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchDriverMoveMatch) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchDriverMoveMatch(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDispatchDriverMovesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverMovesInput(ctx context.Context, v any) (gqlmodel.DispatchDriverMovesInput, error) {
+	res, err := ec.unmarshalInputDispatchDriverMovesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchFinding) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFinding(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFinding(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchFinding) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchFinding(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDispatchMoveCandidatesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveCandidatesInput(ctx context.Context, v any) (gqlmodel.DispatchMoveCandidatesInput, error) {
+	res, err := ec.unmarshalInputDispatchMoveCandidatesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDispatchPlan2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlan(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DispatchPlan) graphql.Marshaler {
+	return ec._DispatchPlan(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDispatchPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlan(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchPlan) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchPlan(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDispatchPlanInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlanInput(ctx context.Context, v any) (gqlmodel.DispatchPlanInput, error) {
+	res, err := ec.unmarshalInputDispatchPlanInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDispatchPlannedAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlannedAssignmentᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchPlannedAssignment) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchPlannedAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlannedAssignment(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchPlannedAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlannedAssignment(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchPlannedAssignment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchPlannedAssignment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchScoreFactor2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchScoreFactorᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchScoreFactor) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchScoreFactor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchScoreFactor(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchScoreFactor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchScoreFactor(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchScoreFactor) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchScoreFactor(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchTimeOff2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTimeOffᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchTimeOff) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchTimeOff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTimeOff(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchTimeOff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTimeOff(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchTimeOff) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchTimeOff(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchUncoveredMove2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchUncoveredMoveᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchUncoveredMove) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchUncoveredMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchUncoveredMove(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchUncoveredMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchUncoveredMove(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchUncoveredMove) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchUncoveredMove(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDistanceOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdistanceoverrideᚐDistanceOverride(ctx context.Context, sel ast.SelectionSet, v *distanceoverride.DistanceOverride) graphql.Marshaler {

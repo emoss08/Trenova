@@ -73,6 +73,21 @@ func boolValue(value *bool) bool {
 	return *value
 }
 
+func nonEmptyPtr(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func int16Ptr(value *int16) *int {
+	if value == nil {
+		return nil
+	}
+	converted := int(*value)
+	return &converted
+}
+
 func intPtr(value *int64) *int {
 	if value == nil {
 		return nil

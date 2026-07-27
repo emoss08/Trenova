@@ -17,10 +17,29 @@ type StartAgentRunRequest struct {
 	TenantInfo  pagination.TenantInfo
 }
 
+// StartInlineAgentRunRequest opens a run for an agent whose reasoning happens in-process
+// rather than in a Temporal workflow.
+type StartInlineAgentRunRequest struct {
+	AgentType     agent.Type
+	SubjectType   agent.SubjectType
+	SubjectID     pulid.ID
+	PromptVersion string
+	Summary       string
+	TenantInfo    pagination.TenantInfo
+}
+
 type AgentRunService interface {
 	Start(
 		ctx context.Context,
 		req *StartAgentRunRequest,
+		actor *RequestActor,
+	) (*agent.AgentRun, error)
+	// StartInline records a run for a deterministic agent that reasons in-process. Such
+	// agents still need the run row so their proposals, decisions, and audit trail are
+	// indistinguishable from an LLM-backed agent's.
+	StartInline(
+		ctx context.Context,
+		req *StartInlineAgentRunRequest,
 		actor *RequestActor,
 	) (*agent.AgentRun, error)
 	ListConnection(

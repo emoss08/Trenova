@@ -21,8 +21,11 @@ import (
 
 const (
 	agentPromptVersion = "billing-exception-v1"
-	provisionalHash    = "pending"
-	workflowIDPrefix   = "billing-exception-agent-"
+	// inlinePromptVersion is the fallback for a deterministic agent that did not name its
+	// own version. Runs still carry one so the audit trail has a uniform shape.
+	inlinePromptVersion = "inline-v1"
+	provisionalHash     = "pending"
+	workflowIDPrefix    = "billing-exception-agent-"
 )
 
 type Params struct {
@@ -140,6 +143,66 @@ func (s *Service) Start(
 	}
 
 	return updated, nil
+}
+
+// StartInline records a run for an agent whose reasoning happens in-process rather than
+// in a Temporal workflow. The dispatch optimizer is deterministic and finishes within the
+// request, but it still needs a run row so its proposals, decisions, and audit trail are
+// indistinguishable from an LLM-backed agent's.
+func (s *Service) StartInline(
+	ctx context.Context,
+	req *services.StartInlineAgentRunRequest,
+	actor *services.RequestActor,
+) (*agent.AgentRun, error) {
+	promptVersion := req.PromptVersion
+	if promptVersion == "" {
+		promptVersion = inlinePromptVersion
+	}
+
+	run := &agent.AgentRun{
+		OrganizationID:   req.TenantInfo.OrgID,
+		BusinessUnitID:   req.TenantInfo.BuID,
+		AgentType:        req.AgentType,
+		SubjectType:      req.SubjectType,
+		SubjectID:        req.SubjectID,
+		Status:           agent.RunStatusAwaitingDecision,
+		PromptVersion:    promptVersion,
+		InputContextHash: provisionalHash,
+		StartedAt:        timeutils.NowUnix(),
+	}
+
+	me := errortypes.NewMultiError()
+	run.Validate(me)
+	if me.HasErrors() {
+		return nil, me
+	}
+
+	created, err := s.repo.Create(ctx, run)
+	if err != nil {
+		return nil, err
+	}
+
+	auditActor := actor.AuditActorOrSystem()
+	comment := req.Summary
+	if comment == "" {
+		comment = "Inline agent run started"
+	}
+	if err = s.audit.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceAgentRun,
+		ResourceID:     created.GetID().String(),
+		Operation:      permission.OpCreate,
+		UserID:         auditActor.UserID,
+		PrincipalType:  auditActor.PrincipalType,
+		PrincipalID:    auditActor.PrincipalID,
+		APIKeyID:       auditActor.APIKeyID,
+		CurrentState:   jsonutils.MustToJSON(created),
+		OrganizationID: created.OrganizationID,
+		BusinessUnitID: created.BusinessUnitID,
+	}, auditservice.WithComment(comment)); err != nil {
+		s.l.Error("failed to log inline agent run audit", zap.Error(err))
+	}
+
+	return created, nil
 }
 
 func (s *Service) ListConnection(

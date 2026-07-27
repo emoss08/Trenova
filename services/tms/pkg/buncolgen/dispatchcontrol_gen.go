@@ -64,6 +64,10 @@ var DispatchControlColumns = struct {
 	EnforceHazmatCompliance              Column // "enforce_hazmat_compliance" → qualified: "dc.enforce_hazmat_compliance"
 	EnforceDrugAndAlcoholCompliance      Column // "enforce_drug_and_alcohol_compliance" → qualified: "dc.enforce_drug_and_alcohol_compliance"
 	EnableAutoStopActuals                Column // "enable_auto_stop_actuals" → qualified: "dc.enable_auto_stop_actuals"
+	ScoringWeights                       Column // "scoring_weights" → qualified: "dc.scoring_weights"
+	AutoAssignConfidenceThreshold        Column // "auto_assign_confidence_threshold" → qualified: "dc.auto_assign_confidence_threshold"
+	AutoAssignMaxDeadheadMiles           Column // "auto_assign_max_deadhead_miles" → qualified: "dc.auto_assign_max_deadhead_miles"
+	AutoAssignPlanningHorizonHours       Column // "auto_assign_planning_horizon_hours" → qualified: "dc.auto_assign_planning_horizon_hours"
 	ComplianceEnforcementLevel           Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -87,6 +91,10 @@ var DispatchControlColumns = struct {
 	EnforceHazmatCompliance:              NewColumn("enforce_hazmat_compliance", "dc"),
 	EnforceDrugAndAlcoholCompliance:      NewColumn("enforce_drug_and_alcohol_compliance", "dc"),
 	EnableAutoStopActuals:                NewColumn("enable_auto_stop_actuals", "dc"),
+	ScoringWeights:                       NewColumn("scoring_weights", "dc"),
+	AutoAssignConfidenceThreshold:        NewColumn("auto_assign_confidence_threshold", "dc"),
+	AutoAssignMaxDeadheadMiles:           NewColumn("auto_assign_max_deadhead_miles", "dc"),
+	AutoAssignPlanningHorizonHours:       NewColumn("auto_assign_planning_horizon_hours", "dc"),
 	ComplianceEnforcementLevel:           NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 NewColumn("service_failure_target", "dc"),
@@ -116,6 +124,10 @@ var DispatchControlFieldMap = map[string]string{
 	"enforceHazmatCompliance":              "enforce_hazmat_compliance",
 	"enforceDrugAndAlcoholCompliance":      "enforce_drug_and_alcohol_compliance",
 	"enableAutoStopActuals":                "enable_auto_stop_actuals",
+	"scoringWeights":                       "scoring_weights",
+	"autoAssignConfidenceThreshold":        "auto_assign_confidence_threshold",
+	"autoAssignMaxDeadheadMiles":           "auto_assign_max_deadhead_miles",
+	"autoAssignPlanningHorizonHours":       "auto_assign_planning_horizon_hours",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -143,6 +155,10 @@ var DispatchControlInsertableColumns = []string{
 	"enforce_hazmat_compliance",
 	"enforce_drug_and_alcohol_compliance",
 	"enable_auto_stop_actuals",
+	"scoring_weights",
+	"auto_assign_confidence_threshold",
+	"auto_assign_max_deadhead_miles",
+	"auto_assign_planning_horizon_hours",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -217,6 +233,10 @@ var DispatchControlFilter = struct {
 	EnforceHazmatCompliance              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceHazmatCompliance" → DB: "enforce_hazmat_compliance"
 	EnforceDrugAndAlcoholCompliance      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceDrugAndAlcoholCompliance" → DB: "enforce_drug_and_alcohol_compliance"
 	EnableAutoStopActuals                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAutoStopActuals" → DB: "enable_auto_stop_actuals"
+	ScoringWeights                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scoringWeights" → DB: "scoring_weights"
+	AutoAssignConfidenceThreshold        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignConfidenceThreshold" → DB: "auto_assign_confidence_threshold"
+	AutoAssignMaxDeadheadMiles           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignMaxDeadheadMiles" → DB: "auto_assign_max_deadhead_miles"
+	AutoAssignPlanningHorizonHours       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignPlanningHorizonHours" → DB: "auto_assign_planning_horizon_hours"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -269,6 +289,18 @@ var DispatchControlFilter = struct {
 	},
 	EnableAutoStopActuals: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enableAutoStopActuals", op, value)
+	},
+	ScoringWeights: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("scoringWeights", op, value)
+	},
+	AutoAssignConfidenceThreshold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoAssignConfidenceThreshold", op, value)
+	},
+	AutoAssignMaxDeadheadMiles: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoAssignMaxDeadheadMiles", op, value)
+	},
+	AutoAssignPlanningHorizonHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoAssignPlanningHorizonHours", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("complianceEnforcementLevel", op, value)

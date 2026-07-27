@@ -9,8 +9,16 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
+
+const (
+	DefaultAutoAssignPlanningHorizonHours = int16(48)
+	MaxAutoAssignPlanningHorizonHours     = int16(336)
+)
+
+var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*DispatchControl)(nil)
@@ -37,6 +45,10 @@ type DispatchControl struct {
 	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance"              bun:"enforce_hazmat_compliance,type:BOOLEAN,notnull,default:false"`
 	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance"      bun:"enforce_drug_and_alcohol_compliance,type:BOOLEAN,notnull,default:false"`
 	EnableAutoStopActuals                bool                       `json:"enableAutoStopActuals"                bun:"enable_auto_stop_actuals,type:BOOLEAN,notnull,default:false"`
+	ScoringWeights                       ScoringWeights             `json:"scoringWeights"                       bun:"scoring_weights,type:JSONB,notnull,default:'{}'::jsonb"`
+	AutoAssignConfidenceThreshold        decimal.Decimal            `json:"autoAssignConfidenceThreshold"        bun:"auto_assign_confidence_threshold,type:NUMERIC(5,4),notnull,default:0.85"`
+	AutoAssignMaxDeadheadMiles           *int32                     `json:"autoAssignMaxDeadheadMiles"           bun:"auto_assign_max_deadhead_miles,type:INTEGER,nullzero"`
+	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours"       bun:"auto_assign_planning_horizon_hours,type:SMALLINT,notnull,default:48"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -44,6 +56,36 @@ type DispatchControl struct {
 	Version                              int64                      `json:"version"                              bun:"version,type:BIGINT"`
 	CreatedAt                            int64                      `json:"createdAt"                            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                            int64                      `json:"updatedAt"                            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+}
+
+// ResolvedScoringWeights is the weighting the candidate scorer should use for this
+// organization: the strategy preset with any stored per-factor overrides applied.
+func (dc *DispatchControl) ResolvedScoringWeights() map[ScoringFactor]float64 {
+	if dc == nil {
+		return PresetWeights(AutoAssignmentStrategyProximity)
+	}
+	return dc.ScoringWeights.Resolve(dc.AutoAssignmentStrategy)
+}
+
+// PlanningHorizonHours is the forward window the console and the optimizer plan over,
+// falling back to the default when an organization has never configured one.
+func (dc *DispatchControl) PlanningHorizonHours() int16 {
+	if dc == nil || dc.AutoAssignPlanningHorizonHours <= 0 {
+		return DefaultAutoAssignPlanningHorizonHours
+	}
+	if dc.AutoAssignPlanningHorizonHours > MaxAutoAssignPlanningHorizonHours {
+		return MaxAutoAssignPlanningHorizonHours
+	}
+	return dc.AutoAssignPlanningHorizonHours
+}
+
+// ConfidenceThreshold is the minimum confidence an auto-assign proposal must carry
+// before it may execute without a dispatcher reviewing it.
+func (dc *DispatchControl) ConfidenceThreshold() decimal.Decimal {
+	if dc == nil || dc.AutoAssignConfidenceThreshold.IsZero() {
+		return defaultAutoAssignConfidenceThreshold
+	}
+	return dc.AutoAssignConfidenceThreshold
 }
 
 func (dc *DispatchControl) NormalizeServiceFailureSettings() {
@@ -62,8 +104,28 @@ func (dc *DispatchControl) NormalizeServiceFailureSettings() {
 	dc.ServiceFailureGracePeriod = &defaultGracePeriod
 }
 
+// NormalizeAutoAssignmentSettings fills in the auto-assignment defaults for controls
+// that predate them or were constructed in memory, so a zero value is treated as
+// "unset" rather than as an invalid configuration.
+func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
+	if dc == nil {
+		return
+	}
+
+	if dc.ScoringWeights == nil {
+		dc.ScoringWeights = ScoringWeights{}
+	}
+	if dc.AutoAssignConfidenceThreshold.IsZero() {
+		dc.AutoAssignConfidenceThreshold = defaultAutoAssignConfidenceThreshold
+	}
+	if dc.AutoAssignPlanningHorizonHours <= 0 {
+		dc.AutoAssignPlanningHorizonHours = DefaultAutoAssignPlanningHorizonHours
+	}
+}
+
 func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 	dc.NormalizeServiceFailureSettings()
+	dc.NormalizeAutoAssignmentSettings()
 
 	err := validation.ValidateStruct(dc,
 		validation.Field(&dc.AutoAssignmentStrategy,
@@ -120,6 +182,46 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 					return nil
 				}),
 			),
+		),
+		validation.Field(&dc.ScoringWeights,
+			validation.By(func(_ any) error {
+				if err := dc.ScoringWeights.Validate(); err != nil {
+					return errors.New(
+						"Scoring weights must reference known factors with values between 0 and 10",
+					)
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.AutoAssignConfidenceThreshold,
+			validation.By(func(_ any) error {
+				if dc.AutoAssignConfidenceThreshold.LessThan(decimal.Zero) ||
+					dc.AutoAssignConfidenceThreshold.GreaterThan(decimal.NewFromInt(1)) {
+					return errors.New("Auto assign confidence threshold must be between 0 and 1")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&dc.AutoAssignMaxDeadheadMiles,
+			validation.When(dc.AutoAssignMaxDeadheadMiles != nil,
+				validation.By(func(_ any) error {
+					if *dc.AutoAssignMaxDeadheadMiles <= 0 {
+						return errors.New("Auto assign max deadhead miles must be greater than 0")
+					}
+					return nil
+				}),
+			),
+		),
+		validation.Field(&dc.AutoAssignPlanningHorizonHours,
+			validation.By(func(_ any) error {
+				if dc.AutoAssignPlanningHorizonHours <= 0 ||
+					dc.AutoAssignPlanningHorizonHours > MaxAutoAssignPlanningHorizonHours {
+					return errors.New(
+						"Auto assign planning horizon must be between 1 and 336 hours",
+					)
+				}
+				return nil
+			}),
 		),
 	)
 	if err != nil {
@@ -179,5 +281,8 @@ func NewDefaultDispatchControl(orgID, buID pulid.ID) *DispatchControl {
 		EnforceDrugAndAlcoholCompliance:      true,
 		ComplianceEnforcementLevel:           ComplianceEnforcementLevelWarning,
 		RecordServiceFailures:                ServiceIncidentTypeNever,
+		ScoringWeights:                       ScoringWeights{},
+		AutoAssignConfidenceThreshold:        defaultAutoAssignConfidenceThreshold,
+		AutoAssignPlanningHorizonHours:       DefaultAutoAssignPlanningHorizonHours,
 	}
 }

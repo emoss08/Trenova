@@ -38,6 +38,12 @@ func UnixToHumanReadable(ts int64) string {
 	return time.Unix(ts, 0).Format("January 2, 2006 3:04:05 PM MST")
 }
 
+// FormatUnixDate renders a unix timestamp as a calendar date without a time component,
+// for messages where the clock time carries no meaning (time off, due dates).
+func FormatUnixDate(ts int64) string {
+	return time.Unix(ts, 0).UTC().Format("Jan 2, 2006")
+}
+
 func NormalizeTimezone(timezone string) string {
 	if timezone == "" {
 		return "UTC"

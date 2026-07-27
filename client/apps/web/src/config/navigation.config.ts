@@ -121,6 +121,12 @@ const dispatchModule: NavModule = {
       resource: Resource.Location,
     },
     {
+      id: "dispatch-console",
+      label: "Dispatcher Console",
+      path: "/dispatch/console",
+      resource: Resource.ShipmentMove,
+    },
+    {
       id: "workers",
       label: "Workers",
       path: "/dispatch/workers",
