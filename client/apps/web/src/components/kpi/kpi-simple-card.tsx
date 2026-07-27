@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type React from "react";
-import { KpiCard, KpiHeader, KpiSub } from "./kpi/kpi-card";
+import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 
 type KPICardProps = {
   label: string;

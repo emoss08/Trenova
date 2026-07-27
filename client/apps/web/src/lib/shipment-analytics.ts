@@ -1,4 +1,6 @@
-export type Tone = "success" | "danger" | "warning" | "brand" | "info" | "muted";
+export type { Tone } from "@/components/kpi/tone";
+
+import type { Tone } from "@/components/kpi/tone";
 
 export type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<unknown>

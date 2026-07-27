@@ -1,7 +1,7 @@
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { cn, formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { toneVar } from "../../analytics/kpi/tone";
+import { toneVar } from "@/components/kpi/tone";
 import { ProfitabilityBreakdownPopover } from "../../profitability/profitability-breakdown-popover";
 
 type FinancialRow = { label: string; value: string; bold?: boolean; tone?: string };
@@ -67,17 +67,13 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
         value: formatCurrency(parseDecimal(estimate.estimatedCost)),
       },
       { label: "Est. profit", value: formatCurrency(profit), tone },
-      ...(marginPct !== null
-        ? [{ label: "Margin", value: formatPercent(marginPct), tone }]
-        : []),
+      ...(marginPct !== null ? [{ label: "Margin", value: formatPercent(marginPct), tone }] : []),
       ...(rpm !== null
         ? [
             {
               label: "RPM vs CPM",
               value: `${formatCurrency(rpm)} vs ${formatCurrency(parseDecimal(estimate.costPerMile))}`,
-              tone: toneVar(
-                rpm >= parseDecimal(estimate.costPerMile) ? "success" : "danger",
-              ),
+              tone: toneVar(rpm >= parseDecimal(estimate.costPerMile) ? "success" : "danger"),
             },
           ]
         : []),

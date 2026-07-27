@@ -9,7 +9,7 @@ import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/li
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { toneVar } from "../analytics/kpi/tone";
+import { toneVar } from "@/components/kpi/tone";
 
 const sourceBadges: Record<string, { label: string; className: string }> = {
   Benchmark: { label: "Benchmark", className: "text-2xs" },
@@ -58,11 +58,7 @@ export function ProfitabilityBreakdownPopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger render={<span>{trigger}</span>} />
       <PopoverContent align={align} className="w-80 space-y-3">
-        {isLoading || !data ? (
-          <BreakdownSkeleton />
-        ) : (
-          <BreakdownContent data={data} />
-        )}
+        {isLoading || !data ? <BreakdownSkeleton /> : <BreakdownContent data={data} />}
       </PopoverContent>
     </Popover>
   );
@@ -119,7 +115,10 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
         {data.breakdown.map((line) => {
           const badge = sourceBadges[line.effectiveSource] ?? sourceBadges.Benchmark;
           return (
-            <div key={`${line.category}-${line.name}`} className="flex items-center justify-between gap-2 text-xs">
+            <div
+              key={`${line.category}-${line.name}`}
+              className="flex items-center justify-between gap-2 text-xs"
+            >
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate text-muted-foreground">{line.name}</span>
                 <Badge variant="outline" className={badge.className}>
@@ -140,7 +139,10 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       <Separator />
 
       <div className="space-y-1.5">
-        <DetailRow label="Estimated cost" value={formatCurrency(parseDecimal(data.estimatedCost))} />
+        <DetailRow
+          label="Estimated cost"
+          value={formatCurrency(parseDecimal(data.estimatedCost))}
+        />
         <DetailRow label="Revenue" value={formatCurrency(revenue)} />
         <DetailRow
           label="Profit"

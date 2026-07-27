@@ -1,4 +1,9 @@
-import type { Tone } from "../mock-data";
+/**
+ * The semantic colour a KPI carries. It lives with the KPI primitives rather
+ * than with any one page's data shape, because every surface that renders a
+ * KPI has to speak it.
+ */
+export type Tone = "success" | "danger" | "warning" | "brand" | "info" | "muted";
 
 export type DeltaTone = Tone;
 

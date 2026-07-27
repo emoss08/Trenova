@@ -20,7 +20,9 @@ function buildPath(data: number[], w: number, h: number, pad: number) {
     return [x, y];
   });
   const line = pts
-    .map((point, index) => `${index === 0 ? "M" : "L"}${point[0].toFixed(1)},${point[1].toFixed(1)}`)
+    .map(
+      (point, index) => `${index === 0 ? "M" : "L"}${point[0].toFixed(1)},${point[1].toFixed(1)}`,
+    )
     .join(" ");
   const last = pts[pts.length - 1];
   const first = pts[0];

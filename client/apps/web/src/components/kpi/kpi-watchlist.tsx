@@ -1,9 +1,8 @@
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import type React from "react";
-import type { Tone } from "../mock-data";
 import { KpiCard, KpiHeader } from "./kpi-card";
-import { toneVar } from "./tone";
+import { toneVar, type Tone } from "./tone";
 
 export type WatchlistItem = {
   id: string;
