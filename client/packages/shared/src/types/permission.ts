@@ -141,6 +141,7 @@ export const Resource = {
   Dashboard: "dashboard",
   CustomFieldDefinition: "custom_field_definition",
   TableChangeAlert: "table_change_alert",
+  HomeLayoutPreset: "home_layout_preset",
   FiscalYear: "fiscal_year",
   FiscalPeriod: "fiscal_period",
   DocumentParsingRule: "document_parsing_rule",

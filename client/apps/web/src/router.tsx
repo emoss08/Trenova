@@ -1062,6 +1062,32 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "home-layouts",
+                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Read),
+                async lazy() {
+                  const { HomeLayoutsPage } = await import("@/routes/admin/home-layouts/page");
+                  return { Component: HomeLayoutsPage };
+                },
+              },
+              {
+                path: "home-layouts/new",
+                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Create),
+                async lazy() {
+                  const { NewHomeLayoutPage } =
+                    await import("@/routes/admin/home-layouts/new/page");
+                  return { Component: NewHomeLayoutPage };
+                },
+              },
+              {
+                path: "home-layouts/:id",
+                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Update),
+                async lazy() {
+                  const { EditHomeLayoutPage } =
+                    await import("@/routes/admin/home-layouts/[id]/page");
+                  return { Component: EditHomeLayoutPage };
+                },
+              },
+              {
                 path: "roles",
                 loader: createPermissionLoader(Resource.Role, Operation.Read),
                 async lazy() {
