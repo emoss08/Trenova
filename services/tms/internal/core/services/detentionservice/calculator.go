@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/shopspring/decimal"
@@ -952,5 +953,20 @@ func roundingVerb(mode detention.RoundingMode) string {
 		return "Exact"
 	default:
 		return "Rounded"
+	}
+}
+
+// tierUnitFromAccessorial maps an accessorial's rate unit onto the tier unit
+// vocabulary so a flat-rate policy and a tiered one share one code path.
+func tierUnitFromAccessorial(unit accessorialcharge.RateUnit) detention.TierRateUnit {
+	switch unit {
+	case accessorialcharge.RateUnitHour:
+		return detention.TierRateUnitHour
+	case accessorialcharge.RateUnitDay:
+		return detention.TierRateUnitDay
+	case accessorialcharge.RateUnitStop, accessorialcharge.RateUnitMile:
+		return detention.TierRateUnitFlat
+	default:
+		return detention.TierRateUnitHour
 	}
 }

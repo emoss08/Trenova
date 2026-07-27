@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/databasesessionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dataentrycontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/detentionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distancecalculationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distancecontrolrepository"
@@ -300,6 +301,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	distanceprofilerepository.New,
 	storedmileagerepository.New,
 	exchangeraterepository.New,
+	detentionrepository.NewPolicyRepository,
+	detentionrepository.NewOccurrenceRepository,
+	detentionrepository.NewEvidenceRepository,
+	detentionrepository.NewNoticeRepository,
 	fuelsurchargerepository.NewIndexRepository,
 	fuelsurchargerepository.NewPriceRepository,
 	fuelsurchargerepository.NewProgramRepository,

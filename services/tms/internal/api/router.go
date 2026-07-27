@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/detentionpolicyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
@@ -201,6 +202,7 @@ type RouterParams struct {
 	HoldReasonHandler               *holdreasonhandler.Handler
 	RecurringShipmentHandler        *recurringshipmenthandler.Handler
 	RateTableHandler                *ratetablehandler.Handler
+	DetentionPolicyHandler          *detentionpolicyhandler.Handler
 	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
 	InvoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
@@ -309,6 +311,7 @@ type Router struct {
 	holdReasonHandler               *holdreasonhandler.Handler
 	recurringShipmentHandler        *recurringshipmenthandler.Handler
 	rateTableHandler                *ratetablehandler.Handler
+	detentionPolicyHandler          *detentionpolicyhandler.Handler
 	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
 	invoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
@@ -419,6 +422,7 @@ func NewRouter(p RouterParams) *Router {
 		holdReasonHandler:               p.HoldReasonHandler,
 		recurringShipmentHandler:        p.RecurringShipmentHandler,
 		rateTableHandler:                p.RateTableHandler,
+		detentionPolicyHandler:          p.DetentionPolicyHandler,
 		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
 		invoiceAdjustmentHandler:        p.InvoiceAdjustmentHandler,
@@ -595,6 +599,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.holdReasonHandler.RegisterRoutes(protected)
 	r.recurringShipmentHandler.RegisterRoutes(protected)
 	r.rateTableHandler.RegisterRoutes(protected)
+	r.detentionPolicyHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
 	r.invoiceHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentHandler.RegisterRoutes(protected)

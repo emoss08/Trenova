@@ -1239,6 +1239,15 @@ func (r *Registry) registerBillingResources() {
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDetentionPolicy.String(),
+		DisplayName:        "Detention Policy",
+		Description:        "Contractual detention terms, rate tiers, notice requirements, and per-stop occurrences",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerCustomerResources() {
