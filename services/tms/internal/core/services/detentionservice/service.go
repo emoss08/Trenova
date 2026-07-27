@@ -29,6 +29,7 @@ type Params struct {
 	PayProfileRepo    repositories.PayProfileRepository
 	OrgCacheRepo      repositories.OrganizationCacheRepository
 	NoticeRepo        repositories.DetentionNoticeRepository
+	AnalyticsRepo     repositories.DetentionAnalyticsRepository
 	EmailService      services.EmailService
 	AuditService      services.AuditService
 }
@@ -43,6 +44,7 @@ type Service struct {
 	payProfileRepo    repositories.PayProfileRepository
 	orgCacheRepo      repositories.OrganizationCacheRepository
 	noticeRepo        repositories.DetentionNoticeRepository
+	analyticsRepo     repositories.DetentionAnalyticsRepository
 	emailService      services.EmailService
 	auditService      services.AuditService
 	now               func() int64
@@ -59,6 +61,7 @@ func New(p Params) *Service {
 		payProfileRepo:    p.PayProfileRepo,
 		orgCacheRepo:      p.OrgCacheRepo,
 		noticeRepo:        p.NoticeRepo,
+		analyticsRepo:     p.AnalyticsRepo,
 		emailService:      p.EmailService,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,

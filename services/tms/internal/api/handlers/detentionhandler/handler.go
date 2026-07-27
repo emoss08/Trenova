@@ -2,6 +2,7 @@ package detentionhandler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -64,6 +65,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpUpdate),
 		h.approve,
 	)
+	api.POST("/backtest/", h.pm.RequirePermission(resource, permission.OpRead), h.backtest)
+	api.GET("/facilities/", h.pm.RequirePermission(resource, permission.OpRead), h.facilities)
+	api.GET("/customers/", h.pm.RequirePermission(resource, permission.OpRead), h.customers)
+	api.GET("/waivers/", h.pm.RequirePermission(resource, permission.OpRead), h.waivers)
+
 	api.POST(
 		"/occurrences/:occurrenceID/dispute/",
 		h.pm.RequirePermission(resource, permission.OpUpdate),
@@ -347,4 +353,120 @@ func (h *Handler) dispute(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, occurrence)
+}
+
+func (h *Handler) statsRequest(c *gin.Context) *repositories.DetentionStatsRequest {
+	req := &repositories.DetentionStatsRequest{TenantInfo: h.tenant(c)}
+
+	if raw := helpers.QueryString(c, "from"); raw != "" {
+		if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			req.From = parsed
+		}
+	}
+	if raw := helpers.QueryString(c, "to"); raw != "" {
+		if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			req.To = parsed
+		}
+	}
+	if raw := helpers.QueryString(c, "limit"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil {
+			req.Limit = parsed
+		}
+	}
+
+	return req
+}
+
+// @Summary Backtest a detention policy against settled history
+// @ID backtestDetentionPolicy
+// @Tags Detention
+// @Accept json
+// @Produce json
+// @Param request body detentionservice.BacktestRequest true "Backtest request"
+// @Success 200 {object} detentionservice.BacktestResult
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /detention/backtest [post]
+func (h *Handler) backtest(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(detentionservice.BacktestRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if req.Policy != nil {
+		authctx.AddContextToRequest(authCtx, req.Policy)
+	}
+
+	result, err := h.service.Backtest(c.Request.Context(), *req, h.tenant(c))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// @Summary Detention profile per facility
+// @ID listDetentionFacilityProfiles
+// @Tags Detention
+// @Produce json
+// @Param from query int false "Window start (unix seconds)"
+// @Param to query int false "Window end (unix seconds)"
+// @Success 200 {array} repositories.FacilityDetentionStat
+// @Failure 401 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /detention/facilities/ [get]
+func (h *Handler) facilities(c *gin.Context) {
+	stats, err := h.service.FacilityProfiles(c.Request.Context(), h.statsRequest(c))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
+// @Summary Detention margin per customer
+// @ID listDetentionCustomerProfiles
+// @Tags Detention
+// @Produce json
+// @Param from query int false "Window start (unix seconds)"
+// @Param to query int false "Window end (unix seconds)"
+// @Success 200 {array} repositories.CustomerDetentionStat
+// @Failure 401 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /detention/customers/ [get]
+func (h *Handler) customers(c *gin.Context) {
+	stats, err := h.service.CustomerProfiles(c.Request.Context(), h.statsRequest(c))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
+// @Summary Detention waiver leakage by coded reason
+// @ID listDetentionWaiverLeakage
+// @Tags Detention
+// @Produce json
+// @Param from query int false "Window start (unix seconds)"
+// @Param to query int false "Window end (unix seconds)"
+// @Success 200 {array} repositories.WaiverLeakageStat
+// @Failure 401 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /detention/waivers/ [get]
+func (h *Handler) waivers(c *gin.Context) {
+	stats, err := h.service.WaiverLeakage(c.Request.Context(), h.statsRequest(c))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
 }

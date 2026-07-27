@@ -36,9 +36,9 @@ func (f *fakeReader) Next(_ context.Context) (services.ReportRow, error) {
 }
 
 func (f *fakeReader) Totals(_ context.Context) (services.ReportRow, error) { return f.totals, nil }
-func (f *fakeReader) RowCount() int64                                     { return int64(f.cursor) }
-func (f *fakeReader) Truncated() bool                                     { return false }
-func (f *fakeReader) Close() error                                        { f.closed = true; return nil }
+func (f *fakeReader) RowCount() int64                                      { return int64(f.cursor) }
+func (f *fakeReader) Truncated() bool                                      { return false }
+func (f *fakeReader) Close() error                                         { f.closed = true; return nil }
 
 func moneyColumn(label string, rules ...reportfmt.Rule) services.ReportResultColumn {
 	return services.ReportResultColumn{
