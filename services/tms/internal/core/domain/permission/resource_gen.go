@@ -71,6 +71,7 @@ const (
 	ResourceFormulaTemplate      Resource = "formula_template"
 	ResourceRateTable            Resource = "rate_table"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
+	ResourceDetentionPolicy      Resource = "detention_policy"
 
 	// Agent
 	ResourceAgentRun       Resource = "agent_run"

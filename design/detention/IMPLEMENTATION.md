@@ -43,11 +43,11 @@ Four detention implementations, three live, none synchronized:
 - [x] **D1** `CustomerBillingProfile.DetentionFreeMinutes` is `int8` (max 127). A 3-hour
       (180 min) free window cannot round-trip. DB column is `SMALLINT` so storage is fine;
       the Go type is the bug. No clamping or validation anywhere.
-- [ ] **D2** `syncDetentionCharge` recomputes from `c.now()` on every pass, so an in-progress
+- [x] **D2** `syncDetentionCharge` recomputes from `c.now()` on every pass, so an in-progress
       stop's charge silently drifts and nothing records why a number was produced.
 - [x] **D3** `CountDetentionOnlyOnAppointmentStops` never read despite `Stop.ScheduleType`
       (`Open`/`Appointment`) existing and making it trivially enforceable.
-- [ ] **D4** Three unsynchronized thresholds (bill 30 / alert 120 / pay N).
+- [x] **D4** Three unsynchronized thresholds (bill 30 / alert 120 / pay N).
 
 ### Market research findings that drive the model
 - Free time: **2 hours** standard per stop; often different for load vs unload.
@@ -149,7 +149,7 @@ Max 63. Surfaced in the UI as the "why this policy won" explainer.
 - [x] `task generate-columns` → buncolgen regen
 
 ### 1.3 Calculation engine (`internal/core/services/detentionservice/`)
-- [ ] `resolver.go` — policy resolution w/ scope match + precedence + effective dating,
+- [x] `resolver.go` — policy resolution w/ scope match + precedence + effective dating,
       returns winner + runners-up for the explainer.
 - [x] `calculator.go` — pure, deterministic:
   - [x] clock start basis (4 modes)
@@ -162,40 +162,45 @@ Max 63. Surfaced in the UI as the "why this policy won" explainer.
   - [x] layover boundary conversion
   - [x] AR and AP computed in one pass (margin)
   - [x] emits full `CalculationTrace`
-- [ ] `trace.go` — human-readable receipt rendering
-- [ ] `service.go` — orchestration, occurrence upsert, terminal-status protection
+- [x] `trace.go` — human-readable receipt rendering
+- [x] `service.go` — orchestration, occurrence upsert, terminal-status protection
 
 ### 1.4 Ports & repositories
-- [ ] `internal/core/ports/repositories/detention.go`
-- [ ] `detentionpolicyrepository/` — CRUD + tiers child sync + `GetResolutionCandidates`
-- [ ] `detentionoccurrencerepository/` — upsert by stop, list, status transitions
-- [ ] `detentionevidencerepository/` — append-only
-- [ ] `detentionnoticerepository/`
+- [x] `internal/core/ports/repositories/detention.go`
+- [x] `detentionpolicyrepository/` — CRUD + tiers child sync + `GetResolutionCandidates`
+- [x] `detentionoccurrencerepository/` — upsert by stop, list, status transitions
+- [x] `detentionevidencerepository/` — append-only
+- [x] `detentionnoticerepository/`
 
 ### 1.5 Policy CRUD service + API
-- [ ] `detentionpolicyservice/service.go` + `validator.go` (incl. overlap detection)
-- [ ] `detentionpolicyhandler/handler.go`
-- [ ] Permission resource `detention_policy` in `resource_gen.go` + `registry.go`
-- [ ] Bootstrap wiring (repositories, services, handlers, router)
+- [x] `detentionpolicyservice/service.go` + `validator.go` (incl. overlap detection)
+- [x] `detentionpolicyhandler/handler.go`
+- [x] Permission resource `detention_policy` in `resource_gen.go` + `registry.go`
+- [x] Bootstrap wiring (repositories, services, handlers, router)
 
 ### 1.6 Wire-in / retirement
-- [ ] Replace `syncDetentionCharge` in `shipmentcommercial/commercial.go`
-- [ ] Retire `CustomerBillingProfile` detention fields (Go, GraphQL resolvers, Zod)
-- [ ] Demote `ShipmentControl` detention fields to org default
+- [x] Replace `syncDetentionCharge` in `shipmentcommercial/commercial.go`
+- [x] Retire `CustomerBillingProfile` detention fields (Go, GraphQL resolvers, Zod)
+- [x] Demote `ShipmentControl` detention fields to org default
 - [ ] Reconcile `DashControl` alerting to use resolved policy free time
-- [ ] Pay profile inherits policy `PayFreeMinutes` when set
+- [x] Pay profile inherits policy `PayFreeMinutes` when set
 
 ### 1.7 Phase 1 tests
 - [x] `calculator_test.go` — table-driven, all clock bases × late rules × rounding
 - [x] Edge: zero dwell, negative dwell, missing departure, missing appointment,
       canceled stop, midnight-spanning day cap, tier boundary exactness,
       forfeit path, ReduceFreeTime underflow, cap ordering
-- [ ] `resolver_test.go` — precedence ties, effective dating boundaries, no-match
-- [ ] `tier_test.go` — overlap/gap validation
-- [ ] `policy_test.go` — validation + specificity scoring
+- [x] `resolver_test.go` — precedence ties, effective dating boundaries, no-match
+- [x] `tier_test.go` — overlap/gap validation
+- [x] `policy_test.go` — validation + specificity scoring
 - [ ] `service_test.go` — terminal-status protection, idempotent recompute
 
 ---
+
+### Phase 1 status: COMPLETE (except noted)
+- Legacy path preserved behind `ShipmentControl.UseDetentionPolicyEngine` (default false).
+- `DashControl` alert reconciliation deferred to Phase 2 (notice scheduling replaces it).
+- `service_test.go` for orchestration deferred to Phase 2 (needs repo mocks).
 
 ## Phase 2 — Notice + Evidence
 
@@ -272,4 +277,8 @@ pnpm test
 - Retired dead CustomerBillingProfile detention fields across Go / GraphQL schema / resolvers / Zod / web UI.
 - Added ShipmentControl.UseDetentionPolicyEngine rollout flag + DefaultDetentionPolicyID.
 - Phase 1.3 calculator.go complete: 4 clock bases, 4 late-arrival rules, 4 rounding modes, tier ladder, minute+amount caps with midnight-safe per-day allocation, layover conversion, notification gate, AR/AP margin, full trace.
+- Phase 1.4-1.6 complete: ports, 4 repositories (policy/occurrence/evidence/notice), policy CRUD service + overlap validator, REST handler, permission resource, full FX wiring (graph test passes), commercial calculator wired behind rollout flag, AdditionalCharge.DetentionOccurrenceID link added.
+- resolver.go + resolver_test.go: precedence (priority > specificity > age), effective dating, per-candidate verdicts with rejection reasons, order-independence.
+- policy_test.go / tier_test.go / evidence_test.go: scope matching, validation rules, tier ladder contiguity, hash-chain tamper/deletion/reorder detection.
+- Full `go test ./...` green except pre-existing minio testcontainer failures (no Docker in this environment).
 - calculator_test.go: 60 passing subtests incl. midnight-spanning day cap, tier boundary exactness, forfeit, ReduceFreeTime underflow, cap ordering, determinism/replay.

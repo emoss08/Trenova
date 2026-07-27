@@ -470,3 +470,16 @@ ALTER TABLE "customer_billing_profiles"
     DROP COLUMN IF EXISTS "detention_free_minutes",
     DROP COLUMN IF EXISTS "detention_rate_per_hour",
     DROP COLUMN IF EXISTS "count_detention_only_on_appointment_stops";
+
+--bun:split
+ALTER TABLE "additional_charges"
+    ADD COLUMN IF NOT EXISTS "detention_occurrence_id" varchar(100);
+
+--bun:split
+ALTER TABLE "additional_charges"
+    ADD CONSTRAINT "fk_additional_charges_detention_occurrence" FOREIGN KEY ("detention_occurrence_id", "organization_id", "business_unit_id") REFERENCES "detention_occurrences"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS "idx_additional_charges_detention_occurrence" ON "additional_charges"("detention_occurrence_id")
+WHERE
+    "detention_occurrence_id" IS NOT NULL;

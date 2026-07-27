@@ -14,7 +14,7 @@ import (
 
 const (
 	expectedAPIContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
-	expectedHSTSHeaderValue         = "max-age=31536000; includeSubDomains"
+	expectedHSTSHeaderValue          = "max-age=31536000; includeSubDomains"
 )
 
 func TestSecurityHeadersMiddleware_AddsHeaders(t *testing.T) {

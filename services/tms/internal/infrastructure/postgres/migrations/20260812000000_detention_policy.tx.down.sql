@@ -1,3 +1,11 @@
+ALTER TABLE "additional_charges"
+    DROP CONSTRAINT IF EXISTS "fk_additional_charges_detention_occurrence";
+
+--bun:split
+ALTER TABLE "additional_charges"
+    DROP COLUMN IF EXISTS "detention_occurrence_id";
+
+--bun:split
 ALTER TABLE "customer_billing_profiles"
     ADD COLUMN IF NOT EXISTS "detention_billing_enabled" boolean NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS "detention_free_minutes" smallint NOT NULL DEFAULT 120,

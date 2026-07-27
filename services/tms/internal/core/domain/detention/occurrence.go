@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -104,6 +105,16 @@ func (o *DetentionOccurrence) GetOrganizationID() pulid.ID { return o.Organizati
 func (o *DetentionOccurrence) GetBusinessUnitID() pulid.ID { return o.BusinessUnitID }
 
 func (o *DetentionOccurrence) GetTableName() string { return "detention_occurrences" }
+
+// GetPostgresSearchConfig declares no search vector: occurrences are reached by
+// shipment, facility, customer, or status rather than by free text.
+func (o *DetentionOccurrence) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:       "dto",
+		UseSearchVector:  false,
+		SearchableFields: []domaintypes.SearchableField{},
+	}
+}
 
 // IsFrozen reports whether the recalculation engine must leave this record
 // alone. A billed, waived, or disputed occurrence represents a number the
