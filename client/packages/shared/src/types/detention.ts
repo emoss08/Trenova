@@ -500,3 +500,78 @@ export const previewResultSchema = z.object({
   receipt: z.string().default(""),
 });
 export type PreviewResult = z.infer<typeof previewResultSchema>;
+
+export const backtestBucketSchema = z.object({
+  key: z.string(),
+  stopCount: z.number().int(),
+  billableCount: z.number().int(),
+  proposedAmount: z.coerce.number(),
+  baselineAmount: z.coerce.number(),
+  delta: z.coerce.number(),
+  driverPayAmount: z.coerce.number(),
+  netMargin: z.coerce.number(),
+});
+export type BacktestBucket = z.infer<typeof backtestBucketSchema>;
+
+export const backtestResultSchema = z.object({
+  stopsEvaluated: z.number().int(),
+  stopsMatched: z.number().int(),
+  stopsBillable: z.number().int(),
+  stopsForfeited: z.number().int(),
+  stopsSuppressed: z.number().int(),
+  proposedRevenue: z.coerce.number(),
+  baselineRevenue: z.coerce.number(),
+  revenueDelta: z.coerce.number(),
+  proposedDriverPay: z.coerce.number(),
+  proposedNetMargin: z.coerce.number(),
+  negativeMarginStops: z.number().int(),
+  byCustomer: z.array(backtestBucketSchema).default([]),
+  byFacility: z.array(backtestBucketSchema).default([]),
+  from: z.number().int(),
+  to: z.number().int(),
+  truncated: z.boolean(),
+});
+export type BacktestResult = z.infer<typeof backtestResultSchema>;
+
+export const facilityDetentionStatSchema = z.object({
+  locationId: z.string(),
+  stopCount: z.number().int(),
+  breachCount: z.number().int(),
+  avgDwellMinutes: z.number(),
+  medianDwellMinutes: z.number(),
+  p90DwellMinutes: z.number(),
+  billedAmount: z.coerce.number(),
+  driverPayAmount: z.coerce.number(),
+  netMargin: z.coerce.number(),
+  waivedAmount: z.coerce.number(),
+  disputeCount: z.number().int(),
+  suppressedCount: z.number().int(),
+});
+export type FacilityDetentionStat = z.infer<typeof facilityDetentionStatSchema>;
+
+export const customerDetentionStatSchema = z.object({
+  customerId: z.string(),
+  stopCount: z.number().int(),
+  breachCount: z.number().int(),
+  billedAmount: z.coerce.number(),
+  driverPayAmount: z.coerce.number(),
+  netMargin: z.coerce.number(),
+  waivedAmount: z.coerce.number(),
+  disputeCount: z.number().int(),
+  suppressedCount: z.number().int(),
+});
+export type CustomerDetentionStat = z.infer<typeof customerDetentionStatSchema>;
+
+export const waiverLeakageStatSchema = z.object({
+  reason: z.string(),
+  waiverCount: z.number().int(),
+  approverCount: z.number().int(),
+  waivedAmount: z.coerce.number(),
+});
+export type WaiverLeakageStat = z.infer<typeof waiverLeakageStatSchema>;
+
+export type DetentionStatsQuery = {
+  from?: number;
+  to?: number;
+  limit?: number;
+};

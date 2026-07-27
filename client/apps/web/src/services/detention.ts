@@ -2,14 +2,23 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   deskEntrySchema,
+  backtestResultSchema,
+  customerDetentionStatSchema,
+  facilityDetentionStatSchema,
   previewResultSchema,
+  waiverLeakageStatSchema,
   detentionOccurrenceSchema,
   disputePacketSchema,
   occurrenceDetailSchema,
   type DeskEntry,
   type DetentionOccurrence,
   type DisputePacket,
+  type BacktestResult,
+  type CustomerDetentionStat,
   type DetentionPolicy,
+  type DetentionStatsQuery,
+  type FacilityDetentionStat,
+  type WaiverLeakageStat,
   type OccurrenceDetail,
   type PreviewResult,
   type PreviewScenario,
@@ -79,6 +88,74 @@ export class DetentionService {
       payload,
     );
     return safeParse(detentionOccurrenceSchema, response, "Detention Occurrence");
+  }
+}
+
+function statsQuery(params: DetentionStatsQuery = {}): string {
+  const search = new URLSearchParams();
+  if (params.from) search.set("from", String(params.from));
+  if (params.to) search.set("to", String(params.to));
+  if (params.limit) search.set("limit", String(params.limit));
+  const query = search.toString();
+  return query ? `?${query}` : "";
+}
+
+export class DetentionAnalyticsService {
+  public async backtest(
+    policy: DetentionPolicy,
+    params: {
+      from: number;
+      to: number;
+      assumeNoticeCompliance?: boolean;
+      driverPayRate?: string;
+    },
+  ): Promise<BacktestResult> {
+    const response = await api.post<BacktestResult>("/detention/backtest/", {
+      policy,
+      ...params,
+    });
+
+    return safeParse(backtestResultSchema, response, "Detention Backtest");
+  }
+
+  public async facilities(
+    params: DetentionStatsQuery = {},
+  ): Promise<FacilityDetentionStat[]> {
+    const response = await api.get<FacilityDetentionStat[]>(
+      `/detention/facilities/${statsQuery(params)}`,
+    );
+
+    return safeParse(
+      z.array(facilityDetentionStatSchema),
+      response ?? [],
+      "Facility Detention Stats",
+    );
+  }
+
+  public async customers(
+    params: DetentionStatsQuery = {},
+  ): Promise<CustomerDetentionStat[]> {
+    const response = await api.get<CustomerDetentionStat[]>(
+      `/detention/customers/${statsQuery(params)}`,
+    );
+
+    return safeParse(
+      z.array(customerDetentionStatSchema),
+      response ?? [],
+      "Customer Detention Stats",
+    );
+  }
+
+  public async waivers(params: DetentionStatsQuery = {}): Promise<WaiverLeakageStat[]> {
+    const response = await api.get<WaiverLeakageStat[]>(
+      `/detention/waivers/${statsQuery(params)}`,
+    );
+
+    return safeParse(
+      z.array(waiverLeakageStatSchema),
+      response ?? [],
+      "Detention Waiver Leakage",
+    );
   }
 }
 
