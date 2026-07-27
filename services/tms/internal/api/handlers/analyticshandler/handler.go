@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,22 +23,36 @@ const (
 	includeSavedViewCounts     = "savedViewCounts"
 )
 
+// pagePermissions names the resource a caller must be able to read before an
+// analytics page will answer. Every page must appear here: an unlisted page is
+// refused rather than served, so adding a provider without deciding who may see
+// it fails closed.
+var pagePermissions = map[services.AnalyticsPage]permission.Resource{
+	services.ShipmentAnalyticsPage:        permission.ResourceShipment,
+	services.BillingClientAnalyticsPage:   permission.ResourceBillingQueue,
+	services.DedicatedLaneSuggestionsPage: permission.ResourceShipment,
+	services.APIKeyAnalyticsPage:          permission.ResourceAPIKey,
+}
+
 type Params struct {
 	fx.In
 
-	Service      services.AnalyticsService
-	ErrorHandler *helpers.ErrorHandler
+	Service          services.AnalyticsService
+	PermissionEngine services.PermissionEngine
+	ErrorHandler     *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service services.AnalyticsService
-	eh      *helpers.ErrorHandler
+	service     services.AnalyticsService
+	permissions services.PermissionEngine
+	eh          *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
+		service:     p.Service,
+		permissions: p.PermissionEngine,
+		eh:          p.ErrorHandler,
 	}
 }
 
@@ -80,6 +96,13 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
+	// The page is a query parameter, so the gate cannot live in route
+	// middleware — it has to be applied once the request is bound.
+	if err := h.authorizePage(c, req.Page); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	opts := &services.AnalyticsRequestOptions{
 		OrgID:      authCtx.OrganizationID,
 		BuID:       authCtx.BusinessUnitID,
@@ -106,6 +129,35 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, data)
+}
+
+func (h *Handler) authorizePage(c *gin.Context, page services.AnalyticsPage) error {
+	resource, ok := pagePermissions[page]
+	if !ok {
+		return errortypes.NewAuthorizationError(
+			"You don't have permission to view this analytics page",
+		)
+	}
+
+	result, err := h.permissions.Check(
+		c.Request.Context(),
+		middleware.BuildPermissionCheckRequest(
+			authctx.GetAuthContext(c),
+			resource.String(),
+			permission.OpRead,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	if !result.Allowed {
+		return errortypes.NewAuthorizationError(
+			"You don't have permission to view this analytics page",
+		)
+	}
+
+	return nil
 }
 
 func validateAnalyticsRequest(req *services.AnaltyicsRequest) error {

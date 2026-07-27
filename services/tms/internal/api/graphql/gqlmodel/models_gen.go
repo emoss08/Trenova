@@ -1180,6 +1180,125 @@ type HoldReasonEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type HomeLayout struct {
+	SchemaVersion int              `json:"schemaVersion"`
+	Version       int              `json:"version"`
+	Source        HomeLayoutSource `json:"source"`
+	PresetID      *string          `json:"presetId,omitempty"`
+	PresetName    *string          `json:"presetName,omitempty"`
+	Locked        bool             `json:"locked"`
+	CanCustomize  bool             `json:"canCustomize"`
+	Density       string           `json:"density"`
+	Widgets       []*HomeWidget    `json:"widgets"`
+}
+
+type HomeLayoutInput struct {
+	Version int `json:"version"`
+	// When false the viewer follows their assigned preset and widgets is ignored.
+	Customized bool               `json:"customized"`
+	Density    string             `json:"density"`
+	Widgets    []*HomeWidgetInput `json:"widgets"`
+}
+
+type HomeLayoutPreset struct {
+	ID                 string        `json:"id"`
+	Name               string        `json:"name"`
+	Description        *string       `json:"description,omitempty"`
+	Widgets            []*HomeWidget `json:"widgets"`
+	RoleIds            []string      `json:"roleIds"`
+	CoreResponsibility *string       `json:"coreResponsibility,omitempty"`
+	IsOrgDefault       bool          `json:"isOrgDefault"`
+	Locked             bool          `json:"locked"`
+	Priority           int           `json:"priority"`
+	AssignedUserCount  int           `json:"assignedUserCount"`
+	Version            int           `json:"version"`
+	CreatedAt          int           `json:"createdAt"`
+	UpdatedAt          int           `json:"updatedAt"`
+}
+
+type HomeMetricOption struct {
+	Key   string `json:"key"`
+	Label string `json:"label"`
+}
+
+// One card on the home canvas. Position is not stored: widgets are an ordered
+// list that the client packs into the grid, so order alone defines the layout.
+type HomeWidget struct {
+	ID     string            `json:"id"`
+	Key    string            `json:"key"`
+	Title  *string           `json:"title,omitempty"`
+	W      int               `json:"w"`
+	H      int               `json:"h"`
+	Config *HomeWidgetConfig `json:"config"`
+}
+
+type HomeWidgetCatalog struct {
+	Widgets     []*HomeWidgetOption   `json:"widgets"`
+	Metrics     []*HomeMetricOption   `json:"metrics"`
+	Categories  []*HomeWidgetCategory `json:"categories"`
+	Densities   []string              `json:"densities"`
+	GridColumns int                   `json:"gridColumns"`
+	MaxWidgets  int                   `json:"maxWidgets"`
+}
+
+type HomeWidgetCategory struct {
+	Key         string `json:"key"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
+}
+
+// Configuration for one widget. Which fields are meaningful depends on the
+// widget's configKind; the server discards the rest rather than rejecting them.
+type HomeWidgetConfig struct {
+	Metric       *string  `json:"metric,omitempty"`
+	Metrics      []string `json:"metrics,omitempty"`
+	DefinitionID *string  `json:"definitionId,omitempty"`
+	CannedKey    *string  `json:"cannedKey,omitempty"`
+	ChartID      *string  `json:"chartId,omitempty"`
+	ColumnID     *string  `json:"columnId,omitempty"`
+	DashboardID  *string  `json:"dashboardId,omitempty"`
+	Text         *string  `json:"text,omitempty"`
+	Limit        *int     `json:"limit,omitempty"`
+	WindowDays   *int     `json:"windowDays,omitempty"`
+}
+
+type HomeWidgetConfigInput struct {
+	Metric       *string  `json:"metric,omitempty"`
+	Metrics      []string `json:"metrics,omitempty"`
+	DefinitionID *string  `json:"definitionId,omitempty"`
+	CannedKey    *string  `json:"cannedKey,omitempty"`
+	ChartID      *string  `json:"chartId,omitempty"`
+	ColumnID     *string  `json:"columnId,omitempty"`
+	DashboardID  *string  `json:"dashboardId,omitempty"`
+	Text         *string  `json:"text,omitempty"`
+	Limit        *int     `json:"limit,omitempty"`
+	WindowDays   *int     `json:"windowDays,omitempty"`
+}
+
+type HomeWidgetInput struct {
+	ID     string                 `json:"id"`
+	Key    string                 `json:"key"`
+	Title  *string                `json:"title,omitempty"`
+	W      int                    `json:"w"`
+	H      int                    `json:"h"`
+	Config *HomeWidgetConfigInput `json:"config,omitempty"`
+}
+
+type HomeWidgetOption struct {
+	Key              string  `json:"key"`
+	Label            string  `json:"label"`
+	Description      string  `json:"description"`
+	Category         string  `json:"category"`
+	ConfigKind       string  `json:"configKind"`
+	AnalyticsInclude *string `json:"analyticsInclude,omitempty"`
+	DefaultW         int     `json:"defaultW"`
+	DefaultH         int     `json:"defaultH"`
+	MinW             int     `json:"minW"`
+	MinH             int     `json:"minH"`
+	MaxW             int     `json:"maxW"`
+	MaxH             int     `json:"maxH"`
+}
+
 type HosCertificationSummary struct {
 	WorkerID        string `json:"workerId"`
 	WorkerName      string `json:"workerName"`
@@ -2048,6 +2167,17 @@ type SCIMGroupRoleMappingConnection struct {
 type SCIMGroupRoleMappingEdge struct {
 	Node   *iam.SCIMGroupRoleMapping `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+type SaveHomeLayoutPresetInput struct {
+	Name               string             `json:"name"`
+	Description        *string            `json:"description,omitempty"`
+	Widgets            []*HomeWidgetInput `json:"widgets"`
+	RoleIds            []string           `json:"roleIds,omitempty"`
+	CoreResponsibility *string            `json:"coreResponsibility,omitempty"`
+	IsOrgDefault       bool               `json:"isOrgDefault"`
+	Locked             bool               `json:"locked"`
+	Priority           int                `json:"priority"`
 }
 
 type SaveReportDashboardInput struct {
@@ -3500,6 +3630,19 @@ type UpdateFuelIndexPriceInput struct {
 	Price     string `json:"price"`
 }
 
+type UpdateHomeLayoutPresetInput struct {
+	ID                 string             `json:"id"`
+	Version            int                `json:"version"`
+	Name               string             `json:"name"`
+	Description        *string            `json:"description,omitempty"`
+	Widgets            []*HomeWidgetInput `json:"widgets"`
+	RoleIds            []string           `json:"roleIds,omitempty"`
+	CoreResponsibility *string            `json:"coreResponsibility,omitempty"`
+	IsOrgDefault       bool               `json:"isOrgDefault"`
+	Locked             bool               `json:"locked"`
+	Priority           int                `json:"priority"`
+}
+
 type UpdateMyContactInfoInput struct {
 	PhoneNumber           string  `json:"phoneNumber"`
 	AddressLine1          string  `json:"addressLine1"`
@@ -4229,6 +4372,66 @@ func (e *EffectiveRateSource) UnmarshalJSON(b []byte) error {
 }
 
 func (e EffectiveRateSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Which tier of the resolution chain produced the home screen on display.
+type HomeLayoutSource string
+
+const (
+	HomeLayoutSourceUser       HomeLayoutSource = "USER"
+	HomeLayoutSourceRolePreset HomeLayoutSource = "ROLE_PRESET"
+	HomeLayoutSourceOrgDefault HomeLayoutSource = "ORG_DEFAULT"
+	HomeLayoutSourceBuiltIn    HomeLayoutSource = "BUILT_IN"
+)
+
+var AllHomeLayoutSource = []HomeLayoutSource{
+	HomeLayoutSourceUser,
+	HomeLayoutSourceRolePreset,
+	HomeLayoutSourceOrgDefault,
+	HomeLayoutSourceBuiltIn,
+}
+
+func (e HomeLayoutSource) IsValid() bool {
+	switch e {
+	case HomeLayoutSourceUser, HomeLayoutSourceRolePreset, HomeLayoutSourceOrgDefault, HomeLayoutSourceBuiltIn:
+		return true
+	}
+	return false
+}
+
+func (e HomeLayoutSource) String() string {
+	return string(e)
+}
+
+func (e *HomeLayoutSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = HomeLayoutSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid HomeLayoutSource", str)
+	}
+	return nil
+}
+
+func (e HomeLayoutSource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *HomeLayoutSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e HomeLayoutSource) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

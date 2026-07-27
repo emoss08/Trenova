@@ -532,6 +532,36 @@ func (r *Registry) registerAdministrationResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceHomeLayoutPreset.String(),
+		DisplayName: "Home Screen Preset",
+		Description: "Home screens administrators author and assign to roles",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View home screen presets",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create home screen presets",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify, assign, and lock home screen presets",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Delete home screen presets",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerEquipmentResources() {
