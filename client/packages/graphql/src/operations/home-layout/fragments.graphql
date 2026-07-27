@@ -1,0 +1,51 @@
+fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+
+fragment HomeLayoutFields on HomeLayout {
+  schemaVersion
+  version
+  source
+  presetId
+  presetName
+  locked
+  canCustomize
+  density
+  widgets {
+    ...HomeWidgetFields
+  }
+}
+
+fragment HomeLayoutPresetFields on HomeLayoutPreset {
+  id
+  name
+  description
+  roleIds
+  coreResponsibility
+  isOrgDefault
+  locked
+  priority
+  assignedUserCount
+  version
+  createdAt
+  updatedAt
+  widgets {
+    ...HomeWidgetFields
+  }
+}

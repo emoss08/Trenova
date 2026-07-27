@@ -3143,6 +3143,141 @@ enum HoldType {
   OperationalHold
 }
 
+type HomeLayout {
+  canCustomize: Boolean!
+  density: String!
+  locked: Boolean!
+  presetId: ID
+  presetName: String
+  schemaVersion: Int!
+  source: HomeLayoutSource!
+  version: Int!
+  widgets: [HomeWidget!]!
+}
+
+input HomeLayoutInput {
+  """
+  When false the viewer follows their assigned preset and widgets is ignored.
+  """
+  customized: Boolean!
+  density: String!
+  version: Int!
+  widgets: [HomeWidgetInput!]!
+}
+
+type HomeLayoutPreset {
+  assignedUserCount: Int!
+  coreResponsibility: String
+  createdAt: Int!
+  description: String
+  id: ID!
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  name: String!
+  priority: Int!
+  roleIds: [ID!]!
+  updatedAt: Int!
+  version: Int!
+  widgets: [HomeWidget!]!
+}
+
+"""
+Which tier of the resolution chain produced the home screen on display.
+"""
+enum HomeLayoutSource {
+  BUILT_IN
+  ORG_DEFAULT
+  ROLE_PRESET
+  USER
+}
+
+type HomeMetricOption {
+  key: String!
+  label: String!
+}
+
+"""
+One card on the home canvas. Position is not stored: widgets are an ordered
+list that the client packs into the grid, so order alone defines the layout.
+"""
+type HomeWidget {
+  config: HomeWidgetConfig!
+  h: Int!
+  id: String!
+  key: String!
+  title: String
+  w: Int!
+}
+
+type HomeWidgetCatalog {
+  categories: [HomeWidgetCategory!]!
+  densities: [String!]!
+  gridColumns: Int!
+  maxWidgets: Int!
+  metrics: [HomeMetricOption!]!
+  widgets: [HomeWidgetOption!]!
+}
+
+type HomeWidgetCategory {
+  description: String!
+  key: String!
+  label: String!
+}
+
+"""
+Configuration for one widget. Which fields are meaningful depends on the
+widget's configKind; the server discards the rest rather than rejecting them.
+"""
+type HomeWidgetConfig {
+  cannedKey: String
+  chartId: String
+  columnId: String
+  dashboardId: ID
+  definitionId: ID
+  limit: Int
+  metric: String
+  metrics: [String!]
+  text: String
+  windowDays: Int
+}
+
+input HomeWidgetConfigInput {
+  cannedKey: String
+  chartId: String
+  columnId: String
+  dashboardId: ID
+  definitionId: ID
+  limit: Int
+  metric: String
+  metrics: [String!]
+  text: String
+  windowDays: Int
+}
+
+input HomeWidgetInput {
+  config: HomeWidgetConfigInput
+  h: Int!
+  id: String!
+  key: String!
+  title: String
+  w: Int!
+}
+
+type HomeWidgetOption {
+  analyticsInclude: String
+  category: String!
+  configKind: String!
+  defaultH: Int!
+  defaultW: Int!
+  description: String!
+  key: String!
+  label: String!
+  maxH: Int!
+  maxW: Int!
+  minH: Int!
+  minW: Int!
+}
+
 type HosCertificationSummary {
   totalDays: Int!
   uncertifiedDays: Int!
@@ -3595,6 +3730,7 @@ type Mutation {
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createInvoiceFromOrder(orderId: ID!): Invoice!
   createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
   """
@@ -3624,6 +3760,7 @@ type Mutation {
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
+  deleteHomeLayoutPreset(id: ID!): Boolean!
   deleteReportDashboard(id: ID!): Boolean!
   deleteReportDefinition(id: ID!): Boolean!
   deleteReportSchedule(id: ID!): Boolean!
@@ -3699,6 +3836,7 @@ type Mutation {
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   resetCannedFork(id: ID!): ReportDefinition!
+  resetHomeLayout: HomeLayout!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   """
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
@@ -3744,6 +3882,8 @@ type Mutation {
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
   updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
+  updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   """
   Updates the signed-in driver's own contact details (phone, address,
   emergency contact). Compliance fields are carrier-controlled.
@@ -4641,6 +4781,15 @@ type Query {
   hazmatSegregationRules(input: DataTableConnectionInput!): HazmatSegregationRuleConnection!
   holdReason(id: ID!): HoldReason
   holdReasons(input: DataTableConnectionInput!): HoldReasonConnection!
+  homeLayout: HomeLayout!
+  homeLayoutPreset(id: ID!): HomeLayoutPreset!
+  homeLayoutPresets: [HomeLayoutPreset!]!
+  """
+  Renders a preset, or whatever a member of the given role would resolve to,
+  without saving anything.
+  """
+  homeLayoutPreview(presetId: ID, roleId: ID): HomeLayout!
+  homeWidgetCatalog: HomeWidgetCatalog!
   hosCertificationSummary(endDate: String!, startDate: String!): [HosCertificationSummary!]!
   invoice(id: ID!): Invoice
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
@@ -5596,6 +5745,17 @@ type SCIMGroupRoleMappingConnection {
 type SCIMGroupRoleMappingEdge {
   cursor: String!
   node: SCIMGroupRoleMapping!
+}
+
+input SaveHomeLayoutPresetInput {
+  coreResponsibility: String
+  description: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  name: String!
+  priority: Int!
+  roleIds: [ID!]
+  widgets: [HomeWidgetInput!]!
 }
 
 input SaveReportDashboardInput {
@@ -7698,6 +7858,19 @@ input UpdateFuelIndexPriceInput {
   id: ID!
   price: String!
   priceDate: String!
+}
+
+input UpdateHomeLayoutPresetInput {
+  coreResponsibility: String
+  description: String
+  id: ID!
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  name: String!
+  priority: Int!
+  roleIds: [ID!]
+  version: Int!
+  widgets: [HomeWidgetInput!]!
 }
 
 input UpdateMyContactInfoInput {

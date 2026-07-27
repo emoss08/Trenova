@@ -1,6 +1,6 @@
 {
-  "operationCount": 338,
-  "fragmentCount": 103,
+  "operationCount": 348,
+  "fragmentCount": 106,
   "operations": [
     {
       "name": "AccessorialChargeTable",
@@ -1225,6 +1225,29 @@
       "sdl": "mutation CreateFuelSurchargeProgram($input: FuelSurchargeProgramInput!) {\n  createFuelSurchargeProgram(input: $input) {\n    id\n    name\n    code\n  }\n}"
     },
     {
+      "name": "CreateHomeLayoutPreset",
+      "kind": "mutation",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/mutations.graphql",
+      "hash": "sha256:d75d1fcd085631b841bf464bf9004ea6eaa56436b8ddc03ddda5d7dd85d5e7b1",
+      "rootFields": [
+        "createHomeLayoutPreset"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SaveHomeLayoutPresetInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "HomeLayoutPresetFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateHomeLayoutPreset($input: SaveHomeLayoutPresetInput!) {\n  createHomeLayoutPreset(input: $input) {\n    ...HomeLayoutPresetFields\n  }\n}\n\nfragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
       "name": "CreateInvoiceFromOrder",
       "kind": "mutation",
       "domain": "order",
@@ -1780,6 +1803,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation DeleteFuelSurchargeProgram($id: ID!) {\n  deleteFuelSurchargeProgram(id: $id)\n}"
+    },
+    {
+      "name": "DeleteHomeLayoutPreset",
+      "kind": "mutation",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/mutations.graphql",
+      "hash": "sha256:9e1e4363c27b26dfa7a016bf82fa31f1b06ede585f4e79943094ddd3610b973d",
+      "rootFields": [
+        "deleteHomeLayoutPreset"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteHomeLayoutPreset($id: ID!) {\n  deleteHomeLayoutPreset(id: $id)\n}"
     },
     {
       "name": "DeleteReportDashboard",
@@ -3151,6 +3194,105 @@
       ],
       "usages": [],
       "sdl": "query HoldReasonTable($input: DataTableConnectionInput!) {\n  holdReasons(input: $input) {\n    edges {\n      node {\n        ...HoldReasonTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment HoldReasonTableRowFields on HoldReason {\n  id\n  businessUnitId\n  organizationId\n  type\n  code\n  label\n  description\n  active\n  defaultSeverity\n  defaultBlocksDispatch\n  defaultBlocksDelivery\n  defaultBlocksBilling\n  defaultVisibleToCustomer\n  sortOrder\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "HomeLayout",
+      "kind": "query",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/queries.graphql",
+      "hash": "sha256:54555d91b387c7e74269ce62063e35106cd2b8291936c35a3d0642268410856f",
+      "rootFields": [
+        "homeLayout"
+      ],
+      "variables": [],
+      "fragments": [
+        "HomeLayoutFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "query HomeLayout {\n  homeLayout {\n    ...HomeLayoutFields\n  }\n}\n\nfragment HomeLayoutFields on HomeLayout {\n  schemaVersion\n  version\n  source\n  presetId\n  presetName\n  locked\n  canCustomize\n  density\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "HomeLayoutPreset",
+      "kind": "query",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/queries.graphql",
+      "hash": "sha256:6ab7e3b94462884c03c1835ebff74e5d06d7f94b1ae69512da5254714985fe63",
+      "rootFields": [
+        "homeLayoutPreset"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "HomeLayoutPresetFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "query HomeLayoutPreset($id: ID!) {\n  homeLayoutPreset(id: $id) {\n    ...HomeLayoutPresetFields\n  }\n}\n\nfragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "HomeLayoutPresets",
+      "kind": "query",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/queries.graphql",
+      "hash": "sha256:4e593b5900c91c160d041d71d66f1246ed5f1962ead7fe0e6f4f217c00427400",
+      "rootFields": [
+        "homeLayoutPresets"
+      ],
+      "variables": [],
+      "fragments": [
+        "HomeLayoutPresetFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "query HomeLayoutPresets {\n  homeLayoutPresets {\n    ...HomeLayoutPresetFields\n  }\n}\n\nfragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "HomeLayoutPreview",
+      "kind": "query",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/queries.graphql",
+      "hash": "sha256:1cf255a093a992d50b4a00e4b558a23190b43df72bb4ff298821a5b9180946df",
+      "rootFields": [
+        "homeLayoutPreview"
+      ],
+      "variables": [
+        {
+          "name": "presetId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "roleId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "HomeLayoutFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "query HomeLayoutPreview($presetId: ID, $roleId: ID) {\n  homeLayoutPreview(presetId: $presetId, roleId: $roleId) {\n    ...HomeLayoutFields\n  }\n}\n\nfragment HomeLayoutFields on HomeLayout {\n  schemaVersion\n  version\n  source\n  presetId\n  presetName\n  locked\n  canCustomize\n  density\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "HomeWidgetCatalog",
+      "kind": "query",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/queries.graphql",
+      "hash": "sha256:5e16e534f1d96c3cb75fff356ae936c19faf5985d49593b3d59491d02b777ba7",
+      "rootFields": [
+        "homeWidgetCatalog"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query HomeWidgetCatalog {\n  homeWidgetCatalog {\n    gridColumns\n    maxWidgets\n    densities\n    categories {\n      key\n      label\n      description\n    }\n    metrics {\n      key\n      label\n    }\n    widgets {\n      key\n      label\n      description\n      category\n      configKind\n      analyticsInclude\n      defaultW\n      defaultH\n      minW\n      minH\n      maxW\n      maxH\n    }\n  }\n}"
     },
     {
       "name": "HosCertificationSummary",
@@ -4983,6 +5125,23 @@
       "sdl": "mutation ResetCannedFork($id: ID!) {\n  resetCannedFork(id: $id) {\n    ...ReportDefinitionFields\n  }\n}\n\nfragment ReportDefinitionFields on ReportDefinition {\n  id\n  name\n  description\n  category\n  tags\n  kind\n  cannedKey\n  cannedVersion\n  ownerId\n  visibility\n  status\n  diagnostics\n  catalogVersion\n  definition\n  defaultFormat\n  currentRevision\n  lastRunAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ResetHomeLayout",
+      "kind": "mutation",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/mutations.graphql",
+      "hash": "sha256:77165d1c06d424dbbedcb1c0e1c9ef91913e538faac9d5a11d24a9d5668cf3ed",
+      "rootFields": [
+        "resetHomeLayout"
+      ],
+      "variables": [],
+      "fragments": [
+        "HomeLayoutFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ResetHomeLayout {\n  resetHomeLayout {\n    ...HomeLayoutFields\n  }\n}\n\nfragment HomeLayoutFields on HomeLayout {\n  schemaVersion\n  version\n  source\n  presetId\n  presetName\n  locked\n  canCustomize\n  density\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
       "name": "ResolveAgentException",
       "kind": "mutation",
       "domain": "agent",
@@ -6606,6 +6765,52 @@
       "sdl": "mutation UpdateFuelSurchargeProgram($id: ID!, $input: FuelSurchargeProgramInput!) {\n  updateFuelSurchargeProgram(id: $id, input: $input) {\n    id\n    name\n    code\n  }\n}"
     },
     {
+      "name": "UpdateHomeLayout",
+      "kind": "mutation",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/mutations.graphql",
+      "hash": "sha256:d5c57c1e547d5c9b9a1b393c73fa835c9cab7da77e8bd9d4f070a55faa37d430",
+      "rootFields": [
+        "updateHomeLayout"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "HomeLayoutInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "HomeLayoutFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateHomeLayout($input: HomeLayoutInput!) {\n  updateHomeLayout(input: $input) {\n    ...HomeLayoutFields\n  }\n}\n\nfragment HomeLayoutFields on HomeLayout {\n  schemaVersion\n  version\n  source\n  presetId\n  presetName\n  locked\n  canCustomize\n  density\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "UpdateHomeLayoutPreset",
+      "kind": "mutation",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/mutations.graphql",
+      "hash": "sha256:305586d1cca594b06d305d8f7f79580a7ec087a587014916f98e3c5f7239d2f9",
+      "rootFields": [
+        "updateHomeLayoutPreset"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateHomeLayoutPresetInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "HomeLayoutPresetFields",
+        "HomeWidgetFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateHomeLayoutPreset($input: UpdateHomeLayoutPresetInput!) {\n  updateHomeLayoutPreset(input: $input) {\n    ...HomeLayoutPresetFields\n  }\n}\n\nfragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
       "name": "UpdateMyContactInfo",
       "kind": "mutation",
       "domain": "driver-portal",
@@ -8120,6 +8325,59 @@
       ],
       "usages": [],
       "sdl": "fragment HoldReasonTableRowFields on HoldReason {\n  id\n  businessUnitId\n  organizationId\n  type\n  code\n  label\n  description\n  active\n  defaultSeverity\n  defaultBlocksDispatch\n  defaultBlocksDelivery\n  defaultBlocksBilling\n  defaultVisibleToCustomer\n  sortOrder\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "HomeLayoutFields",
+      "typeCondition": "HomeLayout",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/fragments.graphql",
+      "fragments": [
+        "HomeWidgetFields"
+      ],
+      "usedByOperations": [
+        "HomeLayout",
+        "HomeLayoutPreview",
+        "ResetHomeLayout",
+        "UpdateHomeLayout"
+      ],
+      "usages": [],
+      "sdl": "fragment HomeLayoutFields on HomeLayout {\n  schemaVersion\n  version\n  source\n  presetId\n  presetName\n  locked\n  canCustomize\n  density\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "HomeLayoutPresetFields",
+      "typeCondition": "HomeLayoutPreset",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/fragments.graphql",
+      "fragments": [
+        "HomeWidgetFields"
+      ],
+      "usedByOperations": [
+        "CreateHomeLayoutPreset",
+        "HomeLayoutPreset",
+        "HomeLayoutPresets",
+        "UpdateHomeLayoutPreset"
+      ],
+      "usages": [],
+      "sdl": "fragment HomeLayoutPresetFields on HomeLayoutPreset {\n  id\n  name\n  description\n  roleIds\n  coreResponsibility\n  isOrgDefault\n  locked\n  priority\n  assignedUserCount\n  version\n  createdAt\n  updatedAt\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
+    },
+    {
+      "name": "HomeWidgetFields",
+      "typeCondition": "HomeWidget",
+      "domain": "home-layout",
+      "sourceFile": "src/operations/home-layout/fragments.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateHomeLayoutPreset",
+        "HomeLayout",
+        "HomeLayoutPreset",
+        "HomeLayoutPresets",
+        "HomeLayoutPreview",
+        "ResetHomeLayout",
+        "UpdateHomeLayout",
+        "UpdateHomeLayoutPreset"
+      ],
+      "usages": [],
+      "sdl": "fragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
     },
     {
       "name": "InvoiceTableRowFields",
@@ -10281,6 +10539,32 @@
       ],
       "sdl": "input HoldPayEventInput {\n  payEventId: ID!\n  \"\"\"Why pay is being deferred — shown to whoever reviews the held event.\"\"\"\n  reason: String!\n}"
     },
+    "HomeLayoutInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "customized",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "density",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "widgets",
+          "type": "[HomeWidgetInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input HomeLayoutInput {\n  \"\"\"\n  When false the viewer follows their assigned preset and widgets is ignored.\n  \"\"\"\n  customized: Boolean!\n  density: String!\n  version: Int!\n  widgets: [HomeWidgetInput!]!\n}"
+    },
     "InviteWorkerToPortalInput": {
       "kind": "input",
       "fields": [
@@ -10944,6 +11228,52 @@
         }
       ],
       "sdl": "input RunReportInput {\n  cannedKey: String\n  definitionId: ID\n  format: String!\n  params: JSON\n  viewId: ID\n}"
+    },
+    "SaveHomeLayoutPresetInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "coreResponsibility",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "isOrgDefault",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "locked",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "priority",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "roleIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "widgets",
+          "type": "[HomeWidgetInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SaveHomeLayoutPresetInput {\n  coreResponsibility: String\n  description: String\n  isOrgDefault: Boolean!\n  locked: Boolean!\n  name: String!\n  priority: Int!\n  roleIds: [ID!]\n  widgets: [HomeWidgetInput!]!\n}"
     },
     "SaveReportDashboardInput": {
       "kind": "input",
@@ -11994,6 +12324,62 @@
         }
       ],
       "sdl": "input UpdateFuelIndexPriceInput {\n  id: ID!\n  price: String!\n  priceDate: String!\n}"
+    },
+    "UpdateHomeLayoutPresetInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "coreResponsibility",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "isOrgDefault",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "locked",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "priority",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "roleIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "widgets",
+          "type": "[HomeWidgetInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateHomeLayoutPresetInput {\n  coreResponsibility: String\n  description: String\n  id: ID!\n  isOrgDefault: Boolean!\n  locked: Boolean!\n  name: String!\n  priority: Int!\n  roleIds: [ID!]\n  version: Int!\n  widgets: [HomeWidgetInput!]!\n}"
     },
     "UpdateMyContactInfoInput": {
       "kind": "input",
@@ -13125,6 +13511,42 @@
       ],
       "sdl": "input FuelSurchargeTableRowInput {\n  priceMax: String\n  priceMin: String\n  sortOrder: Int\n  value: String!\n}"
     },
+    "HomeWidgetInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "config",
+          "type": "HomeWidgetConfigInput",
+          "defaultValue": null
+        },
+        {
+          "name": "h",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "key",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "w",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input HomeWidgetInput {\n  config: HomeWidgetConfigInput\n  h: Int!\n  id: String!\n  key: String!\n  title: String\n  w: Int!\n}"
+    },
     "PayAdvanceSource": {
       "kind": "enum",
       "values": [
@@ -14079,6 +14501,62 @@
     "Any": {
       "kind": "scalar",
       "sdl": "scalar Any"
+    },
+    "HomeWidgetConfigInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "cannedKey",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "chartId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "columnId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "dashboardId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "definitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "metric",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "metrics",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "windowDays",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input HomeWidgetConfigInput {\n  cannedKey: String\n  chartId: String\n  columnId: String\n  dashboardId: ID\n  definitionId: ID\n  limit: Int\n  metric: String\n  metrics: [String!]\n  text: String\n  windowDays: Int\n}"
     },
     "ReportChartGoalInput": {
       "kind": "input",

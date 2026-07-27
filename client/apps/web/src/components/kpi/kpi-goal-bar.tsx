@@ -16,6 +16,7 @@ type KpiGoalBarProps = {
   icon?: React.ReactNode;
   info?: React.ReactNode;
   span?: 2 | 3;
+  className?: string;
 };
 
 export function KpiGoalBar({
@@ -32,6 +33,7 @@ export function KpiGoalBar({
   icon,
   info,
   span = 2,
+  className,
 }: KpiGoalBarProps) {
   const actualPct = Math.min(100, Math.max(0, (actual / max) * 100));
   const targetPct = Math.min(100, Math.max(0, (target / max) * 100));
@@ -39,7 +41,7 @@ export function KpiGoalBar({
   const fillColor = onGoal ? "var(--success)" : "var(--warning)";
 
   return (
-    <KpiCard span={span}>
+    <KpiCard span={span} className={className}>
       <KpiHeader
         icon={icon}
         label={label}
