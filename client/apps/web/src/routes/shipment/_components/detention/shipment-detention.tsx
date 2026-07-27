@@ -10,33 +10,18 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatDetentionMinutes, SCORE_BAND_STYLES } from "@trenova/shared/lib/detention";
+import {
+  formatDetentionMinutes,
+  OCCURRENCE_STATUS_STYLES,
+  SCORE_BAND_STYLES,
+  scoreBand,
+} from "@trenova/shared/lib/detention";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import type {
-  DetentionOccurrence,
-  OccurrenceStatus,
-} from "@trenova/shared/types/detention";
+import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, TimerIcon } from "lucide-react";
 import { useFormContext, useWatch } from "react-hook-form";
-
-const STATUS_STYLES: Record<OccurrenceStatus, string> = {
-  Accruing: "bg-red-500/15 text-red-700 dark:text-red-400",
-  Pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  Approved: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  Billed: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
-  Waived: "bg-muted text-muted-foreground",
-  Disputed: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
-  NotBillable: "bg-muted text-muted-foreground",
-};
-
-function bandForScore(score: number) {
-  if (score >= 85) return "Strong" as const;
-  if (score >= 65) return "Adequate" as const;
-  if (score >= 40) return "Weak" as const;
-  return "AtRisk" as const;
-}
 
 function OccurrenceRow({ occurrence }: { occurrence: DetentionOccurrence }) {
   const snapshot = occurrence.policySnapshot;
@@ -46,7 +31,7 @@ function OccurrenceRow({ occurrence }: { occurrence: DetentionOccurrence }) {
       <div className="flex items-start justify-between gap-3 p-3">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge className={cn("border-none", STATUS_STYLES[occurrence.status])}>
+            <Badge className={cn("border-none", OCCURRENCE_STATUS_STYLES[occurrence.status])}>
               {occurrence.status}
             </Badge>
             <span className="text-sm font-medium">{occurrence.stopType}</span>
@@ -100,7 +85,7 @@ function OccurrenceRow({ occurrence }: { occurrence: DetentionOccurrence }) {
             <Badge
               className={cn(
                 "border-none text-[10px]",
-                SCORE_BAND_STYLES[bandForScore(occurrence.collectabilityScore)],
+                SCORE_BAND_STYLES[scoreBand(occurrence.collectabilityScore)],
               )}
             >
               {occurrence.collectabilityScore}/100

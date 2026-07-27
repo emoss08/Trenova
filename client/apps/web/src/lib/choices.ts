@@ -1785,6 +1785,93 @@ export const settlementDisputeCategoryChoices = [
   },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
+export const detentionPolicyStatusChoices = [
+  { label: "Active", value: "Active", color: "#15803d" },
+  { label: "Draft", value: "Draft", color: "#7e22ce" },
+  { label: "Inactive", value: "Inactive", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionClockStartBasisChoices = [
+  { label: "Later of arrival or appointment", value: "LaterOfArrivalOrAppointment" },
+  { label: "Actual arrival", value: "Arrival" },
+  { label: "Appointment, regardless of arrival", value: "Appointment" },
+  { label: "Earlier of arrival or appointment", value: "EarlierOfArrivalOrAppointment" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionLateArrivalRuleChoices = [
+  { label: "No effect on entitlement", value: "NoEffect" },
+  { label: "Forfeit detention entirely", value: "Forfeit" },
+  { label: "Anchor the clock to the appointment", value: "ClockFromAppointment" },
+  { label: "Subtract lateness from free time", value: "ReduceFreeTime" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionRoundingModeChoices = [
+  { label: "Round up", value: "Up" },
+  { label: "Round down", value: "Down" },
+  { label: "Round to nearest", value: "Nearest" },
+  { label: "Bill exact minutes", value: "Exact" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionRateSourceChoices = [
+  { label: "Flat accessorial rate", value: "Accessorial" },
+  { label: "Graduated tiers", value: "Tiers" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionNotificationRequirementChoices = [
+  { label: "No notice required", value: "None" },
+  { label: "Advisory only", value: "Advisory" },
+  { label: "Required to bill", value: "Required" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionUnnotifiedBehaviorChoices = [
+  { label: "Bill anyway", value: "Bill" },
+  { label: "Hold for review", value: "Flag" },
+  { label: "Suppress the charge", value: "Suppress" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const detentionWaiverReasonChoices = [
+  {
+    label: "Weather",
+    value: "Weather",
+    description: "Weather kept the facility from working the truck.",
+  },
+  {
+    label: "Facility Closure",
+    value: "FacilityClosure",
+    description: "The facility was closed or unable to receive during the stay.",
+  },
+  {
+    label: "Carrier Fault",
+    value: "CarrierFault",
+    description: "Our own error caused the delay, so the charge is not defensible.",
+  },
+  {
+    label: "Equipment Issue",
+    value: "EquipmentIssue",
+    description: "An equipment problem on our side extended the dwell.",
+  },
+  {
+    label: "Customer Goodwill",
+    value: "CustomerGoodwill",
+    description: "A commercial concession to preserve the relationship.",
+  },
+  {
+    label: "Data Correction",
+    value: "DataCorrection",
+    description: "The underlying timestamps were wrong; the charge should not stand.",
+  },
+  {
+    label: "Force Majeure",
+    value: "ForceMajeure",
+    description: "An event outside anyone's control caused the detention.",
+  },
+  {
+    label: "Other",
+    value: "Other",
+    description: "Anything else — explain it in the note.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
 export const weekdayChoices = [
   { label: "Sunday", value: 0 },
   { label: "Monday", value: 1 },

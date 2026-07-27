@@ -32,4 +32,8 @@ export const detention = createQueryKeys("detention", {
     queryKey: ["disputePacket", id],
     queryFn: async () => apiService.detentionService.disputePacket(id),
   }),
+  policyById: (id: string) => ({
+    queryKey: ["policyById", id],
+    queryFn: async () => apiService.detentionPolicyService.getById(id),
+  }),
 });

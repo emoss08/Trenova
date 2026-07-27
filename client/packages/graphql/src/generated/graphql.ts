@@ -440,6 +440,237 @@ export type DetachPayEventInput = {
   settlementId: string | number;
 };
 
+export type DetentionBacktestInput = {
+  assumeNoticeCompliance?: boolean | null | undefined;
+  driverPayRate?: string | null | undefined;
+  from: number;
+  limit?: number | null | undefined;
+  policy: DetentionPolicyInput;
+  to: number;
+};
+
+export type DetentionCapKind =
+  | 'LayoverBoundary'
+  | 'MaxBillableMinutes'
+  | 'MaxChargePerDay'
+  | 'MaxChargePerShipment'
+  | 'MaxChargePerStop'
+  | 'None';
+
+export type DetentionCapScope =
+  | 'PerDay'
+  | 'PerShipment'
+  | 'PerStop';
+
+export type DetentionClockStartBasis =
+  | 'Appointment'
+  | 'Arrival'
+  | 'EarlierOfArrivalOrAppointment'
+  | 'LaterOfArrivalOrAppointment';
+
+export type DetentionDeskUrgency =
+  | 'Accruing'
+  | 'FreeTimeEnding'
+  | 'Lost'
+  | 'Normal'
+  | 'NoticeDueSoon'
+  | 'NoticeOverdue';
+
+export type DetentionDisputeInput = {
+  note: string;
+  occurrenceId: string | number;
+};
+
+export type DetentionEvidenceKind =
+  | 'Appointment'
+  | 'Arrival'
+  | 'Departure'
+  | 'Dispute'
+  | 'Document'
+  | 'Notice'
+  | 'Recalculated'
+  | 'StatusChange'
+  | 'Waiver';
+
+export type DetentionEvidenceSource =
+  | 'Document'
+  | 'DriverApp'
+  | 'EDI'
+  | 'Geofence'
+  | 'Manual'
+  | 'System'
+  | 'Telematics';
+
+export type DetentionLateArrivalRule =
+  | 'ClockFromAppointment'
+  | 'Forfeit'
+  | 'NoEffect'
+  | 'ReduceFreeTime';
+
+export type DetentionNoticeChannel =
+  | 'EDI'
+  | 'Email'
+  | 'Manual'
+  | 'Portal';
+
+export type DetentionNoticeDeliveryStatus =
+  | 'Bounced'
+  | 'Delivered'
+  | 'Failed'
+  | 'Opened'
+  | 'Queued'
+  | 'Sent';
+
+export type DetentionNoticeKind =
+  | 'Final'
+  | 'Started'
+  | 'Update'
+  | 'Warning';
+
+export type DetentionNotificationRequirement =
+  | 'Advisory'
+  | 'None'
+  | 'Required';
+
+export type DetentionNotificationStatus =
+  | 'Failed'
+  | 'Late'
+  | 'Missed'
+  | 'NotRequired'
+  | 'Pending'
+  | 'Sent';
+
+export type DetentionOccurrenceStatus =
+  | 'Accruing'
+  | 'Approved'
+  | 'Billed'
+  | 'Disputed'
+  | 'NotBillable'
+  | 'Pending'
+  | 'Waived';
+
+export type DetentionPolicyInput = {
+  accessorialChargeId: string | number;
+  appointmentStopsOnly?: boolean | null | undefined;
+  autoApproveUnderAmount?: string | null | undefined;
+  autoSendNotice?: boolean | null | undefined;
+  billingFreeMinutes?: number | null | undefined;
+  billingIncrementMinutes?: number | null | undefined;
+  clockStartBasis?: DetentionClockStartBasis | null | undefined;
+  code: string;
+  comments?: string | null | undefined;
+  commodityIds?: Array<string | number> | null | undefined;
+  convertToLayoverAtMinutes?: number | null | undefined;
+  currency?: string | null | undefined;
+  customerId?: string | number | null | undefined;
+  dayBoundaryMode?: DetentionCapScope | null | undefined;
+  deliveryFreeMinutes?: number | null | undefined;
+  description?: string | null | undefined;
+  effectiveEndDate?: number | null | undefined;
+  effectiveStartDate?: number | null | undefined;
+  isOrgDefault?: boolean | null | undefined;
+  lateArrivalGraceMinutes?: number | null | undefined;
+  lateArrivalRule?: DetentionLateArrivalRule | null | undefined;
+  layoverAccessorialChargeId?: string | number | null | undefined;
+  locationId?: string | number | null | undefined;
+  maxBillableMinutesPerStop?: number | null | undefined;
+  maxChargePerDay?: string | null | undefined;
+  maxChargePerShipment?: string | null | undefined;
+  maxChargePerStop?: string | null | undefined;
+  minimumBillableMinutes?: number | null | undefined;
+  name: string;
+  notificationDeadlineMinutes?: number | null | undefined;
+  notificationLeadMinutes?: number | null | undefined;
+  notificationRequirement?: DetentionNotificationRequirement | null | undefined;
+  payFreeMinutes?: number | null | undefined;
+  pickupFreeMinutes?: number | null | undefined;
+  priority?: number | null | undefined;
+  rateSource?: DetentionRateSource | null | undefined;
+  requireApprovalOverAmount?: string | null | undefined;
+  roundingMode?: DetentionRoundingMode | null | undefined;
+  sendDepartureSummary?: boolean | null | undefined;
+  serviceTypeIds?: Array<string | number> | null | undefined;
+  shipmentTypeIds?: Array<string | number> | null | undefined;
+  status?: DetentionPolicyStatus | null | undefined;
+  stopTypes?: Array<StopType> | null | undefined;
+  tiers?: Array<DetentionTierInput> | null | undefined;
+  unnotifiedBehavior?: DetentionUnnotifiedBehavior | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type DetentionPolicyStatus =
+  | 'Active'
+  | 'Draft'
+  | 'Inactive';
+
+export type DetentionPreviewScenarioInput = {
+  appointmentEnd?: number | null | undefined;
+  appointmentStart?: number | null | undefined;
+  arrivedAt: number;
+  departedAt?: number | null | undefined;
+  driverPayRate?: string | null | undefined;
+  noticeSentAt?: number | null | undefined;
+  scheduleType: StopScheduleType;
+  stopType: StopType;
+};
+
+export type DetentionRateSource =
+  | 'Accessorial'
+  | 'Tiers';
+
+export type DetentionRoundingMode =
+  | 'Down'
+  | 'Exact'
+  | 'Nearest'
+  | 'Up';
+
+export type DetentionScoreBand =
+  | 'Adequate'
+  | 'AtRisk'
+  | 'Strong'
+  | 'Weak';
+
+export type DetentionStatsInput = {
+  from: number;
+  limit?: number | null | undefined;
+  to: number;
+};
+
+export type DetentionTierInput = {
+  fromMinute: number;
+  label?: string | null | undefined;
+  rate: string;
+  rateUnit?: DetentionTierRateUnit | null | undefined;
+  sortOrder?: number | null | undefined;
+  toMinute?: number | null | undefined;
+};
+
+export type DetentionTierRateUnit =
+  | 'Day'
+  | 'Flat'
+  | 'Hour';
+
+export type DetentionUnnotifiedBehavior =
+  | 'Bill'
+  | 'Flag'
+  | 'Suppress';
+
+export type DetentionWaiveInput = {
+  note: string;
+  occurrenceId: string | number;
+  reason: DetentionWaiverReason;
+};
+
+export type DetentionWaiverReason =
+  | 'CarrierFault'
+  | 'CustomerGoodwill'
+  | 'DataCorrection'
+  | 'EquipmentIssue'
+  | 'FacilityClosure'
+  | 'ForceMajeure'
+  | 'Other'
+  | 'Weather';
+
 export type DispatchAssignMoveInput = {
   moveId: string | number;
   primaryWorkerId: string | number;
@@ -2692,6 +2923,144 @@ export type CustomerTableQueryVariables = Exact<{
 
 
 export type CustomerTableQuery = { customers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomerTableRowFieldsFragment': CustomerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DetentionFacilityStatsQueryVariables = Exact<{
+  input: DetentionStatsInput;
+}>;
+
+
+export type DetentionFacilityStatsQuery = { detentionFacilityStats: Array<{ locationId: string, locationName: string, stopCount: number, breachCount: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, billedAmount: string, driverPayAmount: string, netMargin: string, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
+
+export type DetentionCustomerStatsQueryVariables = Exact<{
+  input: DetentionStatsInput;
+}>;
+
+
+export type DetentionCustomerStatsQuery = { detentionCustomerStats: Array<{ customerId: string, customerName: string, stopCount: number, breachCount: number, billedAmount: string, driverPayAmount: string, netMargin: string, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
+
+export type DetentionWaiverStatsQueryVariables = Exact<{
+  input: DetentionStatsInput;
+}>;
+
+
+export type DetentionWaiverStatsQuery = { detentionWaiverStats: Array<{ reason: string, waiverCount: number, approverCount: number, waivedAmount: string }> };
+
+export type DetentionPolicyPreviewQueryVariables = Exact<{
+  policy: DetentionPolicyInput;
+  scenario: DetentionPreviewScenarioInput;
+}>;
+
+
+export type DetentionPolicyPreviewQuery = { detentionPolicyPreview: { policySnapshot: unknown, rawDwellMinutes: number, freeMinutesGranted: number, billableMinutes: number, roundedMinutes: number, billableAmount: string, grossAmount: string, driverPayAmount: string, netMargin: string, arrivedLate: boolean, capApplied: DetentionCapKind, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, suppressedByGate: boolean, calculationTrace: unknown, receipt: string } };
+
+export type DetentionBacktestMutationVariables = Exact<{
+  input: DetentionBacktestInput;
+}>;
+
+
+export type DetentionBacktestMutation = { detentionBacktest: { stopsEvaluated: number, stopsMatched: number, stopsBillable: number, stopsForfeited: number, stopsSuppressed: number, proposedRevenue: string, baselineRevenue: string, revenueDelta: string, proposedDriverPay: string, proposedNetMargin: string, negativeMarginStops: number, from: number, to: number, truncated: boolean, byCustomer: Array<{ key: string, label: string, stopCount: number, billableCount: number, proposedAmount: string, baselineAmount: string, delta: string, driverPayAmount: string, netMargin: string }>, byFacility: Array<{ key: string, label: string, stopCount: number, billableCount: number, proposedAmount: string, baselineAmount: string, delta: string, driverPayAmount: string, netMargin: string }> } };
+
+export type DetentionOccurrenceFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string, shipmentMoveId: string, stopId: string, customerId: string, locationId: string, detentionPolicyId: string | null, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableUnits: string, grossAmount: string, billableAmount: string, driverPayMinutes: number, driverPayAmount: string, netMargin: string, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, collectabilityScore: number, evidenceHead: string, additionalChargeId: string | null, locationName: string, customerName: string, shipmentProNumber: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DetentionOccurrenceFieldsFragment' };
+
+export type DetentionEvidenceFieldsFragment = { id: string, detentionOccurrenceId: string, sequence: number, kind: DetentionEvidenceKind, source: DetentionEvidenceSource, summary: string, observedAt: number, recordedAt: number, recordedById: string | null, documentId: string | null, payload: unknown, prevHash: string, hash: string, createdAt: number } & { ' $fragmentName'?: 'DetentionEvidenceFieldsFragment' };
+
+export type DetentionNoticeFieldsFragment = { id: string, detentionOccurrenceId: string, threadKey: string, kind: DetentionNoticeKind, channel: DetentionNoticeChannel, deliveryStatus: DetentionNoticeDeliveryStatus, recipients: Array<string> | null, subject: string, body: string, scheduledFor: number, sentAt: number | null, deliveredAt: number | null, openedAt: number | null, failedAt: number | null, failureReason: string, sentById: string | null, wasAutomatic: boolean, satisfiesRequirement: boolean, quotedFreeMinutes: number, quotedRate: string | null, quotedAmount: string | null, createdAt: number } & { ' $fragmentName'?: 'DetentionNoticeFieldsFragment' };
+
+export type DetentionCollectabilityFieldsFragment = { score: number, band: DetentionScoreBand, chainValid: boolean, summary: string, factors: Array<{ key: string, label: string, earned: number, possible: number, detail: string, remedy: string }> } & { ' $fragmentName'?: 'DetentionCollectabilityFieldsFragment' };
+
+export type DetentionDeskQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DetentionDeskQuery = { detentionDesk: Array<{ minutesUntilFreeEnds: number, minutesUntilNoticeDue: number | null, noticeWindowOpen: boolean, amountAtRisk: string, urgency: DetentionDeskUrgency, occurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } } }> };
+
+export type DetentionOccurrenceDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DetentionOccurrenceDetailQuery = { detentionOccurrence: { receipt: string, occurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } }, evidence: Array<{ ' $fragmentRefs'?: { 'DetentionEvidenceFieldsFragment': DetentionEvidenceFieldsFragment } }> | null, notices: Array<{ ' $fragmentRefs'?: { 'DetentionNoticeFieldsFragment': DetentionNoticeFieldsFragment } }> | null, collectability: { ' $fragmentRefs'?: { 'DetentionCollectabilityFieldsFragment': DetentionCollectabilityFieldsFragment } } } };
+
+export type ShipmentDetentionQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type ShipmentDetentionQuery = { shipmentDetention: Array<{ ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } }> };
+
+export type DetentionDisputePacketQueryVariables = Exact<{
+  occurrenceId: string | number;
+}>;
+
+
+export type DetentionDisputePacketQuery = { detentionDisputePacket: { policySnapshot: unknown, receipt: string, generatedAt: number, occurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } }, evidence: Array<{ ' $fragmentRefs'?: { 'DetentionEvidenceFieldsFragment': DetentionEvidenceFieldsFragment } }> | null, notices: Array<{ ' $fragmentRefs'?: { 'DetentionNoticeFieldsFragment': DetentionNoticeFieldsFragment } }> | null, collectability: { ' $fragmentRefs'?: { 'DetentionCollectabilityFieldsFragment': DetentionCollectabilityFieldsFragment } } } };
+
+export type WaiveDetentionOccurrenceMutationVariables = Exact<{
+  input: DetentionWaiveInput;
+}>;
+
+
+export type WaiveDetentionOccurrenceMutation = { waiveDetentionOccurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } } };
+
+export type ApproveDetentionOccurrenceMutationVariables = Exact<{
+  occurrenceId: string | number;
+}>;
+
+
+export type ApproveDetentionOccurrenceMutation = { approveDetentionOccurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } } };
+
+export type DisputeDetentionOccurrenceMutationVariables = Exact<{
+  input: DetentionDisputeInput;
+}>;
+
+
+export type DisputeDetentionOccurrenceMutation = { disputeDetentionOccurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } } };
+
+export type SendDetentionNoticeMutationVariables = Exact<{
+  occurrenceId: string | number;
+}>;
+
+
+export type SendDetentionNoticeMutation = { sendDetentionNotice: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } } };
+
+export type DetentionPolicyTierFieldsFragment = { id: string | null, fromMinute: number, toMinute: number | null, rate: string, rateUnit: DetentionTierRateUnit, label: string, sortOrder: number } & { ' $fragmentName'?: 'DetentionPolicyTierFieldsFragment' };
+
+export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrgDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string> | null, serviceTypeIds: Array<string> | null, commodityIds: Array<string> | null, stopTypes: Array<StopType> | null, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> | null } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
+
+export type DetentionPolicyTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DetentionPolicyTableQuery = { detentionPolicies: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'DetentionPolicyRowFieldsFragment': DetentionPolicyRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DetentionPolicyQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DetentionPolicyQuery = { detentionPolicy: { ' $fragmentRefs'?: { 'DetentionPolicyRowFieldsFragment': DetentionPolicyRowFieldsFragment } } | null };
+
+export type CreateDetentionPolicyMutationVariables = Exact<{
+  input: DetentionPolicyInput;
+}>;
+
+
+export type CreateDetentionPolicyMutation = { createDetentionPolicy: { ' $fragmentRefs'?: { 'DetentionPolicyRowFieldsFragment': DetentionPolicyRowFieldsFragment } } };
+
+export type UpdateDetentionPolicyMutationVariables = Exact<{
+  id: string | number;
+  input: DetentionPolicyInput;
+}>;
+
+
+export type UpdateDetentionPolicyMutation = { updateDetentionPolicy: { ' $fragmentRefs'?: { 'DetentionPolicyRowFieldsFragment': DetentionPolicyRowFieldsFragment } } };
+
+export type DeleteDetentionPolicyMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteDetentionPolicyMutation = { deleteDetentionPolicy: boolean };
 
 export type DispatchBoardQueryVariables = Exact<{
   input: DispatchBoardInput;
@@ -5557,6 +5926,205 @@ fragment CustomerEmailProfileFields on CustomerEmailProfile {
   createdAt
   updatedAt
 }`, {"fragmentName":"CustomerTableRowFields"}) as unknown as TypedDocumentString<CustomerTableRowFieldsFragment, unknown>;
+export const DetentionOccurrenceFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"DetentionOccurrenceFields"}) as unknown as TypedDocumentString<DetentionOccurrenceFieldsFragment, unknown>;
+export const DetentionEvidenceFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DetentionEvidenceFields on DetentionEvidence {
+  id
+  detentionOccurrenceId
+  sequence
+  kind
+  source
+  summary
+  observedAt
+  recordedAt
+  recordedById
+  documentId
+  payload
+  prevHash
+  hash
+  createdAt
+}
+    `, {"fragmentName":"DetentionEvidenceFields"}) as unknown as TypedDocumentString<DetentionEvidenceFieldsFragment, unknown>;
+export const DetentionNoticeFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DetentionNoticeFields on DetentionNotice {
+  id
+  detentionOccurrenceId
+  threadKey
+  kind
+  channel
+  deliveryStatus
+  recipients
+  subject
+  body
+  scheduledFor
+  sentAt
+  deliveredAt
+  openedAt
+  failedAt
+  failureReason
+  sentById
+  wasAutomatic
+  satisfiesRequirement
+  quotedFreeMinutes
+  quotedRate
+  quotedAmount
+  createdAt
+}
+    `, {"fragmentName":"DetentionNoticeFields"}) as unknown as TypedDocumentString<DetentionNoticeFieldsFragment, unknown>;
+export const DetentionCollectabilityFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DetentionCollectabilityFields on DetentionCollectability {
+  score
+  band
+  chainValid
+  summary
+  factors {
+    key
+    label
+    earned
+    possible
+    detail
+    remedy
+  }
+}
+    `, {"fragmentName":"DetentionCollectabilityFields"}) as unknown as TypedDocumentString<DetentionCollectabilityFieldsFragment, unknown>;
+export const DetentionPolicyTierFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}
+    `, {"fragmentName":"DetentionPolicyTierFields"}) as unknown as TypedDocumentString<DetentionPolicyTierFieldsFragment, unknown>;
+export const DetentionPolicyRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment DetentionPolicyRowFields on DetentionPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isOrgDefault
+  priority
+  specificityScore
+  customerId
+  locationId
+  shipmentTypeIds
+  serviceTypeIds
+  commodityIds
+  stopTypes
+  appointmentStopsOnly
+  effectiveStartDate
+  effectiveEndDate
+  clockStartBasis
+  lateArrivalRule
+  lateArrivalGraceMinutes
+  billingFreeMinutes
+  pickupFreeMinutes
+  deliveryFreeMinutes
+  payFreeMinutes
+  minimumBillableMinutes
+  billingIncrementMinutes
+  roundingMode
+  rateSource
+  accessorialChargeId
+  tiers {
+    ...DetentionPolicyTierFields
+  }
+  maxBillableMinutesPerStop
+  maxChargePerStop
+  maxChargePerDay
+  maxChargePerShipment
+  dayBoundaryMode
+  convertToLayoverAtMinutes
+  layoverAccessorialChargeId
+  notificationRequirement
+  notificationLeadMinutes
+  notificationDeadlineMinutes
+  unnotifiedBehavior
+  autoSendNotice
+  sendDepartureSummary
+  requireApprovalOverAmount
+  autoApproveUnderAmount
+  currency
+  comments
+  version
+  createdAt
+  updatedAt
+}
+    fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}`, {"fragmentName":"DetentionPolicyRowFields"}) as unknown as TypedDocumentString<DetentionPolicyRowFieldsFragment, unknown>;
 export const DistanceOverrideLocationFieldsFragmentDoc = new TypedDocumentString(`
     fragment DistanceOverrideLocationFields on Location {
   id
@@ -9395,6 +9963,1085 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:e806c5ef7e06c26211a40d494eb2ba6db6e1ca2da88582d1a4c9496e61ee4200"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const DetentionFacilityStatsDocument = new TypedDocumentString(`
+    query DetentionFacilityStats($input: DetentionStatsInput!) {
+  detentionFacilityStats(input: $input) {
+    locationId
+    locationName
+    stopCount
+    breachCount
+    avgDwellMinutes
+    medianDwellMinutes
+    p90DwellMinutes
+    billedAmount
+    driverPayAmount
+    netMargin
+    waivedAmount
+    disputeCount
+    suppressedCount
+  }
+}
+    `, {"hash":"sha256:c7c1f1b8d0b5c5fa3dced842b3436b910f8525f3f3dc5992cd753d0e247a40c2"}) as unknown as TypedDocumentString<DetentionFacilityStatsQuery, DetentionFacilityStatsQueryVariables>;
+export const DetentionCustomerStatsDocument = new TypedDocumentString(`
+    query DetentionCustomerStats($input: DetentionStatsInput!) {
+  detentionCustomerStats(input: $input) {
+    customerId
+    customerName
+    stopCount
+    breachCount
+    billedAmount
+    driverPayAmount
+    netMargin
+    waivedAmount
+    disputeCount
+    suppressedCount
+  }
+}
+    `, {"hash":"sha256:188bf76366f9651b4c37387fa0792d2ba42578a237866a2bbfa3a1d0d904c056"}) as unknown as TypedDocumentString<DetentionCustomerStatsQuery, DetentionCustomerStatsQueryVariables>;
+export const DetentionWaiverStatsDocument = new TypedDocumentString(`
+    query DetentionWaiverStats($input: DetentionStatsInput!) {
+  detentionWaiverStats(input: $input) {
+    reason
+    waiverCount
+    approverCount
+    waivedAmount
+  }
+}
+    `, {"hash":"sha256:23077469702670463ce465420c6147c9583c2fbb143df6d60a5c0ac2276d0da1"}) as unknown as TypedDocumentString<DetentionWaiverStatsQuery, DetentionWaiverStatsQueryVariables>;
+export const DetentionPolicyPreviewDocument = new TypedDocumentString(`
+    query DetentionPolicyPreview($policy: DetentionPolicyInput!, $scenario: DetentionPreviewScenarioInput!) {
+  detentionPolicyPreview(policy: $policy, scenario: $scenario) {
+    policySnapshot
+    rawDwellMinutes
+    freeMinutesGranted
+    billableMinutes
+    roundedMinutes
+    billableAmount
+    grossAmount
+    driverPayAmount
+    netMargin
+    arrivedLate
+    capApplied
+    status
+    notificationStatus
+    suppressedByGate
+    calculationTrace
+    receipt
+  }
+}
+    `, {"hash":"sha256:f328a9b7f74696985a4257d65ce18dbd22f852376305567d6eaf1cf2ff6eb490"}) as unknown as TypedDocumentString<DetentionPolicyPreviewQuery, DetentionPolicyPreviewQueryVariables>;
+export const DetentionBacktestDocument = new TypedDocumentString(`
+    mutation DetentionBacktest($input: DetentionBacktestInput!) {
+  detentionBacktest(input: $input) {
+    stopsEvaluated
+    stopsMatched
+    stopsBillable
+    stopsForfeited
+    stopsSuppressed
+    proposedRevenue
+    baselineRevenue
+    revenueDelta
+    proposedDriverPay
+    proposedNetMargin
+    negativeMarginStops
+    byCustomer {
+      key
+      label
+      stopCount
+      billableCount
+      proposedAmount
+      baselineAmount
+      delta
+      driverPayAmount
+      netMargin
+    }
+    byFacility {
+      key
+      label
+      stopCount
+      billableCount
+      proposedAmount
+      baselineAmount
+      delta
+      driverPayAmount
+      netMargin
+    }
+    from
+    to
+    truncated
+  }
+}
+    `, {"hash":"sha256:3fb6d3d1bc6ca9a6ba843f0529dea282ba78b256406c80d9a47d886ef7014aef"}) as unknown as TypedDocumentString<DetentionBacktestMutation, DetentionBacktestMutationVariables>;
+export const DetentionDeskDocument = new TypedDocumentString(`
+    query DetentionDesk {
+  detentionDesk {
+    occurrence {
+      ...DetentionOccurrenceFields
+    }
+    minutesUntilFreeEnds
+    minutesUntilNoticeDue
+    noticeWindowOpen
+    amountAtRisk
+    urgency
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:1c057e39e0bca0b66bc728666181aadc64acf47ab7c444fab7af0d586fe4798a"}) as unknown as TypedDocumentString<DetentionDeskQuery, DetentionDeskQueryVariables>;
+export const DetentionOccurrenceDetailDocument = new TypedDocumentString(`
+    query DetentionOccurrenceDetail($id: ID!) {
+  detentionOccurrence(id: $id) {
+    occurrence {
+      ...DetentionOccurrenceFields
+    }
+    evidence {
+      ...DetentionEvidenceFields
+    }
+    notices {
+      ...DetentionNoticeFields
+    }
+    collectability {
+      ...DetentionCollectabilityFields
+    }
+    receipt
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}
+fragment DetentionEvidenceFields on DetentionEvidence {
+  id
+  detentionOccurrenceId
+  sequence
+  kind
+  source
+  summary
+  observedAt
+  recordedAt
+  recordedById
+  documentId
+  payload
+  prevHash
+  hash
+  createdAt
+}
+fragment DetentionNoticeFields on DetentionNotice {
+  id
+  detentionOccurrenceId
+  threadKey
+  kind
+  channel
+  deliveryStatus
+  recipients
+  subject
+  body
+  scheduledFor
+  sentAt
+  deliveredAt
+  openedAt
+  failedAt
+  failureReason
+  sentById
+  wasAutomatic
+  satisfiesRequirement
+  quotedFreeMinutes
+  quotedRate
+  quotedAmount
+  createdAt
+}
+fragment DetentionCollectabilityFields on DetentionCollectability {
+  score
+  band
+  chainValid
+  summary
+  factors {
+    key
+    label
+    earned
+    possible
+    detail
+    remedy
+  }
+}`, {"hash":"sha256:70b004f2c36c5ec853d192f295f27795a2d43a3b8487ac7d57cc1a9d9f0043c5"}) as unknown as TypedDocumentString<DetentionOccurrenceDetailQuery, DetentionOccurrenceDetailQueryVariables>;
+export const ShipmentDetentionDocument = new TypedDocumentString(`
+    query ShipmentDetention($shipmentId: ID!) {
+  shipmentDetention(shipmentId: $shipmentId) {
+    ...DetentionOccurrenceFields
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:700e9ac1cfa6d524e49b8709c7cfd3569762f1179b0071e3f4a5da81147a4e99"}) as unknown as TypedDocumentString<ShipmentDetentionQuery, ShipmentDetentionQueryVariables>;
+export const DetentionDisputePacketDocument = new TypedDocumentString(`
+    query DetentionDisputePacket($occurrenceId: ID!) {
+  detentionDisputePacket(occurrenceId: $occurrenceId) {
+    occurrence {
+      ...DetentionOccurrenceFields
+    }
+    policySnapshot
+    receipt
+    evidence {
+      ...DetentionEvidenceFields
+    }
+    notices {
+      ...DetentionNoticeFields
+    }
+    collectability {
+      ...DetentionCollectabilityFields
+    }
+    generatedAt
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}
+fragment DetentionEvidenceFields on DetentionEvidence {
+  id
+  detentionOccurrenceId
+  sequence
+  kind
+  source
+  summary
+  observedAt
+  recordedAt
+  recordedById
+  documentId
+  payload
+  prevHash
+  hash
+  createdAt
+}
+fragment DetentionNoticeFields on DetentionNotice {
+  id
+  detentionOccurrenceId
+  threadKey
+  kind
+  channel
+  deliveryStatus
+  recipients
+  subject
+  body
+  scheduledFor
+  sentAt
+  deliveredAt
+  openedAt
+  failedAt
+  failureReason
+  sentById
+  wasAutomatic
+  satisfiesRequirement
+  quotedFreeMinutes
+  quotedRate
+  quotedAmount
+  createdAt
+}
+fragment DetentionCollectabilityFields on DetentionCollectability {
+  score
+  band
+  chainValid
+  summary
+  factors {
+    key
+    label
+    earned
+    possible
+    detail
+    remedy
+  }
+}`, {"hash":"sha256:c66f0633fd956fd1d9ecd07f415c5806a819751d023081314f6bf80890e9a041"}) as unknown as TypedDocumentString<DetentionDisputePacketQuery, DetentionDisputePacketQueryVariables>;
+export const WaiveDetentionOccurrenceDocument = new TypedDocumentString(`
+    mutation WaiveDetentionOccurrence($input: DetentionWaiveInput!) {
+  waiveDetentionOccurrence(input: $input) {
+    ...DetentionOccurrenceFields
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d665c2bf1d09b15cc03c4ebeaeafb7783fab89d40503826a7c2ab8da9d050f71"}) as unknown as TypedDocumentString<WaiveDetentionOccurrenceMutation, WaiveDetentionOccurrenceMutationVariables>;
+export const ApproveDetentionOccurrenceDocument = new TypedDocumentString(`
+    mutation ApproveDetentionOccurrence($occurrenceId: ID!) {
+  approveDetentionOccurrence(occurrenceId: $occurrenceId) {
+    ...DetentionOccurrenceFields
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:a64a4971ebe414d368676e932585afc0795028454f7617f0efcf75036fe89f00"}) as unknown as TypedDocumentString<ApproveDetentionOccurrenceMutation, ApproveDetentionOccurrenceMutationVariables>;
+export const DisputeDetentionOccurrenceDocument = new TypedDocumentString(`
+    mutation DisputeDetentionOccurrence($input: DetentionDisputeInput!) {
+  disputeDetentionOccurrence(input: $input) {
+    ...DetentionOccurrenceFields
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:3276979f1b20a5fc9d0004594e930277fbf789cb7505a4dda9561d58d93e2619"}) as unknown as TypedDocumentString<DisputeDetentionOccurrenceMutation, DisputeDetentionOccurrenceMutationVariables>;
+export const SendDetentionNoticeDocument = new TypedDocumentString(`
+    mutation SendDetentionNotice($occurrenceId: ID!) {
+  sendDetentionNotice(occurrenceId: $occurrenceId) {
+    ...DetentionOccurrenceFields
+  }
+}
+    fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:71ee21b771997298c7f03866527d9b7bd1a50d61093a2fb35c53618ec7d6d68d"}) as unknown as TypedDocumentString<SendDetentionNoticeMutation, SendDetentionNoticeMutationVariables>;
+export const DetentionPolicyTableDocument = new TypedDocumentString(`
+    query DetentionPolicyTable($input: DataTableConnectionInput!) {
+  detentionPolicies(input: $input) {
+    edges {
+      node {
+        ...DetentionPolicyRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}
+fragment DetentionPolicyRowFields on DetentionPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isOrgDefault
+  priority
+  specificityScore
+  customerId
+  locationId
+  shipmentTypeIds
+  serviceTypeIds
+  commodityIds
+  stopTypes
+  appointmentStopsOnly
+  effectiveStartDate
+  effectiveEndDate
+  clockStartBasis
+  lateArrivalRule
+  lateArrivalGraceMinutes
+  billingFreeMinutes
+  pickupFreeMinutes
+  deliveryFreeMinutes
+  payFreeMinutes
+  minimumBillableMinutes
+  billingIncrementMinutes
+  roundingMode
+  rateSource
+  accessorialChargeId
+  tiers {
+    ...DetentionPolicyTierFields
+  }
+  maxBillableMinutesPerStop
+  maxChargePerStop
+  maxChargePerDay
+  maxChargePerShipment
+  dayBoundaryMode
+  convertToLayoverAtMinutes
+  layoverAccessorialChargeId
+  notificationRequirement
+  notificationLeadMinutes
+  notificationDeadlineMinutes
+  unnotifiedBehavior
+  autoSendNotice
+  sendDepartureSummary
+  requireApprovalOverAmount
+  autoApproveUnderAmount
+  currency
+  comments
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:ab27332f86ad547b1db6894802f6634cdc8ebd33e00cb991e8d1d8dbc5baaabd"}) as unknown as TypedDocumentString<DetentionPolicyTableQuery, DetentionPolicyTableQueryVariables>;
+export const DetentionPolicyDocument = new TypedDocumentString(`
+    query DetentionPolicy($id: ID!) {
+  detentionPolicy(id: $id) {
+    ...DetentionPolicyRowFields
+  }
+}
+    fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}
+fragment DetentionPolicyRowFields on DetentionPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isOrgDefault
+  priority
+  specificityScore
+  customerId
+  locationId
+  shipmentTypeIds
+  serviceTypeIds
+  commodityIds
+  stopTypes
+  appointmentStopsOnly
+  effectiveStartDate
+  effectiveEndDate
+  clockStartBasis
+  lateArrivalRule
+  lateArrivalGraceMinutes
+  billingFreeMinutes
+  pickupFreeMinutes
+  deliveryFreeMinutes
+  payFreeMinutes
+  minimumBillableMinutes
+  billingIncrementMinutes
+  roundingMode
+  rateSource
+  accessorialChargeId
+  tiers {
+    ...DetentionPolicyTierFields
+  }
+  maxBillableMinutesPerStop
+  maxChargePerStop
+  maxChargePerDay
+  maxChargePerShipment
+  dayBoundaryMode
+  convertToLayoverAtMinutes
+  layoverAccessorialChargeId
+  notificationRequirement
+  notificationLeadMinutes
+  notificationDeadlineMinutes
+  unnotifiedBehavior
+  autoSendNotice
+  sendDepartureSummary
+  requireApprovalOverAmount
+  autoApproveUnderAmount
+  currency
+  comments
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:c4e1d0cdc23b3fa4460502975ffecd05a957dc80041cae8f73da5639a268e192"}) as unknown as TypedDocumentString<DetentionPolicyQuery, DetentionPolicyQueryVariables>;
+export const CreateDetentionPolicyDocument = new TypedDocumentString(`
+    mutation CreateDetentionPolicy($input: DetentionPolicyInput!) {
+  createDetentionPolicy(input: $input) {
+    ...DetentionPolicyRowFields
+  }
+}
+    fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}
+fragment DetentionPolicyRowFields on DetentionPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isOrgDefault
+  priority
+  specificityScore
+  customerId
+  locationId
+  shipmentTypeIds
+  serviceTypeIds
+  commodityIds
+  stopTypes
+  appointmentStopsOnly
+  effectiveStartDate
+  effectiveEndDate
+  clockStartBasis
+  lateArrivalRule
+  lateArrivalGraceMinutes
+  billingFreeMinutes
+  pickupFreeMinutes
+  deliveryFreeMinutes
+  payFreeMinutes
+  minimumBillableMinutes
+  billingIncrementMinutes
+  roundingMode
+  rateSource
+  accessorialChargeId
+  tiers {
+    ...DetentionPolicyTierFields
+  }
+  maxBillableMinutesPerStop
+  maxChargePerStop
+  maxChargePerDay
+  maxChargePerShipment
+  dayBoundaryMode
+  convertToLayoverAtMinutes
+  layoverAccessorialChargeId
+  notificationRequirement
+  notificationLeadMinutes
+  notificationDeadlineMinutes
+  unnotifiedBehavior
+  autoSendNotice
+  sendDepartureSummary
+  requireApprovalOverAmount
+  autoApproveUnderAmount
+  currency
+  comments
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d9582cec413151d9c018204c856f2117efcf06f70e18137289e898471a107148"}) as unknown as TypedDocumentString<CreateDetentionPolicyMutation, CreateDetentionPolicyMutationVariables>;
+export const UpdateDetentionPolicyDocument = new TypedDocumentString(`
+    mutation UpdateDetentionPolicy($id: ID!, $input: DetentionPolicyInput!) {
+  updateDetentionPolicy(id: $id, input: $input) {
+    ...DetentionPolicyRowFields
+  }
+}
+    fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}
+fragment DetentionPolicyRowFields on DetentionPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isOrgDefault
+  priority
+  specificityScore
+  customerId
+  locationId
+  shipmentTypeIds
+  serviceTypeIds
+  commodityIds
+  stopTypes
+  appointmentStopsOnly
+  effectiveStartDate
+  effectiveEndDate
+  clockStartBasis
+  lateArrivalRule
+  lateArrivalGraceMinutes
+  billingFreeMinutes
+  pickupFreeMinutes
+  deliveryFreeMinutes
+  payFreeMinutes
+  minimumBillableMinutes
+  billingIncrementMinutes
+  roundingMode
+  rateSource
+  accessorialChargeId
+  tiers {
+    ...DetentionPolicyTierFields
+  }
+  maxBillableMinutesPerStop
+  maxChargePerStop
+  maxChargePerDay
+  maxChargePerShipment
+  dayBoundaryMode
+  convertToLayoverAtMinutes
+  layoverAccessorialChargeId
+  notificationRequirement
+  notificationLeadMinutes
+  notificationDeadlineMinutes
+  unnotifiedBehavior
+  autoSendNotice
+  sendDepartureSummary
+  requireApprovalOverAmount
+  autoApproveUnderAmount
+  currency
+  comments
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:eafadf4f61a8519e3b5557178be198ed54ea17b2c1c40db7ac1a8717038ba8ac"}) as unknown as TypedDocumentString<UpdateDetentionPolicyMutation, UpdateDetentionPolicyMutationVariables>;
+export const DeleteDetentionPolicyDocument = new TypedDocumentString(`
+    mutation DeleteDetentionPolicy($id: ID!) {
+  deleteDetentionPolicy(id: $id)
+}
+    `, {"hash":"sha256:b3080ac3dc795c66808fe6644957188d98fc8bd5457f85ddc9cc6328d05c4f94"}) as unknown as TypedDocumentString<DeleteDetentionPolicyMutation, DeleteDetentionPolicyMutationVariables>;
 export const DispatchBoardDocument = new TypedDocumentString(`
     query DispatchBoard($input: DispatchBoardInput!) {
   dispatchBoard(input: $input) {

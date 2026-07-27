@@ -239,6 +239,18 @@ const billingModule: NavModule = {
       resource: Resource.FuelSurchargeProgram,
     },
     {
+      id: "detention-desk",
+      label: "Detention Desk",
+      path: "/billing/detention-desk",
+      resource: Resource.DetentionPolicy,
+    },
+    {
+      id: "detention-intelligence",
+      label: "Detention Intelligence",
+      path: "/billing/detention-intelligence",
+      resource: Resource.DetentionPolicy,
+    },
+    {
       id: "billing-config-group",
       label: "Configuration Files",
       defaultOpen: false,
@@ -268,6 +280,12 @@ const billingModule: NavModule = {
           path: "/billing/configuration-files/rate-tables",
           resource: Resource.RateTable,
           includeBetaTag: true,
+        },
+        {
+          id: "detention-policies",
+          label: "Detention Policies",
+          path: "/billing/configuration-files/detention-policies",
+          resource: Resource.DetentionPolicy,
         },
         {
           id: "customers",
@@ -723,6 +741,16 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["rate", "table", "lookup"],
+    },
+    {
+      id: "create-detention-policy",
+      label: "Create Detention Policy",
+      description: "Encode a contract's detention terms",
+      path: "/billing/configuration-files/detention-policies",
+      resource: Resource.DetentionPolicy,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["detention", "policy", "demurrage", "free time", "dwell"],
     },
     {
       id: "create-fuel-surcharge-program",

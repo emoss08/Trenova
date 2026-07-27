@@ -1,23 +1,14 @@
 import { CalculationReceipt } from "@/routes/detention-desk/_components/calculation-receipt";
+import { useDebounce } from "@/hooks/use-debounce";
 import { apiService } from "@/services/api";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import type {
-  DetentionPolicy,
-  PreviewScenario,
-} from "@trenova/shared/types/detention";
+import type { DetentionPolicy, PreviewScenario } from "@trenova/shared/types/detention";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { useWatch, type Control } from "react-hook-form";
+import { FlaskConicalIcon } from "lucide-react";
+import { useFormContext, useWatch } from "react-hook-form";
 
 /**
  * Worked scenarios the preview runs on every change. They are chosen to expose
@@ -26,6 +17,7 @@ import { useWatch, type Control } from "react-hook-form";
  * arrival that exercises the entitlement rule.
  */
 const SCENARIO_BASE = 1_767_225_600;
+const PREVIEW_DEBOUNCE_MS = 400;
 
 type ScenarioDefinition = {
   key: string;
@@ -83,12 +75,11 @@ type PreviewRowProps = {
   definition: ScenarioDefinition;
   policy: DetentionPolicy;
   enabled: boolean;
-  expanded: boolean;
 };
 
-function PreviewRow({ definition, policy, enabled, expanded }: PreviewRowProps) {
+function PreviewRow({ definition, policy, enabled }: PreviewRowProps) {
   const { data, isFetching, isError, error } = useQuery({
-    queryKey: ["detentionPreview", definition.key, definition.scenario, policy],
+    queryKey: ["detention", "preview", definition.key, definition.scenario, policy],
     queryFn: async () =>
       apiService.detentionPolicyService.preview(policy, definition.scenario),
     enabled,
@@ -101,7 +92,7 @@ function PreviewRow({ definition, policy, enabled, expanded }: PreviewRowProps) 
   }
 
   if (isFetching && !data) {
-    return <Skeleton className="h-20 w-full" />;
+    return <Skeleton className="h-24 w-full" />;
   }
 
   if (isError) {
@@ -111,7 +102,7 @@ function PreviewRow({ definition, policy, enabled, expanded }: PreviewRowProps) 
         <p className="text-muted-foreground text-xs">
           {error instanceof Error
             ? error.message
-            : "Resolve the validation errors above to see this scenario."}
+            : "Resolve the validation errors on the Terms tab to see this scenario."}
         </p>
       </div>
     );
@@ -124,7 +115,7 @@ function PreviewRow({ definition, policy, enabled, expanded }: PreviewRowProps) 
   const suppressed = data.suppressedByGate;
 
   return (
-    <div className="rounded-md border p-3">
+    <div className="rounded-lg border p-3 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium">{definition.label}</p>
@@ -174,67 +165,56 @@ function PreviewRow({ definition, policy, enabled, expanded }: PreviewRowProps) 
         )}
       </div>
 
-      {expanded && (
-        <div className="mt-3 border-t pt-3">
-          <CalculationReceipt
-            trace={data.calculationTrace}
-            currency={data.policySnapshot.currency}
-          />
-        </div>
-      )}
+      <div className="mt-3 border-t pt-3">
+        <CalculationReceipt
+          trace={data.calculationTrace}
+          currency={data.policySnapshot.currency}
+        />
+      </div>
     </div>
   );
 }
 
-type DetentionPolicyPreviewProps = {
-  control: Control<DetentionPolicy>;
-  expanded?: boolean;
-};
-
 /**
- * Live preview panel. Every keystroke re-runs the server's production
- * calculator, so the operator sees the money their terms produce before the
- * policy ever touches a shipment.
+ * Live preview panel. Edits on the Terms tab re-run the server's production
+ * calculator (debounced), so the operator sees the money their terms produce
+ * before the policy ever touches a shipment.
  */
-export function DetentionPolicyPreview({
-  control,
-  expanded = false,
-}: DetentionPolicyPreviewProps) {
+export function DetentionPolicyPreview() {
+  const { control } = useFormContext<DetentionPolicy>();
   const values = useWatch({ control });
 
-  const policy = values as DetentionPolicy;
-  const ready = useMemo(
-    () => Boolean(policy?.accessorialChargeId && policy?.code && policy?.name),
-    [policy?.accessorialChargeId, policy?.code, policy?.name],
-  );
+  const policy = useDebounce(values, PREVIEW_DEBOUNCE_MS) as DetentionPolicy;
+  const ready = Boolean(policy?.accessorialChargeId && policy?.code && policy?.name);
 
   return (
-    <Card className="sticky top-4">
-      <CardHeader>
-        <CardTitle className="text-base">Live preview</CardTitle>
-        <CardDescription>
-          What these terms would charge, computed by the same engine that bills
-          real shipments.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {!ready ? (
-          <p className="text-muted-foreground text-sm">
-            Choose an accessorial charge and name the policy to see worked
+    <div className="flex flex-col gap-3">
+      <div>
+        <h3 className="text-sm font-medium">Worked examples</h3>
+        <p className="text-muted-foreground text-xs">
+          What these terms would charge, computed by the same engine that bills real
+          shipments.
+        </p>
+      </div>
+
+      {!ready ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
+          <FlaskConicalIcon className="text-muted-foreground size-5" />
+          <p className="text-muted-foreground max-w-xs text-sm">
+            Name the policy and choose an accessorial charge on the Terms tab to see worked
             examples.
           </p>
-        ) : (
-          SCENARIOS.map((definition) => (
-            <PreviewRow
-              key={definition.key}
-              definition={definition}
-              policy={policy}
-              enabled={ready}
-              expanded={expanded}
-            />
-          ))
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      ) : (
+        SCENARIOS.map((definition) => (
+          <PreviewRow
+            key={definition.key}
+            definition={definition}
+            policy={policy}
+            enabled={ready}
+          />
+        ))
+      )}
+    </div>
   );
 }

@@ -86,7 +86,10 @@ export function DetentionTierEditor() {
                 control={control}
                 name={`tiers.${index}.fromMinute`}
                 label="From"
+                placeholder="0"
                 sideText="min"
+                rules={{ required: true }}
+                description="Billable minute this rung starts at."
               />
             </FormControl>
             <FormControl>
@@ -94,8 +97,9 @@ export function DetentionTierEditor() {
                 control={control}
                 name={`tiers.${index}.toMinute`}
                 label="To"
+                placeholder="Open-ended"
                 sideText="min"
-                description="Leave empty for the final open-ended rung"
+                description="Leave empty for the final open-ended rung."
               />
             </FormControl>
             <FormControl>
@@ -103,7 +107,10 @@ export function DetentionTierEditor() {
                 control={control}
                 name={`tiers.${index}.rate`}
                 label="Rate"
+                placeholder="75.00"
                 sideText="$"
+                rules={{ required: true }}
+                description="Amount charged per unit inside this rung."
               />
             </FormControl>
             <FormControl>
@@ -111,7 +118,10 @@ export function DetentionTierEditor() {
                 control={control}
                 name={`tiers.${index}.rateUnit`}
                 label="Unit"
+                placeholder="Select unit"
+                rules={{ required: true }}
                 options={RATE_UNIT_OPTIONS}
+                description="How the rate applies: per hour, per day, or flat."
               />
             </FormControl>
           </div>
@@ -122,6 +132,7 @@ export function DetentionTierEditor() {
               name={`tiers.${index}.label`}
               label="Label"
               placeholder="First 2 hours"
+              description="Shown on the calculation receipt when this rung applies."
             />
           </FormControl>
         </div>

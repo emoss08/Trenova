@@ -1,6 +1,6 @@
 {
-  "operationCount": 355,
-  "fragmentCount": 106,
+  "operationCount": 373,
+  "fragmentCount": 112,
   "operations": [
     {
       "name": "AccessorialChargeTable",
@@ -337,6 +337,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation ApplyUnappliedCustomerPayment($input: ApplyCustomerPaymentInput!) {\n  applyUnappliedCustomerPayment(input: $input) {\n    id\n    customerId\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    updatedAt\n    applications {\n      id\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "ApproveDetentionOccurrence",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:a64a4971ebe414d368676e932585afc0795028454f7617f0efcf75036fe89f00",
+      "rootFields": [
+        "approveDetentionOccurrence"
+      ],
+      "variables": [
+        {
+          "name": "occurrenceId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ApproveDetentionOccurrence($occurrenceId: ID!) {\n  approveDetentionOccurrence(occurrenceId: $occurrenceId) {\n    ...DetentionOccurrenceFields\n  }\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ApproveDriverSettlement",
@@ -1163,6 +1185,29 @@
       "sdl": "query CostingControlPage {\n  costingControl {\n    id\n    businessUnitId\n    organizationId\n    fuelIndexId\n    fuelIndex {\n      id\n      name\n      code\n      source\n      fuelType\n      isActive\n    }\n    useLiveFuelPrice\n    milesPerGallon\n    includeDeadheadMiles\n    glActualsEnabled\n    glRollingMonths\n    plannedMonthlyMiles\n    targetMarginPercent\n    version\n    createdAt\n    updatedAt\n    categories {\n      id\n      category\n      name\n      costBehavior\n      rateSource\n      benchmarkRatePerMile\n      overrideRatePerMile\n      isActive\n      sortOrder\n      version\n      glAccounts {\n        id\n        glAccountId\n        accountCode\n        accountName\n      }\n    }\n  }\n}"
     },
     {
+      "name": "CreateDetentionPolicy",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "hash": "sha256:d9582cec413151d9c018204c856f2117efcf06f70e18137289e898471a107148",
+      "rootFields": [
+        "createDetentionPolicy"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionPolicyInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionPolicyRowFields",
+        "DetentionPolicyTierFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateDetentionPolicy($input: DetentionPolicyInput!) {\n  createDetentionPolicy(input: $input) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+    },
+    {
       "name": "CreateEquipmentType",
       "kind": "mutation",
       "domain": "equipment",
@@ -1745,6 +1790,26 @@
       "sdl": "query DefaultTableConfiguration($resource: String!) {\n  defaultTableConfiguration(resource: $resource) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
     },
     {
+      "name": "DeleteDetentionPolicy",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "hash": "sha256:b3080ac3dc795c66808fe6644957188d98fc8bd5457f85ddc9cc6328d05c4f94",
+      "rootFields": [
+        "deleteDetentionPolicy"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteDetentionPolicy($id: ID!) {\n  deleteDetentionPolicy(id: $id)\n}"
+    },
+    {
       "name": "DeleteFuelIndex",
       "kind": "mutation",
       "domain": "fuel-surcharge",
@@ -2017,6 +2082,224 @@
       "sdl": "mutation DetachPayEventFromSettlement($input: DetachPayEventInput!) {\n  detachPayEventFromSettlement(input: $input) {\n    id\n    status\n    grossEarningsMinor\n    netPayMinor\n    version\n  }\n}"
     },
     {
+      "name": "DetentionBacktest",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/analytics.graphql",
+      "hash": "sha256:3fb6d3d1bc6ca9a6ba843f0529dea282ba78b256406c80d9a47d886ef7014aef",
+      "rootFields": [
+        "detentionBacktest"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionBacktestInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DetentionBacktest($input: DetentionBacktestInput!) {\n  detentionBacktest(input: $input) {\n    stopsEvaluated\n    stopsMatched\n    stopsBillable\n    stopsForfeited\n    stopsSuppressed\n    proposedRevenue\n    baselineRevenue\n    revenueDelta\n    proposedDriverPay\n    proposedNetMargin\n    negativeMarginStops\n    byCustomer {\n      key\n      label\n      stopCount\n      billableCount\n      proposedAmount\n      baselineAmount\n      delta\n      driverPayAmount\n      netMargin\n    }\n    byFacility {\n      key\n      label\n      stopCount\n      billableCount\n      proposedAmount\n      baselineAmount\n      delta\n      driverPayAmount\n      netMargin\n    }\n    from\n    to\n    truncated\n  }\n}"
+    },
+    {
+      "name": "DetentionCustomerStats",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/analytics.graphql",
+      "hash": "sha256:188bf76366f9651b4c37387fa0792d2ba42578a237866a2bbfa3a1d0d904c056",
+      "rootFields": [
+        "detentionCustomerStats"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionStatsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query DetentionCustomerStats($input: DetentionStatsInput!) {\n  detentionCustomerStats(input: $input) {\n    customerId\n    customerName\n    stopCount\n    breachCount\n    billedAmount\n    driverPayAmount\n    netMargin\n    waivedAmount\n    disputeCount\n    suppressedCount\n  }\n}"
+    },
+    {
+      "name": "DetentionDesk",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:1c057e39e0bca0b66bc728666181aadc64acf47ab7c444fab7af0d586fe4798a",
+      "rootFields": [
+        "detentionDesk"
+      ],
+      "variables": [],
+      "fragments": [
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "query DetentionDesk {\n  detentionDesk {\n    occurrence {\n      ...DetentionOccurrenceFields\n    }\n    minutesUntilFreeEnds\n    minutesUntilNoticeDue\n    noticeWindowOpen\n    amountAtRisk\n    urgency\n  }\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DetentionDisputePacket",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:c66f0633fd956fd1d9ecd07f415c5806a819751d023081314f6bf80890e9a041",
+      "rootFields": [
+        "detentionDisputePacket"
+      ],
+      "variables": [
+        {
+          "name": "occurrenceId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionCollectabilityFields",
+        "DetentionEvidenceFields",
+        "DetentionNoticeFields",
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "query DetentionDisputePacket($occurrenceId: ID!) {\n  detentionDisputePacket(occurrenceId: $occurrenceId) {\n    occurrence {\n      ...DetentionOccurrenceFields\n    }\n    policySnapshot\n    receipt\n    evidence {\n      ...DetentionEvidenceFields\n    }\n    notices {\n      ...DetentionNoticeFields\n    }\n    collectability {\n      ...DetentionCollectabilityFields\n    }\n    generatedAt\n  }\n}\n\nfragment DetentionCollectabilityFields on DetentionCollectability {\n  score\n  band\n  chainValid\n  summary\n  factors {\n    key\n    label\n    earned\n    possible\n    detail\n    remedy\n  }\n}\n\nfragment DetentionEvidenceFields on DetentionEvidence {\n  id\n  detentionOccurrenceId\n  sequence\n  kind\n  source\n  summary\n  observedAt\n  recordedAt\n  recordedById\n  documentId\n  payload\n  prevHash\n  hash\n  createdAt\n}\n\nfragment DetentionNoticeFields on DetentionNotice {\n  id\n  detentionOccurrenceId\n  threadKey\n  kind\n  channel\n  deliveryStatus\n  recipients\n  subject\n  body\n  scheduledFor\n  sentAt\n  deliveredAt\n  openedAt\n  failedAt\n  failureReason\n  sentById\n  wasAutomatic\n  satisfiesRequirement\n  quotedFreeMinutes\n  quotedRate\n  quotedAmount\n  createdAt\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DetentionFacilityStats",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/analytics.graphql",
+      "hash": "sha256:c7c1f1b8d0b5c5fa3dced842b3436b910f8525f3f3dc5992cd753d0e247a40c2",
+      "rootFields": [
+        "detentionFacilityStats"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionStatsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query DetentionFacilityStats($input: DetentionStatsInput!) {\n  detentionFacilityStats(input: $input) {\n    locationId\n    locationName\n    stopCount\n    breachCount\n    avgDwellMinutes\n    medianDwellMinutes\n    p90DwellMinutes\n    billedAmount\n    driverPayAmount\n    netMargin\n    waivedAmount\n    disputeCount\n    suppressedCount\n  }\n}"
+    },
+    {
+      "name": "DetentionOccurrenceDetail",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:70b004f2c36c5ec853d192f295f27795a2d43a3b8487ac7d57cc1a9d9f0043c5",
+      "rootFields": [
+        "detentionOccurrence"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionCollectabilityFields",
+        "DetentionEvidenceFields",
+        "DetentionNoticeFields",
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "query DetentionOccurrenceDetail($id: ID!) {\n  detentionOccurrence(id: $id) {\n    occurrence {\n      ...DetentionOccurrenceFields\n    }\n    evidence {\n      ...DetentionEvidenceFields\n    }\n    notices {\n      ...DetentionNoticeFields\n    }\n    collectability {\n      ...DetentionCollectabilityFields\n    }\n    receipt\n  }\n}\n\nfragment DetentionCollectabilityFields on DetentionCollectability {\n  score\n  band\n  chainValid\n  summary\n  factors {\n    key\n    label\n    earned\n    possible\n    detail\n    remedy\n  }\n}\n\nfragment DetentionEvidenceFields on DetentionEvidence {\n  id\n  detentionOccurrenceId\n  sequence\n  kind\n  source\n  summary\n  observedAt\n  recordedAt\n  recordedById\n  documentId\n  payload\n  prevHash\n  hash\n  createdAt\n}\n\nfragment DetentionNoticeFields on DetentionNotice {\n  id\n  detentionOccurrenceId\n  threadKey\n  kind\n  channel\n  deliveryStatus\n  recipients\n  subject\n  body\n  scheduledFor\n  sentAt\n  deliveredAt\n  openedAt\n  failedAt\n  failureReason\n  sentById\n  wasAutomatic\n  satisfiesRequirement\n  quotedFreeMinutes\n  quotedRate\n  quotedAmount\n  createdAt\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DetentionPolicy",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "hash": "sha256:c4e1d0cdc23b3fa4460502975ffecd05a957dc80041cae8f73da5639a268e192",
+      "rootFields": [
+        "detentionPolicy"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionPolicyRowFields",
+        "DetentionPolicyTierFields"
+      ],
+      "usages": [],
+      "sdl": "query DetentionPolicy($id: ID!) {\n  detentionPolicy(id: $id) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+    },
+    {
+      "name": "DetentionPolicyPreview",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/analytics.graphql",
+      "hash": "sha256:f328a9b7f74696985a4257d65ce18dbd22f852376305567d6eaf1cf2ff6eb490",
+      "rootFields": [
+        "detentionPolicyPreview"
+      ],
+      "variables": [
+        {
+          "name": "policy",
+          "type": "DetentionPolicyInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "scenario",
+          "type": "DetentionPreviewScenarioInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query DetentionPolicyPreview($policy: DetentionPolicyInput!, $scenario: DetentionPreviewScenarioInput!) {\n  detentionPolicyPreview(policy: $policy, scenario: $scenario) {\n    policySnapshot\n    rawDwellMinutes\n    freeMinutesGranted\n    billableMinutes\n    roundedMinutes\n    billableAmount\n    grossAmount\n    driverPayAmount\n    netMargin\n    arrivedLate\n    capApplied\n    status\n    notificationStatus\n    suppressedByGate\n    calculationTrace\n    receipt\n  }\n}"
+    },
+    {
+      "name": "DetentionPolicyTable",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "hash": "sha256:ab27332f86ad547b1db6894802f6634cdc8ebd33e00cb991e8d1d8dbc5baaabd",
+      "rootFields": [
+        "detentionPolicies"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "DetentionPolicyRowFields",
+        "DetentionPolicyTierFields"
+      ],
+      "usages": [],
+      "sdl": "query DetentionPolicyTable($input: DataTableConnectionInput!) {\n  detentionPolicies(input: $input) {\n    edges {\n      node {\n        ...DetentionPolicyRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+    },
+    {
+      "name": "DetentionWaiverStats",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/analytics.graphql",
+      "hash": "sha256:23077469702670463ce465420c6147c9583c2fbb143df6d60a5c0ac2276d0da1",
+      "rootFields": [
+        "detentionWaiverStats"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionStatsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query DetentionWaiverStats($input: DetentionStatsInput!) {\n  detentionWaiverStats(input: $input) {\n    reason\n    waiverCount\n    approverCount\n    waivedAmount\n  }\n}"
+    },
+    {
       "name": "DismissMyNotifications",
       "kind": "mutation",
       "domain": "notification",
@@ -2195,6 +2478,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation DispatchUnassignMoves($moveIds: [ID!]!) {\n  dispatchUnassignMoves(moveIds: $moveIds) {\n    succeeded\n    failed\n    results {\n      moveId\n      success\n      assignmentId\n      error\n      findings {\n        code\n        severity\n        field\n        message\n        regulation\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "DisputeDetentionOccurrence",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:3276979f1b20a5fc9d0004594e930277fbf789cb7505a4dda9561d58d93e2619",
+      "rootFields": [
+        "disputeDetentionOccurrence"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionDisputeInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DisputeDetentionOccurrence($input: DetentionDisputeInput!) {\n  disputeDetentionOccurrence(input: $input) {\n    ...DetentionOccurrenceFields\n  }\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "DistanceOverrideTable",
@@ -5580,6 +5885,28 @@
       "sdl": "query SelectOptions($input: SelectOptionsInput!) {\n  selectOptions(input: $input) {\n    edges {\n      node {\n        id\n        label\n        description\n        meta\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    totalCount\n  }\n}"
     },
     {
+      "name": "SendDetentionNotice",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:71ee21b771997298c7f03866527d9b7bd1a50d61093a2fb35c53618ec7d6d68d",
+      "rootFields": [
+        "sendDetentionNotice"
+      ],
+      "variables": [
+        {
+          "name": "occurrenceId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SendDetentionNotice($occurrenceId: ID!) {\n  sendDetentionNotice(occurrenceId: $occurrenceId) {\n    ...DetentionOccurrenceFields\n  }\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ServiceFailureReasonCodeTable",
       "kind": "query",
       "domain": "service-failure-reason-code",
@@ -5971,6 +6298,28 @@
       ],
       "usages": [],
       "sdl": "query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {\n  shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {\n    ...ShipmentFields\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
+    },
+    {
+      "name": "ShipmentDetention",
+      "kind": "query",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:700e9ac1cfa6d524e49b8709c7cfd3569762f1179b0071e3f4a5da81147a4e99",
+      "rootFields": [
+        "shipmentDetention"
+      ],
+      "variables": [
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "query ShipmentDetention($shipmentId: ID!) {\n  shipmentDetention(shipmentId: $shipmentId) {\n    ...DetentionOccurrenceFields\n  }\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ShipmentDriverFeasibility",
@@ -6788,6 +7137,34 @@
       "sdl": "mutation UpdateDashControl($input: UpdateDashControlInput!) {\n  updateDashControl(input: $input) {\n    id\n    requireLoadAcknowledgment\n    allowLoadRefusals\n    allowStopActions\n    allowLoadDocumentUpload\n    allowLoadComments\n    showLoadPay\n    showPayEstimates\n    allowExpenseSubmission\n    requireExpenseReceipt\n    allowSettlementDisputes\n    allowProfileDocumentUpload\n    allowContactInfoEdit\n    allowPtoRequests\n    sendCredentialReminders\n    enableDetentionAlerts\n    detentionAlertThresholdMinutes\n    version\n  }\n}"
     },
     {
+      "name": "UpdateDetentionPolicy",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "hash": "sha256:eafadf4f61a8519e3b5557178be198ed54ea17b2c1c40db7ac1a8717038ba8ac",
+      "rootFields": [
+        "updateDetentionPolicy"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DetentionPolicyInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionPolicyRowFields",
+        "DetentionPolicyTierFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateDetentionPolicy($id: ID!, $input: DetentionPolicyInput!) {\n  updateDetentionPolicy(id: $id, input: $input) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+    },
+    {
       "name": "UpdateEquipmentType",
       "kind": "mutation",
       "domain": "equipment",
@@ -7451,6 +7828,28 @@
       "sdl": "mutation VoidDriverSettlement($input: DriverSettlementActionInput!) {\n  voidDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
     },
     {
+      "name": "WaiveDetentionOccurrence",
+      "kind": "mutation",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "hash": "sha256:d665c2bf1d09b15cc03c4ebeaeafb7783fab89d40503826a7c2ab8da9d050f71",
+      "rootFields": [
+        "waiveDetentionOccurrence"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DetentionWaiveInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DetentionOccurrenceFields"
+      ],
+      "usages": [],
+      "sdl": "mutation WaiveDetentionOccurrence($input: DetentionWaiveInput!) {\n  waiveDetentionOccurrence(input: $input) {\n    ...DetentionOccurrenceFields\n  }\n}\n\nfragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "WithdrawSettlementDispute",
       "kind": "mutation",
       "domain": "driver-portal",
@@ -8049,6 +8448,7 @@
         "CustomerPaymentTable",
         "CustomerTable",
         "CustomFieldDefinitionTable",
+        "DetentionPolicyTable",
         "DistanceOverrideTable",
         "DistanceProfileTable",
         "DocumentPacketRuleTable",
@@ -8103,6 +8503,96 @@
       ],
       "usages": [],
       "sdl": "fragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "DetentionCollectabilityFields",
+      "typeCondition": "DetentionCollectability",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "DetentionDisputePacket",
+        "DetentionOccurrenceDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment DetentionCollectabilityFields on DetentionCollectability {\n  score\n  band\n  chainValid\n  summary\n  factors {\n    key\n    label\n    earned\n    possible\n    detail\n    remedy\n  }\n}"
+    },
+    {
+      "name": "DetentionEvidenceFields",
+      "typeCondition": "DetentionEvidence",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "DetentionDisputePacket",
+        "DetentionOccurrenceDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment DetentionEvidenceFields on DetentionEvidence {\n  id\n  detentionOccurrenceId\n  sequence\n  kind\n  source\n  summary\n  observedAt\n  recordedAt\n  recordedById\n  documentId\n  payload\n  prevHash\n  hash\n  createdAt\n}"
+    },
+    {
+      "name": "DetentionNoticeFields",
+      "typeCondition": "DetentionNotice",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "DetentionDisputePacket",
+        "DetentionOccurrenceDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment DetentionNoticeFields on DetentionNotice {\n  id\n  detentionOccurrenceId\n  threadKey\n  kind\n  channel\n  deliveryStatus\n  recipients\n  subject\n  body\n  scheduledFor\n  sentAt\n  deliveredAt\n  openedAt\n  failedAt\n  failureReason\n  sentById\n  wasAutomatic\n  satisfiesRequirement\n  quotedFreeMinutes\n  quotedRate\n  quotedAmount\n  createdAt\n}"
+    },
+    {
+      "name": "DetentionOccurrenceFields",
+      "typeCondition": "DetentionOccurrence",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/desk.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ApproveDetentionOccurrence",
+        "DetentionDesk",
+        "DetentionDisputePacket",
+        "DetentionOccurrenceDetail",
+        "DisputeDetentionOccurrence",
+        "SendDetentionNotice",
+        "ShipmentDetention",
+        "WaiveDetentionOccurrence"
+      ],
+      "usages": [],
+      "sdl": "fragment DetentionOccurrenceFields on DetentionOccurrence {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  shipmentMoveId\n  stopId\n  customerId\n  locationId\n  detentionPolicyId\n  policySnapshot\n  calculationTrace\n  stopType\n  scheduleType\n  appointmentStart\n  appointmentEnd\n  arrivedAt\n  departedAt\n  clockStartAt\n  clockStopAt\n  freeTimeExpiresAt\n  noticeDueAt\n  noticeDeadlineAt\n  isOpen\n  arrivedLate\n  lateByMinutes\n  freeMinutesGranted\n  rawDwellMinutes\n  billableMinutes\n  roundedMinutes\n  billableUnits\n  grossAmount\n  billableAmount\n  driverPayMinutes\n  driverPayAmount\n  netMargin\n  capApplied\n  convertedToLayover\n  currency\n  status\n  notificationStatus\n  noticeSentAt\n  suppressedByGate\n  requiresApproval\n  waiverReason\n  waiverNote\n  waivedAt\n  waivedAmount\n  disputeNote\n  disputedAt\n  collectabilityScore\n  evidenceHead\n  additionalChargeId\n  locationName\n  customerName\n  shipmentProNumber\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "DetentionPolicyRowFields",
+      "typeCondition": "DetentionPolicy",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "fragments": [
+        "DetentionPolicyTierFields"
+      ],
+      "usedByOperations": [
+        "CreateDetentionPolicy",
+        "DetentionPolicy",
+        "DetentionPolicyTable",
+        "UpdateDetentionPolicy"
+      ],
+      "usages": [],
+      "sdl": "fragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+    },
+    {
+      "name": "DetentionPolicyTierFields",
+      "typeCondition": "DetentionPolicyTier",
+      "domain": "detention",
+      "sourceFile": "src/operations/detention/table.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CreateDetentionPolicy",
+        "DetentionPolicy",
+        "DetentionPolicyTable",
+        "UpdateDetentionPolicy"
+      ],
+      "usages": [],
+      "sdl": "fragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
     },
     {
       "name": "DistanceOverrideLocationFields",
@@ -10187,6 +10677,402 @@
         }
       ],
       "sdl": "input DetachPayEventInput {\n  payEventId: ID!\n  settlementId: ID!\n}"
+    },
+    "DetentionBacktestInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "assumeNoticeCompliance",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "driverPayRate",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "from",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "policy",
+          "type": "DetentionPolicyInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "to",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionBacktestInput {\n  assumeNoticeCompliance: Boolean\n  driverPayRate: String\n  from: Int!\n  limit: Int\n  policy: DetentionPolicyInput!\n  to: Int!\n}"
+    },
+    "DetentionDisputeInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "note",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "occurrenceId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionDisputeInput {\n  note: String!\n  occurrenceId: ID!\n}"
+    },
+    "DetentionPolicyInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accessorialChargeId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "appointmentStopsOnly",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "autoApproveUnderAmount",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "autoSendNotice",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "billingFreeMinutes",
+          "type": "Int",
+          "defaultValue": "120",
+          "defaultJson": 120
+        },
+        {
+          "name": "billingIncrementMinutes",
+          "type": "Int",
+          "defaultValue": "15",
+          "defaultJson": 15
+        },
+        {
+          "name": "clockStartBasis",
+          "type": "DetentionClockStartBasis",
+          "defaultValue": "LaterOfArrivalOrAppointment",
+          "defaultJson": "LaterOfArrivalOrAppointment"
+        },
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "comments",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "commodityIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "convertToLayoverAtMinutes",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "currency",
+          "type": "String",
+          "defaultValue": "\"USD\"",
+          "defaultJson": "USD"
+        },
+        {
+          "name": "customerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "dayBoundaryMode",
+          "type": "DetentionCapScope",
+          "defaultValue": "PerStop",
+          "defaultJson": "PerStop"
+        },
+        {
+          "name": "deliveryFreeMinutes",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "effectiveEndDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "effectiveStartDate",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "isOrgDefault",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "lateArrivalGraceMinutes",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "lateArrivalRule",
+          "type": "DetentionLateArrivalRule",
+          "defaultValue": "NoEffect",
+          "defaultJson": "NoEffect"
+        },
+        {
+          "name": "layoverAccessorialChargeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "locationId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "maxBillableMinutesPerStop",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "maxChargePerDay",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "maxChargePerShipment",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "maxChargePerStop",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "minimumBillableMinutes",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "notificationDeadlineMinutes",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "notificationLeadMinutes",
+          "type": "Int",
+          "defaultValue": "30",
+          "defaultJson": 30
+        },
+        {
+          "name": "notificationRequirement",
+          "type": "DetentionNotificationRequirement",
+          "defaultValue": "None",
+          "defaultJson": "None"
+        },
+        {
+          "name": "payFreeMinutes",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "pickupFreeMinutes",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "priority",
+          "type": "Int",
+          "defaultValue": "0",
+          "defaultJson": 0
+        },
+        {
+          "name": "rateSource",
+          "type": "DetentionRateSource",
+          "defaultValue": "Accessorial",
+          "defaultJson": "Accessorial"
+        },
+        {
+          "name": "requireApprovalOverAmount",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "roundingMode",
+          "type": "DetentionRoundingMode",
+          "defaultValue": "Up",
+          "defaultJson": "Up"
+        },
+        {
+          "name": "sendDepartureSummary",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "serviceTypeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentTypeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "DetentionPolicyStatus",
+          "defaultValue": "Draft",
+          "defaultJson": "Draft"
+        },
+        {
+          "name": "stopTypes",
+          "type": "[StopType!]",
+          "defaultValue": null
+        },
+        {
+          "name": "tiers",
+          "type": "[DetentionTierInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "unnotifiedBehavior",
+          "type": "DetentionUnnotifiedBehavior",
+          "defaultValue": "Bill",
+          "defaultJson": "Bill"
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionPolicyInput {\n  accessorialChargeId: ID!\n  appointmentStopsOnly: Boolean = false\n  autoApproveUnderAmount: String\n  autoSendNotice: Boolean = false\n  billingFreeMinutes: Int = 120\n  billingIncrementMinutes: Int = 15\n  clockStartBasis: DetentionClockStartBasis = LaterOfArrivalOrAppointment\n  code: String!\n  comments: String\n  commodityIds: [ID!]\n  convertToLayoverAtMinutes: Int\n  currency: String = \"USD\"\n  customerId: ID\n  dayBoundaryMode: DetentionCapScope = PerStop\n  deliveryFreeMinutes: Int\n  description: String\n  effectiveEndDate: Int\n  effectiveStartDate: Int\n  isOrgDefault: Boolean = false\n  lateArrivalGraceMinutes: Int = 0\n  lateArrivalRule: DetentionLateArrivalRule = NoEffect\n  layoverAccessorialChargeId: ID\n  locationId: ID\n  maxBillableMinutesPerStop: Int\n  maxChargePerDay: String\n  maxChargePerShipment: String\n  maxChargePerStop: String\n  minimumBillableMinutes: Int = 0\n  name: String!\n  notificationDeadlineMinutes: Int = 0\n  notificationLeadMinutes: Int = 30\n  notificationRequirement: DetentionNotificationRequirement = None\n  payFreeMinutes: Int\n  pickupFreeMinutes: Int\n  priority: Int = 0\n  rateSource: DetentionRateSource = Accessorial\n  requireApprovalOverAmount: String\n  roundingMode: DetentionRoundingMode = Up\n  sendDepartureSummary: Boolean = false\n  serviceTypeIds: [ID!]\n  shipmentTypeIds: [ID!]\n  status: DetentionPolicyStatus = Draft\n  stopTypes: [StopType!]\n  tiers: [DetentionTierInput!]\n  unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill\n  version: Int\n}"
+    },
+    "DetentionPreviewScenarioInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "appointmentEnd",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "appointmentStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "arrivedAt",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "departedAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "driverPayRate",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "noticeSentAt",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "scheduleType",
+          "type": "StopScheduleType!",
+          "defaultValue": null
+        },
+        {
+          "name": "stopType",
+          "type": "StopType!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionPreviewScenarioInput {\n  appointmentEnd: Int\n  appointmentStart: Int\n  arrivedAt: Int!\n  departedAt: Int\n  driverPayRate: String\n  noticeSentAt: Int\n  scheduleType: StopScheduleType!\n  stopType: StopType!\n}"
+    },
+    "DetentionStatsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "from",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "to",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionStatsInput {\n  from: Int!\n  limit: Int\n  to: Int!\n}"
+    },
+    "DetentionWaiveInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "note",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "occurrenceId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "DetentionWaiverReason!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionWaiveInput {\n  note: String!\n  occurrenceId: ID!\n  reason: DetentionWaiverReason!\n}"
     },
     "DispatchAssignmentPreviewInput": {
       "kind": "input",
@@ -13744,6 +14630,149 @@
       ],
       "sdl": "input SortFieldInput {\n  direction: String!\n  field: String!\n}"
     },
+    "DetentionClockStartBasis": {
+      "kind": "enum",
+      "values": [
+        "Appointment",
+        "Arrival",
+        "EarlierOfArrivalOrAppointment",
+        "LaterOfArrivalOrAppointment"
+      ],
+      "sdl": "enum DetentionClockStartBasis {\n  Appointment\n  Arrival\n  EarlierOfArrivalOrAppointment\n  LaterOfArrivalOrAppointment\n}"
+    },
+    "DetentionCapScope": {
+      "kind": "enum",
+      "values": [
+        "PerDay",
+        "PerShipment",
+        "PerStop"
+      ],
+      "sdl": "enum DetentionCapScope {\n  PerDay\n  PerShipment\n  PerStop\n}"
+    },
+    "DetentionLateArrivalRule": {
+      "kind": "enum",
+      "values": [
+        "ClockFromAppointment",
+        "Forfeit",
+        "NoEffect",
+        "ReduceFreeTime"
+      ],
+      "sdl": "enum DetentionLateArrivalRule {\n  ClockFromAppointment\n  Forfeit\n  NoEffect\n  ReduceFreeTime\n}"
+    },
+    "DetentionNotificationRequirement": {
+      "kind": "enum",
+      "values": [
+        "Advisory",
+        "None",
+        "Required"
+      ],
+      "sdl": "enum DetentionNotificationRequirement {\n  Advisory\n  None\n  Required\n}"
+    },
+    "DetentionRateSource": {
+      "kind": "enum",
+      "values": [
+        "Accessorial",
+        "Tiers"
+      ],
+      "sdl": "enum DetentionRateSource {\n  Accessorial\n  Tiers\n}"
+    },
+    "DetentionRoundingMode": {
+      "kind": "enum",
+      "values": [
+        "Down",
+        "Exact",
+        "Nearest",
+        "Up"
+      ],
+      "sdl": "enum DetentionRoundingMode {\n  Down\n  Exact\n  Nearest\n  Up\n}"
+    },
+    "DetentionPolicyStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Draft",
+        "Inactive"
+      ],
+      "sdl": "enum DetentionPolicyStatus {\n  Active\n  Draft\n  Inactive\n}"
+    },
+    "StopType": {
+      "kind": "enum",
+      "values": [
+        "Delivery",
+        "Pickup",
+        "SplitDelivery",
+        "SplitPickup"
+      ],
+      "sdl": "enum StopType {\n  Delivery\n  Pickup\n  SplitDelivery\n  SplitPickup\n}"
+    },
+    "DetentionTierInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "fromMinute",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rate",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "rateUnit",
+          "type": "DetentionTierRateUnit",
+          "defaultValue": "Hour",
+          "defaultJson": "Hour"
+        },
+        {
+          "name": "sortOrder",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "toMinute",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DetentionTierInput {\n  fromMinute: Int!\n  label: String\n  rate: String!\n  rateUnit: DetentionTierRateUnit = Hour\n  sortOrder: Int\n  toMinute: Int\n}"
+    },
+    "DetentionUnnotifiedBehavior": {
+      "kind": "enum",
+      "values": [
+        "Bill",
+        "Flag",
+        "Suppress"
+      ],
+      "sdl": "enum DetentionUnnotifiedBehavior {\n  Bill\n  Flag\n  Suppress\n}"
+    },
+    "StopScheduleType": {
+      "kind": "enum",
+      "values": [
+        "Appointment",
+        "Open"
+      ],
+      "sdl": "enum StopScheduleType {\n  Appointment\n  Open\n}"
+    },
+    "DetentionWaiverReason": {
+      "kind": "enum",
+      "values": [
+        "CarrierFault",
+        "CustomerGoodwill",
+        "DataCorrection",
+        "EquipmentIssue",
+        "FacilityClosure",
+        "ForceMajeure",
+        "Other",
+        "Weather"
+      ],
+      "sdl": "enum DetentionWaiverReason {\n  CarrierFault\n  CustomerGoodwill\n  DataCorrection\n  EquipmentIssue\n  FacilityClosure\n  ForceMajeure\n  Other\n  Weather\n}"
+    },
     "FuelType": {
       "kind": "enum",
       "values": [
@@ -14838,6 +15867,15 @@
       "kind": "scalar",
       "sdl": "scalar Any"
     },
+    "DetentionTierRateUnit": {
+      "kind": "enum",
+      "values": [
+        "Day",
+        "Flat",
+        "Hour"
+      ],
+      "sdl": "enum DetentionTierRateUnit {\n  Day\n  Flat\n  Hour\n}"
+    },
     "HomeWidgetConfigInput": {
       "kind": "input",
       "fields": [
@@ -15361,14 +16399,6 @@
       ],
       "sdl": "input ReportDisplayRuleInput {\n  op: String!\n  tone: String!\n  upper: Float\n  value: Float!\n}"
     },
-    "StopScheduleType": {
-      "kind": "enum",
-      "values": [
-        "Appointment",
-        "Open"
-      ],
-      "sdl": "enum StopScheduleType {\n  Appointment\n  Open\n}"
-    },
     "StopStatus": {
       "kind": "enum",
       "values": [
@@ -15378,16 +16408,6 @@
         "New"
       ],
       "sdl": "enum StopStatus {\n  Canceled\n  Completed\n  InTransit\n  New\n}"
-    },
-    "StopType": {
-      "kind": "enum",
-      "values": [
-        "Delivery",
-        "Pickup",
-        "SplitDelivery",
-        "SplitPickup"
-      ],
-      "sdl": "enum StopType {\n  Delivery\n  Pickup\n  SplitDelivery\n  SplitPickup\n}"
     }
   }
 }

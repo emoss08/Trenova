@@ -1,4 +1,7 @@
-import { AccessorialChargeAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  AccessorialChargeAutocompleteField,
+  DetentionPolicyAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
@@ -253,6 +256,10 @@ function DetentionForm() {
     control,
     name: "trackDetentionTime",
   });
+  const useDetentionPolicyEngine = useWatch({
+    control,
+    name: "useDetentionPolicyEngine",
+  });
 
   return (
     <Card>
@@ -267,6 +274,29 @@ function DetentionForm() {
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
+          <FormControl className="min-h-[3em]">
+            <SwitchField
+              control={control}
+              name="useDetentionPolicyEngine"
+              label="Use Detention Policy Engine"
+              description="Compute detention with configurable detention policies — clock rules, tiered rates, notices, and full calculation receipts — instead of the legacy flat threshold below. Requires at least one Active detention policy or a default policy."
+              position="left"
+            />
+          </FormControl>
+          {useDetentionPolicyEngine && (
+            <div className="flex flex-col pl-10">
+              <FormControl className="min-h-[3em] max-w-[400px]">
+                <DetentionPolicyAutocompleteField
+                  control={control}
+                  name="defaultDetentionPolicyId"
+                  label="Default Detention Policy"
+                  placeholder="Select Default Policy"
+                  description="The fallback policy used when no scoped policy matches a stop. Leave empty to rely on a policy marked as the organization default."
+                  clearable
+                />
+              </FormControl>
+            </div>
+          )}
           <FormControl className="min-h-[3em]">
             <SwitchField
               control={control}

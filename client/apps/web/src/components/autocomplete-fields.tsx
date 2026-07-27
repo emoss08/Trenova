@@ -9,6 +9,7 @@ import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge
 import type { AccountType } from "@/types/account-type";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Commodity } from "@trenova/shared/types/commodity";
+import type { DetentionPolicy } from "@trenova/shared/types/detention";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@trenova/shared/types/document";
 import type { DocumentType } from "@trenova/shared/types/document-type";
@@ -1585,6 +1586,21 @@ export function ServiceTypeMultiSelectField<T extends FieldValues>({
   );
 }
 
+export function CommodityMultiSelectField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<Commodity, T>) {
+  return (
+    <MultiSelectAutocompleteField<Commodity, T>
+      link="/commodities/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name || ""}
+      renderOption={(option) => option.name || ""}
+      getOptionLabel={(option) => option.name || ""}
+      {...props}
+    />
+  );
+}
+
 export function EquipmentTypeMultiSelectField<T extends FieldValues>({
   ...props
 }: BaseMultiSelectAutocompleteFieldProps<EquipmentTypeOption, T>) {
@@ -1595,6 +1611,30 @@ export function EquipmentTypeMultiSelectField<T extends FieldValues>({
       getDisplayValue={(option) => option.code || ""}
       renderOption={(option) => option.code || ""}
       getOptionLabel={(option) => option.code || ""}
+      {...props}
+    />
+  );
+}
+
+export function DetentionPolicyAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<DetentionPolicy, T>) {
+  return (
+    <AutocompleteField<DetentionPolicy, T>
+      link="/detention-policies/select-options/"
+      popoutLink="/billing/configuration-files/detention-policies"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option?.code && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.code}
+            </span>
+          )}
+        </div>
+      )}
       {...props}
     />
   );

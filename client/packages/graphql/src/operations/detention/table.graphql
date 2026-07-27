@@ -1,0 +1,102 @@
+fragment DetentionPolicyTierFields on DetentionPolicyTier {
+  id
+  fromMinute
+  toMinute
+  rate
+  rateUnit
+  label
+  sortOrder
+}
+
+fragment DetentionPolicyRowFields on DetentionPolicy {
+  id
+  businessUnitId
+  organizationId
+  name
+  code
+  description
+  status
+  isOrgDefault
+  priority
+  specificityScore
+  customerId
+  locationId
+  shipmentTypeIds
+  serviceTypeIds
+  commodityIds
+  stopTypes
+  appointmentStopsOnly
+  effectiveStartDate
+  effectiveEndDate
+  clockStartBasis
+  lateArrivalRule
+  lateArrivalGraceMinutes
+  billingFreeMinutes
+  pickupFreeMinutes
+  deliveryFreeMinutes
+  payFreeMinutes
+  minimumBillableMinutes
+  billingIncrementMinutes
+  roundingMode
+  rateSource
+  accessorialChargeId
+  tiers {
+    ...DetentionPolicyTierFields
+  }
+  maxBillableMinutesPerStop
+  maxChargePerStop
+  maxChargePerDay
+  maxChargePerShipment
+  dayBoundaryMode
+  convertToLayoverAtMinutes
+  layoverAccessorialChargeId
+  notificationRequirement
+  notificationLeadMinutes
+  notificationDeadlineMinutes
+  unnotifiedBehavior
+  autoSendNotice
+  sendDepartureSummary
+  requireApprovalOverAmount
+  autoApproveUnderAmount
+  currency
+  comments
+  version
+  createdAt
+  updatedAt
+}
+
+query DetentionPolicyTable($input: DataTableConnectionInput!) {
+  detentionPolicies(input: $input) {
+    edges {
+      node {
+        ...DetentionPolicyRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DetentionPolicy($id: ID!) {
+  detentionPolicy(id: $id) {
+    ...DetentionPolicyRowFields
+  }
+}
+
+mutation CreateDetentionPolicy($input: DetentionPolicyInput!) {
+  createDetentionPolicy(input: $input) {
+    ...DetentionPolicyRowFields
+  }
+}
+
+mutation UpdateDetentionPolicy($id: ID!, $input: DetentionPolicyInput!) {
+  updateDetentionPolicy(id: $id, input: $input) {
+    ...DetentionPolicyRowFields
+  }
+}
+
+mutation DeleteDetentionPolicy($id: ID!) {
+  deleteDetentionPolicy(id: $id)
+}

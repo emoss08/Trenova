@@ -1166,6 +1166,19 @@ enum CustomerCreditStatus {
   Warning
 }
 
+type CustomerDetentionStat {
+  billedAmount: String!
+  breachCount: Int!
+  customerId: ID!
+  customerName: String!
+  disputeCount: Int!
+  driverPayAmount: String!
+  netMargin: String!
+  stopCount: Int!
+  suppressedCount: Int!
+  waivedAmount: String!
+}
+
 type CustomerEdge {
   cursor: String!
   node: Customer!
@@ -1360,6 +1373,537 @@ input DataTableConnectionInput {
 input DetachPayEventInput {
   payEventId: ID!
   settlementId: ID!
+}
+
+type DetentionBacktestBucket {
+  baselineAmount: String!
+  billableCount: Int!
+  delta: String!
+  driverPayAmount: String!
+  key: String!
+  label: String!
+  netMargin: String!
+  proposedAmount: String!
+  stopCount: Int!
+}
+
+input DetentionBacktestInput {
+  assumeNoticeCompliance: Boolean
+  driverPayRate: String
+  from: Int!
+  limit: Int
+  policy: DetentionPolicyInput!
+  to: Int!
+}
+
+type DetentionBacktestResult {
+  baselineRevenue: String!
+  byCustomer: [DetentionBacktestBucket!]!
+  byFacility: [DetentionBacktestBucket!]!
+  from: Int!
+  negativeMarginStops: Int!
+  proposedDriverPay: String!
+  proposedNetMargin: String!
+  proposedRevenue: String!
+  revenueDelta: String!
+  stopsBillable: Int!
+  stopsEvaluated: Int!
+  stopsForfeited: Int!
+  stopsMatched: Int!
+  stopsSuppressed: Int!
+  to: Int!
+  truncated: Boolean!
+}
+
+enum DetentionCapKind {
+  LayoverBoundary
+  MaxBillableMinutes
+  MaxChargePerDay
+  MaxChargePerShipment
+  MaxChargePerStop
+  None
+}
+
+enum DetentionCapScope {
+  PerDay
+  PerShipment
+  PerStop
+}
+
+enum DetentionClockStartBasis {
+  Appointment
+  Arrival
+  EarlierOfArrivalOrAppointment
+  LaterOfArrivalOrAppointment
+}
+
+type DetentionCollectability {
+  band: DetentionScoreBand!
+  chainValid: Boolean!
+  factors: [DetentionScoreFactor!]!
+  score: Int!
+  summary: String!
+}
+
+type DetentionDeskEntry {
+  amountAtRisk: String!
+  minutesUntilFreeEnds: Int!
+  minutesUntilNoticeDue: Int
+  noticeWindowOpen: Boolean!
+  occurrence: DetentionOccurrence!
+  urgency: DetentionDeskUrgency!
+}
+
+enum DetentionDeskUrgency {
+  Accruing
+  FreeTimeEnding
+  Lost
+  Normal
+  NoticeDueSoon
+  NoticeOverdue
+}
+
+input DetentionDisputeInput {
+  note: String!
+  occurrenceId: ID!
+}
+
+type DetentionDisputePacket {
+  collectability: DetentionCollectability!
+  evidence: [DetentionEvidence!]
+  generatedAt: Int!
+  notices: [DetentionNotice!]
+  occurrence: DetentionOccurrence!
+  policySnapshot: JSON
+  receipt: String!
+}
+
+type DetentionEvidence {
+  createdAt: Int!
+  detentionOccurrenceId: ID!
+  documentId: ID
+  hash: String!
+  id: ID!
+  kind: DetentionEvidenceKind!
+  observedAt: Int!
+  payload: JSON
+  prevHash: String!
+  recordedAt: Int!
+  recordedById: ID
+  sequence: Int!
+  source: DetentionEvidenceSource!
+  summary: String!
+}
+
+enum DetentionEvidenceKind {
+  Appointment
+  Arrival
+  Departure
+  Dispute
+  Document
+  Notice
+  Recalculated
+  StatusChange
+  Waiver
+}
+
+enum DetentionEvidenceSource {
+  Document
+  DriverApp
+  EDI
+  Geofence
+  Manual
+  System
+  Telematics
+}
+
+enum DetentionLateArrivalRule {
+  ClockFromAppointment
+  Forfeit
+  NoEffect
+  ReduceFreeTime
+}
+
+type DetentionNotice {
+  body: String!
+  channel: DetentionNoticeChannel!
+  createdAt: Int!
+  deliveredAt: Int
+  deliveryStatus: DetentionNoticeDeliveryStatus!
+  detentionOccurrenceId: ID!
+  failedAt: Int
+  failureReason: String!
+  id: ID!
+  kind: DetentionNoticeKind!
+  openedAt: Int
+  quotedAmount: String
+  quotedFreeMinutes: Int!
+  quotedRate: String
+  recipients: [String!]
+  satisfiesRequirement: Boolean!
+  scheduledFor: Int!
+  sentAt: Int
+  sentById: ID
+  subject: String!
+  threadKey: String!
+  wasAutomatic: Boolean!
+}
+
+enum DetentionNoticeChannel {
+  EDI
+  Email
+  Manual
+  Portal
+}
+
+enum DetentionNoticeDeliveryStatus {
+  Bounced
+  Delivered
+  Failed
+  Opened
+  Queued
+  Sent
+}
+
+enum DetentionNoticeKind {
+  Final
+  Started
+  Update
+  Warning
+}
+
+enum DetentionNotificationRequirement {
+  Advisory
+  None
+  Required
+}
+
+enum DetentionNotificationStatus {
+  Failed
+  Late
+  Missed
+  NotRequired
+  Pending
+  Sent
+}
+
+type DetentionOccurrence {
+  additionalChargeId: ID
+  appointmentEnd: Int
+  appointmentStart: Int
+  arrivedAt: Int
+  arrivedLate: Boolean!
+  billableAmount: String!
+  billableMinutes: Int!
+  billableUnits: String!
+  businessUnitId: ID!
+  calculationTrace: JSON
+  capApplied: DetentionCapKind!
+  clockStartAt: Int!
+  clockStopAt: Int
+  collectabilityScore: Int!
+  convertedToLayover: Boolean!
+  createdAt: Int!
+  currency: String!
+  customerId: ID!
+  customerName: String!
+  departedAt: Int
+  detentionPolicyId: ID
+  disputeNote: String!
+  disputedAt: Int
+  driverPayAmount: String!
+  driverPayMinutes: Int!
+  evidenceHead: String!
+  freeMinutesGranted: Int!
+  freeTimeExpiresAt: Int!
+  grossAmount: String!
+  id: ID!
+  isOpen: Boolean!
+  lateByMinutes: Int!
+  locationId: ID!
+  locationName: String!
+  netMargin: String!
+  noticeDeadlineAt: Int
+  noticeDueAt: Int
+  noticeSentAt: Int
+  notificationStatus: DetentionNotificationStatus!
+  organizationId: ID!
+  policySnapshot: JSON
+  rawDwellMinutes: Int!
+  requiresApproval: Boolean!
+  roundedMinutes: Int!
+  scheduleType: String!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  shipmentProNumber: String!
+  status: DetentionOccurrenceStatus!
+  stopId: ID!
+  stopType: String!
+  suppressedByGate: Boolean!
+  updatedAt: Int!
+  version: Int!
+  waivedAmount: String!
+  waivedAt: Int
+  waiverNote: String!
+  waiverReason: DetentionWaiverReason
+}
+
+type DetentionOccurrenceDetail {
+  collectability: DetentionCollectability!
+  evidence: [DetentionEvidence!]
+  notices: [DetentionNotice!]
+  occurrence: DetentionOccurrence!
+  receipt: String!
+}
+
+enum DetentionOccurrenceStatus {
+  Accruing
+  Approved
+  Billed
+  Disputed
+  NotBillable
+  Pending
+  Waived
+}
+
+type DetentionPolicy {
+  accessorialChargeId: ID!
+  appointmentStopsOnly: Boolean!
+  autoApproveUnderAmount: String
+  autoSendNotice: Boolean!
+  billingFreeMinutes: Int!
+  billingIncrementMinutes: Int!
+  businessUnitId: ID!
+  clockStartBasis: DetentionClockStartBasis!
+  code: String!
+  comments: String!
+  commodityIds: [ID!]
+  convertToLayoverAtMinutes: Int
+  createdAt: Int!
+  currency: String!
+  customerId: ID
+  dayBoundaryMode: DetentionCapScope!
+  deliveryFreeMinutes: Int
+  description: String!
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  id: ID!
+  isOrgDefault: Boolean!
+  lateArrivalGraceMinutes: Int!
+  lateArrivalRule: DetentionLateArrivalRule!
+  layoverAccessorialChargeId: ID
+  locationId: ID
+  maxBillableMinutesPerStop: Int
+  maxChargePerDay: String
+  maxChargePerShipment: String
+  maxChargePerStop: String
+  minimumBillableMinutes: Int!
+  name: String!
+  notificationDeadlineMinutes: Int!
+  notificationLeadMinutes: Int!
+  notificationRequirement: DetentionNotificationRequirement!
+  organizationId: ID!
+  payFreeMinutes: Int
+  pickupFreeMinutes: Int
+  priority: Int!
+  rateSource: DetentionRateSource!
+  requireApprovalOverAmount: String
+  roundingMode: DetentionRoundingMode!
+  sendDepartureSummary: Boolean!
+  serviceTypeIds: [ID!]
+  shipmentTypeIds: [ID!]
+  specificityScore: Int!
+  status: DetentionPolicyStatus!
+  stopTypes: [StopType!]
+  tiers: [DetentionPolicyTier!]
+  unnotifiedBehavior: DetentionUnnotifiedBehavior!
+  updatedAt: Int!
+  version: Int!
+}
+
+type DetentionPolicyConnection {
+  edges: [DetentionPolicyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DetentionPolicyEdge {
+  cursor: String!
+  node: DetentionPolicy!
+}
+
+input DetentionPolicyInput {
+  accessorialChargeId: ID!
+  appointmentStopsOnly: Boolean = false
+  autoApproveUnderAmount: String
+  autoSendNotice: Boolean = false
+  billingFreeMinutes: Int = 120
+  billingIncrementMinutes: Int = 15
+  clockStartBasis: DetentionClockStartBasis = LaterOfArrivalOrAppointment
+  code: String!
+  comments: String
+  commodityIds: [ID!]
+  convertToLayoverAtMinutes: Int
+  currency: String = "USD"
+  customerId: ID
+  dayBoundaryMode: DetentionCapScope = PerStop
+  deliveryFreeMinutes: Int
+  description: String
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  isOrgDefault: Boolean = false
+  lateArrivalGraceMinutes: Int = 0
+  lateArrivalRule: DetentionLateArrivalRule = NoEffect
+  layoverAccessorialChargeId: ID
+  locationId: ID
+  maxBillableMinutesPerStop: Int
+  maxChargePerDay: String
+  maxChargePerShipment: String
+  maxChargePerStop: String
+  minimumBillableMinutes: Int = 0
+  name: String!
+  notificationDeadlineMinutes: Int = 0
+  notificationLeadMinutes: Int = 30
+  notificationRequirement: DetentionNotificationRequirement = None
+  payFreeMinutes: Int
+  pickupFreeMinutes: Int
+  priority: Int = 0
+  rateSource: DetentionRateSource = Accessorial
+  requireApprovalOverAmount: String
+  roundingMode: DetentionRoundingMode = Up
+  sendDepartureSummary: Boolean = false
+  serviceTypeIds: [ID!]
+  shipmentTypeIds: [ID!]
+  status: DetentionPolicyStatus = Draft
+  stopTypes: [StopType!]
+  tiers: [DetentionTierInput!]
+  unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill
+  version: Int
+}
+
+enum DetentionPolicyStatus {
+  Active
+  Draft
+  Inactive
+}
+
+type DetentionPolicyTier {
+  fromMinute: Int!
+  id: ID
+  label: String!
+  rate: String!
+  rateUnit: DetentionTierRateUnit!
+  sortOrder: Int!
+  toMinute: Int
+}
+
+type DetentionPreviewResult {
+  arrivedLate: Boolean!
+  billableAmount: String!
+  billableMinutes: Int!
+  calculationTrace: JSON
+  capApplied: DetentionCapKind!
+  driverPayAmount: String!
+  freeMinutesGranted: Int!
+  grossAmount: String!
+  netMargin: String!
+  notificationStatus: DetentionNotificationStatus!
+  policySnapshot: JSON!
+  rawDwellMinutes: Int!
+  receipt: String!
+  roundedMinutes: Int!
+  status: DetentionOccurrenceStatus!
+  suppressedByGate: Boolean!
+}
+
+input DetentionPreviewScenarioInput {
+  appointmentEnd: Int
+  appointmentStart: Int
+  arrivedAt: Int!
+  departedAt: Int
+  driverPayRate: String
+  noticeSentAt: Int
+  scheduleType: StopScheduleType!
+  stopType: StopType!
+}
+
+enum DetentionRateSource {
+  Accessorial
+  Tiers
+}
+
+enum DetentionRoundingMode {
+  Down
+  Exact
+  Nearest
+  Up
+}
+
+enum DetentionScoreBand {
+  Adequate
+  AtRisk
+  Strong
+  Weak
+}
+
+type DetentionScoreFactor {
+  detail: String!
+  earned: Int!
+  key: String!
+  label: String!
+  possible: Int!
+  remedy: String!
+}
+
+input DetentionStatsInput {
+  from: Int!
+  limit: Int
+  to: Int!
+}
+
+input DetentionTierInput {
+  fromMinute: Int!
+  label: String
+  rate: String!
+  rateUnit: DetentionTierRateUnit = Hour
+  sortOrder: Int
+  toMinute: Int
+}
+
+enum DetentionTierRateUnit {
+  Day
+  Flat
+  Hour
+}
+
+enum DetentionUnnotifiedBehavior {
+  Bill
+  Flag
+  Suppress
+}
+
+input DetentionWaiveInput {
+  note: String!
+  occurrenceId: ID!
+  reason: DetentionWaiverReason!
+}
+
+type DetentionWaiverLeakageStat {
+  approverCount: Int!
+  reason: String!
+  waivedAmount: String!
+  waiverCount: Int!
+}
+
+enum DetentionWaiverReason {
+  CarrierFault
+  CustomerGoodwill
+  DataCorrection
+  EquipmentIssue
+  FacilityClosure
+  ForceMajeure
+  Other
+  Weather
 }
 
 input DispatchAssignMoveInput {
@@ -2836,6 +3380,22 @@ enum EscrowTransactionType {
   Refund
 }
 
+type FacilityDetentionStat {
+  avgDwellMinutes: Int!
+  billedAmount: String!
+  breachCount: Int!
+  disputeCount: Int!
+  driverPayAmount: String!
+  locationId: ID!
+  locationName: String!
+  medianDwellMinutes: Float!
+  netMargin: String!
+  p90DwellMinutes: Float!
+  stopCount: Int!
+  suppressedCount: Int!
+  waivedAmount: String!
+}
+
 enum FacilityType {
   ColdStorage
   CrossDock
@@ -4031,6 +4591,7 @@ type Mutation {
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
+  approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   approveWorkerPTO(id: ID!): WorkerPTO!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
@@ -4059,6 +4620,7 @@ type Mutation {
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
   closeEscrowAccount(accountId: ID!): EscrowAccount!
   closeOrder(id: ID!): Order!
+  createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
@@ -4090,6 +4652,7 @@ type Mutation {
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  deleteDetentionPolicy(id: ID!): Boolean!
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
@@ -4106,11 +4669,13 @@ type Mutation {
   Remove a pay event from a draft settlement, returning it to the unsettled pool.
   """
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
+  detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
+  disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
@@ -4197,6 +4762,7 @@ type Mutation {
   revokeWorkerPortalAccess(workerId: ID!): Boolean!
   runReport(input: RunReportInput!): ReportRun!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
+  sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   """Moves an open dispute into review (back office)."""
@@ -4212,6 +4778,7 @@ type Mutation {
   updateCostingControl(input: CostingControlInput!): CostingControl!
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
+  updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
@@ -4244,6 +4811,7 @@ type Mutation {
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
   voidDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  waiveDetentionOccurrence(input: DetentionWaiveInput!): DetentionOccurrence!
   """Withdraws one of the signed-in driver's own open disputes."""
   withdrawSettlementDispute(id: ID!): SettlementDispute!
   writeOffPayAdvance(input: WriteOffPayAdvanceInput!): PayAdvance!
@@ -5057,6 +5625,15 @@ type Query {
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
   defaultTableConfiguration(resource: String!): TableConfiguration
+  detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
+  detentionDesk: [DetentionDeskEntry!]!
+  detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
+  detentionFacilityStats(input: DetentionStatsInput!): [FacilityDetentionStat!]!
+  detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
+  detentionPolicies(input: DataTableConnectionInput!): DetentionPolicyConnection!
+  detentionPolicy(id: ID!): DetentionPolicy
+  detentionPolicyPreview(policy: DetentionPolicyInput!, scenario: DetentionPreviewScenarioInput!): DetentionPreviewResult!
+  detentionWaiverStats(input: DetentionStatsInput!): [DetentionWaiverLeakageStat!]!
   dispatchAssignmentPreview(input: DispatchAssignmentPreviewInput!): DispatchAssignmentPreview!
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
@@ -5259,6 +5836,7 @@ type Query {
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
   shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!

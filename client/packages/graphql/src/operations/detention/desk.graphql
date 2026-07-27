@@ -1,0 +1,198 @@
+fragment DetentionOccurrenceFields on DetentionOccurrence {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  stopId
+  customerId
+  locationId
+  detentionPolicyId
+  policySnapshot
+  calculationTrace
+  stopType
+  scheduleType
+  appointmentStart
+  appointmentEnd
+  arrivedAt
+  departedAt
+  clockStartAt
+  clockStopAt
+  freeTimeExpiresAt
+  noticeDueAt
+  noticeDeadlineAt
+  isOpen
+  arrivedLate
+  lateByMinutes
+  freeMinutesGranted
+  rawDwellMinutes
+  billableMinutes
+  roundedMinutes
+  billableUnits
+  grossAmount
+  billableAmount
+  driverPayMinutes
+  driverPayAmount
+  netMargin
+  capApplied
+  convertedToLayover
+  currency
+  status
+  notificationStatus
+  noticeSentAt
+  suppressedByGate
+  requiresApproval
+  waiverReason
+  waiverNote
+  waivedAt
+  waivedAmount
+  disputeNote
+  disputedAt
+  collectabilityScore
+  evidenceHead
+  additionalChargeId
+  locationName
+  customerName
+  shipmentProNumber
+  version
+  createdAt
+  updatedAt
+}
+
+fragment DetentionEvidenceFields on DetentionEvidence {
+  id
+  detentionOccurrenceId
+  sequence
+  kind
+  source
+  summary
+  observedAt
+  recordedAt
+  recordedById
+  documentId
+  payload
+  prevHash
+  hash
+  createdAt
+}
+
+fragment DetentionNoticeFields on DetentionNotice {
+  id
+  detentionOccurrenceId
+  threadKey
+  kind
+  channel
+  deliveryStatus
+  recipients
+  subject
+  body
+  scheduledFor
+  sentAt
+  deliveredAt
+  openedAt
+  failedAt
+  failureReason
+  sentById
+  wasAutomatic
+  satisfiesRequirement
+  quotedFreeMinutes
+  quotedRate
+  quotedAmount
+  createdAt
+}
+
+fragment DetentionCollectabilityFields on DetentionCollectability {
+  score
+  band
+  chainValid
+  summary
+  factors {
+    key
+    label
+    earned
+    possible
+    detail
+    remedy
+  }
+}
+
+query DetentionDesk {
+  detentionDesk {
+    occurrence {
+      ...DetentionOccurrenceFields
+    }
+    minutesUntilFreeEnds
+    minutesUntilNoticeDue
+    noticeWindowOpen
+    amountAtRisk
+    urgency
+  }
+}
+
+query DetentionOccurrenceDetail($id: ID!) {
+  detentionOccurrence(id: $id) {
+    occurrence {
+      ...DetentionOccurrenceFields
+    }
+    evidence {
+      ...DetentionEvidenceFields
+    }
+    notices {
+      ...DetentionNoticeFields
+    }
+    collectability {
+      ...DetentionCollectabilityFields
+    }
+    receipt
+  }
+}
+
+query ShipmentDetention($shipmentId: ID!) {
+  shipmentDetention(shipmentId: $shipmentId) {
+    ...DetentionOccurrenceFields
+  }
+}
+
+query DetentionDisputePacket($occurrenceId: ID!) {
+  detentionDisputePacket(occurrenceId: $occurrenceId) {
+    occurrence {
+      ...DetentionOccurrenceFields
+    }
+    policySnapshot
+    receipt
+    evidence {
+      ...DetentionEvidenceFields
+    }
+    notices {
+      ...DetentionNoticeFields
+    }
+    collectability {
+      ...DetentionCollectabilityFields
+    }
+    generatedAt
+  }
+}
+
+mutation WaiveDetentionOccurrence($input: DetentionWaiveInput!) {
+  waiveDetentionOccurrence(input: $input) {
+    ...DetentionOccurrenceFields
+  }
+}
+
+mutation ApproveDetentionOccurrence($occurrenceId: ID!) {
+  approveDetentionOccurrence(occurrenceId: $occurrenceId) {
+    ...DetentionOccurrenceFields
+  }
+}
+
+mutation DisputeDetentionOccurrence($input: DetentionDisputeInput!) {
+  disputeDetentionOccurrence(input: $input) {
+    ...DetentionOccurrenceFields
+  }
+}
+
+mutation SendDetentionNotice($occurrenceId: ID!) {
+  sendDetentionNotice(occurrenceId: $occurrenceId) {
+    ...DetentionOccurrenceFields
+  }
+}

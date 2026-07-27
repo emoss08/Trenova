@@ -54,6 +54,7 @@ export type BaseEndpoint =
   | "/roles/"
   | "/us-states/"
   | "/accessorial-charges/"
+  | "/detention-policies/"
   | "/users/"
   | "/workers/"
   | "/worker-pto/"

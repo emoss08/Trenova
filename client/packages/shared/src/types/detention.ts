@@ -393,6 +393,9 @@ export const detentionOccurrenceSchema = z.object({
   collectabilityScore: z.number().int(),
   evidenceHead: z.string().default(""),
   additionalChargeId: z.string().nullish(),
+  locationName: z.string().default(""),
+  customerName: z.string().default(""),
+  shipmentProNumber: z.string().default(""),
   version: z.number().int(),
   createdAt: z.number().int(),
   updatedAt: z.number().int(),
@@ -503,6 +506,7 @@ export type PreviewResult = z.infer<typeof previewResultSchema>;
 
 export const backtestBucketSchema = z.object({
   key: z.string(),
+  label: z.string().default(""),
   stopCount: z.number().int(),
   billableCount: z.number().int(),
   proposedAmount: z.coerce.number(),
@@ -535,6 +539,7 @@ export type BacktestResult = z.infer<typeof backtestResultSchema>;
 
 export const facilityDetentionStatSchema = z.object({
   locationId: z.string(),
+  locationName: z.string().default(""),
   stopCount: z.number().int(),
   breachCount: z.number().int(),
   avgDwellMinutes: z.number(),
@@ -551,6 +556,7 @@ export type FacilityDetentionStat = z.infer<typeof facilityDetentionStatSchema>;
 
 export const customerDetentionStatSchema = z.object({
   customerId: z.string(),
+  customerName: z.string().default(""),
   stopCount: z.number().int(),
   breachCount: z.number().int(),
   billedAmount: z.coerce.number(),

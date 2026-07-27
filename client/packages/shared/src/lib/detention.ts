@@ -2,6 +2,7 @@ import {
   DESK_URGENCY_RANK,
   type DeskEntry,
   type DeskUrgency,
+  type OccurrenceStatus,
   type ScoreBand,
 } from "../types/detention";
 
@@ -48,37 +49,37 @@ export const URGENCY_LABEL: Record<DeskUrgency, string> = {
  */
 export const URGENCY_STYLES: Record<
   DeskUrgency,
-  { border: string; badge: string; bar: string }
+  { badge: string; bar: string; dot: string }
 > = {
   NoticeOverdue: {
-    border: "border-l-amber-500",
     badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
     bar: "bg-amber-500",
+    dot: "bg-amber-500",
   },
   NoticeDueSoon: {
-    border: "border-l-amber-400",
     badge: "bg-amber-400/15 text-amber-700 dark:text-amber-400",
     bar: "bg-amber-400",
+    dot: "bg-amber-400",
   },
   Accruing: {
-    border: "border-l-red-500",
     badge: "bg-red-500/15 text-red-700 dark:text-red-400",
     bar: "bg-red-500",
+    dot: "bg-red-500",
   },
   FreeTimeEnding: {
-    border: "border-l-orange-400",
     badge: "bg-orange-400/15 text-orange-700 dark:text-orange-400",
     bar: "bg-orange-400",
+    dot: "bg-orange-400",
   },
   Lost: {
-    border: "border-l-muted-foreground/40",
     badge: "bg-muted text-muted-foreground",
     bar: "bg-muted-foreground/50",
+    dot: "bg-muted-foreground/50",
   },
   Normal: {
-    border: "border-l-emerald-500",
     badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
     bar: "bg-emerald-500",
+    dot: "bg-emerald-500",
   },
 };
 
@@ -87,6 +88,24 @@ export const SCORE_BAND_STYLES: Record<ScoreBand, string> = {
   Adequate: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
   Weak: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   AtRisk: "bg-red-500/15 text-red-700 dark:text-red-400",
+};
+
+/** Maps a 0-100 collectability score onto its qualitative band. */
+export function scoreBand(score: number): ScoreBand {
+  if (score >= 85) return "Strong";
+  if (score >= 65) return "Adequate";
+  if (score >= 40) return "Weak";
+  return "AtRisk";
+}
+
+export const OCCURRENCE_STATUS_STYLES: Record<OccurrenceStatus, string> = {
+  Accruing: "bg-red-500/15 text-red-700 dark:text-red-400",
+  Pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  Approved: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  Billed: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  Waived: "bg-muted text-muted-foreground",
+  Disputed: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+  NotBillable: "bg-muted text-muted-foreground",
 };
 
 /**

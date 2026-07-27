@@ -1,16 +1,9 @@
 import { apiService } from "@/services/api";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
+import { Label } from "@trenova/shared/components/ui/label";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
-import { Label } from "@trenova/shared/components/ui/label";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type {
   BacktestBucket,
@@ -18,8 +11,9 @@ import type {
   DetentionPolicy,
 } from "@trenova/shared/types/detention";
 import { useMutation } from "@tanstack/react-query";
+import { HistoryIcon } from "lucide-react";
 import { useState } from "react";
-import { useWatch, type Control } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 const WINDOW_OPTIONS = [
   { label: "30 days", days: 30 },
@@ -61,9 +55,9 @@ function BucketList({ title, buckets }: { title: string; buckets: BacktestBucket
         {buckets.slice(0, 5).map((bucket) => (
           <div
             key={bucket.key}
-            className="flex items-center justify-between gap-2 rounded-md border px-2 py-1.5"
+            className="flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5"
           >
-            <span className="truncate font-mono text-[11px]">{bucket.key}</span>
+            <span className="truncate text-xs">{bucket.label || bucket.key}</span>
             <div className="flex shrink-0 items-center gap-2">
               <span className="text-muted-foreground text-[11px] tabular-nums">
                 {bucket.stopCount} stops
@@ -81,7 +75,7 @@ function ResultView({ result }: { result: BacktestResult }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-md border p-3">
+        <div className="rounded-lg border p-3">
           <p className="text-muted-foreground text-xs">Projected revenue</p>
           <p className="text-xl font-semibold tabular-nums">
             {formatCurrency(result.proposedRevenue)}
@@ -90,7 +84,7 @@ function ResultView({ result }: { result: BacktestResult }) {
             vs {formatCurrency(result.baselineRevenue)} actual
           </p>
         </div>
-        <div className="rounded-md border p-3">
+        <div className="rounded-lg border p-3">
           <p className="text-muted-foreground text-xs">Change</p>
           <p
             className={cn(
@@ -146,10 +140,6 @@ function ResultView({ result }: { result: BacktestResult }) {
   );
 }
 
-type DetentionBacktestProps = {
-  control: Control<DetentionPolicy>;
-};
-
 /**
  * Backtest panel.
  *
@@ -158,7 +148,8 @@ type DetentionBacktestProps = {
  * between "what are these terms worth" and "what would we actually have
  * collected given the notices we sent".
  */
-export function DetentionBacktest({ control }: DetentionBacktestProps) {
+export function DetentionBacktest() {
+  const { control } = useFormContext<DetentionPolicy>();
   const values = useWatch({ control });
   const policy = values as DetentionPolicy;
 
@@ -180,74 +171,74 @@ export function DetentionBacktest({ control }: DetentionBacktestProps) {
   const ready = Boolean(policy?.accessorialChargeId && policy?.code && policy?.name);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Backtest</CardTitle>
-        <CardDescription>
-          Re-price settled history under these terms. The engine is the same one
-          that bills live shipments, so the projection is exact rather than
-          estimated.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {WINDOW_OPTIONS.map((option) => (
-            <Button
-              key={option.days}
-              type="button"
-              size="sm"
-              variant={days === option.days ? "default" : "outline"}
-              className="h-7 text-xs"
-              onClick={() => setDays(option.days)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Switch
-            id="assume-compliance"
-            checked={assumeCompliance}
-            onCheckedChange={setAssumeCompliance}
-          />
-          <Label htmlFor="assume-compliance" className="text-xs">
-            Assume notices were sent on time
-          </Label>
-        </div>
-        <p className="text-muted-foreground text-[11px]">
-          {assumeCompliance
-            ? "Measures what the terms are worth if the notice process works."
-            : "Replays the notices actually sent, showing what process failures cost."}
+    <div className="flex flex-col gap-4">
+      <div>
+        <h3 className="text-sm font-medium">Backtest</h3>
+        <p className="text-muted-foreground text-xs">
+          Re-price settled history under these terms. The engine is the same one that bills
+          live shipments, so the projection is exact rather than estimated.
         </p>
+      </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        {WINDOW_OPTIONS.map((option) => (
+          <Button
+            key={option.days}
+            type="button"
+            size="sm"
+            variant={days === option.days ? "default" : "outline"}
+            className="h-7 text-xs"
+            onClick={() => setDays(option.days)}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch
+          id="assume-compliance"
+          checked={assumeCompliance}
+          onCheckedChange={setAssumeCompliance}
+        />
+        <Label htmlFor="assume-compliance" className="text-xs">
+          Assume notices were sent on time
+        </Label>
+      </div>
+      <p className="text-muted-foreground text-[11px]">
+        {assumeCompliance
+          ? "Measures what the terms are worth if the notice process works."
+          : "Replays the notices actually sent, showing what process failures cost."}
+      </p>
+
+      <div>
         <Button
           type="button"
           size="sm"
           disabled={!ready || mutation.isPending}
           onClick={() => mutation.mutate()}
         >
+          <HistoryIcon className="mr-1.5 size-3.5" />
           {mutation.isPending ? "Running…" : "Run backtest"}
         </Button>
-
         {!ready && (
-          <p className="text-muted-foreground text-xs">
-            Name the policy and choose an accessorial charge first.
+          <p className="text-muted-foreground mt-1.5 text-xs">
+            Name the policy and choose an accessorial charge on the Terms tab first.
           </p>
         )}
+      </div>
 
-        {mutation.isPending && <Skeleton className="h-40 w-full" />}
+      {mutation.isPending && <Skeleton className="h-40 w-full" />}
 
-        {mutation.isError && (
-          <p className="text-muted-foreground text-xs">
-            {mutation.error instanceof Error
-              ? mutation.error.message
-              : "The backtest could not run."}
-          </p>
-        )}
+      {mutation.isError && (
+        <p className="text-destructive text-xs">
+          {mutation.error instanceof Error
+            ? mutation.error.message
+            : "The backtest could not run."}
+        </p>
+      )}
 
-        {mutation.data && <ResultView result={mutation.data} />}
-      </CardContent>
-    </Card>
+      {mutation.data && <ResultView result={mutation.data} />}
+    </div>
   );
 }

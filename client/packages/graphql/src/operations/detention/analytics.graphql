@@ -1,0 +1,106 @@
+query DetentionFacilityStats($input: DetentionStatsInput!) {
+  detentionFacilityStats(input: $input) {
+    locationId
+    locationName
+    stopCount
+    breachCount
+    avgDwellMinutes
+    medianDwellMinutes
+    p90DwellMinutes
+    billedAmount
+    driverPayAmount
+    netMargin
+    waivedAmount
+    disputeCount
+    suppressedCount
+  }
+}
+
+query DetentionCustomerStats($input: DetentionStatsInput!) {
+  detentionCustomerStats(input: $input) {
+    customerId
+    customerName
+    stopCount
+    breachCount
+    billedAmount
+    driverPayAmount
+    netMargin
+    waivedAmount
+    disputeCount
+    suppressedCount
+  }
+}
+
+query DetentionWaiverStats($input: DetentionStatsInput!) {
+  detentionWaiverStats(input: $input) {
+    reason
+    waiverCount
+    approverCount
+    waivedAmount
+  }
+}
+
+query DetentionPolicyPreview(
+  $policy: DetentionPolicyInput!
+  $scenario: DetentionPreviewScenarioInput!
+) {
+  detentionPolicyPreview(policy: $policy, scenario: $scenario) {
+    policySnapshot
+    rawDwellMinutes
+    freeMinutesGranted
+    billableMinutes
+    roundedMinutes
+    billableAmount
+    grossAmount
+    driverPayAmount
+    netMargin
+    arrivedLate
+    capApplied
+    status
+    notificationStatus
+    suppressedByGate
+    calculationTrace
+    receipt
+  }
+}
+
+mutation DetentionBacktest($input: DetentionBacktestInput!) {
+  detentionBacktest(input: $input) {
+    stopsEvaluated
+    stopsMatched
+    stopsBillable
+    stopsForfeited
+    stopsSuppressed
+    proposedRevenue
+    baselineRevenue
+    revenueDelta
+    proposedDriverPay
+    proposedNetMargin
+    negativeMarginStops
+    byCustomer {
+      key
+      label
+      stopCount
+      billableCount
+      proposedAmount
+      baselineAmount
+      delta
+      driverPayAmount
+      netMargin
+    }
+    byFacility {
+      key
+      label
+      stopCount
+      billableCount
+      proposedAmount
+      baselineAmount
+      delta
+      driverPayAmount
+      netMargin
+    }
+    from
+    to
+    truncated
+  }
+}
