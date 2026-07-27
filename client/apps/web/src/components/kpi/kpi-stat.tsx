@@ -13,6 +13,7 @@ type KpiStatProps = {
   icon?: React.ReactNode;
   info?: React.ReactNode;
   span?: 2 | 3;
+  className?: string;
 };
 
 export function KpiStat({
@@ -26,11 +27,12 @@ export function KpiStat({
   icon,
   info,
   span = 2,
+  className,
 }: KpiStatProps) {
   const dot = toneVar(tone);
 
   return (
-    <KpiCard span={span} density="compact">
+    <KpiCard span={span} density="compact" className={className}>
       <KpiHeader
         icon={
           <span className="inline-flex items-center gap-1.5">

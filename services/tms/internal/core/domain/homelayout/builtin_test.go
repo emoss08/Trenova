@@ -127,3 +127,47 @@ func TestMetricCatalogIsWellFormed(t *testing.T) {
 		})
 	}
 }
+
+// TestWidgetCatalogKeysAreStable pins the catalog's contents. The client keeps
+// a matching list in routes/home/_components/__tests__/widget-registry.test.tsx
+// so it can prove it draws every widget the server offers; changing the catalog
+// here without changing it there would ship a card nothing renders.
+func TestWidgetCatalogKeysAreStable(t *testing.T) {
+	expected := []string{
+		homelayout.WidgetAttention,
+		homelayout.WidgetUnassigned,
+		homelayout.WidgetExceptions,
+		homelayout.WidgetDetentionWatch,
+		homelayout.WidgetTomorrowsPickups,
+		homelayout.WidgetMyApprovals,
+		homelayout.WidgetBillingQueue,
+		homelayout.WidgetServiceFailures,
+		homelayout.WidgetEDIAttention,
+		homelayout.WidgetExpiringCredentials,
+		homelayout.WidgetKPI,
+		homelayout.WidgetKPIRow,
+		homelayout.WidgetARSnapshot,
+		homelayout.WidgetRevenueTrend,
+		homelayout.WidgetFleetStatus,
+		homelayout.WidgetOnTimeGoal,
+		homelayout.WidgetReport,
+		homelayout.WidgetDashboardLink,
+		homelayout.WidgetLaneHeatmap,
+		homelayout.WidgetCustomerMix,
+		homelayout.WidgetQuickActions,
+		homelayout.WidgetFavorites,
+		homelayout.WidgetJumpBackIn,
+		homelayout.WidgetSavedViews,
+		homelayout.WidgetActivity,
+		homelayout.WidgetNotifications,
+		homelayout.WidgetAnnouncement,
+		homelayout.WidgetMap,
+	}
+
+	actual := make([]string, 0, len(expected))
+	for _, widget := range homelayout.WidgetCatalog() {
+		actual = append(actual, widget.Key)
+	}
+
+	require.ElementsMatch(t, expected, actual)
+}

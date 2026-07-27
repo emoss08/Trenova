@@ -1,0 +1,54 @@
+query HomeLayout {
+  homeLayout {
+    ...HomeLayoutFields
+  }
+}
+
+query HomeWidgetCatalog {
+  homeWidgetCatalog {
+    gridColumns
+    maxWidgets
+    densities
+    categories {
+      key
+      label
+      description
+    }
+    metrics {
+      key
+      label
+    }
+    widgets {
+      key
+      label
+      description
+      category
+      configKind
+      analyticsInclude
+      defaultW
+      defaultH
+      minW
+      minH
+      maxW
+      maxH
+    }
+  }
+}
+
+query HomeLayoutPresets {
+  homeLayoutPresets {
+    ...HomeLayoutPresetFields
+  }
+}
+
+query HomeLayoutPreset($id: ID!) {
+  homeLayoutPreset(id: $id) {
+    ...HomeLayoutPresetFields
+  }
+}
+
+query HomeLayoutPreview($presetId: ID, $roleId: ID) {
+  homeLayoutPreview(presetId: $presetId, roleId: $roleId) {
+    ...HomeLayoutFields
+  }
+}

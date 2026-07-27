@@ -43,7 +43,7 @@ const routes: RouteObject[] = [
           {
             path: "/",
             async lazy() {
-              const { Home } = await import("@/routes/home");
+              const { Home } = await import("@/routes/home/page");
               return { Component: Home };
             },
           },

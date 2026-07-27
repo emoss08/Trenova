@@ -16,6 +16,7 @@ type KpiRingProps = {
   icon?: React.ReactNode;
   info?: React.ReactNode;
   span?: 2 | 3;
+  className?: string;
 };
 
 export function KpiRing({
@@ -32,13 +33,14 @@ export function KpiRing({
   icon,
   info,
   span = 2,
+  className,
 }: KpiRingProps) {
   const pct = Math.min(100, Math.max(0, (ringValue / ringMax) * 100));
   const onTarget = target !== undefined ? ringValue >= target : true;
   const ringColor = onTarget ? "var(--success)" : "var(--warning)";
 
   return (
-    <KpiCard span={span}>
+    <KpiCard span={span} className={className}>
       <KpiHeader
         icon={icon}
         label={label}

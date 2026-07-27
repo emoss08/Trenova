@@ -38,6 +38,7 @@ import { serviceFailureReasonCode } from "./service-failure-reason-code";
 import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
+import { homeLayout } from "./home-layout";
 import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "@trenova/shared/lib/queries/notification";
 import { tableChangeAlert } from "./table-change-alert";
@@ -100,6 +101,7 @@ const workspaceQueries = mergeQueryKeys(
   pageFavoite,
   platformBilling,
   tableConfiguration,
+  homeLayout,
   sidebarPreferences,
   user,
   worker,

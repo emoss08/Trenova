@@ -1,3 +1,4 @@
+import { cn } from "@trenova/shared/lib/utils";
 import type React from "react";
 import { Delta, KpiCard, KpiHeader, KpiSub } from "./kpi-card";
 import { type Segment, SegmentedBar } from "./segmented-bar";
@@ -18,6 +19,7 @@ type KpiHeroProps = {
   icon?: React.ReactNode;
   info?: React.ReactNode;
   span?: 2 | 3;
+  className?: string;
 };
 
 export function KpiHero({
@@ -34,11 +36,12 @@ export function KpiHero({
   icon,
   info,
   span = 3,
+  className,
 }: KpiHeroProps) {
   const showSpark = sparkData && !breakdown;
 
   return (
-    <KpiCard span={span} className="gap-2.5">
+    <KpiCard span={span} className={cn("gap-2.5", className)}>
       <KpiHeader
         icon={icon}
         label={label}
