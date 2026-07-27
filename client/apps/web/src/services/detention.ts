@@ -2,13 +2,17 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   deskEntrySchema,
+  previewResultSchema,
   detentionOccurrenceSchema,
   disputePacketSchema,
   occurrenceDetailSchema,
   type DeskEntry,
   type DetentionOccurrence,
   type DisputePacket,
+  type DetentionPolicy,
   type OccurrenceDetail,
+  type PreviewResult,
+  type PreviewScenario,
   type WaiverReason,
 } from "@trenova/shared/types/detention";
 import { z } from "zod";
@@ -63,5 +67,24 @@ export class DetentionService {
       payload,
     );
     return safeParse(detentionOccurrenceSchema, response, "Detention Occurrence");
+  }
+}
+
+export class DetentionPolicyService {
+  /**
+   * Runs the server's production calculator against a hypothetical stop so the
+   * builder shows what the configured terms would actually charge. The math is
+   * never re-derived on the client.
+   */
+  public async preview(
+    policy: DetentionPolicy,
+    scenario: PreviewScenario,
+  ): Promise<PreviewResult> {
+    const response = await api.post<PreviewResult>("/detention-policies/preview/", {
+      policy,
+      scenario,
+    });
+
+    return safeParse(previewResultSchema, response, "Detention Preview");
   }
 }

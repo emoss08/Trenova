@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,12 +21,14 @@ type Params struct {
 	fx.In
 
 	Service              *detentionpolicyservice.Service
+	Engine               *detentionservice.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service *detentionpolicyservice.Service
+	engine  *detentionservice.Service
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -33,6 +36,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.Service,
+		engine:  p.Engine,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
 	}
@@ -55,6 +59,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpDelete),
 		h.delete,
 	)
+
+	api.POST("/preview/", h.pm.RequirePermission(resource, permission.OpRead), h.preview)
 
 	selectOptions := api.Group("/select-options")
 	selectOptions.GET("/", h.selectOptions)
@@ -337,4 +343,50 @@ func (h *Handler) getOption(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+type previewRequest struct {
+	Policy   *detention.DetentionPolicy       `json:"policy"   binding:"required"`
+	Scenario detentionservice.PreviewScenario `json:"scenario" binding:"required"`
+}
+
+// @Summary Preview what a detention policy would charge for a scenario
+// @ID previewDetentionPolicy
+// @Tags Detention Policies
+// @Accept json
+// @Produce json
+// @Param request body previewRequest true "Policy and scenario"
+// @Success 200 {object} detentionservice.PreviewResult
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /detention-policies/preview [post]
+func (h *Handler) preview(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(previewRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	authctx.AddContextToRequest(authCtx, req.Policy)
+
+	result, err := h.engine.PreviewPolicy(
+		c.Request.Context(),
+		req.Policy,
+		req.Scenario,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }

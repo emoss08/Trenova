@@ -468,3 +468,35 @@ export const DESK_URGENCY_RANK: Record<DeskUrgency, number> = {
   Lost: 4,
   Normal: 5,
 };
+
+export const previewScenarioSchema = z.object({
+  arrivedAt: z.number().int(),
+  departedAt: z.number().int().nullish(),
+  appointmentStart: z.number().int().nullish(),
+  appointmentEnd: z.number().int().nullish(),
+  stopType: z.string().default("Delivery"),
+  scheduleType: z.string().default("Appointment"),
+  noticeSentAt: z.number().int().nullish(),
+  driverPayRate: z.string().nullish(),
+});
+export type PreviewScenario = z.infer<typeof previewScenarioSchema>;
+
+export const previewResultSchema = z.object({
+  policySnapshot: policySnapshotSchema,
+  rawDwellMinutes: z.number().int(),
+  freeMinutesGranted: z.number().int(),
+  billableMinutes: z.number().int(),
+  roundedMinutes: z.number().int(),
+  billableAmount: z.coerce.number(),
+  grossAmount: z.coerce.number(),
+  driverPayAmount: z.coerce.number(),
+  netMargin: z.coerce.number(),
+  arrivedLate: z.boolean(),
+  capApplied: capKindSchema,
+  status: occurrenceStatusSchema,
+  notificationStatus: detentionNotificationStatusSchema,
+  suppressedByGate: z.boolean(),
+  calculationTrace: calculationTraceSchema.nullish(),
+  receipt: z.string().default(""),
+});
+export type PreviewResult = z.infer<typeof previewResultSchema>;

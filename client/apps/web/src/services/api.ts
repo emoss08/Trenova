@@ -15,7 +15,7 @@ import { CustomFieldService } from "./custom-field";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
-import { DetentionService } from "./detention";
+import { DetentionPolicyService, DetentionService } from "./detention";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DistanceControlService } from "./distance-control";
@@ -117,6 +117,7 @@ class APIService {
   public invoiceService: InvoiceService;
   public dataEntryControlService: DataEntryControlService;
   public detentionService: DetentionService;
+  public detentionPolicyService: DetentionPolicyService;
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
   public distanceControlService: DistanceControlService;
@@ -192,6 +193,7 @@ class APIService {
     this.invoiceService = new InvoiceService();
     this.dataEntryControlService = new DataEntryControlService();
     this.detentionService = new DetentionService();
+    this.detentionPolicyService = new DetentionPolicyService();
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();
     this.distanceControlService = new DistanceControlService();
