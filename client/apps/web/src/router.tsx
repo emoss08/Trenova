@@ -420,6 +420,19 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/detention-intelligence",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DetentionPolicy),
+            ),
+            async lazy() {
+              const { DetentionIntelligencePage } = await import(
+                "@/routes/detention-intelligence/page"
+              );
+              return { Component: DetentionIntelligencePage };
+            },
+          },
+          {
             path: "/billing/detention-desk",
             loader: combineLoaders(
               protectedLoader,

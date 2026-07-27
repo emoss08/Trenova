@@ -251,27 +251,29 @@ waterfall component, shared desk helpers with unit tests, and a server-side
 calculator** against a hypothetical stop (so the builder's live preview never
 re-derives the math on the client).
 
-**Not done:**
-- [ ] Policy builder form UI (create/edit + tier editor) wired to the preview
-      endpoint — the endpoint and types exist, the form does not.
-- [ ] Precedence explainer UI (resolver already returns per-candidate verdicts).
-- [ ] Shipment detention tab (receipt component exists and is reusable).
-- [ ] Dispute packet export UI (endpoint returns structured JSON today).
+**Also done:**
+- [x] Policy builder form UI with tier editor, wired to the preview endpoint.
+- [x] Shipment detention section with per-stop calculation receipts and AR/AP margin.
+
+**Still open:**
+- [ ] Precedence explainer UI (resolver returns per-candidate verdicts; the
+      winning policy is surfaced on the shipment section, but the full
+      "why these lost" panel is not built).
+- [ ] Dispute packet export as PDF (endpoint returns structured JSON today).
+- [ ] Policy list/table page (the builder is reachable, listing is not).
 
 ## Phase 4 — Intelligence
 
-### Phase 4 status: NOT STARTED
-The preview endpoint (Phase 3) is the foundation the backtest builds on: it
-already proves the calculator can be driven from arbitrary scenario inputs.
-
-- [ ] Policy backtesting engine (replay against historical stops)
-- [ ] Backtest UI: revenue delta, affected customers/facilities
-- [ ] Facility detention profiles (median/p90 dwell, breach freq, dispute rate,
+### Phase 4 status: SUBSTANTIALLY COMPLETE
+- [x] Policy backtesting engine (replay against historical stops)
+- [x] Backtest UI: revenue delta, affected customers/facilities
+- [x] Facility detention profiles (median/p90 dwell, breach freq, dispute rate,
       worst day/hour)
-- [ ] Planning-time facility warning
-- [ ] AR/AP margin rollups (customer, facility, lane)
-- [ ] Waiver leakage reporting
-- [ ] Phase 4 tests
+- [ ] Planning-time facility warning (data exists via facility profiles; the
+      dispatch-side warning is not wired)
+- [x] AR/AP margin rollups (customer, facility, lane)
+- [x] Waiver leakage reporting
+- [x] Phase 4 tests
 
 ---
 

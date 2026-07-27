@@ -14,6 +14,20 @@ export const detention = createQueryKeys("detention", {
     queryKey: ["occurrence", id],
     queryFn: async () => apiService.detentionService.getOccurrence(id),
   }),
+  facilities: (from: number, to: number) => ({
+    queryKey: ["facilities", from, to],
+    queryFn: async () =>
+      apiService.detentionAnalyticsService.facilities({ from, to, limit: 25 }),
+  }),
+  customers: (from: number, to: number) => ({
+    queryKey: ["customers", from, to],
+    queryFn: async () =>
+      apiService.detentionAnalyticsService.customers({ from, to, limit: 25 }),
+  }),
+  waivers: (from: number, to: number) => ({
+    queryKey: ["waivers", from, to],
+    queryFn: async () => apiService.detentionAnalyticsService.waivers({ from, to }),
+  }),
   disputePacket: (id: string) => ({
     queryKey: ["disputePacket", id],
     queryFn: async () => apiService.detentionService.disputePacket(id),

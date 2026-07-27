@@ -5,6 +5,7 @@ import { detentionPolicySchema, type DetentionPolicy } from "@trenova/shared/typ
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { DetentionPolicyForm } from "./_components/detention-policy-form";
+import { DetentionBacktest } from "./_components/detention-backtest";
 import { DetentionPolicyPreview } from "./_components/detention-policy-preview";
 
 const DEFAULT_POLICY: Partial<DetentionPolicy> = {
@@ -58,8 +59,9 @@ export function DetentionPolicyPage() {
         <Form onSubmit={handleSubmit(() => undefined)}>
           <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <DetentionPolicyForm />
-            <div>
+            <div className="flex flex-col gap-4">
               <DetentionPolicyPreview control={control} />
+              <DetentionBacktest control={control} />
             </div>
           </div>
 
