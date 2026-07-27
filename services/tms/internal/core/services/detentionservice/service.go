@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,6 +28,9 @@ type Params struct {
 	PayAssignmentRepo repositories.WorkerPayAssignmentRepository
 	PayProfileRepo    repositories.PayProfileRepository
 	OrgCacheRepo      repositories.OrganizationCacheRepository
+	NoticeRepo        repositories.DetentionNoticeRepository
+	EmailService      services.EmailService
+	AuditService      services.AuditService
 }
 
 type Service struct {
@@ -38,6 +42,9 @@ type Service struct {
 	payAssignmentRepo repositories.WorkerPayAssignmentRepository
 	payProfileRepo    repositories.PayProfileRepository
 	orgCacheRepo      repositories.OrganizationCacheRepository
+	noticeRepo        repositories.DetentionNoticeRepository
+	emailService      services.EmailService
+	auditService      services.AuditService
 	now               func() int64
 }
 
@@ -51,6 +58,9 @@ func New(p Params) *Service {
 		payAssignmentRepo: p.PayAssignmentRepo,
 		payProfileRepo:    p.PayProfileRepo,
 		orgCacheRepo:      p.OrgCacheRepo,
+		noticeRepo:        p.NoticeRepo,
+		emailService:      p.EmailService,
+		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}
 }

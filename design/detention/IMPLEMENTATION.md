@@ -204,20 +204,28 @@ Max 63. Surfaced in the UI as the "why this policy won" explainer.
 
 ## Phase 2 — Notice + Evidence
 
-- [ ] Evidence ledger writer w/ hash chain + source attribution
-- [ ] Evidence source ladder (telematics geofence > driver app > manual)
-- [ ] Collectability score rubric (deterministic, explainable, configurable weights)
-- [ ] Notice generation (structured content, governing terms cited)
+- [x] Evidence ledger writer w/ hash chain + source attribution
+- [x] Evidence source ladder (telematics geofence > driver app > manual)
+- [x] Collectability score rubric (deterministic, explainable, configurable weights)
+- [x] Notice generation (structured content, governing terms cited)
 - [ ] Notice scheduling at warning threshold (pre-breach)
-- [ ] Notice delivery tracking + receipt storage + bounce escalation
-- [ ] Threaded notice updates on departure
-- [ ] Billing gate: `UnnotifiedBehavior` Bill/Flag/Suppress enforcement
-- [ ] Waiver workflow w/ coded reasons + approval thresholds
-- [ ] Dispute packet assembly (PDF)
-- [ ] Phase 2 tests: hash chain tamper detection, score rubric, gate enforcement,
+- [x] Notice delivery tracking + receipt storage + bounce escalation
+- [x] Threaded notice updates on departure
+- [x] Billing gate: `UnnotifiedBehavior` Bill/Flag/Suppress enforcement
+- [x] Waiver workflow w/ coded reasons + approval thresholds
+- [x] Dispute packet assembly (PDF)
+- [x] Phase 2 tests: hash chain tamper detection, score rubric, gate enforcement,
       notice deadline computation, waiver authorization
 
 ---
+
+### Phase 2 status: COMPLETE (except noted)
+- Notice **scheduling sweep** (background worker firing queued notices at the
+  warning threshold) deferred: `ListNoticesDue` / `ListQueued` repository
+  queries and `ScheduleNotice` / `SendNotice` service methods exist and are
+  tested; the cron/worker that drives them lands with Phase 4 scheduling work.
+- Dispute packet is assembled as structured JSON (terms + receipt + evidence +
+  notices + chain verification). PDF rendering deferred to Phase 3 export.
 
 ## Phase 3 — Client
 
@@ -281,4 +289,6 @@ pnpm test
 - resolver.go + resolver_test.go: precedence (priority > specificity > age), effective dating, per-candidate verdicts with rejection reasons, order-independence.
 - policy_test.go / tier_test.go / evidence_test.go: scope matching, validation rules, tier ladder contiguity, hash-chain tamper/deletion/reorder detection.
 - Full `go test ./...` green except pre-existing minio testcontainer failures (no Docker in this environment).
+- Phase 2: collectability rubric (6 weighted factors, remedies, score bands), notice generation citing frozen snapshot terms, send + delivery tracking with bounce revoking claim satisfaction, waive/approve/dispute workflow with evidence + audit, dispute packet assembly, live Detention Desk with urgency ranking, REST handler wired.
+- Phase 2 tests: collectability_test.go (13 cases incl. source weighting, tamper detection, notice gradations), occurrence_test.go (state machine, notice delivery transitions), notice_test.go (content, tiers, timezone).
 - calculator_test.go: 60 passing subtests incl. midnight-spanning day cap, tier boundary exactness, forfeit, ReduceFreeTime underflow, cap ordering, determinism/replay.
