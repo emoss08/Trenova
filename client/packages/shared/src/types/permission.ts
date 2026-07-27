@@ -103,6 +103,7 @@ export const Resource = {
   Invoice: "invoice",
   BillingQueue: "billing_queue",
   AccessorialCharge: "accessorial_charge",
+  DetentionPolicy: "detention_policy",
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",
   FormulaTemplate: "formula_template",
