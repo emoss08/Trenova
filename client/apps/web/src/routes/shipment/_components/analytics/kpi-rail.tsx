@@ -15,13 +15,13 @@ import {
   type DeepPartial,
   type ShipmentAnalyticsData,
   mergeShipmentAnalyticsWithDefaults,
-} from "../mock-data";
-import { KpiGoalBar } from "./kpi-goal-bar";
-import { KpiHero } from "./kpi-hero";
-import { KpiInfoPopover } from "./kpi-info-popover";
-import { KpiRing } from "./kpi-ring";
-import { KpiStat } from "./kpi-stat";
-import { KpiWatchlist } from "./kpi-watchlist";
+} from "@/lib/shipment-analytics";
+import { KpiGoalBar } from "@/components/kpi/kpi-goal-bar";
+import { KpiHero } from "@/components/kpi/kpi-hero";
+import { KpiInfoPopover } from "@/components/kpi/kpi-info-popover";
+import { KpiRing } from "@/components/kpi/kpi-ring";
+import { KpiStat } from "@/components/kpi/kpi-stat";
+import { KpiWatchlist } from "@/components/kpi/kpi-watchlist";
 
 const ICON_PROPS = { className: "size-[11px]" } as const;
 const KPI_INFO = {

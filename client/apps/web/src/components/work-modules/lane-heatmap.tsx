@@ -1,7 +1,7 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
-import type { Region, ShipmentAnalyticsData } from "../../analytics/mock-data";
+import type { Region, ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 
 const HIGH_INTENSITY_THRESHOLD = 0.55;
 const REGIONS: Region[] = ["West", "Midwest", "South", "Northeast"];

@@ -1,3 +1,8 @@
+/**
+ * The queries behind the operational work queues. They live outside any one
+ * route because the shipment command center and the home screen show the same
+ * queues, and two copies would drift.
+ */
 import {
   listExceptionShipmentsGraphQL,
   listUnassignedShipmentsGraphQL,
@@ -58,7 +63,7 @@ export function useExceptionShipments(
   enabled = true,
 ) {
   return useQuery({
-    queryKey: ["shipment-list", "right-stack", "exceptions", category, { limit }],
+    queryKey: ["shipment-list", "work-queues", "exceptions", category, { limit }],
     queryFn: () =>
       listExceptionShipmentsGraphQL({
         limit,

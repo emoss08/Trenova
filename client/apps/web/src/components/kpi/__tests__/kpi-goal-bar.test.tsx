@@ -7,14 +7,7 @@ afterEach(() => cleanup());
 describe("KpiGoalBar", () => {
   it("places the target tick at target/max * 100% and renders warning fill when actual exceeds target", () => {
     const { container } = render(
-      <KpiGoalBar
-        label="Empty mile %"
-        value="11.8"
-        unit="%"
-        actual={11.8}
-        target={10}
-        max={20}
-      />,
+      <KpiGoalBar label="Empty mile %" value="11.8" unit="%" actual={11.8} target={10} max={20} />,
     );
     const fill = container.querySelector<HTMLDivElement>(".absolute.inset-y-0");
     const tick = container.querySelector<HTMLDivElement>("[title='Target 10%']");

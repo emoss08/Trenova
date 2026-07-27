@@ -14,7 +14,7 @@ import type { CommandCenterTableSummary } from "./_components/command-center/com
 import { ShipmentMapPanelBoundary } from "./_components/map/map-boundary";
 
 const Table = lazy(() => import("./_components/shipment-table"));
-const ShipmentAnalytics = lazy(() => import("./_components/analytics/kpi/kpi-rail"));
+const ShipmentAnalytics = lazy(() => import("./_components/analytics/kpi-rail"));
 const ShipmentMapPanel = lazy(() => import("./_components/map/shipment-map-panel"));
 const RightStack = lazy(() => import("./_components/command-center/right-stack"));
 const BottomModules = lazy(() => import("./_components/command-center/bottom-modules"));

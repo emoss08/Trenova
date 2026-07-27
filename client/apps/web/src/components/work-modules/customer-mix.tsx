@@ -8,7 +8,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
-import type { ShipmentAnalyticsData } from "../../analytics/mock-data";
+import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 
 type CustomerMixEntry = ShipmentAnalyticsData["customerMix"]["entries"][number];
 type TomorrowPickup = ShipmentAnalyticsData["tomorrowsPickups"]["pickups"][number];
