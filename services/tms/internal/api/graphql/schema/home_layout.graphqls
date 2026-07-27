@@ -1,0 +1,178 @@
+"""
+Which tier of the resolution chain produced the home screen on display.
+"""
+enum HomeLayoutSource {
+  USER
+  ROLE_PRESET
+  ORG_DEFAULT
+  BUILT_IN
+}
+
+"""
+Configuration for one widget. Which fields are meaningful depends on the
+widget's configKind; the server discards the rest rather than rejecting them.
+"""
+type HomeWidgetConfig {
+  metric: String
+  metrics: [String!]
+  definitionId: ID
+  cannedKey: String
+  chartId: String
+  columnId: String
+  dashboardId: ID
+  text: String
+  limit: Int
+  windowDays: Int
+}
+
+"""
+One card on the home canvas. Position is not stored: widgets are an ordered
+list that the client packs into the grid, so order alone defines the layout.
+"""
+type HomeWidget {
+  id: String!
+  key: String!
+  title: String
+  w: Int!
+  h: Int!
+  config: HomeWidgetConfig!
+}
+
+type HomeLayout {
+  schemaVersion: Int!
+  version: Int!
+  source: HomeLayoutSource!
+  presetId: ID
+  presetName: String
+  locked: Boolean!
+  canCustomize: Boolean!
+  density: String!
+  widgets: [HomeWidget!]!
+}
+
+type HomeWidgetOption {
+  key: String!
+  label: String!
+  description: String!
+  category: String!
+  configKind: String!
+  analyticsInclude: String
+  defaultW: Int!
+  defaultH: Int!
+  minW: Int!
+  minH: Int!
+  maxW: Int!
+  maxH: Int!
+}
+
+type HomeWidgetCategory {
+  key: String!
+  label: String!
+  description: String!
+}
+
+type HomeMetricOption {
+  key: String!
+  label: String!
+}
+
+type HomeWidgetCatalog {
+  widgets: [HomeWidgetOption!]!
+  metrics: [HomeMetricOption!]!
+  categories: [HomeWidgetCategory!]!
+  densities: [String!]!
+  gridColumns: Int!
+  maxWidgets: Int!
+}
+
+type HomeLayoutPreset {
+  id: ID!
+  name: String!
+  description: String
+  widgets: [HomeWidget!]!
+  roleIds: [ID!]!
+  coreResponsibility: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  priority: Int!
+  assignedUserCount: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input HomeWidgetConfigInput {
+  metric: String
+  metrics: [String!]
+  definitionId: ID
+  cannedKey: String
+  chartId: String
+  columnId: String
+  dashboardId: ID
+  text: String
+  limit: Int
+  windowDays: Int
+}
+
+input HomeWidgetInput {
+  id: String!
+  key: String!
+  title: String
+  w: Int!
+  h: Int!
+  config: HomeWidgetConfigInput
+}
+
+input HomeLayoutInput {
+  version: Int!
+  """
+  When false the viewer follows their assigned preset and widgets is ignored.
+  """
+  customized: Boolean!
+  density: String!
+  widgets: [HomeWidgetInput!]!
+}
+
+input SaveHomeLayoutPresetInput {
+  name: String!
+  description: String
+  widgets: [HomeWidgetInput!]!
+  roleIds: [ID!]
+  coreResponsibility: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  priority: Int!
+}
+
+input UpdateHomeLayoutPresetInput {
+  id: ID!
+  version: Int!
+  name: String!
+  description: String
+  widgets: [HomeWidgetInput!]!
+  roleIds: [ID!]
+  coreResponsibility: String
+  isOrgDefault: Boolean!
+  locked: Boolean!
+  priority: Int!
+}
+
+extend type Query {
+  homeLayout: HomeLayout!
+  homeWidgetCatalog: HomeWidgetCatalog!
+  homeLayoutPresets: [HomeLayoutPreset!]!
+  homeLayoutPreset(id: ID!): HomeLayoutPreset!
+  """
+  Renders a preset, or whatever a member of the given role would resolve to,
+  without saving anything.
+  """
+  homeLayoutPreview(presetId: ID, roleId: ID): HomeLayout!
+}
+
+extend type Mutation {
+  updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
+  resetHomeLayout: HomeLayout!
+  createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
+  updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
+  deleteHomeLayoutPreset(id: ID!): Boolean!
+}

@@ -56,16 +56,6 @@ func (r *customerBillingProfileResolver) GracePeriodDays(ctx context.Context, ob
 	return int(obj.GracePeriodDays), nil
 }
 
-// DetentionFreeMinutes is the resolver for the detentionFreeMinutes field.
-func (r *customerBillingProfileResolver) DetentionFreeMinutes(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	return int(obj.DetentionFreeMinutes), nil
-}
-
-// DetentionRatePerHour is the resolver for the detentionRatePerHour field.
-func (r *customerBillingProfileResolver) DetentionRatePerHour(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
-	return nullDecimalToStringPtr(obj.DetentionRatePerHour), nil
-}
-
 // Customers is the resolver for the customers field.
 func (r *queryResolver) Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceCustomer, permission.OpRead)

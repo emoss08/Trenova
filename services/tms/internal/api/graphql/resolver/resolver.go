@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
@@ -151,6 +152,7 @@ type Params struct {
 	TableChangeAlertService      *tablechangealertservice.Service
 	TableConfigurationService    *tableconfigurationservice.Service
 	SidebarPreferenceService     *sidebarpreferenceservice.Service
+	HomeLayoutService            *homelayoutservice.Service
 	ReportingService             *reportingservice.Service
 	NotificationService          *notificationservice.Service
 	PermissionEngine             services.PermissionEngine
@@ -247,6 +249,7 @@ type Resolver struct {
 	tableChangeAlertService      *tablechangealertservice.Service
 	tableConfigurationService    *tableconfigurationservice.Service
 	sidebarPreferenceService     *sidebarpreferenceservice.Service
+	homeLayoutService            *homelayoutservice.Service
 	notificationService          *notificationservice.Service
 	driverPayService             *driverpayservice.Service
 	driverSettlementService      *driversettlementservice.Service
@@ -344,6 +347,7 @@ func New(p Params) *Resolver {
 		tableChangeAlertService:      p.TableChangeAlertService,
 		tableConfigurationService:    p.TableConfigurationService,
 		sidebarPreferenceService:     p.SidebarPreferenceService,
+		homeLayoutService:            p.HomeLayoutService,
 		notificationService:          p.NotificationService,
 		reportingService:             p.ReportingService,
 		permissionEngine:             p.PermissionEngine,

@@ -27,6 +27,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/detentionpolicyhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
@@ -178,6 +180,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	holdreasonhandler.New,
 	recurringshipmenthandler.New,
 	ratetablehandler.New,
+	detentionpolicyhandler.New,
+	detentionhandler.New,
 	invoiceadjustmenthandler.New,
 	invoiceadjustmentcontrolhandler.New,
 	journalentryhandler.New,

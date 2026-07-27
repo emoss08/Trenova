@@ -60,6 +60,7 @@ var AdditionalChargeColumns = struct {
 	Unit                   Column // "unit" → qualified: "ac.unit"
 	FuelSurchargeProgramID Column // "fuel_surcharge_program_id" → qualified: "ac.fuel_surcharge_program_id"
 	FuelSurchargeDetail    Column // "fuel_surcharge_detail" → qualified: "ac.fuel_surcharge_detail"
+	DetentionOccurrenceID  Column // "detention_occurrence_id" → qualified: "ac.detention_occurrence_id"
 	Version                Column // "version" → qualified: "ac.version"
 	CreatedAt              Column // "created_at" → qualified: "ac.created_at"
 	UpdatedAt              Column // "updated_at" → qualified: "ac.updated_at"
@@ -75,6 +76,7 @@ var AdditionalChargeColumns = struct {
 	Unit:                   NewColumn("unit", "ac"),
 	FuelSurchargeProgramID: NewColumn("fuel_surcharge_program_id", "ac"),
 	FuelSurchargeDetail:    NewColumn("fuel_surcharge_detail", "ac"),
+	DetentionOccurrenceID:  NewColumn("detention_occurrence_id", "ac"),
 	Version:                NewColumn("version", "ac"),
 	CreatedAt:              NewColumn("created_at", "ac"),
 	UpdatedAt:              NewColumn("updated_at", "ac"),
@@ -96,6 +98,7 @@ var AdditionalChargeFieldMap = map[string]string{
 	"unit":                   "unit",
 	"fuelSurchargeProgramId": "fuel_surcharge_program_id",
 	"fuelSurchargeDetail":    "fuel_surcharge_detail",
+	"detentionOccurrenceId":  "detention_occurrence_id",
 	"version":                "version",
 	"createdAt":              "created_at",
 	"updatedAt":              "updated_at",
@@ -115,6 +118,7 @@ var AdditionalChargeInsertableColumns = []string{
 	"unit",
 	"fuel_surcharge_program_id",
 	"fuel_surcharge_detail",
+	"detention_occurrence_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -198,6 +202,7 @@ var AdditionalChargeFilter = struct {
 	Unit                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unit" → DB: "unit"
 	FuelSurchargeProgramID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeProgramId" → DB: "fuel_surcharge_program_id"
 	FuelSurchargeDetail    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeDetail" → DB: "fuel_surcharge_detail"
+	DetentionOccurrenceID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionOccurrenceId" → DB: "detention_occurrence_id"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -234,6 +239,9 @@ var AdditionalChargeFilter = struct {
 	},
 	FuelSurchargeDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fuelSurchargeDetail", op, value)
+	},
+	DetentionOccurrenceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("detentionOccurrenceId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

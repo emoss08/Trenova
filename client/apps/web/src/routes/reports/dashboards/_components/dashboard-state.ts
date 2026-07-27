@@ -9,6 +9,7 @@ import type {
   ReportParameterDef,
 } from "@/types/report";
 import { DASHBOARD_GRID_COLUMNS } from "@/types/report";
+import { nextItemId, packTiles as packGridItems } from "@/components/tile-grid/pack-tiles";
 
 export function refKey(ref: ReportFieldRef): string {
   return `${(ref.path ?? []).join(".")}|${ref.field}`;
@@ -118,31 +119,11 @@ export function resolveTileParams(
  * free-form editor without asking authors to place tiles by hand.
  */
 export function packTiles(tiles: ReportDashboardTile[]): ReportDashboardTile[] {
-  let x = 0;
-  let y = 0;
-  let rowHeight = 0;
-
-  return tiles.map((tile) => {
-    const w = Math.min(Math.max(tile.w || 4, 1), DASHBOARD_GRID_COLUMNS);
-    const h = Math.max(tile.h || 4, 1);
-
-    if (x + w > DASHBOARD_GRID_COLUMNS) {
-      x = 0;
-      y += rowHeight || h;
-      rowHeight = 0;
-    }
-
-    const placed = { ...tile, w, h, x, y };
-    x += w;
-    rowHeight = Math.max(rowHeight, h);
-    return placed;
-  });
+  return packGridItems(tiles, { columns: DASHBOARD_GRID_COLUMNS });
 }
 
 export function nextTileId(tiles: ReportDashboardTile[]): string {
-  let suffix = tiles.length + 1;
-  while (tiles.some((tile) => tile.id === `tile_${suffix}`)) suffix += 1;
-  return `tile_${suffix}`;
+  return nextItemId(tiles, "tile_");
 }
 
 export function emptyLayout(): ReportDashboardLayout {

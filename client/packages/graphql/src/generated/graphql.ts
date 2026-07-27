@@ -944,6 +944,43 @@ export type HoldType =
   | 'FinanceHold'
   | 'OperationalHold';
 
+export type HomeLayoutInput = {
+  /** When false the viewer follows their assigned preset and widgets is ignored. */
+  customized: boolean;
+  density: string;
+  version: number;
+  widgets: Array<HomeWidgetInput>;
+};
+
+/** Which tier of the resolution chain produced the home screen on display. */
+export type HomeLayoutSource =
+  | 'BUILT_IN'
+  | 'ORG_DEFAULT'
+  | 'ROLE_PRESET'
+  | 'USER';
+
+export type HomeWidgetConfigInput = {
+  cannedKey?: string | null | undefined;
+  chartId?: string | null | undefined;
+  columnId?: string | null | undefined;
+  dashboardId?: string | number | null | undefined;
+  definitionId?: string | number | null | undefined;
+  limit?: number | null | undefined;
+  metric?: string | null | undefined;
+  metrics?: Array<string> | null | undefined;
+  text?: string | null | undefined;
+  windowDays?: number | null | undefined;
+};
+
+export type HomeWidgetInput = {
+  config?: HomeWidgetConfigInput | null | undefined;
+  h: number;
+  id: string;
+  key: string;
+  title?: string | null | undefined;
+  w: number;
+};
+
 export type InviteWorkerToPortalInput = {
   /** Overrides the email on the worker record when provided. */
   email?: string | null | undefined;
@@ -1548,6 +1585,17 @@ export type RunReportInput = {
   viewId?: string | number | null | undefined;
 };
 
+export type SaveHomeLayoutPresetInput = {
+  coreResponsibility?: string | null | undefined;
+  description?: string | null | undefined;
+  isOrgDefault: boolean;
+  locked: boolean;
+  name: string;
+  priority: number;
+  roleIds?: Array<string | number> | null | undefined;
+  widgets: Array<HomeWidgetInput>;
+};
+
 export type SaveReportDashboardInput = {
   category?: string | null | undefined;
   description?: string | null | undefined;
@@ -2104,6 +2152,19 @@ export type UpdateFuelIndexPriceInput = {
   priceDate: string;
 };
 
+export type UpdateHomeLayoutPresetInput = {
+  coreResponsibility?: string | null | undefined;
+  description?: string | null | undefined;
+  id: string | number;
+  isOrgDefault: boolean;
+  locked: boolean;
+  name: string;
+  priority: number;
+  roleIds?: Array<string | number> | null | undefined;
+  version: number;
+  widgets: Array<HomeWidgetInput>;
+};
+
 export type UpdateMyContactInfoInput = {
   addressLine1: string;
   addressLine2?: string | null | undefined;
@@ -2619,7 +2680,7 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
-export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, detentionBillingEnabled: boolean, detentionFreeMinutes: number, detentionRatePerHour: string | null, countLateOnlyOnAppointmentStops: boolean, countDetentionOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, billingCycleType: CustomerBillingCycleType, billingCycleDayOfWeek: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, invoiceMethod: CustomerInvoiceMethod, autoSendInvoiceOnGeneration: boolean, allowInvoiceConsolidation: boolean, consolidationPeriodDays: number, consolidationGroupBy: CustomerConsolidationGroupBy, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
@@ -3810,6 +3871,75 @@ export type HoldReasonTableQueryVariables = Exact<{
 
 
 export type HoldReasonTableQuery = { holdReasons: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'HoldReasonTableRowFieldsFragment': HoldReasonTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type HomeWidgetFieldsFragment = { id: string, key: string, title: string | null, w: number, h: number, config: { metric: string | null, metrics: Array<string> | null, definitionId: string | null, cannedKey: string | null, chartId: string | null, columnId: string | null, dashboardId: string | null, text: string | null, limit: number | null, windowDays: number | null } } & { ' $fragmentName'?: 'HomeWidgetFieldsFragment' };
+
+export type HomeLayoutFieldsFragment = { schemaVersion: number, version: number, source: HomeLayoutSource, presetId: string | null, presetName: string | null, locked: boolean, canCustomize: boolean, density: string, widgets: Array<{ ' $fragmentRefs'?: { 'HomeWidgetFieldsFragment': HomeWidgetFieldsFragment } }> } & { ' $fragmentName'?: 'HomeLayoutFieldsFragment' };
+
+export type HomeLayoutPresetFieldsFragment = { id: string, name: string, description: string | null, roleIds: Array<string>, coreResponsibility: string | null, isOrgDefault: boolean, locked: boolean, priority: number, assignedUserCount: number, version: number, createdAt: number, updatedAt: number, widgets: Array<{ ' $fragmentRefs'?: { 'HomeWidgetFieldsFragment': HomeWidgetFieldsFragment } }> } & { ' $fragmentName'?: 'HomeLayoutPresetFieldsFragment' };
+
+export type UpdateHomeLayoutMutationVariables = Exact<{
+  input: HomeLayoutInput;
+}>;
+
+
+export type UpdateHomeLayoutMutation = { updateHomeLayout: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
+
+export type ResetHomeLayoutMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ResetHomeLayoutMutation = { resetHomeLayout: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
+
+export type CreateHomeLayoutPresetMutationVariables = Exact<{
+  input: SaveHomeLayoutPresetInput;
+}>;
+
+
+export type CreateHomeLayoutPresetMutation = { createHomeLayoutPreset: { ' $fragmentRefs'?: { 'HomeLayoutPresetFieldsFragment': HomeLayoutPresetFieldsFragment } } };
+
+export type UpdateHomeLayoutPresetMutationVariables = Exact<{
+  input: UpdateHomeLayoutPresetInput;
+}>;
+
+
+export type UpdateHomeLayoutPresetMutation = { updateHomeLayoutPreset: { ' $fragmentRefs'?: { 'HomeLayoutPresetFieldsFragment': HomeLayoutPresetFieldsFragment } } };
+
+export type DeleteHomeLayoutPresetMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteHomeLayoutPresetMutation = { deleteHomeLayoutPreset: boolean };
+
+export type HomeLayoutQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomeLayoutQuery = { homeLayout: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
+
+export type HomeWidgetCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomeWidgetCatalogQuery = { homeWidgetCatalog: { gridColumns: number, maxWidgets: number, densities: Array<string>, categories: Array<{ key: string, label: string, description: string }>, metrics: Array<{ key: string, label: string }>, widgets: Array<{ key: string, label: string, description: string, category: string, configKind: string, analyticsInclude: string | null, defaultW: number, defaultH: number, minW: number, minH: number, maxW: number, maxH: number }> } };
+
+export type HomeLayoutPresetsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomeLayoutPresetsQuery = { homeLayoutPresets: Array<{ ' $fragmentRefs'?: { 'HomeLayoutPresetFieldsFragment': HomeLayoutPresetFieldsFragment } }> };
+
+export type HomeLayoutPresetQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type HomeLayoutPresetQuery = { homeLayoutPreset: { ' $fragmentRefs'?: { 'HomeLayoutPresetFieldsFragment': HomeLayoutPresetFieldsFragment } } };
+
+export type HomeLayoutPreviewQueryVariables = Exact<{
+  presetId?: string | number | null | undefined;
+  roleId?: string | number | null | undefined;
+}>;
+
+
+export type HomeLayoutPreviewQuery = { homeLayoutPreview: { ' $fragmentRefs'?: { 'HomeLayoutFieldsFragment': HomeLayoutFieldsFragment } } };
 
 export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, customerId: string, number: string, billType: BillType, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
 
@@ -5276,11 +5406,7 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
@@ -5390,11 +5516,7 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
@@ -6265,6 +6387,97 @@ export const HoldReasonTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"HoldReasonTableRowFields"}) as unknown as TypedDocumentString<HoldReasonTableRowFieldsFragment, unknown>;
+export const HomeWidgetFieldsFragmentDoc = new TypedDocumentString(`
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+    `, {"fragmentName":"HomeWidgetFields"}) as unknown as TypedDocumentString<HomeWidgetFieldsFragment, unknown>;
+export const HomeLayoutFieldsFragmentDoc = new TypedDocumentString(`
+    fragment HomeLayoutFields on HomeLayout {
+  schemaVersion
+  version
+  source
+  presetId
+  presetName
+  locked
+  canCustomize
+  density
+  widgets {
+    ...HomeWidgetFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}`, {"fragmentName":"HomeLayoutFields"}) as unknown as TypedDocumentString<HomeLayoutFieldsFragment, unknown>;
+export const HomeLayoutPresetFieldsFragmentDoc = new TypedDocumentString(`
+    fragment HomeLayoutPresetFields on HomeLayoutPreset {
+  id
+  name
+  description
+  roleIds
+  coreResponsibility
+  isOrgDefault
+  locked
+  priority
+  assignedUserCount
+  version
+  createdAt
+  updatedAt
+  widgets {
+    ...HomeWidgetFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}`, {"fragmentName":"HomeLayoutPresetFields"}) as unknown as TypedDocumentString<HomeLayoutPresetFieldsFragment, unknown>;
 export const InvoiceTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment InvoiceTableRowFields on Invoice {
   id
@@ -9107,11 +9320,7 @@ export const CustomerTableDocument = new TypedDocumentString(`
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
@@ -9185,7 +9394,7 @@ fragment CustomerTableRowFields on Customer {
 fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:5a193fd06a8c6ee5b581c9fad145441766cfbb218821bc3ee33b0b4dfefb4322"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+}`, {"hash":"sha256:e806c5ef7e06c26211a40d494eb2ba6db6e1ca2da88582d1a4c9496e61ee4200"}) as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DispatchBoardDocument = new TypedDocumentString(`
     query DispatchBoard($input: DispatchBoardInput!) {
   dispatchBoard(input: $input) {
@@ -13056,6 +13265,363 @@ fragment HoldReasonTableRowFields on HoldReason {
   createdAt
   updatedAt
 }`, {"hash":"sha256:366e81c2432a4eafc200d3719e3b3917a9ac0fccc30df96abd7a3450fe189e31"}) as unknown as TypedDocumentString<HoldReasonTableQuery, HoldReasonTableQueryVariables>;
+export const UpdateHomeLayoutDocument = new TypedDocumentString(`
+    mutation UpdateHomeLayout($input: HomeLayoutInput!) {
+  updateHomeLayout(input: $input) {
+    ...HomeLayoutFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutFields on HomeLayout {
+  schemaVersion
+  version
+  source
+  presetId
+  presetName
+  locked
+  canCustomize
+  density
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:d5c57c1e547d5c9b9a1b393c73fa835c9cab7da77e8bd9d4f070a55faa37d430"}) as unknown as TypedDocumentString<UpdateHomeLayoutMutation, UpdateHomeLayoutMutationVariables>;
+export const ResetHomeLayoutDocument = new TypedDocumentString(`
+    mutation ResetHomeLayout {
+  resetHomeLayout {
+    ...HomeLayoutFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutFields on HomeLayout {
+  schemaVersion
+  version
+  source
+  presetId
+  presetName
+  locked
+  canCustomize
+  density
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:77165d1c06d424dbbedcb1c0e1c9ef91913e538faac9d5a11d24a9d5668cf3ed"}) as unknown as TypedDocumentString<ResetHomeLayoutMutation, ResetHomeLayoutMutationVariables>;
+export const CreateHomeLayoutPresetDocument = new TypedDocumentString(`
+    mutation CreateHomeLayoutPreset($input: SaveHomeLayoutPresetInput!) {
+  createHomeLayoutPreset(input: $input) {
+    ...HomeLayoutPresetFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutPresetFields on HomeLayoutPreset {
+  id
+  name
+  description
+  roleIds
+  coreResponsibility
+  isOrgDefault
+  locked
+  priority
+  assignedUserCount
+  version
+  createdAt
+  updatedAt
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:d75d1fcd085631b841bf464bf9004ea6eaa56436b8ddc03ddda5d7dd85d5e7b1"}) as unknown as TypedDocumentString<CreateHomeLayoutPresetMutation, CreateHomeLayoutPresetMutationVariables>;
+export const UpdateHomeLayoutPresetDocument = new TypedDocumentString(`
+    mutation UpdateHomeLayoutPreset($input: UpdateHomeLayoutPresetInput!) {
+  updateHomeLayoutPreset(input: $input) {
+    ...HomeLayoutPresetFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutPresetFields on HomeLayoutPreset {
+  id
+  name
+  description
+  roleIds
+  coreResponsibility
+  isOrgDefault
+  locked
+  priority
+  assignedUserCount
+  version
+  createdAt
+  updatedAt
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:305586d1cca594b06d305d8f7f79580a7ec087a587014916f98e3c5f7239d2f9"}) as unknown as TypedDocumentString<UpdateHomeLayoutPresetMutation, UpdateHomeLayoutPresetMutationVariables>;
+export const DeleteHomeLayoutPresetDocument = new TypedDocumentString(`
+    mutation DeleteHomeLayoutPreset($id: ID!) {
+  deleteHomeLayoutPreset(id: $id)
+}
+    `, {"hash":"sha256:9e1e4363c27b26dfa7a016bf82fa31f1b06ede585f4e79943094ddd3610b973d"}) as unknown as TypedDocumentString<DeleteHomeLayoutPresetMutation, DeleteHomeLayoutPresetMutationVariables>;
+export const HomeLayoutDocument = new TypedDocumentString(`
+    query HomeLayout {
+  homeLayout {
+    ...HomeLayoutFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutFields on HomeLayout {
+  schemaVersion
+  version
+  source
+  presetId
+  presetName
+  locked
+  canCustomize
+  density
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:54555d91b387c7e74269ce62063e35106cd2b8291936c35a3d0642268410856f"}) as unknown as TypedDocumentString<HomeLayoutQuery, HomeLayoutQueryVariables>;
+export const HomeWidgetCatalogDocument = new TypedDocumentString(`
+    query HomeWidgetCatalog {
+  homeWidgetCatalog {
+    gridColumns
+    maxWidgets
+    densities
+    categories {
+      key
+      label
+      description
+    }
+    metrics {
+      key
+      label
+    }
+    widgets {
+      key
+      label
+      description
+      category
+      configKind
+      analyticsInclude
+      defaultW
+      defaultH
+      minW
+      minH
+      maxW
+      maxH
+    }
+  }
+}
+    `, {"hash":"sha256:5e16e534f1d96c3cb75fff356ae936c19faf5985d49593b3d59491d02b777ba7"}) as unknown as TypedDocumentString<HomeWidgetCatalogQuery, HomeWidgetCatalogQueryVariables>;
+export const HomeLayoutPresetsDocument = new TypedDocumentString(`
+    query HomeLayoutPresets {
+  homeLayoutPresets {
+    ...HomeLayoutPresetFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutPresetFields on HomeLayoutPreset {
+  id
+  name
+  description
+  roleIds
+  coreResponsibility
+  isOrgDefault
+  locked
+  priority
+  assignedUserCount
+  version
+  createdAt
+  updatedAt
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:4e593b5900c91c160d041d71d66f1246ed5f1962ead7fe0e6f4f217c00427400"}) as unknown as TypedDocumentString<HomeLayoutPresetsQuery, HomeLayoutPresetsQueryVariables>;
+export const HomeLayoutPresetDocument = new TypedDocumentString(`
+    query HomeLayoutPreset($id: ID!) {
+  homeLayoutPreset(id: $id) {
+    ...HomeLayoutPresetFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutPresetFields on HomeLayoutPreset {
+  id
+  name
+  description
+  roleIds
+  coreResponsibility
+  isOrgDefault
+  locked
+  priority
+  assignedUserCount
+  version
+  createdAt
+  updatedAt
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:6ab7e3b94462884c03c1835ebff74e5d06d7f94b1ae69512da5254714985fe63"}) as unknown as TypedDocumentString<HomeLayoutPresetQuery, HomeLayoutPresetQueryVariables>;
+export const HomeLayoutPreviewDocument = new TypedDocumentString(`
+    query HomeLayoutPreview($presetId: ID, $roleId: ID) {
+  homeLayoutPreview(presetId: $presetId, roleId: $roleId) {
+    ...HomeLayoutFields
+  }
+}
+    fragment HomeWidgetFields on HomeWidget {
+  id
+  key
+  title
+  w
+  h
+  config {
+    metric
+    metrics
+    definitionId
+    cannedKey
+    chartId
+    columnId
+    dashboardId
+    text
+    limit
+    windowDays
+  }
+}
+fragment HomeLayoutFields on HomeLayout {
+  schemaVersion
+  version
+  source
+  presetId
+  presetName
+  locked
+  canCustomize
+  density
+  widgets {
+    ...HomeWidgetFields
+  }
+}`, {"hash":"sha256:1cf255a093a992d50b4a00e4b558a23190b43df72bb4ff298821a5b9180946df"}) as unknown as TypedDocumentString<HomeLayoutPreviewQuery, HomeLayoutPreviewQueryVariables>;
 export const InvoiceTableDocument = new TypedDocumentString(`
     query InvoiceTable($input: DataTableConnectionInput!) {
   invoices(input: $input) {

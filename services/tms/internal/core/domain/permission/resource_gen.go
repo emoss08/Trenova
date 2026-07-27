@@ -31,6 +31,7 @@ const (
 	ResourceExternalIdentity      Resource = "external_identity"
 	ResourceMFAAuthenticator      Resource = "mfa_authenticator"
 	ResourceTableChangeAlert      Resource = "table_change_alert"
+	ResourceHomeLayoutPreset      Resource = "home_layout_preset"
 
 	// Equipment
 	ResourceEquipmentType         Resource = "equipment_type"
@@ -71,6 +72,7 @@ const (
 	ResourceFormulaTemplate      Resource = "formula_template"
 	ResourceRateTable            Resource = "rate_table"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
+	ResourceDetentionPolicy      Resource = "detention_policy"
 
 	// Agent
 	ResourceAgentRun       Resource = "agent_run"

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
@@ -150,6 +151,7 @@ var ValidatorModule = fx.Module("validators",
 		holdreasonservice.NewValidator,
 		recurringshipmentservice.NewValidator,
 		ratetableservice.NewValidator,
+		detentionpolicyservice.NewValidator,
 		invoiceadjustmentcontrolservice.NewValidator,
 		invoiceadjustmentservice.NewValidator,
 		invoiceservice.NewValidator,

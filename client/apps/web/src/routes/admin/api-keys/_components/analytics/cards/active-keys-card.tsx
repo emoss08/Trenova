@@ -1,4 +1,4 @@
-import { KPICard } from "@/routes/shipment/_components/analytics/kpi-card";
+import { KPICard } from "@/components/kpi/kpi-simple-card";
 import { ShieldCheck } from "lucide-react";
 import type { ApiKeyAnalyticsData } from "../mock-data";
 

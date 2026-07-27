@@ -6,11 +6,13 @@ import (
 	"math"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -26,12 +28,14 @@ type Params struct {
 	Formula         services.FormulaCalculator
 	AccessorialRepo repositories.AccessorialChargeRepository
 	FuelSurcharge   services.FuelSurchargeResolver
+	DetentionEngine *detentionservice.Service
 }
 
 type Calculator struct {
 	formula         services.FormulaCalculator
 	accessorialRepo repositories.AccessorialChargeRepository
 	fuelSurcharge   services.FuelSurchargeResolver
+	detentionEngine *detentionservice.Service
 	now             func() int64
 }
 
@@ -40,6 +44,7 @@ func New(p Params) *Calculator {
 		formula:         p.Formula,
 		accessorialRepo: p.AccessorialRepo,
 		fuelSurcharge:   p.FuelSurcharge,
+		detentionEngine: p.DetentionEngine,
 		now:             timeutils.NowUnix,
 	}
 }
@@ -275,6 +280,10 @@ func (c *Calculator) syncDetentionCharge(
 ) error {
 	if entity == nil || control == nil {
 		return nil
+	}
+
+	if control.UseDetentionPolicyEngine {
+		return c.syncDetentionFromPolicyEngine(ctx, entity)
 	}
 
 	if !control.TrackDetentionTime ||
@@ -532,4 +541,74 @@ func ensureGeneratedDetentionCharge(
 
 	filtered = append(filtered, generated)
 	entity.AdditionalCharges = filtered
+}
+
+// syncDetentionFromPolicyEngine rebuilds detention charges from resolved policy
+// occurrences. Each billable occurrence contributes exactly one system charge
+// carrying the amount the engine already computed, so the invoice line and the
+// stored calculation trace can never disagree.
+func (c *Calculator) syncDetentionFromPolicyEngine(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) error {
+	if c.detentionEngine == nil {
+		return nil
+	}
+
+	result, err := c.detentionEngine.SyncShipment(ctx, entity)
+	if err != nil {
+		return err
+	}
+
+	removeDetentionOccurrenceCharges(entity)
+
+	if result == nil {
+		return nil
+	}
+
+	for _, occurrence := range result.Occurrences {
+		if occurrence == nil || !occurrence.Status.IsBillable() {
+			continue
+		}
+		if occurrence.BillableAmount.LessThanOrEqual(decimal.Zero) {
+			continue
+		}
+
+		appendDetentionOccurrenceCharge(entity, occurrence)
+	}
+
+	return nil
+}
+
+func removeDetentionOccurrenceCharges(entity *shipment.Shipment) {
+	filtered := entity.AdditionalCharges[:0]
+	for _, charge := range entity.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		if charge.IsSystemGenerated && charge.DetentionOccurrenceID != nil {
+			continue
+		}
+		filtered = append(filtered, charge)
+	}
+	entity.AdditionalCharges = filtered
+}
+
+func appendDetentionOccurrenceCharge(
+	entity *shipment.Shipment,
+	occurrence *detention.DetentionOccurrence,
+) {
+	occurrenceID := occurrence.ID
+
+	entity.AdditionalCharges = append(entity.AdditionalCharges, &shipment.AdditionalCharge{
+		OrganizationID:        entity.OrganizationID,
+		BusinessUnitID:        entity.BusinessUnitID,
+		ShipmentID:            entity.ID,
+		IsSystemGenerated:     true,
+		AccessorialChargeID:   occurrence.PolicySnapshot.AccessorialChargeID,
+		Method:                accessorialcharge.MethodFlat,
+		Amount:                occurrence.BillableAmount,
+		Unit:                  1,
+		DetentionOccurrenceID: &occurrenceID,
+	})
 }

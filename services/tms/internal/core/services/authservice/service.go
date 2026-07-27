@@ -46,10 +46,10 @@ type Params struct {
 }
 
 type Service struct {
-	ur        repositories.UserRepository
-	or        repositories.OrganizationRepository
-	sr        repositories.SessionRepository
-	rbacRepo  repositories.RBACRepository
+	ur         repositories.UserRepository
+	or         repositories.OrganizationRepository
+	sr         repositories.SessionRepository
+	rbacRepo   repositories.RBACRepository
 	ssoRepo    repositories.SSOConfigRepository
 	stateRepo  repositories.SSOLoginStateRepository
 	akr        repositories.APIKeyRepository
@@ -62,10 +62,10 @@ type Service struct {
 
 func New(p Params) services.AuthService {
 	return &Service{
-		ur:        p.UserRepository,
-		or:        p.OrganizationRepo,
-		sr:        p.SessionRepository,
-		rbacRepo:  p.RBACRepository,
+		ur:         p.UserRepository,
+		or:         p.OrganizationRepo,
+		sr:         p.SessionRepository,
+		rbacRepo:   p.RBACRepository,
 		ssoRepo:    p.SSOConfigRepo,
 		stateRepo:  p.SSOStateRepo,
 		akr:        p.APIKeyRepository,

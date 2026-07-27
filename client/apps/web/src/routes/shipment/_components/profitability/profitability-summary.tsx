@@ -3,7 +3,7 @@ import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profi
 import { queries } from "@/lib/queries";
 import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { toneVar } from "../analytics/kpi/tone";
+import { toneVar } from "@/components/kpi/tone";
 import { MarginPill } from "./margin-pill";
 import { ProfitabilityBreakdownPopover } from "./profitability-breakdown-popover";
 
@@ -79,9 +79,9 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
         </StatCell>
         <StatCell label="RPM vs break-even">
           {data.revenuePerLoadedMile !== null &&
-            data.revenuePerLoadedMile !== undefined &&
-            data.breakEvenRpm !== null &&
-            data.breakEvenRpm !== undefined ? (
+          data.revenuePerLoadedMile !== undefined &&
+          data.breakEvenRpm !== null &&
+          data.breakEvenRpm !== undefined ? (
             <span
               style={{
                 color: toneVar(

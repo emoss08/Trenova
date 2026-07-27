@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  LayoutGridIcon,
   Building2Icon,
   BoxesIcon,
   CalendarRangeIcon,
@@ -31,6 +32,7 @@ import {
 } from "lucide-react";
 
 export const QUICK_ACTION_ICONS: Record<string, LucideIcon> = {
+  "create-home-layout": LayoutGridIcon,
   "create-shipment": TruckIcon,
   "create-shipment-type": BoxesIcon,
   "create-service-type": WrenchIcon,

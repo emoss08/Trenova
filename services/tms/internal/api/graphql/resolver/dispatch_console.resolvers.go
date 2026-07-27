@@ -107,10 +107,7 @@ func (r *mutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 }
 
 // DispatchPlanAutoAssign is the resolver for the dispatchPlanAutoAssign field.
-func (r *mutationResolver) DispatchPlanAutoAssign(
-	ctx context.Context,
-	input gqlmodel.DispatchPlanInput,
-) (*gqlmodel.DispatchPlan, error) {
+func (r *mutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error) {
 	// Producing a plan is a read, but applying it assigns work. Requiring the assign
 	// permission for both keeps a reader from triggering writes through the apply flag.
 	authCtx, err := r.requirePermission(
@@ -321,10 +318,3 @@ func (r *queryResolver) DispatchAssignmentPreview(ctx context.Context, input gql
 		Score:            mapDispatchCandidate(preview.Score),
 	}, nil
 }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.

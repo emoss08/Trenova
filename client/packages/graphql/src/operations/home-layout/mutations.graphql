@@ -1,0 +1,27 @@
+mutation UpdateHomeLayout($input: HomeLayoutInput!) {
+  updateHomeLayout(input: $input) {
+    ...HomeLayoutFields
+  }
+}
+
+mutation ResetHomeLayout {
+  resetHomeLayout {
+    ...HomeLayoutFields
+  }
+}
+
+mutation CreateHomeLayoutPreset($input: SaveHomeLayoutPresetInput!) {
+  createHomeLayoutPreset(input: $input) {
+    ...HomeLayoutPresetFields
+  }
+}
+
+mutation UpdateHomeLayoutPreset($input: UpdateHomeLayoutPresetInput!) {
+  updateHomeLayoutPreset(input: $input) {
+    ...HomeLayoutPresetFields
+  }
+}
+
+mutation DeleteHomeLayoutPreset($id: ID!) {
+  deleteHomeLayoutPreset(id: $id)
+}

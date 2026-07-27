@@ -378,11 +378,7 @@ var CustomerBillingProfileColumns = struct {
 	AutoTransfer                              Column // "auto_transfer" → qualified: "cbp.auto_transfer"
 	AutoMarkReadyToBill                       Column // "auto_mark_ready_to_bill" → qualified: "cbp.auto_mark_ready_to_bill"
 	AutoBill                                  Column // "auto_bill" → qualified: "cbp.auto_bill"
-	DetentionBillingEnabled                   Column // "detention_billing_enabled" → qualified: "cbp.detention_billing_enabled"
-	DetentionFreeMinutes                      Column // "detention_free_minutes" → qualified: "cbp.detention_free_minutes"
-	DetentionRatePerHour                      Column // "detention_rate_per_hour" → qualified: "cbp.detention_rate_per_hour"
 	CountLateOnlyOnAppointmentStops           Column // "count_late_only_on_appointment_stops" → qualified: "cbp.count_late_only_on_appointment_stops"
-	CountDetentionOnlyOnAppointmentStops      Column // "count_detention_only_on_appointment_stops" → qualified: "cbp.count_detention_only_on_appointment_stops"
 	AutoApplyAccessorials                     Column // "auto_apply_accessorials" → qualified: "cbp.auto_apply_accessorials"
 	BillingCurrency                           Column // "billing_currency" → qualified: "cbp.billing_currency"
 	RequirePONumber                           Column // "require_po_number" → qualified: "cbp.require_po_number"
@@ -397,50 +393,46 @@ var CustomerBillingProfileColumns = struct {
 	CreatedAt                                 Column // "created_at" → qualified: "cbp.created_at"
 	UpdatedAt                                 Column // "updated_at" → qualified: "cbp.updated_at"
 }{
-	ID:                                   NewColumn("id", "cbp"),
-	BusinessUnitID:                       NewColumn("business_unit_id", "cbp"),
-	OrganizationID:                       NewColumn("organization_id", "cbp"),
-	CustomerID:                           NewColumn("customer_id", "cbp"),
-	BillingCycleType:                     NewColumn("billing_cycle_type", "cbp"),
-	BillingCycleDayOfWeek:                NewColumn("billing_cycle_day_of_week", "cbp"),
-	PaymentTerm:                          NewColumn("payment_term", "cbp"),
-	HasBillingControlOverrides:           NewColumn("has_billing_control_overrides", "cbp"),
-	CreditLimit:                          NewColumn("credit_limit", "cbp"),
-	CreditBalance:                        NewColumn("credit_balance", "cbp"),
-	CreditStatus:                         NewColumn("credit_status", "cbp"),
-	EnforceCreditLimit:                   NewColumn("enforce_credit_limit", "cbp"),
-	AutoCreditHold:                       NewColumn("auto_credit_hold", "cbp"),
-	CreditHoldReason:                     NewColumn("credit_hold_reason", "cbp"),
-	InvoiceMethod:                        NewColumn("invoice_method", "cbp"),
-	AutoSendInvoiceOnGeneration:          NewColumn("auto_send_invoice_on_generation", "cbp"),
-	AllowInvoiceConsolidation:            NewColumn("allow_invoice_consolidation", "cbp"),
-	ConsolidationPeriodDays:              NewColumn("consolidation_period_days", "cbp"),
-	ConsolidationGroupBy:                 NewColumn("consolidation_group_by", "cbp"),
-	InvoiceNumberFormat:                  NewColumn("invoice_number_format", "cbp"),
-	CustomerInvoicePrefix:                NewColumn("customer_invoice_prefix", "cbp"),
-	InvoiceCopies:                        NewColumn("invoice_copies", "cbp"),
-	RevenueAccountID:                     NewColumn("revenue_account_id", "cbp"),
-	ARAccountID:                          NewColumn("ar_account_id", "cbp"),
-	ApplyLateCharges:                     NewColumn("apply_late_charges", "cbp"),
-	LateChargeRate:                       NewColumn("late_charge_rate", "cbp"),
-	GracePeriodDays:                      NewColumn("grace_period_days", "cbp"),
-	TaxExempt:                            NewColumn("tax_exempt", "cbp"),
-	TaxExemptNumber:                      NewColumn("tax_exempt_number", "cbp"),
-	EnforceCustomerBillingReq:            NewColumn("enforce_customer_billing_req", "cbp"),
-	ValidateCustomerRates:                NewColumn("validate_customer_rates", "cbp"),
-	AutoTransfer:                         NewColumn("auto_transfer", "cbp"),
-	AutoMarkReadyToBill:                  NewColumn("auto_mark_ready_to_bill", "cbp"),
-	AutoBill:                             NewColumn("auto_bill", "cbp"),
-	DetentionBillingEnabled:              NewColumn("detention_billing_enabled", "cbp"),
-	DetentionFreeMinutes:                 NewColumn("detention_free_minutes", "cbp"),
-	DetentionRatePerHour:                 NewColumn("detention_rate_per_hour", "cbp"),
-	CountLateOnlyOnAppointmentStops:      NewColumn("count_late_only_on_appointment_stops", "cbp"),
-	CountDetentionOnlyOnAppointmentStops: NewColumn("count_detention_only_on_appointment_stops", "cbp"),
-	AutoApplyAccessorials:                NewColumn("auto_apply_accessorials", "cbp"),
-	BillingCurrency:                      NewColumn("billing_currency", "cbp"),
-	RequirePONumber:                      NewColumn("require_po_number", "cbp"),
-	RequireBOLNumber:                     NewColumn("require_bol_number", "cbp"),
-	RequireDeliveryNumber:                NewColumn("require_delivery_number", "cbp"),
+	ID:                              NewColumn("id", "cbp"),
+	BusinessUnitID:                  NewColumn("business_unit_id", "cbp"),
+	OrganizationID:                  NewColumn("organization_id", "cbp"),
+	CustomerID:                      NewColumn("customer_id", "cbp"),
+	BillingCycleType:                NewColumn("billing_cycle_type", "cbp"),
+	BillingCycleDayOfWeek:           NewColumn("billing_cycle_day_of_week", "cbp"),
+	PaymentTerm:                     NewColumn("payment_term", "cbp"),
+	HasBillingControlOverrides:      NewColumn("has_billing_control_overrides", "cbp"),
+	CreditLimit:                     NewColumn("credit_limit", "cbp"),
+	CreditBalance:                   NewColumn("credit_balance", "cbp"),
+	CreditStatus:                    NewColumn("credit_status", "cbp"),
+	EnforceCreditLimit:              NewColumn("enforce_credit_limit", "cbp"),
+	AutoCreditHold:                  NewColumn("auto_credit_hold", "cbp"),
+	CreditHoldReason:                NewColumn("credit_hold_reason", "cbp"),
+	InvoiceMethod:                   NewColumn("invoice_method", "cbp"),
+	AutoSendInvoiceOnGeneration:     NewColumn("auto_send_invoice_on_generation", "cbp"),
+	AllowInvoiceConsolidation:       NewColumn("allow_invoice_consolidation", "cbp"),
+	ConsolidationPeriodDays:         NewColumn("consolidation_period_days", "cbp"),
+	ConsolidationGroupBy:            NewColumn("consolidation_group_by", "cbp"),
+	InvoiceNumberFormat:             NewColumn("invoice_number_format", "cbp"),
+	CustomerInvoicePrefix:           NewColumn("customer_invoice_prefix", "cbp"),
+	InvoiceCopies:                   NewColumn("invoice_copies", "cbp"),
+	RevenueAccountID:                NewColumn("revenue_account_id", "cbp"),
+	ARAccountID:                     NewColumn("ar_account_id", "cbp"),
+	ApplyLateCharges:                NewColumn("apply_late_charges", "cbp"),
+	LateChargeRate:                  NewColumn("late_charge_rate", "cbp"),
+	GracePeriodDays:                 NewColumn("grace_period_days", "cbp"),
+	TaxExempt:                       NewColumn("tax_exempt", "cbp"),
+	TaxExemptNumber:                 NewColumn("tax_exempt_number", "cbp"),
+	EnforceCustomerBillingReq:       NewColumn("enforce_customer_billing_req", "cbp"),
+	ValidateCustomerRates:           NewColumn("validate_customer_rates", "cbp"),
+	AutoTransfer:                    NewColumn("auto_transfer", "cbp"),
+	AutoMarkReadyToBill:             NewColumn("auto_mark_ready_to_bill", "cbp"),
+	AutoBill:                        NewColumn("auto_bill", "cbp"),
+	CountLateOnlyOnAppointmentStops: NewColumn("count_late_only_on_appointment_stops", "cbp"),
+	AutoApplyAccessorials:           NewColumn("auto_apply_accessorials", "cbp"),
+	BillingCurrency:                 NewColumn("billing_currency", "cbp"),
+	RequirePONumber:                 NewColumn("require_po_number", "cbp"),
+	RequireBOLNumber:                NewColumn("require_bol_number", "cbp"),
+	RequireDeliveryNumber:           NewColumn("require_delivery_number", "cbp"),
 	InvoiceAdjustmentSupportingDocumentPolicy: NewColumn("invoice_adjustment_supporting_document_policy", "cbp"),
 	DefaultBillerID:        NewColumn("default_biller_id", "cbp"),
 	BillingNotes:           NewColumn("billing_notes", "cbp"),
@@ -490,11 +482,7 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"autoTransfer":                              "auto_transfer",
 	"autoMarkReadyToBill":                       "auto_mark_ready_to_bill",
 	"autoBill":                                  "auto_bill",
-	"detentionBillingEnabled":                   "detention_billing_enabled",
-	"detentionFreeMinutes":                      "detention_free_minutes",
-	"detentionRatePerHour":                      "detention_rate_per_hour",
 	"countLateOnlyOnAppointmentStops":           "count_late_only_on_appointment_stops",
-	"countDetentionOnlyOnAppointmentStops":      "count_detention_only_on_appointment_stops",
 	"autoApplyAccessorials":                     "auto_apply_accessorials",
 	"billingCurrency":                           "billing_currency",
 	"requirePONumber":                           "require_po_number",
@@ -547,11 +535,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"auto_transfer",
 	"auto_mark_ready_to_bill",
 	"auto_bill",
-	"detention_billing_enabled",
-	"detention_free_minutes",
-	"detention_rate_per_hour",
 	"count_late_only_on_appointment_stops",
-	"count_detention_only_on_appointment_stops",
 	"auto_apply_accessorials",
 	"billing_currency",
 	"require_po_number",
@@ -672,11 +656,7 @@ var CustomerBillingProfileFilter = struct {
 	AutoTransfer                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoTransfer" → DB: "auto_transfer"
 	AutoMarkReadyToBill                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMarkReadyToBill" → DB: "auto_mark_ready_to_bill"
 	AutoBill                                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoBill" → DB: "auto_bill"
-	DetentionBillingEnabled                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionBillingEnabled" → DB: "detention_billing_enabled"
-	DetentionFreeMinutes                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionFreeMinutes" → DB: "detention_free_minutes"
-	DetentionRatePerHour                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionRatePerHour" → DB: "detention_rate_per_hour"
 	CountLateOnlyOnAppointmentStops           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countLateOnlyOnAppointmentStops" → DB: "count_late_only_on_appointment_stops"
-	CountDetentionOnlyOnAppointmentStops      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countDetentionOnlyOnAppointmentStops" → DB: "count_detention_only_on_appointment_stops"
 	AutoApplyAccessorials                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApplyAccessorials" → DB: "auto_apply_accessorials"
 	BillingCurrency                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCurrency" → DB: "billing_currency"
 	RequirePONumber                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requirePONumber" → DB: "require_po_number"
@@ -793,20 +773,8 @@ var CustomerBillingProfileFilter = struct {
 	AutoBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoBill", op, value)
 	},
-	DetentionBillingEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("detentionBillingEnabled", op, value)
-	},
-	DetentionFreeMinutes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("detentionFreeMinutes", op, value)
-	},
-	DetentionRatePerHour: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("detentionRatePerHour", op, value)
-	},
 	CountLateOnlyOnAppointmentStops: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("countLateOnlyOnAppointmentStops", op, value)
-	},
-	CountDetentionOnlyOnAppointmentStops: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("countDetentionOnlyOnAppointmentStops", op, value)
 	},
 	AutoApplyAccessorials: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoApplyAccessorials", op, value)

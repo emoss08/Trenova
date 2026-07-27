@@ -4,10 +4,10 @@ import {
   type DeepPartial,
   type ShipmentAnalyticsData,
   mergeShipmentAnalyticsWithDefaults,
-} from "../../analytics/mock-data";
+} from "@/lib/shipment-analytics";
 import { ActivityFeed } from "./activity-feed";
-import { CustomerMix } from "./customer-mix";
-import { LaneHeatmap } from "./lane-heatmap";
+import { CustomerMix } from "@/components/work-modules/customer-mix";
+import { LaneHeatmap } from "@/components/work-modules/lane-heatmap";
 
 export default function BottomModules({
   backgroundEnabled = true,

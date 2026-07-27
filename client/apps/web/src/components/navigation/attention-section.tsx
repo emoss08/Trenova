@@ -1,69 +1,17 @@
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
+import {
+  ATTENTION_ROWS_BY_KEY,
+  ATTENTION_TONE_DOT_CLASSES,
+  type AttentionRowConfig,
+  type AttentionTone,
+} from "@/config/attention-rows";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import type { AttentionSummaryQuery } from "@trenova/graphql/generated/graphql";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { isRouteActive } from "@/lib/route-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useLocation } from "react-router";
-
-type AttentionSummary = AttentionSummaryQuery["attentionSummary"];
-type AttentionTone = "default" | "warning" | "destructive";
-
-interface AttentionRowConfig {
-  key: keyof AttentionSummary;
-  label: string;
-  module: string;
-  path: string;
-  tone: AttentionTone;
-}
-
-const ATTENTION_ROWS: AttentionRowConfig[] = [
-  {
-    key: "billingQueue",
-    label: "Billing Queue",
-    module: "Billing",
-    path: "/billing/queue",
-    tone: "default",
-  },
-  {
-    key: "pendingApprovals",
-    label: "Pending Approvals",
-    module: "Billing",
-    path: "/billing/pending-approvals",
-    tone: "default",
-  },
-  {
-    key: "reconciliationExceptions",
-    label: "Reconciliation Exceptions",
-    module: "Billing",
-    path: "/billing/reconciliation-exceptions",
-    tone: "destructive",
-  },
-  {
-    key: "serviceFailures",
-    label: "Service Failures",
-    module: "Shipments",
-    path: "/shipment-management/service-failures",
-    tone: "warning",
-  },
-  {
-    key: "ediAttention",
-    label: "EDI Needs Attention",
-    module: "EDI",
-    path: "/edi/overview",
-    tone: "warning",
-  },
-];
-
-const ATTENTION_ROWS_BY_KEY = new Map(ATTENTION_ROWS.map((row) => [row.key as string, row]));
-
-const TONE_DOT_CLASSES: Record<AttentionTone, string> = {
-  default: "bg-info",
-  warning: "bg-warning",
-  destructive: "bg-destructive",
-};
 
 const TONE_BADGE_VARIANTS: Record<AttentionTone, BadgeVariant> = {
   default: "secondary",
@@ -87,7 +35,7 @@ function AttentionRow({
       <span
         className={cn(
           "size-1.5 shrink-0 rounded-full",
-          hasWork ? TONE_DOT_CLASSES[row.tone] : "bg-muted-foreground/40",
+          hasWork ? ATTENTION_TONE_DOT_CLASSES[row.tone] : "bg-muted-foreground/40",
         )}
       />
       <span className="min-w-0 flex-1 truncate">{row.label}</span>

@@ -87,11 +87,6 @@ export function CustomerBillingProfileForm() {
   });
   const taxExempt = useWatch({ control, name: "billingProfile.taxExempt" });
   const fuelSurchargeMode = useWatch({ control, name: "billingProfile.fuelSurchargeMode" });
-  const detentionBillingEnabled = useWatch({
-    control,
-    name: "billingProfile.detentionBillingEnabled",
-  });
-
   const showDayOfWeek =
     billingCycleType === "Weekly" || billingCycleType === "BiWeekly";
   const showCreditHoldReason =
@@ -539,63 +534,19 @@ export function CustomerBillingProfileForm() {
       <Separator />
       <SectionHeader
         icon={TruckIcon}
-        title="Detention Billing"
-        description="Charge customers for excessive loading or unloading wait times"
+        title="Stop Performance"
+        description="How appointment scheduling affects late and detention evaluation"
       />
       <FormGroup cols={1}>
-        <FormControl className="min-h-[3em]">
+        <FormControl className="min-h-[3em] max-w-[500px]">
           <SwitchField
             control={control}
-            name="billingProfile.detentionBillingEnabled"
-            label="Enable Detention Billing"
-            description="When enabled, detention charges are automatically calculated when driver wait time at pickup or delivery exceeds the free time allowance."
+            name="billingProfile.countLateOnlyOnAppointmentStops"
+            label="Count Late Only on Appointment Stops"
+            description="When enabled, late-performance evaluation only applies to stops explicitly marked as appointment stops. Open stops remain operationally scheduled but do not count as late exceptions."
             position="left"
           />
         </FormControl>
-        {detentionBillingEnabled && (
-          <div className="flex flex-col pl-10">
-            <FormControl className="min-h-[3em] max-w-[400px]">
-              <NumberField
-                control={control}
-                name="billingProfile.detentionFreeMinutes"
-                label="Free Time"
-                placeholder="120"
-                sideText="min"
-                description="Minutes allowed at each stop before detention charges begin. Industry standard is typically 120 minutes (2 hours)."
-              />
-            </FormControl>
-            <FormControl className="min-h-[3em] max-w-[400px]">
-              <NumberField
-                control={control}
-                name="billingProfile.detentionRatePerHour"
-                label="Hourly Rate"
-                placeholder="75.00"
-                sideText="$/hr"
-                description="Dollar amount charged per hour of detention after free time is exhausted."
-              />
-            </FormControl>
-          </div>
-        )}
-        <div className="flex flex-col pl-10">
-          <FormControl className="min-h-[3em] max-w-[500px]">
-            <SwitchField
-              control={control}
-              name="billingProfile.countLateOnlyOnAppointmentStops"
-              label="Count Late Only on Appointment Stops"
-              description="When enabled, late-performance evaluation only applies to stops explicitly marked as appointment stops. Open stops remain operationally scheduled but do not count as late exceptions."
-              position="left"
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em] max-w-[500px]">
-            <SwitchField
-              control={control}
-              name="billingProfile.countDetentionOnlyOnAppointmentStops"
-              label="Count Detention Only on Appointment Stops"
-              description="When enabled, detention calculations only apply to stops explicitly marked as appointment stops. Open stops will not accrue detention by default."
-              position="left"
-            />
-          </FormControl>
-        </div>
       </FormGroup>
       <Separator />
       <SectionHeader

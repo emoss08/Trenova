@@ -36,6 +36,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
+	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
@@ -76,6 +78,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
@@ -147,6 +150,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,
+	homelayoutservice.New,
 	fx.Annotate(
 		reportingcompiler.New,
 		fx.As(new(services.ReportCompiler)),
@@ -314,6 +318,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	holdreasonservice.New,
 	recurringshipmentservice.New,
 	ratetableservice.New,
+	detentionpolicyservice.New,
+	detentionservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
 		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },

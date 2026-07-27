@@ -5,7 +5,6 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useDeleteReportDashboard, useUpdateReportDashboard } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { cn } from "@trenova/shared/lib/utils";
 import type { ReportDashboard } from "@/lib/graphql/reports";
 import {
   DASHBOARD_GRID_COLUMNS,
@@ -16,22 +15,17 @@ import {
   type ReportDashboardLayout,
   type ReportDashboardTile,
 } from "@/types/report";
+import { TileGrid } from "@/components/tile-grid/tile-grid";
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+  SortableTile,
+  TileDragHandle,
+  type TileDragHandleProps,
+} from "@/components/tile-grid/sortable-tile";
+import { SizeStepper } from "@/components/tile-grid/size-stepper";
 import {
   ArrowLeftIcon,
   ChevronsLeftRightIcon,
   ChevronsUpDownIcon,
-  GripVerticalIcon,
   DownloadIcon,
   LayoutDashboardIcon,
   MoreHorizontalIcon,
@@ -79,55 +73,9 @@ type DashboardViewProps = {
   canEdit: boolean;
 };
 
-function SizeStepper({
-  icon: Icon,
-  label,
-  value,
-  min,
-  max,
-  onChange,
-}: {
-  icon: typeof ChevronsLeftRightIcon;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  onChange: (next: number) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-      <span className="flex-1 text-xs text-muted-foreground">{label}</span>
-      <Button
-        variant="outline"
-        size="icon"
-        className="size-6"
-        aria-label={`Decrease ${label.toLowerCase()}`}
-        disabled={value <= min}
-        onClick={() => onChange(value - 1)}
-      >
-        −
-      </Button>
-      <span className="w-5 text-center text-xs tabular-nums">{value}</span>
-      <Button
-        variant="outline"
-        size="icon"
-        className="size-6"
-        aria-label={`Increase ${label.toLowerCase()}`}
-        disabled={value >= max}
-        onClick={() => onChange(value + 1)}
-      >
-        +
-      </Button>
-    </div>
-  );
-}
-
 /**
- * A narrow tile cannot fit a row of inline controls, and the tile clips its
- * own overflow — which used to strand a shrunken tile with its "wider" button
- * cut off. One trigger always fits, and the popover stays open so the size can
- * be nudged repeatedly.
+ * A narrow tile cannot fit a row of inline controls, so every editing action
+ * lives behind one trigger that always fits.
  */
 function TileControls({
   tile,
@@ -219,7 +167,6 @@ function TileFrame({
   onRemove: () => void;
   onResize: (patch: Partial<ReportDashboardTile>) => void;
 }) {
-  const sortable = useSortable({ id: tile.id, disabled: !editing });
   const report = useTileReport(tile.kind === "text" ? null : tile);
   const title = tile.title || report.name || "Tile";
   const tileFilters = useTileFilterFields(index, report.ir);
@@ -250,60 +197,42 @@ function TileFrame({
     : undefined;
 
   return (
-    <div
-      ref={sortable.setNodeRef}
-      style={{
-        gridColumn: `span ${tile.w} / span ${tile.w}`,
-        gridRow: `span ${tile.h} / span ${tile.h}`,
-        transform: CSS.Transform.toString(sortable.transform),
-        transition: sortable.transition,
-      }}
-      className={cn(
-        "group/tile flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
-        sortable.isDragging && "z-10 opacity-80 shadow-lg",
-      )}
-    >
-      <div className="flex h-8 shrink-0 items-center gap-1 border-b border-border px-2">
-        {editing && (
-          <button
-            type="button"
-            className="shrink-0 cursor-grab text-muted-foreground hover:text-foreground"
-            aria-label="Move tile"
-            {...sortable.attributes}
-            {...sortable.listeners}
-          >
-            <GripVerticalIcon className="size-3.5" />
-          </button>
-        )}
-        <span className="min-w-0 flex-1 truncate text-xs font-medium">{title}</span>
-        {editing ? (
-          <TileControls tile={tile} onEdit={onEdit} onRemove={onRemove} onResize={onResize} />
-        ) : (
-          <>
-            {index && report.ir && (
-              <TileFilterPopover
-                index={index}
-                ir={report.ir}
-                values={tileFilterValues}
-                onChange={onTileFilterChange}
-              />
+    <SortableTile id={tile.id} w={tile.w} h={tile.h} editing={editing}>
+      {(drag: TileDragHandleProps) => (
+        <>
+          <div className="flex h-8 shrink-0 items-center gap-1 border-b border-border px-2">
+            {editing && <TileDragHandle {...drag} />}
+            <span className="min-w-0 flex-1 truncate text-xs font-medium">{title}</span>
+            {editing ? (
+              <TileControls tile={tile} onEdit={onEdit} onRemove={onRemove} onResize={onResize} />
+            ) : (
+              <>
+                {index && report.ir && (
+                  <TileFilterPopover
+                    index={index}
+                    ir={report.ir}
+                    values={tileFilterValues}
+                    onChange={onTileFilterChange}
+                  />
+                )}
+                <TileFooterLink tile={tile} />
+              </>
             )}
-            <TileFooterLink tile={tile} />
-          </>
-        )}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col">
-        <DashboardTileBody
-          tile={tile}
-          params={params}
-          filters={filters}
-          filterValues={filterValues}
-          tileFilters={tileFilters}
-          tileFilterValues={tileFilterValues}
-          categorySelect={categorySelect}
-        />
-      </div>
-    </div>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <DashboardTileBody
+              tile={tile}
+              params={params}
+              filters={filters}
+              filterValues={filterValues}
+              tileFilters={tileFilters}
+              tileFilterValues={tileFilterValues}
+              categorySelect={categorySelect}
+            />
+          </div>
+        </>
+      )}
+    </SortableTile>
   );
 }
 
@@ -326,7 +255,6 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
   const layout = editing ? draft : savedLayout;
   const parameters = layout.parameters ?? [];
   const configuredFilters = useMemo(() => layout.filters ?? [], [layout.filters]);
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   const { entities, candidates } = useDashboardFilterCandidates(layout.tiles);
   const catalog = useReportCatalog();
@@ -375,13 +303,15 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
   }, [configuredFilters]);
 
   const [exporting, setExporting] = useState(false);
-  const [tileFilterFields, setTileFilterFields] = useState<
-    Record<string, ReportDashboardFilter[]>
-  >({});
+  const [tileFilterFields, setTileFilterFields] = useState<Record<string, ReportDashboardFilter[]>>(
+    {},
+  );
 
   const registerTileFilterFields = useCallback(
     (tileId: string, fields: ReportDashboardFilter[]) =>
-      setTileFilterFields((prev) => (prev[tileId] === fields ? prev : { ...prev, [tileId]: fields })),
+      setTileFilterFields((prev) =>
+        prev[tileId] === fields ? prev : { ...prev, [tileId]: fields },
+      ),
     [],
   );
 
@@ -425,17 +355,6 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
       ),
     }));
   }, []);
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    setDraft((prev) => {
-      const from = prev.tiles.findIndex((tile) => tile.id === active.id);
-      const to = prev.tiles.findIndex((tile) => tile.id === over.id);
-      if (from < 0 || to < 0) return prev;
-      return { ...prev, tiles: packTiles(arrayMove(prev.tiles, from, to)) };
-    });
-  };
 
   const addTile = () => {
     const tile: ReportDashboardTile = {
@@ -661,51 +580,38 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
             </div>
           </div>
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+          <TileGrid
+            items={layout.tiles}
+            columns={DASHBOARD_GRID_COLUMNS}
+            onReorder={(tiles) => setDraft((prev) => ({ ...prev, tiles: packTiles(tiles) }))}
           >
-            <SortableContext
-              items={layout.tiles.map((tile) => tile.id)}
-              strategy={rectSortingStrategy}
-            >
-              <div
-                className="grid gap-3"
-                style={{
-                  gridTemplateColumns: `repeat(${DASHBOARD_GRID_COLUMNS}, minmax(0, 1fr))`,
-                  gridAutoRows: "64px",
-                }}
-              >
-                {layout.tiles.map((tile) => (
-                  <TileFrame
-                    key={tile.id}
-                    tile={tile}
-                    params={params}
-                    filters={fieldFilters}
-                    filterValues={appliedFilterValues}
-                    index={index}
-                    onTileFilterFields={registerTileFilterFields}
-                    tileFilterValues={tileFilterValues[tile.id] ?? EMPTY_VALUES}
-                    onTileFilterChange={(values) =>
-                      setTileFilterValues((prev) => ({ ...prev, [tile.id]: values }))
-                    }
-                    crossFilters={crossFilters}
-                    onCrossFilter={handleCrossFilter}
-                    editing={editing}
-                    onEdit={() => setEditingTile(tile)}
-                    onRemove={() =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        tiles: packTiles(prev.tiles.filter((t) => t.id !== tile.id)),
-                      }))
-                    }
-                    onResize={(patch) => patchTile(tile.id, patch)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+            {(tile) => (
+              <TileFrame
+                key={tile.id}
+                tile={tile}
+                params={params}
+                filters={fieldFilters}
+                filterValues={appliedFilterValues}
+                index={index}
+                onTileFilterFields={registerTileFilterFields}
+                tileFilterValues={tileFilterValues[tile.id] ?? EMPTY_VALUES}
+                onTileFilterChange={(values) =>
+                  setTileFilterValues((prev) => ({ ...prev, [tile.id]: values }))
+                }
+                crossFilters={crossFilters}
+                onCrossFilter={handleCrossFilter}
+                editing={editing}
+                onEdit={() => setEditingTile(tile)}
+                onRemove={() =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    tiles: packTiles(prev.tiles.filter((t) => t.id !== tile.id)),
+                  }))
+                }
+                onResize={(patch) => patchTile(tile.id, patch)}
+              />
+            )}
+          </TileGrid>
         )}
         {editing && draft.tiles.length >= MAX_DASHBOARD_TILES && (
           <p className="pt-3 text-center text-2xs text-muted-foreground">

@@ -43,7 +43,7 @@ const routes: RouteObject[] = [
           {
             path: "/",
             async lazy() {
-              const { Home } = await import("@/routes/home");
+              const { Home } = await import("@/routes/home/page");
               return { Component: Home };
             },
           },
@@ -406,6 +406,41 @@ const routes: RouteObject[] = [
             async lazy() {
               const { PlaceholderPage } = await import("@/routes/placeholder-page");
               return { Component: PlaceholderPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/detention-policies",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DetentionPolicy),
+            ),
+            async lazy() {
+              const { DetentionPolicyPage } = await import("@/routes/detention-policy/page");
+              return { Component: DetentionPolicyPage };
+            },
+          },
+          {
+            path: "/billing/detention-intelligence",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DetentionPolicy),
+            ),
+            async lazy() {
+              const { DetentionIntelligencePage } = await import(
+                "@/routes/detention-intelligence/page"
+              );
+              return { Component: DetentionIntelligencePage };
+            },
+          },
+          {
+            path: "/billing/detention-desk",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.DetentionPolicy),
+            ),
+            async lazy() {
+              const { DetentionDeskPage } = await import("@/routes/detention-desk/page");
+              return { Component: DetentionDeskPage };
             },
           },
           {
@@ -1035,6 +1070,32 @@ const routes: RouteObject[] = [
                   const { HazmatSegregationRulesPage } =
                     await import("@/routes/hazmat-segregation-rule/page");
                   return { Component: HazmatSegregationRulesPage };
+                },
+              },
+              {
+                path: "home-layouts",
+                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Read),
+                async lazy() {
+                  const { HomeLayoutsPage } = await import("@/routes/admin/home-layouts/page");
+                  return { Component: HomeLayoutsPage };
+                },
+              },
+              {
+                path: "home-layouts/new",
+                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Create),
+                async lazy() {
+                  const { NewHomeLayoutPage } =
+                    await import("@/routes/admin/home-layouts/new/page");
+                  return { Component: NewHomeLayoutPage };
+                },
+              },
+              {
+                path: "home-layouts/:id",
+                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Update),
+                async lazy() {
+                  const { EditHomeLayoutPage } =
+                    await import("@/routes/admin/home-layouts/[id]/page");
+                  return { Component: EditHomeLayoutPage };
                 },
               },
               {

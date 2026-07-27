@@ -1,6 +1,6 @@
 import { getMarginTone, resolveTargetMarginPct } from "@/lib/profitability";
 import { formatPercent } from "@trenova/shared/lib/utils";
-import { toneVar } from "../analytics/kpi/tone";
+import { toneVar } from "@/components/kpi/tone";
 
 export function MarginPill({
   marginPct,
@@ -18,10 +18,7 @@ export function MarginPill({
       className={`inline-flex items-center gap-1.5 text-sm font-medium tabular-nums ${className ?? ""}`}
       style={{ color: toneVar(tone) }}
     >
-      <span
-        className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: toneVar(tone) }}
-      />
+      <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: toneVar(tone) }} />
       {formatPercent(marginPct)}
     </span>
   );

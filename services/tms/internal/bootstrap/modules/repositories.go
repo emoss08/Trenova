@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/databasesessionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dataentrycontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/detentionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distancecalculationrepository"
@@ -87,6 +88,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazardousmaterialrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/holdreasonrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/homelayoutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iamrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
@@ -165,6 +167,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	reportrepository.NewScheduleRepository,
 	reportrepository.NewViewRepository,
 	sidebarpreferencerepository.New,
+	homelayoutrepository.New,
 	billingqueuefilterpresetrepository.New,
 	equipmentmanufacturerrepository.New,
 	equipmenttyperepository.New,
@@ -302,6 +305,11 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	distanceprofilerepository.New,
 	storedmileagerepository.New,
 	exchangeraterepository.New,
+	detentionrepository.NewPolicyRepository,
+	detentionrepository.NewOccurrenceRepository,
+	detentionrepository.NewEvidenceRepository,
+	detentionrepository.NewNoticeRepository,
+	detentionrepository.NewAnalyticsRepository,
 	fuelsurchargerepository.NewIndexRepository,
 	fuelsurchargerepository.NewPriceRepository,
 	fuelsurchargerepository.NewProgramRepository,
