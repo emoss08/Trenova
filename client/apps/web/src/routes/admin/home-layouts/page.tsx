@@ -1,0 +1,174 @@
+import { PageHeader } from "@/components/page-header";
+import { usePermission } from "@/hooks/use-permission";
+import { useDeleteHomeLayoutPreset, useHomeLayoutPresets } from "@/hooks/use-home-layout";
+import type { HomeLayoutPreset } from "@/lib/graphql/home-layout";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { LayoutGridIcon, LockIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { Link } from "react-router";
+import { toast } from "sonner";
+import { useRoleOptions } from "./_components/use-role-options";
+
+export function HomeLayoutsPage() {
+  const { data: presets, isLoading } = useHomeLayoutPresets();
+  const { data: roles } = useRoleOptions();
+  const deletePreset = useDeleteHomeLayoutPreset();
+
+  const { allowed: canCreate } = usePermission(Resource.HomeLayoutPreset, Operation.Create);
+  const { allowed: canDelete } = usePermission(Resource.HomeLayoutPreset, Operation.Delete);
+
+  const roleNames = new Map((roles ?? []).map((role) => [role.id, role.name]));
+
+  const remove = async (preset: HomeLayoutPreset) => {
+    try {
+      await deletePreset.mutateAsync(preset.id);
+      toast.success(`Deleted ${preset.name}`);
+    } catch (error) {
+      toast.error(graphQLErrorMessage(error, "Could not delete that home screen"));
+    }
+  };
+
+  return (
+    <div className="flex flex-col p-6">
+      <PageHeader
+        title="Home Screens"
+        description="Author a home screen once and assign it to the roles that should land on it."
+        className="p-0 py-4"
+        actions={
+          canCreate ? (
+            <Link to="/admin/home-layouts/new">
+              <Button size="sm">
+                <PlusIcon className="size-4" />
+                New home screen
+              </Button>
+            </Link>
+          ) : undefined
+        }
+      />
+
+      {isLoading ? (
+        <div className="flex flex-col gap-2 pt-2">
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-16 rounded-lg" />
+          ))}
+        </div>
+      ) : !presets || presets.length === 0 ? (
+        <EmptyState canCreate={canCreate} />
+      ) : (
+        <div className="flex flex-col gap-2 pt-2">
+          {presets.map((preset) => (
+            <PresetRow
+              key={preset.id}
+              preset={preset}
+              roleNames={roleNames}
+              canDelete={canDelete}
+              deleting={deletePreset.isPending}
+              onDelete={() => void remove(preset)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PresetRow({
+  preset,
+  roleNames,
+  canDelete,
+  deleting,
+  onDelete,
+}: {
+  preset: HomeLayoutPreset;
+  roleNames: Map<string, string>;
+  canDelete: boolean;
+  deleting: boolean;
+  onDelete: () => void;
+}) {
+  const audience = preset.roleIds
+    .map((roleId) => roleNames.get(roleId))
+    .filter((name): name is string => name != null);
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to={`/admin/home-layouts/${preset.id}`}
+            className="truncate text-sm font-medium hover:underline"
+          >
+            {preset.name}
+          </Link>
+          {preset.isOrgDefault && <Badge variant="secondary">Org default</Badge>}
+          {preset.locked && (
+            <Badge variant="warning" className="gap-1">
+              <LockIcon className="size-2.5" />
+              Locked
+            </Badge>
+          )}
+        </div>
+
+        {preset.description && (
+          <p className="truncate text-2xs text-muted-foreground">{preset.description}</p>
+        )}
+
+        <p className="text-2xs text-muted-foreground">
+          {preset.widgets.length} {preset.widgets.length === 1 ? "widget" : "widgets"}
+          {" · "}
+          {audience.length > 0
+            ? audience.join(", ")
+            : preset.coreResponsibility
+              ? `Everyone in ${preset.coreResponsibility}`
+              : preset.isOrgDefault
+                ? "Everyone without another assignment"
+                : "Not assigned to anyone"}
+          {" · "}
+          {preset.assignedUserCount} {preset.assignedUserCount === 1 ? "person" : "people"}
+        </p>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        <Link to={`/admin/home-layouts/${preset.id}`}>
+          <Button variant="outline" size="sm">
+            Edit
+          </Button>
+        </Link>
+        {canDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive"
+            aria-label={`Delete ${preset.name}`}
+            disabled={deleting}
+            onClick={onDelete}
+          >
+            <Trash2Icon className="size-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ canCreate }: { canCreate: boolean }) {
+  return (
+    <div className="mt-2 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-16 text-center">
+      <LayoutGridIcon className="size-5 text-muted-foreground/40" />
+      <p className="text-sm font-medium">No home screens yet</p>
+      <p className="max-w-sm text-xs text-muted-foreground">
+        Until you author one, everyone lands on the home screen Trenova ships for their role.
+      </p>
+      {canCreate && (
+        <Link to="/admin/home-layouts/new" className="pt-1">
+          <Button size="sm" variant="outline">
+            <PlusIcon className="size-4" />
+            Create one
+          </Button>
+        </Link>
+      )}
+    </div>
+  );
+}

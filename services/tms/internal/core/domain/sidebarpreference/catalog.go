@@ -198,6 +198,11 @@ func adminQuickActions() []QuickActionDefinition {
 			permission.ResourceDistanceProfile,
 		),
 		createQuickAction("create-user", "Create User", permission.ResourceUser),
+		createQuickAction(
+			"create-home-layout",
+			"Create Home Screen",
+			permission.ResourceHomeLayoutPreset,
+		),
 		createQuickAction("create-role", "Create Role", permission.ResourceRole),
 		createQuickAction(
 			"create-custom-field",
