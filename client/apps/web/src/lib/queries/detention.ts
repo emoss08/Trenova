@@ -6,6 +6,10 @@ export const detention = createQueryKeys("detention", {
     queryKey: ["desk"],
     queryFn: async () => apiService.detentionService.desk(),
   }),
+  byShipment: (shipmentId: string) => ({
+    queryKey: ["byShipment", shipmentId],
+    queryFn: async () => apiService.detentionService.byShipment(shipmentId),
+  }),
   occurrence: (id: string) => ({
     queryKey: ["occurrence", id],
     queryFn: async () => apiService.detentionService.getOccurrence(id),

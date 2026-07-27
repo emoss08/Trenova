@@ -15,6 +15,7 @@ const AdditionalChargesSection = lazy(
 const ShipmentGeneralInformation = lazy(() => import("./shipment-general-information"));
 const CommoditiesSection = lazy(() => import("./shipment-commodities"));
 const ShipmentMoveDetails = lazy(() => import("./move/shipment-move-details"));
+const DetentionSection = lazy(() => import("./detention/shipment-detention"));
 const LoadPlannerDialog = lazy(() => import("./trailer-loading/trailer-loading-drawer"));
 
 const BILLING_REVIEW_STATUSES = new Set(["ReadyForReview", "InReview", "OnHold", "Exception"]);
@@ -52,6 +53,7 @@ export function ShipmentForm() {
             <ShipmentGeneralInformation />
             <CommoditiesSection />
             <ShipmentMoveDetails />
+            <DetentionSection />
           </div>
           {isFullyLocked && (
             <div className="absolute inset-0 z-10 rounded-lg bg-background/60">

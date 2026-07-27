@@ -32,6 +32,18 @@ export class DetentionService {
     return safeParse(occurrenceDetailSchema, response, "Detention Occurrence");
   }
 
+  public async byShipment(shipmentId: string): Promise<DetentionOccurrence[]> {
+    const response = await api.get<{ results: DetentionOccurrence[] }>(
+      `/detention/occurrences/?shipmentId=${shipmentId}&limit=100`,
+    );
+
+    return safeParse(
+      z.array(detentionOccurrenceSchema),
+      response?.results ?? [],
+      "Detention Occurrences",
+    );
+  }
+
   public async disputePacket(id: string): Promise<DisputePacket> {
     const response = await api.get<DisputePacket>(
       `/detention/occurrences/${id}/dispute-packet/`,
