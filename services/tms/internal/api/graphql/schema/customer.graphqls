@@ -93,11 +93,7 @@ type CustomerBillingProfile {
   autoTransfer: Boolean!
   autoMarkReadyToBill: Boolean!
   autoBill: Boolean!
-  detentionBillingEnabled: Boolean!
-  detentionFreeMinutes: Int!
-  detentionRatePerHour: String
   countLateOnlyOnAppointmentStops: Boolean!
-  countDetentionOnlyOnAppointmentStops: Boolean!
   autoApplyAccessorials: Boolean!
   billingCurrency: String!
   requirePONumber: Boolean!

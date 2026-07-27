@@ -1109,7 +1109,6 @@ type CustomerBillingProfile {
   businessUnitId: ID!
   consolidationGroupBy: CustomerConsolidationGroupBy!
   consolidationPeriodDays: Int!
-  countDetentionOnlyOnAppointmentStops: Boolean!
   countLateOnlyOnAppointmentStops: Boolean!
   createdAt: Int!
   creditBalance: String!
@@ -1119,9 +1118,6 @@ type CustomerBillingProfile {
   customerId: ID!
   customerInvoicePrefix: String!
   defaultBillerId: ID
-  detentionBillingEnabled: Boolean!
-  detentionFreeMinutes: Int!
-  detentionRatePerHour: String
   documentTypes: [DocumentType!]
   enforceCreditLimit: Boolean!
   enforceCustomerBillingReq: Boolean!

@@ -33,11 +33,7 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   autoTransfer
   autoMarkReadyToBill
   autoBill
-  detentionBillingEnabled
-  detentionFreeMinutes
-  detentionRatePerHour
   countLateOnlyOnAppointmentStops
-  countDetentionOnlyOnAppointmentStops
   autoApplyAccessorials
   billingCurrency
   requirePONumber
