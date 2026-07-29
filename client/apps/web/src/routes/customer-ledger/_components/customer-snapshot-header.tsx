@@ -12,6 +12,7 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { m } from "motion/react";
 import { useMemo } from "react";
 import { Bar, BarChart, XAxis } from "recharts";
+import { formatUnixDateMedium, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 const collectionsChartConfig = {
   collected: {
@@ -20,20 +21,14 @@ const collectionsChartConfig = {
   },
 } satisfies ChartConfig;
 
+// Buckets are keyed to UTC month starts, so the label reads them back in UTC —
+// projecting into the viewer's zone would slide a bucket into the month before.
 function monthLabel(unixSeconds: number) {
-  return new Date(unixSeconds * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    timeZone: "UTC",
-  });
+  return formatUnixInUserTimezone(unixSeconds, { month: "short", timezone: "UTC" });
 }
 
 function formatDateOrDash(unixSeconds: number) {
-  if (!unixSeconds) return "—";
-  return new Date(unixSeconds * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unixSeconds, { fallback: "—" });
 }
 
 export function CustomerSnapshotHeader({

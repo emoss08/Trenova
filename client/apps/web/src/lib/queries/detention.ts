@@ -1,6 +1,12 @@
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
+/**
+ * Ranked detention analytics are grouped rollups, so a generous ceiling keeps
+ * the page's derived totals honest while still bounding the aggregation.
+ */
+export const DETENTION_STATS_LIMIT = 100;
+
 export const detention = createQueryKeys("detention", {
   desk: () => ({
     queryKey: ["desk"],
@@ -17,12 +23,20 @@ export const detention = createQueryKeys("detention", {
   facilities: (from: number, to: number) => ({
     queryKey: ["facilities", from, to],
     queryFn: async () =>
-      apiService.detentionAnalyticsService.facilities({ from, to, limit: 25 }),
+      apiService.detentionAnalyticsService.facilities({
+        from,
+        to,
+        limit: DETENTION_STATS_LIMIT,
+      }),
   }),
   customers: (from: number, to: number) => ({
     queryKey: ["customers", from, to],
     queryFn: async () =>
-      apiService.detentionAnalyticsService.customers({ from, to, limit: 25 }),
+      apiService.detentionAnalyticsService.customers({
+        from,
+        to,
+        limit: DETENTION_STATS_LIMIT,
+      }),
   }),
   waivers: (from: number, to: number) => ({
     queryKey: ["waivers", from, to],

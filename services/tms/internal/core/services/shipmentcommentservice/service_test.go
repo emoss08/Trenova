@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -28,12 +29,18 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 	userRepo := mocks.NewMockUserRepository(t)
 	audit := mocks.NewMockAuditService(t)
 	realtime := mocks.NewMockRealtimeService(t)
+	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo.EXPECT().
+		GetByResourceIDs(mock.Anything, mock.Anything).
+		Return([]*document.Document{}, nil).
+		Maybe()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
+		DocumentRepo: docRepo,
 		AuditService: audit,
 		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
@@ -53,7 +60,8 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
-			return req.ID == shipmentID && req.TenantInfo.OrgID == testutil.TestOrgID && req.TenantInfo.BuID == testutil.TestBuID
+			return req.ID == shipmentID && req.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.TenantInfo.BuID == testutil.TestBuID
 		})).
 		Return(&shipment.Shipment{ID: shipmentID}, nil).
 		Once()
@@ -116,12 +124,18 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 	userRepo := mocks.NewMockUserRepository(t)
 	audit := mocks.NewMockAuditService(t)
 	realtime := mocks.NewMockRealtimeService(t)
+	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo.EXPECT().
+		GetByResourceIDs(mock.Anything, mock.Anything).
+		Return([]*document.Document{}, nil).
+		Maybe()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
+		DocumentRepo: docRepo,
 		AuditService: audit,
 		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
@@ -136,7 +150,10 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 		MentionedUserIDs: []pulid.ID{pulid.MustNew("usr_")},
 	}
 
-	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&shipment.Shipment{ID: shipmentID}, nil).Once()
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&shipment.Shipment{ID: shipmentID}, nil).
+		Once()
 	userRepo.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*tenant.User{}, nil).Once()
 
 	created, err := svc.Create(t.Context(), entity, testActor())
@@ -154,6 +171,7 @@ func TestCreate_RequiresUserActor(t *testing.T) {
 		Repo:         mocks.NewMockShipmentCommentRepository(t),
 		ShipmentRepo: mocks.NewMockShipmentRepository(t),
 		UserRepo:     mocks.NewMockUserRepository(t),
+		DocumentRepo: mocks.NewMockDocumentRepository(t),
 		AuditService: mocks.NewMockAuditService(t),
 		EventService: noopShipmentEventService{},
 		Realtime:     mocks.NewMockRealtimeService(t),
@@ -179,12 +197,18 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 	userRepo := mocks.NewMockUserRepository(t)
 	audit := mocks.NewMockAuditService(t)
 	realtime := mocks.NewMockRealtimeService(t)
+	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo.EXPECT().
+		GetByResourceIDs(mock.Anything, mock.Anything).
+		Return([]*document.Document{}, nil).
+		Maybe()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
+		DocumentRepo: docRepo,
 		AuditService: audit,
 		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
@@ -272,12 +296,18 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 	userRepo := mocks.NewMockUserRepository(t)
 	audit := mocks.NewMockAuditService(t)
 	realtime := mocks.NewMockRealtimeService(t)
+	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo.EXPECT().
+		GetByResourceIDs(mock.Anything, mock.Anything).
+		Return([]*document.Document{}, nil).
+		Maybe()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
+		DocumentRepo: docRepo,
 		AuditService: audit,
 		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
@@ -314,7 +344,8 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 
 	repo.EXPECT().
 		Update(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
-			return comment.Version == 3 && comment.EditedAt != nil && len(comment.MentionedUsers) == 1
+			return comment.Version == 3 && comment.EditedAt != nil &&
+				len(comment.MentionedUsers) == 1
 		})).
 		RunAndReturn(func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
 			comment.Version = 4
@@ -341,13 +372,16 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 		Return(nil).
 		Once()
 
-	updated, err := svc.Update(t.Context(), &shipment.ShipmentComment{
-		ID:               commentID,
-		ShipmentID:       shipmentID,
-		OrganizationID:   testutil.TestOrgID,
-		BusinessUnitID:   testutil.TestBuID,
-		Comment:          "after",
-		MentionedUserIDs: []pulid.ID{mentionID},
+	updated, err := svc.Update(t.Context(), &servicesport.UpdateShipmentCommentRequest{
+		Entity: &shipment.ShipmentComment{
+			ID:               commentID,
+			ShipmentID:       shipmentID,
+			OrganizationID:   testutil.TestOrgID,
+			BusinessUnitID:   testutil.TestBuID,
+			Comment:          "after",
+			Version:          3,
+			MentionedUserIDs: []pulid.ID{mentionID},
+		},
 	}, testActor())
 
 	require.NoError(t, err)
@@ -363,12 +397,18 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 	userRepo := mocks.NewMockUserRepository(t)
 	audit := mocks.NewMockAuditService(t)
 	realtime := mocks.NewMockRealtimeService(t)
+	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo.EXPECT().
+		GetByResourceIDs(mock.Anything, mock.Anything).
+		Return([]*document.Document{}, nil).
+		Maybe()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
+		DocumentRepo: docRepo,
 		AuditService: audit,
 		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
@@ -385,7 +425,7 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 		}, nil).
 		Once()
 
-	err := svc.Delete(t.Context(), &repositories.DeleteShipmentCommentRequest{
+	err := svc.Delete(t.Context(), &servicesport.DeleteShipmentCommentRequest{
 		ShipmentID: pulid.MustNew("shp_"),
 		CommentID:  pulid.MustNew("shc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID},

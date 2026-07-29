@@ -1,13 +1,34 @@
 import type { DispatchFinding } from "@/lib/graphql/dispatch-console";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
-import { severityMeta } from "./dispatch-vocabulary";
+import { InfoIcon, OctagonXIcon, TriangleAlertIcon } from "lucide-react";
 
 const SEVERITY_RANK: Record<string, number> = { Block: 0, Warn: 1, Info: 2 };
 
+const SEVERITY_ROW: Record<
+  string,
+  { Icon: typeof InfoIcon; iconClass: string; textClass: string }
+> = {
+  Block: {
+    Icon: OctagonXIcon,
+    iconClass: "text-red-600 dark:text-red-400",
+    textClass: "text-foreground",
+  },
+  Warn: {
+    Icon: TriangleAlertIcon,
+    iconClass: "text-amber-600 dark:text-amber-400",
+    textClass: "text-foreground/80",
+  },
+  Info: {
+    Icon: InfoIcon,
+    iconClass: "text-muted-foreground",
+    textClass: "text-muted-foreground",
+  },
+};
+
 /**
  * Findings are the console's explanation for why a driver can or cannot take a move.
- * Blocking reasons lead, because that is the one a dispatcher has to act on.
+ * Blocking reasons lead, because that is the one a dispatcher has to act on. Severity
+ * reads from the icon alone; the words are saved for the reason itself.
  */
 export function FindingList({
   findings,
@@ -27,25 +48,25 @@ export function FindingList({
   const hidden = sorted.length - shown.length;
 
   return (
-    <ul className={cn("flex flex-col gap-1", className)}>
+    <ul className={cn("flex flex-col gap-1.5", className)}>
       {shown.map((finding) => {
-        const meta = severityMeta(finding.severity);
+        const row = SEVERITY_ROW[finding.severity] ?? SEVERITY_ROW.Info;
         return (
-          <li key={`${finding.code}-${finding.field}`} className="flex items-start gap-1.5">
-            <Badge variant={meta.variant} className="mt-0.5 h-4 shrink-0 rounded px-1 text-[9px]">
-              {meta.label}
-            </Badge>
-            <span className="text-[11px] leading-tight text-muted-foreground">
+          <li key={`${finding.code}-${finding.field}`} className="flex items-start gap-2">
+            <row.Icon className={cn("mt-px size-3.5 shrink-0", row.iconClass)} aria-hidden />
+            <span className={cn("min-w-0 flex-1 text-[11px] leading-snug", row.textClass)}>
               {finding.message}
-              {finding.regulation ? (
-                <span className="ml-1 font-mono text-[10px] opacity-70">{finding.regulation}</span>
-              ) : null}
             </span>
+            {finding.regulation ? (
+              <span className="shrink-0 rounded border border-border bg-muted/50 px-1 py-px font-mono text-[9px] leading-4 text-muted-foreground">
+                {finding.regulation}
+              </span>
+            ) : null}
           </li>
         );
       })}
       {hidden > 0 ? (
-        <li className="text-[11px] text-muted-foreground">+{hidden} more</li>
+        <li className="pl-[22px] text-[11px] text-muted-foreground">+{hidden} more</li>
       ) : null}
     </ul>
   );

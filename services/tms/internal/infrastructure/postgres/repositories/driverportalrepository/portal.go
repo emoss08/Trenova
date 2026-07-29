@@ -697,7 +697,8 @@ func (r *portalAccessRepository) ListDriverShipmentComments(
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.ShipmentCommentScopeTenant(sq, tenantInfo).
 				Where(cols.ShipmentID.Eq(), shipmentID).
-				Where(cols.Visibility.Eq(), shipment.CommentVisibilityDriver)
+				Where(cols.Visibility.Eq(), shipment.CommentVisibilityDriver).
+				Where(cols.DeletedAt.IsNull())
 		}).
 		Relation(buncolgen.ShipmentCommentRelations.User).
 		Order(cols.CreatedAt.OrderDesc()).

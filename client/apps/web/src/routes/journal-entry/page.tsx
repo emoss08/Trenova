@@ -17,6 +17,7 @@ import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 export function JournalEntryDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,11 +60,7 @@ export function JournalEntryDetailPage() {
     );
   }
 
-  const accountingDate = new Date(entry.accountingDate * 1000).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const accountingDate = formatUnixDateMedium(entry.accountingDate);
 
   return (
     <PageLayout

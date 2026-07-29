@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,8 +43,6 @@ func (r *mutationResolver) DispatchAssignMoves(ctx context.Context, input []*gql
 	tenant := tenantInfo(authCtx)
 	results := make([]*gqlmodel.DispatchAssignResult, 0, len(input))
 
-	// Each move is applied independently: one bad pairing must not cost a dispatcher the
-	// other nine assignments in the batch.
 	for _, item := range input {
 		results = append(results, r.assignOneMove(ctx, tenant, item))
 	}
@@ -78,7 +76,11 @@ func (r *mutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 			Findings: []*gqlmodel.DispatchFinding{},
 		}
 
-		moveID, parseErr := pulid.Parse(rawID)
+		moveID, parseErr := parseDispatchID(
+			rawID,
+			"moveId",
+			"Move ID is not a valid identifier",
+		)
 		if parseErr != nil {
 			result.Error = errorMessage(parseErr)
 			results = append(results, result)
@@ -93,6 +95,7 @@ func (r *mutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 			},
 		)
 		if unassignErr != nil {
+			r.logDispatchError("unassign_move", rawID, unassignErr)
 			result.Error = errorMessage(unassignErr)
 			result.Findings = findingsFromError(unassignErr)
 			results = append(results, result)
@@ -108,8 +111,6 @@ func (r *mutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 
 // DispatchPlanAutoAssign is the resolver for the dispatchPlanAutoAssign field.
 func (r *mutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error) {
-	// Producing a plan is a read, but applying it assigns work. Requiring the assign
-	// permission for both keeps a reader from triggering writes through the apply flag.
 	authCtx, err := r.requirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -119,7 +120,7 @@ func (r *mutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req := &dispatchautoassignservice.PlanRequest{
+	req := &services.DispatchPlanRequest{
 		TenantInfo:  tenantInfo(authCtx),
 		WindowStart: int64(intValue(input.WindowStart)),
 		WindowEnd:   int64(intValue(input.WindowEnd)),
@@ -149,6 +150,9 @@ func (r *queryResolver) DispatchBoard(ctx context.Context, input gqlmodel.Dispat
 		permission.OpRead,
 	)
 	if err != nil {
+		return nil, err
+	}
+	if _, err = r.requirePermission(ctx, permission.ResourceWorker, permission.OpRead); err != nil {
 		return nil, err
 	}
 
@@ -233,6 +237,9 @@ func (r *queryResolver) DispatchDriverMoves(ctx context.Context, input gqlmodel.
 		permission.OpRead,
 	)
 	if err != nil {
+		return nil, err
+	}
+	if _, err = r.requirePermission(ctx, permission.ResourceWorker, permission.OpRead); err != nil {
 		return nil, err
 	}
 

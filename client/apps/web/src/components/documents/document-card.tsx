@@ -7,6 +7,7 @@ import type { Document } from "@trenova/shared/types/document";
 import { BrainCircuitIcon, DownloadIcon, EyeIcon, HistoryIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DocumentThumbnail } from "./document-thumbnail";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 interface DocumentCardProps {
   document: Document;
@@ -28,14 +29,6 @@ function formatFileSize(bytes: number): string {
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i] ?? ""}`;
-}
-
-function formatDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 export function DocumentCard({
@@ -108,7 +101,7 @@ export function DocumentCard({
           {document.originalName}
         </p>
         <p className="text-xs text-muted-foreground">
-          {formatFileSize(document.fileSize)} • {formatDate(document.createdAt)}
+          {formatFileSize(document.fileSize)} • {formatUnixDateMedium(document.createdAt)}
           {documentTypeName && <> • {documentTypeName}</>}
         </p>
         <div className="mt-1 flex flex-wrap gap-1">

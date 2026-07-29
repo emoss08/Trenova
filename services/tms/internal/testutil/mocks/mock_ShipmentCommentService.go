@@ -184,7 +184,7 @@ func (_c *MockShipmentCommentService_CreateSystem_Call) RunAndReturn(run func(ct
 }
 
 // Delete provides a mock function for the type MockShipmentCommentService
-func (_mock *MockShipmentCommentService) Delete(ctx context.Context, req *repositories.DeleteShipmentCommentRequest, actor *services.RequestActor) error {
+func (_mock *MockShipmentCommentService) Delete(ctx context.Context, req *services.DeleteShipmentCommentRequest, actor *services.RequestActor) error {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
@@ -192,7 +192,7 @@ func (_mock *MockShipmentCommentService) Delete(ctx context.Context, req *reposi
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.DeleteShipmentCommentRequest, *services.RequestActor) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.DeleteShipmentCommentRequest, *services.RequestActor) error); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		r0 = ret.Error(0)
@@ -213,15 +213,15 @@ func (_e *MockShipmentCommentService_Expecter) Delete(ctx any, req any, actor an
 	return &MockShipmentCommentService_Delete_Call{Call: _e.mock.On("Delete", ctx, req, actor)}
 }
 
-func (_c *MockShipmentCommentService_Delete_Call) Run(run func(ctx context.Context, req *repositories.DeleteShipmentCommentRequest, actor *services.RequestActor)) *MockShipmentCommentService_Delete_Call {
+func (_c *MockShipmentCommentService_Delete_Call) Run(run func(ctx context.Context, req *services.DeleteShipmentCommentRequest, actor *services.RequestActor)) *MockShipmentCommentService_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *repositories.DeleteShipmentCommentRequest
+		var arg1 *services.DeleteShipmentCommentRequest
 		if args[1] != nil {
-			arg1 = args[1].(*repositories.DeleteShipmentCommentRequest)
+			arg1 = args[1].(*services.DeleteShipmentCommentRequest)
 		}
 		var arg2 *services.RequestActor
 		if args[2] != nil {
@@ -241,7 +241,7 @@ func (_c *MockShipmentCommentService_Delete_Call) Return(err error) *MockShipmen
 	return _c
 }
 
-func (_c *MockShipmentCommentService_Delete_Call) RunAndReturn(run func(ctx context.Context, req *repositories.DeleteShipmentCommentRequest, actor *services.RequestActor) error) *MockShipmentCommentService_Delete_Call {
+func (_c *MockShipmentCommentService_Delete_Call) RunAndReturn(run func(ctx context.Context, req *services.DeleteShipmentCommentRequest, actor *services.RequestActor) error) *MockShipmentCommentService_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -381,8 +381,8 @@ func (_c *MockShipmentCommentService_ListByShipmentID_Call) RunAndReturn(run fun
 }
 
 // Update provides a mock function for the type MockShipmentCommentService
-func (_mock *MockShipmentCommentService) Update(ctx context.Context, entity *shipment.ShipmentComment, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
-	ret := _mock.Called(ctx, entity, actor)
+func (_mock *MockShipmentCommentService) Update(ctx context.Context, req *services.UpdateShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
@@ -390,18 +390,18 @@ func (_mock *MockShipmentCommentService) Update(ctx context.Context, entity *shi
 
 	var r0 *shipment.ShipmentComment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentComment, *services.RequestActor) (*shipment.ShipmentComment, error)); ok {
-		return returnFunc(ctx, entity, actor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateShipmentCommentRequest, *services.RequestActor) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.ShipmentComment, *services.RequestActor) *shipment.ShipmentComment); ok {
-		r0 = returnFunc(ctx, entity, actor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateShipmentCommentRequest, *services.RequestActor) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*shipment.ShipmentComment)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.ShipmentComment, *services.RequestActor) error); ok {
-		r1 = returnFunc(ctx, entity, actor)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.UpdateShipmentCommentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -415,21 +415,21 @@ type MockShipmentCommentService_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *shipment.ShipmentComment
+//   - req *services.UpdateShipmentCommentRequest
 //   - actor *services.RequestActor
-func (_e *MockShipmentCommentService_Expecter) Update(ctx any, entity any, actor any) *MockShipmentCommentService_Update_Call {
-	return &MockShipmentCommentService_Update_Call{Call: _e.mock.On("Update", ctx, entity, actor)}
+func (_e *MockShipmentCommentService_Expecter) Update(ctx any, req any, actor any) *MockShipmentCommentService_Update_Call {
+	return &MockShipmentCommentService_Update_Call{Call: _e.mock.On("Update", ctx, req, actor)}
 }
 
-func (_c *MockShipmentCommentService_Update_Call) Run(run func(ctx context.Context, entity *shipment.ShipmentComment, actor *services.RequestActor)) *MockShipmentCommentService_Update_Call {
+func (_c *MockShipmentCommentService_Update_Call) Run(run func(ctx context.Context, req *services.UpdateShipmentCommentRequest, actor *services.RequestActor)) *MockShipmentCommentService_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *shipment.ShipmentComment
+		var arg1 *services.UpdateShipmentCommentRequest
 		if args[1] != nil {
-			arg1 = args[1].(*shipment.ShipmentComment)
+			arg1 = args[1].(*services.UpdateShipmentCommentRequest)
 		}
 		var arg2 *services.RequestActor
 		if args[2] != nil {
@@ -449,7 +449,123 @@ func (_c *MockShipmentCommentService_Update_Call) Return(shipmentComment *shipme
 	return _c
 }
 
-func (_c *MockShipmentCommentService_Update_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.ShipmentComment, actor *services.RequestActor) (*shipment.ShipmentComment, error)) *MockShipmentCommentService_Update_Call {
+func (_c *MockShipmentCommentService_Update_Call) RunAndReturn(run func(ctx context.Context, req *services.UpdateShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error)) *MockShipmentCommentService_Update_Call {
 	_c.Call.Return(run)
 	return _c
+}
+
+func (_mock *MockShipmentCommentService) toggleResult(ret mock.Arguments, ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	var r0 *shipment.ShipmentComment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Pin provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) Pin(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Pin")
+	}
+
+	return _mock.toggleResult(ret, ctx, req, actor)
+}
+
+// Pin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) Pin(ctx any, req any, actor any) *mock.Call {
+	return _e.mock.On("Pin", ctx, req, actor)
+}
+
+// Unpin provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) Unpin(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Unpin")
+	}
+
+	return _mock.toggleResult(ret, ctx, req, actor)
+}
+
+// Unpin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) Unpin(ctx any, req any, actor any) *mock.Call {
+	return _e.mock.On("Unpin", ctx, req, actor)
+}
+
+// Resolve provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) Resolve(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Resolve")
+	}
+
+	return _mock.toggleResult(ret, ctx, req, actor)
+}
+
+// Resolve is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) Resolve(ctx any, req any, actor any) *mock.Call {
+	return _e.mock.On("Resolve", ctx, req, actor)
+}
+
+// Unresolve provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) Unresolve(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Unresolve")
+	}
+
+	return _mock.toggleResult(ret, ctx, req, actor)
+}
+
+// Unresolve is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) Unresolve(ctx any, req any, actor any) *mock.Call {
+	return _e.mock.On("Unresolve", ctx, req, actor)
+}
+
+// Acknowledge provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) Acknowledge(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Acknowledge")
+	}
+
+	return _mock.toggleResult(ret, ctx, req, actor)
+}
+
+// Acknowledge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) Acknowledge(ctx any, req any, actor any) *mock.Call {
+	return _e.mock.On("Acknowledge", ctx, req, actor)
 }

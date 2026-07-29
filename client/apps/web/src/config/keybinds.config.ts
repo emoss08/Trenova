@@ -43,6 +43,43 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
   {
+    id: "comments",
+    label: "Comments",
+    keybinds: [
+      {
+        id: "comment-send",
+        label: "Send Comment",
+        keys: ["Ctrl", "Enter"],
+        description: "Send the comment you are composing",
+      },
+      {
+        id: "comment-cancel",
+        label: "Cancel Edit or Reply",
+        keys: ["Esc"],
+        description: "Close the inline comment editor or reply composer",
+      },
+      {
+        id: "comment-bold",
+        label: "Bold",
+        keys: ["Ctrl", "B"],
+        description: "Toggle bold formatting in the comment editor",
+      },
+      {
+        id: "comment-italic",
+        label: "Italic",
+        keys: ["Ctrl", "I"],
+        description: "Toggle italic formatting in the comment editor",
+      },
+      {
+        id: "comment-mention",
+        label: "Mention or Reference",
+        keys: ["@", "#"],
+        description:
+          "Mention a teammate with @ or reference a shipment, worker, or customer with #",
+      },
+    ],
+  },
+  {
     id: "forms",
     label: "Forms & Dialogs",
     keybinds: [

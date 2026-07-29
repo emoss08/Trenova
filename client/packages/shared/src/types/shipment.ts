@@ -290,6 +290,7 @@ export const additionalChargeSchema = z.object({
   accessorialCharge: z.custom<AccessorialCharge>().nullish(),
   fuelSurchargeProgramId: z.string().nullish(),
   fuelSurchargeDetail: fuelSurchargeDetailSchema.nullish(),
+  detentionOccurrenceId: z.string().nullish(),
 });
 export type AdditionalCharge = z.infer<typeof additionalChargeSchema>;
 

@@ -57,6 +57,7 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 		"ExceptionShipments",
 		"MapShipments",
 		"ShipmentComments",
+		"ShipmentCommentReplies",
 		"ShipmentCommentCount",
 		"ShipmentEvents",
 		"ShipmentBillingReadiness",
@@ -79,6 +80,11 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 		"CreateShipmentComment",
 		"UpdateShipmentComment",
 		"DeleteShipmentComment",
+		"PinShipmentComment",
+		"UnpinShipmentComment",
+		"ResolveShipmentComment",
+		"UnresolveShipmentComment",
+		"AcknowledgeShipmentComment",
 	} {
 		require.True(
 			t,

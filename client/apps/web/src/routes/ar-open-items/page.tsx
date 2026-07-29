@@ -10,7 +10,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
-import { dateToUnixTimestamp, toDate } from "@trenova/shared/lib/date";
+import { getEndOfDay } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -54,10 +54,8 @@ export function AROpenItemsPage() {
   const asOfValue = useWatch({ control: filterForm.control, name: "asOfDate" });
 
   const asOfUnix = useMemo(() => {
-    const date = toDate(asOfValue ?? undefined);
-    if (!date) return undefined;
-    date.setHours(23, 59, 59, 0);
-    return dateToUnixTimestamp(date);
+    if (!asOfValue) return undefined;
+    return getEndOfDay(new Date(asOfValue * 1000));
   }, [asOfValue]);
 
   const {

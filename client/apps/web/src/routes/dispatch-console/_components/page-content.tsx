@@ -3,21 +3,31 @@ import type {
   DispatchBoardMove,
   DispatchCandidate,
 } from "@/lib/graphql/dispatch-console";
-import { queries } from "@/lib/queries";
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { useDispatchConsoleStore, type PreflightTarget } from "@/stores/dispatch-console-store";
+import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Switch } from "@trenova/shared/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutListIcon, SparklesIcon, Undo2Icon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo } from "react";
 import { CapacityRail } from "./capacity-rail";
-import { CoverageBoard } from "./coverage-board";
-import { Inspector } from "./inspector";
-import { MetricsStrip } from "./metrics-strip";
-import { PlanningBoard, type TimelineZoom } from "./planning-board";
-import { PreflightDialog, type PreflightTarget } from "./preflight-dialog";
+import { ConsoleCenterPane } from "./console-center-pane";
+import { ConsoleOverlays } from "./console-overlays";
+import { InspectorSkeleton } from "./console-skeletons";
+import { ConsoleToolbar } from "./console-toolbar";
+import { groupMovesByUrgency, URGENCY_ORDER } from "./dispatch-vocabulary";
+import { SummaryStrip } from "./summary-strip";
 import { useDispatchActions } from "./use-dispatch-actions";
+import { useDispatchHotkeys } from "./use-dispatch-hotkeys";
+import {
+  useDispatchRail,
+  useDispatchSelection,
+  useDispatchView,
+  useDispatchWindow,
+} from "./url-state";
+
+// The inspector only answers a question once something is selected, and it drags in the
+// candidate scoring UI to do it — none of which the first paint of the board needs.
+const Inspector = lazy(() => import("./inspector").then((m) => ({ default: m.Inspector })));
 
 const BOARD_REFETCH_MS = 60_000;
 
@@ -27,18 +37,27 @@ const NO_MOVES: readonly DispatchBoardMove[] = [];
 const NO_DRIVERS: readonly DispatchBoardDriver[] = [];
 
 export function DispatchConsoleContent() {
-  const [selectedMoveId, setSelectedMoveId] = useState<string | null>(null);
-  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
-  const [includeCovered, setIncludeCovered] = useState(false);
-  const [showTimeline, setShowTimeline] = useState(true);
-  const [zoom, setZoom] = useState<TimelineZoom>(12);
-  const [preflight, setPreflight] = useState<PreflightTarget | null>(null);
-  const [draggingDriver, setDraggingDriver] = useState<DispatchBoardDriver | null>(null);
+  const { range, zoom, includeCovered, shiftWindow, goToday } = useDispatchWindow();
+  const { selectedMoveId, selectedWorkerId, selectMove, selectDriver, clearSelection } =
+    useDispatchSelection();
+  const { urgencyFocus, setUrgencyFocus } = useDispatchView();
+  const { setCapacityFilter } = useDispatchRail();
 
-  const boardInput = useMemo(() => ({ includeCovered }), [includeCovered]);
+  const setDragPreview = useDispatchConsoleStore.use.setDragPreview();
+  const openPreflight = useDispatchConsoleStore.use.openPreflight();
+  const preflight = useDispatchConsoleStore.use.preflight();
+  const resetConsole = useDispatchConsoleStore.use.reset();
+
+  // A drag or a pending pre-flight belongs to the visit, not to the store's lifetime.
+  useEffect(() => resetConsole, [resetConsole]);
+
+  const boardInput = useMemo(
+    () => ({ includeCovered, windowStart: range.start, windowEnd: range.end }),
+    [includeCovered, range],
+  );
 
   const { data: board, isLoading } = useQuery({
-    ...queries.dispatchConsole.board(boardInput),
+    ...dispatchConsoleQueries.board(boardInput),
     refetchInterval: BOARD_REFETCH_MS,
   });
 
@@ -46,6 +65,13 @@ export function DispatchConsoleContent() {
 
   const moves = board?.moves ?? NO_MOVES;
   const drivers = board?.drivers ?? NO_DRIVERS;
+
+  // The visual order of the kanban, reused by j/k navigation so the keyboard walks the
+  // board in the same order the eye does.
+  const orderedMoves = useMemo(() => {
+    const grouped = groupMovesByUrgency(moves);
+    return URGENCY_ORDER.flatMap((bucket) => grouped.get(bucket) ?? []);
+  }, [moves]);
 
   const selectedMove = useMemo(
     () => moves.find((move) => move.moveId === selectedMoveId) ?? null,
@@ -55,16 +81,6 @@ export function DispatchConsoleContent() {
     () => drivers.find((driver) => driver.workerId === selectedWorkerId) ?? null,
     [drivers, selectedWorkerId],
   );
-
-  const selectMove = useCallback((moveId: string) => {
-    setSelectedMoveId(moveId);
-    setSelectedWorkerId(null);
-  }, []);
-
-  const selectDriver = useCallback((workerId: string) => {
-    setSelectedWorkerId(workerId);
-    setSelectedMoveId(null);
-  }, []);
 
   const assignCandidate = useCallback(
     (candidate: DispatchCandidate) => {
@@ -83,180 +99,130 @@ export function DispatchConsoleContent() {
     [actions, moves],
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const data = event.active.data.current;
-    if (data?.type === "driver") {
-      setDraggingDriver(data.driver as DispatchBoardDriver);
-    }
-  }, []);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const data = event.active.data.current;
+      if (data?.type === "driver") {
+        const driver = data.driver as DispatchBoardDriver;
+        setDragPreview(
+          `${driver.firstName} ${driver.lastName}${driver.tractorCode ? ` · ${driver.tractorCode}` : ""}`,
+        );
+        return;
+      }
+      if (data?.type === "move") {
+        const move = data.move as DispatchBoardMove;
+        setDragPreview(`${move.proNumber} · ${move.originCity} → ${move.destinationCity}`);
+      }
+    },
+    [setDragPreview],
+  );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setDraggingDriver(null);
+      setDragPreview(null);
 
-      const driver = event.active.data.current?.driver as DispatchBoardDriver | undefined;
-      const move = event.over?.data.current?.move as DispatchBoardMove | undefined;
-      if (!driver || !move) return;
+      const activeData = event.active.data.current;
+      const overData = event.over?.data.current;
+      if (!activeData || !overData) return;
 
       // A drop opens the pre-flight rather than committing. The dispatcher sees the score,
       // the empty miles, and anything the pairing trips before anything is written.
-      setPreflight({ move, driver });
-      setSelectedMoveId(move.moveId);
-      setSelectedWorkerId(null);
+      let target: PreflightTarget | null = null;
+      if (activeData.type === "driver" && overData.type === "move-target") {
+        target = {
+          move: overData.move as DispatchBoardMove,
+          driver: activeData.driver as DispatchBoardDriver,
+        };
+      } else if (activeData.type === "move" && overData.type === "driver-target") {
+        target = {
+          move: activeData.move as DispatchBoardMove,
+          driver: overData.driver as DispatchBoardDriver,
+        };
+      }
+      if (!target) return;
+
+      openPreflight(target);
+      selectMove(target.move.moveId);
     },
-    [],
+    [openPreflight, selectMove, setDragPreview],
   );
 
   const sensors = useSensors(
-    // A small activation distance keeps a click on a driver row from being read as a drag.
+    // A small activation distance keeps a click on a row from being read as a drag.
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
-  // Dispatchers cover a board faster on the keyboard than with a mouse. Drag-and-drop is
-  // the discoverable path; these are the fast one.
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      const target = event.target as HTMLElement | null;
-      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+  const planForWindow = useCallback(
+    () => actions.planAutoAssign({ windowStart: range.start, windowEnd: range.end }),
+    [actions, range],
+  );
 
-      if (event.key === "u" && actions.canUndo) {
-        event.preventDefault();
-        actions.undo();
-        return;
-      }
+  const hasDialogOpen = Boolean(preflight) || Boolean(actions.plan && !actions.plan.shadowMode);
 
-      if (event.key === "j" || event.key === "k") {
-        if (moves.length === 0) return;
-        event.preventDefault();
-        const index = moves.findIndex((move) => move.moveId === selectedMoveId);
-        const delta = event.key === "j" ? 1 : -1;
-        const next = index === -1 ? 0 : Math.min(Math.max(index + delta, 0), moves.length - 1);
-        selectMove(moves[next].moveId);
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [actions, moves, selectMove, selectedMoveId]);
+  useDispatchHotkeys({
+    enabled: !hasDialogOpen,
+    orderedMoves,
+    selectedMoveId,
+    canUndo: actions.canUndo,
+    onSelectMove: selectMove,
+    onClearSelection: clearSelection,
+    onShiftWindow: shiftWindow,
+    onToday: goToday,
+    onUndo: actions.undo,
+  });
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-3">
-        <MetricsStrip summary={board?.summary} isLoading={isLoading} />
+      <div className="flex h-[calc(100vh-9.5rem)] min-h-135 flex-col gap-3">
+        <SummaryStrip
+          summary={board?.summary}
+          isLoading={isLoading}
+          urgencyFocus={urgencyFocus}
+          onUrgencyFocus={setUrgencyFocus}
+          onCapacityFilter={setCapacityFilter}
+        />
 
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-1.5 text-[11px]">
-            <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
-            Show covered moves
-          </label>
-          <label className="flex items-center gap-1.5 text-[11px]">
-            <Switch checked={showTimeline} onCheckedChange={setShowTimeline} />
-            Planning board
-          </label>
+        <ConsoleToolbar
+          canUndo={actions.canUndo}
+          isAssigning={actions.isAssigning}
+          isPlanning={actions.isPlanning}
+          onUndo={actions.undo}
+          onPlan={planForWindow}
+        />
 
-          <div className="ml-auto flex items-center gap-1.5">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 px-2 text-[11px]"
-              disabled={!actions.canUndo || actions.isAssigning}
-              onClick={actions.undo}
-            >
-              <Undo2Icon className="size-3" aria-hidden />
-              Undo
-              <kbd className="ml-0.5 rounded border border-border px-1 font-mono text-[9px]">u</kbd>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 px-2 text-[11px]"
-              disabled={actions.isPlanning}
-              onClick={() => actions.planAutoAssign({})}
-            >
-              <SparklesIcon className="size-3" aria-hidden />
-              {actions.isPlanning ? "Planning…" : "Auto-assign"}
-            </Button>
-          </div>
-        </div>
-
-        {actions.plan && actions.plan.uncovered.length > 0 ? (
-          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
-            <LayoutListIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600" aria-hidden />
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium">
-                {actions.plan.uncovered.length} move(s) could not be covered
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {actions.plan.uncovered[0].proNumber}: {actions.plan.uncovered[0].reason}
-              </span>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="grid min-h-[32rem] gap-3 lg:grid-cols-[18rem_minmax(0,1fr)_20rem]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
           <CapacityRail
             drivers={drivers}
             isLoading={isLoading}
             selectedWorkerId={selectedWorkerId}
             onSelectDriver={selectDriver}
           />
-          <CoverageBoard
+
+          <ConsoleCenterPane
             moves={moves}
-            isLoading={isLoading}
-            selectedMoveId={selectedMoveId}
-            onSelectMove={selectMove}
-          />
-          <Inspector
-            selectedMove={selectedMove}
-            selectedDriver={selectedDriver}
-            onAssign={assignCandidate}
-            onSelectMove={selectMove}
-            isAssigning={actions.isAssigning}
-          />
-        </div>
-
-        {showTimeline && board ? (
-          <PlanningBoard
             drivers={drivers}
-            windowStart={board.windowStart}
+            isLoading={isLoading}
+            range={range}
             zoom={zoom}
-            onZoomChange={setZoom}
+            selectedMoveId={selectedMoveId}
+            selectedWorkerId={selectedWorkerId}
             onSelectMove={selectMove}
+            onSelectDriver={selectDriver}
           />
-        ) : null}
+
+          <Suspense fallback={<InspectorSkeleton />}>
+            <Inspector
+              selectedMove={selectedMove}
+              selectedDriver={selectedDriver}
+              onAssign={assignCandidate}
+              onSelectMove={selectMove}
+              isAssigning={actions.isAssigning}
+              hotkeysEnabled={!hasDialogOpen}
+            />
+          </Suspense>
+        </div>
       </div>
-
-      <DragOverlay>
-        {draggingDriver ? (
-          <div className="rounded-md border border-brand bg-card px-2 py-1 text-xs shadow-lg">
-            {draggingDriver.firstName} {draggingDriver.lastName}
-            {draggingDriver.tractorCode ? (
-              <span className="ml-1 font-mono text-[10px] text-muted-foreground">
-                {draggingDriver.tractorCode}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-      </DragOverlay>
-
-      <PreflightDialog
-        target={preflight}
-        onCancel={() => setPreflight(null)}
-        isAssigning={actions.isAssigning}
-        onConfirm={(params) => {
-          actions.assign([
-            {
-              moveId: params.moveId,
-              primaryWorkerId: params.workerId,
-              tractorId: params.tractorId,
-              trailerId: params.trailerId,
-              reassign: params.reassign,
-            },
-          ]);
-          setPreflight(null);
-        }}
-      />
+      <ConsoleOverlays actions={actions} />
     </DndContext>
   );
 }

@@ -806,6 +806,26 @@ func (r *Registry) registerOperationsResources() {
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add shipment comments"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify shipment comments"},
 			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete shipment comments"},
+			{
+				Operation:   OpPin,
+				DisplayName: "Pin",
+				Description: "Pin comments to the top of a shipment",
+			},
+			{
+				Operation:   OpUnpin,
+				DisplayName: "Unpin",
+				Description: "Remove pinned comments from the top of a shipment",
+			},
+			{
+				Operation:   OpResolve,
+				DisplayName: "Resolve",
+				Description: "Resolve and reopen shipment comments",
+			},
+			{
+				Operation:   OpManage,
+				DisplayName: "Manage",
+				Description: "Edit or delete any user's shipment comments",
+			},
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})

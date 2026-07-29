@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
@@ -21,7 +22,15 @@ func (s *service) runHOSComplianceChecks(
 	secondaryWorkerID *pulid.ID,
 	multiErr *errortypes.MultiError,
 ) error {
-	if !dc.EnforceHOSCompliance || s.telematicsRepo == nil {
+	if !dc.EnforceHOSCompliance || s.telematicsRepo == nil || s.integrationRepo == nil {
+		return nil
+	}
+
+	integrations, err := s.integrationRepo.ListByTenant(ctx, tenantInfo)
+	if err != nil {
+		return err
+	}
+	if !integration.HasEnabledTelematics(integrations) {
 		return nil
 	}
 

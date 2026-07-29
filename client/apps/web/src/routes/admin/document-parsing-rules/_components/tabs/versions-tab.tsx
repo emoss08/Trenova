@@ -11,6 +11,7 @@ import { GitBranchIcon, LayersIcon, MapPinIcon, PlusIcon, TextIcon } from "lucid
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { VersionDetail } from "../version-detail/version-detail";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 
 const STATUS_BADGE_VARIANT = {
   Draft: "warning",
@@ -186,7 +187,7 @@ function VersionList({
                 </Badge>
                 {v.createdAt && (
                   <span className="text-xs text-muted-foreground">
-                    {new Date(v.createdAt * 1000).toLocaleDateString()}
+                    {formatUnixDate(v.createdAt)}
                   </span>
                 )}
               </div>

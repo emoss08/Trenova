@@ -177,10 +177,10 @@ type DetentionPolicy {
   specificityScore: Int!
   customerId: ID
   locationId: ID
-  shipmentTypeIds: [ID!]
-  serviceTypeIds: [ID!]
-  commodityIds: [ID!]
-  stopTypes: [StopType!]
+  shipmentTypeIds: [ID!]!
+  serviceTypeIds: [ID!]!
+  commodityIds: [ID!]!
+  stopTypes: [StopType!]!
   appointmentStopsOnly: Boolean!
   effectiveStartDate: Int
   effectiveEndDate: Int
@@ -196,7 +196,7 @@ type DetentionPolicy {
   roundingMode: DetentionRoundingMode!
   rateSource: DetentionRateSource!
   accessorialChargeId: ID!
-  tiers: [DetentionPolicyTier!]
+  tiers: [DetentionPolicyTier!]!
   maxBillableMinutesPerStop: Int
   maxChargePerStop: String
   maxChargePerDay: String
@@ -432,6 +432,7 @@ type DetentionDisputePacket {
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
   collectability: DetentionCollectability!
+  chainVerified: Boolean!
   generatedAt: Int!
 }
 

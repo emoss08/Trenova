@@ -2,6 +2,8 @@ package homelayoutservice
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -54,6 +56,27 @@ type PreviewRequest struct {
 	RoleID   pulid.ID
 }
 
+// countAssignedUsers reports how many distinct people a preset reaches through
+// its explicit roles or its core responsibility. The assignment list is fetched
+// once per request, so a page of thirty presets still costs one query.
+func countAssignedUsers(
+	preset *homelayout.Preset,
+	assignments []repositories.HomeRoleUserAssignment,
+) int {
+	if len(preset.RoleIDs) == 0 && preset.CoreResponsibility == "" {
+		return 0
+	}
+
+	seen := make(map[pulid.ID]struct{})
+	for _, assignment := range assignments {
+		if preset.AppliesToRole(assignment.RoleID, assignment.CoreResponsibility) {
+			seen[assignment.UserID] = struct{}{}
+		}
+	}
+
+	return len(seen)
+}
+
 func (s *Service) ListPresets(ctx context.Context, req *Request) ([]*PresetView, error) {
 	log := s.l.With(zap.String("operation", "ListPresets"))
 
@@ -66,13 +89,17 @@ func (s *Service) ListPresets(ctx context.Context, req *Request) ([]*PresetView,
 		return nil, err
 	}
 
+	assignments, err := s.repo.ListRoleUserAssignments(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	views := make([]*PresetView, 0, len(presets))
 	for _, preset := range presets {
-		count, countErr := s.repo.CountUsersForRoles(ctx, req.TenantInfo, preset.RoleIDs)
-		if countErr != nil {
-			return nil, countErr
-		}
-		views = append(views, &PresetView{Preset: preset, AssignedUserCount: count})
+		views = append(views, &PresetView{
+			Preset:            preset,
+			AssignedUserCount: countAssignedUsers(preset, assignments),
+		})
 	}
 
 	return views, nil
@@ -87,12 +114,35 @@ func (s *Service) GetPreset(ctx context.Context, req *GetPresetRequest) (*Preset
 		return nil, err
 	}
 
-	count, err := s.repo.CountUsersForRoles(ctx, req.TenantInfo, preset.RoleIDs)
+	assignments, err := s.repo.ListRoleUserAssignments(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PresetView{Preset: preset, AssignedUserCount: count}, nil
+	return &PresetView{
+		Preset:            preset,
+		AssignedUserCount: countAssignedUsers(preset, assignments),
+	}, nil
+}
+
+// validateRoleIDs refuses role IDs that do not exist in the tenant. Without it
+// an administrator pasting a stale or foreign ID gets a "successful" preset
+// that silently reaches nobody.
+func (s *Service) validateRoleIDs(ctx context.Context, req *SavePresetRequest) error {
+	for _, roleID := range req.RoleIDs {
+		if _, err := s.roles.GetByID(ctx, repositories.GetRoleByIDRequest{
+			ID:         roleID,
+			TenantInfo: req.TenantInfo,
+		}); err != nil {
+			return errortypes.NewValidationError(
+				"roleIds",
+				errortypes.ErrInvalid,
+				fmt.Sprintf("Role %s does not exist", roleID),
+			)
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) CreatePreset(
@@ -104,8 +154,8 @@ func (s *Service) CreatePreset(
 	entity := &homelayout.Preset{
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
-		Name:               req.Name,
-		Description:        req.Description,
+		Name:               strings.TrimSpace(req.Name),
+		Description:        strings.TrimSpace(req.Description),
 		Layout:             req.Layout,
 		RoleIDs:            req.RoleIDs,
 		CoreResponsibility: req.CoreResponsibility,
@@ -123,30 +173,28 @@ func (s *Service) CreatePreset(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
+	if err := s.validateRoleIDs(ctx, req); err != nil {
+		return nil, err
+	}
 	entity.Layout = entity.Layout.Normalize()
 
-	// Demote the incumbent first: the partial unique index would otherwise
-	// reject the insert rather than hand the default over.
-	if entity.IsOrgDefault {
-		if err := s.repo.ClearOrgDefault(ctx, &repositories.ClearHomeLayoutOrgDefaultRequest{
-			TenantInfo: req.TenantInfo,
-		}); err != nil {
-			return nil, err
-		}
-	}
-
+	// The repository demotes the incumbent org default in the same transaction
+	// as the insert, so a rejected insert cannot leave the tenant without one.
 	saved, err := s.repo.CreatePreset(ctx, entity)
 	if err != nil {
 		log.Error("failed to create home layout preset", zap.Error(err))
 		return nil, err
 	}
 
-	count, err := s.repo.CountUsersForRoles(ctx, req.TenantInfo, saved.RoleIDs)
+	assignments, err := s.repo.ListRoleUserAssignments(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PresetView{Preset: saved, AssignedUserCount: count}, nil
+	return &PresetView{
+		Preset:            saved,
+		AssignedUserCount: countAssignedUsers(saved, assignments),
+	}, nil
 }
 
 func (s *Service) UpdatePreset(
@@ -166,8 +214,8 @@ func (s *Service) UpdatePreset(
 		return nil, err
 	}
 
-	existing.Name = req.Name
-	existing.Description = req.Description
+	existing.Name = strings.TrimSpace(req.Name)
+	existing.Description = strings.TrimSpace(req.Description)
 	existing.Layout = req.Layout
 	existing.RoleIDs = req.RoleIDs
 	existing.CoreResponsibility = req.CoreResponsibility
@@ -181,29 +229,28 @@ func (s *Service) UpdatePreset(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
+	if err = s.validateRoleIDs(ctx, req); err != nil {
+		return nil, err
+	}
 	existing.Layout = existing.Layout.Normalize()
 
-	if existing.IsOrgDefault {
-		if err = s.repo.ClearOrgDefault(ctx, &repositories.ClearHomeLayoutOrgDefaultRequest{
-			TenantInfo: req.TenantInfo,
-			ExceptID:   existing.ID,
-		}); err != nil {
-			return nil, err
-		}
-	}
-
+	// The repository demotes the incumbent org default in the same transaction
+	// as the write, so a version conflict cannot leave the tenant without one.
 	saved, err := s.repo.UpdatePreset(ctx, existing)
 	if err != nil {
 		log.Error("failed to update home layout preset", zap.Error(err))
 		return nil, err
 	}
 
-	count, err := s.repo.CountUsersForRoles(ctx, req.TenantInfo, saved.RoleIDs)
+	assignments, err := s.repo.ListRoleUserAssignments(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PresetView{Preset: saved, AssignedUserCount: count}, nil
+	return &PresetView{
+		Preset:            saved,
+		AssignedUserCount: countAssignedUsers(saved, assignments),
+	}, nil
 }
 
 func (s *Service) DeletePreset(ctx context.Context, req *DeletePresetRequest) error {

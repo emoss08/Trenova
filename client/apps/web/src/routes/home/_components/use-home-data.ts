@@ -23,6 +23,7 @@ const SHIPMENT_ANALYTICS_WIDGETS = new Set([
   "kpi-row",
   "revenue-trend",
   "on-time-goal",
+  "fleet-status",
   "lane-heatmap",
   "customer-mix",
   "detention-watch",
@@ -38,10 +39,21 @@ const RECEIVABLES_WIDGETS = new Set(["ar-snapshot"]);
 export type HomeData = {
   shipmentAnalytics: ShipmentAnalyticsData;
   shipmentAnalyticsLoading: boolean;
+  /** True once the shipment payload holds real numbers rather than defaults. */
+  shipmentAnalyticsReady: boolean;
   attention: ReturnType<typeof useAttentionSummary>["data"];
   attentionLoading: boolean;
   receivables: ReturnType<typeof useHomeReceivables>["data"];
   receivablesLoading: boolean;
+};
+
+export type UseHomeDataOptions = {
+  /**
+   * Set on the home page, where the briefing bar reads the shipment payload
+   * even when no widget on the canvas does. The preset editor leaves it unset
+   * so an administrator arranging orientation widgets fetches nothing extra.
+   */
+  briefing?: boolean;
 };
 
 function widgetReadsReceivables(widget: HomeWidget): boolean {
@@ -71,13 +83,15 @@ function useHomeReceivables(enabled: boolean) {
  * than inside each widget means every tile shows the same instant's numbers,
  * and a layout with six shipment metrics still makes one request.
  */
-export function useHomeData(widgets: HomeWidget[]): HomeData {
+export function useHomeData(widgets: HomeWidget[], options: UseHomeDataOptions = {}): HomeData {
   const canReadShipments = usePermissionStore((state) =>
     state.hasPermission(Resource.Shipment, Operation.Read),
   );
 
   const needsShipmentAnalytics =
-    canReadShipments && widgets.some((widget) => SHIPMENT_ANALYTICS_WIDGETS.has(widget.key));
+    canReadShipments &&
+    (options.briefing === true ||
+      widgets.some((widget) => SHIPMENT_ANALYTICS_WIDGETS.has(widget.key)));
   const needsReceivables = widgets.some(widgetReadsReceivables);
 
   const shipmentQuery = useQuery({
@@ -99,6 +113,7 @@ export function useHomeData(widgets: HomeWidget[]): HomeData {
   return {
     shipmentAnalytics,
     shipmentAnalyticsLoading: needsShipmentAnalytics && shipmentQuery.isLoading,
+    shipmentAnalyticsReady: shipmentQuery.data != null,
     attention: attentionQuery.data,
     attentionLoading: attentionQuery.isLoading,
     receivables: receivablesQuery.data,

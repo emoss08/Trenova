@@ -36,6 +36,31 @@ type ListWorkerHOSViolationsRequest struct {
 	Limit      int
 }
 
+type SyncWorkerHOSLogsRequest struct {
+	TenantInfo  pagination.TenantInfo
+	WorkerIDs   []pulid.ID
+	WindowStart int64
+	Logs        []*telematics.WorkerHOSLog
+}
+
+type ListWorkerHOSLogsRequest struct {
+	TenantInfo pagination.TenantInfo
+	WorkerIDs  []pulid.ID
+	Since      int64
+}
+
+type ListWorkerHOSViolationStatsRequest struct {
+	TenantInfo pagination.TenantInfo
+	WorkerIDs  []pulid.ID
+	Since      int64
+}
+
+type WorkerHOSViolationStats struct {
+	WorkerID        pulid.ID `bun:"worker_id"         json:"workerId"`
+	ViolationCount  int      `bun:"violation_count"   json:"violationCount"`
+	LastViolationAt int64    `bun:"last_violation_at" json:"lastViolationAt"`
+}
+
 type WorkerTelematicsMapping struct {
 	WorkerID   pulid.ID
 	ExternalID string
@@ -147,6 +172,18 @@ type TelematicsRepository interface {
 		ctx context.Context,
 		req *ListWorkerHOSViolationsRequest,
 	) ([]*telematics.WorkerHOSViolation, error)
+	ListWorkerHOSViolationStats(
+		ctx context.Context,
+		req *ListWorkerHOSViolationStatsRequest,
+	) ([]*WorkerHOSViolationStats, error)
+	SyncWorkerHOSLogs(
+		ctx context.Context,
+		req *SyncWorkerHOSLogsRequest,
+	) (int, error)
+	ListWorkerHOSLogs(
+		ctx context.Context,
+		req *ListWorkerHOSLogsRequest,
+	) ([]*telematics.WorkerHOSLog, error)
 	UpsertVehicleInspections(
 		ctx context.Context,
 		inspections []*telematics.VehicleInspection,
@@ -224,6 +261,7 @@ type TelematicsRepository interface {
 		ctx context.Context,
 		eventsOlderThan int64,
 		violationsOlderThan int64,
+		hosLogsOlderThan int64,
 	) (int64, error)
 	GetWebhookConfigByToken(
 		ctx context.Context,

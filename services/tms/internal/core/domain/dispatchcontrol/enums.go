@@ -55,6 +55,7 @@ const (
 	AutoAssignmentStrategyProximity     = AutoAssignmentStrategy("Proximity")
 	AutoAssignmentStrategyAvailability  = AutoAssignmentStrategy("Availability")
 	AutoAssignmentStrategyLoadBalancing = AutoAssignmentStrategy("LoadBalancing")
+	AutoAssignmentStrategyPerformance   = AutoAssignmentStrategy("Performance")
 )
 
 func (a AutoAssignmentStrategy) String() string {
@@ -65,7 +66,8 @@ func (a AutoAssignmentStrategy) IsValid() bool {
 	switch a {
 	case AutoAssignmentStrategyProximity,
 		AutoAssignmentStrategyAvailability,
-		AutoAssignmentStrategyLoadBalancing:
+		AutoAssignmentStrategyLoadBalancing,
+		AutoAssignmentStrategyPerformance:
 		return true
 	default:
 		return false
@@ -80,6 +82,8 @@ func AutoAssignmentStrategyFromString(s string) (AutoAssignmentStrategy, error) 
 		return AutoAssignmentStrategyAvailability, nil
 	case "LoadBalancing":
 		return AutoAssignmentStrategyLoadBalancing, nil
+	case "Performance":
+		return AutoAssignmentStrategyPerformance, nil
 	default:
 		return "", ErrInvalidAutoAssignmentStrategy
 	}

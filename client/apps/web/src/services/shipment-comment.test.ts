@@ -34,6 +34,8 @@ describe("ShipmentCommentService", () => {
       createdAt: 1_800_000_000,
       updatedAt: 1_800_000_100,
       mentionedUserIds: [],
+      replyCount: 0,
+      requiresAcknowledgment: false,
     };
 
     listShipmentCommentsGraphQLMock.mockResolvedValueOnce({
@@ -58,6 +60,7 @@ describe("ShipmentCommentService", () => {
       shipmentId: "shp_1",
       limit: 20,
       after: "cursor-1",
+      filter: null,
     });
     expect(response).toEqual({
       results: [comment],

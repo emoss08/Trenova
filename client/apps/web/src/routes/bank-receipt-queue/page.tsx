@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const STATUS_LABELS: Record<WorkItemStatus, string> = {
   Open: "Open",
@@ -379,7 +380,7 @@ function WorkItemDetail({
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             <PropertyCell label="Receipt Date">
               <span className="text-xs font-medium">
-                {new Date(receipt.receiptDate * 1000).toLocaleDateString()}
+                {formatUnixDate(receipt.receiptDate)}
               </span>
             </PropertyCell>
             <PropertyCell label="Amount">
@@ -419,7 +420,7 @@ function WorkItemDetail({
             {workItem.assignedAt ? (
               <PropertyCell label="Assigned At">
                 <span className="text-xs font-medium">
-                  {new Date(workItem.assignedAt * 1000).toLocaleString()}
+                  {formatUnixDateTime(workItem.assignedAt)}
                 </span>
               </PropertyCell>
             ) : null}
@@ -447,7 +448,7 @@ function WorkItemDetail({
             {workItem.resolvedAt ? (
               <PropertyCell label="Resolved At">
                 <span className="text-xs font-medium">
-                  {new Date(workItem.resolvedAt * 1000).toLocaleString()}
+                  {formatUnixDateTime(workItem.resolvedAt)}
                 </span>
               </PropertyCell>
             ) : null}

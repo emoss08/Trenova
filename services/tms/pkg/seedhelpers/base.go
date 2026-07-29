@@ -104,6 +104,14 @@ func RunInTransaction(
 			logger.Error("Seed %s failed: %v", seedName, err)
 			return fmt.Errorf("%s seed failed: %w", seedName, err)
 		}
+
+		// Tracking rows are written on the seed's own transaction so they are
+		// committed with the data they describe and discarded with it on failure.
+		if err := seedCtx.FlushTracked(ctx); err != nil {
+			logger.Error("Seed %s failed to record created entities: %v", seedName, err)
+			return fmt.Errorf("%s seed failed: %w", seedName, err)
+		}
+
 		return nil
 	})
 }

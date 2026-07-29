@@ -8,7 +8,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { getCommonDatePresets } from "@trenova/shared/lib/date";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ptoFilterSchema, type PTOFilter, type PTOType } from "@trenova/shared/types/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FilterIcon } from "lucide-react";
@@ -32,8 +31,7 @@ export function PTOFilterPopover({
   onReset: () => void;
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const user = useAuthStore((state) => state.user);
-  const datePresets = useMemo(() => getCommonDatePresets(user?.timezone), [user?.timezone]);
+  const datePresets = useMemo(() => getCommonDatePresets(), []);
 
   const form = useForm<PTOFilter>({
     resolver: zodResolver(ptoFilterSchema),

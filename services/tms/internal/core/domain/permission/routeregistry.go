@@ -261,6 +261,7 @@ func (rr *RouteRegistry) registerAll() {
 	rr.registerWorkerRoutes()
 	rr.registerOperationsRoutes()
 	rr.registerBillingRoutes()
+	rr.registerDetentionRoutes()
 	rr.registerCustomerRoutes()
 	rr.registerLocationRoutes()
 	rr.registerCommodityRoutes()
@@ -716,34 +717,37 @@ func (rr *RouteRegistry) registerBillingRoutes() {
 		Category:    "Billing",
 	})
 
-	_ = rr.Register(&RouteDefinition{
-		Path:      "/billing/configuration-files/detention-policies",
-		MatchType: RouteMatchExact,
-		Requirements: []RouteRequirement{
-			{Resource: ResourceDetentionPolicy, Operation: OpRead},
-		},
-		DisplayName: "Detention Policies",
-		Category:    "Billing",
-	})
+}
 
+func (rr *RouteRegistry) registerDetentionRoutes() {
 	_ = rr.Register(&RouteDefinition{
-		Path:      "/billing/detention-desk",
+		Path:      "/detention/desk",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
 			{Resource: ResourceDetentionPolicy, Operation: OpRead},
 		},
 		DisplayName: "Detention Desk",
-		Category:    "Billing",
+		Category:    "Detention",
 	})
 
 	_ = rr.Register(&RouteDefinition{
-		Path:      "/billing/detention-intelligence",
+		Path:      "/detention/intelligence",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
 			{Resource: ResourceDetentionPolicy, Operation: OpRead},
 		},
 		DisplayName: "Detention Intelligence",
-		Category:    "Billing",
+		Category:    "Detention",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/detention/configuration-files/detention-policies",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDetentionPolicy, Operation: OpRead},
+		},
+		DisplayName: "Detention Policies",
+		Category:    "Detention",
 	})
 }
 

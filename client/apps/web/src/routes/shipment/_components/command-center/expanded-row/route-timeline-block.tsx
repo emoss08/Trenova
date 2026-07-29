@@ -1,5 +1,6 @@
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import type { Stop, StopType } from "@trenova/shared/types/shipment";
+import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 const STOP_KIND: Record<StopType, string> = {
   Pickup: "PICKUP",
@@ -16,17 +17,12 @@ function stopState(stop: Stop): StopState {
   return "upcoming";
 }
 
-const COMPACT_STOP_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-
 function formatStopTime(timestamp: number | null | undefined): string {
-  if (!timestamp) return "—";
-  return COMPACT_STOP_FORMAT.format(new Date(timestamp * 1000));
+  return formatUnixInUserTimezone(
+    timestamp,
+    { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false },
+    "—",
+  );
 }
 
 function StopDot({ state }: { state: StopState }) {

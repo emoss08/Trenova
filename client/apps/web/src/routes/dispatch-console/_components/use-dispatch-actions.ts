@@ -5,7 +5,15 @@ import {
   type DispatchBulkAssignResult,
   type DispatchPlan,
 } from "@/lib/graphql/dispatch-console";
-import type { DispatchAssignMoveInput } from "@trenova/graphql/generated/graphql";
+import {
+  DISPATCH_BOARD_KEY,
+  DISPATCH_DRIVER_MOVES_KEY,
+  DISPATCH_MOVE_CANDIDATES_KEY,
+} from "@/lib/queries/dispatch-console";
+import type {
+  DispatchAssignMoveInput,
+  DispatchPlanInput,
+} from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -27,8 +35,6 @@ function describeResult(result: DispatchBulkAssignResult, verb: string): void {
     return;
   }
 
-  // Partial success is the normal case for a bulk action, so it reports what actually
-  // happened rather than collapsing to a single failure toast.
   const firstFailure = result.results.find((item) => !item.success);
   toast.warning(
     `${verb} ${result.succeeded}, ${result.failed} failed`,
@@ -36,15 +42,17 @@ function describeResult(result: DispatchBulkAssignResult, verb: string): void {
   );
 }
 
+export type DispatchActions = ReturnType<typeof useDispatchActions>;
+
 export function useDispatchActions() {
   const queryClient = useQueryClient();
   const undoStack = useRef<UndoStep[]>([]);
   const [undoDepth, setUndoDepth] = useState(0);
 
   const invalidateBoard = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["dispatch-board"] });
-    void queryClient.invalidateQueries({ queryKey: ["dispatch-move-candidates"] });
-    void queryClient.invalidateQueries({ queryKey: ["dispatch-driver-moves"] });
+    void queryClient.invalidateQueries({ queryKey: [DISPATCH_BOARD_KEY] });
+    void queryClient.invalidateQueries({ queryKey: [DISPATCH_MOVE_CANDIDATES_KEY] });
+    void queryClient.invalidateQueries({ queryKey: [DISPATCH_DRIVER_MOVES_KEY] });
   }, [queryClient]);
 
   const pushUndo = useCallback((step: UndoStep) => {
@@ -57,7 +65,7 @@ export function useDispatchActions() {
 
   const assignMutation = useMutation({
     mutationFn: (input: DispatchAssignMoveInput[]) => assignDispatchMovesGraphQL(input),
-    onSuccess: (result, input) => {
+    onSuccess: (result) => {
       describeResult(result, "Assigned");
 
       // Only successful moves are undoable; queueing a failed one would make undo
@@ -66,7 +74,6 @@ export function useDispatchActions() {
       if (succeeded.length > 0) {
         pushUndo({ kind: "assigned", moveIds: succeeded });
       }
-      void input;
       invalidateBoard();
     },
     onError: (error: Error) => toast.error("Assignment failed", { description: error.message }),
@@ -93,8 +100,7 @@ export function useDispatchActions() {
   });
 
   const planMutation = useMutation({
-    mutationFn: (input: { windowStart?: number; windowEnd?: number; apply?: boolean }) =>
-      planDispatchAutoAssignGraphQL(input),
+    mutationFn: (input: DispatchPlanInput) => planDispatchAutoAssignGraphQL(input),
     onSuccess: (plan: DispatchPlan) => {
       if (plan.shadowMode) {
         toast.info("Shadow mode: nothing was assigned", {
@@ -103,13 +109,14 @@ export function useDispatchActions() {
         return;
       }
       const executed = plan.assignments.filter((item) => item.autoExecutable).length;
-      toast.success(`Planned coverage for ${plan.assignments.length} move(s)`, {
-        description:
-          executed > 0
-            ? `${executed} assigned automatically, ${plan.assignments.length - executed} awaiting review.`
-            : `All pairings await your review. ${plan.uncovered.length} move(s) could not be covered.`,
-      });
-      invalidateBoard();
+      if (executed > 0) {
+        invalidateBoard();
+      }
+      if (plan.assignments.length === 0 && plan.uncovered.length === 0) {
+        toast.info("Nothing to plan", {
+          description: "No uncovered moves in the current window.",
+        });
+      }
     },
     onError: (error: Error) => toast.error("Auto-assign failed", { description: error.message }),
   });
@@ -139,7 +146,8 @@ export function useDispatchActions() {
     unassign: (moveIds: string[], restore?: DispatchAssignMoveInput[]) =>
       runUnassign({ moveIds, restore }),
     planAutoAssign: planMutation.mutate,
-    plan: planMutation.data,
+    plan: planMutation.data ?? null,
+    clearPlan: planMutation.reset,
     undo,
     canUndo: undoDepth > 0,
     isAssigning: assignMutation.isPending || unassignMutation.isPending,

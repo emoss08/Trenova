@@ -28,21 +28,24 @@ func (s *Service) resolve(
 	req *Request,
 	document *homelayout.Document,
 ) (*EffectiveLayout, error) {
-	roles, err := s.rbac.GetAuthorizedRoles(ctx, req.TenantInfo.UserID, req.TenantInfo.OrgID)
+	roles, presets, err := s.loadPresetContext(ctx, req)
 	if err != nil {
-		s.l.Error("failed to load roles for home layout", zap.Error(err))
-		return nil, fmt.Errorf("load roles for home layout: %w", err)
-	}
-
-	presets, err := s.repo.ListPresets(
-		ctx,
-		&repositories.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
-	)
-	if err != nil {
-		s.l.Error("failed to list home layout presets", zap.Error(err))
 		return nil, err
 	}
 
+	return s.resolveWith(ctx, req, document, roles, presets)
+}
+
+// resolveWith is resolve with the roles and presets already in hand, so a
+// write path that had to load them for its own checks does not fetch the same
+// rows twice in one request.
+func (s *Service) resolveWith(
+	ctx context.Context,
+	req *Request,
+	document *homelayout.Document,
+	roles []*permission.Role,
+	presets []*homelayout.Preset,
+) (*EffectiveLayout, error) {
 	assigned, source := pickPreset(presets, roles)
 	responsibility := primaryResponsibility(roles)
 
@@ -51,8 +54,10 @@ func (s *Service) resolve(
 		CanCustomize: true,
 	}
 
+	unlockedByPreset := assigned == nil || !assigned.Locked
+
 	switch {
-	case document.Mode == homelayout.ModeCustom && !(assigned != nil && assigned.Locked):
+	case document.Mode == homelayout.ModeCustom && unlockedByPreset:
 		effective.Layout = document.Layout
 		effective.Source = SourceUser
 		if assigned != nil {
@@ -83,15 +88,16 @@ func (s *Service) resolve(
 	return effective, nil
 }
 
-// assignedPreset resolves only the preset half of the chain, which is what the
-// write path needs to know before deciding whether a save is allowed.
-func (s *Service) assignedPreset(
+// loadPresetContext fetches the two inputs preset resolution needs: the
+// viewer's roles and the tenant's presets.
+func (s *Service) loadPresetContext(
 	ctx context.Context,
 	req *Request,
-) (*homelayout.Preset, error) {
+) ([]*permission.Role, []*homelayout.Preset, error) {
 	roles, err := s.rbac.GetAuthorizedRoles(ctx, req.TenantInfo.UserID, req.TenantInfo.OrgID)
 	if err != nil {
-		return nil, fmt.Errorf("load roles for home layout: %w", err)
+		s.l.Error("failed to load roles for home layout", zap.Error(err))
+		return nil, nil, fmt.Errorf("load roles for home layout: %w", err)
 	}
 
 	presets, err := s.repo.ListPresets(
@@ -99,11 +105,11 @@ func (s *Service) assignedPreset(
 		&repositories.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
-		return nil, err
+		s.l.Error("failed to list home layout presets", zap.Error(err))
+		return nil, nil, err
 	}
 
-	assigned, _ := pickPreset(presets, roles)
-	return assigned, nil
+	return roles, presets, nil
 }
 
 // pickPreset takes the first preset assigned to any of the viewer's roles. The

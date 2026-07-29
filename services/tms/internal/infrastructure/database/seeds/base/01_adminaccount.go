@@ -52,6 +52,20 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
+			// An existing core admin means this seed already owns the tenant
+			// below it. Re-running would duplicate the second organization, its
+			// users, memberships, sequences, and control files.
+			seeded, err := tx.NewSelect().
+				Model((*tenant.User)(nil)).
+				Where("username = ?", coreAdminUsername).
+				Exists(ctx)
+			if err != nil {
+				return fmt.Errorf("check existing admin account: %w", err)
+			}
+			if seeded {
+				return nil
+			}
+
 			bu, err := sc.GetDefaultBusinessUnit(ctx)
 			if err != nil {
 				bu, err = sc.CreateBusinessUnit(ctx, tx, &seedhelpers.BusinessUnitOptions{

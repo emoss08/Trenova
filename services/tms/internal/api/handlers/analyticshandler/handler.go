@@ -18,6 +18,7 @@ const (
 	defaultAnalyticsWindowDays = 7
 	minAnalyticsWindowDays     = 1
 	maxAnalyticsWindowDays     = 90
+	maxAnalyticsLimit          = 500
 	includeLaneHeatmap         = "laneHeatmap"
 	includeTomorrowsPickups    = "tomorrowsPickups"
 	includeSavedViewCounts     = "savedViewCounts"
@@ -186,9 +187,25 @@ func validateAnalyticsRequest(req *services.AnaltyicsRequest) error {
 			&req.Offset,
 			validation.Min(0).Error("Offset must be at least 0"),
 		),
+		validation.Field(
+			&req.Limit,
+			validation.Min(0).Error("Limit must be at least 0"),
+			validation.Max(maxAnalyticsLimit).Error("Limit must be at most 500"),
+		),
 	)
 
 	me.AddOzzoError(err)
+
+	// A range with only one end is a caller mistake; silently dropping it would
+	// serve the default window while the caller believes they filtered.
+	if (req.StartDate > 0) != (req.EndDate > 0) {
+		me.Add("startDate", errortypes.ErrInvalid,
+			"startDate and endDate must be provided together")
+	}
+	if req.StartDate > 0 && req.EndDate > 0 && req.EndDate < req.StartDate {
+		me.Add("endDate", errortypes.ErrInvalid, "endDate must not be before startDate")
+	}
+
 	if me.HasErrors() {
 		return me
 	}

@@ -7,7 +7,7 @@ import {
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { formatToUserTimezone, toDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useUserDatePreferences } from "@trenova/shared/hooks/use-user-date-preferences";
 import { UTCDate } from "@date-fns/utc";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -34,14 +34,7 @@ export function HoverCardTimestamp({
   className,
   showTime = true,
 }: HoverCardTimestampProps) {
-  const user = useAuthStore((state) => state.user);
-  const userTimezone = user?.timezone || "auto";
-  const userTimeFormat = user?.timeFormat || "24-hour";
-
-  const effectiveTimezone =
-    userTimezone === "auto"
-      ? Intl.DateTimeFormat().resolvedOptions().timeZone
-      : userTimezone;
+  const { timezone } = useUserDatePreferences();
 
   const date = toDate(timestamp);
 
@@ -60,17 +53,12 @@ export function HoverCardTimestamp({
               className,
             )}
           >
-            {formatToUserTimezone(
-              timestamp,
-              {
-                timeFormat: userTimeFormat,
-                showSeconds: false,
-                showTimeZone: false,
-                showTime: showTime,
-                showDate: true,
-              },
-              userTimezone,
-            )}
+            {formatToUserTimezone(timestamp, {
+              showSeconds: false,
+              showTimeZone: false,
+              showTime: showTime,
+              showDate: true,
+            })}
           </div>
         }
       />
@@ -86,17 +74,12 @@ export function HoverCardTimestamp({
               label="UTC"
             />
             <Row
-              value={formatToUserTimezone(
-                timestamp,
-                {
-                  timeFormat: userTimeFormat,
-                  showSeconds: showTime,
-                  showTimeZone: false,
-                  showDate: true,
-                },
-                userTimezone,
-              )}
-              label={userTimezone === "auto" ? "Local" : effectiveTimezone}
+              value={formatToUserTimezone(timestamp, {
+                showSeconds: showTime,
+                showTimeZone: false,
+                showDate: true,
+              })}
+              label={timezone}
             />
             <Row
               value={formatDistanceToNowStrict(date, {

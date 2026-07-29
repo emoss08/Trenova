@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  countDeskFilters,
+  deskClockTrack,
+  deskFloorStats,
   formatCountdown,
   formatDetentionMinutes,
-  freeTimeConsumedPercent,
+  matchesDeskFilter,
+  matchesDeskSearch,
+  nextDeskDeadline,
   sortDeskEntries,
+  sortDeskEntriesBy,
   summarizeDesk,
 } from "../detention";
 import type { DeskEntry, DeskUrgency } from "../../types/detention";
@@ -18,7 +24,13 @@ function entry(
     roundedMinutes?: number;
     freeMinutesGranted?: number;
     clockStartAt?: number;
+    clockStopAt?: number | null;
     freeTimeExpiresAt?: number;
+    noticeDeadlineAt?: number | null;
+    locationName?: string;
+    customerName?: string;
+    shipmentProNumber?: string;
+    stopType?: string;
   } = {},
 ): DeskEntry {
   const {
@@ -28,7 +40,13 @@ function entry(
     roundedMinutes = 0,
     freeMinutesGranted = 120,
     clockStartAt = NOW,
+    clockStopAt = null,
     freeTimeExpiresAt = NOW + 7200,
+    noticeDeadlineAt = null,
+    locationName = "",
+    customerName = "",
+    shipmentProNumber = "",
+    stopType = "Delivery",
   } = overrides;
 
   return {
@@ -41,7 +59,14 @@ function entry(
       roundedMinutes,
       freeMinutesGranted,
       clockStartAt,
+      clockStopAt,
       freeTimeExpiresAt,
+      noticeDeadlineAt,
+      isOpen: clockStopAt === null,
+      locationName,
+      customerName,
+      shipmentProNumber,
+      stopType,
       grossAmount,
       billableAmount: amountAtRisk,
     },
@@ -89,28 +114,6 @@ describe("formatCountdown", () => {
   });
 });
 
-describe("freeTimeConsumedPercent", () => {
-  it("is zero at the moment the clock starts", () => {
-    expect(freeTimeConsumedPercent(entry(), NOW)).toBe(0);
-  });
-
-  it("is half way through the budget", () => {
-    expect(freeTimeConsumedPercent(entry(), NOW + 3600)).toBe(50);
-  });
-
-  it("clamps once free time is exhausted", () => {
-    expect(freeTimeConsumedPercent(entry(), NOW + 36000)).toBe(100);
-  });
-
-  it("treats a zero allowance as immediately consumed", () => {
-    expect(freeTimeConsumedPercent(entry({ freeMinutesGranted: 0 }), NOW)).toBe(100);
-  });
-
-  it("never reports negative consumption for a future clock start", () => {
-    expect(freeTimeConsumedPercent(entry(), NOW - 3600)).toBe(0);
-  });
-});
-
 describe("sortDeskEntries", () => {
   it("puts a savable notice deadline ahead of a larger accruing charge", () => {
     const sorted = sortDeskEntries([
@@ -137,18 +140,11 @@ describe("sortDeskEntries", () => {
       entry({ urgency: "NoticeDueSoon", amountAtRisk: 1 }),
     ]);
 
-    expect(sorted.map((e) => e.urgency)).toEqual([
-      "NoticeDueSoon",
-      "Lost",
-      "Normal",
-    ]);
+    expect(sorted.map((e) => e.urgency)).toEqual(["NoticeDueSoon", "Lost", "Normal"]);
   });
 
   it("does not mutate the input", () => {
-    const input = [
-      entry({ urgency: "Accruing" }),
-      entry({ urgency: "NoticeOverdue" }),
-    ];
+    const input = [entry({ urgency: "Accruing" }), entry({ urgency: "NoticeOverdue" })];
     const before = input.map((e) => e.urgency);
 
     sortDeskEntries(input);
@@ -184,5 +180,238 @@ describe("summarizeDesk", () => {
 
     expect(summary.total).toBe(0);
     expect(summary.amountAtRisk).toBe(0);
+  });
+});
+
+describe("matchesDeskFilter", () => {
+  it("puts both notice states in the notice lane", () => {
+    expect(matchesDeskFilter(entry({ urgency: "NoticeOverdue" }), "notice")).toBe(true);
+    expect(matchesDeskFilter(entry({ urgency: "NoticeDueSoon" }), "notice")).toBe(true);
+  });
+
+  it("keeps a stop still inside its free time out of the accruing lane", () => {
+    expect(matchesDeskFilter(entry({ urgency: "FreeTimeEnding" }), "accruing")).toBe(false);
+    expect(matchesDeskFilter(entry({ urgency: "FreeTimeEnding" }), "free")).toBe(true);
+  });
+
+  it("matches everything in the all lane", () => {
+    expect(matchesDeskFilter(entry({ urgency: "Lost" }), "all")).toBe(true);
+  });
+});
+
+describe("countDeskFilters", () => {
+  it("assigns every stop to exactly one lane", () => {
+    const counts = countDeskFilters([
+      entry({ urgency: "NoticeOverdue" }),
+      entry({ urgency: "NoticeDueSoon" }),
+      entry({ urgency: "Accruing" }),
+      entry({ urgency: "FreeTimeEnding" }),
+      entry({ urgency: "Normal" }),
+      entry({ urgency: "Lost" }),
+    ]);
+
+    expect(counts.all).toBe(6);
+    expect(counts.notice).toBe(2);
+    expect(counts.accruing).toBe(1);
+    expect(counts.free).toBe(2);
+    expect(counts.lost).toBe(1);
+    expect(counts.notice + counts.accruing + counts.free + counts.lost).toBe(counts.all);
+  });
+
+  it("reports zeroes for an empty desk", () => {
+    expect(countDeskFilters([])).toEqual({
+      all: 0,
+      notice: 0,
+      accruing: 0,
+      free: 0,
+      lost: 0,
+    });
+  });
+});
+
+describe("matchesDeskSearch", () => {
+  const target = entry({
+    locationName: "Kroger DC #42",
+    customerName: "Kroger Co",
+    shipmentProNumber: "PRO10482",
+    stopType: "Delivery",
+  });
+
+  it("matches an empty or whitespace term", () => {
+    expect(matchesDeskSearch(target, "")).toBe(true);
+    expect(matchesDeskSearch(target, "   ")).toBe(true);
+  });
+
+  it("matches the facility, the customer, the PRO, and the stop type case-insensitively", () => {
+    expect(matchesDeskSearch(target, "kroger dc")).toBe(true);
+    expect(matchesDeskSearch(target, "KROGER CO")).toBe(true);
+    expect(matchesDeskSearch(target, "10482")).toBe(true);
+    expect(matchesDeskSearch(target, "deliv")).toBe(true);
+  });
+
+  it("rejects a term that appears nowhere", () => {
+    expect(matchesDeskSearch(target, "walmart")).toBe(false);
+  });
+});
+
+describe("nextDeskDeadline", () => {
+  it("prefers the notice deadline when it lands first", () => {
+    const target = entry({ noticeDeadlineAt: NOW + 1800, freeTimeExpiresAt: NOW + 7200 });
+    expect(nextDeskDeadline(target)).toBe(NOW + 1800);
+  });
+
+  it("falls back to free time expiry when there is no notice", () => {
+    expect(nextDeskDeadline(entry({ freeTimeExpiresAt: NOW + 7200 }))).toBe(NOW + 7200);
+  });
+
+  it("keeps free time expiry when the notice deadline is later", () => {
+    const target = entry({ noticeDeadlineAt: NOW + 9000, freeTimeExpiresAt: NOW + 7200 });
+    expect(nextDeskDeadline(target)).toBe(NOW + 7200);
+  });
+});
+
+describe("sortDeskEntriesBy", () => {
+  it("orders by exposure, largest first", () => {
+    const sorted = sortDeskEntriesBy(
+      [
+        entry({ urgency: "Normal", amountAtRisk: 10 }),
+        entry({ urgency: "Lost", amountAtRisk: 900 }),
+        entry({ urgency: "Accruing", amountAtRisk: 200 }),
+      ],
+      "exposure",
+    );
+
+    expect(sorted.map((item) => item.amountAtRisk)).toEqual([900, 200, 10]);
+  });
+
+  it("orders by dwell, longest on site first", () => {
+    const sorted = sortDeskEntriesBy(
+      [
+        entry({ clockStartAt: NOW - 600 }),
+        entry({ clockStartAt: NOW - 7200 }),
+        entry({ clockStartAt: NOW - 3600 }),
+      ],
+      "dwell",
+    );
+
+    expect(sorted.map((item) => item.occurrence.clockStartAt)).toEqual([
+      NOW - 7200,
+      NOW - 3600,
+      NOW - 600,
+    ]);
+  });
+
+  it("orders by the soonest deadline of either kind", () => {
+    const sorted = sortDeskEntriesBy(
+      [
+        entry({ freeTimeExpiresAt: NOW + 3600 }),
+        entry({ freeTimeExpiresAt: NOW + 7200, noticeDeadlineAt: NOW + 600 }),
+      ],
+      "deadline",
+    );
+
+    expect(nextDeskDeadline(sorted[0]!)).toBe(NOW + 600);
+  });
+
+  it("breaks ties by urgency", () => {
+    const sorted = sortDeskEntriesBy(
+      [
+        entry({ urgency: "Lost", amountAtRisk: 100 }),
+        entry({ urgency: "NoticeOverdue", amountAtRisk: 100 }),
+      ],
+      "exposure",
+    );
+
+    expect(sorted[0]?.urgency).toBe("NoticeOverdue");
+  });
+
+  it("delegates the urgency sort and leaves the input untouched", () => {
+    const input = [entry({ urgency: "Accruing" }), entry({ urgency: "NoticeOverdue" })];
+
+    expect(sortDeskEntriesBy(input, "urgency")[0]?.urgency).toBe("NoticeOverdue");
+    expect(input[0]?.urgency).toBe("Accruing");
+  });
+});
+
+describe("deskClockTrack", () => {
+  it("starts empty with the free-time boundary short of the end", () => {
+    const track = deskClockTrack(entry(), NOW);
+
+    expect(track.elapsedPercent).toBe(0);
+    expect(track.accruedPercent).toBe(0);
+    expect(track.isAccruing).toBe(false);
+    expect(track.freePercent).toBeCloseTo(92.6, 0);
+    expect(track.noticePercent).toBeNull();
+  });
+
+  it("splits free time from accrual once the clock runs past it", () => {
+    const track = deskClockTrack(entry(), NOW + 10_800);
+
+    expect(track.isAccruing).toBe(true);
+    expect(track.freePercent).toBeCloseTo(61.7, 0);
+    expect(track.elapsedPercent).toBeCloseTo(92.6, 0);
+    expect(track.accruedPercent).toBeCloseTo(30.9, 0);
+  });
+
+  it("freezes a departed stop at its stop time", () => {
+    const track = deskClockTrack(entry({ clockStopAt: NOW + 3600 }), NOW + 100_000);
+
+    expect(track.elapsedPercent).toBeCloseTo(46.3, 0);
+    expect(track.isAccruing).toBe(false);
+  });
+
+  it("places the notice deadline and reports once it has passed", () => {
+    const target = entry({ noticeDeadlineAt: NOW + 1800 });
+
+    expect(deskClockTrack(target, NOW).noticePercent).toBeCloseTo(23.1, 0);
+    expect(deskClockTrack(target, NOW).noticePassed).toBe(false);
+    expect(deskClockTrack(target, NOW + 3600).noticePassed).toBe(true);
+  });
+
+  it("never reports a negative elapsed share for a clock that has not started", () => {
+    const track = deskClockTrack(entry(), NOW - 3600);
+
+    expect(track.elapsedPercent).toBe(0);
+    expect(track.accruedPercent).toBe(0);
+  });
+
+  it("keeps the whole bar within bounds for a stop far past every deadline", () => {
+    const track = deskClockTrack(entry({ noticeDeadlineAt: NOW + 600 }), NOW + 864_000);
+
+    expect(track.elapsedPercent).toBeLessThanOrEqual(100);
+    expect(track.freePercent + track.accruedPercent).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("deskFloorStats", () => {
+  it("averages and ranks dwell across the floor", () => {
+    const stats = deskFloorStats(
+      [
+        entry({ clockStartAt: NOW - 3600, locationName: "Kroger DC" }),
+        entry({ clockStartAt: NOW - 7200, locationName: "Target RDC" }),
+      ],
+      NOW,
+    );
+
+    expect(stats.averageOnSiteMinutes).toBe(90);
+    expect(stats.longestOnSiteMinutes).toBe(120);
+    expect(stats.longestLocationName).toBe("Target RDC");
+  });
+
+  it("measures a departed stop to its stop time, not to now", () => {
+    const stats = deskFloorStats(
+      [entry({ clockStartAt: NOW - 7200, clockStopAt: NOW - 3600 })],
+      NOW,
+    );
+
+    expect(stats.longestOnSiteMinutes).toBe(60);
+  });
+
+  it("reports zeroes for an empty floor", () => {
+    expect(deskFloorStats([], NOW)).toEqual({
+      averageOnSiteMinutes: 0,
+      longestOnSiteMinutes: 0,
+      longestLocationName: "",
+    });
   });
 });

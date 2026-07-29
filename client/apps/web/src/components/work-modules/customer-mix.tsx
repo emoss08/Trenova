@@ -9,6 +9,7 @@ import { useQueryStates } from "nuqs";
 import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
+import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 type CustomerMixEntry = ShipmentAnalyticsData["customerMix"]["entries"][number];
 type TomorrowPickup = ShipmentAnalyticsData["tomorrowsPickups"]["pickups"][number];
@@ -265,11 +266,11 @@ function EmptyState({ label }: { label: string }) {
 }
 
 function formatPickupTime(unixSeconds: number) {
-  return new Intl.DateTimeFormat(undefined, {
+  return formatUnixInUserTimezone(unixSeconds, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(new Date(unixSeconds * 1000));
+  });
 }
 
 function formatPercent(value: number) {

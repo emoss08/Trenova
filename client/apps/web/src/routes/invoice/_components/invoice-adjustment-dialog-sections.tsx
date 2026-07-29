@@ -25,6 +25,7 @@ import {
   ShieldAlertIcon,
 } from "lucide-react";
 import type { Control, FieldErrors, UseFormClearErrors, UseFormSetValue } from "react-hook-form";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 
 export type EditableLine = {
   originalLineId: string;
@@ -442,7 +443,7 @@ export function InvoiceAdjustmentPreviewPanel({
           />
           <PreviewRow
             label="Accounting Date"
-            value={new Date(preview.accountingDate * 1000).toLocaleDateString()}
+            value={formatUnixDate(preview.accountingDate)}
             icon={<CalendarIcon className="size-3" />}
           />
         </div>

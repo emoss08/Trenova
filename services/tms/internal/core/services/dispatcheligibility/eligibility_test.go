@@ -465,8 +465,9 @@ func TestEvaluate_ComposesEveryRuleSet(t *testing.T) {
 		Requirements: dispatcheligibility.MoveRequirements{
 			Window: dispatcheligibility.TimeWindow{Start: now, End: now + 8*3600},
 		},
-		Control: blockingControl(),
-		Now:     now,
+		Control:          blockingControl(),
+		Now:              now,
+		TelematicsActive: true,
 	})
 
 	assert.ElementsMatch(t, []string{
@@ -478,24 +479,32 @@ func TestEvaluate_ComposesEveryRuleSet(t *testing.T) {
 	assert.True(t, eval.Blocked())
 }
 
-func TestEvaluateMany_SkipsCandidatesWithoutAWorker(t *testing.T) {
+func TestEvaluate_ActiveDispatchHoldBlocks(t *testing.T) {
 	t.Parallel()
 
-	results := dispatcheligibility.EvaluateMany(dispatcheligibility.EvaluateManyInput{
-		Candidates: []dispatcheligibility.Candidate{
-			{Worker: compliantWorker(), HOSState: healthyHOS(), Tractor: &tractor.Tractor{
-				Code:            "T-1",
+	now := timeutils.NowUnix()
+
+	eval := dispatcheligibility.Evaluate(dispatcheligibility.EvaluateInput{
+		Candidate: dispatcheligibility.Candidate{
+			Worker:   compliantWorker(),
+			HOSState: healthyHOS(),
+			Tractor: &tractor.Tractor{
+				Code:            "T-100",
 				Status:          domaintypes.EquipmentStatusAvailable,
 				EquipmentTypeID: pulid.MustNew("etp_"),
-			}},
-			{},
+			},
 		},
-		Requirements: dispatcheligibility.MoveRequirements{},
-		Control:      blockingControl(),
+		Requirements: dispatcheligibility.MoveRequirements{
+			Window:        dispatcheligibility.TimeWindow{Start: now, End: now + 8*3600},
+			HasActiveHold: true,
+		},
+		Control: blockingControl(),
+		Now:     now,
 	})
 
-	require.Len(t, results, 1)
-	assert.False(t, results[0].Evaluation.Blocked())
+	require.True(t, eval.Blocked())
+	assert.Contains(t, codes(eval), dispatcheligibility.CodeShipmentOnHold)
+	assert.Equal(t, dispatcheligibility.CodeShipmentOnHold, eval.Findings[0].Code)
 }
 
 func TestComplianceErrorCode(t *testing.T) {

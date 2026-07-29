@@ -6,6 +6,7 @@ export type ModuleId =
   | "dispatch"
   | "fleet"
   | "billing"
+  | "detention"
   | "payroll"
   | "edi"
   | "reports"

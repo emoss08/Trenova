@@ -227,12 +227,12 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(
-        row.updatedAt as number,
-        {
-          timeFormat: user?.timeFormat || "24-hour",
-        },
-        user?.timezone,
-      )}`
+      row.updatedAt as number,
+      {
+        timeFormat: user?.timeFormat || "24-hour",
+      },
+      user?.timezone,
+    )}`
     : undefined;
 
   const rowId = row !== null && row !== undefined ? String(row.id) : "unable to retrieve ID";
@@ -293,9 +293,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as string)}
-              className="flex flex-1 flex-col overflow-hidden"
+              className="flex flex-1 flex-col overflow-hidden gap-0"
             >
-              <div className="border-b border-border px-4 pt-2">
+              <div className="border-b border-border px-4">
                 <OverflowTabsList
                   items={formTabs.map((tab) => ({
                     value: tab.value,
@@ -331,9 +331,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as string)}
-              className="flex flex-1 flex-col overflow-hidden"
+              className="flex flex-1 flex-col overflow-hidden gap-0"
             >
-              <div className="border-b border-border px-4 pt-2">
+              <div className="border-b border-border px-4">
                 <OverflowTabsList
                   items={[
                     { value: "details", label: "Details" },

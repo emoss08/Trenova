@@ -10,6 +10,7 @@ import type { Notification } from "@trenova/shared/types/notification";
 import { BellIcon, CheckCheckIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useNavigate } from "react-router";
+import { daysUntil, formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 
 function notificationLink(notification: Notification): string {
   const link = notification.data?.link;
@@ -17,18 +18,7 @@ function notificationLink(notification: Notification): string {
 }
 
 function notificationTime(unix: number): string {
-  const date = new Date(unix * 1000);
-  const sameDay = new Date().toDateString() === date.toDateString();
-  if (sameDay) {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(date);
-  }
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-  }).format(date);
+  return daysUntil(unix) === 0 ? formatUnixTime(unix) : formatUnixMonthDay(unix);
 }
 
 const priorityDot: Record<string, string> = {

@@ -41,8 +41,7 @@ const LATE_ARRIVAL_HELP: Record<string, string> = {
   NoEffect: "Lateness is recorded but the carrier keeps full entitlement.",
   Forfeit:
     "A late arrival voids detention entirely. Common in shipper-favorable rate confirmations — verify before selecting.",
-  ClockFromAppointment:
-    "Entitlement survives, but lateness burns the carrier's own free time.",
+  ClockFromAppointment: "Entitlement survives, but lateness burns the carrier's own free time.",
   ReduceFreeTime: "The minutes of lateness are subtracted from the allowance.",
 };
 
@@ -181,7 +180,7 @@ export function DetentionPolicyForm() {
                   description="Only these service levels are governed. Specificity +2."
                 />
               </FormControl>
-              <FormControl>
+              <FormControl cols="full">
                 <CommodityMultiSelectField
                   control={control}
                   name="commodityIds"
@@ -190,7 +189,7 @@ export function DetentionPolicyForm() {
                   description="Only shipments carrying these commodities are governed. Specificity +8."
                 />
               </FormControl>
-              <FormControl>
+              <FormControl cols="full">
                 <MultiCheckboxField
                   control={control}
                   name="stopTypes"
@@ -262,7 +261,7 @@ export function DetentionPolicyForm() {
               description={LATE_ARRIVAL_HELP[lateArrivalRule ?? ""]}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <NumberField
               control={control}
               name="lateArrivalGraceMinutes"
@@ -280,8 +279,8 @@ export function DetentionPolicyForm() {
               Check the contract
             </Badge>
             <p className="mt-2 text-sm">
-              Forfeit voids detention entirely on a late arrival, even by one minute. Only
-              select this when the rate confirmation says so.
+              Forfeit voids detention entirely on a late arrival, even by one minute. Only select
+              this when the rate confirmation says so.
             </p>
           </div>
         )}
@@ -333,7 +332,7 @@ export function DetentionPolicyForm() {
               description="Different allowance for delivery stops, when the contract splits them."
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <NumberField
               control={control}
               name="minimumBillableMinutes"
@@ -455,7 +454,7 @@ export function DetentionPolicyForm() {
               description="Total detention across every stop on the shipment stops accruing here."
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <NumberField
               control={control}
               name="convertToLayoverAtMinutes"

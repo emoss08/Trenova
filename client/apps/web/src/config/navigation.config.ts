@@ -10,6 +10,7 @@ import {
   ReceiptTextIcon,
   WalletIcon,
   SettingsIcon,
+  TimerIcon,
   TruckIcon,
   UsersIcon,
 } from "lucide-react";
@@ -115,16 +116,16 @@ const dispatchModule: NavModule = {
   basePath: "/dispatch",
   navigation: [
     {
+      id: "dispatch-console",
+      label: "Console",
+      path: "/dispatch/console",
+      resource: Resource.ShipmentMove,
+    },
+    {
       id: "locations",
       label: "Locations",
       path: "/dispatch/locations",
       resource: Resource.Location,
-    },
-    {
-      id: "dispatch-console",
-      label: "Dispatcher Console",
-      path: "/dispatch/console",
-      resource: Resource.ShipmentMove,
     },
     {
       id: "workers",
@@ -239,18 +240,6 @@ const billingModule: NavModule = {
       resource: Resource.FuelSurchargeProgram,
     },
     {
-      id: "detention-desk",
-      label: "Detention Desk",
-      path: "/billing/detention-desk",
-      resource: Resource.DetentionPolicy,
-    },
-    {
-      id: "detention-intelligence",
-      label: "Detention Intelligence",
-      path: "/billing/detention-intelligence",
-      resource: Resource.DetentionPolicy,
-    },
-    {
       id: "billing-config-group",
       label: "Configuration Files",
       defaultOpen: false,
@@ -282,12 +271,6 @@ const billingModule: NavModule = {
           includeBetaTag: true,
         },
         {
-          id: "detention-policies",
-          label: "Detention Policies",
-          path: "/billing/configuration-files/detention-policies",
-          resource: Resource.DetentionPolicy,
-        },
-        {
           id: "customers",
           label: "Customers",
           path: "/billing/configuration-files/customers",
@@ -304,6 +287,41 @@ const billingModule: NavModule = {
           label: "Packet Rules",
           path: "/billing/configuration-files/document-packet-rules",
           resource: Resource.DocumentType,
+        },
+      ],
+    },
+  ],
+};
+
+const detentionModule: NavModule = {
+  id: "detention",
+  label: "Detention Management",
+  icon: TimerIcon,
+  description: "Live dwell clocks, detention billing, and contract terms",
+  basePath: "/detention",
+  navigation: [
+    {
+      id: "detention-desk",
+      label: "Desk",
+      path: "/detention/desk",
+      resource: Resource.DetentionPolicy,
+    },
+    {
+      id: "detention-intelligence",
+      label: "Intelligence",
+      path: "/detention/intelligence",
+      resource: Resource.DetentionPolicy,
+    },
+    {
+      id: "detention-config-group",
+      label: "Configuration Files",
+      defaultOpen: false,
+      items: [
+        {
+          id: "detention-policies",
+          label: "Detention Policies",
+          path: "/detention/configuration-files/detention-policies",
+          resource: Resource.DetentionPolicy,
         },
       ],
     },
@@ -635,6 +653,7 @@ export const navigationConfig: NavigationConfig = {
     dispatchModule,
     equipmentModule,
     billingModule,
+    detentionModule,
     payrollModule,
     ediModule,
     reportsModule,
@@ -746,7 +765,7 @@ export const navigationConfig: NavigationConfig = {
       id: "create-detention-policy",
       label: "Create Detention Policy",
       description: "Encode a contract's detention terms",
-      path: "/billing/configuration-files/detention-policies",
+      path: "/detention/configuration-files/detention-policies",
       resource: Resource.DetentionPolicy,
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
@@ -967,7 +986,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "financial",
     label: "Financial",
-    moduleIds: ["billing", "payroll", "reports", "accounting"],
+    moduleIds: ["billing", "detention", "payroll", "reports", "accounting"],
   },
   {
     id: "admin",

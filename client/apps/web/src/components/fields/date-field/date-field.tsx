@@ -1,7 +1,7 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { format } from "date-fns";
@@ -135,7 +135,7 @@ export function DateField<T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field, fieldState }) => {
-        const dateValue = toDate(field.value);
+        const dateValue = toUserWallClock(field.value);
         const isLocked = disabled || !!field.disabled || readOnly;
 
         return (
@@ -155,7 +155,7 @@ export function DateField<T extends FieldValues>({
               clearable={clearable}
               onSelect={(date) => {
                 if (isLocked) return;
-                field.onChange(toUnixTimeStamp(date) ?? null);
+                field.onChange(fromUserWallClock(date) ?? null);
               }}
               onClear={() => field.onChange(null)}
               onBlur={field.onBlur}
@@ -221,8 +221,8 @@ export function AutoCompleteDateField<T extends FieldValues>({
               name={field.name}
               ref={field.ref}
               aria-label={label}
-              date={field.value ? toDate(field.value) : undefined}
-              setDate={(date) => field.onChange(date ? (toUnixTimeStamp(date) ?? null) : null)}
+              date={toUserWallClock(field.value)}
+              setDate={(date) => field.onChange(fromUserWallClock(date) ?? null)}
               onBlur={field.onBlur}
               placeholder={placeholder}
               disabled={disabled || field.disabled}

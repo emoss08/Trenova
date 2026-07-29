@@ -2,10 +2,7 @@ import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import {
-  detentionPolicySchema,
-  type DetentionPolicy,
-} from "@trenova/shared/types/detention";
+import { detentionPolicySchema, type DetentionPolicy } from "@trenova/shared/types/detention";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FlaskConicalIcon, HistoryIcon, ScaleIcon } from "lucide-react";
 import { useMemo } from "react";
@@ -110,7 +107,6 @@ export function DetentionPolicyPanel({
         title="Detention Policy"
         fieldKey="name"
         formTabs={formTabs}
-        size="xl"
         mutationFn={(values, currentRow) => {
           if (!currentRow.id) {
             throw new Error("No Detention Policy ID selected");
@@ -131,7 +127,6 @@ export function DetentionPolicyPanel({
       title="Detention Policy"
       description="Encode the contract's detention terms and see what they would charge before they touch a shipment."
       formTabs={formTabs}
-      size="xl"
       mutationFn={(values) => apiService.detentionPolicyService.create(values)}
     />
   );

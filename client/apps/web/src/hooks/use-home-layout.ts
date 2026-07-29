@@ -56,7 +56,7 @@ export function useHomeLayoutPreset(id: string | undefined) {
 export function useHomeLayoutPreview(presetId: string | null, roleId: string | null) {
   return useQuery({
     ...queries.homeLayout.preview(presetId, roleId),
-    enabled: Boolean(presetId) || Boolean(roleId),
+    enabled: roleId != null,
     select: (data): HomeLayout => toHomeLayout(data.homeLayoutPreview),
   });
 }
@@ -98,9 +98,12 @@ function useHomeLayoutPresetWriter<TArgs, TResult>(mutationFn: (args: TArgs) => 
     mutationFn,
     onSuccess: () => {
       // A preset edit can change what every user resolves to, including this
-      // one, so the viewer's own layout is invalidated alongside the list.
-      void queryClient.invalidateQueries({ queryKey: queries.homeLayout.presets().queryKey });
-      void queryClient.invalidateQueries({ queryKey: queries.homeLayout.effective().queryKey });
+      // one, so everything under the homeLayout key space — the list, the
+      // edited preset itself, previews, and the viewer's own layout — goes
+      // stale together. Invalidating the preset detail is what keeps a second
+      // consecutive save from carrying a stale version into the optimistic
+      // lock.
+      void queryClient.invalidateQueries({ queryKey: queries.homeLayout._def });
     },
   });
 }

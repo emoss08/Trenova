@@ -1,4 +1,4 @@
-import { toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../field-components";
@@ -42,8 +42,8 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
               name={field.name}
               ref={field.ref}
               aria-label={label}
-              dateTime={field.value ? toDate(field.value) : undefined}
-              setDateTime={(date) => field.onChange(date ? (toUnixTimeStamp(date) ?? null) : null)}
+              dateTime={toUserWallClock(field.value)}
+              setDateTime={(date) => field.onChange(fromUserWallClock(date) ?? null)}
               onBlur={field.onBlur}
               placeholder={placeholder}
               disabled={disabled || field.disabled}

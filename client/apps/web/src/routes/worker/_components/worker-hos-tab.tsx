@@ -23,6 +23,9 @@ import {
   formatUnixDate,
   formatUnixDateTime,
   formatUnixTime,
+  fromUserWallClock,
+  toUserWallClock,
+  userWallClockNow,
 } from "@trenova/shared/lib/date";
 import { cn, metersToMiles, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -122,15 +125,15 @@ type HosDaySlot = {
 function buildDaySlots(dailyLogs: WorkerHosDailyLog[]): HosDaySlot[] {
   const logsByDay = new Map<string, WorkerHosDailyLog>();
   for (const log of dailyLogs) {
-    logsByDay.set(format(new Date(log.startAt * 1000), DAY_KEY_FORMAT), log);
+    logsByDay.set(format(toUserWallClock(log.startAt) ?? new Date(0), DAY_KEY_FORMAT), log);
   }
-  const today = startOfDay(new Date());
+  const today = startOfDay(userWallClockNow());
   const slots: HosDaySlot[] = [];
   for (let offset = DAILY_LOG_DAYS - 1; offset >= 0; offset -= 1) {
     const date = subDays(today, offset);
     const key = format(date, DAY_KEY_FORMAT);
     const dailyLog = logsByDay.get(key) ?? null;
-    const fallbackStart = Math.floor(date.getTime() / 1000);
+    const fallbackStart = fromUserWallClock(date) ?? 0;
     slots.push({
       key,
       label: offset === 0 ? "Today" : format(date, "EEE d"),
@@ -429,7 +432,7 @@ function EldGraph({
       ticks.push({
         key: h,
         fraction,
-        hour: new Date((dayStart + fraction * windowSec) * 1000).getHours(),
+        hour: (toUserWallClock(dayStart + fraction * windowSec) ?? new Date(0)).getHours(),
         isMajor: h % 4 === 0,
       });
     }
@@ -693,7 +696,7 @@ function DailyLogsSkeleton() {
 
 function DailyLogsSection({ workerId }: { workerId: string }) {
   const [dateRange] = useState(() => {
-    const today = new Date();
+    const today = userWallClockNow();
     return {
       startDate: format(subDays(today, DAILY_LOG_DAYS - 1), DAY_KEY_FORMAT),
       endDate: format(today, DAY_KEY_FORMAT),

@@ -32,6 +32,13 @@ func (e *ShipmentComment) GetStaticFieldMap() map[string]string {
 	return buncolgen.ShipmentCommentFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShipmentCommentAcknowledgment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ShipmentCommentAcknowledgmentFieldMap] instead of parsing struct tags via reflection.
+func (e *ShipmentCommentAcknowledgment) GetStaticFieldMap() map[string]string {
+	return buncolgen.ShipmentCommentAcknowledgmentFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShipmentCommentMention].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ShipmentCommentMentionFieldMap] instead of parsing struct tags via reflection.

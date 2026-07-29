@@ -12,7 +12,6 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   billing_queue: ["billing-queue-list", "billingQueue"],
   shipmentEvents: ["shipment-events"],
   "report-run": ["report-run-list"],
-  shipment_comment: ["shipment-comments", "shipment-comment-count"],
   driver_settlement: [
     "driver-settlement-list",
     "driver-settlement-detail",

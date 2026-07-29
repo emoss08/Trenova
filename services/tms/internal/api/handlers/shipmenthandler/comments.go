@@ -7,6 +7,7 @@ import (
 	_ "github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -183,7 +184,7 @@ func (h *Handler) updateComment(c *gin.Context) {
 
 	updated, err := h.commentService.Update(
 		c.Request.Context(),
-		entity,
+		&services.UpdateShipmentCommentRequest{Entity: entity},
 		actorutil.FromAuthContext(authCtx),
 	)
 	if err != nil {
@@ -222,7 +223,7 @@ func (h *Handler) deleteComment(c *gin.Context) {
 
 	if err = h.commentService.Delete(
 		c.Request.Context(),
-		&repositories.DeleteShipmentCommentRequest{
+		&services.DeleteShipmentCommentRequest{
 			ShipmentID: shipmentID,
 			CommentID:  commentID,
 			TenantInfo: pagination.TenantInfo{

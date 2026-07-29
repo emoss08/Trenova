@@ -32,6 +32,7 @@ import {
 import { parseAsString, useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
+import { formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const bankReceiptSearchParams = {
   item: parseAsString,
@@ -361,9 +362,7 @@ function ReceiptDetail({
                 </PropertyCell>
                 <PropertyCell label="Matched At">
                   <span className="text-xs font-medium">
-                    {receipt.matchedAt
-                      ? new Date(receipt.matchedAt * 1000).toLocaleString()
-                      : "N/A"}
+                    {formatUnixDateTime(receipt.matchedAt)}
                   </span>
                 </PropertyCell>
               </div>
@@ -505,9 +504,5 @@ function PropertyCell({ label, children }: { label: string; children: ReactNode 
 }
 
 function formatReceiptDate(epoch: number) {
-  return new Date(epoch * 1000).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return formatUnixDateMedium(epoch);
 }

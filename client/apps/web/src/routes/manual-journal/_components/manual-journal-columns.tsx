@@ -3,6 +3,7 @@ import { AmountDisplay } from "@trenova/shared/components/accounting/amount-disp
 import { manualJournalStatusChoices } from "@/lib/choices";
 import type { ManualJournal } from "@/types/manual-journal";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 
 export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
   return [
@@ -55,7 +56,7 @@ export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
       header: "Accounting Date",
       cell: ({ row }) => (
         <span className="text-xs">
-          {new Date(row.original.accountingDate * 1000).toLocaleDateString()}
+          {formatUnixDate(row.original.accountingDate)}
         </span>
       ),
       meta: {

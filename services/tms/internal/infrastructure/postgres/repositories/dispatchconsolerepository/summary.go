@@ -8,18 +8,26 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
-// atRiskLeadSeconds is how close a pickup appointment has to be, with the move still
-// uncovered, before the console calls it at risk.
 const atRiskLeadSeconds = int64(4 * 3600)
 
-// GetBoardSummary produces the metrics strip. Move-side and driver-side counts are two
-// aggregate queries rather than a scan of the rows the board already returned, so the
-// numbers stay honest even when the board itself is truncated by its limit.
+const positionFreshnessSeconds = int64(4 * 3600)
+
+const metersPerMile = 1609.344
+
+var vehiclePositionJoin = "LEFT JOIN " + buncolgen.VehiclePositionTable.As(
+	buncolgen.VehiclePositionTable.Alias) +
+	" ON " + buncolgen.VehiclePositionColumns.TractorID.EqColumn(
+	buncolgen.AssignmentColumns.TractorID) +
+	" AND " + buncolgen.VehiclePositionColumns.OrganizationID.EqColumn(
+	buncolgen.AssignmentColumns.OrganizationID) +
+	" AND " + buncolgen.VehiclePositionColumns.BusinessUnitID.EqColumn(
+	buncolgen.AssignmentColumns.BusinessUnitID) +
+	" AND " + buncolgen.VehiclePositionColumns.RecordedAt.Gte()
+
 func (r *repository) GetBoardSummary(
 	ctx context.Context,
 	filter *repositories.DispatchBoardFilter,
@@ -48,46 +56,55 @@ func (r *repository) scanMoveSummary(
 	now int64,
 	summary *repositories.BoardSummary,
 ) error {
-	moveCols := buncolgen.ShipmentMoveColumns
 	asnCols := buncolgen.AssignmentColumns
+	posCols := buncolgen.VehiclePositionColumns
 
-	const windowJoin = `LEFT JOIN LATERAL (
-		SELECT MIN(stp.scheduled_window_start) AS window_start
-		FROM stops AS stp
-		WHERE stp.shipment_move_id = sm.id
-			AND stp.organization_id = sm.organization_id
-			AND stp.business_unit_id = sm.business_unit_id
-			AND stp.status <> 'Canceled'
-	) AS win ON TRUE`
+	dayStart := filter.DayStartUnix
+	if dayStart <= 0 {
+		var err error
+		dayStart, err = timeutils.DayStartUnix(now, "")
+		if err != nil {
+			return fmt.Errorf("resolve dispatch board day start: %w", err)
+		}
+	}
 
 	err := r.db.DB().NewSelect().
 		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL)::int AS uncovered_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NOT NULL)::int AS covered_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL "+
-			"AND COALESCE(win.window_start, 0) > 0 "+
-			"AND win.window_start < ?)::int AS late_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NULL "+
-			"AND COALESCE(win.window_start, 0) > 0 "+
-			"AND win.window_start >= ? AND win.window_start <= ?)::int AS at_risk_moves").
-		ColumnExpr("COUNT(*) FILTER (WHERE a.id IS NOT NULL AND a.created_at >= ?)::int "+
-			"AS assigned_today").
-		Join("LEFT JOIN assignments AS a ON "+asnCols.ShipmentMoveID.EqColumn(moveCols.ID)+
-			" AND "+asnCols.ArchivedAt.IsNull()).
-		Join(windowJoin).
+		ColumnExpr(buncolgen.CountFilter("uncovered_moves", asnCols.ID.IsNull())).
+		ColumnExpr(buncolgen.CountFilter("covered_moves", asnCols.ID.IsNotNull())).
+		ColumnExpr(buncolgen.CountFilter("late_moves",
+			asnCols.ID.IsNull(),
+			"COALESCE(orig.window_start, 0) > 0",
+			"orig.window_start < ?",
+		), now).
+		ColumnExpr(buncolgen.CountFilter("at_risk_moves",
+			asnCols.ID.IsNull(),
+			"COALESCE(orig.window_start, 0) > 0",
+			"orig.window_start >= ?",
+			"orig.window_start <= ?",
+		), now, now+atRiskLeadSeconds).
+		ColumnExpr(buncolgen.CountFilter("assigned_today",
+			asnCols.ID.IsNotNull(),
+			asnCols.CreatedAt.Gte(),
+		), dayStart).
+		ColumnExpr(buncolgen.Expr(
+			"COALESCE(AVG(ST_DistanceSphere(ST_MakePoint({0}, {1}), "+
+				"ST_MakePoint(orig.longitude, orig.latitude)) / ?) "+
+				"FILTER (WHERE {2} IS NOT NULL AND {3} IS NOT NULL "+
+				"AND orig.latitude IS NOT NULL AND orig.longitude IS NOT NULL), 0)::float8 "+
+				"AS average_deadhead",
+			posCols.Longitude, posCols.Latitude, asnCols.ID, posCols.TractorID,
+		), metersPerMile).
+		Join(shipmentJoin).
+		Join(customerJoin).
+		Join(assignmentJoin).
+		Join(vehiclePositionJoin, now-positionFreshnessSeconds).
+		Apply(joinMoveStopEdges).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo).
-				Where(moveCols.Status.In(), bun.List([]shipment.MoveStatus{
-					shipment.MoveStatusNew,
-					shipment.MoveStatusAssigned,
-					shipment.MoveStatusInTransit,
-				}))
-			if filter.WindowEnd > 0 {
-				sq = sq.Where("COALESCE(win.window_start, 0) <= ?", filter.WindowEnd)
-			}
-			return sq
+			sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
+			return applyMoveFilters(sq, filter)
 		}).
-		Scan(ctx, summary, now, now, now+atRiskLeadSeconds, startOfDay(now))
+		Scan(ctx, summary)
 	if err != nil {
 		return fmt.Errorf("scan dispatch board move summary: %w", err)
 	}
@@ -102,17 +119,6 @@ func (r *repository) scanDriverSummary(
 ) error {
 	cols := buncolgen.WorkerColumns
 
-	const openAssignmentJoin = `LEFT JOIN LATERAL (
-		SELECT COUNT(*)::int AS open_assignments
-		FROM assignments AS a
-		JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id
-		WHERE a.primary_worker_id = wrk.id
-			AND a.organization_id = wrk.organization_id
-			AND a.business_unit_id = wrk.business_unit_id
-			AND a.archived_at IS NULL
-			AND sm.status IN ('Assigned', 'InTransit')
-	) AS oa ON TRUE`
-
 	counts := new(struct {
 		AvailableDrivers int `bun:"available_drivers"`
 		UnseatedDrivers  int `bun:"unseated_drivers"`
@@ -121,18 +127,13 @@ func (r *repository) scanDriverSummary(
 	err := r.db.DB().NewSelect().
 		Model((*worker.Worker)(nil)).
 		ColumnExpr("COUNT(*)::int AS available_drivers").
-		ColumnExpr("COUNT(*) FILTER (WHERE COALESCE(oa.open_assignments, 0) = 0)::int "+
-			"AS unseated_drivers").
-		Join(openAssignmentJoin).
+		ColumnExpr(buncolgen.CountFilter("unseated_drivers",
+			"COALESCE(oa.open_assignments, 0) = 0")).
+		Join(openAssignmentLateral, bun.List(openMoveStatuses)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo).
-				Where(cols.Status.Eq(), domaintypes.StatusActive).
-				Where(cols.CanBeAssigned.IsTrue()).
-				Where(cols.AvailableForDispatch.IsTrue())
-			if len(filter.FleetCodeIDs) > 0 {
-				sq = sq.Where(cols.FleetCodeID.In(), bun.List(filter.FleetCodeIDs))
-			}
-			return sq
+			sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo)
+			sq = applyDriverFilters(sq, filter)
+			return sq.Where(cols.AvailableForDispatch.IsTrue())
 		}).
 		Scan(ctx, counts)
 	if err != nil {
@@ -143,8 +144,4 @@ func (r *repository) scanDriverSummary(
 	summary.UnseatedDrivers = counts.UnseatedDrivers
 
 	return nil
-}
-
-func startOfDay(ts int64) int64 {
-	return ts - (ts % 86400)
 }

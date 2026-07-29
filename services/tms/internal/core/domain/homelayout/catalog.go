@@ -2,6 +2,7 @@ package homelayout
 
 import (
 	"slices"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 )
@@ -231,7 +232,7 @@ func workWidgets() []WidgetDefinition {
 			Resource:    permission.ResourceInvoice,
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
-			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+			DefaultW:    4, DefaultH: 3, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
 		},
 		{
 			Key:         WidgetBillingQueue,
@@ -241,7 +242,7 @@ func workWidgets() []WidgetDefinition {
 			Resource:    permission.ResourceBillingQueue,
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
-			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+			DefaultW:    4, DefaultH: 3, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
 		},
 		{
 			Key:         WidgetServiceFailures,
@@ -251,7 +252,7 @@ func workWidgets() []WidgetDefinition {
 			Resource:    permission.ResourceServiceFailure,
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
-			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+			DefaultW:    4, DefaultH: 3, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
 		},
 		{
 			Key:         WidgetEDIAttention,
@@ -261,7 +262,7 @@ func workWidgets() []WidgetDefinition {
 			Resource:    permission.ResourceEDI,
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
-			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+			DefaultW:    4, DefaultH: 3, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
 		},
 		{
 			Key:         WidgetExpiringCredentials,
@@ -517,15 +518,31 @@ func Densities() []string {
 	return []string{DensityComfortable, DensityCompact}
 }
 
-func widgetDefinition(key string) (WidgetDefinition, bool) {
+// The catalogs are code-resident and immutable, so the lookup maps are built
+// once. Normalize and permission narrowing look up every widget and metric on
+// every home-screen resolve; rebuilding the full catalog per lookup would make
+// that O(widgets × catalog) allocations.
+var widgetDefinitionsByKey = sync.OnceValue(func() map[string]WidgetDefinition {
 	catalog := WidgetCatalog()
-	idx := slices.IndexFunc(catalog, func(widget WidgetDefinition) bool {
-		return widget.Key == key
-	})
-	if idx < 0 {
-		return WidgetDefinition{}, false
+	byKey := make(map[string]WidgetDefinition, len(catalog))
+	for _, widget := range catalog {
+		byKey[widget.Key] = widget
 	}
-	return catalog[idx], true
+	return byKey
+})
+
+var metricDefinitionsByKey = sync.OnceValue(func() map[string]MetricDefinition {
+	catalog := MetricCatalog()
+	byKey := make(map[string]MetricDefinition, len(catalog))
+	for _, metric := range catalog {
+		byKey[metric.Key] = metric
+	}
+	return byKey
+})
+
+func widgetDefinition(key string) (WidgetDefinition, bool) {
+	definition, ok := widgetDefinitionsByKey()[key]
+	return definition, ok
 }
 
 // WidgetDefinitionFor exposes the catalog lookup to the service layer, which
@@ -535,14 +552,8 @@ func WidgetDefinitionFor(key string) (WidgetDefinition, bool) {
 }
 
 func metricDefinition(key string) (MetricDefinition, bool) {
-	catalog := MetricCatalog()
-	idx := slices.IndexFunc(catalog, func(metric MetricDefinition) bool {
-		return metric.Key == key
-	})
-	if idx < 0 {
-		return MetricDefinition{}, false
-	}
-	return catalog[idx], true
+	definition, ok := metricDefinitionsByKey()[key]
+	return definition, ok
 }
 
 // MetricDefinitionFor exposes the metric lookup to the service layer so a KPI

@@ -434,3 +434,405 @@ func (_c *MockShipmentCommentRepository_Update_Call) RunAndReturn(run func(ctx c
 	_c.Call.Return(run)
 	return _c
 }
+
+// SoftDelete provides a mock function for the type MockShipmentCommentRepository
+func (_mock *MockShipmentCommentRepository) SoftDelete(ctx context.Context, req *repositories.SoftDeleteShipmentCommentRequest) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SoftDelete")
+	}
+
+	var r0 *shipment.ShipmentComment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SoftDeleteShipmentCommentRequest) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SoftDeleteShipmentCommentRequest) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.SoftDeleteShipmentCommentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentRepository_SoftDelete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SoftDelete'
+type MockShipmentCommentRepository_SoftDelete_Call struct {
+	*mock.Call
+}
+
+// SoftDelete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SoftDeleteShipmentCommentRequest
+func (_e *MockShipmentCommentRepository_Expecter) SoftDelete(ctx any, req any) *MockShipmentCommentRepository_SoftDelete_Call {
+	return &MockShipmentCommentRepository_SoftDelete_Call{Call: _e.mock.On("SoftDelete", ctx, req)}
+}
+
+func (_c *MockShipmentCommentRepository_SoftDelete_Call) Run(run func(ctx context.Context, req *repositories.SoftDeleteShipmentCommentRequest)) *MockShipmentCommentRepository_SoftDelete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SoftDeleteShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SoftDeleteShipmentCommentRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_SoftDelete_Call) Return(shipmentComment *shipment.ShipmentComment, err error) *MockShipmentCommentRepository_SoftDelete_Call {
+	_c.Call.Return(shipmentComment, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_SoftDelete_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SoftDeleteShipmentCommentRequest) (*shipment.ShipmentComment, error)) *MockShipmentCommentRepository_SoftDelete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetPinned provides a mock function for the type MockShipmentCommentRepository
+func (_mock *MockShipmentCommentRepository) SetPinned(ctx context.Context, req *repositories.SetShipmentCommentPinnedRequest) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetPinned")
+	}
+
+	var r0 *shipment.ShipmentComment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SetShipmentCommentPinnedRequest) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SetShipmentCommentPinnedRequest) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.SetShipmentCommentPinnedRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentRepository_SetPinned_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetPinned'
+type MockShipmentCommentRepository_SetPinned_Call struct {
+	*mock.Call
+}
+
+// SetPinned is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SetShipmentCommentPinnedRequest
+func (_e *MockShipmentCommentRepository_Expecter) SetPinned(ctx any, req any) *MockShipmentCommentRepository_SetPinned_Call {
+	return &MockShipmentCommentRepository_SetPinned_Call{Call: _e.mock.On("SetPinned", ctx, req)}
+}
+
+func (_c *MockShipmentCommentRepository_SetPinned_Call) Run(run func(ctx context.Context, req *repositories.SetShipmentCommentPinnedRequest)) *MockShipmentCommentRepository_SetPinned_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SetShipmentCommentPinnedRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SetShipmentCommentPinnedRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_SetPinned_Call) Return(shipmentComment *shipment.ShipmentComment, err error) *MockShipmentCommentRepository_SetPinned_Call {
+	_c.Call.Return(shipmentComment, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_SetPinned_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SetShipmentCommentPinnedRequest) (*shipment.ShipmentComment, error)) *MockShipmentCommentRepository_SetPinned_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetResolved provides a mock function for the type MockShipmentCommentRepository
+func (_mock *MockShipmentCommentRepository) SetResolved(ctx context.Context, req *repositories.SetShipmentCommentResolvedRequest) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetResolved")
+	}
+
+	var r0 *shipment.ShipmentComment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SetShipmentCommentResolvedRequest) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SetShipmentCommentResolvedRequest) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.SetShipmentCommentResolvedRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentRepository_SetResolved_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetResolved'
+type MockShipmentCommentRepository_SetResolved_Call struct {
+	*mock.Call
+}
+
+// SetResolved is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SetShipmentCommentResolvedRequest
+func (_e *MockShipmentCommentRepository_Expecter) SetResolved(ctx any, req any) *MockShipmentCommentRepository_SetResolved_Call {
+	return &MockShipmentCommentRepository_SetResolved_Call{Call: _e.mock.On("SetResolved", ctx, req)}
+}
+
+func (_c *MockShipmentCommentRepository_SetResolved_Call) Run(run func(ctx context.Context, req *repositories.SetShipmentCommentResolvedRequest)) *MockShipmentCommentRepository_SetResolved_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SetShipmentCommentResolvedRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SetShipmentCommentResolvedRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_SetResolved_Call) Return(shipmentComment *shipment.ShipmentComment, err error) *MockShipmentCommentRepository_SetResolved_Call {
+	_c.Call.Return(shipmentComment, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_SetResolved_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SetShipmentCommentResolvedRequest) (*shipment.ShipmentComment, error)) *MockShipmentCommentRepository_SetResolved_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Acknowledge provides a mock function for the type MockShipmentCommentRepository
+func (_mock *MockShipmentCommentRepository) Acknowledge(ctx context.Context, req *repositories.AcknowledgeShipmentCommentRequest) (bool, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Acknowledge")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.AcknowledgeShipmentCommentRequest) (bool, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.AcknowledgeShipmentCommentRequest) bool); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.AcknowledgeShipmentCommentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentRepository_Acknowledge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Acknowledge'
+type MockShipmentCommentRepository_Acknowledge_Call struct {
+	*mock.Call
+}
+
+// Acknowledge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.AcknowledgeShipmentCommentRequest
+func (_e *MockShipmentCommentRepository_Expecter) Acknowledge(ctx any, req any) *MockShipmentCommentRepository_Acknowledge_Call {
+	return &MockShipmentCommentRepository_Acknowledge_Call{Call: _e.mock.On("Acknowledge", ctx, req)}
+}
+
+func (_c *MockShipmentCommentRepository_Acknowledge_Call) Run(run func(ctx context.Context, req *repositories.AcknowledgeShipmentCommentRequest)) *MockShipmentCommentRepository_Acknowledge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.AcknowledgeShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.AcknowledgeShipmentCommentRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_Acknowledge_Call) Return(inserted bool, err error) *MockShipmentCommentRepository_Acknowledge_Call {
+	_c.Call.Return(inserted, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_Acknowledge_Call) RunAndReturn(run func(ctx context.Context, req *repositories.AcknowledgeShipmentCommentRequest) (bool, error)) *MockShipmentCommentRepository_Acknowledge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountReplies provides a mock function for the type MockShipmentCommentRepository
+func (_mock *MockShipmentCommentRepository) CountReplies(ctx context.Context, req *repositories.GetShipmentCommentByIDRequest) (int, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountReplies")
+	}
+
+	var r0 int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentCommentByIDRequest) (int, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentCommentByIDRequest) int); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetShipmentCommentByIDRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentRepository_CountReplies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountReplies'
+type MockShipmentCommentRepository_CountReplies_Call struct {
+	*mock.Call
+}
+
+// CountReplies is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetShipmentCommentByIDRequest
+func (_e *MockShipmentCommentRepository_Expecter) CountReplies(ctx any, req any) *MockShipmentCommentRepository_CountReplies_Call {
+	return &MockShipmentCommentRepository_CountReplies_Call{Call: _e.mock.On("CountReplies", ctx, req)}
+}
+
+func (_c *MockShipmentCommentRepository_CountReplies_Call) Run(run func(ctx context.Context, req *repositories.GetShipmentCommentByIDRequest)) *MockShipmentCommentRepository_CountReplies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetShipmentCommentByIDRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetShipmentCommentByIDRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_CountReplies_Call) Return(n int, err error) *MockShipmentCommentRepository_CountReplies_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_CountReplies_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetShipmentCommentByIDRequest) (int, error)) *MockShipmentCommentRepository_CountReplies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountPinnedByShipmentID provides a mock function for the type MockShipmentCommentRepository
+func (_mock *MockShipmentCommentRepository) CountPinnedByShipmentID(ctx context.Context, req *repositories.GetShipmentCommentCountRequest) (int, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountPinnedByShipmentID")
+	}
+
+	var r0 int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentCommentCountRequest) (int, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentCommentCountRequest) int); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetShipmentCommentCountRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentRepository_CountPinnedByShipmentID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountPinnedByShipmentID'
+type MockShipmentCommentRepository_CountPinnedByShipmentID_Call struct {
+	*mock.Call
+}
+
+// CountPinnedByShipmentID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetShipmentCommentCountRequest
+func (_e *MockShipmentCommentRepository_Expecter) CountPinnedByShipmentID(ctx any, req any) *MockShipmentCommentRepository_CountPinnedByShipmentID_Call {
+	return &MockShipmentCommentRepository_CountPinnedByShipmentID_Call{Call: _e.mock.On("CountPinnedByShipmentID", ctx, req)}
+}
+
+func (_c *MockShipmentCommentRepository_CountPinnedByShipmentID_Call) Run(run func(ctx context.Context, req *repositories.GetShipmentCommentCountRequest)) *MockShipmentCommentRepository_CountPinnedByShipmentID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetShipmentCommentCountRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetShipmentCommentCountRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_CountPinnedByShipmentID_Call) Return(n int, err error) *MockShipmentCommentRepository_CountPinnedByShipmentID_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentRepository_CountPinnedByShipmentID_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetShipmentCommentCountRequest) (int, error)) *MockShipmentCommentRepository_CountPinnedByShipmentID_Call {
+	_c.Call.Return(run)
+	return _c
+}

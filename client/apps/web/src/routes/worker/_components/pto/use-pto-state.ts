@@ -1,4 +1,4 @@
-import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
+import { getEndOfMonth, getStartOfMonth } from "@trenova/shared/lib/date";
 import { ptoFilterSchema } from "@trenova/shared/types/worker";
 import { parseAsJson, parseAsStringLiteral } from "nuqs";
 
@@ -15,12 +15,8 @@ export const ptoSearchParamsParser = {
       shallow: true,
     })
     .withDefault({
-      startDate: dateToUnixTimestamp(
-        new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-      ),
-      endDate: dateToUnixTimestamp(
-        new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
-      ),
+      startDate: getStartOfMonth(),
+      endDate: getEndOfMonth(),
       type: undefined,
       workerId: undefined,
       fleetCodeId: undefined,
@@ -30,12 +26,8 @@ export const ptoSearchParamsParser = {
       shallow: true,
     })
     .withDefault({
-      startDate: dateToUnixTimestamp(
-        new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-      ),
-      endDate: dateToUnixTimestamp(
-        new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
-      ),
+      startDate: getStartOfMonth(),
+      endDate: getEndOfMonth(),
       type: undefined,
       workerId: undefined,
       fleetCodeId: undefined,

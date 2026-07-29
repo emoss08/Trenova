@@ -26,6 +26,10 @@ const (
 	OpUnlock    Operation = "unlock"
 	OpActivate  Operation = "activate"
 	OpReopen    Operation = "reopen"
+	OpPin       Operation = "pin"
+	OpUnpin     Operation = "unpin"
+	OpResolve   Operation = "resolve"
+	OpManage    Operation = "manage"
 )
 
 var Dependencies = map[Operation][]Operation{
@@ -49,6 +53,10 @@ var Dependencies = map[Operation][]Operation{
 	OpUnlock:    {OpRead, OpUpdate},
 	OpActivate:  {OpRead, OpUpdate},
 	OpReopen:    {OpRead, OpUpdate},
+	OpPin:       {OpRead},
+	OpUnpin:     {OpRead},
+	OpResolve:   {OpRead},
+	OpManage:    {OpRead, OpUpdate, OpDelete},
 }
 
 var Dependents = computeDependents()
@@ -153,6 +161,10 @@ const (
 	ClientOpUnlock    uint32 = 1 << 19
 	ClientOpActivate  uint32 = 1 << 20
 	ClientOpReopen    uint32 = 1 << 21
+	ClientOpPin       uint32 = 1 << 22
+	ClientOpUnpin     uint32 = 1 << 23
+	ClientOpResolve   uint32 = 1 << 24
+	ClientOpManage    uint32 = 1 << 25
 )
 
 var OperationToBit = map[Operation]uint32{
@@ -176,6 +188,10 @@ var OperationToBit = map[Operation]uint32{
 	OpUnlock:    ClientOpUnlock,
 	OpActivate:  ClientOpActivate,
 	OpReopen:    ClientOpReopen,
+	OpPin:       ClientOpPin,
+	OpUnpin:     ClientOpUnpin,
+	OpResolve:   ClientOpResolve,
+	OpManage:    ClientOpManage,
 }
 
 func OperationsToBitmask(ops []Operation) uint32 {

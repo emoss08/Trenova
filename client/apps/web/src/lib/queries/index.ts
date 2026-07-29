@@ -19,7 +19,6 @@ import { distanceControl } from "./distance-control";
 import { documentControl } from "./document-control";
 import { documentParsingRule } from "./document-parsing-rule";
 import { detention } from "./detention";
-import { dispatchConsole } from "./dispatch-console";
 import { dispatchControl } from "./dispatch-control";
 import { edi } from "./edi";
 import { email } from "./email";
@@ -96,7 +95,6 @@ const operationsQueries = mergeQueryKeys(
   shipmentControl,
   weatherAlert,
   weatherRadar,
-  dispatchConsole,
   telematics,
 );
 

@@ -12,27 +12,21 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
 import { ClockIcon, MapPinIcon, XIcon } from "lucide-react";
+import { formatUnixDateTimeShort, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 function formatUnixTimestamp(unix: number | null | undefined): string {
   if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleString([], {
+  return formatUnixInUserTimezone(unix, {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    hour12: true,
     timeZoneName: "short",
-  });
+  }, "—");
 }
 
 function formatActivityTime(unix: number): string {
-  return new Date(unix * 1000).toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return formatUnixDateTimeShort(unix);
 }
 
 function capitalizeFirst(str: string): string {

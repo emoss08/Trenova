@@ -1,13 +1,17 @@
+import {
+  ACTION_DOCK_SECONDARY_BUTTON,
+  ActionDock,
+  ActionDockIndicator,
+  type ActionDockPosition,
+} from "@/components/action-dock";
 import { Button } from "@trenova/shared/components/ui/button";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
-import { cn } from "@trenova/shared/lib/utils";
-import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 
-type DockPosition = "center" | "left" | "right";
+type DockPosition = ActionDockPosition;
 
 interface SplitButtonConfig<T extends string = string> {
   options: SplitButtonOption<T>[];
@@ -48,64 +52,54 @@ function SaveDockContent<T extends string = string>({
   isDirty: boolean;
   onReset: () => void;
 }) {
-  const positionClasses = {
-    center: "left-1/2 transform -translate-x-1/2",
-    left: "left-20",
-    right: "right-35",
-  };
-
   const showUnsavedIndicator = isDirty || !alwaysVisible;
 
   return (
-    <div
-      className={cn("fixed bottom-6 z-50", positionClasses[position || "center"], className)}
-      style={{ width }}
+    <ActionDock
+      position={position}
+      width={width}
+      className={className}
+      indicator={
+        showUnsavedIndicator ? (
+          <ActionDockIndicator
+            title={unsavedText ?? "Unsaved changes"}
+            description="You have unsaved changes."
+          />
+        ) : undefined
+      }
     >
-      <div className="flex w-fit min-w-[450px] items-center gap-x-10 rounded-lg bg-foreground p-2 shadow-lg">
-        {showUnsavedIndicator && (
-          <div className="flex items-center gap-x-3">
-            <CircleAlert className="rounded-full bg-amber-400/10 text-amber-400 dark:text-amber-600" />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-background">{unsavedText}</span>
-              <span className="text-2xs text-background/80">You have unsaved changes.</span>
-            </div>
-          </div>
-        )}
-        <div className="ml-auto flex items-center space-x-2">
-          {showReset && (
-            <Button
-              type="reset"
-              variant="outline"
-              onClick={onReset}
-              disabled={isSubmitting}
-              className="border-none bg-white/20 text-background hover:bg-white/30 hover:text-background dark:bg-black/20 dark:hover:bg-black/30"
-            >
-              Reset
-            </Button>
-          )}
-          {splitButton ? (
-            <SplitButton
-              options={splitButton.options}
-              selectedOption={splitButton.selectedOption}
-              onOptionSelect={splitButton.onOptionSelect}
-              isLoading={isSubmitting}
-              loadingText={splitButton.loadingText}
-              formId={formId}
-            />
-          ) : (
-            <Button
-              type="submit"
-              variant="default"
-              className="pr-2"
-              disabled={isSubmitting}
-              form={formId}
-            >
-              {isSubmitting ? <Spinner /> : (saveButtonContent ?? "Save")}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
+      {showReset && (
+        <Button
+          type="reset"
+          variant="outline"
+          onClick={onReset}
+          disabled={isSubmitting}
+          className={ACTION_DOCK_SECONDARY_BUTTON}
+        >
+          Reset
+        </Button>
+      )}
+      {splitButton ? (
+        <SplitButton
+          options={splitButton.options}
+          selectedOption={splitButton.selectedOption}
+          onOptionSelect={splitButton.onOptionSelect}
+          isLoading={isSubmitting}
+          loadingText={splitButton.loadingText}
+          formId={formId}
+        />
+      ) : (
+        <Button
+          type="submit"
+          variant="default"
+          className="pr-2"
+          disabled={isSubmitting}
+          form={formId}
+        >
+          {isSubmitting ? <Spinner /> : (saveButtonContent ?? "Save")}
+        </Button>
+      )}
+    </ActionDock>
   );
 }
 

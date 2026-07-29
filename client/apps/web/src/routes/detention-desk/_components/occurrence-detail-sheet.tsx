@@ -5,7 +5,6 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { detentionWaiverReasonChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -16,7 +15,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { Separator } from "@trenova/shared/components/ui/separator";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -27,35 +26,36 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import {
-  OCCURRENCE_STATUS_STYLES,
-  SCORE_BAND_STYLES,
+  NOTICE_DELIVERY_DOT,
+  OCCURRENCE_STATUS_DOT,
+  OCCURRENCE_STATUS_LABEL,
   formatDetentionMinutes,
-  scoreBand,
 } from "@trenova/shared/lib/detention";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency, toTitleCase } from "@trenova/shared/lib/utils";
 import {
   waiverReasonSchema,
+  type CollectabilityAssessment,
   type DetentionEvidence,
   type DetentionNotice,
   type DetentionOccurrence,
   type OccurrenceDetail,
 } from "@trenova/shared/types/detention";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckIcon,
-  CopyIcon,
-  FileWarningIcon,
-  MailIcon,
-  ScaleIcon,
-  ShieldCheckIcon,
-  ShieldXIcon,
-} from "lucide-react";
-import { useCallback, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { m } from "motion/react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { CalculationReceipt } from "./calculation-receipt";
+import { DeskMetric } from "./desk-metric";
+import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
+
+const METER_TRANSITION = { type: "spring", stiffness: 160, damping: 28, mass: 0.7 } as const;
+
+/** Below this the claim needs work before anyone leans on it in a dispute. */
+const WEAK_SCORE = 65;
 
 const waiveFormSchema = z.object({
   reason: waiverReasonSchema,
@@ -73,101 +73,107 @@ type OccurrenceDetailSheetProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-function useInvalidateDetention(occurrenceId: string | null) {
-  const queryClient = useQueryClient();
-
-  return useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: queries.detention.desk().queryKey });
-    if (occurrenceId) {
-      void queryClient.invalidateQueries({
-        queryKey: queries.detention.occurrence(occurrenceId).queryKey,
-      });
-    }
-  }, [queryClient, occurrenceId]);
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="border-b px-4 py-4 last:border-b-0">
+      {(title || action) && (
+        <div className="mb-2.5 flex items-center justify-between gap-2">
+          {title ? (
+            <h3 className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+              {title}
+            </h3>
+          ) : (
+            <span />
+          )}
+          {action}
+        </div>
+      )}
+      {children}
+    </section>
+  );
 }
 
 function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
   const marginNegative = occurrence.netMargin < 0;
 
   return (
-    <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border bg-border">
-      <div className="bg-card p-3">
-        <p className="text-muted-foreground text-[11px]">Billable</p>
-        <p className="text-lg font-semibold tabular-nums">
-          {formatCurrency(occurrence.billableAmount, occurrence.currency)}
-        </p>
-        <p className="text-muted-foreground text-[11px] tabular-nums">
-          {formatDetentionMinutes(occurrence.roundedMinutes)} of{" "}
-          {formatDetentionMinutes(occurrence.rawDwellMinutes)} on site
-        </p>
-      </div>
-      <div className="bg-card p-3">
-        <p className="text-muted-foreground text-[11px]">Driver pay</p>
-        <p className="text-lg font-semibold tabular-nums">
-          {formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
-        </p>
-        <p className="text-muted-foreground text-[11px] tabular-nums">
-          {formatDetentionMinutes(occurrence.driverPayMinutes)} payable
-        </p>
-      </div>
-      <div className="bg-card p-3">
-        <p className="text-muted-foreground text-[11px]">Net margin</p>
-        <p
-          className={cn(
-            "text-lg font-semibold tabular-nums",
-            marginNegative && "text-red-600 dark:text-red-400",
-          )}
-        >
-          {formatCurrency(occurrence.netMargin, occurrence.currency)}
-        </p>
-        <p className="text-muted-foreground text-[11px]">
-          {marginNegative ? "You pay more than you bill" : "After driver detention pay"}
-        </p>
-      </div>
-    </div>
+    <dl className="grid grid-cols-3 divide-x divide-border">
+      <DeskMetric
+        size="md"
+        label="Billable"
+        value={formatCurrency(occurrence.billableAmount, occurrence.currency)}
+        sub={`${formatDetentionMinutes(occurrence.roundedMinutes)} of ${formatDetentionMinutes(
+          occurrence.rawDwellMinutes,
+        )}`}
+        className="pr-4"
+      />
+      <DeskMetric
+        size="md"
+        label="Driver pay"
+        value={formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
+        sub={`${formatDetentionMinutes(occurrence.driverPayMinutes)} payable`}
+        className="px-4"
+      />
+      <DeskMetric
+        size="md"
+        label="Net margin"
+        value={formatCurrency(occurrence.netMargin, occurrence.currency)}
+        sub={marginNegative ? "You pay more than you bill" : "After driver pay"}
+        valueClassName={cn(marginNegative && "text-red-600 dark:text-red-400")}
+        className="pl-4"
+      />
+    </dl>
   );
 }
 
-function CollectabilityPanel({ detail }: { detail: OccurrenceDetail }) {
-  const { collectability } = detail;
-  const band = scoreBand(collectability.score);
+function CollectabilityPanel({ collectability }: { collectability: CollectabilityAssessment }) {
+  const isWeak = collectability.score < WEAK_SCORE;
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {collectability.chainValid ? (
-            <ShieldCheckIcon className="size-4 text-emerald-600 dark:text-emerald-400" />
-          ) : (
-            <ShieldXIcon className="size-4 text-red-600 dark:text-red-400" />
-          )}
-          <h4 className="text-sm font-medium">Dispute defensibility</h4>
-        </div>
-        <Badge className={cn("border-none tabular-nums", SCORE_BAND_STYLES[band])}>
-          {collectability.score}/100
-        </Badge>
+    <>
+      <div className="h-1 w-full rounded-full bg-border">
+        <m.div
+          className={cn("h-1 rounded-full", isWeak ? "bg-amber-500" : "bg-foreground/70")}
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min(100, Math.max(0, collectability.score))}%` }}
+          transition={METER_TRANSITION}
+        />
       </div>
 
       {collectability.summary && (
-        <p className="text-muted-foreground text-xs">{collectability.summary}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{collectability.summary}</p>
       )}
 
-      <div className="flex flex-col gap-1.5">
+      <p
+        className={cn(
+          "mt-1 text-2xs",
+          collectability.chainValid ? "text-muted-foreground/70" : "text-red-600 dark:text-red-400",
+        )}
+      >
+        {collectability.chainValid
+          ? "Evidence chain verified"
+          : "Evidence chain broken — the record no longer hashes clean"}
+      </p>
+
+      <ul className="mt-2 divide-y divide-border/60">
         {collectability.factors.map((factor) => {
           const full = factor.earned >= factor.possible;
 
           return (
-            <div
-              key={factor.key}
-              className="flex items-start justify-between gap-3 rounded-md border px-2.5 py-2"
-            >
+            <li key={factor.key} className="flex items-start justify-between gap-3 py-2">
               <div className="min-w-0">
-                <p className="text-xs font-medium">{factor.label}</p>
-                {factor.detail && (
-                  <p className="text-muted-foreground text-[11px]">{factor.detail}</p>
-                )}
+                <p className="text-xs">{factor.label}</p>
+                {factor.detail && <p className="text-2xs text-muted-foreground">{factor.detail}</p>}
                 {!full && factor.remedy && (
-                  <p className="mt-0.5 text-[11px] text-amber-700 dark:text-amber-400">
+                  <p className="mt-0.5 text-2xs text-amber-700 dark:text-amber-500">
                     {factor.remedy}
                   </p>
                 )}
@@ -175,47 +181,46 @@ function CollectabilityPanel({ detail }: { detail: OccurrenceDetail }) {
               <span
                 className={cn(
                   "shrink-0 text-xs tabular-nums",
-                  full
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-muted-foreground",
+                  full ? "text-muted-foreground" : "text-foreground",
                 )}
               >
                 {factor.earned}/{factor.possible}
               </span>
-            </div>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </>
   );
 }
 
 function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
   if (evidence.length === 0) {
-    return (
-      <p className="text-muted-foreground text-xs">No evidence has been recorded yet.</p>
-    );
+    return <p className="text-xs text-muted-foreground">No evidence has been recorded yet.</p>;
   }
 
   return (
     <ol className="flex flex-col">
       {evidence.map((item, index) => (
-        <li key={item.id} className="relative flex gap-3 pb-3 last:pb-0">
+        <li key={item.id} className="relative flex gap-2.5 pb-3 last:pb-0">
+          {/* The connector runs from the bottom of this dot to the top of the next
+              one, which sits 6px (the dot's own top margin) into the row below —
+              so it has to overhang this row's padding by exactly that much. */}
           {index < evidence.length - 1 && (
-            <span className="bg-border absolute top-4 left-[5px] h-full w-px" />
+            <span className="absolute top-3 -bottom-1.5 left-[3px] w-px -translate-x-1/2 bg-border" />
           )}
-          <span className="bg-muted-foreground/60 mt-1.5 size-[11px] shrink-0 rounded-full border-2 border-background" />
+          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-medium">{item.kind}</span>
-              <Badge variant="outline" className="text-[10px]">
-                {item.source}
-              </Badge>
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="truncate text-xs">
+                {toTitleCase(item.kind)}
+                <span className="text-muted-foreground"> · {toTitleCase(item.source)}</span>
+              </p>
+              <span className="shrink-0 text-2xs text-muted-foreground tabular-nums">
+                {formatToUserTimezone(item.observedAt)}
+              </span>
             </div>
-            <p className="text-muted-foreground text-xs">{item.summary}</p>
-            <p className="text-muted-foreground/70 text-[11px] tabular-nums">
-              {formatToUserTimezone(item.observedAt)}
-            </p>
+            <p className="text-2xs text-muted-foreground">{item.summary}</p>
           </div>
         </li>
       ))}
@@ -223,65 +228,48 @@ function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
   );
 }
 
-const NOTICE_STATUS_STYLES: Record<string, string> = {
-  Queued: "bg-muted text-muted-foreground",
-  Sent: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
-  Delivered: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  Opened: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  Bounced: "bg-red-500/15 text-red-700 dark:text-red-400",
-  Failed: "bg-red-500/15 text-red-700 dark:text-red-400",
-};
-
 function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
   if (notices.length === 0) {
     return (
-      <p className="text-muted-foreground text-xs">
-        No notices have been sent for this stop.
-      </p>
+      <p className="text-xs text-muted-foreground">No notices have been sent for this stop.</p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <ul className="divide-y divide-border/60">
       {notices.map((notice) => (
-        <div key={notice.id} className="rounded-md border px-2.5 py-2">
-          <div className="flex flex-wrap items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium">{notice.kind} notice</span>
-              <Badge
+        <li key={notice.id} className="flex flex-col gap-0.5 py-2 first:pt-0 last:pb-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-1.5 text-xs">
+              <span
                 className={cn(
-                  "border-none text-[10px]",
-                  NOTICE_STATUS_STYLES[notice.deliveryStatus] ??
-                    "bg-muted text-muted-foreground",
+                  "size-1.5 shrink-0 rounded-full",
+                  NOTICE_DELIVERY_DOT[notice.deliveryStatus],
                 )}
-              >
-                {notice.deliveryStatus}
-              </Badge>
-              {notice.satisfiesRequirement && (
-                <Badge variant="outline" className="text-[10px]">
-                  In window
-                </Badge>
-              )}
-            </div>
-            <span className="text-muted-foreground text-[11px] tabular-nums">
+              />
+              <span className="truncate">{toTitleCase(notice.kind)} notice</span>
+              <span className="shrink-0 text-muted-foreground">
+                {toTitleCase(notice.deliveryStatus)}
+                {notice.satisfiesRequirement ? " · in window" : ""}
+              </span>
+            </span>
+            <span className="shrink-0 text-2xs text-muted-foreground tabular-nums">
               {notice.sentAt
                 ? formatToUserTimezone(notice.sentAt)
                 : formatToUserTimezone(notice.scheduledFor)}
             </span>
           </div>
           {notice.recipients && notice.recipients.length > 0 && (
-            <p className="text-muted-foreground mt-0.5 truncate text-[11px]">
+            <p className="truncate text-2xs text-muted-foreground">
               To {notice.recipients.join(", ")}
             </p>
           )}
           {notice.failureReason && (
-            <p className="mt-0.5 text-[11px] text-red-600 dark:text-red-400">
-              {notice.failureReason}
-            </p>
+            <p className="text-2xs text-red-600 dark:text-red-400">{notice.failureReason}</p>
           )}
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -324,8 +312,8 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
         <DialogHeader>
           <DialogTitle>Waive this charge</DialogTitle>
           <DialogDescription>
-            Waiving forgives the money but keeps the record, so discretionary revenue loss
-            stays measurable instead of disappearing into free text.
+            Waiving forgives the money but keeps the record, so discretionary revenue loss stays
+            measurable instead of disappearing into free text.
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -357,8 +345,8 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Waiving…" : "Waive charge"}
+              <Button type="submit" isLoading={isPending} loadingText="Waiving">
+                Waive charge
               </Button>
             </DialogFooter>
           </Form>
@@ -400,8 +388,8 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
         <DialogHeader>
           <DialogTitle>Record a dispute</DialogTitle>
           <DialogDescription>
-            Recording the customer&apos;s rejection keeps the original computation intact —
-            exactly what working the claim requires.
+            Recording the customer&apos;s rejection keeps the original computation intact — exactly
+            what working the claim requires.
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -422,8 +410,8 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Recording…" : "Record dispute"}
+              <Button type="submit" isLoading={isPending} loadingText="Recording">
+                Record dispute
               </Button>
             </DialogFooter>
           </Form>
@@ -433,19 +421,24 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
   );
 }
 
-function OccurrenceActions({
-  detail,
-  onDone,
-}: {
-  detail: OccurrenceDetail;
-  onDone: () => void;
-}) {
+type OccurrenceAction = {
+  key: string;
+  label: string;
+  pendingLabel?: string;
+  isPending?: boolean;
+  onSelect: () => void;
+};
+
+/**
+ * Everything a clerk can still do to this charge, in the order it matters. The
+ * first available action carries the weight — the rest stay quiet, because a
+ * row of five equally loud buttons tells you nothing about which one to press.
+ */
+function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDone: () => void }) {
   const { occurrence } = detail;
   const [waiveOpen, setWaiveOpen] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
   const { copy, isCopied } = useCopyToClipboard();
-
-  const invalidate = onDone;
 
   const approve = useApiMutation<DetentionOccurrence, undefined>({
     mutationFn: () => apiService.detentionService.approve(occurrence.id),
@@ -453,21 +446,12 @@ function OccurrenceActions({
       toast.success("Charge approved", {
         description: "The detention charge will post to the shipment.",
       });
-      invalidate();
+      onDone();
     },
     resourceName: "Detention Occurrence",
   });
 
-  const sendNotice = useApiMutation<DetentionOccurrence, undefined>({
-    mutationFn: () => apiService.detentionService.sendNotice(occurrence.id),
-    onSuccess: () => {
-      toast.success("Notice sent", {
-        description: "The customer notice went out and was recorded as evidence.",
-      });
-      invalidate();
-    },
-    resourceName: "Detention Notice",
-  });
+  const sendNotice = useSendDetentionNotice(occurrence.id);
 
   const copyPacket = useApiMutation<boolean, undefined>({
     mutationFn: async () => {
@@ -482,99 +466,109 @@ function OccurrenceActions({
     resourceName: "Dispute Packet",
   });
 
-  const canApprove = occurrence.status === "Pending";
-  const canSendNotice =
-    occurrence.notificationStatus !== "NotRequired" &&
-    occurrence.notificationStatus !== "Sent";
-  const canWaive = occurrence.status !== "Waived" && occurrence.status !== "NotBillable";
-  const canDispute = occurrence.status !== "Disputed" && occurrence.billableAmount > 0;
+  const actions: OccurrenceAction[] = [];
+
+  if (occurrence.status === "Pending") {
+    actions.push({
+      key: "approve",
+      label: "Approve charge",
+      pendingLabel: "Approving",
+      isPending: approve.isPending,
+      onSelect: () => approve.mutate(undefined),
+    });
+  }
+
+  if (occurrence.notificationStatus !== "NotRequired" && occurrence.notificationStatus !== "Sent") {
+    actions.push({
+      key: "notice",
+      label: "Send notice",
+      pendingLabel: "Sending",
+      isPending: sendNotice.isPending,
+      onSelect: () => sendNotice.mutate(undefined),
+    });
+  }
+
+  if (occurrence.status !== "Disputed" && occurrence.billableAmount > 0) {
+    actions.push({
+      key: "dispute",
+      label: "Record dispute",
+      onSelect: () => setDisputeOpen(true),
+    });
+  }
+
+  if (occurrence.status !== "Waived" && occurrence.status !== "NotBillable") {
+    actions.push({ key: "waive", label: "Waive", onSelect: () => setWaiveOpen(true) });
+  }
+
+  actions.push({
+    key: "packet",
+    label: isCopied ? "Packet copied" : "Copy dispute packet",
+    pendingLabel: "Building",
+    isPending: copyPacket.isPending,
+    onSelect: () => copyPacket.mutate(undefined),
+  });
 
   return (
     <>
       <div className="flex flex-wrap gap-1.5">
-        {canApprove && (
+        {actions.map((action, index) => (
           <Button
+            key={action.key}
             size="sm"
-            className="h-7 gap-1.5 text-xs"
-            disabled={approve.isPending}
-            onClick={() => approve.mutate(undefined)}
+            variant={index === 0 ? "default" : "outline"}
+            className="text-xs"
+            isLoading={action.isPending}
+            loadingText={action.pendingLabel}
+            onClick={action.onSelect}
           >
-            <CheckIcon className="size-3.5" />
-            {approve.isPending ? "Approving…" : "Approve charge"}
+            {action.label}
           </Button>
-        )}
-        {canSendNotice && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 gap-1.5 text-xs"
-            disabled={sendNotice.isPending}
-            onClick={() => sendNotice.mutate(undefined)}
-          >
-            <MailIcon className="size-3.5" />
-            {sendNotice.isPending ? "Sending…" : "Send notice"}
-          </Button>
-        )}
-        {canDispute && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 gap-1.5 text-xs"
-            onClick={() => setDisputeOpen(true)}
-          >
-            <ScaleIcon className="size-3.5" />
-            Record dispute
-          </Button>
-        )}
-        {canWaive && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 gap-1.5 text-xs"
-            onClick={() => setWaiveOpen(true)}
-          >
-            <FileWarningIcon className="size-3.5" />
-            Waive
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1.5 text-xs"
-          disabled={copyPacket.isPending}
-          onClick={() => copyPacket.mutate(undefined)}
-        >
-          <CopyIcon className="size-3.5" />
-          {isCopied ? "Copied" : "Copy dispute packet"}
-        </Button>
+        ))}
       </div>
 
       <WaiveDialog
         occurrenceId={occurrence.id}
         open={waiveOpen}
         onOpenChange={setWaiveOpen}
-        onDone={invalidate}
+        onDone={onDone}
       />
       <DisputeDialog
         occurrenceId={occurrence.id}
         open={disputeOpen}
         onOpenChange={setDisputeOpen}
-        onDone={invalidate}
+        onDone={onDone}
       />
     </>
+  );
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-3 w-64" />
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton key={index} className="h-14 w-full" />
+        ))}
+      </div>
+      <Skeleton className="h-8 w-full" />
+      <Skeleton className="h-48 w-full" />
+    </div>
   );
 }
 
 /**
  * The claim file for one detention occurrence: the money, the derivation, the
  * evidence chain, and every notice — plus the actions a billing clerk takes
- * from the desk. Everything a customer dispute will ask for lives here.
+ * from the desk. Everything a customer dispute will ask for lives here, set in
+ * the same hairline sections the desk itself uses.
  */
-export function OccurrenceDetailSheet({
-  occurrenceId,
-  onOpenChange,
-}: OccurrenceDetailSheetProps) {
-  const invalidate = useInvalidateDetention(occurrenceId);
+export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: OccurrenceDetailSheetProps) {
+  const invalidate = useInvalidateDetention();
 
   const { data: detail, isLoading } = useQuery({
     ...queries.detention.occurrence(occurrenceId ?? ""),
@@ -585,72 +579,69 @@ export function OccurrenceDetailSheet({
 
   return (
     <Sheet open={Boolean(occurrenceId)} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[520px]">
+      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[540px]">
         {isLoading || !detail || !occurrence ? (
-          <div className="flex flex-col gap-3 p-4">
-            <Skeleton className="h-8 w-2/3" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
+          <DetailSkeleton />
         ) : (
           <>
-            <SheetHeader className="border-b px-4 py-3">
-              <div className="flex items-start justify-between gap-2 pr-8">
-                <div className="min-w-0">
-                  <SheetTitle className="truncate">
-                    {occurrence.locationName || "Unknown facility"}
-                  </SheetTitle>
-                  <SheetDescription className="truncate text-xs">
-                    {occurrence.customerName || "Unknown customer"}
-                    {occurrence.shipmentProNumber && (
-                      <> · PRO {occurrence.shipmentProNumber}</>
-                    )}{" "}
-                    · {occurrence.stopType}
-                  </SheetDescription>
-                </div>
-                <Badge
+            <SheetHeader className="gap-1 border-b px-4 py-3 pr-12">
+              <div className="flex items-center gap-1.5">
+                <span
                   className={cn(
-                    "shrink-0 border-none",
-                    OCCURRENCE_STATUS_STYLES[occurrence.status],
+                    "size-1.5 shrink-0 rounded-full",
+                    OCCURRENCE_STATUS_DOT[occurrence.status],
                   )}
-                >
-                  {occurrence.status}
-                </Badge>
+                />
+                <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+                  {OCCURRENCE_STATUS_LABEL[occurrence.status]}
+                </span>
               </div>
+              <SheetTitle className="truncate">
+                {occurrence.locationName || "Unknown facility"}
+              </SheetTitle>
+              <SheetDescription className="truncate text-xs">
+                {occurrence.customerName || "Unknown customer"}
+                {occurrence.shipmentProNumber && <> · PRO {occurrence.shipmentProNumber}</>} ·{" "}
+                {occurrence.stopType}
+              </SheetDescription>
             </SheetHeader>
 
-            <div className="flex-1 overflow-y-auto">
-              <div className="flex flex-col gap-5 p-4">
+            <ScrollArea className="min-h-0 flex-1">
+              <Section>
                 <MoneySummary occurrence={occurrence} />
+              </Section>
 
+              <Section>
                 <OccurrenceActions detail={detail} onDone={invalidate} />
+              </Section>
 
-                <Separator />
+              <Section
+                title="Defensibility"
+                action={
+                  <span className="text-xs tabular-nums">
+                    {detail.collectability.score}
+                    <span className="text-muted-foreground">/100</span>
+                  </span>
+                }
+              >
+                <CollectabilityPanel collectability={detail.collectability} />
+              </Section>
 
-                <CollectabilityPanel detail={detail} />
-
-                <Separator />
-
+              <Section>
                 <CalculationReceipt
                   trace={occurrence.calculationTrace}
                   currency={occurrence.currency}
                 />
+              </Section>
 
-                <Separator />
+              <Section title="Evidence chain">
+                <EvidenceChain evidence={detail.evidence ?? []} />
+              </Section>
 
-                <div className="flex flex-col gap-2.5">
-                  <h4 className="text-sm font-medium">Evidence chain</h4>
-                  <EvidenceChain evidence={detail.evidence ?? []} />
-                </div>
-
-                <Separator />
-
-                <div className="flex flex-col gap-2.5">
-                  <h4 className="text-sm font-medium">Notices</h4>
-                  <NoticeHistory notices={detail.notices ?? []} />
-                </div>
-              </div>
-            </div>
+              <Section title="Notices">
+                <NoticeHistory notices={detail.notices ?? []} />
+              </Section>
+            </ScrollArea>
           </>
         )}
       </SheetContent>

@@ -29,9 +29,9 @@ import {
 } from "@trenova/shared/types/document";
 import { z } from "zod";
 
-type DocumentContentAction = "download" | "view" | "preview";
+export type DocumentContentAction = "download" | "view" | "preview";
 
-function documentContentUrl(documentId: string, action: DocumentContentAction): string {
+export function documentContentUrl(documentId: string, action: DocumentContentAction): string {
   return `${API_BASE_URL}/documents/${encodeURIComponent(documentId)}/${action}/`;
 }
 

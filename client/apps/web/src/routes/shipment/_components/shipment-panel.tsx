@@ -28,7 +28,7 @@ import { ShipmentForm } from "./shipment-form";
 
 const AuditTab = lazy(() => import("@/components/audit-tab"));
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
-const ShipmentCommentsTab = lazy(() => import("./shipment-comments"));
+const ShipmentCommentsTab = lazy(() => import("./comments"));
 const ShipmentServiceFailuresTab = lazy(() => import("./shipment-service-failures"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {

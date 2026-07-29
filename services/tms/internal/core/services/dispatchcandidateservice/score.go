@@ -6,15 +6,14 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/core/services/hosprojection"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-// ScoreFactor is one weighted dimension of a candidate's score, carrying both its
-// contribution and the sentence a dispatcher reads to understand it. The console renders
-// every factor: a ranking nobody can audit is a ranking nobody uses.
 type ScoreFactor struct {
 	Key          dispatchcontrol.ScoringFactor `json:"key"`
 	Label        string                        `json:"label"`
@@ -24,7 +23,6 @@ type ScoreFactor struct {
 	Detail       string                        `json:"detail"`
 }
 
-// CandidateScore is one driver-and-equipment pairing judged against one move.
 type CandidateScore struct {
 	WorkerID   pulid.ID `json:"workerId"`
 	WorkerName string   `json:"workerName"`
@@ -44,13 +42,16 @@ type CandidateScore struct {
 	CycleRemainingMs   int64    `json:"cycleRemainingMs"`
 	ProjectedAvailable int64    `json:"projectedTimeAvailable"`
 
+	HOSStrategy          string `json:"hosStrategy"`
+	HOSRestStartDeadline int64  `json:"hosRestStartDeadline"`
+	HOSProjectedDriveMs  int64  `json:"hosProjectedDriveMs"`
+	HOSProjectedShiftMs  int64  `json:"hosProjectedShiftMs"`
+	HOSProjectedCycleMs  int64  `json:"hosProjectedCycleMs"`
+
 	Findings []dispatcheligibility.Finding `json:"findings"`
 	Factors  []ScoreFactor                 `json:"factors"`
 }
 
-// Blocked reports whether any hard constraint disqualifies this pairing. A blocked
-// candidate is still returned, with its reasons, so the console can explain an absence
-// instead of silently hiding a driver a dispatcher expected to see.
 func (c *CandidateScore) Blocked() bool {
 	for i := range c.Findings {
 		if c.Findings[i].Severity == dispatcheligibility.SeverityBlock {
@@ -71,24 +72,36 @@ func (c *CandidateScore) Warnings() int {
 }
 
 const (
-	// maxScore keeps the weighted sum on a 0-100 scale a dispatcher can read at a glance.
 	maxScore = 100.0
 
-	// Normalization anchors. Each soft factor is reduced to a 0-1 goodness value before
-	// weighting, so factors measured in miles, hours, and counts stay comparable.
 	deadheadFullCreditMiles = 25.0
 	deadheadZeroCreditMiles = 250.0
 	slackFullCreditMinutes  = 240.0
 	hosMarginFullCreditMs   = float64(6 * 3600 * 1000)
 	loadBalanceFullMiles    = 3000.0
 	laneExperienceFullCount = 10.0
-	homeTimeFullCreditDays  = 14.0
+	homeTimeZeroCreditDays  = 14.0
+
+	onTimeHistoryMinStops           = 5
+	onTimeShortfallZeroCreditPp     = 20.0
+	defaultOnTimeTargetPct          = 95.0
+	onTimeFailurePenaltyPerIncident = 0.05
+	safetyZeroCreditViolations      = 5.0
+	acceptanceMinDecisions          = 3
+	ackLatencyFullCreditMinutes     = 15.0
+	ackLatencyZeroCreditMinutes     = 240.0
+	ptoGapFullCreditHours           = 48.0
+	loadBalanceFullCreditMoves      = 10.0
+	openAssignmentsZeroCredit       = 4.0
 )
 
 type factorInput struct {
 	deadheadMiles    *float64
 	slackMinutes     float64
+	slackKnown       bool
 	hosMarginMs      float64
+	hosKnown         bool
+	hosDetail        string
 	trailerContinues bool
 	trailerKnown     bool
 	fleetMatches     bool
@@ -98,36 +111,70 @@ type factorInput struct {
 	daysOut          float64
 	daysOutKnown     bool
 	committedMiles   float64
+	moveCount        float64
+	openAssignments  float64
+	workloadKnown    bool
 	laneMoves        float64
 	customerName     string
+
+	onTimeKnown         bool
+	onTimePct           float64
+	onTimeStops         int
+	onTimeTargetPct     float64
+	driverFaultFailures int
+	safetyKnown         bool
+	violationCount      float64
+	acceptanceKnown     bool
+	acceptRate          float64
+	ackDecisions        int
+	ackLatencyMinutes   float64
+	ptoKnown            bool
+	ptoGapHours         float64
 }
 
-// buildFactors reduces every soft signal to a 0-1 goodness value, applies the
-// organization's weights, and returns both the total and the per-factor breakdown.
-// Factors with no data are omitted rather than scored as zero, so a missing telematics
-// feed does not quietly push a good driver down the list.
+type factorList struct {
+	weights map[dispatchcontrol.ScoringFactor]float64
+	factors []ScoreFactor
+}
+
+func (l *factorList) add(
+	key dispatchcontrol.ScoringFactor,
+	label string,
+	raw float64,
+	detail string,
+) {
+	weight := l.weights[key]
+	if weight <= 0 {
+		return
+	}
+	l.factors = append(l.factors, ScoreFactor{
+		Key:    key,
+		Label:  label,
+		Raw:    clamp01(raw),
+		Weight: weight,
+		Detail: detail,
+	})
+}
+
 func buildFactors(
-	in factorInput,
+	in *factorInput,
 	weights map[dispatchcontrol.ScoringFactor]float64,
 ) (int, []ScoreFactor) {
-	factors := make([]ScoreFactor, 0, len(dispatchcontrol.AllScoringFactors()))
-
-	add := func(key dispatchcontrol.ScoringFactor, label string, raw float64, detail string) {
-		weight := weights[key]
-		if weight <= 0 {
-			return
-		}
-		factors = append(factors, ScoreFactor{
-			Key:    key,
-			Label:  label,
-			Raw:    clamp01(raw),
-			Weight: weight,
-			Detail: detail,
-		})
+	list := &factorList{
+		weights: weights,
+		factors: make([]ScoreFactor, 0, len(dispatchcontrol.AllScoringFactors())),
 	}
 
+	addTripFactors(list, in)
+	addDriverContextFactors(list, in)
+	addPerformanceFactors(list, in)
+
+	return finalizeFactors(list.factors)
+}
+
+func addTripFactors(list *factorList, in *factorInput) {
 	if in.deadheadMiles != nil {
-		add(
+		list.add(
 			dispatchcontrol.FactorDeadhead,
 			"Empty miles",
 			invertedRamp(*in.deadheadMiles, deadheadFullCreditMiles, deadheadZeroCreditMiles),
@@ -135,22 +182,35 @@ func buildFactors(
 		)
 	}
 
-	add(
-		dispatchcontrol.FactorHOSMargin,
-		"Hours remaining",
-		clamp01(in.hosMarginMs/hosMarginFullCreditMs),
-		fmt.Sprintf("%s of clock left after the trip", formatDurationMs(int64(in.hosMarginMs))),
-	)
+	if in.hosKnown {
+		detail := in.hosDetail
+		if detail == "" {
+			detail = fmt.Sprintf(
+				"%s of clock left after the trip",
+				timeutils.FormatDurationMs(int64(in.hosMarginMs)),
+			)
+		}
+		list.add(
+			dispatchcontrol.FactorHOSMargin,
+			"Hours remaining",
+			clamp01(in.hosMarginMs/hosMarginFullCreditMs),
+			detail,
+		)
+	}
 
-	add(
-		dispatchcontrol.FactorOnTime,
-		"On-time margin",
-		clamp01(in.slackMinutes/slackFullCreditMinutes),
-		describeSlack(in.slackMinutes),
-	)
+	if in.slackKnown {
+		list.add(
+			dispatchcontrol.FactorOnTime,
+			"On-time margin",
+			clamp01(in.slackMinutes/slackFullCreditMinutes),
+			describeSlack(in.slackMinutes),
+		)
+	}
+}
 
+func addDriverContextFactors(list *factorList, in *factorInput) {
 	if in.trailerKnown {
-		add(
+		list.add(
 			dispatchcontrol.FactorTrailerContinuity,
 			"Trailer continuity",
 			boolScore(in.trailerContinues),
@@ -159,7 +219,7 @@ func buildFactors(
 	}
 
 	if in.fleetKnown {
-		add(
+		list.add(
 			dispatchcontrol.FactorFleetMatch,
 			"Fleet match",
 			boolScore(in.fleetMatches),
@@ -168,7 +228,7 @@ func buildFactors(
 	}
 
 	if in.driverTypeLabel != "" {
-		add(
+		list.add(
 			dispatchcontrol.FactorDriverTypeFit,
 			"Haul fit",
 			in.driverTypeFit,
@@ -177,35 +237,137 @@ func buildFactors(
 	}
 
 	if in.daysOutKnown {
-		add(
+		list.add(
 			dispatchcontrol.FactorHomeTime,
 			"Home time",
-			invertedRamp(in.daysOut, 0, homeTimeFullCreditDays),
+			invertedRamp(in.daysOut, 0, homeTimeZeroCreditDays),
 			fmt.Sprintf("%.0f days since last home", in.daysOut),
 		)
 	}
 
-	add(
-		dispatchcontrol.FactorLoadBalance,
-		"Load balance",
-		invertedRamp(in.committedMiles, 0, loadBalanceFullMiles),
-		fmt.Sprintf("%.0f miles committed this period", in.committedMiles),
-	)
+	if in.workloadKnown {
+		raw := 0.5*invertedRamp(in.committedMiles, 0, loadBalanceFullMiles) +
+			0.3*invertedRamp(in.moveCount, 0, loadBalanceFullCreditMoves) +
+			0.2*invertedRamp(in.openAssignments, 0, openAssignmentsZeroCredit)
+		list.add(
+			dispatchcontrol.FactorLoadBalance,
+			"Load balance",
+			raw,
+			fmt.Sprintf(
+				"%.0f mi, %.0f moves this week; %.0f open assignment(s)",
+				in.committedMiles,
+				in.moveCount,
+				in.openAssignments,
+			),
+		)
+	}
 
 	if in.laneMoves > 0 {
-		add(
+		list.add(
 			dispatchcontrol.FactorLaneExperience,
 			"Customer experience",
 			clamp01(in.laneMoves/laneExperienceFullCount),
 			describeLaneExperience(in.laneMoves, in.customerName),
 		)
 	}
-
-	return finalizeFactors(factors)
 }
 
-// finalizeFactors normalizes the applied weights so the score always spans 0-100 no
-// matter how many factors had data, then records each factor's share of the result.
+func addPerformanceFactors(list *factorList, in *factorInput) {
+	if in.onTimeKnown {
+		raw := onTimeRamp(in.onTimePct, in.onTimeTargetPct) -
+			onTimeFailurePenaltyPerIncident*float64(in.driverFaultFailures)
+		list.add(
+			dispatchcontrol.FactorOnTimeHistory,
+			"On-time history",
+			raw,
+			describeOnTimeHistory(in),
+		)
+	}
+
+	if in.safetyKnown {
+		list.add(
+			dispatchcontrol.FactorSafetyHistory,
+			"Safety history",
+			invertedRamp(in.violationCount, 0, safetyZeroCreditViolations),
+			describeSafetyHistory(in.violationCount),
+		)
+	}
+
+	if in.acceptanceKnown {
+		latencyRamp := 1.0
+		if in.ackLatencyMinutes > 0 {
+			latencyRamp = invertedRamp(
+				in.ackLatencyMinutes,
+				ackLatencyFullCreditMinutes,
+				ackLatencyZeroCreditMinutes,
+			)
+		}
+		list.add(
+			dispatchcontrol.FactorAcceptance,
+			"Acceptance",
+			0.8*in.acceptRate+0.2*latencyRamp,
+			describeAcceptance(in),
+		)
+	}
+
+	if in.ptoKnown {
+		list.add(
+			dispatchcontrol.FactorPTOProximity,
+			"Time-off buffer",
+			clamp01(in.ptoGapHours/ptoGapFullCreditHours),
+			describePTOProximity(in.ptoGapHours),
+		)
+	}
+}
+
+// onTimeRamp gives full credit at or above the organization's on-time goal and no
+// credit twenty points below it.
+func onTimeRamp(pct, target float64) float64 {
+	return invertedRamp(target-pct, 0, onTimeShortfallZeroCreditPp)
+}
+
+func describeOnTimeHistory(in *factorInput) string {
+	detail := fmt.Sprintf(
+		"%.0f%% on-time over %d stops (goal %.0f%%)",
+		in.onTimePct,
+		in.onTimeStops,
+		in.onTimeTargetPct,
+	)
+	if in.driverFaultFailures > 0 {
+		detail += fmt.Sprintf("; %d driver-fault service failure(s)", in.driverFaultFailures)
+	}
+	return detail
+}
+
+func describeSafetyHistory(violations float64) string {
+	if violations == 0 {
+		return "No HOS violations in the last 90 days"
+	}
+	return fmt.Sprintf("%.0f HOS violation(s) in the last 90 days", violations)
+}
+
+func describeAcceptance(in *factorInput) string {
+	accepted := int(math.Round(in.acceptRate * float64(in.ackDecisions)))
+	detail := fmt.Sprintf("Accepted %d of %d assignments", accepted, in.ackDecisions)
+	if in.ackLatencyMinutes > 0 {
+		detail += fmt.Sprintf(", typically within %.0fm", in.ackLatencyMinutes)
+	}
+	return detail
+}
+
+func describePTOProximity(gapHours float64) string {
+	if gapHours < 0 {
+		return fmt.Sprintf(
+			"Run projected to overrun approved time off by %s",
+			timeutils.FormatDurationMs(int64(-gapHours*3_600_000)),
+		)
+	}
+	return fmt.Sprintf(
+		"Run projected to finish %s before approved time off",
+		timeutils.FormatDurationMs(int64(gapHours*3_600_000)),
+	)
+}
+
 func finalizeFactors(factors []ScoreFactor) (int, []ScoreFactor) {
 	if len(factors) == 0 {
 		return 0, factors
@@ -233,9 +395,7 @@ func finalizeFactors(factors []ScoreFactor) (int, []ScoreFactor) {
 	return int(math.Round(clampScore(total))), factors
 }
 
-// driverTypeFit rewards matching the length of haul to how the driver runs. A local
-// driver on a 900-mile lane is technically legal and operationally wrong.
-func driverTypeFit(driverType worker.DriverType, tripMiles float64) (float64, string) {
+func driverTypeFit(driverType worker.DriverType, tripMiles float64) (fit float64, label string) {
 	if tripMiles <= 0 {
 		return 0.5, ""
 	}
@@ -269,7 +429,6 @@ func driverTypeFit(driverType worker.DriverType, tripMiles float64) (float64, st
 	}
 }
 
-// rampFit scores 1 below the comfortable ceiling and decays to 0 at the hard ceiling.
 func rampFit(value, comfortable, hard float64) float64 {
 	if value <= comfortable {
 		return 1
@@ -280,8 +439,6 @@ func rampFit(value, comfortable, hard float64) float64 {
 	return 1 - (value-comfortable)/(hard-comfortable)
 }
 
-// invertedRamp scores 1 at or below best and 0 at or above worst — for metrics where
-// smaller is better, such as empty miles.
 func invertedRamp(value, best, worst float64) float64 {
 	if worst <= best {
 		return 0
@@ -329,11 +486,17 @@ func round1(v float64) float64 {
 func describeSlack(minutes float64) string {
 	switch {
 	case minutes < 0:
-		return fmt.Sprintf("Projected %.0f minutes late to the pickup", -minutes)
+		return fmt.Sprintf(
+			"Projected %s late to the pickup",
+			timeutils.FormatLongDurationMs(int64(-minutes*60_000)),
+		)
 	case minutes < 60:
 		return fmt.Sprintf("Only %.0f minutes of margin to the appointment", minutes)
 	default:
-		return fmt.Sprintf("%.1f hours of margin to the appointment", minutes/60)
+		return fmt.Sprintf(
+			"%s of margin to the appointment",
+			timeutils.FormatLongDurationMs(int64(minutes*60_000)),
+		)
 	}
 }
 
@@ -358,30 +521,38 @@ func describeLaneExperience(moves float64, customerName string) string {
 	return fmt.Sprintf("Has run %s %.0f times", customerName, moves)
 }
 
-func formatDurationMs(ms int64) string {
-	if ms < 0 {
-		ms = 0
-	}
-	hours := ms / 3_600_000
-	minutes := (ms % 3_600_000) / 60_000
-	return fmt.Sprintf("%dh %02dm", hours, minutes)
+type verdictInput struct {
+	Eval         *dispatcheligibility.Evaluation
+	SlackMinutes float64
+	HOSKnown     bool
+	HOSExpected  bool
+	Projection   *hosprojection.Result
 }
 
-// verdictFor maps the eligibility findings and the remaining margin onto the same
-// vocabulary the existing shipment-level feasibility check already uses, so the console
-// and the assignment dialog never disagree about what "tight" means.
-func verdictFor(eval *dispatcheligibility.Evaluation, slackMinutes float64, hosKnown bool) string {
-	if eval.Blocked() {
-		return telematicsservice.FeasibilityVerdictInfeasible
+// verdictFor folds eligibility, appointment slack, and the HOS projection into one
+// feasibility verdict. Unknown is reserved for organizations that do track hours but
+// have no fresh data for this driver — an organization without telematics is judged
+// on schedule alone, never penalized for data it cannot have. A trip that is legal
+// only after additional rest is at best tight.
+func verdictFor(in *verdictInput) string {
+	if in.Eval.Blocked() {
+		return telematics.FeasibilityVerdictInfeasible
 	}
-	if !hosKnown {
-		return telematicsservice.FeasibilityVerdictUnknown
+	if in.HOSExpected && !in.HOSKnown {
+		return telematics.FeasibilityVerdictUnknown
 	}
-	if slackMinutes < 0 {
-		return telematicsservice.FeasibilityVerdictInfeasible
+	if in.Projection != nil && !in.Projection.Feasible {
+		return telematics.FeasibilityVerdictInfeasible
 	}
-	if slackMinutes < 90 {
-		return telematicsservice.FeasibilityVerdictTight
+	if in.SlackMinutes < 0 {
+		return telematics.FeasibilityVerdictInfeasible
 	}
-	return telematicsservice.FeasibilityVerdictFeasible
+	if in.SlackMinutes < 90 {
+		return telematics.FeasibilityVerdictTight
+	}
+	if in.Projection != nil &&
+		in.Projection.Strategy != hosprojection.StrategyCurrentClocks {
+		return telematics.FeasibilityVerdictTight
+	}
+	return telematics.FeasibilityVerdictFeasible
 }

@@ -4,11 +4,12 @@ import {
   availabilityMeta,
   formatMiles,
   formatMinutesToPickup,
-  formatMoney,
+  groupMovesByUrgency,
   scoreTone,
   severityMeta,
   urgencyMeta,
   verdictMeta,
+  workerInitials,
 } from "../dispatch-vocabulary";
 
 describe("urgency", () => {
@@ -64,15 +65,37 @@ describe("formatMinutesToPickup", () => {
 describe("value formatting", () => {
   // Absent data has to be visibly absent. Rendering it as 0 would read as a real
   // measurement — a truck with no GPS fix is not a truck with zero empty miles.
-  it("renders missing miles and money as a dash", () => {
+  it("renders missing miles as a dash", () => {
     expect(formatMiles(null)).toBe("—");
     expect(formatMiles(undefined)).toBe("—");
-    expect(formatMoney(null)).toBe("—");
   });
 
-  it("rounds miles and money for scanning", () => {
+  it("rounds miles for scanning", () => {
     expect(formatMiles(123.7)).toBe("124 mi");
-    expect(formatMoney(1234.56)).toBe("$1,235");
+  });
+});
+
+describe("workerInitials", () => {
+  it("takes the first letter of each name", () => {
+    expect(workerInitials("Jane", "Doe")).toBe("JD");
+  });
+
+  it("falls back to a placeholder when both names are empty", () => {
+    expect(workerInitials("", "")).toBe("?");
+  });
+});
+
+describe("groupMovesByUrgency", () => {
+  it("buckets moves in urgency order and defaults unknown urgencies to Planned", () => {
+    const grouped = groupMovesByUrgency([
+      { urgency: "Now", id: "a" },
+      { urgency: "Late", id: "b" },
+      { urgency: "Whatever", id: "c" },
+    ]);
+    expect([...grouped.keys()]).toEqual([...URGENCY_ORDER]);
+    expect(grouped.get("Late")?.map((move) => move.id)).toEqual(["b"]);
+    expect(grouped.get("Now")?.map((move) => move.id)).toEqual(["a"]);
+    expect(grouped.get("Planned")?.map((move) => move.id)).toEqual(["c"]);
   });
 });
 

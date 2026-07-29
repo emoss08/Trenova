@@ -46,6 +46,16 @@ var CustomerPaymentApplicationSpec TypeSpec
 
 var DashControlSpec TypeSpec
 
+var DetentionEvidenceSpec TypeSpec
+
+var DetentionNoticeSpec TypeSpec
+
+var DetentionOccurrenceSpec TypeSpec
+
+var DetentionPolicyTierSpec TypeSpec
+
+var DispatchTimeOffSpec TypeSpec
+
 var DistanceOverrideSpec TypeSpec
 
 var DistanceOverrideStopSpec TypeSpec
@@ -122,6 +132,8 @@ var HazmatSegregationRuleSpec TypeSpec
 
 var HoldReasonSpec TypeSpec
 
+var HomeLayoutPresetSpec TypeSpec
+
 var InvoiceSpec TypeSpec
 
 var InvoiceLineSpec TypeSpec
@@ -168,6 +180,8 @@ var RecurringEarningSpec TypeSpec
 
 var RecurringShipmentSpec TypeSpec
 
+var ReportDashboardSpec TypeSpec
+
 var ReportDefinitionSpec TypeSpec
 
 var ReportDefinitionRevisionSpec TypeSpec
@@ -175,6 +189,8 @@ var ReportDefinitionRevisionSpec TypeSpec
 var ReportRunSpec TypeSpec
 
 var ReportScheduleSpec TypeSpec
+
+var ReportViewSpec TypeSpec
 
 var RoleSpec TypeSpec
 
@@ -205,6 +221,8 @@ var ShipmentAdditionalChargeSpec TypeSpec
 var ShipmentAssignmentSpec TypeSpec
 
 var ShipmentCommentSpec TypeSpec
+
+var ShipmentCommentAcknowledgmentSpec TypeSpec
 
 var ShipmentCommentMentionSpec TypeSpec
 
@@ -1689,24 +1707,8 @@ func init() {
 				FieldMapKey: "autoBill",
 			},
 			{
-				Name:        "detentionBillingEnabled",
-				FieldMapKey: "detentionBillingEnabled",
-			},
-			{
-				Name:        "detentionFreeMinutes",
-				FieldMapKey: "detentionFreeMinutes",
-			},
-			{
-				Name:        "detentionRatePerHour",
-				FieldMapKey: "detentionRatePerHour",
-			},
-			{
 				Name:        "countLateOnlyOnAppointmentStops",
 				FieldMapKey: "countLateOnlyOnAppointmentStops",
-			},
-			{
-				Name:        "countDetentionOnlyOnAppointmentStops",
-				FieldMapKey: "countDetentionOnlyOnAppointmentStops",
 			},
 			{
 				Name:        "autoApplyAccessorials",
@@ -2109,6 +2111,477 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	DetentionEvidenceSpec = TypeSpec{
+		TypeName: "DetentionEvidence",
+		FieldMap: buncolgen.DetentionEvidenceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "detentionOccurrenceId",
+				FieldMapKey: "detentionOccurrenceId",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "observedAt",
+				FieldMapKey: "observedAt",
+			},
+			{
+				Name:        "recordedAt",
+				FieldMapKey: "recordedAt",
+			},
+			{
+				Name:        "recordedById",
+				FieldMapKey: "recordedById",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "payload",
+				FieldMapKey: "payload",
+			},
+			{
+				Name:        "prevHash",
+				FieldMapKey: "prevHash",
+			},
+			{
+				Name:        "hash",
+				FieldMapKey: "hash",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	DetentionNoticeSpec = TypeSpec{
+		TypeName: "DetentionNotice",
+		FieldMap: buncolgen.DetentionNoticeFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "detentionOccurrenceId",
+				FieldMapKey: "detentionOccurrenceId",
+			},
+			{
+				Name:        "threadKey",
+				FieldMapKey: "threadKey",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "channel",
+				FieldMapKey: "channel",
+			},
+			{
+				Name:        "deliveryStatus",
+				FieldMapKey: "deliveryStatus",
+			},
+			{
+				Name:        "recipients",
+				FieldMapKey: "recipients",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "body",
+				FieldMapKey: "body",
+			},
+			{
+				Name:        "scheduledFor",
+				FieldMapKey: "scheduledFor",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "deliveredAt",
+				FieldMapKey: "deliveredAt",
+			},
+			{
+				Name:        "openedAt",
+				FieldMapKey: "openedAt",
+			},
+			{
+				Name:        "failedAt",
+				FieldMapKey: "failedAt",
+			},
+			{
+				Name:        "failureReason",
+				FieldMapKey: "failureReason",
+			},
+			{
+				Name:        "sentById",
+				FieldMapKey: "sentById",
+			},
+			{
+				Name:        "wasAutomatic",
+				FieldMapKey: "wasAutomatic",
+			},
+			{
+				Name:        "satisfiesRequirement",
+				FieldMapKey: "satisfiesRequirement",
+			},
+			{
+				Name:        "quotedFreeMinutes",
+				FieldMapKey: "quotedFreeMinutes",
+			},
+			{
+				Name:        "quotedRate",
+				FieldMapKey: "quotedRate",
+			},
+			{
+				Name:        "quotedAmount",
+				FieldMapKey: "quotedAmount",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	DetentionOccurrenceSpec = TypeSpec{
+		TypeName: "DetentionOccurrence",
+		FieldMap: buncolgen.DetentionOccurrenceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "stopId",
+				FieldMapKey: "stopId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "locationId",
+				FieldMapKey: "locationId",
+			},
+			{
+				Name:        "detentionPolicyId",
+				FieldMapKey: "detentionPolicyId",
+			},
+			{
+				Name:        "policySnapshot",
+				FieldMapKey: "policySnapshot",
+			},
+			{
+				Name:        "calculationTrace",
+				FieldMapKey: "calculationTrace",
+			},
+			{
+				Name:        "stopType",
+				FieldMapKey: "stopType",
+			},
+			{
+				Name:        "scheduleType",
+				FieldMapKey: "scheduleType",
+			},
+			{
+				Name:        "appointmentStart",
+				FieldMapKey: "appointmentStart",
+			},
+			{
+				Name:        "appointmentEnd",
+				FieldMapKey: "appointmentEnd",
+			},
+			{
+				Name:        "arrivedAt",
+				FieldMapKey: "arrivedAt",
+			},
+			{
+				Name:        "departedAt",
+				FieldMapKey: "departedAt",
+			},
+			{
+				Name:        "clockStartAt",
+				FieldMapKey: "clockStartAt",
+			},
+			{
+				Name:        "clockStopAt",
+				FieldMapKey: "clockStopAt",
+			},
+			{
+				Name:        "freeTimeExpiresAt",
+				FieldMapKey: "freeTimeExpiresAt",
+			},
+			{
+				Name:        "noticeDueAt",
+				FieldMapKey: "noticeDueAt",
+			},
+			{
+				Name:        "noticeDeadlineAt",
+				FieldMapKey: "noticeDeadlineAt",
+			},
+			{
+				Name:        "isOpen",
+				FieldMapKey: "isOpen",
+			},
+			{
+				Name:        "arrivedLate",
+				FieldMapKey: "arrivedLate",
+			},
+			{
+				Name:        "lateByMinutes",
+				FieldMapKey: "lateByMinutes",
+			},
+			{
+				Name:        "freeMinutesGranted",
+				FieldMapKey: "freeMinutesGranted",
+			},
+			{
+				Name:        "rawDwellMinutes",
+				FieldMapKey: "rawDwellMinutes",
+			},
+			{
+				Name:        "billableMinutes",
+				FieldMapKey: "billableMinutes",
+			},
+			{
+				Name:        "roundedMinutes",
+				FieldMapKey: "roundedMinutes",
+			},
+			{
+				Name:        "billableUnits",
+				FieldMapKey: "billableUnits",
+			},
+			{
+				Name:        "grossAmount",
+				FieldMapKey: "grossAmount",
+			},
+			{
+				Name:        "billableAmount",
+				FieldMapKey: "billableAmount",
+			},
+			{
+				Name:        "driverPayMinutes",
+				FieldMapKey: "driverPayMinutes",
+			},
+			{
+				Name:        "driverPayAmount",
+				FieldMapKey: "driverPayAmount",
+			},
+			{
+				Name:        "netMargin",
+				FieldMapKey: "netMargin",
+			},
+			{
+				Name:        "capApplied",
+				FieldMapKey: "capApplied",
+			},
+			{
+				Name:        "convertedToLayover",
+				FieldMapKey: "convertedToLayover",
+			},
+			{
+				Name:        "currency",
+				FieldMapKey: "currency",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "notificationStatus",
+				FieldMapKey: "notificationStatus",
+			},
+			{
+				Name:        "noticeSentAt",
+				FieldMapKey: "noticeSentAt",
+			},
+			{
+				Name:        "suppressedByGate",
+				FieldMapKey: "suppressedByGate",
+			},
+			{
+				Name:        "requiresApproval",
+				FieldMapKey: "requiresApproval",
+			},
+			{
+				Name:        "waiverReason",
+				FieldMapKey: "waiverReason",
+			},
+			{
+				Name:        "waiverNote",
+				FieldMapKey: "waiverNote",
+			},
+			{
+				Name:        "waivedAt",
+				FieldMapKey: "waivedAt",
+			},
+			{
+				Name:        "waivedAmount",
+				FieldMapKey: "waivedAmount",
+			},
+			{
+				Name:        "disputeNote",
+				FieldMapKey: "disputeNote",
+			},
+			{
+				Name:        "disputedAt",
+				FieldMapKey: "disputedAt",
+			},
+			{
+				Name:        "collectabilityScore",
+				FieldMapKey: "collectabilityScore",
+			},
+			{
+				Name:        "evidenceHead",
+				FieldMapKey: "evidenceHead",
+			},
+			{
+				Name:        "additionalChargeId",
+				FieldMapKey: "additionalChargeId",
+			},
+			{
+				Name:        "locationName",
+				FieldMapKey: "locationName",
+			},
+			{
+				Name:        "customerName",
+				FieldMapKey: "customerName",
+			},
+			{
+				Name:        "shipmentProNumber",
+				FieldMapKey: "shipmentProNumber",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	DetentionPolicyTierSpec = TypeSpec{
+		TypeName: "DetentionPolicyTier",
+		FieldMap: buncolgen.DetentionPolicyTierFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "fromMinute",
+				FieldMapKey: "fromMinute",
+			},
+			{
+				Name:        "toMinute",
+				FieldMapKey: "toMinute",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "rateUnit",
+				FieldMapKey: "rateUnit",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "sortOrder",
+				FieldMapKey: "sortOrder",
+			},
+		},
+	}
+
+	DispatchTimeOffSpec = TypeSpec{
+		TypeName: "DispatchTimeOff",
+		FieldMap: buncolgen.WorkerPTOFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "startDate",
+				FieldMapKey: "startDate",
+			},
+			{
+				Name:        "endDate",
+				FieldMapKey: "endDate",
+			},
+			{
+				Name:        "type",
+				FieldMapKey: "type",
 			},
 		},
 	}
@@ -5347,6 +5820,69 @@ func init() {
 		},
 	}
 
+	HomeLayoutPresetSpec = TypeSpec{
+		TypeName: "HomeLayoutPreset",
+		FieldMap: buncolgen.PresetFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:    "widgets",
+				Special: "widgets",
+			},
+			{
+				Name:        "roleIds",
+				FieldMapKey: "roleIds",
+			},
+			{
+				Name:        "coreResponsibility",
+				FieldMapKey: "coreResponsibility",
+			},
+			{
+				Name:        "isOrgDefault",
+				FieldMapKey: "isOrgDefault",
+			},
+			{
+				Name:        "locked",
+				FieldMapKey: "locked",
+			},
+			{
+				Name:        "priority",
+				FieldMapKey: "priority",
+			},
+			{
+				Name:    "assignedUserCount",
+				Special: "assignedUserCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	InvoiceSpec = TypeSpec{
 		TypeName: "Invoice",
 		FieldMap: buncolgen.InvoiceFieldMap,
@@ -7308,6 +7844,61 @@ func init() {
 		},
 	}
 
+	ReportDashboardSpec = TypeSpec{
+		TypeName: "ReportDashboard",
+		FieldMap: buncolgen.DashboardFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "tags",
+				FieldMapKey: "tags",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:        "visibility",
+				FieldMapKey: "visibility",
+			},
+			{
+				Name:        "layout",
+				FieldMapKey: "layout",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	ReportDefinitionSpec = TypeSpec{
 		TypeName: "ReportDefinition",
 		FieldMap: buncolgen.ReportDefinitionFieldMap,
@@ -7574,8 +8165,20 @@ func init() {
 				Special: "emailAttach",
 			},
 			{
+				Name:    "emailInline",
+				Special: "emailInline",
+			},
+			{
 				Name:    "notifyUserIds",
 				Special: "notifyUserIds",
+			},
+			{
+				Name:        "alert",
+				FieldMapKey: "alert",
+			},
+			{
+				Name:        "alertFiring",
+				FieldMapKey: "alertFiring",
 			},
 			{
 				Name:        "enabled",
@@ -7596,6 +8199,73 @@ func init() {
 			{
 				Name:        "consecutiveFailures",
 				FieldMapKey: "consecutiveFailures",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ReportViewSpec = TypeSpec{
+		TypeName: "ReportView",
+		FieldMap: buncolgen.ReportViewFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "definitionId",
+				FieldMapKey: "definitionId",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "params",
+				FieldMapKey: "params",
+			},
+			{
+				Name:        "shared",
+				FieldMapKey: "shared",
+			},
+			{
+				Name:        "pinned",
+				FieldMapKey: "pinned",
+			},
+			{
+				Name:        "format",
+				FieldMapKey: "format",
+			},
+			{
+				Name:        "lastRunAt",
+				FieldMapKey: "lastRunAt",
+			},
+			{
+				Name:        "runCount",
+				FieldMapKey: "runCount",
 			},
 			{
 				Name:        "version",
@@ -8699,6 +9369,10 @@ func init() {
 				FieldMapKey: "fuelSurchargeDetail",
 			},
 			{
+				Name:        "detentionOccurrenceId",
+				FieldMapKey: "detentionOccurrenceId",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -8837,8 +9511,20 @@ func init() {
 				FieldMapKey: "userId",
 			},
 			{
+				Name:        "parentCommentId",
+				FieldMapKey: "parentCommentId",
+			},
+			{
+				Name:        "replyCount",
+				FieldMapKey: "replyCount",
+			},
+			{
 				Name:        "comment",
 				FieldMapKey: "comment",
+			},
+			{
+				Name:        "body",
+				FieldMapKey: "body",
 			},
 			{
 				Name:        "type",
@@ -8865,6 +9551,30 @@ func init() {
 				FieldMapKey: "editedAt",
 			},
 			{
+				Name:        "pinnedAt",
+				FieldMapKey: "pinnedAt",
+			},
+			{
+				Name:        "pinnedById",
+				FieldMapKey: "pinnedById",
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:        "resolvedById",
+				FieldMapKey: "resolvedById",
+			},
+			{
+				Name:        "requiresAcknowledgment",
+				FieldMapKey: "requiresAcknowledgment",
+			},
+			{
+				Name:        "deletedAt",
+				FieldMapKey: "deletedAt",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -8888,9 +9598,66 @@ func init() {
 				},
 			},
 			{
+				Name:        "pinnedBy",
+				FieldMapKey: "pinnedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "resolvedBy",
+				FieldMapKey: "resolvedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
 				Name: "mentionedUsers",
 				Relation: &RelationSpec{
 					Target: &ShipmentCommentMentionSpec,
+				},
+			},
+			{
+				Name: "acknowledgments",
+				Relation: &RelationSpec{
+					Target: &ShipmentCommentAcknowledgmentSpec,
+				},
+			},
+			{
+				Name:    "attachments",
+				Special: "attachments",
+			},
+		},
+	}
+
+	ShipmentCommentAcknowledgmentSpec = TypeSpec{
+		TypeName: "ShipmentCommentAcknowledgment",
+		FieldMap: buncolgen.ShipmentCommentAcknowledgmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "commentId",
+				FieldMapKey: "commentId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
 				},
 			},
 		},

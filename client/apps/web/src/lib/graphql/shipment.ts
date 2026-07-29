@@ -1,4 +1,5 @@
 import {
+  AcknowledgeShipmentCommentDocument,
   BulkTransferShipmentsToBillingDocument,
   CalculateShipmentDistanceDocument,
   CalculateShipmentLoadingOptimizationDocument,
@@ -12,9 +13,12 @@ import {
   DuplicateShipmentDocument,
   ExceptionShipmentsDocument,
   MapShipmentsDocument,
+  PinShipmentCommentDocument,
   RecalculateShipmentDistanceDocument,
+  ResolveShipmentCommentDocument,
   ShipmentBillingReadinessDocument,
   ShipmentCommentCountDocument,
+  ShipmentCommentRepliesDocument,
   ShipmentCommentsDocument,
   ShipmentCommandCenterTableDocument,
   ShipmentDetailDocument,
@@ -28,6 +32,8 @@ import {
   TransferShipmentToBillingDocument,
   UnassignedShipmentsDocument,
   UncancelShipmentDocument,
+  UnpinShipmentCommentDocument,
+  UnresolveShipmentCommentDocument,
   UpdateShipmentCommentDocument,
   UpdateShipmentDocument,
   type BillType,
@@ -37,13 +43,14 @@ import {
   type ShipmentBulkTransferToBillingInput,
   type ShipmentCommentInput,
   type ShipmentCommentUpdateInput,
+  type ShipmentCommentsFilterInput,
   type ShipmentCommandCenterTableQueryVariables,
   type ShipmentCommodityInput,
   type ShipmentDuplicateInput,
-	type ShipmentInput,
-	type ShipmentLoadingOptimizationInput,
-	type ShipmentMoveInput,
-	type ShipmentPreviousRatesInput,
+  type ShipmentInput,
+  type ShipmentLoadingOptimizationInput,
+  type ShipmentMoveInput,
+  type ShipmentPreviousRatesInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
@@ -249,12 +256,14 @@ export async function getShipmentPageAnalyticsGraphQL(req: {
   return data.shipmentAnalytics;
 }
 
-export async function listShipmentEventsGraphQL(req: {
-  shipmentId?: string;
-  types?: ShipmentEventType[];
-  limit?: number;
-  before?: number;
-} = {}): Promise<ShipmentEventList> {
+export async function listShipmentEventsGraphQL(
+  req: {
+    shipmentId?: string;
+    types?: ShipmentEventType[];
+    limit?: number;
+    before?: number;
+  } = {},
+): Promise<ShipmentEventList> {
   const data = await requestShipmentGraphQL({
     document: ShipmentEventsDocument,
     operationName: "ShipmentEvents",
@@ -447,9 +456,7 @@ export async function getShipmentPreviousRatesGraphQL(request: GetPreviousRatesR
   return data.shipmentPreviousRates;
 }
 
-export async function calculateShipmentLoadingOptimizationGraphQL(
-  req: LoadingOptimizationRequest,
-) {
+export async function calculateShipmentLoadingOptimizationGraphQL(req: LoadingOptimizationRequest) {
   const data = await requestShipmentGraphQL({
     document: CalculateShipmentLoadingOptimizationDocument,
     operationName: "CalculateShipmentLoadingOptimization",
@@ -464,6 +471,7 @@ export async function listShipmentCommentsGraphQL(req: {
   shipmentId: Shipment["id"];
   limit: number;
   after?: string | null;
+  filter?: ShipmentCommentsFilterInput | null;
 }): Promise<GenericLimitOffsetResponse<ShipmentComment>> {
   const data = await requestShipmentGraphQL({
     document: ShipmentCommentsDocument,
@@ -472,9 +480,29 @@ export async function listShipmentCommentsGraphQL(req: {
       shipmentId: req.shipmentId,
       first: req.limit,
       after: req.after ?? undefined,
+      filter: req.filter ?? undefined,
     },
   });
   return connectionToLimitOffset(data.shipmentComments);
+}
+
+export async function listShipmentCommentRepliesGraphQL(req: {
+  shipmentId: Shipment["id"];
+  commentId: ShipmentComment["id"];
+  limit: number;
+  after?: string | null;
+}): Promise<GenericLimitOffsetResponse<ShipmentComment>> {
+  const data = await requestShipmentGraphQL({
+    document: ShipmentCommentRepliesDocument,
+    operationName: "ShipmentCommentReplies",
+    variables: {
+      shipmentId: req.shipmentId,
+      commentId: req.commentId,
+      first: req.limit,
+      after: req.after ?? undefined,
+    },
+  });
+  return connectionToLimitOffset(data.shipmentCommentReplies);
 }
 
 export async function getShipmentCommentCountGraphQL(shipmentId: Shipment["id"]) {
@@ -523,6 +551,66 @@ export async function deleteShipmentCommentGraphQL(
   return data.deleteShipmentComment;
 }
 
+export async function pinShipmentCommentGraphQL(
+  shipmentId: Shipment["id"],
+  commentId: ShipmentComment["id"],
+) {
+  const data = await requestShipmentGraphQL({
+    document: PinShipmentCommentDocument,
+    operationName: "PinShipmentComment",
+    variables: { shipmentId, commentId },
+  });
+  return data.pinShipmentComment as ShipmentComment;
+}
+
+export async function unpinShipmentCommentGraphQL(
+  shipmentId: Shipment["id"],
+  commentId: ShipmentComment["id"],
+) {
+  const data = await requestShipmentGraphQL({
+    document: UnpinShipmentCommentDocument,
+    operationName: "UnpinShipmentComment",
+    variables: { shipmentId, commentId },
+  });
+  return data.unpinShipmentComment as ShipmentComment;
+}
+
+export async function resolveShipmentCommentGraphQL(
+  shipmentId: Shipment["id"],
+  commentId: ShipmentComment["id"],
+) {
+  const data = await requestShipmentGraphQL({
+    document: ResolveShipmentCommentDocument,
+    operationName: "ResolveShipmentComment",
+    variables: { shipmentId, commentId },
+  });
+  return data.resolveShipmentComment as ShipmentComment;
+}
+
+export async function unresolveShipmentCommentGraphQL(
+  shipmentId: Shipment["id"],
+  commentId: ShipmentComment["id"],
+) {
+  const data = await requestShipmentGraphQL({
+    document: UnresolveShipmentCommentDocument,
+    operationName: "UnresolveShipmentComment",
+    variables: { shipmentId, commentId },
+  });
+  return data.unresolveShipmentComment as ShipmentComment;
+}
+
+export async function acknowledgeShipmentCommentGraphQL(
+  shipmentId: Shipment["id"],
+  commentId: ShipmentComment["id"],
+) {
+  const data = await requestShipmentGraphQL({
+    document: AcknowledgeShipmentCommentDocument,
+    operationName: "AcknowledgeShipmentComment",
+    variables: { shipmentId, commentId },
+  });
+  return data.acknowledgeShipmentComment as ShipmentComment;
+}
+
 function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimitOffsetResponse<T> {
   const results = (connection.edges ?? []).map((edge) => edge.node as T);
   const totalCount = connection.totalCount ?? results.length;
@@ -543,7 +631,9 @@ function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimi
   };
 }
 
-function toShipmentInput(payload: Shipment | ShipmentCreateInput | ShipmentUpdateInput): ShipmentInput {
+function toShipmentInput(
+  payload: Shipment | ShipmentCreateInput | ShipmentUpdateInput,
+): ShipmentInput {
   return {
     sourceDocumentId: payload.sourceDocumentId,
     serviceTypeId: payload.serviceTypeId,
@@ -604,25 +694,26 @@ function toShipmentMoveInput(move: Shipment["moves"][number]): ShipmentMoveInput
     distanceUnits: move.distanceUnits,
     distanceMetadata: move.distanceMetadata,
     version: move.version,
-    stops: move.stops?.map((stop) => ({
-      id: stop.id,
-      shipmentMoveId: stop.shipmentMoveId,
-      locationId: stop.locationId,
-      status: stop.status,
-      type: stop.type,
-      scheduleType: stop.scheduleType,
-      sequence: stop.sequence,
-      pieces: stop.pieces,
-      weight: stop.weight,
-      scheduledWindowStart: stop.scheduledWindowStart,
-      scheduledWindowEnd: stop.scheduledWindowEnd,
-      actualArrival: stop.actualArrival,
-      actualDeparture: stop.actualDeparture,
-      countLateOverride: stop.countLateOverride,
-      countDetentionOverride: stop.countDetentionOverride,
-      addressLine: stop.addressLine,
-      version: stop.version,
-    })) ?? [],
+    stops:
+      move.stops?.map((stop) => ({
+        id: stop.id,
+        shipmentMoveId: stop.shipmentMoveId,
+        locationId: stop.locationId,
+        status: stop.status,
+        type: stop.type,
+        scheduleType: stop.scheduleType,
+        sequence: stop.sequence,
+        pieces: stop.pieces,
+        weight: stop.weight,
+        scheduledWindowStart: stop.scheduledWindowStart,
+        scheduledWindowEnd: stop.scheduledWindowEnd,
+        actualArrival: stop.actualArrival,
+        actualDeparture: stop.actualDeparture,
+        countLateOverride: stop.countLateOverride,
+        countDetentionOverride: stop.countDetentionOverride,
+        addressLine: stop.addressLine,
+        version: stop.version,
+      })) ?? [],
   };
 }
 
@@ -640,6 +731,10 @@ function toAdditionalChargeInput(
     fuelSurchargeProgramId:
       "fuelSurchargeProgramId" in charge
         ? ((charge.fuelSurchargeProgramId as string | null | undefined) ?? undefined)
+        : undefined,
+    detentionOccurrenceId:
+      "detentionOccurrenceId" in charge
+        ? ((charge.detentionOccurrenceId as string | null | undefined) ?? undefined)
         : undefined,
     version: charge.version,
   };

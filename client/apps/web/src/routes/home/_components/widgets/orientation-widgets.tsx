@@ -3,6 +3,7 @@ import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionCommand } from "@/config/navigation.types";
 import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
 import { useRecentActivityInfinite } from "@/hooks/use-attention";
+import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { queries } from "@/lib/queries";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
@@ -195,11 +196,14 @@ export function NotificationsWidget({ widget }: WidgetProps) {
     ...queries.notification.feed({ first: limit, unreadOnly: true }),
     select: (data) => data.results,
   });
+  // The badge is the true unread total, not the page size the list happened to
+  // fetch — a widget showing 8 rows over 40 unread must not read as "8".
+  const { data: unreadCount } = useUnreadNotificationCount();
 
   return (
     <WidgetShell
       title={widget.title || "Notifications"}
-      badge={<WidgetCount value={notifications?.length} />}
+      badge={<WidgetCount value={unreadCount ?? notifications?.length} />}
     >
       {isLoading ? (
         <WidgetSkeleton />

@@ -1,7 +1,7 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatClockDurationMs, formatRange } from "@trenova/shared/lib/date";
+import { daysUntil, formatClockDurationMs, formatRange } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   fetchMyHosState,
@@ -21,10 +21,6 @@ function greeting(): string {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
-}
-
-function daysUntil(unix: number): number {
-  return Math.max(0, Math.ceil((unix - Date.now() / 1000) / 86400));
 }
 
 function Section({
@@ -128,9 +124,9 @@ export function DashHomePage() {
                 {formatRange(period.data.periodStart, period.data.periodEnd)}
               </span>
               <span className="rounded-full bg-teal-500/15 px-2.5 py-1 text-xs font-medium text-teal-300">
-                {daysUntil(period.data.payDate) === 0
+                {Math.max(0, daysUntil(period.data.payDate)) === 0
                   ? "Settles today"
-                  : `Settles in ${daysUntil(period.data.payDate)}d`}
+                  : `Settles in ${Math.max(0, daysUntil(period.data.payDate))}d`}
               </span>
             </div>
           </>

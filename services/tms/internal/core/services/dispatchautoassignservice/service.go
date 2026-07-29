@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -28,8 +29,6 @@ const (
 
 	promptVersion = "dispatch-auto-assign-v1"
 
-	// maxPlanMoves bounds one optimizer run. The solver is O(n^3); beyond this the run
-	// belongs in a scheduled job rather than a request a dispatcher is waiting on.
 	maxPlanMoves = 400
 )
 
@@ -70,15 +69,10 @@ func New(p Params) *Service {
 	}
 }
 
-// Plan covers the open board as a whole. It scores every eligible driver against every
-// uncovered move, solves the resulting cost matrix for the global optimum, and records
-// each chosen pairing as an agent proposal.
-//
-// Solving globally rather than greedily is the point: taking the best pair repeatedly
-// spends the strongest driver on whichever load happens to sort first and leaves later
-// loads uncoverable. This is the behavior dispatchers distrust in auto-assignment, and
-// avoiding it is what makes the feature usable.
-func (s *Service) Plan(ctx context.Context, req *PlanRequest) (*Plan, error) {
+func (s *Service) Plan(
+	ctx context.Context,
+	req *portservices.DispatchPlanRequest,
+) (*portservices.DispatchPlan, error) {
 	control, err := s.dispatchControlRepo.GetOrCreate(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -100,7 +94,7 @@ func (s *Service) Plan(ctx context.Context, req *PlanRequest) (*Plan, error) {
 	}
 
 	now := timeutils.NowUnix()
-	filter := s.buildFilter(req, control, now)
+	filter := buildFilter(req, control, now)
 
 	moves, err := s.consoleRepo.ListBoardMoves(ctx, filter)
 	if err != nil {
@@ -115,53 +109,60 @@ func (s *Service) Plan(ctx context.Context, req *PlanRequest) (*Plan, error) {
 	}
 
 	if len(moves) == 0 {
-		return &Plan{
-			Assignments:  []*PlannedAssignment{},
-			Uncovered:    []*UncoveredMove{},
-			ShadowMode:   agentControl.ShadowMode,
-			AutonomyTier: resolveTier(agentControl),
-			GeneratedAt:  now,
-		}, nil
+		return emptyPlan(agentControl, now), nil
 	}
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo:  req.TenantInfo,
 		Filter:      filter,
 		Control:     control,
-		CustomerIDs: customerIDsOf(moves),
+		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	plan := s.solve(moves, snapshot, control, agentControl, now)
+	plan := s.solve(&solveParams{
+		Moves:        moves,
+		Snapshot:     snapshot,
+		Control:      control,
+		AgentControl: agentControl,
+		Now:          now,
+	})
 
 	if err = s.recordPlan(ctx, req, agentControl, plan); err != nil {
 		return nil, err
 	}
 
 	if req.Apply {
-		if err = s.applyAutoExecutable(ctx, req, plan); err != nil {
-			return nil, err
-		}
+		s.applyAutoExecutable(ctx, req, plan)
 	}
 
 	return plan, nil
 }
 
-func (s *Service) buildFilter(
-	req *PlanRequest,
+func emptyPlan(agentControl *tenant.AgentControl, now int64) *portservices.DispatchPlan {
+	return &portservices.DispatchPlan{
+		Assignments:  []*portservices.DispatchPlannedAssignment{},
+		Uncovered:    []*portservices.DispatchUncoveredMove{},
+		ShadowMode:   agentControl.ShadowMode,
+		AutonomyTier: resolveTier(agentControl),
+		GeneratedAt:  now,
+	}
+}
+
+func buildFilter(
+	req *portservices.DispatchPlanRequest,
 	control *dispatchcontrol.DispatchControl,
 	now int64,
 ) *repositories.DispatchBoardFilter {
-	windowStart := req.WindowStart
-	if windowStart <= 0 {
-		windowStart = now
-	}
-	windowEnd := req.WindowEnd
-	if windowEnd <= 0 {
-		windowEnd = now + int64(control.PlanningHorizonHours())*3600
-	}
+	windowStart, windowEnd := dispatchcandidateservice.ResolveWindow(
+		req.WindowStart,
+		req.WindowEnd,
+		control,
+		now,
+	)
 
 	return &repositories.DispatchBoardFilter{
 		TenantInfo:   req.TenantInfo,
@@ -173,26 +174,37 @@ func (s *Service) buildFilter(
 	}
 }
 
-// solve builds the move-by-driver cost matrix and reads the optimum back out of it.
-func (s *Service) solve(
-	moves []*repositories.BoardMove,
-	snapshot *dispatchcandidateservice.FleetSnapshot,
-	control *dispatchcontrol.DispatchControl,
-	agentControl *tenant.AgentControl,
-	now int64,
-) *Plan {
-	drivers := snapshot.Drivers
-	cost := make([][]float64, len(moves))
-	scores := make([][]*dispatchcandidateservice.CandidateScore, len(moves))
+type solveParams struct {
+	Moves        []*repositories.BoardMove
+	Snapshot     *dispatchcandidateservice.FleetSnapshot
+	Control      *dispatchcontrol.DispatchControl
+	AgentControl *tenant.AgentControl
+	Now          int64
+}
 
-	for i, move := range moves {
+func (s *Service) solve(p *solveParams) *portservices.DispatchPlan {
+	drivers := p.Snapshot.Drivers
+	if len(drivers) == 0 {
+		plan := emptyPlan(p.AgentControl, p.Now)
+		plan.Uncovered = make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves))
+		for _, move := range p.Moves {
+			plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))
+		}
+		return plan
+	}
+
+	cost := make([][]float64, len(p.Moves))
+	scores := make([][]*dispatchcandidateservice.CandidateScore, len(p.Moves))
+	byWorker := make(map[pulid.ID]*dispatchcandidateservice.CandidateScore, len(drivers))
+
+	for i, move := range p.Moves {
 		ranked := s.candidates.RankCandidates(&dispatchcandidateservice.RankRequest{
 			Move:           move,
-			Snapshot:       snapshot,
+			Snapshot:       p.Snapshot,
 			IncludeBlocked: true,
 		})
 
-		byWorker := make(map[pulid.ID]*dispatchcandidateservice.CandidateScore, len(ranked))
+		clear(byWorker)
 		for _, score := range ranked {
 			byWorker[score.WorkerID] = score
 		}
@@ -202,44 +214,55 @@ func (s *Service) solve(
 		for j, driver := range drivers {
 			score := byWorker[driver.WorkerID]
 			scores[i][j] = score
-			cost[i][j] = costFor(score, control)
+			cost[i][j] = costFor(score, p.Control)
 		}
 	}
 
-	solution := assignmentsolver.Solve(cost)
-	return s.buildPlan(moves, solution, scores, control, agentControl, now)
+	return buildPlan(&buildPlanParams{
+		Moves:        p.Moves,
+		Solution:     assignmentsolver.Solve(cost),
+		Scores:       scores,
+		Control:      p.Control,
+		AgentControl: p.AgentControl,
+		Now:          p.Now,
+	})
 }
 
-func (s *Service) buildPlan(
-	moves []*repositories.BoardMove,
-	solution assignmentsolver.Result,
-	scores [][]*dispatchcandidateservice.CandidateScore,
-	control *dispatchcontrol.DispatchControl,
-	agentControl *tenant.AgentControl,
-	now int64,
-) *Plan {
-	tier := resolveTier(agentControl)
-	threshold := control.ConfidenceThreshold()
+type buildPlanParams struct {
+	Moves        []*repositories.BoardMove
+	Solution     assignmentsolver.Result
+	Scores       [][]*dispatchcandidateservice.CandidateScore
+	Control      *dispatchcontrol.DispatchControl
+	AgentControl *tenant.AgentControl
+	Now          int64
+}
 
-	plan := &Plan{
-		Assignments:  make([]*PlannedAssignment, 0, len(moves)),
-		Uncovered:    make([]*UncoveredMove, 0),
-		ShadowMode:   agentControl.ShadowMode,
+func buildPlan(p *buildPlanParams) *portservices.DispatchPlan {
+	tier := resolveTier(p.AgentControl)
+	threshold := p.Control.ConfidenceThreshold()
+
+	plan := &portservices.DispatchPlan{
+		Assignments:  make([]*portservices.DispatchPlannedAssignment, 0, len(p.Moves)),
+		Uncovered:    make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves)),
+		ShadowMode:   p.AgentControl.ShadowMode,
 		AutonomyTier: tier,
-		GeneratedAt:  now,
+		GeneratedAt:  p.Now,
 	}
 
-	for i, move := range moves {
-		column := solution.RowAssignment[i]
+	for i, move := range p.Moves {
+		column := assignmentsolver.Unassigned
+		if i < len(p.Solution.RowAssignment) {
+			column = p.Solution.RowAssignment[i]
+		}
 		if column == assignmentsolver.Unassigned {
-			plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, scores[i]))
+			plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, p.Scores[i], p.Control))
 			continue
 		}
 
-		score := scores[i][column]
+		score := p.Scores[i][column]
 		confidence := confidenceFor(score)
 
-		planned := &PlannedAssignment{
+		planned := &portservices.DispatchPlannedAssignment{
 			MoveID:     move.MoveID,
 			ProNumber:  move.ProNumber,
 			WorkerID:   score.WorkerID,
@@ -251,11 +274,8 @@ func (s *Service) buildPlan(
 			Rationale:  rationaleFor(score, move),
 		}
 
-		// Auto-execution needs all three: the tier allows it, the organization is not
-		// merely watching, and this particular pairing clears the confidence bar. Anything
-		// short of that stays a proposal for a dispatcher rather than being dropped.
 		planned.AutoExecutable = tier == agent.TierAutoExecute &&
-			!agentControl.ShadowMode &&
+			!p.AgentControl.ShadowMode &&
 			!score.Blocked() &&
 			confidence.GreaterThanOrEqual(threshold)
 
@@ -266,13 +286,12 @@ func (s *Service) buildPlan(
 	return plan
 }
 
-// uncoveredFor explains why a move went uncovered, preferring the closest candidate's
-// blocking findings over a generic message.
 func uncoveredFor(
 	move *repositories.BoardMove,
 	scores []*dispatchcandidateservice.CandidateScore,
-) *UncoveredMove {
-	uncovered := &UncoveredMove{
+	control *dispatchcontrol.DispatchControl,
+) *portservices.DispatchUncoveredMove {
+	uncovered := &portservices.DispatchUncoveredMove{
 		MoveID:              move.MoveID,
 		ProNumber:           move.ProNumber,
 		Reason:              "No eligible driver was available for this move",
@@ -289,27 +308,40 @@ func uncoveredFor(
 		}
 	}
 
-	if best != nil && len(best.Findings) > 0 {
+	if best == nil {
+		return uncovered
+	}
+
+	switch {
+	case best.Blocked():
 		uncovered.BestBlockedFindings = best.Findings
 		uncovered.Reason = fmt.Sprintf(
-			"Closest candidate %s was disqualified: %s",
+			"Closest candidate %s was disqualified",
 			best.WorkerName,
-			best.Findings[0].Message,
+		)
+	case deadheadExceedsLimit(best, control):
+		uncovered.Reason = fmt.Sprintf(
+			"Closest candidate %s exceeds the %d mile deadhead limit (%.0f empty miles)",
+			best.WorkerName,
+			*control.AutoAssignMaxDeadheadMiles,
+			*best.DeadheadMiles,
+		)
+	default:
+		uncovered.Reason = fmt.Sprintf(
+			"Closest candidate %s was eligible but no feasible pairing remained "+
+				"after higher-value assignments were made",
+			best.WorkerName,
 		)
 	}
 
 	return uncovered
 }
 
-// recordPlan opens an agent run and writes one proposal per chosen pairing, so every
-// automated decision carries the same audit trail as the billing agent's. Shadow mode
-// still records the run: watching what the agent would have done is the entire point of
-// that mode.
 func (s *Service) recordPlan(
 	ctx context.Context,
-	req *PlanRequest,
+	req *portservices.DispatchPlanRequest,
 	agentControl *tenant.AgentControl,
-	plan *Plan,
+	plan *portservices.DispatchPlan,
 ) error {
 	if len(plan.Assignments) == 0 {
 		return nil
@@ -333,12 +365,17 @@ func (s *Service) recordPlan(
 
 	tier := resolveTier(agentControl)
 	for _, planned := range plan.Assignments {
+		toolParams, paramsErr := toolParamsFor(planned)
+		if paramsErr != nil {
+			return paramsErr
+		}
+
 		proposal, createErr := s.proposalRepo.Create(ctx, &agent.AgentProposal{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			RunID:          run.ID,
 			ToolName:       toolNameAssignMove,
-			ToolParams:     toolParamsFor(planned),
+			ToolParams:     toolParams,
 			Confidence:     planned.Confidence,
 			Rationale:      planned.Rationale,
 			Evidence:       evidenceFor(planned.Score, moveStubFor(planned)),
@@ -354,16 +391,13 @@ func (s *Service) recordPlan(
 	return nil
 }
 
-// applyAutoExecutable commits only the pairings that cleared every gate. Everything else
-// stays pending for a dispatcher — an assignment the agent was not sure about must remain
-// visible rather than being quietly dropped from the board.
 func (s *Service) applyAutoExecutable(
 	ctx context.Context,
-	req *PlanRequest,
-	plan *Plan,
-) error {
+	req *portservices.DispatchPlanRequest,
+	plan *portservices.DispatchPlan,
+) {
 	if plan.ShadowMode {
-		return nil
+		return
 	}
 
 	for _, planned := range plan.Assignments {
@@ -383,9 +417,6 @@ func (s *Service) applyAutoExecutable(
 		}
 
 		if _, err := s.assignments.AssignToMove(ctx, assignReq); err != nil {
-			// A pairing that fails at write time stays a proposal rather than failing the
-			// whole run: the board is still covered by everything that did succeed, and the
-			// dispatcher sees exactly which one needs a human.
 			planned.AutoExecutable = false
 			s.l.Warn(
 				"auto-assign proposal could not be executed and remains pending",
@@ -404,32 +435,44 @@ func (s *Service) applyAutoExecutable(
 				Status:     agent.ProposalStatusAccepted,
 			},
 		); err != nil {
-			return err
+			s.l.Error(
+				"auto-assign executed but the proposal status could not be updated",
+				zap.String("moveId", planned.MoveID.String()),
+				zap.String("proposalId", planned.ProposalID.String()),
+				zap.Error(err),
+			)
 		}
 	}
-
-	return nil
 }
 
-func toolParamsFor(planned *PlannedAssignment) map[string]any {
-	params := map[string]any{
-		"shipmentMoveId":  planned.MoveID.String(),
-		"primaryWorkerId": planned.WorkerID.String(),
-		"tractorId":       planned.TractorID.String(),
+type assignMoveToolParams struct {
+	ShipmentMoveID  string `json:"shipmentMoveId"`
+	PrimaryWorkerID string `json:"primaryWorkerId"`
+	TractorID       string `json:"tractorId"`
+	TrailerID       string `json:"trailerId,omitempty"`
+}
+
+func toolParamsFor(planned *portservices.DispatchPlannedAssignment) (map[string]any, error) {
+	params := assignMoveToolParams{
+		ShipmentMoveID:  planned.MoveID.String(),
+		PrimaryWorkerID: planned.WorkerID.String(),
+		TractorID:       planned.TractorID.String(),
 	}
 	if !planned.TrailerID.IsNil() {
-		params["trailerId"] = planned.TrailerID.String()
+		params.TrailerID = planned.TrailerID.String()
 	}
-	return params
-}
 
-// moveStubFor reconstructs the minimum move context the evidence builder needs from an
-// already-planned assignment.
-func moveStubFor(planned *PlannedAssignment) *repositories.BoardMove {
-	return &repositories.BoardMove{
-		MoveID:    planned.MoveID,
-		ProNumber: planned.ProNumber,
+	raw, err := sonic.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("marshal assign move tool params: %w", err)
 	}
+
+	out := make(map[string]any, 4)
+	if err = sonic.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("unmarshal assign move tool params: %w", err)
+	}
+
+	return out, nil
 }
 
 func resolveTier(agentControl *tenant.AgentControl) agent.AutonomyTier {
@@ -443,7 +486,7 @@ func resolveTier(agentControl *tenant.AgentControl) agent.AutonomyTier {
 	return tier
 }
 
-func actorFor(req *PlanRequest) *portservices.RequestActor {
+func actorFor(req *portservices.DispatchPlanRequest) *portservices.RequestActor {
 	return &portservices.RequestActor{
 		PrincipalType:  portservices.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
@@ -451,20 +494,4 @@ func actorFor(req *PlanRequest) *portservices.RequestActor {
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
-}
-
-func customerIDsOf(moves []*repositories.BoardMove) []pulid.ID {
-	seen := make(map[pulid.ID]struct{}, len(moves))
-	ids := make([]pulid.ID, 0, len(moves))
-	for _, move := range moves {
-		if move.CustomerID.IsNil() {
-			continue
-		}
-		if _, ok := seen[move.CustomerID]; ok {
-			continue
-		}
-		seen[move.CustomerID] = struct{}{}
-		ids = append(ids, move.CustomerID)
-	}
-	return ids
 }

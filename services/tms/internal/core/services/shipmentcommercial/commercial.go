@@ -560,55 +560,85 @@ func (c *Calculator) syncDetentionFromPolicyEngine(
 		return err
 	}
 
-	removeDetentionOccurrenceCharges(entity)
-
 	if result == nil {
+		reconcileDetentionOccurrenceCharges(entity, nil)
 		return nil
 	}
 
-	for _, occurrence := range result.Occurrences {
-		if occurrence == nil || !occurrence.Status.IsBillable() {
-			continue
-		}
-		if occurrence.BillableAmount.LessThanOrEqual(decimal.Zero) {
-			continue
-		}
-
-		appendDetentionOccurrenceCharge(entity, occurrence)
-	}
+	reconcileDetentionOccurrenceCharges(entity, result.Occurrences)
 
 	return nil
 }
 
-func removeDetentionOccurrenceCharges(entity *shipment.Shipment) {
-	filtered := entity.AdditionalCharges[:0]
+// reconcileDetentionOccurrenceCharges rewrites the shipment's detention charges
+// so exactly one charge survives per billable occurrence. Existing rows are
+// reused rather than replaced: a charge that keeps its identity keeps its audit
+// trail, and the occurrence it points at stays resolvable after the save.
+func reconcileDetentionOccurrenceCharges(
+	entity *shipment.Shipment,
+	occurrences []*detention.DetentionOccurrence,
+) {
+	existing := make(map[pulid.ID]*shipment.AdditionalCharge, len(occurrences))
+	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges))
+
 	for _, charge := range entity.AdditionalCharges {
 		if charge == nil {
 			continue
 		}
-		if charge.IsSystemGenerated && charge.DetentionOccurrenceID != nil {
+
+		if !charge.IsSystemGenerated || charge.DetentionOccurrenceID == nil {
+			filtered = append(filtered, charge)
 			continue
 		}
-		filtered = append(filtered, charge)
+
+		if _, ok := existing[*charge.DetentionOccurrenceID]; !ok {
+			existing[*charge.DetentionOccurrenceID] = charge
+		}
 	}
+
+	for _, occurrence := range occurrences {
+		if !detentionOccurrenceIsChargeable(occurrence) {
+			continue
+		}
+
+		filtered = append(filtered, detentionOccurrenceCharge(
+			entity,
+			occurrence,
+			existing[occurrence.ID],
+		))
+	}
+
 	entity.AdditionalCharges = filtered
 }
 
-func appendDetentionOccurrenceCharge(
+func detentionOccurrenceIsChargeable(occurrence *detention.DetentionOccurrence) bool {
+	return occurrence != nil &&
+		occurrence.PolicySnapshot != nil &&
+		occurrence.Status.IsBillable() &&
+		occurrence.BillableAmount.GreaterThan(decimal.Zero)
+}
+
+func detentionOccurrenceCharge(
 	entity *shipment.Shipment,
 	occurrence *detention.DetentionOccurrence,
-) {
+	existing *shipment.AdditionalCharge,
+) *shipment.AdditionalCharge {
 	occurrenceID := occurrence.ID
 
-	entity.AdditionalCharges = append(entity.AdditionalCharges, &shipment.AdditionalCharge{
-		OrganizationID:        entity.OrganizationID,
-		BusinessUnitID:        entity.BusinessUnitID,
-		ShipmentID:            entity.ID,
-		IsSystemGenerated:     true,
-		AccessorialChargeID:   occurrence.PolicySnapshot.AccessorialChargeID,
-		Method:                accessorialcharge.MethodFlat,
-		Amount:                occurrence.BillableAmount,
-		Unit:                  1,
-		DetentionOccurrenceID: &occurrenceID,
-	})
+	charge := existing
+	if charge == nil {
+		charge = &shipment.AdditionalCharge{}
+	}
+
+	charge.OrganizationID = entity.OrganizationID
+	charge.BusinessUnitID = entity.BusinessUnitID
+	charge.ShipmentID = entity.ID
+	charge.IsSystemGenerated = true
+	charge.AccessorialChargeID = occurrence.PolicySnapshot.AccessorialChargeID
+	charge.Method = accessorialcharge.MethodFlat
+	charge.Amount = occurrence.BillableAmount
+	charge.Unit = 1
+	charge.DetentionOccurrenceID = &occurrenceID
+
+	return charge
 }

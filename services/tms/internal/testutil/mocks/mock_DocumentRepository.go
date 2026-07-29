@@ -483,6 +483,74 @@ func (_c *MockDocumentRepository_GetByResourceID_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// GetByResourceIDs provides a mock function for the type MockDocumentRepository
+func (_mock *MockDocumentRepository) GetByResourceIDs(ctx context.Context, req *repositories.GetDocumentsByResourceIDsRequest) ([]*document.Document, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByResourceIDs")
+	}
+
+	var r0 []*document.Document
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetDocumentsByResourceIDsRequest) ([]*document.Document, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetDocumentsByResourceIDsRequest) []*document.Document); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*document.Document)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetDocumentsByResourceIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentRepository_GetByResourceIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByResourceIDs'
+type MockDocumentRepository_GetByResourceIDs_Call struct {
+	*mock.Call
+}
+
+// GetByResourceIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetDocumentsByResourceIDsRequest
+func (_e *MockDocumentRepository_Expecter) GetByResourceIDs(ctx any, req any) *MockDocumentRepository_GetByResourceIDs_Call {
+	return &MockDocumentRepository_GetByResourceIDs_Call{Call: _e.mock.On("GetByResourceIDs", ctx, req)}
+}
+
+func (_c *MockDocumentRepository_GetByResourceIDs_Call) Run(run func(ctx context.Context, req *repositories.GetDocumentsByResourceIDsRequest)) *MockDocumentRepository_GetByResourceIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetDocumentsByResourceIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetDocumentsByResourceIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentRepository_GetByResourceIDs_Call) Return(documents []*document.Document, err error) *MockDocumentRepository_GetByResourceIDs_Call {
+	_c.Call.Return(documents, err)
+	return _c
+}
+
+func (_c *MockDocumentRepository_GetByResourceIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetDocumentsByResourceIDsRequest) ([]*document.Document, error)) *MockDocumentRepository_GetByResourceIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByStoragePath provides a mock function for the type MockDocumentRepository
 func (_mock *MockDocumentRepository) GetByStoragePath(ctx context.Context, req repositories.GetDocumentByStoragePathRequest) (*document.Document, error) {
 	ret := _mock.Called(ctx, req)

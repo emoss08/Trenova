@@ -11,6 +11,7 @@ func (s SeedID) String() string {
 
 const (
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
+	SeedDetention SeedID = "Detention" // from 13_detention.go
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
 	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
 	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
@@ -37,6 +38,7 @@ const (
 
 var AllSeedIDs = []SeedID{
 	SeedAdminAccount,
+	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDocumentType,
 	SeedDotHazmatReferences,
@@ -75,6 +77,7 @@ var BaseSeedIDs = []SeedID{
 }
 
 var DevelopmentSeedIDs = []SeedID{
+	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDriverPay,
 	SeedDriverPayLedger,

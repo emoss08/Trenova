@@ -5,9 +5,8 @@ export function DispatchConsolePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Dispatcher Console",
-        description:
-          "Cover open moves against available capacity without opening a shipment",
+        title: "Console",
+        description: "Cover open moves against available capacity without opening a shipment",
       }}
     >
       <DispatchConsoleContent />

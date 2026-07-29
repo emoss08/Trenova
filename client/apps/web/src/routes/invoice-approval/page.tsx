@@ -41,6 +41,7 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { invoiceApprovalSearchParamsParser } from "./use-invoice-approval-state";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const adjustmentKindChoices: Array<{ label: string; value: InvoiceAdjustmentKind }> = [
   { label: "Credit Only", value: "CreditOnly" },
@@ -653,6 +654,5 @@ function ArtifactLink({ to, label }: { to: string; label: string }) {
 }
 
 function formatTimestamp(value: number | null | undefined) {
-  if (!value) return "Not recorded";
-  return new Date(value * 1000).toLocaleString();
+  return formatUnixDateTime(value, { fallback: "Not recorded" });
 }

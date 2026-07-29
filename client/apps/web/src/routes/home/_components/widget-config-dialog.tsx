@@ -10,6 +10,13 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
+import {
+  NumberField as NumberFieldRoot,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@trenova/shared/components/ui/number-field";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   useCannedReports,
@@ -91,25 +98,25 @@ export function WidgetConfigDialog({
           )}
 
           {kind === "queue" && (
-            <NumberField
+            <ConfigNumberField
               id="widget-limit"
               label="Rows to show"
-              value={draft.config.limit ?? 0}
+              value={draft.config.limit ?? null}
               min={0}
               max={50}
-              hint="0 shows as many as fit."
+              hint="Leave empty to show as many as fit."
               onChange={(value) => patchConfig({ limit: value })}
             />
           )}
 
           {kind === "trend" && (
-            <NumberField
+            <ConfigNumberField
               id="widget-window"
               label="Window (days)"
-              value={draft.config.windowDays ?? 0}
+              value={draft.config.windowDays ?? null}
               min={0}
               max={365}
-              hint="0 uses the organization default."
+              hint="Leave empty to use the organization default."
               onChange={(value) => patchConfig({ windowDays: value })}
             />
           )}
@@ -137,7 +144,7 @@ export function WidgetConfigDialog({
                 rows={5}
                 maxLength={MAX_ANNOUNCEMENT}
                 value={draft.config.text ?? ""}
-                onChange={(event) => patchConfig({ text: event.target.value })}
+                onChange={(event) => patchConfig({ text: event.target.value || null })}
               />
               <p className="text-2xs text-muted-foreground">
                 {(draft.config.text ?? "").length} / {MAX_ANNOUNCEMENT}
@@ -157,7 +164,7 @@ export function WidgetConfigDialog({
   );
 }
 
-function NumberField({
+export function ConfigNumberField({
   id,
   label,
   value,
@@ -168,26 +175,30 @@ function NumberField({
 }: {
   id: string;
   label: string;
-  value: number;
+  value: number | null;
   min: number;
   max: number;
   hint?: string;
-  onChange: (value: number) => void;
+  onChange: (value: number | null) => void;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input
+      <NumberFieldRoot
         id={id}
-        type="number"
+        value={value}
         min={min}
         max={max}
-        value={value}
-        onChange={(event) => {
-          const parsed = Number(event.target.value);
-          onChange(Number.isFinite(parsed) ? Math.min(Math.max(parsed, min), max) : min);
-        }}
-      />
+        step={1}
+        size="sm"
+        onValueChange={(next) => onChange(next)}
+      >
+        <NumberFieldGroup>
+          <NumberFieldDecrement />
+          <NumberFieldInput />
+          <NumberFieldIncrement />
+        </NumberFieldGroup>
+      </NumberFieldRoot>
       {hint && <p className="text-2xs text-muted-foreground">{hint}</p>}
     </div>
   );

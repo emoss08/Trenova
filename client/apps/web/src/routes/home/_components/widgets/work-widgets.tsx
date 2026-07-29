@@ -129,15 +129,14 @@ export function ExceptionsWidget({ widget }: WidgetProps) {
 }
 
 export function DetentionWatchWidget({ widget, data }: WidgetProps) {
-  const items = data.shipmentAnalytics.detentionWatchlist.items.slice(
-    0,
-    widget.config.limit ?? undefined,
-  );
+  const all = data.shipmentAnalytics.detentionWatchlist.items;
+  // A limit of 0 means "as many as fit", matching the queue lists.
+  const items = all.slice(0, widget.config.limit || undefined);
 
   return (
     <WidgetShell
       title={widget.title || "Detention Watch"}
-      badge={<WidgetCount value={items.length} tone={items.length > 0 ? "warning" : "muted"} />}
+      badge={<WidgetCount value={all.length} tone={all.length > 0 ? "warning" : "muted"} />}
       href={SHIPMENTS_HREF}
     >
       {data.shipmentAnalyticsLoading ? (
@@ -171,15 +170,13 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
 }
 
 export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
-  const items = data.shipmentAnalytics.tomorrowsPickups.pickups.slice(
-    0,
-    widget.config.limit ?? undefined,
-  );
+  const all = data.shipmentAnalytics.tomorrowsPickups.pickups;
+  const items = all.slice(0, widget.config.limit || undefined);
 
   return (
     <WidgetShell
       title={widget.title || "Tomorrow's Pickups"}
-      badge={<WidgetCount value={items.length} />}
+      badge={<WidgetCount value={all.length} />}
       href={SHIPMENTS_HREF}
     >
       {data.shipmentAnalyticsLoading ? (

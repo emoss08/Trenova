@@ -13,6 +13,7 @@ import { formatCompactCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
+import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 
 const cashFlowChartConfig = {
   actual: {
@@ -29,19 +30,12 @@ const cashFlowChartConfig = {
   },
 } satisfies ChartConfig;
 
-function shortDate(unixSeconds: number) {
-  return new Date(unixSeconds * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export function CashFlowForecastCard() {
   const { data: points, isLoading } = useQuery(queries.ar.cashFlowForecast());
 
   const { chartData, nowLabel } = useMemo(() => {
     const data = (points ?? []).map((point) => ({
-      label: shortDate(point.weekStart),
+      label: formatUnixMonthDay(point.weekStart),
       actual: point.isForecast ? null : point.actualMinor / 100,
       expected: point.expectedMinor / 100,
       forecast: point.isForecast ? point.openDueMinor / 100 : null,
@@ -49,7 +43,7 @@ export function CashFlowForecastCard() {
     const firstForecast = (points ?? []).find((point) => point.isForecast);
     return {
       chartData: data,
-      nowLabel: firstForecast ? shortDate(firstForecast.weekStart) : undefined,
+      nowLabel: firstForecast ? formatUnixMonthDay(firstForecast.weekStart) : undefined,
     };
   }, [points]);
 

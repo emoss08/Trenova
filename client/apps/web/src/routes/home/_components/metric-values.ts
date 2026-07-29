@@ -1,5 +1,6 @@
 import type { DeltaTone } from "@/components/kpi/tone";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
+import { formatCompactCurrency } from "@trenova/shared/lib/utils";
 import type { HomeData } from "./use-home-data";
 
 /**
@@ -30,16 +31,6 @@ export type MetricValue = {
 const SHIPMENTS_HREF = "/shipment-management/shipments";
 const RECEIVABLES_HREF = "/accounting/ar/aging";
 
-function compact(value: number): string {
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toLocaleString();
-}
-
-function money(value: number): string {
-  return `$${compact(value)}`;
-}
-
 function minorToMajor(minor: number | null | undefined): number {
   return (minor ?? 0) / 100;
 }
@@ -63,7 +54,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         key,
         label: "Revenue Today",
         shape: "hero",
-        display: money(analytics.revenueToday.total),
+        display: formatCompactCurrency(analytics.revenueToday.total),
         raw: analytics.revenueToday.total,
         delta: analytics.revenueToday.deltaPct,
         deltaLabel: "%",
@@ -124,7 +115,7 @@ function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricVa
         raw: analytics.unassigned.count,
         delta: analytics.unassigned.delta,
         deltaTone: "warning",
-        sub: `${money(analytics.unassigned.revenueWaiting)} waiting`,
+        sub: `${formatCompactCurrency(analytics.unassigned.revenueWaiting)} waiting`,
         href: SHIPMENTS_HREF,
       };
     case "readyToDispatch":
@@ -183,7 +174,7 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
         key,
         label: "Open Receivables",
         shape: "hero",
-        display: money(minorToMajor(overview?.totalOpenMinor)),
+        display: formatCompactCurrency(minorToMajor(overview?.totalOpenMinor)),
         raw: minorToMajor(overview?.totalOpenMinor),
         sub: `${overview?.openInvoiceCount ?? 0} invoices`,
         href: RECEIVABLES_HREF,
@@ -193,7 +184,7 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
         key,
         label: "Overdue",
         shape: "stat",
-        display: money(minorToMajor(overview?.overdueMinor)),
+        display: formatCompactCurrency(minorToMajor(overview?.overdueMinor)),
         raw: minorToMajor(overview?.overdueMinor),
         deltaTone: "danger",
         sub: `${overview?.overdueInvoiceCount ?? 0} invoices · avg ${Math.round(overview?.avgDaysPastDue ?? 0)}d late`,
@@ -224,5 +215,9 @@ function receivablesMetric(key: string, receivables: HomeData["receivables"]): M
  * skeleton instead of a zero it would have to correct.
  */
 export function resolveMetric(key: string, data: HomeData): MetricValue | null {
-  return shipmentMetric(key, data.shipmentAnalytics) ?? receivablesMetric(key, data.receivables);
+  const fromShipments = shipmentMetric(key, data.shipmentAnalytics);
+  if (fromShipments) {
+    return data.shipmentAnalyticsLoading ? null : fromShipments;
+  }
+  return receivablesMetric(key, data.receivables);
 }

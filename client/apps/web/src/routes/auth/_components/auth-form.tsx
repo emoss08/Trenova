@@ -1,6 +1,12 @@
 import { Metadata } from "@/components/metadata";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { PRIVACY_URL, TERMS_URL } from "@trenova/shared/lib/constants";
 import type { TenantLoginMetadata, UserOrganization } from "@trenova/shared/types/organization";
@@ -146,7 +152,7 @@ export function AuthForm({
     <>
       <Metadata title="Sign In" description="Sign in to your Trenova account" />
       <div className="flex max-w-[400px] flex-col gap-6">
-        <Card className="rounded-2xl border-border bg-background backdrop-blur-md">
+        <Card className="rounded-2xl border-border bg-background backdrop-blur-md gap-0">
           <CardHeader className="text-left">
             <m.div
               key={`${authStep}-${formType}-${audience}`}

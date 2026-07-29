@@ -15,13 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
-	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
-	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
-	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
@@ -128,8 +126,8 @@ type Params struct {
 	FiscalPeriodRepo             repositories.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	TelematicsService            *telematicsservice.Service
-	DispatchConsoleService       *dispatchconsoleservice.Service
-	DispatchAutoAssignService    *dispatchautoassignservice.Service
+	DispatchConsoleService       services.DispatchConsoleService
+	DispatchAutoAssignService    services.DispatchAutoAssignService
 	AssignmentService            services.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
@@ -227,8 +225,8 @@ type Resolver struct {
 	fiscalPeriodRepo             repositories.FiscalPeriodRepository
 	emailService                 *emailservice.Service
 	telematicsService            *telematicsservice.Service
-	dispatchConsoleService       *dispatchconsoleservice.Service
-	dispatchAutoAssignService    *dispatchautoassignservice.Service
+	dispatchConsoleService       services.DispatchConsoleService
+	dispatchAutoAssignService    services.DispatchAutoAssignService
 	assignmentService            services.AssignmentService
 	documentPacketRuleService    *documentpacketruleservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service

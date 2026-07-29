@@ -34,6 +34,8 @@ type SeedContext struct {
 
 	tracker           *EntityTracker
 	persistentTracker *PersistentEntityTracker
+	pending           []TrackedEntity
+	pendingMutex      sync.Mutex
 	logger            SeedLogger
 	cfg               *config.Config
 }
@@ -44,8 +46,8 @@ func NewSeedContext(db bun.IDB, logger SeedLogger, cfg *config.Config) *SeedCont
 	}
 
 	var persistentTracker *PersistentEntityTracker
-	if bunDB, ok := db.(*bun.DB); ok {
-		persistentTracker = NewPersistentEntityTracker(bunDB)
+	if db != nil {
+		persistentTracker = NewPersistentEntityTracker(db)
 	}
 
 	return &SeedContext{
@@ -54,6 +56,7 @@ func NewSeedContext(db bun.IDB, logger SeedLogger, cfg *config.Config) *SeedCont
 		sharedState:       make(map[string]any),
 		tracker:           NewEntityTracker(),
 		persistentTracker: persistentTracker,
+		pending:           make([]TrackedEntity, 0, 128),
 		logger:            logger,
 		cfg:               cfg,
 	}
@@ -250,8 +253,11 @@ func (sc *SeedContext) GetUserByUsername(
 	return &user, nil
 }
 
+// TrackCreated remembers an entity for rollback. The database write is deferred
+// to FlushTracked so a seed that creates thousands of rows pays for one insert
+// rather than one per entity.
 func (sc *SeedContext) TrackCreated(
-	ctx context.Context,
+	_ context.Context,
 	table string,
 	id pulid.ID,
 	seedName string,
@@ -260,10 +266,28 @@ func (sc *SeedContext) TrackCreated(
 		return err
 	}
 
-	if sc.persistentTracker != nil {
-		if err := sc.persistentTracker.Track(ctx, table, id, seedName); err != nil {
-			return fmt.Errorf("track created entity in database: %w", err)
-		}
+	sc.pendingMutex.Lock()
+	sc.pending = append(sc.pending, TrackedEntity{Table: table, ID: id, SeedName: seedName})
+	sc.pendingMutex.Unlock()
+
+	return nil
+}
+
+// FlushTracked persists everything tracked so far. RunInTransaction calls it on
+// the way out, inside the seed's own transaction, so tracking rows never
+// survive a seed that failed.
+func (sc *SeedContext) FlushTracked(ctx context.Context) error {
+	sc.pendingMutex.Lock()
+	pending := sc.pending
+	sc.pending = make([]TrackedEntity, 0, 128)
+	sc.pendingMutex.Unlock()
+
+	if len(pending) == 0 || sc.persistentTracker == nil {
+		return nil
+	}
+
+	if err := sc.persistentTracker.TrackBatch(ctx, pending); err != nil {
+		return fmt.Errorf("track created entities in database: %w", err)
 	}
 
 	return nil
@@ -273,28 +297,40 @@ func (sc *SeedContext) GetCreatedEntities(
 	ctx context.Context,
 	seedName string,
 ) ([]TrackedEntity, error) {
-	if sc.persistentTracker != nil {
-		return sc.persistentTracker.GetBySeed(ctx, seedName)
+	if sc.persistentTracker == nil {
+		return sc.tracker.GetBySeed(seedName), nil
 	}
 
-	return sc.tracker.GetBySeed(seedName), nil
+	if err := sc.FlushTracked(ctx); err != nil {
+		return nil, err
+	}
+
+	return sc.persistentTracker.GetBySeed(ctx, seedName)
 }
 
 func (sc *SeedContext) GetAllCreatedEntities(ctx context.Context) ([]TrackedEntity, error) {
-	if sc.persistentTracker != nil {
-		return sc.persistentTracker.GetAll(ctx)
+	if sc.persistentTracker == nil {
+		return sc.tracker.GetAll(), nil
 	}
 
-	return sc.tracker.GetAll(), nil
+	if err := sc.FlushTracked(ctx); err != nil {
+		return nil, err
+	}
+
+	return sc.persistentTracker.GetAll(ctx)
 }
 
 func (sc *SeedContext) DeleteTrackedEntities(ctx context.Context, seedName string) error {
-	if sc.persistentTracker != nil {
-		return sc.persistentTracker.DeleteBySeed(ctx, seedName)
+	sc.pendingMutex.Lock()
+	sc.pending = sc.pending[:0]
+	sc.pendingMutex.Unlock()
+	sc.tracker.Clear()
+
+	if sc.persistentTracker == nil {
+		return nil
 	}
 
-	sc.tracker.Clear()
-	return nil
+	return sc.persistentTracker.DeleteBySeed(ctx, seedName)
 }
 
 func (sc *SeedContext) Logger() SeedLogger {

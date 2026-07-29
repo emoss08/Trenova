@@ -17,35 +17,60 @@ import {
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
-import { useHomeData } from "./use-home-data";
+import { HomeEditDock } from "./edit-dock";
+import type { HomeData } from "./use-home-data";
 import { widgetComponentFor, type WidgetProps } from "./widget-registry";
 import { WidgetConfigDialog } from "./widget-config-dialog";
+import { WidgetEditingProvider } from "./widget-shell";
 
 const DEFAULT_GRID_COLUMNS = 12;
 
+export type HomeCanvasDock = {
+  dirty: boolean;
+  saving: boolean;
+  saveLabel?: string;
+  onSave: () => void;
+  onDiscard: () => void;
+};
+
 export type HomeCanvasProps = {
   widgets: HomeWidget[];
+  data: HomeData;
   catalog: HomeWidgetCatalog | undefined;
   catalogLoading: boolean;
   editing: boolean;
   onChange: (widgets: HomeWidget[]) => void;
+  /**
+   * Save and discard actions for the floating edit dock. The dock renders from
+   * inside the canvas because that is where the add-widget flow lives; the
+   * caller only supplies what the canvas cannot know — whether the draft is
+   * dirty and how to persist it.
+   */
+  dock?: HomeCanvasDock;
+};
+
+type ConfigTarget = {
+  widget: HomeWidget;
+  /** Set when the widget was just added, so cancelling removes it again. */
+  isNew: boolean;
 };
 
 /**
  * The widget grid. In read mode it is a plain grid of live tiles; in edit mode
- * the same tiles gain a drag handle and a controls popover, so what an author
- * arranges is exactly what they were just looking at.
+ * the same tiles swap their header for a drag bar with controls, and their
+ * bodies go inert so a drag can never fire a link underneath it.
  */
 export function HomeCanvas({
   widgets,
+  data,
   catalog,
   catalogLoading,
   editing,
   onChange,
+  dock,
 }: HomeCanvasProps) {
-  const data = useHomeData(widgets);
   const [addOpen, setAddOpen] = useState(false);
-  const [configuring, setConfiguring] = useState<HomeWidget | null>(null);
+  const [configuring, setConfiguring] = useState<ConfigTarget | null>(null);
 
   const columns = catalog?.gridColumns ?? DEFAULT_GRID_COLUMNS;
   const maxWidgets = catalog?.maxWidgets ?? 24;
@@ -71,7 +96,7 @@ export function HomeCanvas({
     // A widget that cannot draw anything until it is told what to show opens
     // its editor immediately, rather than landing as an empty card.
     if (option.configKind !== "none" && option.configKind !== "queue") {
-      setConfiguring(widget);
+      setConfiguring({ widget, isNew: true });
     }
   };
 
@@ -79,6 +104,13 @@ export function HomeCanvas({
     onChange(widgets.map((widget) => (widget.id === id ? { ...widget, ...patch } : widget)));
 
   const removeWidget = (id: string) => onChange(widgets.filter((widget) => widget.id !== id));
+
+  const closeConfig = (saved: boolean) => {
+    if (configuring && configuring.isNew && !saved) {
+      removeWidget(configuring.widget.id);
+    }
+    setConfiguring(null);
+  };
 
   if (widgets.length === 0 && !editing) {
     return (
@@ -93,7 +125,21 @@ export function HomeCanvas({
   }
 
   return (
-    <>
+    <WidgetEditingProvider value={editing}>
+      {editing && widgets.length === 0 && (
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-12 text-center transition-colors hover:border-foreground/25 hover:bg-muted/30"
+        >
+          <PlusIcon className="size-5 text-muted-foreground/50" />
+          <span className="text-sm font-medium">Add your first widget</span>
+          <span className="max-w-xs text-xs text-muted-foreground">
+            Pick the queues and numbers this home screen should open on.
+          </span>
+        </button>
+      )}
+
       <TileGrid
         items={widgets}
         columns={columns}
@@ -117,45 +163,51 @@ export function HomeCanvas({
                 className="flex min-h-0 flex-1 flex-col"
               >
                 {editing && (
-                  <div className="flex h-7 shrink-0 items-center gap-1 border-b border-border bg-muted/40 px-2">
+                  <div className="flex h-8 shrink-0 items-center gap-1.5 border-b border-border/60 bg-muted/40 px-2">
                     <TileDragHandle {...drag} />
-                    <span className="min-w-0 flex-1 truncate text-2xs text-muted-foreground">
+                    <span className="cc-label min-w-0 flex-1 truncate text-foreground">
                       {widget.title || optionsByKey.get(widget.key)?.label || widget.key}
+                    </span>
+                    <span className="shrink-0 font-mono text-[9px] text-muted-foreground tabular-nums">
+                      {widget.w}×{widget.h}
                     </span>
                     <WidgetControls
                       widget={widget}
                       option={optionsByKey.get(widget.key)}
                       columns={columns}
-                      onEdit={() => setConfiguring(widget)}
+                      onEdit={() => setConfiguring({ widget, isNew: false })}
                       onRemove={() => removeWidget(widget.id)}
                       onResize={(patch) => patchWidget(widget.id, patch)}
                     />
                   </div>
                 )}
-                <WidgetBody widget={widget} data={data} />
+                <div
+                  className="flex min-h-0 flex-1 flex-col"
+                  inert={editing || undefined}
+                >
+                  <WidgetBody widget={widget} data={data} />
+                </div>
               </m.div>
             )}
           </SortableTile>
         )}
       </TileGrid>
 
-      {editing && (
-        <div className="flex items-center justify-between gap-3 pt-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setAddOpen(true)}
-            disabled={widgets.length >= maxWidgets}
-          >
-            <PlusIcon className="size-3.5" />
-            Add widget
-          </Button>
-          {widgets.length >= maxWidgets && (
-            <p className="text-2xs text-muted-foreground">
-              This home screen has reached the {maxWidgets}-widget limit.
-            </p>
-          )}
-        </div>
+      {editing && dock && (
+        <>
+          {/* Keeps the last row of tiles reachable underneath the fixed dock. */}
+          <div className="h-16" aria-hidden />
+          <HomeEditDock
+            dirty={dock.dirty}
+            saving={dock.saving}
+            saveLabel={dock.saveLabel}
+            addDisabled={widgets.length >= maxWidgets}
+            maxWidgets={maxWidgets}
+            onAdd={() => setAddOpen(true)}
+            onDiscard={dock.onDiscard}
+            onSave={dock.onSave}
+          />
+        </>
       )}
 
       <AddWidgetDialog
@@ -170,17 +222,17 @@ export function HomeCanvas({
 
       {configuring && (
         <WidgetConfigDialog
-          widget={configuring}
-          option={optionsByKey.get(configuring.key)}
+          widget={configuring.widget}
+          option={optionsByKey.get(configuring.widget.key)}
           metrics={catalog?.metrics ?? []}
           onSave={(updated) => {
             patchWidget(updated.id, updated);
-            setConfiguring(null);
+            closeConfig(true);
           }}
-          onCancel={() => setConfiguring(null)}
+          onCancel={() => closeConfig(false)}
         />
       )}
-    </>
+    </WidgetEditingProvider>
   );
 }
 

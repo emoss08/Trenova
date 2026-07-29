@@ -16,18 +16,35 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// ListBoardDrivers returns the capacity rail: active drivers the organization allows to
-// be assigned. Drivers temporarily flagged unavailable for dispatch are deliberately
-// still returned — a dispatcher needs to see why someone is idle, and the eligibility
-// engine is what stops the assignment from going through.
+var (
+	moveFromAssignmentJoin = "JOIN " + buncolgen.ShipmentMoveTable.As(
+		buncolgen.ShipmentMoveTable.Alias) +
+		" ON " + buncolgen.ShipmentMoveColumns.ID.EqColumn(
+		buncolgen.AssignmentColumns.ShipmentMoveID) +
+		" AND " + buncolgen.ShipmentMoveColumns.OrganizationID.EqColumn(
+		buncolgen.AssignmentColumns.OrganizationID) +
+		" AND " + buncolgen.ShipmentMoveColumns.BusinessUnitID.EqColumn(
+		buncolgen.AssignmentColumns.BusinessUnitID)
+
+	fleetCodeJoin = "LEFT JOIN " + buncolgen.FleetCodeTable.As(buncolgen.FleetCodeTable.Alias) +
+		" ON " + buncolgen.FleetCodeColumns.ID.EqColumn(buncolgen.WorkerColumns.FleetCodeID) +
+		" AND " + buncolgen.FleetCodeColumns.OrganizationID.EqColumn(
+		buncolgen.WorkerColumns.OrganizationID) +
+		" AND " + buncolgen.FleetCodeColumns.BusinessUnitID.EqColumn(
+		buncolgen.WorkerColumns.BusinessUnitID)
+
+	workerStateJoin = "LEFT JOIN " + buncolgen.UsStateTable.As(buncolgen.UsStateTable.Alias) +
+		" ON " + buncolgen.UsStateColumns.ID.EqColumn(buncolgen.WorkerColumns.StateID)
+)
+
 func (r *repository) ListBoardDrivers(
 	ctx context.Context,
 	filter *repositories.DispatchBoardFilter,
 ) ([]*repositories.BoardDriver, error) {
 	cols := buncolgen.WorkerColumns
-	entities := make([]*repositories.BoardDriver, 0, 128)
+	entities := make([]*repositories.BoardDriver, 0, boardLimit(filter.Limit))
 
-	const tractorJoin = `LEFT JOIN LATERAL (
+	const tractorLateral = `LEFT JOIN LATERAL (
 		SELECT trac.id,
 			trac.code,
 			trac.equipment_type_id,
@@ -37,20 +54,9 @@ func (r *repository) ListBoardDrivers(
 		WHERE trac.primary_worker_id = wrk.id
 			AND trac.organization_id = wrk.organization_id
 			AND trac.business_unit_id = wrk.business_unit_id
-		ORDER BY (trac.status = 'Available') DESC, trac.code ASC
+		ORDER BY (trac.status = ?) DESC, trac.code ASC
 		LIMIT 1
 	) AS wtrac ON TRUE`
-
-	const openAssignmentJoin = `LEFT JOIN LATERAL (
-		SELECT COUNT(*)::int AS open_assignments
-		FROM assignments AS a
-		JOIN shipment_moves AS sm ON sm.id = a.shipment_move_id
-		WHERE a.primary_worker_id = wrk.id
-			AND a.organization_id = wrk.organization_id
-			AND a.business_unit_id = wrk.business_unit_id
-			AND a.archived_at IS NULL
-			AND sm.status IN ('Assigned', 'InTransit')
-	) AS oa ON TRUE`
 
 	q := r.db.DB().NewSelect().
 		Model((*worker.Worker)(nil)).
@@ -65,33 +71,25 @@ func (r *repository) ListBoardDrivers(
 		ColumnExpr(cols.ProfilePicURL.As("profile_pic_url")).
 		ColumnExpr(cols.AssignmentBlocked.Expr("COALESCE({}, '') AS assignment_note")).
 		ColumnExpr(cols.AvailableForDispatch.As("available_for_dispatch")).
-		ColumnExpr("COALESCE(fc.code, '') AS fleet_code_name").
-		ColumnExpr("COALESCE(ust.abbreviation, '') AS state_abbr").
+		ColumnExpr(buncolgen.FleetCodeColumns.Code.Expr("COALESCE({}, '') AS fleet_code_name")).
+		ColumnExpr(buncolgen.UsStateColumns.Abbreviation.Expr("COALESCE({}, '') AS state_abbr")).
 		ColumnExpr("COALESCE(wtrac.id, '') AS tractor_id").
 		ColumnExpr("COALESCE(wtrac.code, '') AS tractor_code").
 		ColumnExpr("COALESCE(wtrac.equipment_type_id, '') AS tractor_type_id").
 		ColumnExpr("COALESCE(wtrac.fleet_code_id, '') AS tractor_fleet_id").
-		ColumnExpr("COALESCE(wtrac.status = 'Available', FALSE) AS tractor_status_ok").
+		ColumnExpr("COALESCE(wtrac.status = ?, FALSE) AS tractor_status_ok",
+			domaintypes.EquipmentStatusAvailable).
 		ColumnExpr("COALESCE(oa.open_assignments, 0) AS open_assignments").
-		Join("LEFT JOIN fleet_codes AS fc ON "+
-			buncolgen.FleetCodeColumns.ID.EqColumn(cols.FleetCodeID)).
-		Join("LEFT JOIN us_states AS ust ON "+
-			buncolgen.UsStateColumns.ID.EqColumn(cols.StateID)).
-		Join(tractorJoin).
-		Join(openAssignmentJoin).
+		Join(fleetCodeJoin).
+		Join(workerStateJoin).
+		Join(tractorLateral, domaintypes.EquipmentStatusAvailable).
+		Join(openAssignmentLateral, bun.List(openMoveStatuses)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo).
-				Where(cols.Status.Eq(), domaintypes.StatusActive).
-				Where(cols.CanBeAssigned.IsTrue())
+			sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo)
+			sq = applyDriverFilters(sq, filter)
 
-			if len(filter.WorkerIDs) > 0 {
-				sq = sq.Where(cols.ID.In(), bun.List(filter.WorkerIDs))
-			}
-			if len(filter.FleetCodeIDs) > 0 {
-				sq = sq.Where(cols.FleetCodeID.In(), bun.List(filter.FleetCodeIDs))
-			}
 			if filter.Query != "" {
-				pattern := "%" + filter.Query + "%"
+				pattern := searchPattern(filter.Query)
 				sq = sq.WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
 					return g.Where(cols.FirstName.ILike(), pattern).
 						WhereOr(cols.LastName.ILike(), pattern).
@@ -101,7 +99,9 @@ func (r *repository) ListBoardDrivers(
 			return sq
 		}).
 		Order(cols.LastName.OrderAsc()).
-		Order(cols.FirstName.OrderAsc())
+		Order(cols.FirstName.OrderAsc()).
+		Order(cols.ID.OrderAsc()).
+		Limit(boardLimit(filter.Limit))
 
 	if err := q.Scan(ctx, &entities); err != nil {
 		return nil, fmt.Errorf("list dispatch board drivers: %w", err)
@@ -110,9 +110,6 @@ func (r *repository) ListBoardDrivers(
 	return entities, nil
 }
 
-// ListWorkerCommitments returns the assignments each driver already holds inside the
-// planning horizon. The console draws these as timeline blocks and the eligibility
-// engine uses them to refuse a double booking.
 func (r *repository) ListWorkerCommitments(
 	ctx context.Context,
 	req *repositories.ListWorkerWindowsRequest,
@@ -125,32 +122,15 @@ func (r *repository) ListWorkerCommitments(
 	moveCols := buncolgen.ShipmentMoveColumns
 	entities := make([]*repositories.WorkerCommitment, 0, len(req.WorkerIDs))
 
-	const windowJoin = `JOIN LATERAL (
+	const windowLateral = `JOIN LATERAL (
 		SELECT MIN(stp.scheduled_window_start) AS window_start,
 			MAX(COALESCE(stp.scheduled_window_end, stp.scheduled_window_start)) AS window_end
 		FROM stops AS stp
 		WHERE stp.shipment_move_id = sm.id
 			AND stp.organization_id = sm.organization_id
 			AND stp.business_unit_id = sm.business_unit_id
-			AND stp.status <> 'Canceled'
+			AND stp.status <> ?
 	) AS win ON TRUE`
-
-	const destinationJoin = `LEFT JOIN LATERAL (
-		SELECT stp.location_id,
-			loc.city,
-			loc.latitude,
-			loc.longitude,
-			ust.abbreviation AS state_abbr
-		FROM stops AS stp
-		LEFT JOIN locations AS loc ON loc.id = stp.location_id
-		LEFT JOIN us_states AS ust ON ust.id = loc.state_id
-		WHERE stp.shipment_move_id = sm.id
-			AND stp.organization_id = sm.organization_id
-			AND stp.business_unit_id = sm.business_unit_id
-			AND stp.status <> 'Canceled'
-		ORDER BY stp.sequence DESC
-		LIMIT 1
-	) AS dest ON TRUE`
 
 	q := r.db.DB().NewSelect().
 		Model((*shipment.Assignment)(nil)).
@@ -159,7 +139,7 @@ func (r *repository) ListWorkerCommitments(
 		ColumnExpr(asnCols.TrailerID.Expr("COALESCE({}, '') AS trailer_id")).
 		ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
 		ColumnExpr(moveCols.Status.As("move_status")).
-		ColumnExpr("COALESCE(sp.pro_number, '') AS pro_number").
+		ColumnExpr(buncolgen.ShipmentColumns.ProNumber.Expr("COALESCE({}, '') AS pro_number")).
 		ColumnExpr("COALESCE(win.window_start, 0) AS window_start").
 		ColumnExpr("COALESCE(win.window_end, 0) AS window_end").
 		ColumnExpr("COALESCE(dest.location_id, '') AS destination_id").
@@ -167,19 +147,15 @@ func (r *repository) ListWorkerCommitments(
 		ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_st").
 		ColumnExpr("dest.latitude AS dest_latitude").
 		ColumnExpr("dest.longitude AS dest_longitude").
-		Join("JOIN shipment_moves AS sm ON "+moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
-		Join("LEFT JOIN shipments AS sp ON "+
-			buncolgen.ShipmentColumns.ID.EqColumn(moveCols.ShipmentID)).
-		Join(windowJoin).
-		Join(destinationJoin).
+		Join(moveFromAssignmentJoin).
+		Join("LEFT "+shipmentJoin).
+		Join(windowLateral, shipment.StopStatusCanceled).
+		Join(stopEdgeLateral(destinationAlias, orderDescending), shipment.StopStatusCanceled).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
 				Where(asnCols.ArchivedAt.IsNull()).
 				Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-				Where(moveCols.Status.In(), bun.List([]shipment.MoveStatus{
-					shipment.MoveStatusAssigned,
-					shipment.MoveStatusInTransit,
-				}))
+				Where(moveCols.Status.In(), bun.List(openMoveStatuses))
 
 			if req.WindowEnd > 0 {
 				sq = sq.Where("COALESCE(win.window_start, 0) <= ?", req.WindowEnd)
@@ -198,8 +174,6 @@ func (r *repository) ListWorkerCommitments(
 	return entities, nil
 }
 
-// ListWorkerTimeOff returns approved PTO overlapping the horizon. Only approved time off
-// counts: a requested-but-unapproved day should not silently remove capacity.
 func (r *repository) ListWorkerTimeOff(
 	ctx context.Context,
 	req *repositories.ListWorkerWindowsRequest,
@@ -239,7 +213,6 @@ func (r *repository) ListWorkerTimeOff(
 	return entities, nil
 }
 
-// ListWorkerWorkload is the rolling utilization behind the load-balancing factor.
 func (r *repository) ListWorkerWorkload(
 	ctx context.Context,
 	req *repositories.ListWorkloadRequest,
@@ -252,25 +225,50 @@ func (r *repository) ListWorkerWorkload(
 	moveCols := buncolgen.ShipmentMoveColumns
 	entities := make([]*repositories.WorkerWorkload, 0, len(req.WorkerIDs))
 
-	q := r.db.DB().NewSelect().
+	const departureLateral = `LEFT JOIN LATERAL (
+		SELECT stp.actual_departure
+		FROM stops AS stp
+		WHERE stp.shipment_move_id = sm.id
+			AND stp.organization_id = sm.organization_id
+			AND stp.business_unit_id = sm.business_unit_id
+			AND stp.status <> ?
+		ORDER BY stp.sequence DESC
+		LIMIT 1
+	) AS dep ON TRUE`
+
+	perShipment := r.db.DB().NewSelect().
 		Model((*shipment.Assignment)(nil)).
 		ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
 		ColumnExpr("COUNT(*)::int AS move_count").
-		ColumnExpr("COALESCE(SUM(sm.distance), 0)::float8 AS total_miles").
-		ColumnExpr("COALESCE(SUM(sp.total_charge_amount), 0)::float8 AS total_revenue").
-		ColumnExpr("COALESCE(MAX("+asnCols.UpdatedAt.Qualified()+"), 0) AS last_ended_at").
-		Join("JOIN shipment_moves AS sm ON "+moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
-		Join("LEFT JOIN shipments AS sp ON "+
-			buncolgen.ShipmentColumns.ID.EqColumn(moveCols.ShipmentID)).
+		ColumnExpr(buncolgen.Expr(
+			"COALESCE(SUM({0}), 0)::float8 AS total_miles", moveCols.Distance)).
+		ColumnExpr(buncolgen.Expr(
+			"COALESCE(MAX({0}), 0)::float8 AS shipment_revenue",
+			buncolgen.ShipmentColumns.TotalChargeAmount)).
+		ColumnExpr(buncolgen.Expr(
+			"MAX(COALESCE(dep.actual_departure, {0})) AS last_ended_at", asnCols.CreatedAt)).
+		Join(moveFromAssignmentJoin).
+		Join("LEFT "+shipmentJoin).
+		Join(departureLateral, shipment.StopStatusCanceled).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
-				Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs))
+				Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
+				Where(moveCols.Status.NotEq(), shipment.MoveStatusCanceled)
 			if req.Since > 0 {
 				sq = sq.Where(asnCols.CreatedAt.Gte(), req.Since)
 			}
 			return sq
 		}).
-		GroupExpr(asnCols.PrimaryWorkerID.Qualified())
+		GroupExpr(asnCols.PrimaryWorkerID.Qualified() + ", " + moveCols.ShipmentID.Qualified())
+
+	q := r.db.DB().NewSelect().
+		TableExpr("(?) AS wl", perShipment).
+		ColumnExpr("wl.worker_id AS worker_id").
+		ColumnExpr("SUM(wl.move_count)::int AS move_count").
+		ColumnExpr("SUM(wl.total_miles)::float8 AS total_miles").
+		ColumnExpr("SUM(wl.shipment_revenue)::float8 AS total_revenue").
+		ColumnExpr("MAX(wl.last_ended_at) AS last_ended_at").
+		GroupExpr("wl.worker_id")
 
 	if err := q.Scan(ctx, &entities); err != nil {
 		return nil, fmt.Errorf("list worker workload: %w", err)
@@ -279,9 +277,6 @@ func (r *repository) ListWorkerWorkload(
 	return entities, nil
 }
 
-// ListWorkerLaneExperience counts how many times each driver has already carried each
-// customer's freight. Dispatchers weigh this heavily and nothing else in the system
-// captures it.
 func (r *repository) ListWorkerLaneExperience(
 	ctx context.Context,
 	req *repositories.ListLaneExperienceRequest,
@@ -291,7 +286,6 @@ func (r *repository) ListWorkerLaneExperience(
 	}
 
 	asnCols := buncolgen.AssignmentColumns
-	moveCols := buncolgen.ShipmentMoveColumns
 	shipCols := buncolgen.ShipmentColumns
 	entities := make([]*repositories.WorkerLaneExperience, 0, len(req.WorkerIDs))
 
@@ -300,8 +294,8 @@ func (r *repository) ListWorkerLaneExperience(
 		ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
 		ColumnExpr(shipCols.CustomerID.As("customer_id")).
 		ColumnExpr("COUNT(*)::int AS move_count").
-		Join("JOIN shipment_moves AS sm ON "+moveCols.ID.EqColumn(asnCols.ShipmentMoveID)).
-		Join("JOIN shipments AS sp ON "+shipCols.ID.EqColumn(moveCols.ShipmentID)).
+		Join(moveFromAssignmentJoin).
+		Join(shipmentJoin).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
 				Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
@@ -320,8 +314,6 @@ func (r *repository) ListWorkerLaneExperience(
 	return entities, nil
 }
 
-// ListWorkersByIDs hydrates full worker records with profiles for the eligibility engine,
-// which needs licence, medical, and endorsement data the board projection omits.
 func (r *repository) ListWorkersByIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -349,8 +341,6 @@ func (r *repository) ListWorkersByIDs(
 	return entities, nil
 }
 
-// ListEquipmentByIDs loads the power units and trailers a candidate set references, in
-// two queries rather than one per assignment preview.
 func (r *repository) ListEquipmentByIDs(
 	ctx context.Context,
 	req *repositories.ListEquipmentByIDsRequest,

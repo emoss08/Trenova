@@ -1469,6 +1469,7 @@ input DetentionDisputeInput {
 }
 
 type DetentionDisputePacket {
+  chainVerified: Boolean!
   collectability: DetentionCollectability!
   evidence: [DetentionEvidence!]
   generatedAt: Int!
@@ -1677,7 +1678,7 @@ type DetentionPolicy {
   clockStartBasis: DetentionClockStartBasis!
   code: String!
   comments: String!
-  commodityIds: [ID!]
+  commodityIds: [ID!]!
   convertToLayoverAtMinutes: Int
   createdAt: Int!
   currency: String!
@@ -1710,12 +1711,12 @@ type DetentionPolicy {
   requireApprovalOverAmount: String
   roundingMode: DetentionRoundingMode!
   sendDepartureSummary: Boolean!
-  serviceTypeIds: [ID!]
-  shipmentTypeIds: [ID!]
+  serviceTypeIds: [ID!]!
+  shipmentTypeIds: [ID!]!
   specificityScore: Int!
   status: DetentionPolicyStatus!
-  stopTypes: [StopType!]
-  tiers: [DetentionPolicyTier!]
+  stopTypes: [StopType!]!
+  tiers: [DetentionPolicyTier!]!
   unnotifiedBehavior: DetentionUnnotifiedBehavior!
   updatedAt: Int!
   version: Int!
@@ -2098,6 +2099,18 @@ type DispatchCandidate {
   estimatedDriveMs: Int!
   factors: [DispatchScoreFactor!]!
   findings: [DispatchFinding!]!
+  hosProjectedCycleMs: Int!
+  hosProjectedDriveMs: Int!
+  hosProjectedShiftMs: Int!
+  """
+  Latest unix time the required pre-departure rest must start; 0 when none is needed.
+  """
+  hosRestStartDeadline: Int!
+  """
+  Rest strategy that makes this trip legal: currentClocks, splitSleeper,
+  tenHourReset, or restart34. Empty when no projection ran.
+  """
+  hosStrategy: String!
   minutesOfSlack: Int!
   moveId: ID!
   projectedArrival: Int!
@@ -4586,6 +4599,7 @@ enum MoveStatus {
 }
 
 type Mutation {
+  acknowledgeShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
@@ -4719,6 +4733,7 @@ type Mutation {
   good state for manual follow-up.
   """
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
+  pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
@@ -4743,6 +4758,7 @@ type Mutation {
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
   """
   resolveSettlementDispute(input: ResolveSettlementDisputeInput!): SettlementDispute!
+  resolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   """
   Accept or decline one of the signed-in driver's load assignments. Declining
   requires a reason and alerts dispatch.
@@ -4772,6 +4788,8 @@ type Mutation {
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
+  unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
@@ -5835,7 +5853,8 @@ type Query {
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
-  shipmentComments(after: String, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  shipmentCommentReplies(after: String, commentId: ID!, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  shipmentComments(after: String, filter: ShipmentCommentsFilterInput, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
@@ -7206,6 +7225,7 @@ type ShipmentAdditionalCharge {
   amount: String!
   businessUnitId: ID!
   createdAt: Int!
+  detentionOccurrenceId: ID
   fuelSurchargeDetail: JSON
   fuelSurchargeProgramId: ID
   id: ID
@@ -7221,6 +7241,7 @@ type ShipmentAdditionalCharge {
 input ShipmentAdditionalChargeInput {
   accessorialChargeId: ID!
   amount: String = "0"
+  detentionOccurrenceId: ID
   fuelSurchargeProgramId: ID
   id: ID
   isSystemGenerated: Boolean = false
@@ -7371,9 +7392,16 @@ input ShipmentCancelInput {
 }
 
 type ShipmentComment {
+  acknowledgments: [ShipmentCommentAcknowledgment!]
+  attachments: [ShipmentCommentAttachment!]
+  """
+  Structured comment body (comment body v1). Null for legacy plain-text comments.
+  """
+  body: JSON
   businessUnitId: ID
   comment: String!
   createdAt: Int!
+  deletedAt: Int
   editedAt: Int
   id: ID!
   mentionedUserIds: [ID!]!
@@ -7383,7 +7411,16 @@ type ShipmentComment {
   """
   metadata: JSON
   organizationId: ID
+  parentCommentId: ID
+  pinnedAt: Int
+  pinnedBy: User
+  pinnedById: ID
   priority: ShipmentCommentPriority!
+  replyCount: Int!
+  requiresAcknowledgment: Boolean!
+  resolvedAt: Int
+  resolvedBy: User
+  resolvedById: ID
   shipmentId: ID!
   source: ShipmentCommentSource!
   type: ShipmentCommentType!
@@ -7392,6 +7429,25 @@ type ShipmentComment {
   userId: ID
   version: Int!
   visibility: ShipmentCommentVisibility!
+}
+
+type ShipmentCommentAcknowledgment {
+  acknowledgedAt: Int!
+  commentId: ID!
+  id: ID!
+  user: User
+  userId: ID!
+}
+
+type ShipmentCommentAttachment {
+  createdAt: Int!
+  documentId: ID!
+  downloadUrl: String!
+  fileName: String!
+  fileSize: Int!
+  mimeType: String!
+  originalName: String
+  previewUrl: String
 }
 
 type ShipmentCommentConnection {
@@ -7410,9 +7466,20 @@ type ShipmentCommentEdge {
 }
 
 input ShipmentCommentInput {
+  attachmentDocumentIds: [ID!] = []
+  """
+  Structured comment body (comment body v1). When present, the plain-text comment is derived server-side.
+  """
+  body: JSON
+  """
+  Client-generated reference echoed on the created entity for optimistic-update reconciliation.
+  """
+  clientRef: String
   comment: String!
   mentionedUserIds: [ID!] = []
+  parentCommentId: ID
   priority: ShipmentCommentPriority = Normal
+  requiresAcknowledgment: Boolean
   type: ShipmentCommentType = Internal
   visibility: ShipmentCommentVisibility = Internal
 }
@@ -7458,10 +7525,16 @@ enum ShipmentCommentType {
 }
 
 input ShipmentCommentUpdateInput {
+  attachmentDocumentIds: [ID!] = []
+  """
+  Structured comment body (comment body v1). When present, the plain-text comment is derived server-side.
+  """
+  body: JSON
   comment: String!
   id: ID!
   mentionedUserIds: [ID!] = []
   priority: ShipmentCommentPriority = Normal
+  requiresAcknowledgment: Boolean
   type: ShipmentCommentType = Internal
   version: Int!
   visibility: ShipmentCommentVisibility = Internal
@@ -7473,6 +7546,16 @@ enum ShipmentCommentVisibility {
   Driver
   Internal
   Operations
+}
+
+input ShipmentCommentsFilterInput {
+  authorIds: [ID!]
+  mentionsUserId: ID
+  pinnedOnly: Boolean = false
+  priorities: [ShipmentCommentPriority!]
+  search: String
+  types: [ShipmentCommentType!]
+  unresolvedOnly: Boolean = false
 }
 
 type ShipmentCommodity {

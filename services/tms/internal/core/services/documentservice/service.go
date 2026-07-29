@@ -127,18 +127,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-type UploadRequest struct {
-	TenantInfo        pagination.TenantInfo
-	Actor             services.RequestActor
-	File              *multipart.FileHeader
-	ResourceID        string
-	ResourceType      string
-	ProcessingProfile string
-	Description       string
-	Tags              []string
-	DocumentTypeID    string
-	LineageID         string
-}
+type UploadRequest = services.UploadRequest
 
 type UploadResult = services.DocumentUploadResult
 
@@ -162,12 +151,6 @@ func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
-	log := s.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
-
-	log.Info("listing documents")
 	return s.repo.List(ctx, req)
 }
 
@@ -206,7 +189,7 @@ func (s *Service) GetByResource(
 
 func (s *Service) Upload(
 	ctx context.Context,
-	req *UploadRequest,
+	req *services.UploadRequest,
 ) (*UploadResult, error) {
 	log := s.l.With(
 		zap.String("operation", "Upload"),
@@ -398,7 +381,7 @@ func (s *Service) publishDocumentInvalidation(
 
 func (s *Service) prepareUploadLineage(
 	ctx context.Context,
-	req *UploadRequest,
+	req *services.UploadRequest,
 	docID pulid.ID,
 ) (pulid.ID, *document.Document, error) {
 	if strings.TrimSpace(req.LineageID) == "" {
@@ -540,7 +523,7 @@ func (s *Service) BulkUpload(
 	}
 
 	for _, file := range req.Files {
-		uploadResult, err := s.Upload(ctx, &UploadRequest{
+		uploadResult, err := s.Upload(ctx, &services.UploadRequest{
 			TenantInfo:   req.TenantInfo,
 			Actor:        req.Actor,
 			File:         file,
@@ -1099,6 +1082,57 @@ func (s *Service) GetPreviewURL(
 	}
 
 	return url, nil
+}
+
+type DocumentURLSet struct {
+	DownloadURL string
+	PreviewURL  string
+}
+
+func (s *Service) PresignDocumentURLs(
+	ctx context.Context,
+	docs []*document.Document,
+) (map[pulid.ID]DocumentURLSet, error) {
+	urls := make(map[pulid.ID]DocumentURLSet, len(docs))
+	expiry := s.config.GetPresignedURLExpiry()
+
+	for _, doc := range docs {
+		if doc == nil {
+			continue
+		}
+
+		downloadURL, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+			Key:                doc.StoragePath,
+			Expiry:             expiry,
+			ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
+		})
+		if err != nil {
+			s.l.Error("failed to presign document download URL",
+				zap.String("documentId", doc.ID.String()),
+				zap.Error(err))
+			return nil, errortypes.NewDatabaseError("Failed to generate download URL").
+				WithInternal(err)
+		}
+
+		set := DocumentURLSet{DownloadURL: downloadURL}
+		if doc.PreviewStatus == document.PreviewStatusReady && doc.PreviewStoragePath != "" {
+			previewURL, previewErr := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+				Key:    doc.PreviewStoragePath,
+				Expiry: expiry,
+			})
+			if previewErr != nil {
+				s.l.Warn("failed to presign document preview URL",
+					zap.String("documentId", doc.ID.String()),
+					zap.Error(previewErr))
+			} else {
+				set.PreviewURL = previewURL
+			}
+		}
+
+		urls[doc.ID] = set
+	}
+
+	return urls, nil
 }
 
 func (s *Service) cleanupDocumentStorage(

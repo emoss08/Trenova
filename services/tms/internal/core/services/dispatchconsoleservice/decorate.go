@@ -2,12 +2,12 @@ package dispatchconsoleservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
 )
 
-// decorateMoves derives the triage facts the console renders on each card.
 func decorateMoves(moves []*repositories.BoardMove, now int64) []*BoardMove {
 	decorated := make([]*BoardMove, 0, len(moves))
 	for _, move := range moves {
@@ -26,8 +26,6 @@ func decorateMove(move *repositories.BoardMove, now int64) *BoardMove {
 	}
 }
 
-// urgencyFor buckets a move by how soon its pickup is due. A move whose window has
-// already opened without coverage is Late — that is the queue a dispatcher works first.
 func urgencyFor(move *repositories.BoardMove, now int64) UrgencyBucket {
 	if move.OriginWindowStart <= 0 {
 		return UrgencyPlanned
@@ -55,8 +53,6 @@ func minutesToPickup(move *repositories.BoardMove, now int64) int64 {
 	return (move.OriginWindowStart - now) / 60
 }
 
-// decorateDrivers turns the fleet snapshot into capacity-rail rows, attaching live
-// clocks, position, PTA, and the reasons a driver is unavailable.
 func decorateDrivers(
 	snapshot *dispatchcandidateservice.FleetSnapshot,
 	control *dispatchcontrol.DispatchControl,
@@ -75,7 +71,10 @@ func decorateDrivers(
 		applyPosition(row, snapshot)
 		applyWorkload(row, snapshot)
 
-		row.ProjectedTimeAvailable = projectedTimeAvailable(row.Commitments, now)
+		row.ProjectedTimeAvailable = dispatchcandidateservice.ProjectedTimeAvailable(
+			row.Commitments,
+			now,
+		)
 		row.Findings = availabilityFindings(driver, snapshot, control, now)
 		row.Availability = availabilityFor(row, now)
 
@@ -126,9 +125,6 @@ func applyWorkload(row *BoardDriver, snapshot *dispatchcandidateservice.FleetSna
 	row.CommittedRevenue = workload.TotalRevenue
 }
 
-// availabilityFindings runs the driver-only rule sets — the ones that do not depend on a
-// particular move — so the rail can explain why a driver is unavailable before a
-// dispatcher tries to use them.
 func availabilityFindings(
 	driver *repositories.BoardDriver,
 	snapshot *dispatchcandidateservice.FleetSnapshot,
@@ -152,17 +148,25 @@ func availabilityFindings(
 			Control: control,
 		},
 	))
-	eval.Merge(dispatcheligibility.EvaluateHOSClocks(dispatcheligibility.HOSInput{
-		State:   snapshot.HOSByWorker[driver.WorkerID],
-		Control: control,
-		Now:     now,
-	}))
+	if snapshot.TelematicsActive {
+		eval.Merge(dispatcheligibility.EvaluateHOSClocks(dispatcheligibility.HOSInput{
+			State:     snapshot.HOSByWorker[driver.WorkerID],
+			Control:   control,
+			Now:       now,
+			ELDExempt: workerHOSExempt(w),
+		}))
+	}
 
 	return eval.Findings
 }
 
-// availabilityFor is the single word the rail shows for a driver's state, chosen in
-// priority order: a blocked driver is blocked no matter what their calendar says.
+func workerHOSExempt(w *worker.Worker) bool {
+	if w == nil || w.Profile == nil {
+		return false
+	}
+	return w.Profile.ELDExempt || w.Profile.ShortHaulExempt
+}
+
 func availabilityFor(row *BoardDriver, now int64) DriverAvailability {
 	for i := range row.Findings {
 		if row.Findings[i].Severity == dispatcheligibility.SeverityBlock {
@@ -171,12 +175,12 @@ func availabilityFor(row *BoardDriver, now int64) DriverAvailability {
 	}
 
 	for _, pto := range row.TimeOff {
-		if pto.StartDate <= now && pto.EndDate >= now {
+		if pto.StartDate <= now && now <= dispatchcandidateservice.PTOInclusiveEnd(pto.EndDate) {
 			return AvailabilityTimeOff
 		}
 	}
 
-	if len(row.Commitments) == 0 {
+	if row.ProjectedTimeAvailable <= now {
 		return AvailabilityOpen
 	}
 
@@ -185,16 +189,4 @@ func availabilityFor(row *BoardDriver, now int64) DriverAvailability {
 	}
 
 	return AvailabilityWorking
-}
-
-// projectedTimeAvailable is when the driver frees up: the end of their last committed
-// move, or now when they hold nothing.
-func projectedTimeAvailable(commitments []*repositories.WorkerCommitment, now int64) int64 {
-	latest := now
-	for _, commitment := range commitments {
-		if commitment.WindowEnd > latest {
-			latest = commitment.WindowEnd
-		}
-	}
-	return latest
 }

@@ -2,12 +2,24 @@ import { PageHeader } from "@/components/page-header";
 import { usePermission } from "@/hooks/use-permission";
 import { useDeleteHomeLayoutPreset, useHomeLayoutPresets } from "@/hooks/use-home-layout";
 import type { HomeLayoutPreset } from "@/lib/graphql/home-layout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@trenova/shared/components/ui/alert-dialog";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { LayoutGridIcon, LockIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { LayoutGridIcon, Loader2Icon, LockIcon, PlusIcon, Trash2Icon, TrashIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { useRoleOptions } from "./_components/use-role-options";
@@ -16,16 +28,21 @@ export function HomeLayoutsPage() {
   const { data: presets, isLoading } = useHomeLayoutPresets();
   const { data: roles } = useRoleOptions();
   const deletePreset = useDeleteHomeLayoutPreset();
+  const [confirming, setConfirming] = useState<HomeLayoutPreset | null>(null);
 
   const { allowed: canCreate } = usePermission(Resource.HomeLayoutPreset, Operation.Create);
   const { allowed: canDelete } = usePermission(Resource.HomeLayoutPreset, Operation.Delete);
 
-  const roleNames = new Map((roles ?? []).map((role) => [role.id, role.name]));
+  const roleNames = useMemo(
+    () => new Map((roles ?? []).map((role) => [role.id, role.name])),
+    [roles],
+  );
 
   const remove = async (preset: HomeLayoutPreset) => {
     try {
       await deletePreset.mutateAsync(preset.id);
       toast.success(`Deleted ${preset.name}`);
+      setConfirming(null);
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not delete that home screen"));
     }
@@ -65,12 +82,42 @@ export function HomeLayoutsPage() {
               preset={preset}
               roleNames={roleNames}
               canDelete={canDelete}
-              deleting={deletePreset.isPending}
-              onDelete={() => void remove(preset)}
+              onDelete={() => setConfirming(preset)}
             />
           ))}
         </div>
       )}
+
+      <AlertDialog open={confirming != null} onOpenChange={(open) => !open && setConfirming(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive">
+              <TrashIcon />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete home screen</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirming && (
+                <>
+                  <strong>{confirming.name}</strong> reaches {confirming.assignedUserCount}{" "}
+                  {confirming.assignedUserCount === 1 ? "person" : "people"}. They will fall back to
+                  the next home screen that matches them. This cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirming(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deletePreset.isPending}
+              onClick={() => confirming && void remove(confirming)}
+            >
+              {deletePreset.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -79,13 +126,11 @@ function PresetRow({
   preset,
   roleNames,
   canDelete,
-  deleting,
   onDelete,
 }: {
   preset: HomeLayoutPreset;
   roleNames: Map<string, string>;
   canDelete: boolean;
-  deleting: boolean;
   onDelete: () => void;
 }) {
   const audience = preset.roleIds
@@ -93,7 +138,7 @@ function PresetRow({
     .filter((name): name is string => name != null);
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-3">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/80 bg-card p-3 transition-colors hover:border-border">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -142,7 +187,6 @@ function PresetRow({
             size="icon"
             className="text-destructive"
             aria-label={`Delete ${preset.name}`}
-            disabled={deleting}
             onClick={onDelete}
           >
             <Trash2Icon className="size-4" />

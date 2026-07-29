@@ -18,6 +18,10 @@ import {
   shouldPatchEvent,
   type ResourceInvalidationEvent,
 } from "@trenova/shared/hooks/realtime-patching";
+import {
+  handleShipmentCommentEvent,
+  isShipmentCommentEvent,
+} from "@/lib/shipment-comment-realtime";
 
 const COALESCE_DELAY_MS = 300;
 
@@ -159,8 +163,7 @@ export function useRealtimeConnection() {
 
             if (isForCurrentUser && notif.title) {
               const runId =
-                notif.eventType === "report_run_completed" &&
-                typeof notif.data?.runId === "string"
+                notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
                   ? notif.data.runId
                   : null;
 
@@ -193,6 +196,11 @@ export function useRealtimeConnection() {
         return;
       }
       useRealtimeStore.getState().setLastEventAt(Date.now());
+
+      if (isShipmentCommentEvent(evt)) {
+        handleShipmentCommentEvent(queryClient, evt, user.id);
+        return;
+      }
 
       const queryKeys = RESOURCE_QUERY_KEY_MAP[evt.resource] ?? [];
       if (queryKeys.length === 0) return;

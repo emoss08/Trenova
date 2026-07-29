@@ -5,10 +5,14 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { dateToUnixTimestamp, toDate } from "@trenova/shared/lib/date";
+import {
+  getEndOfDay,
+  toISODateString,
+  toUserWallClock,
+  userWallClockNow,
+} from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { ClipboardListIcon, DownloadIcon, FileTextIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -51,10 +55,8 @@ export function ARAgingPage() {
   const asOfValue = useWatch({ control: filterForm.control, name: "asOfDate" });
 
   const asOfUnix = useMemo(() => {
-    const date = toDate(asOfValue ?? undefined);
-    if (!date) return undefined;
-    date.setHours(23, 59, 59, 0);
-    return dateToUnixTimestamp(date);
+    if (!asOfValue) return undefined;
+    return getEndOfDay(new Date(asOfValue * 1000));
   }, [asOfValue]);
 
   const { data: summary, isLoading } = useQuery(queries.ar.agingSummary(asOfUnix));
@@ -94,8 +96,8 @@ export function ARAgingPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    const asOfDate = toDate(asOfValue ?? undefined) ?? new Date();
-    anchor.download = `ar-aging-${format(asOfDate, "yyyy-MM-dd")}.csv`;
+    const asOfDate = toUserWallClock(asOfValue) ?? userWallClockNow();
+    anchor.download = `ar-aging-${toISODateString(asOfDate)}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   };

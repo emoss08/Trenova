@@ -18,15 +18,10 @@ import {
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ImportBatchDialog } from "./_components/import-batch-dialog";
+import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 
 function formatTimestamp(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatUnixDateTimeMedium(unix);
 }
 
 function SummaryCard({

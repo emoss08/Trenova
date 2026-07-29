@@ -33,4 +33,5 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewFuelSurchargeSeed())
 	r.MustRegister(development.NewDriverPaySeed())
 	r.MustRegister(development.NewDriverPayLedgerSeed())
+	r.MustRegister(development.NewDetentionSeed())
 }

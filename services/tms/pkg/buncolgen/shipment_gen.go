@@ -986,37 +986,59 @@ var ShipmentCommentTable = TableInfo{
 //	q.Where(ShipmentCommentColumns.ID.Eq(), id)           // WHERE sc.id = ?
 //	q.Order(ShipmentCommentColumns.CreatedAt.OrderDesc())  // ORDER BY sc.created_at DESC
 var ShipmentCommentColumns = struct {
-	ID             Column // "id" → qualified: "sc.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "sc.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "sc.organization_id"
-	ShipmentID     Column // "shipment_id" → qualified: "sc.shipment_id"
-	UserID         Column // "user_id" → qualified: "sc.user_id"
-	Comment        Column // "comment" → qualified: "sc.comment"
-	Type           Column // "type" → qualified: "sc.type"
-	Visibility     Column // "visibility" → qualified: "sc.visibility"
-	Priority       Column // "priority" → qualified: "sc.priority"
-	Source         Column // "source" → qualified: "sc.source"
-	Metadata       Column // "metadata" → qualified: "sc.metadata"
-	EditedAt       Column // "edited_at" → qualified: "sc.edited_at"
-	Version        Column // "version" → qualified: "sc.version"
-	CreatedAt      Column // "created_at" → qualified: "sc.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "sc.updated_at"
+	ID                     Column // "id" → qualified: "sc.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "sc.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "sc.organization_id"
+	ShipmentID             Column // "shipment_id" → qualified: "sc.shipment_id"
+	UserID                 Column // "user_id" → qualified: "sc.user_id"
+	ParentCommentID        Column // "parent_comment_id" → qualified: "sc.parent_comment_id"
+	Comment                Column // "comment" → qualified: "sc.comment"
+	Body                   Column // "body" → qualified: "sc.body"
+	Type                   Column // "type" → qualified: "sc.type"
+	Visibility             Column // "visibility" → qualified: "sc.visibility"
+	Priority               Column // "priority" → qualified: "sc.priority"
+	Source                 Column // "source" → qualified: "sc.source"
+	Metadata               Column // "metadata" → qualified: "sc.metadata"
+	EditedAt               Column // "edited_at" → qualified: "sc.edited_at"
+	PinnedAt               Column // "pinned_at" → qualified: "sc.pinned_at"
+	PinnedByID             Column // "pinned_by_id" → qualified: "sc.pinned_by_id"
+	ResolvedAt             Column // "resolved_at" → qualified: "sc.resolved_at"
+	ResolvedByID           Column // "resolved_by_id" → qualified: "sc.resolved_by_id"
+	RequiresAcknowledgment Column // "requires_acknowledgment" → qualified: "sc.requires_acknowledgment"
+	DeletedAt              Column // "deleted_at" → qualified: "sc.deleted_at"
+	DeletedByID            Column // "deleted_by_id" → qualified: "sc.deleted_by_id"
+	SearchVector           Column // "search_vector" → qualified: "sc.search_vector"
+	ReplyCount             Column // "reply_count" → qualified: "sc.reply_count"
+	Version                Column // "version" → qualified: "sc.version"
+	CreatedAt              Column // "created_at" → qualified: "sc.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "sc.updated_at"
 }{
-	ID:             NewColumn("id", "sc"),
-	BusinessUnitID: NewColumn("business_unit_id", "sc"),
-	OrganizationID: NewColumn("organization_id", "sc"),
-	ShipmentID:     NewColumn("shipment_id", "sc"),
-	UserID:         NewColumn("user_id", "sc"),
-	Comment:        NewColumn("comment", "sc"),
-	Type:           NewColumn("type", "sc"),
-	Visibility:     NewColumn("visibility", "sc"),
-	Priority:       NewColumn("priority", "sc"),
-	Source:         NewColumn("source", "sc"),
-	Metadata:       NewColumn("metadata", "sc"),
-	EditedAt:       NewColumn("edited_at", "sc"),
-	Version:        NewColumn("version", "sc"),
-	CreatedAt:      NewColumn("created_at", "sc"),
-	UpdatedAt:      NewColumn("updated_at", "sc"),
+	ID:                     NewColumn("id", "sc"),
+	BusinessUnitID:         NewColumn("business_unit_id", "sc"),
+	OrganizationID:         NewColumn("organization_id", "sc"),
+	ShipmentID:             NewColumn("shipment_id", "sc"),
+	UserID:                 NewColumn("user_id", "sc"),
+	ParentCommentID:        NewColumn("parent_comment_id", "sc"),
+	Comment:                NewColumn("comment", "sc"),
+	Body:                   NewColumn("body", "sc"),
+	Type:                   NewColumn("type", "sc"),
+	Visibility:             NewColumn("visibility", "sc"),
+	Priority:               NewColumn("priority", "sc"),
+	Source:                 NewColumn("source", "sc"),
+	Metadata:               NewColumn("metadata", "sc"),
+	EditedAt:               NewColumn("edited_at", "sc"),
+	PinnedAt:               NewColumn("pinned_at", "sc"),
+	PinnedByID:             NewColumn("pinned_by_id", "sc"),
+	ResolvedAt:             NewColumn("resolved_at", "sc"),
+	ResolvedByID:           NewColumn("resolved_by_id", "sc"),
+	RequiresAcknowledgment: NewColumn("requires_acknowledgment", "sc"),
+	DeletedAt:              NewColumn("deleted_at", "sc"),
+	DeletedByID:            NewColumn("deleted_by_id", "sc"),
+	SearchVector:           NewColumn("search_vector", "sc"),
+	ReplyCount:             NewColumn("reply_count", "sc"),
+	Version:                NewColumn("version", "sc"),
+	CreatedAt:              NewColumn("created_at", "sc"),
+	UpdatedAt:              NewColumn("updated_at", "sc"),
 }
 
 // ShipmentCommentFieldMap maps JSON API field names to database column names.
@@ -1024,21 +1046,31 @@ var ShipmentCommentColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by ShipmentComment.GetStaticFieldMap().
 var ShipmentCommentFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"shipmentId":     "shipment_id",
-	"userId":         "user_id",
-	"comment":        "comment",
-	"type":           "type",
-	"visibility":     "visibility",
-	"priority":       "priority",
-	"source":         "source",
-	"metadata":       "metadata",
-	"editedAt":       "edited_at",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"shipmentId":             "shipment_id",
+	"userId":                 "user_id",
+	"parentCommentId":        "parent_comment_id",
+	"comment":                "comment",
+	"body":                   "body",
+	"type":                   "type",
+	"visibility":             "visibility",
+	"priority":               "priority",
+	"source":                 "source",
+	"metadata":               "metadata",
+	"editedAt":               "edited_at",
+	"pinnedAt":               "pinned_at",
+	"pinnedById":             "pinned_by_id",
+	"resolvedAt":             "resolved_at",
+	"resolvedById":           "resolved_by_id",
+	"requiresAcknowledgment": "requires_acknowledgment",
+	"deletedAt":              "deleted_at",
+	"deletedById":            "deleted_by_id",
+	"replyCount":             "reply_count",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // ShipmentCommentInsertableColumns lists column names suitable for INSERT statements on the "shipment_comments" table.
@@ -1049,13 +1081,22 @@ var ShipmentCommentInsertableColumns = []string{
 	"organization_id",
 	"shipment_id",
 	"user_id",
+	"parent_comment_id",
 	"comment",
+	"body",
 	"type",
 	"visibility",
 	"priority",
 	"source",
 	"metadata",
 	"edited_at",
+	"pinned_at",
+	"pinned_by_id",
+	"resolved_at",
+	"resolved_by_id",
+	"requires_acknowledgment",
+	"deleted_at",
+	"deleted_by_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1067,11 +1108,17 @@ var ShipmentCommentInsertableColumns = []string{
 //	q.Relation(ShipmentCommentRelations.User)
 //	// Bun eager-loads the User association via a separate query
 var ShipmentCommentRelations = struct {
-	User           string
-	MentionedUsers string
+	User            string
+	PinnedBy        string
+	ResolvedBy      string
+	MentionedUsers  string
+	Acknowledgments string
 }{
-	User:           "User",
-	MentionedUsers: "MentionedUsers",
+	User:            "User",
+	PinnedBy:        "PinnedBy",
+	ResolvedBy:      "ResolvedBy",
+	MentionedUsers:  "MentionedUsers",
+	Acknowledgments: "Acknowledgments",
 }
 
 // ShipmentCommentScopeTenant restricts a query to a single tenant by adding:
@@ -1124,21 +1171,30 @@ func ShipmentCommentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery)
 //	ShipmentCommentFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ShipmentCommentFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ShipmentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
-	Comment        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
-	Type           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Visibility     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "visibility" → DB: "visibility"
-	Priority       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
-	Source         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
-	Metadata       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
-	EditedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "editedAt" → DB: "edited_at"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShipmentID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	UserID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	ParentCommentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentCommentId" → DB: "parent_comment_id"
+	Comment                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
+	Body                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "body" → DB: "body"
+	Type                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
+	Visibility             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "visibility" → DB: "visibility"
+	Priority               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
+	Source                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	Metadata               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
+	EditedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "editedAt" → DB: "edited_at"
+	PinnedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedAt" → DB: "pinned_at"
+	PinnedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedById" → DB: "pinned_by_id"
+	ResolvedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
+	ResolvedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedById" → DB: "resolved_by_id"
+	RequiresAcknowledgment func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requiresAcknowledgment" → DB: "requires_acknowledgment"
+	DeletedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deletedAt" → DB: "deleted_at"
+	DeletedByID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deletedById" → DB: "deleted_by_id"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1155,8 +1211,14 @@ var ShipmentCommentFilter = struct {
 	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("userId", op, value)
 	},
+	ParentCommentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("parentCommentId", op, value)
+	},
 	Comment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("comment", op, value)
+	},
+	Body: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("body", op, value)
 	},
 	Type: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("type", op, value)
@@ -1176,6 +1238,27 @@ var ShipmentCommentFilter = struct {
 	EditedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("editedAt", op, value)
 	},
+	PinnedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pinnedAt", op, value)
+	},
+	PinnedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pinnedById", op, value)
+	},
+	ResolvedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedAt", op, value)
+	},
+	ResolvedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedById", op, value)
+	},
+	RequiresAcknowledgment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requiresAcknowledgment", op, value)
+	},
+	DeletedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deletedAt", op, value)
+	},
+	DeletedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deletedById", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
 	},
@@ -1184,6 +1267,167 @@ var ShipmentCommentFilter = struct {
 	},
 	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ShipmentCommentAcknowledgment — table "shipment_comment_acknowledgments", alias "sca"
+// ---------------------------------------------------------------------------
+
+// ShipmentCommentAcknowledgmentTable holds the table name, alias, and primary key columns
+// for the "shipment_comment_acknowledgments" table. The alias "sca" is used in all generated
+// SQL fragments (e.g. "sca.id = ?").
+var ShipmentCommentAcknowledgmentTable = TableInfo{
+	Name:       "shipment_comment_acknowledgments",
+	Alias:      "sca",
+	PrimaryKey: []string{"id"},
+}
+
+// ShipmentCommentAcknowledgmentColumns provides type-safe column references for the "shipment_comment_acknowledgments" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ShipmentCommentAcknowledgmentColumns.ID.String())
+//	// SELECT sca.id FROM shipment_comment_acknowledgments AS sca
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ShipmentCommentAcknowledgmentColumns.ID.Eq(), id)           // WHERE sca.id = ?
+//	q.Order(ShipmentCommentAcknowledgmentColumns.CreatedAt.OrderDesc())  // ORDER BY sca.created_at DESC
+var ShipmentCommentAcknowledgmentColumns = struct {
+	ID             Column // "id" → qualified: "sca.id"
+	CommentID      Column // "comment_id" → qualified: "sca.comment_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "sca.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "sca.organization_id"
+	ShipmentID     Column // "shipment_id" → qualified: "sca.shipment_id"
+	UserID         Column // "user_id" → qualified: "sca.user_id"
+	AcknowledgedAt Column // "acknowledged_at" → qualified: "sca.acknowledged_at"
+}{
+	ID:             NewColumn("id", "sca"),
+	CommentID:      NewColumn("comment_id", "sca"),
+	BusinessUnitID: NewColumn("business_unit_id", "sca"),
+	OrganizationID: NewColumn("organization_id", "sca"),
+	ShipmentID:     NewColumn("shipment_id", "sca"),
+	UserID:         NewColumn("user_id", "sca"),
+	AcknowledgedAt: NewColumn("acknowledged_at", "sca"),
+}
+
+// ShipmentCommentAcknowledgmentFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ShipmentCommentAcknowledgment.GetStaticFieldMap().
+var ShipmentCommentAcknowledgmentFieldMap = map[string]string{
+	"id":             "id",
+	"commentId":      "comment_id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"shipmentId":     "shipment_id",
+	"userId":         "user_id",
+	"acknowledgedAt": "acknowledged_at",
+}
+
+// ShipmentCommentAcknowledgmentInsertableColumns lists column names suitable for INSERT statements on the "shipment_comment_acknowledgments" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ShipmentCommentAcknowledgmentInsertableColumns = []string{
+	"id",
+	"comment_id",
+	"business_unit_id",
+	"organization_id",
+	"shipment_id",
+	"user_id",
+	"acknowledged_at",
+}
+
+// ShipmentCommentAcknowledgmentRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ShipmentCommentAcknowledgmentRelations.User)
+//	// Bun eager-loads the User association via a separate query
+var ShipmentCommentAcknowledgmentRelations = struct {
+	User string
+}{
+	User: "User",
+}
+
+// ShipmentCommentAcknowledgmentScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE sca.organization_id = ? AND sca.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ShipmentCommentAcknowledgmentScopeTenant(sq, ti).
+//		Where(buncolgen.ShipmentCommentAcknowledgmentColumns.ID.Eq(), id)
+func ShipmentCommentAcknowledgmentScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ShipmentCommentAcknowledgmentColumns.OrganizationID, ShipmentCommentAcknowledgmentColumns.BusinessUnitID, ti)
+}
+
+// ShipmentCommentAcknowledgmentScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ShipmentCommentAcknowledgmentScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ShipmentCommentAcknowledgmentColumns.ID.In(), bun.List(ids))
+//	})
+func ShipmentCommentAcknowledgmentScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ShipmentCommentAcknowledgmentColumns.OrganizationID, ShipmentCommentAcknowledgmentColumns.BusinessUnitID, ti)
+}
+
+// ShipmentCommentAcknowledgmentScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ShipmentCommentAcknowledgmentScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ShipmentCommentAcknowledgmentColumns.ID.Eq(), id)
+//	})
+func ShipmentCommentAcknowledgmentScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ShipmentCommentAcknowledgmentColumns.OrganizationID, ShipmentCommentAcknowledgmentColumns.BusinessUnitID, ti)
+}
+
+// ShipmentCommentAcknowledgmentApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ShipmentCommentAcknowledgmentApplyTenant(tenantInfo))
+func ShipmentCommentAcknowledgmentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ShipmentCommentAcknowledgmentColumns.OrganizationID, ShipmentCommentAcknowledgmentColumns.BusinessUnitID, ti)
+}
+
+// ShipmentCommentAcknowledgmentFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "shipment_comment_acknowledgments" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ShipmentCommentAcknowledgmentFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ShipmentCommentAcknowledgmentFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	CommentID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "commentId" → DB: "comment_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShipmentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	AcknowledgedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acknowledgedAt" → DB: "acknowledged_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	CommentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("commentId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	AcknowledgedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("acknowledgedAt", op, value)
 	},
 }
 

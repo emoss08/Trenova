@@ -16,23 +16,14 @@ import {
   UploadCloudIcon,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
+import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 
 function formatTimestamp(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatUnixDateTimeMedium(unix);
 }
 
 function formatDate(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix);
 }
 
 function SummaryCard({

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
@@ -110,7 +111,7 @@ func planFor(
 	scores []*dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,
 	agentControl *tenant.AgentControl,
-) *Plan {
+) *portservices.DispatchPlan {
 	t.Helper()
 
 	moves := make([]*repositories.BoardMove, len(scores))
@@ -134,15 +135,14 @@ func planFor(
 		}
 	}
 
-	svc := &Service{}
-	return svc.buildPlan(
-		moves,
-		assignmentsolver.Solve(cost),
-		grid,
-		control,
-		agentControl,
-		1_700_000_000,
-	)
+	return buildPlan(&buildPlanParams{
+		Moves:        moves,
+		Solution:     assignmentsolver.Solve(cost),
+		Scores:       grid,
+		Control:      control,
+		AgentControl: agentControl,
+		Now:          1_700_000_000,
+	})
 }
 
 func autoExecuteControls() (*dispatchcontrol.DispatchControl, *tenant.AgentControl) {
@@ -237,8 +237,91 @@ func TestBuildPlan_UncoveredMovesExplainTheClosestDisqualification(t *testing.T)
 	assert.Empty(t, plan.Assignments)
 	require.Len(t, plan.Uncovered, 1)
 	assert.Contains(t, plan.Uncovered[0].Reason, "Dana Ellis")
-	assert.Contains(t, plan.Uncovered[0].Reason, "no drive time remaining")
+	assert.Contains(t, plan.Uncovered[0].Reason, "disqualified")
 	assert.NotEmpty(t, plan.Uncovered[0].BestBlockedFindings)
+}
+
+func TestBuildPlan_SurvivesAnEmptySolverResult(t *testing.T) {
+	t.Parallel()
+
+	control, agentControl := autoExecuteControls()
+	moves := []*repositories.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
+
+	plan := buildPlan(&buildPlanParams{
+		Moves:        moves,
+		Solution:     assignmentsolver.Result{RowAssignment: []int{}, ColAssignment: []int{}},
+		Scores:       [][]*dispatchcandidateservice.CandidateScore{nil},
+		Control:      control,
+		AgentControl: agentControl,
+		Now:          1_700_000_000,
+	})
+
+	assert.Empty(t, plan.Assignments)
+	require.Len(t, plan.Uncovered, 1)
+	assert.Equal(t, "PRO-9", plan.Uncovered[0].ProNumber)
+}
+
+func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
+	t.Parallel()
+
+	control, agentControl := autoExecuteControls()
+	svc := &Service{}
+
+	plan := svc.solve(&solveParams{
+		Moves: []*repositories.BoardMove{
+			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-1"},
+			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-2"},
+		},
+		Snapshot:     &dispatchcandidateservice.FleetSnapshot{},
+		Control:      control,
+		AgentControl: agentControl,
+		Now:          1_700_000_000,
+	})
+
+	assert.Empty(t, plan.Assignments)
+	require.Len(t, plan.Uncovered, 2)
+	for _, uncovered := range plan.Uncovered {
+		assert.Equal(t, "No eligible driver was available for this move", uncovered.Reason)
+		assert.Empty(t, uncovered.BestBlockedFindings)
+	}
+}
+
+func TestUncoveredFor_DistinguishesBlockedFromMerelyUnchosen(t *testing.T) {
+	t.Parallel()
+
+	move := &repositories.BoardMove{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-3"}
+
+	eligible := score(85)
+	eligible.WorkerName = "Riley Chen"
+
+	unchosen := uncoveredFor(move, []*dispatchcandidateservice.CandidateScore{eligible}, nil)
+	assert.Contains(t, unchosen.Reason, "Riley Chen")
+	assert.Contains(t, unchosen.Reason, "no feasible pairing remained")
+	assert.NotContains(t, unchosen.Reason, "disqualified",
+		"an eligible candidate who lost the solve must not be reported as disqualified")
+	assert.Empty(t, unchosen.BestBlockedFindings)
+
+	maxDeadhead := int32(100)
+	control := &dispatchcontrol.DispatchControl{AutoAssignMaxDeadheadMiles: &maxDeadhead}
+	far := score(85)
+	far.WorkerName = "Sam Ortiz"
+	farMiles := 240.0
+	far.DeadheadMiles = &farMiles
+
+	overLimit := uncoveredFor(move, []*dispatchcandidateservice.CandidateScore{far}, control)
+	assert.Contains(t, overLimit.Reason, "Sam Ortiz")
+	assert.Contains(t, overLimit.Reason, "deadhead limit")
+	assert.Empty(t, overLimit.BestBlockedFindings)
+
+	blocked := score(70, warnFinding(), blockFinding())
+	blocked.WorkerName = "Dana Ellis"
+
+	disqualified := uncoveredFor(move, []*dispatchcandidateservice.CandidateScore{blocked}, nil)
+	assert.Contains(t, disqualified.Reason, "disqualified")
+	assert.Contains(t, disqualified.Reason, "Dana Ellis")
+	assert.NotContains(t, disqualified.Reason, "no drive time remaining",
+		"the findings carry the why; repeating it in the reason reads twice in the UI")
+	assert.NotEmpty(t, disqualified.BestBlockedFindings)
 }
 
 func TestResolveTier(t *testing.T) {
@@ -299,4 +382,26 @@ func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
 	miles := 42.0
 	withPosition.DeadheadMiles = &miles
 	assert.Len(t, evidenceFor(withPosition, &repositories.BoardMove{}), 3)
+}
+
+func TestToolParamsFor(t *testing.T) {
+	t.Parallel()
+
+	planned := &portservices.DispatchPlannedAssignment{
+		MoveID:    pulid.MustNew("sm_"),
+		WorkerID:  pulid.MustNew("wrk_"),
+		TractorID: pulid.MustNew("trac_"),
+	}
+
+	params, err := toolParamsFor(planned)
+	require.NoError(t, err)
+	assert.Equal(t, planned.MoveID.String(), params["shipmentMoveId"])
+	assert.Equal(t, planned.WorkerID.String(), params["primaryWorkerId"])
+	assert.Equal(t, planned.TractorID.String(), params["tractorId"])
+	assert.NotContains(t, params, "trailerId")
+
+	planned.TrailerID = pulid.MustNew("tr_")
+	params, err = toolParamsFor(planned)
+	require.NoError(t, err)
+	assert.Equal(t, planned.TrailerID.String(), params["trailerId"])
 }

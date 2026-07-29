@@ -53,6 +53,7 @@ virtuals:
     - formats
     - emailRecipients
     - emailAttach
+    - emailInline
     - notifyUserIds
   Location:
     - geofenceVertices
@@ -71,6 +72,10 @@ virtuals:
     - commodity
   ShipmentComment:
     - mentionedUserIds
+    - attachments
+  HomeLayoutPreset:
+    - widgets
+    - assignedUserCount
   ShipmentEvent:
     - shipment
   Tractor:

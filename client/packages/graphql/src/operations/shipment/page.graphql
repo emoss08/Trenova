@@ -138,6 +138,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -342,19 +343,49 @@ fragment ShipmentCommentMentionFields on ShipmentCommentMention {
   }
 }
 
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+
 fragment ShipmentCommentFields on ShipmentComment {
   id
   businessUnitId
   organizationId
   shipmentId
   userId
+  parentCommentId
+  replyCount
   comment
+  body
   type
   visibility
   priority
   source
   metadata
   editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
   version
   createdAt
   updatedAt
@@ -362,8 +393,20 @@ fragment ShipmentCommentFields on ShipmentComment {
   user {
     ...ShipmentUserFields
   }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
   mentionedUsers {
     ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
   }
 }
 
@@ -631,8 +674,37 @@ query MapShipments($input: ShipmentsInput!) {
   }
 }
 
-query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
-  shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
+query ShipmentComments(
+  $shipmentId: ID!
+  $first: Int!
+  $after: String
+  $filter: ShipmentCommentsFilterInput
+) {
+  shipmentComments(shipmentId: $shipmentId, first: $first, after: $after, filter: $filter) {
+    edges {
+      node {
+        ...ShipmentCommentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+
+query ShipmentCommentReplies(
+  $shipmentId: ID!
+  $commentId: ID!
+  $first: Int!
+  $after: String
+) {
+  shipmentCommentReplies(
+    shipmentId: $shipmentId
+    commentId: $commentId
+    first: $first
+    after: $after
+  ) {
     edges {
       node {
         ...ShipmentCommentFields
@@ -988,6 +1060,36 @@ mutation UpdateShipmentComment(
 
 mutation DeleteShipmentComment($shipmentId: ID!, $commentId: ID!) {
   deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
+}
+
+mutation PinShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  pinShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+
+mutation UnpinShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  unpinShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+
+mutation ResolveShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  resolveShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+
+mutation UnresolveShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  unresolveShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+
+mutation AcknowledgeShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  acknowledgeShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
 }
 
 query ShipmentProfitability($shipmentId: ID!) {

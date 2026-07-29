@@ -73,7 +73,12 @@ func (e *Engine) Execute(ctx context.Context, opts ExecuteOptions) (*ExecutionRe
 			return nil, fmt.Errorf("failed to check seed status for %s: %w", seed.Name(), err)
 		}
 
-		if applied && !opts.Force && !isRepeatable(seed) {
+		// Force re-applies what the caller asked for, not its dependencies: the
+		// dependencies are already satisfied, and re-running them means asking
+		// seeds to be idempotent against data they did not create.
+		forced := opts.Force && (opts.Target == "" || seed.Name() == opts.Target)
+
+		if applied && !forced && !isRepeatable(seed) {
 			skipped = append(skipped, seed.Name())
 			continue
 		}
@@ -239,6 +244,10 @@ func (e *Engine) Rollback(
 
 	if err := e.rollbackTracker.RecordSuccess(ctx, seed.Name(), seed.Version(), environment, 0, duration); err != nil {
 		color.Yellow("Warning: failed to record rollback success: %v", err)
+	}
+
+	if err := e.tracker.RecordRollback(ctx, seed, environment); err != nil {
+		color.Yellow("Warning: failed to clear seed history: %v", err)
 	}
 
 	color.Green("✓ Rolled back %s (%dms)", seedName, duration.Milliseconds())

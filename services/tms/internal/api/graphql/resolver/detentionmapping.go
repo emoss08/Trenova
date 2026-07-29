@@ -114,21 +114,20 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 		LocationID:                  idPtrFromPulidPtr(entity.LocationID),
 	}
 
-	if len(entity.StopTypes) > 0 {
-		model.StopTypes = make([]gqlmodel.StopType, 0, len(entity.StopTypes))
-		for _, stopType := range entity.StopTypes {
-			model.StopTypes = append(model.StopTypes, gqlmodel.StopType(stopType))
-		}
+	// Both lists are emitted as empty rather than nil: a policy with no rate
+	// ladder is a policy with zero tiers, not one with an unknown number, and a
+	// null on the wire makes every consumer guard for it.
+	model.StopTypes = make([]gqlmodel.StopType, 0, len(entity.StopTypes))
+	for _, stopType := range entity.StopTypes {
+		model.StopTypes = append(model.StopTypes, gqlmodel.StopType(stopType))
 	}
 
-	if len(entity.Tiers) > 0 {
-		model.Tiers = make([]*gqlmodel.DetentionPolicyTier, 0, len(entity.Tiers))
-		for _, tier := range entity.Tiers {
-			if tier == nil {
-				continue
-			}
-			model.Tiers = append(model.Tiers, detentionTierToModel(tier))
+	model.Tiers = make([]*gqlmodel.DetentionPolicyTier, 0, len(entity.Tiers))
+	for _, tier := range entity.Tiers {
+		if tier == nil {
+			continue
 		}
+		model.Tiers = append(model.Tiers, detentionTierToModel(tier))
 	}
 
 	return model
@@ -169,15 +168,15 @@ func detentionPolicyFromInput(
 	}
 
 	entity := &detention.DetentionPolicy{
-		ID:                  id,
-		OrganizationID:      tenantInfo.OrgID,
-		BusinessUnitID:      tenantInfo.BuID,
-		Name:                input.Name,
-		Code:                input.Code,
-		Status:              detention.PolicyStatusDraft,
-		ClockStartBasis:     detention.ClockStartBasisLaterOfArrivalOrAppointment,
-		LateArrivalRule:     detention.LateArrivalRuleNoEffect,
-		BillingFreeMinutes:  120,
+		ID:                      id,
+		OrganizationID:          tenantInfo.OrgID,
+		BusinessUnitID:          tenantInfo.BuID,
+		Name:                    input.Name,
+		Code:                    input.Code,
+		Status:                  detention.PolicyStatusDraft,
+		ClockStartBasis:         detention.ClockStartBasisLaterOfArrivalOrAppointment,
+		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
+		BillingFreeMinutes:      120,
 		BillingIncrementMinutes: 15,
 		RoundingMode:            detention.RoundingModeUp,
 		RateSource:              detention.RateSourceAccessorial,
@@ -626,6 +625,7 @@ func detentionDisputePacketToModel(
 		Evidence:       detentionEvidenceListToModel(packet.Evidence),
 		Notices:        detentionNoticesToModel(packet.Notices),
 		Collectability: detentionCollectabilityToModel(packet.Collectability),
+		ChainVerified:  packet.ChainVerified,
 		GeneratedAt:    int(packet.GeneratedAt),
 	}
 }

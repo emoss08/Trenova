@@ -1,16 +1,11 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { recurringShipmentStatusChoices } from "@/lib/choices";
 import { describeCron } from "@/lib/cron";
 import { cn } from "@trenova/shared/lib/utils";
 import type { RecurringShipment, RecurringShipmentStatus } from "@/types/recurring-shipment";
 import { type ColumnDef } from "@tanstack/react-table";
 import { ArrowRightIcon } from "lucide-react";
-
-export const recurringShipmentStatusChoices = [
-  { value: "Active", label: "Active" },
-  { value: "Paused", label: "Paused" },
-  { value: "Expired", label: "Expired" },
-];
 
 const statusStyles: Record<RecurringShipmentStatus, string> = {
   Active: "border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400",

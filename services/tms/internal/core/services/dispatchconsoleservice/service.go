@@ -9,51 +9,60 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 const (
 	secondsPerHour = int64(3600)
 	secondsPerDay  = int64(86400)
 
-	// nowThresholdSeconds is how imminent a pickup has to be to demand attention now.
 	nowThresholdSeconds = int64(4 * 3600)
 
-	// defaultCandidateLimit keeps the inspector to a list a dispatcher can actually read.
 	defaultCandidateLimit = 25
 )
 
 type Params struct {
 	fx.In
 
-	Logger              *zap.Logger
 	ConsoleRepo         repositories.DispatchConsoleRepository
 	DispatchControlRepo repositories.DispatchControlRepository
+	OrgCacheRepo        repositories.OrganizationCacheRepository
 	CandidateService    *dispatchcandidateservice.Service
 }
 
 type Service struct {
-	l                   *zap.Logger
 	consoleRepo         repositories.DispatchConsoleRepository
 	dispatchControlRepo repositories.DispatchControlRepository
+	orgCacheRepo        repositories.OrganizationCacheRepository
 	candidates          *dispatchcandidateservice.Service
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:                   p.Logger.Named("service.dispatch-console"),
 		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
+		orgCacheRepo:        p.OrgCacheRepo,
 		candidates:          p.CandidateService,
 	}
 }
 
-// GetBoard assembles one console render. The number of queries is fixed: it does not
-// grow with the size of the fleet or the board.
+func (s *Service) tenantDayStart(ctx context.Context, orgID pulid.ID, now int64) int64 {
+	timezone := ""
+	if s.orgCacheRepo != nil {
+		if org, err := s.orgCacheRepo.GetByID(ctx, orgID); err == nil && org != nil {
+			timezone = org.Timezone
+		}
+	}
+
+	dayStart, err := timeutils.DayStartUnix(now, timezone)
+	if err != nil {
+		return 0
+	}
+	return dayStart
+}
+
 func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, error) {
 	control, err := s.dispatchControlRepo.GetOrCreate(
 		ctx,
@@ -65,12 +74,18 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 	}
 
 	now := timeutils.NowUnix()
-	windowStart, windowEnd := resolveWindow(req.WindowStart, req.WindowEnd, control, now)
+	windowStart, windowEnd := dispatchcandidateservice.ResolveWindow(
+		req.WindowStart,
+		req.WindowEnd,
+		control,
+		now,
+	)
 
 	filter := &repositories.DispatchBoardFilter{
 		TenantInfo:     req.TenantInfo,
 		WindowStart:    windowStart,
 		WindowEnd:      windowEnd,
+		DayStartUnix:   s.tenantDayStart(ctx, req.TenantInfo.OrgID, now),
 		FleetCodeIDs:   req.FleetCodeIDs,
 		CustomerIDs:    req.CustomerIDs,
 		ServiceTypeIDs: req.ServiceTypeIDs,
@@ -85,11 +100,17 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		return nil, err
 	}
 
+	driverFilter := *filter
+	driverFilter.Query = ""
+	driverFilter.CustomerIDs = nil
+	driverFilter.ServiceTypeIDs = nil
+
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo:  req.TenantInfo,
-		Filter:      filter,
+		Filter:      &driverFilter,
 		Control:     control,
-		CustomerIDs: customerIDsOf(moves),
+		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -100,20 +121,16 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		return nil, err
 	}
 
-	board := &Board{
+	return &Board{
 		Moves:       decorateMoves(moves, now),
 		Drivers:     decorateDrivers(snapshot, control, now),
 		Summary:     summary,
 		WindowStart: windowStart,
 		WindowEnd:   windowEnd,
 		GeneratedAt: now,
-	}
-	board.Summary.AverageDeadhead = averageDeadhead(board.Moves, snapshot)
-
-	return board, nil
+	}, nil
 }
 
-// GetMoveCandidates ranks the fleet against one move for the inspector panel.
 func (s *Service) GetMoveCandidates(
 	ctx context.Context,
 	req *MoveCandidatesRequest,
@@ -132,13 +149,12 @@ func (s *Service) GetMoveCandidates(
 		return nil, err
 	}
 
-	snapshot, err := s.buildSnapshotForMoves(
-		ctx,
-		req.TenantInfo,
-		control,
-		req.FleetCodeIDs,
-		[]*repositories.BoardMove{move},
-	)
+	snapshot, err := s.buildSnapshotForMoves(ctx, &snapshotForMovesParams{
+		TenantInfo:   req.TenantInfo,
+		Control:      control,
+		FleetCodeIDs: req.FleetCodeIDs,
+		Moves:        []*repositories.BoardMove{move},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +172,6 @@ func (s *Service) GetMoveCandidates(
 	}), nil
 }
 
-// GetDriverMoves is the reverse match: which open moves suit one driver. Dispatchers work
-// in both directions — covering a load, and finding work for an idle truck.
 func (s *Service) GetDriverMoves(
 	ctx context.Context,
 	req *DriverMovesRequest,
@@ -172,29 +186,33 @@ func (s *Service) GetDriverMoves(
 	}
 
 	now := timeutils.NowUnix()
-	windowStart, windowEnd := resolveWindow(req.WindowStart, req.WindowEnd, control, now)
+	windowStart, windowEnd := dispatchcandidateservice.ResolveWindow(
+		req.WindowStart,
+		req.WindowEnd,
+		control,
+		now,
+	)
 
-	filter := &repositories.DispatchBoardFilter{
+	moveFilter := &repositories.DispatchBoardFilter{
 		TenantInfo:  req.TenantInfo,
 		WindowStart: windowStart,
 		WindowEnd:   windowEnd,
-		WorkerIDs:   []pulid.ID{req.WorkerID},
 	}
 
-	moves, err := s.consoleRepo.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
-		TenantInfo:  req.TenantInfo,
-		WindowStart: windowStart,
-		WindowEnd:   windowEnd,
-	})
+	moves, err := s.consoleRepo.ListBoardMoves(ctx, moveFilter)
 	if err != nil {
 		return nil, err
 	}
 
+	driverFilter := *moveFilter
+	driverFilter.WorkerIDs = []pulid.ID{req.WorkerID}
+
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo:  req.TenantInfo,
-		Filter:      filter,
+		Filter:      &driverFilter,
 		Control:     control,
-		CustomerIDs: customerIDsOf(moves),
+		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -224,8 +242,6 @@ func (s *Service) GetDriverMoves(
 	return matches, nil
 }
 
-// PreviewAssignment scores one explicit pairing without writing anything. This backs the
-// drag-drop pre-flight, so a dispatcher sees the consequences before committing.
 func (s *Service) PreviewAssignment(
 	ctx context.Context,
 	req *PreviewAssignmentRequest,
@@ -244,16 +260,21 @@ func (s *Service) PreviewAssignment(
 		return nil, err
 	}
 
+	now := timeutils.NowUnix()
+	moves := []*repositories.BoardMove{move}
+	windowStart, windowEnd := spanOf(moves, now)
+
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo: req.TenantInfo,
 		Filter: &repositories.DispatchBoardFilter{
 			TenantInfo:  req.TenantInfo,
 			WorkerIDs:   []pulid.ID{req.WorkerID},
-			WindowStart: move.OriginWindowStart,
-			WindowEnd:   move.DestinationWindowStart,
+			WindowStart: windowStart,
+			WindowEnd:   windowEnd,
 		},
 		Control:     control,
-		CustomerIDs: []pulid.ID{move.CustomerID},
+		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -305,25 +326,30 @@ func (s *Service) loadMove(
 	return moves[0], nil
 }
 
+type snapshotForMovesParams struct {
+	TenantInfo   pagination.TenantInfo
+	Control      *dispatchcontrol.DispatchControl
+	FleetCodeIDs []pulid.ID
+	Moves        []*repositories.BoardMove
+}
+
 func (s *Service) buildSnapshotForMoves(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	control *dispatchcontrol.DispatchControl,
-	fleetCodeIDs []pulid.ID,
-	moves []*repositories.BoardMove,
+	p *snapshotForMovesParams,
 ) (*dispatchcandidateservice.FleetSnapshot, error) {
-	windowStart, windowEnd := spanOf(moves)
+	windowStart, windowEnd := spanOf(p.Moves, timeutils.NowUnix())
 
 	return s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
-		TenantInfo: tenantInfo,
+		TenantInfo: p.TenantInfo,
 		Filter: &repositories.DispatchBoardFilter{
-			TenantInfo:   tenantInfo,
-			FleetCodeIDs: fleetCodeIDs,
+			TenantInfo:   p.TenantInfo,
+			FleetCodeIDs: p.FleetCodeIDs,
 			WindowStart:  windowStart,
 			WindowEnd:    windowEnd,
 		},
-		Control:     control,
-		CustomerIDs: customerIDsOf(moves),
+		Control:     p.Control,
+		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(p.Moves),
+		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(p.Moves),
 	})
 }
 
@@ -334,103 +360,30 @@ func firstNonNil(preferred, fallback pulid.ID) pulid.ID {
 	return fallback
 }
 
-func customerIDsOf(moves []*repositories.BoardMove) []pulid.ID {
-	seen := make(map[pulid.ID]struct{}, len(moves))
-	ids := make([]pulid.ID, 0, len(moves))
-	for _, move := range moves {
-		if move.CustomerID.IsNil() {
-			continue
-		}
-		if _, ok := seen[move.CustomerID]; ok {
-			continue
-		}
-		seen[move.CustomerID] = struct{}{}
-		ids = append(ids, move.CustomerID)
-	}
-	return ids
-}
-
-func spanOf(moves []*repositories.BoardMove) (int64, int64) {
+func spanOf(moves []*repositories.BoardMove, now int64) (spanStart, spanEnd int64) {
 	var start, end int64
 	for _, move := range moves {
 		if move.OriginWindowStart > 0 && (start == 0 || move.OriginWindowStart < start) {
 			start = move.OriginWindowStart
 		}
-		moveEnd := move.DestinationWindowStart
-		if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > moveEnd {
-			moveEnd = *move.DestinationWindowEnd
-		}
-		if moveEnd > end {
+		if moveEnd := dispatchcandidateservice.MoveWindowEnd(move); moveEnd > end {
 			end = moveEnd
 		}
 	}
-	return start, end
-}
-
-// resolveWindow falls back to the organization's configured planning horizon so the
-// board and the optimizer always plan over the same span.
-func resolveWindow(
-	start, end int64,
-	control *dispatchcontrol.DispatchControl,
-	now int64,
-) (int64, int64) {
-	if start <= 0 {
+	if start == 0 {
 		start = now
 	}
-	if end <= 0 {
-		end = now + int64(control.PlanningHorizonHours())*secondsPerHour
+	if end < start {
+		end = start
 	}
 	return start, end
 }
 
 func sortMatches(matches []*DriverMoveMatch) {
 	sort.SliceStable(matches, func(i, j int) bool {
-		left, right := matches[i], matches[j]
-		leftBlocked, rightBlocked := left.Score.Blocked(), right.Score.Blocked()
-		if leftBlocked != rightBlocked {
-			return rightBlocked
+		if c := dispatchcandidateservice.CompareRank(matches[i].Score, matches[j].Score); c != 0 {
+			return c < 0
 		}
-		if left.Score.Score != right.Score.Score {
-			return left.Score.Score > right.Score.Score
-		}
-		return left.Move.OriginWindowStart < right.Move.OriginWindowStart
+		return matches[i].Move.OriginWindowStart < matches[j].Move.OriginWindowStart
 	})
-}
-
-// averageDeadhead reports the empty miles already committed on the board: for every
-// covered move, how far its assigned truck currently sits from the pickup. Moves whose
-// truck has no fresh position are skipped rather than counted as zero, which would
-// flatter the number.
-func averageDeadhead(
-	moves []*BoardMove,
-	snapshot *dispatchcandidateservice.FleetSnapshot,
-) float64 {
-	if len(moves) == 0 || snapshot == nil {
-		return 0
-	}
-
-	total, count := 0.0, 0
-	for _, move := range moves {
-		if move.AssignedTractorID.IsNil() ||
-			move.OriginLatitude == nil ||
-			move.OriginLongitude == nil {
-			continue
-		}
-		position := snapshot.PosByTractor[move.AssignedTractorID]
-		if position == nil {
-			continue
-		}
-		total += geoutils.HaversineMiles(
-			position.Latitude,
-			position.Longitude,
-			*move.OriginLatitude,
-			*move.OriginLongitude,
-		)
-		count++
-	}
-
-	if count == 0 {
-		return 0
-	}
-	return total / float64(count)
 }

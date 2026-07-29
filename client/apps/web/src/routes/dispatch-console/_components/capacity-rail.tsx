@@ -1,40 +1,23 @@
+import { HosClockGauges } from "@/components/hos/hos-clock-gauges";
 import type { DispatchBoardDriver } from "@/lib/graphql/dispatch-console";
-import { useDraggable } from "@dnd-kit/core";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
-import { GripVerticalIcon, TruckIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { availabilityMeta, dutyStatusMeta } from "./dispatch-vocabulary";
-import { HosClockBars } from "./hos-clock-bars";
-
-export type CapacityFilter = "all" | "open" | "finishing" | "blocked" | "timeOff";
-
-const FILTERS: { id: CapacityFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "open", label: "Open" },
-  { id: "finishing", label: "Finishing" },
-  { id: "blocked", label: "Blocked" },
-  { id: "timeOff", label: "Time off" },
-];
-
-function matchesFilter(driver: DispatchBoardDriver, filter: CapacityFilter): boolean {
-  switch (filter) {
-    case "open":
-      return driver.availability === "Open";
-    case "finishing":
-      return driver.availability === "Finishing";
-    case "blocked":
-      return driver.availability === "Blocked";
-    case "timeOff":
-      return driver.availability === "TimeOff";
-    default:
-      return true;
-  }
-}
+import { formatUnixTime } from "@trenova/shared/lib/date";
+import { cn, pluralize } from "@trenova/shared/lib/utils";
+import { GripVerticalIcon, SearchIcon } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { CapacityRailRowsSkeleton } from "./console-skeletons";
+import {
+  AVAILABILITY_SORT_RANK,
+  CAPACITY_FILTERS,
+  availabilityMeta,
+  dutyStatusMeta,
+  workerInitials,
+  type CapacityFilter,
+} from "./dispatch-vocabulary";
+import { useDispatchRail } from "./url-state";
 
 function DriverRow({
   driver,
@@ -48,6 +31,27 @@ function DriverRow({
   const availability = availabilityMeta(driver.availability);
   const duty = driver.dutyStatus ? dutyStatusMeta(driver.dutyStatus) : undefined;
   const isBlocked = driver.availability === "Blocked";
+  const hasFeed = driver.hosRecordedAt > 0;
+  const blockingReason = isBlocked
+    ? driver.findings.find((finding) => finding.severity === "Block")?.message
+    : undefined;
+
+  // A driver who frees up later is more useful stated as the time than as the word
+  // "Working", so the status slot carries whichever of the two the dispatcher can act on.
+  const isBusy = !isBlocked && driver.availability !== "Open";
+  const statusLabel =
+    isBusy && driver.projectedTimeAvailable > 0
+      ? `Free ${formatUnixTime(driver.projectedTimeAvailable)}`
+      : availability.label;
+
+  const context = [
+    driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`,
+    driver.tractorCode,
+    duty?.label,
+    driver.openAssignments > 0
+      ? `${driver.openAssignments} ${pluralize("load", driver.openAssignments)}`
+      : undefined,
+  ].filter(Boolean);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `driver:${driver.workerId}`,
@@ -57,90 +61,113 @@ function DriverRow({
     data: { type: "driver", driver },
   });
 
+  // The browser fires a click on the source element when a drag ends; selecting the
+  // driver then would clobber the move selection the drop just made.
+  const wasDragged = useRef(false);
+  useEffect(() => {
+    if (isDragging) wasDragged.current = true;
+  }, [isDragging]);
+  const handleSelect = () => {
+    if (wasDragged.current) {
+      wasDragged.current = false;
+      return;
+    }
+    onSelect(driver.workerId);
+  };
+
+  // Rows also accept a move bar dragged off the timeline, so covering a load works in
+  // whichever direction the dispatcher thinks in.
+  const {
+    setNodeRef: setDropRef,
+    isOver,
+    active,
+  } = useDroppable({
+    id: `driver-target:${driver.workerId}`,
+    disabled: isBlocked,
+    data: { type: "driver-target", driver },
+  });
+
+  const activeMove = active?.data.current?.type === "move" ? active.data.current.move : null;
+  const showDropHint = isOver && Boolean(activeMove);
+
   return (
     <div
-      ref={setNodeRef}
-      className={cn(
-        "flex flex-col gap-1.5 rounded-md border p-2 transition-colors",
-        isSelected ? "border-brand bg-brand/5" : "border-border bg-card hover:border-brand/40",
-        isDragging && "opacity-50",
-        isBlocked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
-      )}
+      ref={(node) => {
+        setNodeRef(node);
+        setDropRef(node);
+      }}
       {...attributes}
       {...listeners}
-      onClick={() => onSelect(driver.workerId)}
+      role="button"
+      tabIndex={0}
+      onClick={handleSelect}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onSelect(driver.workerId);
         }
       }}
-      role="button"
-      tabIndex={0}
+      className={cn(
+        "group grid w-full grid-cols-[12px_minmax(0,1fr)] items-center gap-x-1.5 border-b px-2 py-2 text-left transition-colors last:border-b-0",
+        isSelected ? "bg-muted" : "hover:bg-muted/50",
+        isDragging && "opacity-40",
+        showDropHint && "bg-brand/10",
+        isBlocked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
+      )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate text-xs font-medium">
-            {driver.firstName} {driver.lastName}
-          </span>
-          <span className="truncate text-[10px] text-muted-foreground">
-            {driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`}
-          </span>
+      <span className="flex h-full items-center justify-center" aria-hidden>
+        {!isBlocked && (
+          <GripVerticalIcon className="size-3 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/60" />
+        )}
+      </span>
+
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <Avatar className="size-6 shrink-0">
+            {driver.profilePicUrl && (
+              <AvatarImage
+                src={driver.profilePicUrl}
+                alt={`${driver.firstName} ${driver.lastName}`}
+              />
+            )}
+            <AvatarFallback className="text-[9px]">
+              {workerInitials(driver.firstName, driver.lastName)}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <div className="flex min-w-0 items-baseline justify-between gap-2">
+              <span className="truncate text-xs leading-none font-medium">
+                {driver.firstName} {driver.lastName}
+              </span>
+              <span
+                className={cn(
+                  "flex shrink-0 items-center gap-1 text-[10px] leading-none font-medium",
+                  availability.labelClass,
+                )}
+              >
+                <span aria-hidden className={cn("size-1.5 rounded-full", availability.dotClass)} />
+                {statusLabel}
+              </span>
+            </div>
+            <p className="truncate text-[10.5px] leading-none text-muted-foreground">
+              {context.join(" · ")}
+            </p>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Badge variant={availability.variant} className="h-4 rounded px-1 text-[9px]">
-            {availability.label}
-          </Badge>
-          {!isBlocked ? (
-            <GripVerticalIcon className="size-3 text-muted-foreground" aria-hidden />
-          ) : null}
-        </div>
+
+        <HosClockGauges
+          driveRemainingMs={driver.driveRemainingMs}
+          shiftRemainingMs={driver.shiftRemainingMs}
+          cycleRemainingMs={driver.cycleRemainingMs}
+          isStale={driver.hosIsStale}
+          hasFeed={hasFeed}
+        />
+
+        {blockingReason && (
+          <p className="text-[10px] leading-tight text-destructive">{blockingReason}</p>
+        )}
       </div>
-
-      <div className="flex flex-wrap items-center gap-1">
-        {driver.tractorCode ? (
-          <Badge
-            variant="outline"
-            className="h-4 rounded border-border px-1 font-mono text-[9px]"
-          >
-            <TruckIcon className="mr-0.5 size-2.5" aria-hidden />
-            {driver.tractorCode}
-          </Badge>
-        ) : null}
-        {duty ? (
-          <Badge variant={duty.variant} className="h-4 rounded px-1 text-[9px]">
-            {duty.label}
-          </Badge>
-        ) : null}
-        <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
-          {driver.driverType}
-        </Badge>
-        {driver.openAssignments > 0 ? (
-          <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
-            {driver.openAssignments} open
-          </Badge>
-        ) : null}
-      </div>
-
-      <HosClockBars
-        driveRemainingMs={driver.driveRemainingMs}
-        shiftRemainingMs={driver.shiftRemainingMs}
-        cycleRemainingMs={driver.cycleRemainingMs}
-        isStale={driver.hosIsStale}
-        hasFeed={driver.hosRecordedAt > 0}
-      />
-
-      {driver.availability !== "Open" ? (
-        <span className="text-[10px] text-muted-foreground">
-          Available {formatUnixDateTime(driver.projectedTimeAvailable)}
-        </span>
-      ) : null}
-
-      {isBlocked && driver.findings.length > 0 ? (
-        <span className="text-[10px] leading-tight text-red-600 dark:text-red-400">
-          {driver.findings.find((finding) => finding.severity === "Block")?.message}
-        </span>
-      ) : null}
     </div>
   );
 }
@@ -156,92 +183,113 @@ export function CapacityRail({
   selectedWorkerId: string | null;
   onSelectDriver: (workerId: string) => void;
 }) {
-  const [filter, setFilter] = useState<CapacityFilter>("all");
-  const [search, setSearch] = useState("");
+  const {
+    capacityFilter: filter,
+    driverSearch: search,
+    setCapacityFilter,
+    setDriverSearch,
+  } = useDispatchRail();
 
   const visible = useMemo(() => {
+    const availability = CAPACITY_FILTERS.find((option) => option.id === filter)?.availability;
     const term = search.trim().toLowerCase();
-    return drivers.filter((driver) => {
-      if (!matchesFilter(driver, filter)) return false;
+    const filtered = drivers.filter((driver) => {
+      if (availability && driver.availability !== availability) return false;
       if (!term) return true;
       return (
         `${driver.firstName} ${driver.lastName}`.toLowerCase().includes(term) ||
-        driver.tractorCode.toLowerCase().includes(term)
+        driver.tractorCode.toLowerCase().includes(term) ||
+        driver.fleetCodeName.toLowerCase().includes(term)
       );
+    });
+    return filtered.sort((a, b) => {
+      const rank =
+        (AVAILABILITY_SORT_RANK[a.availability] ?? 5) -
+        (AVAILABILITY_SORT_RANK[b.availability] ?? 5);
+      if (rank !== 0) return rank;
+      return a.projectedTimeAvailable - b.projectedTimeAvailable;
     });
   }, [drivers, filter, search]);
 
   const counts = useMemo(() => {
-    const result: Record<CapacityFilter, number> = {
-      all: drivers.length,
-      open: 0,
-      finishing: 0,
-      blocked: 0,
-      timeOff: 0,
-    };
-    for (const driver of drivers) {
-      if (driver.availability === "Open") result.open += 1;
-      if (driver.availability === "Finishing") result.finishing += 1;
-      if (driver.availability === "Blocked") result.blocked += 1;
-      if (driver.availability === "TimeOff") result.timeOff += 1;
+    const result = new Map<CapacityFilter, number>([["all", drivers.length]]);
+    for (const option of CAPACITY_FILTERS) {
+      if (!option.availability) continue;
+      result.set(
+        option.id,
+        drivers.reduce(
+          (count, driver) => (driver.availability === option.availability ? count + 1 : count),
+          0,
+        ),
+      );
     }
     return result;
   }, [drivers]);
 
   return (
-    <section className="flex h-full min-h-0 flex-col gap-2 rounded-md border border-border bg-background p-2">
-      <header className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide">Capacity</h2>
-          <span className="text-[10px] text-muted-foreground">
-            {visible.length} of {drivers.length}
-          </span>
-        </div>
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+      <header className="flex flex-col gap-2 border-b p-2">
         <Input
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Find a driver or tractor"
-          className="h-7 text-xs"
+          onChange={(event) => setDriverSearch(event.target.value)}
+          placeholder="Search driver, tractor, fleet"
+          leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+          className="h-8 pl-7 text-xs"
+          aria-label="Search drivers by name, tractor code, or fleet"
         />
         <div className="flex flex-wrap gap-1">
-          {FILTERS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setFilter(option.id)}
-              className={cn(
-                "rounded px-1.5 py-0.5 text-[10px] transition-colors",
-                filter === option.id
-                  ? "bg-brand text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70",
-              )}
-            >
-              {option.label} {counts[option.id]}
-            </button>
-          ))}
+          {CAPACITY_FILTERS.map((option) => {
+            const count = counts.get(option.id) ?? 0;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setCapacityFilter(option.id)}
+                className={cn(
+                  "rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  filter === option.id
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {option.label} {count > 0 && <span className="tabular-nums">{count}</span>}
+              </button>
+            );
+          })}
         </div>
       </header>
 
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-1.5 pr-2">
-          {isLoading
-            ? Array.from({ length: 8 }, (_, index) => (
-                <Skeleton key={index} className="h-24 rounded-md" />
-              ))
-            : visible.map((driver) => (
-                <DriverRow
-                  key={driver.workerId}
-                  driver={driver}
-                  isSelected={selectedWorkerId === driver.workerId}
-                  onSelect={onSelectDriver}
-                />
-              ))}
-          {!isLoading && visible.length === 0 ? (
-            <p className="px-1 py-4 text-center text-xs text-muted-foreground">
-              No drivers match this filter.
-            </p>
-          ) : null}
-        </div>
+      <div className="flex items-center justify-between border-b px-2.5 py-1.5">
+        <span className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+          Capacity
+        </span>
+        <span className="text-[10.5px] text-muted-foreground tabular-nums">
+          {visible.length} of {drivers.length}
+        </span>
+      </div>
+
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportClassName="min-h-0"
+        maskVariant="card"
+        maskHeight={18}
+      >
+        {isLoading ? (
+          <CapacityRailRowsSkeleton />
+        ) : visible.length === 0 ? (
+          <p className="p-4 text-center text-xs text-muted-foreground">
+            No drivers match this view.
+          </p>
+        ) : (
+          visible.map((driver) => (
+            <DriverRow
+              key={driver.workerId}
+              driver={driver}
+              isSelected={selectedWorkerId === driver.workerId}
+              onSelect={onSelectDriver}
+            />
+          ))
+        )}
       </ScrollArea>
     </section>
   );

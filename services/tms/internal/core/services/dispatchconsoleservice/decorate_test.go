@@ -149,6 +149,46 @@ func TestDecorateDrivers_DriverWrappingUpReadsAsFinishing(t *testing.T) {
 	assert.Equal(t, AvailabilityFinishing, rows[0].Availability)
 }
 
+func TestDecorateDrivers_FinishedWorkReadsAsOpen(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_")
+	driver := &repositories.BoardDriver{WorkerID: workerID}
+	snapshot := snapshotWith(driver, availableWorker(workerID), nil)
+	snapshot.CommitmentsByWorker[workerID] = []*repositories.WorkerCommitment{
+		{WindowEnd: testNow - 2*secondsPerHour},
+	}
+
+	rows := decorateDrivers(snapshot, control(), testNow)
+
+	require.Len(t, rows, 1)
+	assert.Equal(t, testNow, rows[0].ProjectedTimeAvailable)
+	assert.Equal(t, AvailabilityOpen, rows[0].Availability,
+		"a driver whose work already ended is open, not finishing forever")
+}
+
+func TestAvailabilityFor_PTOEndDateIsInclusiveThroughTheDay(t *testing.T) {
+	t.Parallel()
+
+	dayStart := (testNow / secondsPerDay) * secondsPerDay
+
+	row := &BoardDriver{
+		BoardDriver: &repositories.BoardDriver{},
+		TimeOff: []*repositories.WorkerTimeOff{
+			{StartDate: dayStart - 2*secondsPerDay, EndDate: dayStart},
+		},
+	}
+
+	assert.Equal(t, AvailabilityTimeOff, availabilityFor(row, testNow),
+		"time off ending today keeps the driver off through end of day")
+
+	row.TimeOff = []*repositories.WorkerTimeOff{
+		{StartDate: dayStart - 3*secondsPerDay, EndDate: dayStart - secondsPerDay},
+	}
+	assert.Equal(t, AvailabilityOpen, availabilityFor(row, testNow),
+		"time off that ended yesterday no longer applies")
+}
+
 // A blocked driver must read as blocked whatever their calendar says: the reason they
 // cannot work outranks whether they happen to be free.
 func TestDecorateDrivers_BlockOutranksTimeOffAndCommitments(t *testing.T) {
@@ -210,11 +250,11 @@ func TestResolveWindow_FallsBackToTheConfiguredHorizon(t *testing.T) {
 	dc := control()
 	dc.AutoAssignPlanningHorizonHours = 24
 
-	start, end := resolveWindow(0, 0, dc, testNow)
+	start, end := dispatchcandidateservice.ResolveWindow(0, 0, dc, testNow)
 	assert.Equal(t, testNow, start)
 	assert.Equal(t, testNow+24*secondsPerHour, end)
 
-	explicitStart, explicitEnd := resolveWindow(500, 900, dc, testNow)
+	explicitStart, explicitEnd := dispatchcandidateservice.ResolveWindow(500, 900, dc, testNow)
 	assert.Equal(t, int64(500), explicitStart)
 	assert.Equal(t, int64(900), explicitEnd)
 }
@@ -225,7 +265,7 @@ func TestCustomerIDsOf_DeduplicatesAndSkipsEmpty(t *testing.T) {
 	first := pulid.MustNew("cus_")
 	second := pulid.MustNew("cus_")
 
-	ids := customerIDsOf([]*repositories.BoardMove{
+	ids := dispatchcandidateservice.CustomerIDsOf([]*repositories.BoardMove{
 		{CustomerID: first},
 		{CustomerID: second},
 		{CustomerID: first},
@@ -242,8 +282,51 @@ func TestSpanOf_CoversEveryMove(t *testing.T) {
 	start, finish := spanOf([]*repositories.BoardMove{
 		{OriginWindowStart: 2000, DestinationWindowStart: 3000},
 		{OriginWindowStart: 1000, DestinationWindowStart: 4000, DestinationWindowEnd: &end},
-	})
+	}, testNow)
 
 	assert.Equal(t, int64(1000), start)
 	assert.Equal(t, int64(5000), finish)
+}
+
+func TestSpanOf_MissingWindowsFallBackToNow(t *testing.T) {
+	t.Parallel()
+
+	start, end := spanOf([]*repositories.BoardMove{{}}, testNow)
+	assert.Equal(t, testNow, start)
+	assert.Equal(t, testNow, end)
+
+	start, end = spanOf([]*repositories.BoardMove{
+		{DestinationWindowStart: testNow + 5000},
+	}, testNow)
+	assert.Equal(t, testNow, start)
+	assert.Equal(t, testNow+5000, end)
+}
+
+func TestAvailabilityFindings_NoHOSFindingsWithoutTelematics(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_")
+	driver := &repositories.BoardDriver{WorkerID: workerID}
+	dc := control()
+	dc.EnforceHOSCompliance = true
+
+	inactive := snapshotWith(driver, availableWorker(workerID), nil)
+	inactive.TelematicsActive = false
+
+	rows := decorateDrivers(inactive, dc, testNow)
+	for _, finding := range rows[0].Findings {
+		assert.NotEqual(t, "hos", finding.Field,
+			"organizations without telematics must see no HOS findings at all")
+	}
+
+	active := snapshotWith(driver, availableWorker(workerID), nil)
+	active.TelematicsActive = true
+
+	rows = decorateDrivers(active, dc, testNow)
+	codes := make([]string, 0, len(rows[0].Findings))
+	for _, finding := range rows[0].Findings {
+		codes = append(codes, finding.Code)
+	}
+	assert.Contains(t, codes, dispatcheligibility.CodeHOSMissing,
+		"with telematics enabled a missing feed is a data gap worth flagging")
 }

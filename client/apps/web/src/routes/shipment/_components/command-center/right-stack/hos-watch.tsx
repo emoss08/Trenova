@@ -1,13 +1,18 @@
+import {
+  HOS_LIMITS_MS,
+  HosClockGauges,
+  hosClockSeverity,
+  type HosClockSeverity,
+} from "@/components/hos/hos-clock-gauges";
 import type { WorkerHosState } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { formatElapsedTime } from "@/lib/time-utils";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { formatClockDurationMs, formatDurationFromSeconds } from "@trenova/shared/lib/date";
+import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -18,15 +23,7 @@ import { ModuleCard } from "./module-card";
 
 const HOS_FETCH_LIMIT = 12;
 const HOS_DISPLAY_LIMIT = 8;
-const HOUR_MS = 3_600_000;
-const DRIVE_LIMIT_MS = 11 * HOUR_MS;
-const SHIFT_LIMIT_MS = 14 * HOUR_MS;
-const CYCLE_LIMIT_MS = 70 * HOUR_MS;
-const WARNING_THRESHOLD_MS = 2 * HOUR_MS;
-const CRITICAL_THRESHOLD_MS = HOUR_MS;
 const CLOCK_TICK_MS = 15_000;
-
-type HosSeverity = "normal" | "warning" | "critical";
 
 const DUTY_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
   driving: { label: "Driving", variant: "info" },
@@ -43,16 +40,9 @@ function hasViolation(state: WorkerHosState): boolean {
   return state.shiftDrivingViolationMs > 0 || state.cycleViolationMs > 0;
 }
 
-function rowSeverity(state: WorkerHosState): HosSeverity {
-  if (hasViolation(state) || state.driveRemainingMs < CRITICAL_THRESHOLD_MS) return "critical";
-  if (state.driveRemainingMs < WARNING_THRESHOLD_MS) return "warning";
-  return "normal";
-}
-
-function barSeverity(remainingMs: number): HosSeverity {
-  if (remainingMs < CRITICAL_THRESHOLD_MS) return "critical";
-  if (remainingMs < WARNING_THRESHOLD_MS) return "warning";
-  return "normal";
+function rowSeverity(state: WorkerHosState): HosClockSeverity {
+  if (hasViolation(state)) return "critical";
+  return hosClockSeverity(state.driveRemainingMs);
 }
 
 function alertLabel(state: WorkerHosState): string {
@@ -73,56 +63,11 @@ function formatRemaining(ms: number): string {
   return formatDurationFromSeconds(Math.max(0, Math.floor(ms / 1000)));
 }
 
-const SEVERITY_TEXT: Record<HosSeverity, string> = {
+const SEVERITY_TEXT: Record<HosClockSeverity, string> = {
   normal: "text-foreground",
   warning: "text-warning",
   critical: "text-destructive",
 };
-
-const SEVERITY_TONE: Record<HosSeverity, RingGaugeTone> = {
-  normal: "brand",
-  warning: "warning",
-  critical: "critical",
-};
-
-function ClockGauge({
-  label,
-  remainingMs,
-  limitMs,
-  severity,
-}: {
-  label: string;
-  remainingMs: number;
-  limitMs: number;
-  severity: HosSeverity;
-}) {
-  const clamped = Math.max(0, remainingMs);
-
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-1.5">
-      <RingGauge
-        value={clamped / limitMs}
-        size={26}
-        strokeWidth={3}
-        tone={SEVERITY_TONE[severity]}
-        aria-label={`${label} time remaining`}
-      />
-      <div className="flex min-w-0 flex-col">
-        <span className="text-[8.5px] font-semibold tracking-wide text-muted-foreground uppercase">
-          {label}
-        </span>
-        <span
-          className={cn(
-            "font-table text-[10px] font-semibold tabular-nums",
-            SEVERITY_TEXT[severity],
-          )}
-        >
-          {formatClockDurationMs(clamped)}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: boolean }) {
   const severity = rowSeverity(state);
@@ -158,26 +103,16 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
           {duty.label}
         </Badge>
       </div>
-      <div className="flex items-center gap-2">
-        <ClockGauge
-          label="Drive"
-          remainingMs={state.driveRemainingMs}
-          limitMs={state.driveLimitMs || DRIVE_LIMIT_MS}
-          severity={hasViolation(state) ? "critical" : barSeverity(state.driveRemainingMs)}
-        />
-        <ClockGauge
-          label="Shift"
-          remainingMs={state.shiftRemainingMs}
-          limitMs={state.shiftLimitMs || SHIFT_LIMIT_MS}
-          severity={barSeverity(state.shiftRemainingMs)}
-        />
-        <ClockGauge
-          label="Cycle"
-          remainingMs={state.cycleRemainingMs}
-          limitMs={state.cycleLimitMs || CYCLE_LIMIT_MS}
-          severity="normal"
-        />
-      </div>
+      <HosClockGauges
+        driveRemainingMs={state.driveRemainingMs}
+        shiftRemainingMs={state.shiftRemainingMs}
+        cycleRemainingMs={state.cycleRemainingMs}
+        driveLimitMs={state.driveLimitMs || HOS_LIMITS_MS.drive}
+        shiftLimitMs={state.shiftLimitMs || HOS_LIMITS_MS.shift}
+        cycleLimitMs={state.cycleLimitMs || HOS_LIMITS_MS.cycle}
+        hasViolation={hasViolation(state)}
+        size={26}
+      />
     </div>
   );
 }

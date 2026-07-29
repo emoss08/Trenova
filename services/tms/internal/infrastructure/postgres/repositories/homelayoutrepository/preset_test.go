@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -84,38 +85,77 @@ func TestUpdatePresetStatementWritesEveryColumn(t *testing.T) {
 	}
 }
 
-// TestClearOrgDefaultExcludesTheIncomingDefault keeps a promotion from
-// demoting the very preset being promoted.
-func TestClearOrgDefaultExcludesTheIncomingDefault(t *testing.T) {
+// TestClearOrgDefaultExcludesAndInvalidatesDemotedRows keeps a promotion from
+// demoting the very preset being promoted, and pins the version + updated_at
+// bump on the rows it does demote — without it, an editor holding a demoted
+// preset open would pass the optimistic lock on their next save and silently
+// re-promote it.
+func TestClearOrgDefaultExcludesAndInvalidatesDemotedRows(t *testing.T) {
 	t.Parallel()
 
 	repo, mock := newTestRepository(t)
 
-	mock.ExpectExec(`UPDATE "home_layout_presets".*SET is_org_default = FALSE.*hlp\.is_org_default = TRUE.*hlp\.id != `).
+	mock.ExpectExec(`UPDATE "home_layout_presets".*SET is_org_default = FALSE, version = version \+ 1, updated_at = .*hlp\.is_org_default = TRUE.*hlp\.id != `).
 		WillReturnResult(sqlmock.NewResult(0, 2))
 
-	err := repo.ClearOrgDefault(t.Context(), &repositories.ClearHomeLayoutOrgDefaultRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
-		},
-		ExceptID: pulid.MustNew("hlp_"),
-	})
+	err := clearOrgDefault(
+		t.Context(),
+		repo.db.DB(),
+		pulid.MustNew("org_"),
+		pulid.MustNew("bu_"),
+		pulid.MustNew("hlp_"),
+	)
 
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-// TestCountUsersForRolesSkipsTheQueryWithoutRoles: a preset assigned by job
-// function alone carries no role IDs, and `IN ()` is not valid SQL.
-func TestCountUsersForRolesSkipsTheQueryWithoutRoles(t *testing.T) {
+// TestCreatePresetDemotesInsideTheInsertTransaction pins the org-default
+// handover to the same transaction as the insert: if the insert is rejected —
+// a duplicate name, say — the rollback restores the incumbent default instead
+// of leaving the tenant with none.
+func TestCreatePresetDemotesInsideTheInsertTransaction(t *testing.T) {
 	t.Parallel()
 
 	repo, mock := newTestRepository(t)
 
-	count, err := repo.CountUsersForRoles(t.Context(), pagination.TenantInfo{}, nil)
+	mock.ExpectBegin()
+	mock.ExpectExec(`UPDATE "home_layout_presets".*SET is_org_default = FALSE`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(`INSERT INTO "home_layout_presets"`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"description", "role_ids", "core_responsibility", "locked", "priority", "created_by",
+		}).AddRow("", "{}", "", false, 0, ""))
+	mock.ExpectCommit()
+
+	entity := testPreset()
+	entity.IsOrgDefault = true
+
+	_, err := repo.CreatePreset(t.Context(), entity)
 
 	require.NoError(t, err)
-	require.Zero(t, count)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// TestDeletePresetMapsMissingRowsToNotFound: deleting a preset another
+// administrator already removed is a not-found, not a version conflict.
+func TestDeletePresetMapsMissingRowsToNotFound(t *testing.T) {
+	t.Parallel()
+
+	repo, mock := newTestRepository(t)
+
+	mock.ExpectExec(`DELETE FROM "home_layout_presets"`).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	err := repo.DeletePreset(t.Context(), &repositories.DeleteHomeLayoutPresetRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
+		PresetID: pulid.MustNew("hlp_"),
+	})
+
+	require.Error(t, err)
+	require.True(t, errortypes.IsNotFoundError(err))
 	require.NoError(t, mock.ExpectationsWereMet())
 }

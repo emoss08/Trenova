@@ -56,6 +56,10 @@ func TestListByShipmentID_ReturnsCommentsAndCount(t *testing.T) {
 			"id", "comment_id", "mentioned_user_id", "organization_id", "business_unit_id", "shipment_id", "created_at",
 			"mentioned_user__id", "mentioned_user__business_unit_id", "mentioned_user__current_organization_id", "mentioned_user__status", "mentioned_user__name", "mentioned_user__username", "mentioned_user__time_format", "mentioned_user__password", "mentioned_user__email_address", "mentioned_user__profile_pic_url", "mentioned_user__thumbnail_url", "mentioned_user__timezone", "mentioned_user__is_locked", "mentioned_user__must_change_password", "mentioned_user__version", "mentioned_user__created_at", "mentioned_user__updated_at", "mentioned_user__last_login_at",
 		}))
+	mock.ExpectQuery(`SELECT .* FROM "shipment_comment_acknowledgments" AS "sca".*LEFT JOIN "users" AS "user".*WHERE .*"sca"\."comment_id" IN`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "comment_id", "business_unit_id", "organization_id", "shipment_id", "user_id", "acknowledged_at",
+		}))
 	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentCommentsRequest{
 		ShipmentID: shipmentID,
 		Filter: &pagination.QueryOptions{
@@ -147,6 +151,10 @@ func TestCreate_InsertsCommentAndMentions(t *testing.T) {
 			"id", "comment_id", "mentioned_user_id", "organization_id", "business_unit_id", "shipment_id", "created_at",
 			"mentioned_user__id", "mentioned_user__business_unit_id", "mentioned_user__current_organization_id", "mentioned_user__status", "mentioned_user__name", "mentioned_user__username", "mentioned_user__time_format", "mentioned_user__password", "mentioned_user__email_address", "mentioned_user__profile_pic_url", "mentioned_user__thumbnail_url", "mentioned_user__timezone", "mentioned_user__is_locked", "mentioned_user__must_change_password", "mentioned_user__version", "mentioned_user__created_at", "mentioned_user__updated_at", "mentioned_user__last_login_at",
 		}).AddRow(entity.MentionedUsers[0].ID, entity.ID, entity.MentionedUsers[0].MentionedUserID, entity.OrganizationID, entity.BusinessUnitID, entity.ShipmentID, 1, entity.MentionedUsers[0].MentionedUserID, entity.BusinessUnitID, entity.OrganizationID, "Active", "Bob", "bob", "12-hour", "secret", "b@example.com", "", "", "UTC", false, false, 0, 1, 1, nil))
+	mock.ExpectQuery(`SELECT .* FROM "shipment_comment_acknowledgments" AS "sca".*LEFT JOIN "users" AS "user".*WHERE .*"sca"\."comment_id" IN`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "comment_id", "business_unit_id", "organization_id", "shipment_id", "user_id", "acknowledged_at",
+		}))
 
 	created, err := repo.Create(t.Context(), entity)
 

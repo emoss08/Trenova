@@ -8,7 +8,7 @@ import { exceptionReasonLabels } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import ShipmentCommentsTab from "@/routes/shipment/_components/shipment-comments";
+import ShipmentCommentsTab from "@/routes/shipment/_components/comments";
 import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import {

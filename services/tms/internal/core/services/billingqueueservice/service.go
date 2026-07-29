@@ -722,6 +722,7 @@ func (s *service) UpdateCharges(
 	}
 
 	if req.AdditionalCharges != nil {
+		shipment.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
 		shp.AdditionalCharges = req.AdditionalCharges
 	}
 

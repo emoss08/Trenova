@@ -22,6 +22,8 @@ type testTracker struct {
 	successErr      error
 	failureCalls    []string
 	failureErr      error
+	rollbackCalls   []string
+	rollbackErr     error
 	statusResult    []*common.SeedStatus
 	statusErr       error
 }
@@ -67,6 +69,15 @@ func (t *testTracker) RecordFailure(
 ) error {
 	t.failureCalls = append(t.failureCalls, seed.Name())
 	return t.failureErr
+}
+
+func (t *testTracker) RecordRollback(
+	ctx context.Context,
+	seed Seed,
+	env common.Environment,
+) error {
+	t.rollbackCalls = append(t.rollbackCalls, seed.Name())
+	return t.rollbackErr
 }
 
 func (t *testTracker) GetStatus(ctx context.Context) ([]*common.SeedStatus, error) {
@@ -251,6 +262,38 @@ func TestEngine_Execute_Force(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, report.Applied)
 	assert.Equal(t, 0, report.Skipped)
+}
+
+func TestEngine_Execute_ForceWithTargetSkipsAppliedDependencies(t *testing.T) {
+	t.Parallel()
+
+	tracker := newTestTracker()
+	tracker.markApplied("Seed1", "Seed2")
+	reporter := seedermocks.NewMockReporter()
+
+	r := NewRegistry()
+	r.MustRegister(seedermocks.NewMockSeed("Seed1",
+		seedermocks.WithEnvironments(common.EnvDevelopment),
+	))
+	r.MustRegister(seedermocks.NewMockSeed("Seed2",
+		seedermocks.WithEnvironments(common.EnvDevelopment),
+		seedermocks.WithDependencies("Seed1"),
+	))
+
+	e := NewEngine(nil, r, nil)
+	e.SetTracker(tracker)
+	e.SetReporter(reporter)
+
+	report, err := e.Execute(t.Context(), ExecuteOptions{
+		Environment: common.EnvDevelopment,
+		Target:      "Seed2",
+		Force:       true,
+		DryRun:      true,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, report.Applied)
+	assert.Equal(t, 1, report.Skipped)
 }
 
 func TestEngine_Execute_TrackerInitializeError(t *testing.T) {

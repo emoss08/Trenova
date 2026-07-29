@@ -169,6 +169,7 @@ query DetentionDisputePacket($occurrenceId: ID!) {
     collectability {
       ...DetentionCollectabilityFields
     }
+    chainVerified
     generatedAt
   }
 }

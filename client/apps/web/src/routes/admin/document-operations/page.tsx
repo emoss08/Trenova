@@ -41,10 +41,10 @@ import {
 } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 
 function formatTimestamp(ts: number): string {
-  if (!ts) return "-";
-  return new Date(ts * 1000).toLocaleString();
+  return formatUnixDateTimeOrDash(ts);
 }
 
 function relativeTime(ts: number): string {

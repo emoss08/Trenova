@@ -1,5 +1,6 @@
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { ScoringWeightForm } from "./scoring-weight-form";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import {
@@ -31,6 +32,7 @@ import {
   useForm,
   useFormContext,
   useWatch,
+  type Resolver,
 } from "react-hook-form";
 
 export default function DispatchControlForm() {
@@ -39,7 +41,7 @@ export default function DispatchControlForm() {
   });
 
   const form = useForm<DispatchControl>({
-    resolver: zodResolver(dispatchControlSchema),
+    resolver: zodResolver(dispatchControlSchema) as Resolver<DispatchControl>,
     defaultValues: data,
   });
 
@@ -67,6 +69,7 @@ export default function DispatchControlForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <AutoAssignmentForm />
+          <ScoringWeightForm />
           <ServiceFailureForm />
           <ComplianceForm />
           <FormSaveDock saveButtonContent="Save Changes" />
@@ -106,15 +109,46 @@ function AutoAssignmentForm() {
             />
           </FormControl>
           {enableAutoAssignment && (
-            <FormControl className="min-h-[3em] max-w-[400px] pl-10">
-              <SelectField
-                control={control}
-                name="autoAssignmentStrategy"
-                label="Assignment Optimization Strategy"
-                description="Select the primary strategy used when matching resources to shipments."
-                options={autoAssignmentStrategyChoices}
-              />
-            </FormControl>
+            <>
+              <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+                <SelectField
+                  control={control}
+                  name="autoAssignmentStrategy"
+                  label="Assignment Optimization Strategy"
+                  description="Select the primary strategy used when matching resources to shipments."
+                  options={autoAssignmentStrategyChoices}
+                />
+              </FormControl>
+              <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+                <NumberField
+                  control={control}
+                  name="autoAssignConfidenceThreshold"
+                  label="Auto-Execute Confidence Threshold"
+                  description="Minimum confidence (0 to 1) an automatic assignment must reach before it executes without dispatcher review."
+                  placeholder="0.85"
+                  decimalScale={2}
+                />
+              </FormControl>
+              <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+                <NumberField
+                  control={control}
+                  name="autoAssignMaxDeadheadMiles"
+                  label="Maximum Deadhead Miles"
+                  description="Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap."
+                  placeholder="No limit"
+                />
+              </FormControl>
+              <FormControl className="min-h-[3em] max-w-[400px] pl-10">
+                <NumberField
+                  control={control}
+                  name="autoAssignPlanningHorizonHours"
+                  label="Planning Horizon (Hours)"
+                  description="How far ahead the optimizer plans moves, from 1 to 336 hours."
+                  placeholder="48"
+                  sideText="hours"
+                />
+              </FormControl>
+            </>
           )}
         </FormGroup>
       </CardContent>

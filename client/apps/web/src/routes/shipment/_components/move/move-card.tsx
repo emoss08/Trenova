@@ -12,7 +12,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type {
   MoveStatus,
   Shipment,
@@ -400,15 +399,12 @@ function StopTimelineItem({
   hasErrors?: boolean;
   errorMessages?: string[];
 }) {
-  const user = useAuthStore((state) => state.user);
-  const userTimezone = user?.timezone || "auto";
-  const userTimeFormat = user?.timeFormat || "12-hour";
   const status = stop.status ?? "New";
   const statusIcon = getStatusIcon(status, isLast, moveStatus);
   const hasInfo = stopHasInfo(stop);
   const scheduled =
     stop.scheduledWindowStart && stop.scheduledWindowStart > 0
-      ? formatSplitDateTime(stop.scheduledWindowStart, userTimeFormat, userTimezone)
+      ? formatSplitDateTime(stop.scheduledWindowStart)
       : null;
 
   return (

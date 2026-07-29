@@ -409,7 +409,7 @@ const routes: RouteObject[] = [
             },
           },
           {
-            path: "/billing/configuration-files/detention-policies",
+            path: "/detention/configuration-files/detention-policies",
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.DetentionPolicy),
@@ -420,7 +420,7 @@ const routes: RouteObject[] = [
             },
           },
           {
-            path: "/billing/detention-intelligence",
+            path: "/detention/intelligence",
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.DetentionPolicy),
@@ -433,7 +433,7 @@ const routes: RouteObject[] = [
             },
           },
           {
-            path: "/billing/detention-desk",
+            path: "/detention/desk",
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.DetentionPolicy),

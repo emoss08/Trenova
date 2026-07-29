@@ -11,6 +11,7 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 
 interface DocumentUploadSectionProps {
   resourceId: string;
@@ -24,10 +25,6 @@ function formatFileSize(bytes: number): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
-}
-
-function formatDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString();
 }
 
 function DocumentRow({
@@ -49,7 +46,7 @@ function DocumentRow({
           <p className="text-sm font-medium">{document.originalName}</p>
           <p className="text-xs text-muted-foreground">
             {formatFileSize(document.fileSize)} &bull;{" "}
-            {formatDate(document.createdAt)}
+            {formatUnixDate(document.createdAt)}
           </p>
         </div>
       </div>

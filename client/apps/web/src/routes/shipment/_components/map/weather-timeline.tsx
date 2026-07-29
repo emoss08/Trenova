@@ -19,6 +19,7 @@ import {
   WindIcon,
 } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
+import { formatUnixInUserTimezone, formatUnixWeekday } from "@trenova/shared/lib/date";
 
 const WEATHER_OPTIONS: WeatherOption[] = [
   {
@@ -54,24 +55,20 @@ const WEATHER_OPTIONS: WeatherOption[] = [
 ];
 
 function formatFullDateTime(unixSeconds: number): string {
-  const date = new Date(unixSeconds * 1000);
-  const weekday = date.toLocaleDateString([], { weekday: "long" });
-  const time = date.toLocaleTimeString([], {
+  const weekday = formatUnixWeekday(unixSeconds);
+  const time = formatUnixInUserTimezone(unixSeconds, {
     hour: "numeric",
     minute: "2-digit",
-    hour12: true,
     timeZoneName: "short",
   });
   return `${weekday}, ${time}`;
 }
 
 function formatTickTime(unixSeconds: number): string {
-  const date = new Date(unixSeconds * 1000);
-  const minutes = date.getMinutes();
-  return date.toLocaleTimeString([], {
+  const onTheHour = new Date(unixSeconds * 1000).getMinutes() === 0;
+  return formatUnixInUserTimezone(unixSeconds, {
     hour: "numeric",
-    ...(minutes !== 0 && { minute: "2-digit" }),
-    hour12: true,
+    ...(onTheHour ? {} : { minute: "2-digit" }),
   });
 }
 

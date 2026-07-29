@@ -1,23 +1,26 @@
+import { isTypingTarget } from "@/lib/dom";
 import type {
   DispatchBoardDriver,
   DispatchBoardMove,
   DispatchCandidate,
   DispatchDriverMoveMatch,
 } from "@/lib/graphql/dispatch-console";
-import { queries } from "@/lib/queries";
+import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { ScoreBreakdown } from "./score-breakdown";
 
 const CANDIDATE_STALE_MS = 30_000;
+const MAX_HOTKEY_RANK = 9;
 
 function CandidateRow({
   candidate,
@@ -32,22 +35,20 @@ function CandidateRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const verdict = verdictMeta(candidate.verdict);
+  const missingTractor = !candidate.tractorId;
 
   return (
     <div
       className={cn(
         "flex flex-col gap-1.5 rounded-md border p-2",
-        candidate.blocked ? "border-border bg-muted/30" : "border-border bg-card",
+        candidate.blocked ? "bg-muted/30" : "bg-card",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          {/* The rank doubles as the keyboard shortcut for assigning this candidate. */}
-          {rank <= 9 && !candidate.blocked ? (
-            <kbd className="flex size-4 shrink-0 items-center justify-center rounded border border-border bg-muted font-mono text-[9px]">
-              {rank}
-            </kbd>
-          ) : null}
+          {rank <= MAX_HOTKEY_RANK && !candidate.blocked && !missingTractor && (
+            <Kbd className="size-4 min-w-4 shrink-0 text-[9px]">{rank}</Kbd>
+          )}
           <span className="truncate text-xs font-medium">{candidate.workerName}</span>
         </div>
         <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
@@ -55,7 +56,7 @@ function CandidateRow({
         </Badge>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
         <span className="tabular-nums">Score {candidate.score}</span>
         <span>· {formatMiles(candidate.deadheadMiles)} empty</span>
         <span>· {formatClockDurationMs(candidate.driveRemainingMs)} drive left</span>
@@ -70,9 +71,9 @@ function CandidateRow({
 
       <FindingList findings={candidate.findings} limit={expanded ? undefined : 2} />
 
-      {expanded ? (
+      {expanded && (
         <ScoreBreakdown score={candidate.score} factors={candidate.factors} className="mt-1" />
-      ) : null}
+      )}
 
       <div className="flex items-center gap-1.5">
         <Button
@@ -86,10 +87,15 @@ function CandidateRow({
         <Button
           size="sm"
           className="h-6 px-2 text-[10px]"
-          disabled={candidate.blocked || isAssigning}
+          disabled={candidate.blocked || missingTractor || isAssigning}
+          title={
+            missingTractor && !candidate.blocked
+              ? "This driver has no tractor assigned; assign one before dispatching."
+              : undefined
+          }
           onClick={() => onAssign(candidate)}
         >
-          {candidate.blocked ? "Ineligible" : "Assign"}
+          {candidate.blocked ? "Ineligible" : missingTractor ? "No tractor" : "Assign"}
         </Button>
       </div>
     </div>
@@ -100,34 +106,57 @@ function MoveInspector({
   move,
   onAssign,
   isAssigning,
+  hotkeysEnabled,
 }: {
   move: DispatchBoardMove;
   onAssign: (candidate: DispatchCandidate) => void;
   isAssigning: boolean;
+  hotkeysEnabled: boolean;
 }) {
   const [includeBlocked, setIncludeBlocked] = useState(false);
 
   const { data, isLoading } = useQuery({
-    ...queries.dispatchConsole.moveCandidates({ moveId: move.moveId, includeBlocked }),
+    ...dispatchConsoleQueries.moveCandidates({ moveId: move.moveId, includeBlocked }),
     staleTime: CANDIDATE_STALE_MS,
   });
 
-  const candidates = data ?? [];
+  const candidates = useMemo(() => data ?? [], [data]);
+
+  // The rank shown next to each candidate doubles as its keyboard shortcut: pressing the
+  // digit assigns without touching the mouse.
+  useEffect(() => {
+    if (!hotkeysEnabled || isAssigning) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      const rank = Number.parseInt(event.key, 10);
+      if (Number.isNaN(rank) || rank < 1 || rank > MAX_HOTKEY_RANK) return;
+      const candidate = candidates[rank - 1];
+      if (!candidate || candidate.blocked || !candidate.tractorId) return;
+      event.preventDefault();
+      onAssign(candidate);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [candidates, hotkeysEnabled, isAssigning, onAssign]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-0.5">
-        <span className="font-mono text-xs font-medium">{move.proNumber}</span>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
+        <span className="font-mono text-xs font-semibold">{move.proNumber}</span>
         <span className="text-[11px] text-muted-foreground">
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
         <span className="text-[10px] text-muted-foreground">
-          Pickup {formatUnixDateTime(move.originWindowStart)}
+          Pickup{" "}
+          {move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled"}
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
+        <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
           {candidates.length} candidates
         </span>
         <Button
@@ -140,8 +169,13 @@ function MoveInspector({
         </Button>
       </div>
 
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-1.5 pr-2">
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportClassName="min-h-0"
+        maskVariant="card"
+        maskHeight={18}
+      >
+        <div className="flex flex-col gap-1.5 p-2">
           {isLoading
             ? Array.from({ length: 5 }, (_, index) => (
                 <Skeleton key={index} className="h-24 rounded-md" />
@@ -155,12 +189,12 @@ function MoveInspector({
                   isAssigning={isAssigning}
                 />
               ))}
-          {!isLoading && candidates.length === 0 ? (
+          {!isLoading && candidates.length === 0 && (
             <p className="px-1 py-6 text-center text-xs text-muted-foreground">
               No eligible driver for this move.
               {!includeBlocked ? " Show ineligible drivers to see why." : ""}
             </p>
-          ) : null}
+          )}
         </div>
       </ScrollArea>
     </div>
@@ -180,11 +214,14 @@ function DriverMatchRow({
     <button
       type="button"
       onClick={() => onSelectMove(match.move.moveId)}
-      className="flex flex-col gap-1 rounded-md border border-border bg-card p-2 text-left transition-colors hover:border-brand/40"
+      className="flex flex-col gap-1 rounded-md border bg-card p-2 text-left transition-colors hover:border-brand/40"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="truncate font-mono text-xs font-medium">{match.move.proNumber}</span>
-        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <span className="truncate font-mono text-xs font-semibold">{match.move.proNumber}</span>
+        <Badge
+          variant={verdict.variant}
+          className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums"
+        >
           {match.score.score}
         </Badge>
       </div>
@@ -208,16 +245,16 @@ function DriverInspector({
   onSelectMove: (moveId: string) => void;
 }) {
   const { data, isLoading } = useQuery({
-    ...queries.dispatchConsole.driverMoves({ workerId: driver.workerId, limit: 20 }),
+    ...dispatchConsoleQueries.driverMoves({ workerId: driver.workerId, limit: 20 }),
     staleTime: CANDIDATE_STALE_MS,
   });
 
   const matches = data ?? [];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-medium">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
+        <span className="text-xs font-semibold">
           {driver.firstName} {driver.lastName}
         </span>
         <span className="text-[11px] text-muted-foreground">
@@ -229,49 +266,52 @@ function DriverInspector({
         </span>
       </div>
 
-      <FindingList findings={driver.findings} />
+      <div className="flex flex-col gap-2 p-2.5">
+        <FindingList findings={driver.findings} />
 
-      {driver.commitments.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Committed
-          </span>
-          {driver.commitments.map((commitment) => (
-            <div
-              key={commitment.moveId}
-              className="flex items-center justify-between gap-2 rounded border border-border bg-muted/30 px-2 py-1"
-            >
-              <span className="truncate font-mono text-[10px]">{commitment.proNumber}</span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">
-                to {commitment.destinationCity}, {commitment.destinationState}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
+        {driver.commitments.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+              Committed
+            </span>
+            {driver.commitments.map((commitment) => (
+              <div
+                key={commitment.moveId}
+                className="flex items-center justify-between gap-2 rounded border bg-muted/30 px-2 py-1"
+              >
+                <span className="truncate font-mono text-[10px]">{commitment.proNumber}</span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  to {commitment.destinationCity}, {commitment.destinationState}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <span className="border-b px-2.5 pb-1.5 text-[10px] tracking-wide text-muted-foreground uppercase">
         Best fit ({matches.length})
       </span>
 
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-1.5 pr-2">
+      <ScrollArea
+        className="min-h-0 flex-1"
+        viewportClassName="min-h-0"
+        maskVariant="card"
+        maskHeight={18}
+      >
+        <div className="flex flex-col gap-1.5 p-2">
           {isLoading
             ? Array.from({ length: 4 }, (_, index) => (
                 <Skeleton key={index} className="h-16 rounded-md" />
               ))
             : matches.map((match) => (
-                <DriverMatchRow
-                  key={match.move.moveId}
-                  match={match}
-                  onSelectMove={onSelectMove}
-                />
+                <DriverMatchRow key={match.move.moveId} match={match} onSelectMove={onSelectMove} />
               ))}
-          {!isLoading && matches.length === 0 ? (
+          {!isLoading && matches.length === 0 && (
             <p className="px-1 py-6 text-center text-xs text-muted-foreground">
               No open moves suit this driver right now.
             </p>
-          ) : null}
+          )}
         </div>
       </ScrollArea>
     </div>
@@ -288,27 +328,39 @@ export function Inspector({
   onAssign,
   onSelectMove,
   isAssigning,
+  hotkeysEnabled,
 }: {
   selectedMove: DispatchBoardMove | null;
   selectedDriver: DispatchBoardDriver | null;
   onAssign: (candidate: DispatchCandidate) => void;
   onSelectMove: (moveId: string) => void;
   isAssigning: boolean;
+  hotkeysEnabled: boolean;
 }) {
   return (
-    <section className="flex h-full min-h-0 flex-col gap-2 rounded-md border border-border bg-background p-2">
-      <header className="flex items-baseline justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide">Inspector</h2>
+    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+      <header className="flex items-center justify-between border-b px-2.5 py-1.5">
+        <h2 className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+          {selectedMove ? "Rank drivers" : selectedDriver ? "Find work" : "Inspector"}
+        </h2>
       </header>
 
       {selectedMove ? (
-        <MoveInspector move={selectedMove} onAssign={onAssign} isAssigning={isAssigning} />
+        <MoveInspector
+          move={selectedMove}
+          onAssign={onAssign}
+          isAssigning={isAssigning}
+          hotkeysEnabled={hotkeysEnabled}
+        />
       ) : selectedDriver ? (
         <DriverInspector driver={selectedDriver} onSelectMove={onSelectMove} />
       ) : (
-        <p className="px-1 py-8 text-center text-xs text-muted-foreground">
-          Select a move to rank drivers, or a driver to find them work.
-        </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
+          <p className="text-xs font-medium">Nothing selected</p>
+          <p className="text-[11px] text-muted-foreground">
+            Select a move to rank drivers for it, or a driver to find them work.
+          </p>
+        </div>
       )}
     </section>
   );

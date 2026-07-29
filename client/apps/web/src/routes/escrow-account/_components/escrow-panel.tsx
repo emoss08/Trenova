@@ -34,6 +34,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 const transactionTypeLabels: Record<string, string> = {
   Contribution: "Contribution",
@@ -44,12 +45,7 @@ const transactionTypeLabels: Record<string, string> = {
 };
 
 function formatDate(unix?: number | null): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function EscrowPanel({

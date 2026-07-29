@@ -100,7 +100,7 @@ export function toDetentionPolicyInput(data: DetentionPolicy): DetentionPolicyIn
     roundingMode: data.roundingMode,
     rateSource: data.rateSource,
     accessorialChargeId: data.accessorialChargeId,
-    tiers: data.tiers.length
+    tiers: data.tiers?.length
       ? data.tiers.map((tier, index) => ({
           fromMinute: tier.fromMinute,
           toMinute: tier.toMinute ?? null,

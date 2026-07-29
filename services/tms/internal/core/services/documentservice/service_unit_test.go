@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -32,6 +33,7 @@ type mockDocRepo struct {
 	GetByIDsFn                         func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error)
 	ListVersionsFn                     func(ctx context.Context, req repositories.ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResFn                         func(ctx context.Context, req *repositories.GetDocumentsByResourceRequest) ([]*document.Document, error)
+	GetByResIDsFn                      func(ctx context.Context, req *repositories.GetDocumentsByResourceIDsRequest) ([]*document.Document, error)
 	ListPendingPreviewReconciliationFn func(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error)
 	CreateFn                           func(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdateFn                           func(ctx context.Context, entity *document.Document) (*document.Document, error)
@@ -100,6 +102,16 @@ func (m *mockDocRepo) GetByResourceID(
 	req *repositories.GetDocumentsByResourceRequest,
 ) ([]*document.Document, error) {
 	return m.GetByResFn(ctx, req)
+}
+
+func (m *mockDocRepo) GetByResourceIDs(
+	ctx context.Context,
+	req *repositories.GetDocumentsByResourceIDsRequest,
+) ([]*document.Document, error) {
+	if m.GetByResIDsFn == nil {
+		return []*document.Document{}, nil
+	}
+	return m.GetByResIDsFn(ctx, req)
 }
 
 func (m *mockDocRepo) ListPendingPreviewReconciliation(
@@ -233,7 +245,11 @@ func (m *mockStorageClient) Upload(
 	params *storage.UploadParams,
 ) (*storage.FileInfo, error) {
 	if m.UploadFn == nil {
-		return &storage.FileInfo{Key: params.Key, Size: params.Size, ContentType: params.ContentType}, nil
+		return &storage.FileInfo{
+			Key:         params.Key,
+			Size:        params.Size,
+			ContentType: params.ContentType,
+		}, nil
 	}
 	return m.UploadFn(ctx, params)
 }
@@ -573,7 +589,7 @@ func TestUnit_Upload_Success(t *testing.T) {
 	fileData := []byte("pdf content here")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
 
-	result, err := svc.Upload(t.Context(), &documentservice.UploadRequest{
+	result, err := svc.Upload(t.Context(), &services.UploadRequest{
 		TenantInfo:   pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		File:         fileHeader,
 		ResourceID:   "res_123",
@@ -597,7 +613,7 @@ func TestUnit_Upload_ValidationFailure(t *testing.T) {
 	fileData := []byte("exe content")
 	fileHeader := storageutil.NewMockFileHeader("malware.exe", fileData, "application/x-msdownload")
 
-	result, err := svc.Upload(t.Context(), &documentservice.UploadRequest{
+	result, err := svc.Upload(t.Context(), &services.UploadRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -626,7 +642,7 @@ func TestUnit_Upload_StorageError(t *testing.T) {
 	fileData := []byte("pdf content")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
 
-	result, err := svc.Upload(t.Context(), &documentservice.UploadRequest{
+	result, err := svc.Upload(t.Context(), &services.UploadRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -665,7 +681,7 @@ func TestUnit_Upload_CreateRepoError_CleansUpStorage(t *testing.T) {
 	fileData := []byte("pdf content")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
 
-	result, err := svc.Upload(t.Context(), &documentservice.UploadRequest{
+	result, err := svc.Upload(t.Context(), &services.UploadRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),

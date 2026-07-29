@@ -6,6 +6,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import { useUserDatePreferenceKey } from "@trenova/shared/hooks/use-user-date-preferences";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
 import { useRealtimeConnection } from "@/hooks/use-realtime-connection";
 import { cn } from "@trenova/shared/lib/utils";
@@ -175,6 +176,9 @@ export function AppLayout() {
   usePermissionPolling();
   useRealtimeConnection();
   const manifest = usePermissionStore((state) => state.manifest);
+  // Timestamps are formatted from module-level preferences, so a zone or clock
+  // change has to remount the page to repaint what is already on screen.
+  const datePreferenceKey = useUserDatePreferenceKey();
 
   if (manifest?.requiresRoleActivation) {
     return <RoleActivationGate key={manifest.organizationId} manifest={manifest} />;
@@ -182,7 +186,7 @@ export function AppLayout() {
 
   return (
     <SidebarLayout>
-      <Outlet />
+      <Outlet key={datePreferenceKey} />
     </SidebarLayout>
   );
 }

@@ -1,4 +1,5 @@
 import { ApiRequestError, clearCsrfToken } from "@trenova/shared/lib/api";
+import { setUserDatePreferences } from "@trenova/shared/lib/date";
 import { realtimeService } from "@trenova/shared/services/realtime";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
@@ -88,3 +89,16 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+
+/**
+ * Timestamps arrive as UTC epoch seconds and are rendered by
+ * `@trenova/shared/lib/date`, which reads the signed-in user's timezone and
+ * clock preferences from module state. Mirroring them here — on hydration and
+ * on every change — is what keeps a Denver user from reading Eastern times.
+ */
+const syncUserDatePreferences = (user: User | null) => {
+  setUserDatePreferences({ timezone: user?.timezone, timeFormat: user?.timeFormat });
+};
+
+syncUserDatePreferences(useAuthStore.getState().user);
+useAuthStore.subscribe((state) => syncUserDatePreferences(state.user));

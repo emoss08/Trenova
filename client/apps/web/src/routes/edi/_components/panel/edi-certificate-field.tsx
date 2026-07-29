@@ -10,6 +10,7 @@ import { UploadIcon } from "lucide-react";
 import { useRef } from "react";
 import { useController, useWatch, type Control, type FieldPath } from "react-hook-form";
 import { toast } from "sonner";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 
 const CERTIFICATE_INSPECTION_DEBOUNCE_MS = 500;
 const CERTIFICATE_EXPIRY_WARNING_DAYS = 30;
@@ -120,7 +121,7 @@ function CertificateSummaryLine({
   }
 
   const summary = inspection.data;
-  const expiresOn = new Date(summary.notAfter * 1000).toLocaleDateString();
+  const expiresOn = formatUnixDate(summary.notAfter);
   const expiryText = summary.expired
     ? `Expired on ${expiresOn}`
     : `Expires in ${summary.expiresInDays} day(s) (${expiresOn})`;

@@ -8,6 +8,7 @@ import { AlertTriangleIcon, ExternalLinkIcon, PlugZapIcon, ShieldCheckIcon } fro
 import { useState } from "react";
 import { Link } from "react-router";
 import { ModuleCard } from "./module-card";
+import { userWallClockNow } from "@trenova/shared/lib/date";
 
 const DAY_KEY_FORMAT = "yyyy-MM-dd";
 const CERTIFICATION_WINDOW_DAYS = 8;
@@ -100,7 +101,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 
 export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
   const [dateRange] = useState(() => {
-    const today = new Date();
+    const today = userWallClockNow();
     return {
       startDate: format(subDays(today, CERTIFICATION_WINDOW_DAYS - 1), DAY_KEY_FORMAT),
       endDate: format(today, DAY_KEY_FORMAT),

@@ -5,7 +5,12 @@ import {
   useHomeWidgetCatalog,
   useUpdateHomeLayoutPreset,
 } from "@/hooks/use-home-layout";
-import type { HomeLayoutPreset, HomeWidget } from "@/lib/graphql/home-layout";
+import { coreResponsibilityChoices } from "@/lib/choices";
+import {
+  toWidgetInput,
+  type HomeLayoutPreset,
+  type HomeWidget,
+} from "@/lib/graphql/home-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -21,13 +26,14 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { HomeCanvas } from "@/routes/home/_components/home-canvas";
+import { useHomeData } from "@/routes/home/_components/use-home-data";
+import { ConfigNumberField } from "@/routes/home/_components/widget-config-dialog";
 import { useRoleOptions } from "./use-role-options";
 
-const CORE_RESPONSIBILITIES = ["Billing", "Operations", "Finance", "Leadership"];
 const NO_RESPONSIBILITY = "__none__";
 const MAX_PRIORITY = 1000;
 
@@ -79,6 +85,28 @@ export function PresetEditor({ preset }: PresetEditorProps) {
 
   const saving = createPreset.isPending || updatePreset.isPending;
   const previewing = previewRoleId != null;
+  const shownWidgets = previewing ? (preview.data?.widgets ?? []) : draft.widgets;
+  const data = useHomeData(shownWidgets);
+
+  const dirty = useMemo(
+    () => JSON.stringify(draft) !== JSON.stringify(toDraft(preset)),
+    [draft, preset],
+  );
+
+  const responsibilityItems = useMemo(
+    () => [
+      { value: NO_RESPONSIBILITY, label: "No job function" },
+      ...coreResponsibilityChoices.map(({ value, label }) => ({ value, label })),
+    ],
+    [],
+  );
+  const previewItems = useMemo(
+    () => [
+      { value: NO_RESPONSIBILITY, label: "Editing" },
+      ...(roles.data ?? []).map((role) => ({ value: role.id, label: role.name })),
+    ],
+    [roles.data],
+  );
 
   const patch = (next: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...next }));
 
@@ -98,7 +126,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
     const payload = {
       name: draft.name.trim(),
       description: draft.description.trim() || null,
-      widgets: draft.widgets.map(toInput),
+      widgets: draft.widgets.map(toWidgetInput),
       roleIds: draft.roleIds,
       coreResponsibility: draft.coreResponsibility || null,
       isOrgDefault: draft.isOrgDefault,
@@ -127,14 +155,9 @@ export function PresetEditor({ preset }: PresetEditorProps) {
         description="Arrange the widgets, then choose who lands on them."
         className="p-0 py-4"
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => void navigate("/admin/home-layouts")}>
-              Back
-            </Button>
-            <Button size="sm" onClick={() => void save()} disabled={saving}>
-              {preset ? "Save" : "Create"}
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => void navigate("/admin/home-layouts")}>
+            Back
+          </Button>
         }
       />
 
@@ -162,7 +185,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+          <div className="flex flex-col gap-3 rounded-lg border border-border/80 bg-card p-3">
             <Toggle
               id="preset-org-default"
               label="Organization default"
@@ -177,32 +200,20 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               checked={draft.locked}
               onChange={(locked) => patch({ locked })}
             />
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="preset-priority">Priority</Label>
-              <Input
-                id="preset-priority"
-                type="number"
-                min={0}
-                max={MAX_PRIORITY}
-                value={draft.priority}
-                onChange={(event) => {
-                  const parsed = Number(event.target.value);
-                  patch({
-                    priority: Number.isFinite(parsed)
-                      ? Math.min(Math.max(parsed, 0), MAX_PRIORITY)
-                      : 0,
-                  });
-                }}
-              />
-              <p className="text-2xs text-muted-foreground">
-                When someone matches more than one home screen, the highest priority wins.
-              </p>
-            </div>
+            <ConfigNumberField
+              id="preset-priority"
+              label="Priority"
+              value={draft.priority}
+              min={0}
+              max={MAX_PRIORITY}
+              hint="When someone matches more than one home screen, the highest priority wins."
+              onChange={(priority) => patch({ priority: priority ?? 0 })}
+            />
           </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+          <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card p-3">
             <Label>Assign to roles</Label>
             {roles.isLoading ? (
               <p className="text-xs text-muted-foreground">Loading roles…</p>
@@ -211,7 +222,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                 {(roles.data ?? []).map((role) => (
                   <label
                     key={role.id}
-                    className="flex items-center gap-2 rounded border border-border px-2 py-1.5 text-xs"
+                    className="flex items-center gap-2 rounded border border-border px-2 py-1.5 text-xs transition-colors hover:bg-muted/40"
                   >
                     <Checkbox
                       checked={draft.roleIds.includes(role.id)}
@@ -224,10 +235,11 @@ export function PresetEditor({ preset }: PresetEditorProps) {
             )}
           </div>
 
-          <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+          <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card p-3">
             <Label htmlFor="preset-responsibility">Or assign by job function</Label>
             <Select
               value={draft.coreResponsibility || NO_RESPONSIBILITY}
+              items={responsibilityItems}
               onValueChange={(value) =>
                 patch({
                   coreResponsibility: !value || value === NO_RESPONSIBILITY ? "" : String(value),
@@ -238,10 +250,9 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                 <SelectValue placeholder="No job function" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_RESPONSIBILITY}>No job function</SelectItem>
-                {CORE_RESPONSIBILITIES.map((responsibility) => (
-                  <SelectItem key={responsibility} value={responsibility}>
-                    {responsibility}
+                {responsibilityItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -255,6 +266,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               <div className="flex items-center gap-2">
                 <Select
                   value={previewRoleId ?? NO_RESPONSIBILITY}
+                  items={previewItems}
                   onValueChange={(value) =>
                     setPreviewRoleId(!value || value === NO_RESPONSIBILITY ? null : String(value))
                   }
@@ -263,10 +275,9 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                     <SelectValue placeholder="Nobody" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NO_RESPONSIBILITY}>Editing</SelectItem>
-                    {(roles.data ?? []).map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
+                    {previewItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -292,7 +303,8 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               Previewing — widgets are read-only and drawn against your own permissions.
             </p>
             <HomeCanvas
-              widgets={preview.data?.widgets ?? []}
+              widgets={shownWidgets}
+              data={data}
               catalog={catalog.data}
               catalogLoading={catalog.isLoading}
               editing={false}
@@ -302,10 +314,18 @@ export function PresetEditor({ preset }: PresetEditorProps) {
         ) : (
           <HomeCanvas
             widgets={draft.widgets}
+            data={data}
             catalog={catalog.data}
             catalogLoading={catalog.isLoading}
             editing
             onChange={(widgets) => patch({ widgets })}
+            dock={{
+              dirty,
+              saving,
+              saveLabel: preset ? "Save" : "Create",
+              onSave: () => void save(),
+              onDiscard: () => setDraft(toDraft(preset)),
+            }}
           />
         )}
       </div>
@@ -337,26 +357,4 @@ function Toggle({
       </div>
     </div>
   );
-}
-
-function toInput(widget: HomeWidget) {
-  return {
-    id: widget.id,
-    key: widget.key,
-    title: widget.title,
-    w: widget.w,
-    h: widget.h,
-    config: {
-      metric: widget.config.metric,
-      metrics: widget.config.metrics,
-      definitionId: widget.config.definitionId,
-      cannedKey: widget.config.cannedKey,
-      chartId: widget.config.chartId,
-      columnId: widget.config.columnId,
-      dashboardId: widget.config.dashboardId,
-      text: widget.config.text,
-      limit: widget.config.limit,
-      windowDays: widget.config.windowDays,
-    },
-  };
 }

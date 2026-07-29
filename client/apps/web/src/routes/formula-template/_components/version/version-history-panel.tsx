@@ -30,7 +30,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { UserHoverCard } from "@/components/user-hover-card";
 import { usePermission } from "@/hooks/use-permission";
-import { formatToUserTimezone, toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { formatToUserTimezone, fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
@@ -455,12 +455,12 @@ function VersionItem({
   });
 
   const handleOpenScheduleDialog = () => {
-    setScheduleDate(version.effectiveFrom ? toDate(version.effectiveFrom) : undefined);
+    setScheduleDate(toUserWallClock(version.effectiveFrom));
     setScheduleDialogOpen(true);
   };
 
   const handleSaveSchedule = () => {
-    const effectiveFrom = toUnixTimeStamp(scheduleDate);
+    const effectiveFrom = fromUserWallClock(scheduleDate);
     if (!effectiveFrom) return;
 
     updateEffectiveDateMutation.mutate(effectiveFrom);

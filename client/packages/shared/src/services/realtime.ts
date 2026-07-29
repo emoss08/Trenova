@@ -69,6 +69,10 @@ export class RealtimeService {
     return `tenant:${orgId}:${buId}:data-events`;
   }
 
+  public getTypingChannelName(orgId: string, buId: string, resource: string, resourceId: string) {
+    return `tenant:${orgId}:${buId}:typing:${resource}:${resourceId}`;
+  }
+
   public connectionState() {
     return this.client?.getState() ?? "closed";
   }

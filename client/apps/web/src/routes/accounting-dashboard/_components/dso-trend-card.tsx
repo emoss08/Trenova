@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from "recharts";
 import { RangeToggle } from "./range-toggle";
+import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 
 const dsoChartConfig = {
   dso: {
@@ -20,13 +21,6 @@ const dsoChartConfig = {
   },
 } satisfies ChartConfig;
 
-function shortDate(unixSeconds: number) {
-  return new Date(unixSeconds * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export function DsoTrendCard() {
   const [range, setRange] = useState<number>(13);
   const { data: trend, isLoading } = useQuery(queries.ar.dsoTrend(range));
@@ -34,7 +28,7 @@ export function DsoTrendCard() {
   const chartData = useMemo(
     () =>
       (trend ?? []).map((point) => ({
-        label: shortDate(point.periodEnd),
+        label: formatUnixMonthDay(point.periodEnd),
         dso: Number(point.dsoDays.toFixed(1)),
         billed: point.billedMinor,
       })),

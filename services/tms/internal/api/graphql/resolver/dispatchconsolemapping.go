@@ -3,7 +3,7 @@ package resolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
@@ -54,7 +54,6 @@ func mapDispatchSummary(
 	}
 }
 
-//nolint:funlen // a flat projection mapper; splitting it would only scatter the fields
 func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.DispatchBoardMove {
 	if move == nil {
 		return nil
@@ -120,7 +119,6 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 	}
 }
 
-//nolint:funlen // a flat projection mapper; splitting it would only scatter the fields
 func mapDispatchBoardDriver(
 	driver *dispatchconsoleservice.BoardDriver,
 ) *gqlmodel.DispatchBoardDriver {
@@ -234,6 +232,11 @@ func mapDispatchCandidate(
 		ShiftRemainingMs:       int(score.ShiftRemainingMs),
 		CycleRemainingMs:       int(score.CycleRemainingMs),
 		ProjectedTimeAvailable: int(score.ProjectedAvailable),
+		HosStrategy:            score.HOSStrategy,
+		HosRestStartDeadline:   int(score.HOSRestStartDeadline),
+		HosProjectedDriveMs:    int(score.HOSProjectedDriveMs),
+		HosProjectedShiftMs:    int(score.HOSProjectedShiftMs),
+		HosProjectedCycleMs:    int(score.HOSProjectedCycleMs),
 		Findings:               mapDispatchFindings(score.Findings),
 		Factors:                factors,
 	}
@@ -256,7 +259,7 @@ func mapDispatchFindings(
 	return mapped
 }
 
-func mapDispatchPlan(plan *dispatchautoassignservice.Plan) *gqlmodel.DispatchPlan {
+func mapDispatchPlan(plan *services.DispatchPlan) *gqlmodel.DispatchPlan {
 	if plan == nil {
 		return nil
 	}

@@ -34,13 +34,10 @@ import { ArrowLeftToLine, Pause, PauseCircle, Play, PlusCircle } from "lucide-re
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 
 function formatDate(unix?: number | null): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatUnixMonthDay(unix, { fallback: "—" });
 }
 
 export function DriverContextRail({

@@ -1,11 +1,14 @@
 "use no memo";
 import { EmptyState } from "@/components/empty-state";
+import { queries } from "@/lib/queries";
+import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import type { Shipment } from "@trenova/shared/types/shipment";
+import { useQuery } from "@tanstack/react-query";
 import {
   BoxesIcon,
   FuelIcon,
@@ -17,10 +20,19 @@ import {
   TriangleAlertIcon,
   TruckIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import {
+  DetentionChargeAction,
+  DetentionChargeLabel,
+  DetentionChargeUnit,
+} from "./detention-charge-cell";
 import { FuelSurchargeAuditPopover } from "./fuel-surcharge-audit-popover";
 import { AdditionalChargeDialog } from "./shipment-additional-charges-dialog";
+
+function detentionOccurrenceId(charge: Shipment["additionalCharges"][number] | undefined) {
+  return charge?.isSystemGenerated ? (charge.detentionOccurrenceId ?? null) : null;
+}
 
 export default function AdditionalChargesSection() {
   const {
@@ -28,6 +40,7 @@ export default function AdditionalChargesSection() {
     setValue,
     formState: { errors },
   } = useFormContext<Shipment>();
+  const shipmentId = useWatch({ control, name: "id" });
   const fuelSurchargeLocked = useWatch({ control, name: "fuelSurchargeLocked" });
   const { fields, append, update, remove } = useFieldArray({
     control,
@@ -38,7 +51,33 @@ export default function AdditionalChargesSection() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [claimFileId, setClaimFileId] = useState<string | null>(null);
   const charges = useWatch({ control, name: "additionalCharges" }) ?? [];
+
+  const hasDetentionCharges = charges.some((charge) => detentionOccurrenceId(charge));
+
+  const { data: occurrences, refetch: refetchOccurrences } = useQuery({
+    ...queries.detention.byShipment(shipmentId as string),
+    enabled: Boolean(shipmentId) && hasDetentionCharges,
+  });
+
+  // Every save re-runs the detention engine server-side, so the derivation
+  // behind these rows is only trustworthy if it is re-read when the shipment
+  // version moves.
+  const shipmentVersion = useWatch({ control, name: "version" });
+  const readOccurrencesAtVersion = useRef(shipmentVersion);
+
+  useEffect(() => {
+    if (readOccurrencesAtVersion.current === shipmentVersion) return;
+    readOccurrencesAtVersion.current = shipmentVersion;
+
+    if (hasDetentionCharges) void refetchOccurrences();
+  }, [shipmentVersion, hasDetentionCharges, refetchOccurrences]);
+
+  const occurrenceById = useMemo(
+    () => new Map((occurrences ?? []).map((occurrence) => [occurrence.id, occurrence])),
+    [occurrences],
+  );
 
   function handleAdd() {
     const newIndex = fields.length;
@@ -103,11 +142,13 @@ export default function AdditionalChargesSection() {
                   | undefined;
                 const isFuelSurcharge =
                   !!charge?.isSystemGenerated && !!charge?.fuelSurchargeProgramId;
+                const occurrenceId = detentionOccurrenceId(charge);
+                const occurrence = occurrenceId ? occurrenceById.get(occurrenceId) : undefined;
                 const displayName = isFuelSurcharge
                   ? (chargeObj?.code ??
                     charge?.fuelSurchargeDetail?.programCode ??
                     "Fuel Surcharge")
-                  : (chargeObj?.code ?? "—");
+                  : (chargeObj?.code ?? (occurrenceId ? "Detention" : "—"));
                 const amt = Number(charge?.amount) || 0;
 
                 const chargeErrors = errors.additionalCharges?.[index];
@@ -128,7 +169,11 @@ export default function AdditionalChargesSection() {
                   >
                     <span className="col-span-4 flex items-center gap-1.5 truncate text-xs font-medium">
                       {isFuelSurcharge && <FuelIcon className="size-3 shrink-0 text-primary" />}
-                      {displayName}
+                      {occurrenceId ? (
+                        <DetentionChargeLabel code={displayName} occurrence={occurrence} />
+                      ) : (
+                        displayName
+                      )}
                       {isFuelSurcharge && !fuelSurchargeLocked && (
                         <span className="rounded bg-primary/10 px-1 py-0.5 text-2xs text-primary">
                           Auto
@@ -158,7 +203,11 @@ export default function AdditionalChargesSection() {
                       )}
                     </span>
                     <span className="col-span-2 text-xs text-muted-foreground">
-                      {charge?.unit ?? 1}
+                      {occurrenceId ? (
+                        <DetentionChargeUnit unit={charge?.unit ?? 1} occurrence={occurrence} />
+                      ) : (
+                        (charge?.unit ?? 1)
+                      )}
                     </span>
                     <span className="col-span-2 text-xs text-muted-foreground">
                       ${amt.toFixed(2)}
@@ -166,6 +215,11 @@ export default function AdditionalChargesSection() {
                     <div className="col-span-2 flex items-center justify-end gap-1">
                       {isFuelSurcharge && charge?.fuelSurchargeDetail ? (
                         <FuelSurchargeAuditPopover detail={charge.fuelSurchargeDetail} />
+                      ) : occurrenceId ? (
+                        <DetentionChargeAction
+                          occurrence={occurrence}
+                          onOpenClaimFile={() => setClaimFileId(occurrenceId)}
+                        />
                       ) : (
                         <>
                           <Button
@@ -234,6 +288,12 @@ export default function AdditionalChargesSection() {
           update={update}
         />
       )}
+      <OccurrenceDetailSheet
+        occurrenceId={claimFileId}
+        onOpenChange={(open) => {
+          if (!open) setClaimFileId(null);
+        }}
+      />
     </>
   );
 }

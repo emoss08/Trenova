@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -344,6 +347,10 @@ func shipmentAdditionalChargesFromInput(
 		if err != nil {
 			return nil, err
 		}
+		detentionOccurrenceID, err := optionalID(input.DetentionOccurrenceID)
+		if err != nil {
+			return nil, err
+		}
 		charge := &shipmentdomain.AdditionalCharge{
 			ID:                  id,
 			BusinessUnitID:      authCtx.BusinessUnitID,
@@ -357,6 +364,9 @@ func shipmentAdditionalChargesFromInput(
 		}
 		if !fuelSurchargeProgramID.IsNil() {
 			charge.FuelSurchargeProgramID = &fuelSurchargeProgramID
+		}
+		if !detentionOccurrenceID.IsNil() {
+			charge.DetentionOccurrenceID = &detentionOccurrenceID
 		}
 		if input.Version != nil {
 			charge.Version = int64(*input.Version)
@@ -598,6 +608,7 @@ func shipmentAdditionalChargeToModel(
 		Unit:                   int(entity.Unit),
 		FuelSurchargeProgramID: idPtrFromPulidPtr(entity.FuelSurchargeProgramID),
 		FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
+		DetentionOccurrenceID:  idPtrFromPulidPtr(entity.DetentionOccurrenceID),
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
 		UpdatedAt:              int(entity.UpdatedAt),
@@ -669,26 +680,152 @@ func shipmentCommentToModel(
 	for _, id := range entity.MentionedUserIDs {
 		mentionedUserIDs = append(mentionedUserIDs, id.String())
 	}
+	acknowledgments := make(
+		[]*gqlmodel.ShipmentCommentAcknowledgment,
+		0,
+		len(entity.Acknowledgments),
+	)
+	for _, ack := range entity.Acknowledgments {
+		if ack == nil {
+			continue
+		}
+		acknowledgments = append(acknowledgments, &gqlmodel.ShipmentCommentAcknowledgment{
+			ID:             ack.ID.String(),
+			CommentID:      ack.CommentID.String(),
+			UserID:         ack.UserID.String(),
+			AcknowledgedAt: int(ack.AcknowledgedAt),
+			User:           ack.User,
+		})
+	}
+	attachments := make([]*gqlmodel.ShipmentCommentAttachment, 0, len(entity.Attachments))
+	for _, attachment := range entity.Attachments {
+		if attachment == nil {
+			continue
+		}
+		attachments = append(attachments, &gqlmodel.ShipmentCommentAttachment{
+			DocumentID:   attachment.DocumentID.String(),
+			FileName:     attachment.FileName,
+			OriginalName: stringPtrFromValue(attachment.OriginalName),
+			FileSize:     int(attachment.FileSize),
+			MimeType:     attachment.MimeType,
+			PreviewURL:   stringPtrFromValue(attachment.PreviewURL),
+			DownloadURL:  attachment.DownloadURL,
+			CreatedAt:    int(attachment.CreatedAt),
+		})
+	}
 	return &gqlmodel.ShipmentComment{
-		ID:               entity.ID.String(),
-		BusinessUnitID:   idPtr(entity.BusinessUnitID),
-		OrganizationID:   idPtr(entity.OrganizationID),
-		ShipmentID:       entity.ShipmentID.String(),
-		UserID:           idPtr(entity.UserID),
-		Comment:          entity.Comment,
-		Type:             gqlmodel.ShipmentCommentType(entity.Type),
-		Visibility:       gqlmodel.ShipmentCommentVisibility(entity.Visibility),
-		Priority:         gqlmodel.ShipmentCommentPriority(entity.Priority),
-		Source:           gqlmodel.ShipmentCommentSource(entity.Source),
-		Metadata:         entity.Metadata,
-		EditedAt:         intPtr(entity.EditedAt),
-		Version:          int(entity.Version),
-		CreatedAt:        int(entity.CreatedAt),
-		UpdatedAt:        int(entity.UpdatedAt),
-		MentionedUserIds: mentionedUserIDs,
-		User:             entity.User,
-		MentionedUsers:   mentions,
+		ID:                     entity.ID.String(),
+		BusinessUnitID:         idPtr(entity.BusinessUnitID),
+		OrganizationID:         idPtr(entity.OrganizationID),
+		ShipmentID:             entity.ShipmentID.String(),
+		UserID:                 idPtr(entity.UserID),
+		ParentCommentID:        idPtrFromPulidPtr(entity.ParentCommentID),
+		ReplyCount:             int(entity.ReplyCount),
+		Comment:                entity.Comment,
+		Body:                   entity.Body,
+		Type:                   gqlmodel.ShipmentCommentType(entity.Type),
+		Visibility:             gqlmodel.ShipmentCommentVisibility(entity.Visibility),
+		Priority:               gqlmodel.ShipmentCommentPriority(entity.Priority),
+		Source:                 gqlmodel.ShipmentCommentSource(entity.Source),
+		Metadata:               entity.Metadata,
+		EditedAt:               intPtr(entity.EditedAt),
+		PinnedAt:               intPtr(entity.PinnedAt),
+		PinnedByID:             idPtrFromPulidPtr(entity.PinnedByID),
+		ResolvedAt:             intPtr(entity.ResolvedAt),
+		ResolvedByID:           idPtrFromPulidPtr(entity.ResolvedByID),
+		RequiresAcknowledgment: entity.RequiresAcknowledgment,
+		DeletedAt:              intPtr(entity.DeletedAt),
+		Version:                int(entity.Version),
+		CreatedAt:              int(entity.CreatedAt),
+		UpdatedAt:              int(entity.UpdatedAt),
+		MentionedUserIds:       mentionedUserIDs,
+		User:                   entity.User,
+		PinnedBy:               entity.PinnedBy,
+		ResolvedBy:             entity.ResolvedBy,
+		MentionedUsers:         mentions,
+		Acknowledgments:        acknowledgments,
+		Attachments:            attachments,
 	}, nil
+}
+
+func (r *mutationResolver) toggleShipmentComment(
+	ctx context.Context,
+	shipmentID string,
+	commentID string,
+	op permission.Operation,
+	action func(
+		ctx context.Context,
+		req *services.ToggleShipmentCommentRequest,
+		actor *services.RequestActor,
+	) (*shipmentdomain.ShipmentComment, error),
+) (*gqlmodel.ShipmentComment, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipmentComment, op)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedShipmentID, err := pulid.MustParse(shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	parsedCommentID, err := pulid.MustParse(commentID)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := action(ctx, &services.ToggleShipmentCommentRequest{
+		TenantInfo: tenantInfo(authCtx),
+		ShipmentID: parsedShipmentID,
+		CommentID:  parsedCommentID,
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return shipmentCommentToModel(entity)
+}
+
+func shipmentCommentFiltersFromGraphQL(
+	filter *gqlmodel.ShipmentCommentsFilterInput,
+) (repositories.ShipmentCommentListFilters, error) {
+	filters := repositories.ShipmentCommentListFilters{}
+	if filter == nil {
+		return filters, nil
+	}
+
+	if len(filter.Types) > 0 {
+		filters.Types = make([]shipmentdomain.CommentType, 0, len(filter.Types))
+		for _, commentType := range filter.Types {
+			filters.Types = append(filters.Types, shipmentdomain.CommentType(commentType))
+		}
+	}
+	if len(filter.Priorities) > 0 {
+		filters.Priorities = make([]shipmentdomain.CommentPriority, 0, len(filter.Priorities))
+		for _, priority := range filter.Priorities {
+			filters.Priorities = append(
+				filters.Priorities,
+				shipmentdomain.CommentPriority(priority),
+			)
+		}
+	}
+	if len(filter.AuthorIds) > 0 {
+		authorIDs, err := parseIDs(filter.AuthorIds)
+		if err != nil {
+			return filters, err
+		}
+		filters.AuthorIDs = authorIDs
+	}
+
+	mentionsUserID, err := pulidPtrFromOptionalString(filter.MentionsUserID)
+	if err != nil {
+		return filters, err
+	}
+	filters.MentionsUserID = mentionsUserID
+	filters.PinnedOnly = boolValue(filter.PinnedOnly)
+	filters.UnresolvedOnly = boolValue(filter.UnresolvedOnly)
+	filters.Search = strings.TrimSpace(stringValue(filter.Search))
+
+	return filters, nil
 }
 
 func shipmentDistanceToModel(

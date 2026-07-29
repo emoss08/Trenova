@@ -72,13 +72,28 @@ func (r *repository) GetPreset(
 	return entity, nil
 }
 
+// CreatePreset inserts the preset, first demoting the incumbent org default in
+// the same transaction when this one takes the flag. Without the transaction a
+// failed insert — a duplicate name, say — would leave the tenant with no
+// default at all.
 func (r *repository) CreatePreset(
 	ctx context.Context,
 	entity *homelayout.Preset,
 ) (*homelayout.Preset, error) {
 	log := r.l.With(zap.String("operation", "CreatePreset"), zap.String("name", entity.Name))
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Exec(ctx); err != nil {
+	err := r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		if entity.IsOrgDefault {
+			if err := clearOrgDefault(c, tx, entity.OrganizationID, entity.BusinessUnitID, pulid.Nil); err != nil {
+				log.Error("failed to clear home layout org default", zap.Error(err))
+				return err
+			}
+		}
+
+		_, err := tx.NewInsert().Model(entity).Exec(c)
+		return err
+	})
+	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
 			return nil, errortypes.NewValidationError(
 				"name",
@@ -93,6 +108,13 @@ func (r *repository) CreatePreset(
 	return entity, nil
 }
 
+// UpdatePreset writes every column from the row the service just loaded, inside
+// one transaction with the org-default handover when this preset is promoted.
+// Neither OmitZero nor an explicit Set list is usable here: OmitZero would
+// silently skip is_org_default, locked, and priority whenever they are being
+// set back to false or zero — exactly the demotions an administrator means —
+// and bun ignores the model's fields entirely once any Set() is present, which
+// would drop name and layout.
 func (r *repository) UpdatePreset(
 	ctx context.Context,
 	entity *homelayout.Preset,
@@ -102,19 +124,26 @@ func (r *repository) UpdatePreset(
 	ov := entity.Version
 	entity.Version++
 
-	// Neither OmitZero nor an explicit Set list is usable here. OmitZero would
-	// silently skip is_org_default, locked, and priority whenever they are
-	// being set back to false or zero — exactly the demotions an administrator
-	// means. And bun ignores the model's fields entirely once any Set() is
-	// present, which would drop name and layout. Writing every column from the
-	// row we just loaded is the only shape that saves all of them.
-	result, err := r.db.DB().
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(buncolgen.PresetColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
+	err := r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		if entity.IsOrgDefault {
+			if err := clearOrgDefault(c, tx, entity.OrganizationID, entity.BusinessUnitID, entity.ID); err != nil {
+				log.Error("failed to clear home layout org default", zap.Error(err))
+				return err
+			}
+		}
+
+		result, err := tx.NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(buncolgen.PresetColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(c)
+		if err != nil {
+			return err
+		}
+
+		return dberror.CheckRowsAffected(result, "HomeLayoutPreset", entity.ID.String())
+	})
 	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
 			return nil, errortypes.NewValidationError(
@@ -124,10 +153,6 @@ func (r *repository) UpdatePreset(
 			)
 		}
 		log.Error("failed to update home layout preset", zap.Error(err))
-		return nil, err
-	}
-
-	if err = dberror.CheckRowsAffected(result, "HomeLayoutPreset", entity.ID.String()); err != nil {
 		return nil, err
 	}
 
@@ -156,70 +181,78 @@ func (r *repository) DeletePreset(
 		return err
 	}
 
-	return dberror.CheckRowsAffected(result, "HomeLayoutPreset", req.PresetID.String())
-}
-
-// ClearOrgDefault demotes every other preset in the tenant. The partial unique
-// index is the real guard; this exists so an administrator promoting a second
-// preset gets a silent handover instead of a constraint violation.
-func (r *repository) ClearOrgDefault(
-	ctx context.Context,
-	req *repositories.ClearHomeLayoutOrgDefaultRequest,
-) error {
-	log := r.l.With(zap.String("operation", "ClearOrgDefault"))
-
-	_, err := r.db.DB().
-		NewUpdate().
-		Model((*homelayout.Preset)(nil)).
-		Set(buncolgen.PresetColumns.IsOrgDefault.Bare()+" = FALSE").
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			uq = buncolgen.PresetScopeTenantUpdate(uq, req.TenantInfo).
-				Where(buncolgen.PresetColumns.IsOrgDefault.IsTrue())
-			if req.ExceptID.IsNil() {
-				return uq
-			}
-			return uq.Where(buncolgen.PresetColumns.ID.Ne(), req.ExceptID)
-		}).
-		Exec(ctx)
+	rows, err := result.RowsAffected()
 	if err != nil {
-		log.Error("failed to clear home layout org default", zap.Error(err))
 		return err
+	}
+	if rows == 0 {
+		return errortypes.NewNotFoundError("Home screen preset not found")
 	}
 
 	return nil
 }
 
-// CountUsersForRoles reports how many people a preset would reach, so the admin
-// list can say what an assignment costs before it is made. Expired assignments
-// are excluded because they no longer grant the role.
-func (r *repository) CountUsersForRoles(
+// clearOrgDefault demotes every other org-default preset in the tenant. It
+// bumps version and updated_at on the demoted rows so any editor holding one of
+// them open fails its next save on the optimistic lock instead of silently
+// re-promoting a preset the administrator just demoted.
+func clearOrgDefault(
+	ctx context.Context,
+	idb bun.IDB,
+	orgID, buID, exceptID pulid.ID,
+) error {
+	_, err := idb.NewUpdate().
+		Model((*homelayout.Preset)(nil)).
+		Set(buncolgen.PresetColumns.IsOrgDefault.Bare()+" = FALSE").
+		Set(buncolgen.PresetColumns.Version.Bare()+" = "+buncolgen.PresetColumns.Version.Bare()+" + 1").
+		Set(buncolgen.PresetColumns.UpdatedAt.Bare()+" = ?", timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			uq = uq.Where(buncolgen.PresetColumns.OrganizationID.Eq(), orgID).
+				Where(buncolgen.PresetColumns.BusinessUnitID.Eq(), buID).
+				Where(buncolgen.PresetColumns.IsOrgDefault.IsTrue())
+			if exceptID.IsNil() {
+				return uq
+			}
+			return uq.Where(buncolgen.PresetColumns.ID.Ne(), exceptID)
+		}).
+		Exec(ctx)
+
+	return err
+}
+
+// ListRoleUserAssignments returns every live role membership in the tenant with
+// the role's core responsibility attached, so the service can compute how many
+// distinct people any preset reaches — by explicit role or by responsibility —
+// in one query instead of one per preset. Expired assignments are excluded
+// because they no longer grant the role.
+func (r *repository) ListRoleUserAssignments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	roleIDs []pulid.ID,
-) (int, error) {
-	if len(roleIDs) == 0 {
-		return 0, nil
-	}
-
-	log := r.l.With(zap.String("operation", "CountUsersForRoles"))
+) ([]repositories.HomeRoleUserAssignment, error) {
+	log := r.l.With(zap.String("operation", "ListRoleUserAssignments"))
 
 	now := timeutils.NowUnix()
-	count := 0
+	assignments := make([]repositories.HomeRoleUserAssignment, 0)
 	err := r.db.DB().
 		NewSelect().
 		Model((*permission.UserRoleAssignment)(nil)).
-		ColumnExpr(buncolgen.CountDistinct(buncolgen.UserRoleAssignmentColumns.UserID, "count")).
+		ColumnExpr(buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
+		ColumnExpr(buncolgen.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
+		ColumnExpr(
+			buncolgen.RoleColumns.CoreResponsibility.Qualified()+" AS core_responsibility",
+		).
+		Join("JOIN roles AS r ON "+buncolgen.RoleColumns.ID.Qualified()+" = "+
+			buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()).
 		Where(buncolgen.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(buncolgen.UserRoleAssignmentColumns.RoleID.In(), bun.List(roleIDs)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where(buncolgen.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
 				WhereOr(buncolgen.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
 		}).
-		Scan(ctx, &count)
+		Scan(ctx, &assignments)
 	if err != nil {
-		log.Error("failed to count users for roles", zap.Error(err))
-		return 0, err
+		log.Error("failed to list role user assignments", zap.Error(err))
+		return nil, err
 	}
 
-	return count, nil
+	return assignments, nil
 }

@@ -34,6 +34,11 @@ export function AddWidgetDialog({
 }: AddWidgetDialogProps) {
   const [search, setSearch] = useState("");
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) setSearch("");
+    onOpenChange(next);
+  };
+
   const grouped = useMemo(() => {
     if (!catalog) return [];
     const term = search.trim().toLowerCase();
@@ -53,7 +58,7 @@ export function AddWidgetDialog({
   }, [catalog, search]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add a widget</DialogTitle>

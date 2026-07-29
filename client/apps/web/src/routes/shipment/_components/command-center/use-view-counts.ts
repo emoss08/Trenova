@@ -1,19 +1,11 @@
 import { getShipmentSavedViewCountsGraphQL } from "@/lib/graphql/shipment";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useUserDatePreferences } from "@trenova/shared/hooks/use-user-date-preferences";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { SAVED_VIEWS, type SavedViewId } from "./saved-views";
 
-const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-function resolveSavedViewCountsTimezone(timezone: string | undefined) {
-  if (!timezone || timezone === "auto") return browserTimezone();
-  return timezone;
-}
-
 export function useSavedViewCounts(enabled = true): Record<SavedViewId, number | undefined> {
-  const userTimezone = useAuthStore((state) => state.user?.timezone);
-  const timezone = resolveSavedViewCountsTimezone(userTimezone);
+  const { timezone } = useUserDatePreferences();
 
   const { data } = useQuery({
     queryKey: ["analytics", "shipment-management", "saved-view-counts", timezone],

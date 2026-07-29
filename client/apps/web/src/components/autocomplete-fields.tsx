@@ -599,6 +599,31 @@ export function WorkerAutocompleteField<T extends FieldValues>({
   );
 }
 
+export function ShipmentAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/shipments/select-options/"
+      graphql={shipmentSelectOptionsGraphQL}
+      popoutLink="/shipment-management/shipments"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          {(selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")) && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
 export function OrderAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
@@ -1622,16 +1647,14 @@ export function DetentionPolicyAutocompleteField<T extends FieldValues>({
   return (
     <AutocompleteField<DetentionPolicy, T>
       link="/detention-policies/select-options/"
-      popoutLink="/billing/configuration-files/detention-policies"
+      popoutLink="/detention/configuration-files/detention-policies"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.name}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
           {option?.code && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
-              {option.code}
-            </span>
+            <span className="w-full truncate text-2xs text-muted-foreground">{option.code}</span>
           )}
         </div>
       )}

@@ -38,6 +38,12 @@ type GetDocumentsByResourceRequest struct {
 	IncludeDocumentType bool                  `json:"includeDocumentType"`
 }
 
+type GetDocumentsByResourceIDsRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	ResourceType string                `json:"resourceType"`
+	ResourceIDs  []string              `json:"resourceIds"`
+}
+
 type DeleteDocumentRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -114,6 +120,10 @@ type DocumentRepository interface {
 	GetByResourceID(
 		ctx context.Context,
 		req *GetDocumentsByResourceRequest,
+	) ([]*document.Document, error)
+	GetByResourceIDs(
+		ctx context.Context,
+		req *GetDocumentsByResourceIDsRequest,
 	) ([]*document.Document, error)
 	ListPendingPreviewReconciliation(
 		ctx context.Context,

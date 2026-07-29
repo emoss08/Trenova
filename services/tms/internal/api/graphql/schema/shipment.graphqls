@@ -338,6 +338,7 @@ type ShipmentAdditionalCharge {
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
+  detentionOccurrenceId: ID
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -599,13 +600,36 @@ type ShipmentCommentMention {
   mentionedUser: User
 }
 
+type ShipmentCommentAttachment {
+  documentId: ID!
+  fileName: String!
+  originalName: String
+  fileSize: Int!
+  mimeType: String!
+  previewUrl: String
+  downloadUrl: String!
+  createdAt: Int!
+}
+
+type ShipmentCommentAcknowledgment {
+  id: ID!
+  commentId: ID!
+  userId: ID!
+  acknowledgedAt: Int!
+  user: User
+}
+
 type ShipmentComment {
   id: ID!
   businessUnitId: ID
   organizationId: ID
   shipmentId: ID!
   userId: ID
+  parentCommentId: ID
+  replyCount: Int!
   comment: String!
+  "Structured comment body (comment body v1). Null for legacy plain-text comments."
+  body: JSON
   type: ShipmentCommentType!
   visibility: ShipmentCommentVisibility!
   priority: ShipmentCommentPriority!
@@ -613,12 +637,22 @@ type ShipmentComment {
   "Comment metadata is written by users, integrations, and system workflows, so keys vary by source."
   metadata: JSON
   editedAt: Int
+  pinnedAt: Int
+  pinnedById: ID
+  resolvedAt: Int
+  resolvedById: ID
+  requiresAcknowledgment: Boolean!
+  deletedAt: Int
   version: Int!
   createdAt: Int!
   updatedAt: Int!
   mentionedUserIds: [ID!]!
   user: User
+  pinnedBy: User
+  resolvedBy: User
   mentionedUsers: [ShipmentCommentMention!]
+  acknowledgments: [ShipmentCommentAcknowledgment!]
+  attachments: [ShipmentCommentAttachment!]
 }
 
 type ShipmentSavedViewCounts {
@@ -1032,6 +1066,7 @@ input ShipmentAdditionalChargeInput {
   amount: String = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
+  detentionOccurrenceId: ID
   version: Int
 }
 
@@ -1106,20 +1141,41 @@ input ShipmentBulkTransferToBillingInput {
 
 input ShipmentCommentInput {
   comment: String!
+  "Structured comment body (comment body v1). When present, the plain-text comment is derived server-side."
+  body: JSON
+  parentCommentId: ID
   mentionedUserIds: [ID!] = []
+  attachmentDocumentIds: [ID!] = []
   type: ShipmentCommentType = Internal
   visibility: ShipmentCommentVisibility = Internal
   priority: ShipmentCommentPriority = Normal
+  requiresAcknowledgment: Boolean
+  "Client-generated reference echoed on the created entity for optimistic-update reconciliation."
+  clientRef: String
 }
 
 input ShipmentCommentUpdateInput {
   id: ID!
   comment: String!
+  "Structured comment body (comment body v1). When present, the plain-text comment is derived server-side."
+  body: JSON
   mentionedUserIds: [ID!] = []
+  attachmentDocumentIds: [ID!] = []
   type: ShipmentCommentType = Internal
   visibility: ShipmentCommentVisibility = Internal
   priority: ShipmentCommentPriority = Normal
+  requiresAcknowledgment: Boolean
   version: Int!
+}
+
+input ShipmentCommentsFilterInput {
+  types: [ShipmentCommentType!]
+  priorities: [ShipmentCommentPriority!]
+  authorIds: [ID!]
+  mentionsUserId: ID
+  pinnedOnly: Boolean = false
+  unresolvedOnly: Boolean = false
+  search: String
 }
 
 input ShipmentsInput {
@@ -1156,7 +1212,8 @@ extend type Query {
   shipments(input: ShipmentsInput!): ShipmentConnection!
   shipment(id: ID!, expandShipmentDetails: Boolean = false, status: String): Shipment
   unassignedShipments(first: Int = 20, after: String): ShipmentConnection!
-  shipmentComments(shipmentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
+  shipmentComments(shipmentId: ID!, first: Int = 20, after: String, filter: ShipmentCommentsFilterInput): ShipmentCommentConnection!
+  shipmentCommentReplies(shipmentId: ID!, commentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -1183,4 +1240,9 @@ extend type Mutation {
   createShipmentComment(shipmentId: ID!, input: ShipmentCommentInput!): ShipmentComment!
   updateShipmentComment(shipmentId: ID!, commentId: ID!, input: ShipmentCommentUpdateInput!): ShipmentComment!
   deleteShipmentComment(shipmentId: ID!, commentId: ID!): Boolean!
+  pinShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  unpinShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  resolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  unresolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  acknowledgeShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
 }

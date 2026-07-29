@@ -75,10 +75,17 @@ import type {
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
 import type { EquipmentClass } from "@/types/equipment-type";
-import type { GenericSelectOption, SelectOption, SelectOptionGroup } from "@trenova/shared/types/fields";
+import type {
+  GenericSelectOption,
+  SelectOption,
+  SelectOptionGroup,
+} from "@trenova/shared/types/fields";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
 import type { FiscalYearStatus } from "@/types/fiscal-year";
-import type { FormulaTemplateStatus, FormulaTemplateType } from "@trenova/shared/types/formula-template";
+import type {
+  FormulaTemplateStatus,
+  FormulaTemplateType,
+} from "@trenova/shared/types/formula-template";
 import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
 import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
 import type { EquipmentStatus, Status } from "@trenova/shared/types/helpers";
@@ -114,7 +121,16 @@ import type {
   FuelSurchargeStepRounding,
 } from "@/types/fuel-surcharge";
 import type { RateTableLookupType } from "@/types/rate-table";
-import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@trenova/shared/types/role";
+import type {
+  RecurringShipmentExceptionPolicy,
+  RecurringShipmentStatus,
+} from "@/types/recurring-shipment";
+import type {
+  CoreResponsibility,
+  DataScope,
+  FieldSensitivity,
+  Operation,
+} from "@trenova/shared/types/role";
 import type {
   ServiceFailureSource,
   ServiceFailureStatus,
@@ -132,7 +148,6 @@ import type {
   StopStatus,
   StopType,
 } from "@trenova/shared/types/shipment";
-import type { CommentPriority, CommentType, CommentVisibility } from "@/types/shipment-comment";
 import type { TimeFormatType } from "@trenova/shared/types/user";
 import type {
   CDLClass,
@@ -1152,6 +1167,7 @@ export const autoAssignmentStrategyChoices = [
   { value: "Proximity", label: "Proximity", color: "#0369a1" },
   { value: "Availability", label: "Availability", color: "#15803d" },
   { value: "LoadBalancing", label: "Load Balancing", color: "#ec4899" },
+  { value: "Performance", label: "Performance", color: "#7c3aed" },
 ] satisfies ReadonlyArray<GenericSelectOption<AutoAssignmentStrategy>>;
 
 export const complianceEnforcementLevelChoices = [
@@ -1208,35 +1224,11 @@ export const invoiceNumberFormatChoices = [
   { value: "POBased", label: "PO Based" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceNumberFormat>>;
 
-export const commentTypeChoices = [
-  { value: "Internal", label: "Internal", color: "#6b7280" },
-  { value: "Dispatch", label: "Dispatch", color: "#3b82f6" },
-  { value: "DriverUpdate", label: "Driver Update", color: "#0891b2" },
-  { value: "PickupInstruction", label: "Pickup Instruction", color: "#16a34a" },
-  { value: "DeliveryInstruction", label: "Delivery Instruction", color: "#15803d" },
-  { value: "StatusUpdate", label: "Status Update", color: "#6366f1" },
-  { value: "Exception", label: "Exception", color: "#dc2626" },
-  { value: "CustomerUpdate", label: "Customer Update", color: "#a855f7" },
-  { value: "Appointment", label: "Appointment", color: "#f59e0b" },
-  { value: "Document", label: "Document", color: "#64748b" },
-  { value: "Billing", label: "Billing", color: "#0d9488" },
-  { value: "Compliance", label: "Compliance", color: "#db2777" },
-] satisfies ReadonlyArray<GenericSelectOption<CommentType>>;
-
-export const commentVisibilityChoices = [
-  { value: "Internal", label: "Internal", color: "#6b7280" },
-  { value: "Operations", label: "Operations", color: "#3b82f6" },
-  { value: "Customer", label: "Customer", color: "#a855f7" },
-  { value: "Driver", label: "Driver", color: "#0891b2" },
-  { value: "Accounting", label: "Accounting", color: "#0d9488" },
-] satisfies ReadonlyArray<GenericSelectOption<CommentVisibility>>;
-
-export const commentPriorityChoices = [
-  { value: "Low", label: "Low", color: "#9ca3af" },
-  { value: "Normal", label: "Normal", color: "#3b82f6" },
-  { value: "High", label: "High", color: "#f59e0b" },
-  { value: "Urgent", label: "Urgent", color: "#dc2626" },
-] satisfies ReadonlyArray<GenericSelectOption<CommentPriority>>;
+export {
+  commentPriorityChoices,
+  commentTypeChoices,
+  commentVisibilityChoices,
+} from "@trenova/shared/lib/comment-choices";
 
 export const currencyChoices = [
   { value: "USD", label: "USD - US Dollar" },
@@ -1637,6 +1629,49 @@ export const recurringEarningStatusChoices = [
     description: "Reached its lifetime cap and stopped permanently.",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<RecurringEarningStatus>>;
+
+export const recurringShipmentStatusChoices = [
+  {
+    label: "Active",
+    value: "Active",
+    color: "#15803d",
+    description: "The schedule runs and shipments generate on their own.",
+  },
+  {
+    label: "Paused",
+    value: "Paused",
+    color: "#d97706",
+    description:
+      "Nothing generates until resumed; the schedule restarts from the next future pickup.",
+  },
+  {
+    label: "Expired",
+    value: "Expired",
+    color: "#a3a3a3",
+    description: "The end date or occurrence cap was reached and the series stopped for good.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RecurringShipmentStatus>>;
+
+export const recurringShipmentExceptionPolicyChoices = [
+  {
+    label: "Skip the occurrence",
+    value: "Skip",
+    color: "#a3a3a3",
+    description: "No shipment is created and the series waits for the next scheduled pickup.",
+  },
+  {
+    label: "Move to previous business day",
+    value: "PreviousBusinessDay",
+    color: "#2563eb",
+    description: "Pulls the pickup earlier — use when the freight cannot ship late.",
+  },
+  {
+    label: "Move to next business day",
+    value: "NextBusinessDay",
+    color: "#9333ea",
+    description: "Pushes the pickup later — the common choice for holiday closures.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RecurringShipmentExceptionPolicy>>;
 
 export const payAdvanceSourceChoices = [
   {

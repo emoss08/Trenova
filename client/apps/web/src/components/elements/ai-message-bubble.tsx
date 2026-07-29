@@ -15,6 +15,7 @@ import { MetaLogo } from "@trenova/shared/components/ui/logos/meta";
 import { MistralLogo } from "@trenova/shared/components/ui/logos/mistral";
 import { OpenAILogo } from "@trenova/shared/components/ui/logos/openai";
 import { XAILogo } from "@trenova/shared/components/ui/logos/xai";
+import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
 
 type MessageRole = "user" | "assistant";
 
@@ -141,10 +142,7 @@ export function AiMessageBubble({
 
         {timestamp && (
           <time className="mt-2 block text-[10px] tracking-wider uppercase opacity-60">
-            {timestamp.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatDateInUserTimezone(timestamp, { hour: "2-digit", minute: "2-digit" })}
           </time>
         )}
 

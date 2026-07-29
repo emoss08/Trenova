@@ -12,6 +12,7 @@ import { useQueryStates } from "nuqs";
 import { lazy, useCallback, useMemo, useState } from "react";
 import type { CommandCenterTableSummary } from "./_components/command-center/command-center-table";
 import { ShipmentMapPanelBoundary } from "./_components/map/map-boundary";
+import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
 
 const Table = lazy(() => import("./_components/shipment-table"));
 const ShipmentAnalytics = lazy(() => import("./_components/analytics/kpi-rail"));
@@ -64,7 +65,11 @@ export function ShipmentsPage() {
             {summary && (
               <div
                 aria-label="Live shipment count"
-                title={`Updated ${new Date(summary.dataUpdatedAt).toLocaleTimeString()}`}
+                title={`Updated ${formatDateInUserTimezone(new Date(summary.dataUpdatedAt), {
+                  hour: "numeric",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}`}
                 className="inline-flex h-5 items-center gap-1 rounded border border-success/25 bg-success/10 px-1.5 font-table text-[10px] text-success tabular-nums"
               >
                 <span className="size-1 rounded-full bg-success" />

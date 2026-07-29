@@ -15,7 +15,6 @@ const AdditionalChargesSection = lazy(
 const ShipmentGeneralInformation = lazy(() => import("./shipment-general-information"));
 const CommoditiesSection = lazy(() => import("./shipment-commodities"));
 const ShipmentMoveDetails = lazy(() => import("./move/shipment-move-details"));
-const DetentionSection = lazy(() => import("./detention/shipment-detention"));
 const LoadPlannerDialog = lazy(() => import("./trailer-loading/trailer-loading-drawer"));
 
 const BILLING_REVIEW_STATUSES = new Set(["ReadyForReview", "InReview", "OnHold", "Exception"]);
@@ -26,11 +25,7 @@ export function ShipmentForm() {
     parseAsBoolean.withDefault(false),
   );
 
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext<Shipment>();
-  console.info("shipment form errors", errors);
+  const { control } = useFormContext<Shipment>();
   const billingTransferStatus = useWatch({ control, name: "billingTransferStatus" });
 
   const isInBillingReview = BILLING_REVIEW_STATUSES.has(billingTransferStatus as string);
@@ -53,7 +48,6 @@ export function ShipmentForm() {
             <ShipmentGeneralInformation />
             <CommoditiesSection />
             <ShipmentMoveDetails />
-            <DetentionSection />
           </div>
           {isFullyLocked && (
             <div className="absolute inset-0 z-10 rounded-lg bg-background/60">

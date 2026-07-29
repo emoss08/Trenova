@@ -53,6 +53,13 @@ func (e *VehiclePosition) GetStaticFieldMap() map[string]string {
 	return buncolgen.VehiclePositionFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerHOSLog].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerHOSLogFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerHOSLog) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerHOSLogFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerHOSState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.WorkerHOSStateFieldMap] instead of parsing struct tags via reflection.

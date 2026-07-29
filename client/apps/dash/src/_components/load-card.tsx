@@ -1,6 +1,6 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { formatRange } from "@trenova/shared/lib/date";
+import { formatRange, formatUnixTime } from "@trenova/shared/lib/date";
 import { recordMyStopAction, type PortalLoad, type PortalStop } from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PortalStopAction } from "@trenova/graphql/generated/graphql";
@@ -29,10 +29,7 @@ export function stopTimeLabel(stop: PortalStop): string {
   }
   if (stop.scheduledWindowStart) {
     const day = formatRange(stop.scheduledWindowStart, stop.scheduledWindowStart);
-    const time = new Intl.DateTimeFormat(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(stop.scheduledWindowStart * 1000));
+    const time = formatUnixTime(stop.scheduledWindowStart);
     return `${day}, ${time}`;
   }
   return "Not scheduled";

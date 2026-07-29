@@ -75,8 +75,13 @@ func (s *Service) CreateToken(
 
 func tenantCapability(orgID, buID string) realtime.Capability {
 	return realtime.Capability{
-		fmt.Sprintf("tenant:%s:%s:*", orgID, buID): {"subscribe", "presence", "history"},
+		fmt.Sprintf("tenant:%s:%s:*", orgID, buID):        {"subscribe", "presence", "history"},
+		fmt.Sprintf("tenant:%s:%s:typing:*", orgID, buID): {"subscribe", "publish", "presence"},
 	}
+}
+
+func TypingChannelName(orgID, buID, resource, resourceID string) string {
+	return fmt.Sprintf("tenant:%s:%s:typing:%s:%s", orgID, buID, resource, resourceID)
 }
 
 func (s *Service) PublishResourceInvalidation(

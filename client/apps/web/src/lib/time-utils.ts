@@ -1,3 +1,5 @@
+import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
+
 export function formatElapsedTime(timestamp: number, now = Date.now()) {
   if (timestamp <= 0) return "just now";
 
@@ -22,5 +24,9 @@ export function formatTimeAgo(timestamp: number, now = Date.now()): string {
   if (elapsedSeconds < 3600) return `${Math.floor(elapsedSeconds / 60)}m ago`;
   if (elapsedSeconds < 86400) return `${Math.floor(elapsedSeconds / 3600)}h ago`;
   if (elapsedSeconds < 604800) return `${Math.floor(elapsedSeconds / 86400)}d ago`;
-  return new Date(timestamp).toLocaleDateString();
+  return formatDateInUserTimezone(new Date(timestamp), {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  });
 }

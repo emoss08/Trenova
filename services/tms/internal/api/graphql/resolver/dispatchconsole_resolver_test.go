@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
@@ -159,6 +160,70 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 	}
 }
 
+// denyResourcePermissionEngine allows everything except the named resource, so a test can
+// prove a resolver demands more than its primary permission.
+type denyResourcePermissionEngine struct {
+	mocks.AllowAllPermissionEngine
+	deniedResource string
+	denied         *servicesport.PermissionCheckRequest
+}
+
+func (e *denyResourcePermissionEngine) Check(
+	_ context.Context,
+	req *servicesport.PermissionCheckRequest,
+) (*servicesport.PermissionCheckResult, error) {
+	if req.Resource == e.deniedResource {
+		e.denied = req
+		return &servicesport.PermissionCheckResult{Allowed: false}, nil
+	}
+	return &servicesport.PermissionCheckResult{Allowed: true}, nil
+}
+
+// The board and the reverse-match expose driver PII, live position, and HOS clocks, so
+// shipment_move:read alone must not be enough.
+func TestDispatchResolvers_DriverDataAlsoRequiresWorkerRead(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		invoke func(ctx context.Context, r *Resolver) error
+	}{
+		{
+			name: "board",
+			invoke: func(ctx context.Context, r *Resolver) error {
+				_, err := (&queryResolver{r}).DispatchBoard(ctx, gqlmodel.DispatchBoardInput{})
+				return err
+			},
+		},
+		{
+			name: "driver moves",
+			invoke: func(ctx context.Context, r *Resolver) error {
+				_, err := (&queryResolver{r}).DispatchDriverMoves(
+					ctx,
+					gqlmodel.DispatchDriverMovesInput{WorkerID: pulid.MustNew("wrk_").String()},
+				)
+				return err
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			engine := &denyResourcePermissionEngine{
+				deniedResource: permission.ResourceWorker.String(),
+			}
+			err := tc.invoke(dispatchAuthContext(t), &Resolver{permissionEngine: engine})
+
+			require.Error(t, err, "denying worker:read must block the query")
+			require.NotNil(t, engine.denied)
+			assert.Equal(t, permission.ResourceWorker.String(), engine.denied.Resource)
+			assert.Equal(t, permission.OpRead, engine.denied.Operation)
+		})
+	}
+}
+
 func TestDispatchResolvers_RejectUnauthenticatedCallers(t *testing.T) {
 	t.Parallel()
 
@@ -207,6 +272,48 @@ func TestFindingsFromError_NonValidationErrorYieldsNoFindings(t *testing.T) {
 
 	assert.Empty(t, findingsFromError(errortypes.NewBusinessError("something broke")))
 	assert.Empty(t, findingsFromError(nil))
+}
+
+// Raw internal errors must never reach a client; only structured errortypes surface their
+// message, everything else collapses to a generic failure.
+func TestErrorMessage_OnlySurfacesStructuredErrors(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, errorMessage(nil))
+
+	business := errorMessage(errortypes.NewBusinessError("Move cannot be assigned"))
+	require.NotNil(t, business)
+	assert.Equal(t, "Move cannot be assigned", *business)
+
+	notFound := errorMessage(errortypes.NewNotFoundError("Shipment move not found"))
+	require.NotNil(t, notFound)
+	assert.Equal(t, "Shipment move not found", *notFound)
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add("hos", errortypes.ErrComplianceViolation, "No drive time remaining")
+	structured := errorMessage(multiErr)
+	require.NotNil(t, structured)
+	assert.Contains(t, *structured, "No drive time remaining")
+
+	internal := errorMessage(errors.New("pq: connection refused to 10.0.0.5:5432"))
+	require.NotNil(t, internal)
+	assert.Equal(t, genericDispatchErrorMessage, *internal)
+	assert.NotContains(t, *internal, "10.0.0.5")
+}
+
+func TestParseDispatchID_ReturnsASafeValidationError(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("sm_")
+	parsed, err := parseDispatchID(id.String(), "moveId", "Move ID is not a valid identifier")
+	require.NoError(t, err)
+	assert.Equal(t, id, parsed)
+
+	_, err = parseDispatchID("garbage", "moveId", "Move ID is not a valid identifier")
+	require.Error(t, err)
+	message := errorMessage(err)
+	require.NotNil(t, message)
+	assert.Equal(t, "Move ID is not a valid identifier", *message)
 }
 
 func TestOptionalPulid(t *testing.T) {

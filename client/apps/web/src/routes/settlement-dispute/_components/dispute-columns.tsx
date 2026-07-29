@@ -2,6 +2,7 @@ import { AmountDisplay } from "@trenova/shared/components/accounting/amount-disp
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { SettlementDisputeRow } from "@trenova/shared/lib/graphql/driver-portal";
 import { type ColumnDef } from "@tanstack/react-table";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
@@ -27,12 +28,7 @@ export function SettlementDisputeStatusBadge({ status }: { status: string }) {
 }
 
 function formatDate(unix: number): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 function workerName(row: SettlementDisputeRow): string {

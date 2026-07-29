@@ -1448,6 +1448,191 @@ var VehiclePositionFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// WorkerHOSLog — table "worker_hos_logs", alias "whl"
+// ---------------------------------------------------------------------------
+
+// WorkerHOSLogTable holds the table name, alias, and primary key columns
+// for the "worker_hos_logs" table. The alias "whl" is used in all generated
+// SQL fragments (e.g. "whl.id = ?").
+var WorkerHOSLogTable = TableInfo{
+	Name:       "worker_hos_logs",
+	Alias:      "whl",
+	PrimaryKey: []string{"organization_id", "business_unit_id", "worker_id", "log_start_at"},
+}
+
+// WorkerHOSLogColumns provides type-safe column references for the "worker_hos_logs" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(WorkerHOSLogColumns.ID.String())
+//	// SELECT whl.id FROM worker_hos_logs AS whl
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(WorkerHOSLogColumns.ID.Eq(), id)           // WHERE whl.id = ?
+//	q.Order(WorkerHOSLogColumns.CreatedAt.OrderDesc())  // ORDER BY whl.created_at DESC
+var WorkerHOSLogColumns = struct {
+	OrganizationID    Column // "organization_id" → qualified: "whl.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "whl.business_unit_id"
+	WorkerID          Column // "worker_id" → qualified: "whl.worker_id"
+	LogStartAt        Column // "log_start_at" → qualified: "whl.log_start_at"
+	DutyStatus        Column // "duty_status" → qualified: "whl.duty_status"
+	LogEndAt          Column // "log_end_at" → qualified: "whl.log_end_at"
+	Remark            Column // "remark" → qualified: "whl.remark"
+	Provider          Column // "provider" → qualified: "whl.provider"
+	ProviderVehicleID Column // "provider_vehicle_id" → qualified: "whl.provider_vehicle_id"
+	ReceivedAt        Column // "received_at" → qualified: "whl.received_at"
+}{
+	OrganizationID:    NewColumn("organization_id", "whl"),
+	BusinessUnitID:    NewColumn("business_unit_id", "whl"),
+	WorkerID:          NewColumn("worker_id", "whl"),
+	LogStartAt:        NewColumn("log_start_at", "whl"),
+	DutyStatus:        NewColumn("duty_status", "whl"),
+	LogEndAt:          NewColumn("log_end_at", "whl"),
+	Remark:            NewColumn("remark", "whl"),
+	Provider:          NewColumn("provider", "whl"),
+	ProviderVehicleID: NewColumn("provider_vehicle_id", "whl"),
+	ReceivedAt:        NewColumn("received_at", "whl"),
+}
+
+// WorkerHOSLogFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by WorkerHOSLog.GetStaticFieldMap().
+var WorkerHOSLogFieldMap = map[string]string{
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"workerId":          "worker_id",
+	"logStartAt":        "log_start_at",
+	"dutyStatus":        "duty_status",
+	"logEndAt":          "log_end_at",
+	"remark":            "remark",
+	"provider":          "provider",
+	"providerVehicleId": "provider_vehicle_id",
+	"receivedAt":        "received_at",
+}
+
+// WorkerHOSLogInsertableColumns lists column names suitable for INSERT statements on the "worker_hos_logs" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var WorkerHOSLogInsertableColumns = []string{
+	"organization_id",
+	"business_unit_id",
+	"worker_id",
+	"log_start_at",
+	"duty_status",
+	"log_end_at",
+	"remark",
+	"provider",
+	"provider_vehicle_id",
+	"received_at",
+}
+
+// WorkerHOSLogRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(WorkerHOSLogRelations.Worker)
+//	// Bun eager-loads the Worker association via a separate query
+var WorkerHOSLogRelations = struct {
+	Worker string
+}{
+	Worker: "Worker",
+}
+
+// WorkerHOSLogScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE whl.organization_id = ? AND whl.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.WorkerHOSLogScopeTenant(sq, ti).
+//		Where(buncolgen.WorkerHOSLogColumns.ID.Eq(), id)
+func WorkerHOSLogScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, WorkerHOSLogColumns.OrganizationID, WorkerHOSLogColumns.BusinessUnitID, ti)
+}
+
+// WorkerHOSLogScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.WorkerHOSLogScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.WorkerHOSLogColumns.ID.In(), bun.List(ids))
+//	})
+func WorkerHOSLogScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, WorkerHOSLogColumns.OrganizationID, WorkerHOSLogColumns.BusinessUnitID, ti)
+}
+
+// WorkerHOSLogScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.WorkerHOSLogScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.WorkerHOSLogColumns.ID.Eq(), id)
+//	})
+func WorkerHOSLogScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, WorkerHOSLogColumns.OrganizationID, WorkerHOSLogColumns.BusinessUnitID, ti)
+}
+
+// WorkerHOSLogApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.WorkerHOSLogApplyTenant(tenantInfo))
+func WorkerHOSLogApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(WorkerHOSLogColumns.OrganizationID, WorkerHOSLogColumns.BusinessUnitID, ti)
+}
+
+// WorkerHOSLogFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "worker_hos_logs" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	WorkerHOSLogFilter.OrganizationID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "organizationId", Operator: "eq", Value: value}
+var WorkerHOSLogFilter = struct {
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	WorkerID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
+	LogStartAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logStartAt" → DB: "log_start_at"
+	DutyStatus        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dutyStatus" → DB: "duty_status"
+	LogEndAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logEndAt" → DB: "log_end_at"
+	Remark            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remark" → DB: "remark"
+	Provider          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	ProviderVehicleID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerVehicleId" → DB: "provider_vehicle_id"
+	ReceivedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "receivedAt" → DB: "received_at"
+}{
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	WorkerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workerId", op, value)
+	},
+	LogStartAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("logStartAt", op, value)
+	},
+	DutyStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dutyStatus", op, value)
+	},
+	LogEndAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("logEndAt", op, value)
+	},
+	Remark: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("remark", op, value)
+	},
+	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("provider", op, value)
+	},
+	ProviderVehicleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerVehicleId", op, value)
+	},
+	ReceivedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("receivedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // WorkerHOSState — table "worker_hos_states", alias "whs"
 // ---------------------------------------------------------------------------
 

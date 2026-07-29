@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
@@ -233,7 +234,7 @@ func uploadDocument(
 		[]byte("test "+filename),
 		"application/pdf",
 	)
-	result, err := h.service.Upload(h.ctx, &documentservice.UploadRequest{
+	result, err := h.service.Upload(h.ctx, &services.UploadRequest{
 		TenantInfo:     h.tenantInfo,
 		File:           fileHeader,
 		ResourceID:     resourceID,

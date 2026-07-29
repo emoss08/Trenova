@@ -1,5 +1,4 @@
 import { formatCurrentUserTime } from "@trenova/shared/lib/date";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Dot } from "lucide-react";
 import React from "react";
 
@@ -14,7 +13,6 @@ export function SystemInformation() {
 }
 
 function UserCurrentTime() {
-  const user = useAuthStore((state) => state.user);
   const [currentTime, setCurrentTime] = React.useState(new Date());
 
   React.useEffect(() => {
@@ -25,7 +23,7 @@ function UserCurrentTime() {
     return () => clearInterval(interval);
   }, []);
 
-  return formatCurrentUserTime(currentTime, user?.timeFormat, user?.timezone);
+  return formatCurrentUserTime(currentTime);
 }
 
 function SystemStatus() {

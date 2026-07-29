@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -58,18 +59,21 @@ func savePresetRequest(req *Request, mutate ...func(*SavePresetRequest)) *SavePr
 	return save
 }
 
-// TestCreatePreset_DemotesIncumbentOrgDefault: the partial unique index would
-// reject a second default outright, so promotion has to be a handover.
-func TestCreatePreset_DemotesIncumbentOrgDefault(t *testing.T) {
+// TestCreatePreset_ClaimsOrgDefault: the demote-then-insert handover happens
+// inside the repository transaction, so the service's job is to pass the flag
+// through untouched.
+func TestCreatePreset_ClaimsOrgDefault(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
 	req := testRequest()
+	roleID := pulid.MustNew("rol_")
+	userA := pulid.MustNew("usr_")
+	userB := pulid.MustNew("usr_")
 
-	h.repo.EXPECT().
-		ClearOrgDefault(mock.Anything, mock.Anything).
-		Return(nil).
-		Once()
+	h.roles.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&permission.Role{ID: roleID}, nil)
 	h.repo.EXPECT().
 		CreatePreset(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *homelayout.Preset) (*homelayout.Preset, error) {
@@ -77,20 +81,42 @@ func TestCreatePreset_DemotesIncumbentOrgDefault(t *testing.T) {
 			return entity, nil
 		})
 	h.repo.EXPECT().
-		CountUsersForRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return(4, nil)
+		ListRoleUserAssignments(mock.Anything, mock.Anything).
+		Return([]repositories.HomeRoleUserAssignment{
+			{RoleID: roleID, UserID: userA},
+			{RoleID: roleID, UserID: userB},
+			{RoleID: pulid.MustNew("rol_"), UserID: pulid.MustNew("usr_")},
+		}, nil)
 
 	view, err := h.svc.CreatePreset(t.Context(), savePresetRequest(req,
-		func(s *SavePresetRequest) { s.IsOrgDefault = true }))
+		func(s *SavePresetRequest) {
+			s.IsOrgDefault = true
+			s.RoleIDs = []pulid.ID{roleID}
+		}))
 	require.NoError(t, err)
 
 	assert.True(t, view.Preset.IsOrgDefault)
-	assert.Equal(t, 4, view.AssignedUserCount)
+	assert.Equal(t, 2, view.AssignedUserCount)
 }
 
-// TestCreatePreset_LeavesDefaultAloneWhenNotClaimingIt guards against every
-// save quietly demoting whichever preset was the fallback.
-func TestCreatePreset_LeavesDefaultAloneWhenNotClaimingIt(t *testing.T) {
+func TestCreatePreset_RejectsUnknownRoleID(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	req := testRequest()
+
+	h.roles.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("Role not found"))
+
+	_, err := h.svc.CreatePreset(t.Context(), savePresetRequest(req,
+		func(s *SavePresetRequest) { s.RoleIDs = []pulid.ID{pulid.MustNew("rol_")} }))
+
+	require.Error(t, err)
+	h.repo.AssertNotCalled(t, "CreatePreset", mock.Anything, mock.Anything)
+}
+
+func TestCreatePreset_TrimsName(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
@@ -103,13 +129,26 @@ func TestCreatePreset_LeavesDefaultAloneWhenNotClaimingIt(t *testing.T) {
 			return entity, nil
 		})
 	h.repo.EXPECT().
-		CountUsersForRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return(0, nil)
+		ListRoleUserAssignments(mock.Anything, mock.Anything).
+		Return(nil, nil)
 
-	_, err := h.svc.CreatePreset(t.Context(), savePresetRequest(req))
+	view, err := h.svc.CreatePreset(t.Context(), savePresetRequest(req,
+		func(s *SavePresetRequest) { s.Name = "  Dispatch Home  " }))
 	require.NoError(t, err)
 
-	h.repo.AssertNotCalled(t, "ClearOrgDefault", mock.Anything, mock.Anything)
+	assert.Equal(t, "Dispatch Home", view.Preset.Name)
+}
+
+func TestCreatePreset_RejectsWhitespaceOnlyName(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	req := testRequest()
+
+	_, err := h.svc.CreatePreset(t.Context(), savePresetRequest(req,
+		func(s *SavePresetRequest) { s.Name = "   " }))
+
+	require.Error(t, err)
 }
 
 func TestCreatePreset_RejectsInvalidLayout(t *testing.T) {
@@ -151,7 +190,7 @@ func TestCreatePreset_RejectsUnknownCoreResponsibility(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestUpdatePreset_DemotesEveryOtherDefault(t *testing.T) {
+func TestUpdatePreset_KeepsOrgDefaultFlag(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
@@ -162,20 +201,13 @@ func TestUpdatePreset_DemotesEveryOtherDefault(t *testing.T) {
 		GetPreset(mock.Anything, mock.Anything).
 		Return(&homelayout.Preset{ID: presetID, Name: "Dispatch Home", Version: 2}, nil)
 	h.repo.EXPECT().
-		ClearOrgDefault(mock.Anything, mock.MatchedBy(
-			func(r *repositories.ClearHomeLayoutOrgDefaultRequest) bool {
-				return r.ExceptID == presetID
-			})).
-		Return(nil).
-		Once()
-	h.repo.EXPECT().
 		UpdatePreset(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *homelayout.Preset) (*homelayout.Preset, error) {
 			return entity, nil
 		})
 	h.repo.EXPECT().
-		CountUsersForRoles(mock.Anything, mock.Anything, mock.Anything).
-		Return(2, nil)
+		ListRoleUserAssignments(mock.Anything, mock.Anything).
+		Return(nil, nil)
 
 	view, err := h.svc.UpdatePreset(t.Context(), savePresetRequest(req,
 		func(s *SavePresetRequest) {
@@ -189,32 +221,50 @@ func TestUpdatePreset_DemotesEveryOtherDefault(t *testing.T) {
 	assert.True(t, view.Preset.IsOrgDefault)
 }
 
+// TestListPresets_ReportsReachPerPreset covers all three audience paths in one
+// tenant snapshot: an explicit role, a core responsibility (which an explicit
+// role list would miss), and an unassigned org default.
 func TestListPresets_ReportsReachPerPreset(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
 	req := testRequest()
 	roleID := pulid.MustNew("rol_")
+	opsRole := pulid.MustNew("rol_")
+	sharedUser := pulid.MustNew("usr_")
 
 	h.repo.EXPECT().
 		ListPresets(mock.Anything, mock.Anything).
 		Return([]*homelayout.Preset{
 			{ID: pulid.MustNew("hlp_"), Name: "Dispatch Home", RoleIDs: []pulid.ID{roleID}},
+			{
+				ID:                 pulid.MustNew("hlp_"),
+				Name:               "Ops",
+				CoreResponsibility: permission.CoreResponsibilityOperations,
+			},
 			{ID: pulid.MustNew("hlp_"), Name: "Everyone", IsOrgDefault: true},
 		}, nil)
 	h.repo.EXPECT().
-		CountUsersForRoles(mock.Anything, mock.Anything, []pulid.ID{roleID}).
-		Return(7, nil)
-	h.repo.EXPECT().
-		CountUsersForRoles(mock.Anything, mock.Anything, []pulid.ID(nil)).
-		Return(0, nil)
+		ListRoleUserAssignments(mock.Anything, mock.Anything).
+		Return([]repositories.HomeRoleUserAssignment{
+			{RoleID: roleID, UserID: sharedUser},
+			{RoleID: roleID, UserID: pulid.MustNew("usr_")},
+			// The same user through two matching roles must count once.
+			{
+				RoleID:             opsRole,
+				UserID:             sharedUser,
+				CoreResponsibility: permission.CoreResponsibilityOperations,
+			},
+		}, nil).
+		Once()
 
 	views, err := h.svc.ListPresets(t.Context(), req)
 	require.NoError(t, err)
 
-	require.Len(t, views, 2)
-	assert.Equal(t, 7, views[0].AssignedUserCount)
-	assert.Equal(t, 0, views[1].AssignedUserCount)
+	require.Len(t, views, 3)
+	assert.Equal(t, 2, views[0].AssignedUserCount)
+	assert.Equal(t, 1, views[1].AssignedUserCount)
+	assert.Equal(t, 0, views[2].AssignedUserCount)
 }
 
 func TestPreviewPreset_RequiresAPresetOrRole(t *testing.T) {

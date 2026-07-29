@@ -21,6 +21,7 @@ import { UserPlus, UsersIcon, WalletIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { PayProfileForm } from "./pay-profile-form";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function defaultComponent(): PayProfileComponentFormValues {
   return {
@@ -256,11 +257,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
                       : "—"}
                   </td>
                   <td className="px-3 py-2">
-                    {new Date(assignment.effectiveFrom * 1000).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {formatUnixDateMedium(assignment.effectiveFrom)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {Number(assignment.splitPercent)}%

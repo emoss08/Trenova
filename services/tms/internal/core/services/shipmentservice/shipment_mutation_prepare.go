@@ -23,10 +23,11 @@ func (s *service) normalizeAdditionalChargeSystemGenerationForCreate(
 		}
 
 		charge.IsSystemGenerated = false
+		charge.DetentionOccurrenceID = nil
 	}
 }
 
-func (s *service) restoreAdditionalChargeSystemGeneration(
+func (s *service) restoreSystemOwnedAdditionalChargeFields(
 	original *shipment.Shipment,
 	updated *shipment.Shipment,
 ) {
@@ -34,33 +35,12 @@ func (s *service) restoreAdditionalChargeSystemGeneration(
 		return
 	}
 
-	originalCharges := make(map[pulid.ID]*shipment.AdditionalCharge, len(updated.AdditionalCharges))
+	var originalCharges []*shipment.AdditionalCharge
 	if original != nil {
-		for _, charge := range original.AdditionalCharges {
-			if charge == nil || charge.ID.IsNil() {
-				continue
-			}
-			originalCharges[charge.ID] = charge
-		}
+		originalCharges = original.AdditionalCharges
 	}
 
-	for _, charge := range updated.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-
-		if charge.ID.IsNil() {
-			charge.IsSystemGenerated = false
-			continue
-		}
-
-		if originalCharge := originalCharges[charge.ID]; originalCharge != nil {
-			charge.IsSystemGenerated = originalCharge.IsSystemGenerated
-			continue
-		}
-
-		charge.IsSystemGenerated = false
-	}
+	shipment.RestoreSystemOwnedCharges(originalCharges, updated.AdditionalCharges)
 }
 
 func (s *service) restoreAssignmentsForExistingMoves(

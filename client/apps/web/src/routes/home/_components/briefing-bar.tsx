@@ -1,9 +1,13 @@
 import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { CheckIcon, LayoutGridIcon, LockIcon } from "lucide-react";
+import { TimeFormat } from "@trenova/shared/types/user";
+import { ArrowRightIcon, CheckIcon, LayoutGridIcon, LockIcon } from "lucide-react";
+import { m } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
@@ -16,9 +20,12 @@ function greeting(hour: number): string {
 
 /**
  * The clock ticks on the minute rather than the second: a home screen is
- * glanced at, and a seconds hand is motion without information.
+ * glanced at, and a seconds hand is motion without information. It renders in
+ * the viewer's profile timezone and time format so it can never disagree with
+ * the clock the app header already shows.
  */
-function useOrganizationClock(timezone: string) {
+function useUserClock() {
+  const user = useAuthStore((state) => state.user);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -35,22 +42,23 @@ function useOrganizationClock(timezone: string) {
     };
   }, []);
 
+  const timeZone = resolveUserTimezone(user?.timezone);
+
   return {
-    date: now.toLocaleDateString(undefined, {
+    date: now.toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
       day: "numeric",
-      timeZone: timezone,
+      timeZone,
     }),
-    time: now.toLocaleTimeString(undefined, {
+    time: now.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
+      hour12: user?.timeFormat === TimeFormat.enum["12-hour"],
       timeZoneName: "short",
-      timeZone: timezone,
+      timeZone,
     }),
-    hour: Number(
-      now.toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: timezone }),
-    ),
+    hour: Number(now.toLocaleString("en-US", { hour: "numeric", hourCycle: "h23", timeZone })),
   };
 }
 
@@ -64,32 +72,34 @@ type Chip = {
 function buildChips(
   attention: AttentionSummary | undefined,
   analytics: ShipmentAnalyticsData,
+  analyticsReady: boolean,
 ): Chip[] {
-  const chips: Chip[] = [
-    {
-      label: "unassigned",
-      count: analytics.unassigned.count,
-      href: "/shipment-management/shipments",
-      tone: "warning",
-    },
-    {
-      label: "at risk",
-      count: analytics.atRisk.count,
-      href: "/shipment-management/shipments",
-      tone: "danger",
-    },
-  ];
+  const chips: Chip[] = [];
+
+  if (analyticsReady) {
+    chips.push(
+      {
+        label: "unassigned",
+        count: analytics.unassigned.count,
+        href: "/shipment-management/shipments",
+        tone: "warning",
+      },
+      {
+        label: "at risk",
+        count: analytics.atRisk.count,
+        href: "/shipment-management/shipments",
+        tone: "danger",
+      },
+    );
+  }
 
   for (const row of ATTENTION_ROWS) {
-    const count = attention?.[row.key] ?? 0;
-    if (count > 0) {
-      chips.push({
-        label: row.label.toLowerCase(),
-        count,
-        href: row.path,
-        tone: row.tone === "destructive" ? "danger" : row.tone === "warning" ? "warning" : "brand",
-      });
-    }
+    chips.push({
+      label: row.label.toLowerCase(),
+      count: attention?.[row.key] ?? 0,
+      href: row.path,
+      tone: row.tone === "destructive" ? "danger" : row.tone === "warning" ? "warning" : "brand",
+    });
   }
 
   return chips.filter((chip) => chip.count > 0);
@@ -104,12 +114,14 @@ const CHIP_DOT: Record<Chip["tone"], string> = {
 export type BriefingBarProps = {
   attention: AttentionSummary | undefined;
   analytics: ShipmentAnalyticsData;
+  /** True once the shipment payload holds real numbers rather than defaults. */
+  analyticsReady: boolean;
   loading: boolean;
   canCustomize: boolean;
   locked: boolean;
   editing: boolean;
+  saving: boolean;
   onCustomize: () => void;
-  timezone: string;
 };
 
 /**
@@ -120,85 +132,131 @@ export type BriefingBarProps = {
 export function BriefingBar({
   attention,
   analytics,
+  analyticsReady,
   loading,
   canCustomize,
   locked,
   editing,
+  saving,
   onCustomize,
-  timezone,
 }: BriefingBarProps) {
   const user = useAuthStore((state) => state.user);
-  const clock = useOrganizationClock(timezone);
-  const chips = buildChips(attention, analytics);
+  const clock = useUserClock();
+  const chips = buildChips(attention, analytics, analyticsReady);
   const total = chips.reduce((sum, chip) => sum + chip.count, 0);
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
-      <div className="flex min-w-0 flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {greeting(clock.hour)}, {firstName}
-        </h1>
-        <p className="text-2xs text-muted-foreground">
-          {clock.date} · {clock.time}
-        </p>
+    <div className="relative isolate overflow-hidden border-b border-border">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand/[0.05] via-transparent to-transparent"
+      />
 
-        {!loading && (
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-            {total === 0 ? (
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CheckIcon className="size-3 text-success" />
-                You&rsquo;re clear — {analytics.activeShipments.count} loads moving, nothing
-                flagged.
-              </span>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <h1 className="text-lg leading-none font-semibold tracking-tight">
+            {greeting(clock.hour)}, {firstName}
+          </h1>
+
+          <div className="flex min-h-5.5 flex-wrap items-center gap-x-2 gap-y-1">
+            {loading ? (
+              <>
+                <Skeleton className="h-5 w-28 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-5 w-24 rounded-full" />
+              </>
+            ) : total === 0 ? (
+              <m.span
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
+                <span className="flex size-4 items-center justify-center rounded-full bg-success/15">
+                  <CheckIcon className="size-2.5 text-success" />
+                </span>
+                {analyticsReady
+                  ? `You're clear — ${analytics.activeShipments.count} ${
+                      analytics.activeShipments.count === 1 ? "load" : "loads"
+                    } moving, nothing flagged.`
+                  : "You're clear — nothing flagged."}
+              </m.span>
             ) : (
               <>
-                <span className="text-xs font-medium">
+                <m.span
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="text-xs font-medium"
+                >
                   {total} {total === 1 ? "item needs" : "items need"} you
-                </span>
-                {chips.map((chip) => (
-                  <Link
+                </m.span>
+                {chips.map((chip, index) => (
+                  <m.span
                     key={`${chip.label}-${chip.href}`}
-                    to={chip.href}
-                    className="flex items-center gap-1.5 text-2xs text-muted-foreground transition-colors hover:text-foreground"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.04 * (index + 1), ease: "easeOut" }}
                   >
-                    <span className={cn("size-1.5 rounded-full", CHIP_DOT[chip.tone])} />
-                    <span className="font-table tabular-nums">{chip.count}</span>
-                    <span>{chip.label}</span>
-                  </Link>
+                    <Link
+                      to={chip.href}
+                      className="group flex h-5.5 items-center gap-1.5 rounded-full border border-border/70 bg-card px-2 text-2xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                    >
+                      <span className={cn("size-1.5 rounded-full", CHIP_DOT[chip.tone])} />
+                      <span className="font-table font-medium text-foreground tabular-nums">
+                        {chip.count}
+                      </span>
+                      <span>{chip.label}</span>
+                      <ArrowRightIcon className="-ml-0.5 size-2.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                    </Link>
+                  </m.span>
                 ))}
               </>
             )}
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        {locked ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button variant="outline" size="sm" disabled>
-                  <LockIcon className="size-3.5" />
-                  Customize
-                </Button>
-              }
-            />
-            <TooltipContent side="bottom">
-              Your administrator manages this home screen.
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button
-            variant={editing ? "default" : "outline"}
-            size="sm"
-            onClick={onCustomize}
-            disabled={!canCustomize}
-          >
-            <LayoutGridIcon className="size-3.5" />
-            {editing ? "Done" : "Customize"}
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="flex flex-col items-end gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-sm leading-none font-medium tabular-nums">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-success/60" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-success" />
+              </span>
+              {clock.time}
+            </span>
+            <span className="text-2xs leading-none text-muted-foreground">{clock.date}</span>
+          </div>
+
+          <div className="h-7 w-px bg-border" aria-hidden />
+
+          {locked ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button variant="outline" size="sm" disabled>
+                    <LockIcon className="size-3.5" />
+                    Customize
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">
+                Your administrator manages this home screen.
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              variant={editing ? "default" : "outline"}
+              size="sm"
+              onClick={onCustomize}
+              disabled={!canCustomize || saving}
+            >
+              <LayoutGridIcon className="size-3.5" />
+              {editing ? "Done" : "Customize"}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

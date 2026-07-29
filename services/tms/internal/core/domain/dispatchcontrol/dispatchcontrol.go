@@ -137,7 +137,7 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 				}
 				if !a.IsValid() {
 					return errors.New(
-						"auto assignment strategy must be one of: Proximity, Availability, LoadBalancing",
+						"auto assignment strategy must be one of: Proximity, Availability, LoadBalancing, Performance",
 					)
 				}
 				return nil

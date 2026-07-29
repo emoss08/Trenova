@@ -3,14 +3,10 @@ import { EscrowAccountStatusBadge } from "@trenova/shared/components/status-badg
 import type { EscrowAccountRow } from "@/lib/graphql/driver-settlement";
 import type { EscrowAccountStatus } from "@trenova/shared/types/driver-pay";
 import { type ColumnDef } from "@tanstack/react-table";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix?: number | null): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function getColumns(): ColumnDef<EscrowAccountRow>[] {

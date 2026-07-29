@@ -18,7 +18,7 @@ import {
   fetchWorkerPayAssignments,
   type EffectiveWorkerPayAssignment,
 } from "@/lib/graphql/driver-settlement";
-import { getTodayDate } from "@trenova/shared/lib/date";
+import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
 import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign, Wallet } from "lucide-react";
@@ -27,12 +27,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 
 function formatDate(unix?: number | null): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export default function WorkerPayTab({ workerId }: { workerId: string }) {

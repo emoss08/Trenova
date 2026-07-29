@@ -17,14 +17,9 @@ import {
   ShieldCheckIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 const numberFormatter = new Intl.NumberFormat();
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 export function BillingUsageTab() {
   const summaryQuery = useQuery({
     ...queries.platformBilling.summary(),
@@ -300,14 +295,13 @@ function formatUsageValue(value: number, unit: string) {
   return `${numberFormatter.format(value)}${suffix}`;
 }
 
-function formatUnixDate(value?: number) {
-  if (!value) return "Not set";
-  return dateFormatter.format(new Date(value * 1000));
+function formatBillingDate(value?: number) {
+  return formatUnixDateMedium(value, { fallback: "Not set" });
 }
 
 function formatPeriod(start?: number, end?: number) {
   if (!start || !end) return "No billing period";
-  return `${formatUnixDate(start)} to ${formatUnixDate(end)}`;
+  return `${formatBillingDate(start)} to ${formatBillingDate(end)}`;
 }
 
 function formatReason(reason?: string) {

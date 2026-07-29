@@ -11,9 +11,10 @@ import {
   operationLabel,
   resourceLabel,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
-import { format, formatDistanceToNowStrict, fromUnixTime } from "date-fns";
+import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ChevronRightIcon, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 
 const PAST_TENSE_OPERATIONS: Record<string, string> = {
   create: "created",
@@ -100,7 +101,7 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
             {resource} · {operationLabel(entry.operation)}
           </span>
           <span className="text-2xs text-background/70 tabular-nums">
-            {format(fromUnixTime(entry.timestamp), "MMM d, yyyy · h:mm a")}
+            {`${formatUnixDateMedium(entry.timestamp)} · ${formatUnixTime(entry.timestamp)}`}
           </span>
         </div>
       </TooltipContent>

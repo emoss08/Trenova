@@ -212,9 +212,9 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as string)}
-              className="flex flex-1 flex-col overflow-hidden"
+              className="flex flex-1 flex-col overflow-hidden gap-0"
             >
-              <div className="border-b border-border px-4 pt-2">
+              <div className="border-b border-border px-4">
                 <OverflowTabsList
                   items={formTabs.map((tab) => ({
                     value: tab.value,

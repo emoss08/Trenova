@@ -149,6 +149,11 @@ query DispatchMoveCandidates($input: DispatchMoveCandidatesInput!) {
     shiftRemainingMs
     cycleRemainingMs
     projectedTimeAvailable
+    hosStrategy
+    hosRestStartDeadline
+    hosProjectedDriveMs
+    hosProjectedShiftMs
+    hosProjectedCycleMs
     findings {
       code
       severity
@@ -240,6 +245,11 @@ query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
       shiftRemainingMs
       cycleRemainingMs
       projectedTimeAvailable
+      hosStrategy
+      hosRestStartDeadline
+      hosProjectedDriveMs
+      hosProjectedShiftMs
+      hosProjectedCycleMs
       findings {
         code
         severity
@@ -284,6 +294,11 @@ query DispatchAssignmentPreview($input: DispatchAssignmentPreviewInput!) {
       shiftRemainingMs
       cycleRemainingMs
       projectedTimeAvailable
+      hosStrategy
+      hosRestStartDeadline
+      hosProjectedDriveMs
+      hosProjectedShiftMs
+      hosProjectedCycleMs
       findings {
         code
         severity
@@ -378,6 +393,11 @@ mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {
         shiftRemainingMs
         cycleRemainingMs
         projectedTimeAvailable
+        hosStrategy
+        hosRestStartDeadline
+        hosProjectedDriveMs
+        hosProjectedShiftMs
+        hosProjectedCycleMs
         findings {
           code
           severity

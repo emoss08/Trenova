@@ -40,14 +40,18 @@ export function KPIWidget({ widget, data }: WidgetProps) {
 }
 
 export function KPIRowWidget({ widget, data }: WidgetProps) {
-  const metrics = (widget.config.metrics ?? [])
+  const configured = widget.config.metrics ?? [];
+  const metrics = configured
     .map((key) => resolveMetric(key, data))
     .filter((metric): metric is NonNullable<typeof metric> => metric != null);
 
   if (metrics.length === 0) {
+    const loading =
+      configured.length > 0 && (data.shipmentAnalyticsLoading || data.receivablesLoading);
+
     return (
       <WidgetShell title={widget.title || "Metrics"} scroll={false}>
-        {data.shipmentAnalyticsLoading ? (
+        {loading ? (
           <WidgetSkeleton rows={2} />
         ) : (
           <WidgetNeedsSetup message="Choose the metrics this strip shows." />
@@ -119,11 +123,14 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: "
 }
 
 const REVENUE_CHART_CONFIG = {
-  value: { label: "Revenue", color: "var(--chart-1)" },
+  value: { label: "Revenue", color: "var(--brand)" },
 } as const;
 
 export function RevenueTrendWidget({ widget, data }: WidgetProps) {
   const points = data.shipmentAnalytics.revenueToday.sparkline;
+  // Roughly six labels regardless of how many points the window holds — a
+  // label per hour reads as noise at this size.
+  const tickInterval = Math.max(Math.ceil(points.length / 6) - 1, 0);
 
   return (
     <WidgetShell
@@ -144,18 +151,35 @@ export function RevenueTrendWidget({ widget, data }: WidgetProps) {
             </span>
             <span className="text-2xs text-muted-foreground">today</span>
           </div>
-          <ChartContainer config={REVENUE_CHART_CONFIG} className="min-h-0 flex-1 w-full">
-            <AreaChart data={points} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis dataKey="hour" tickLine={false} axisLine={false} tickMargin={6} />
+          <ChartContainer config={REVENUE_CHART_CONFIG} className="min-h-0 w-full flex-1">
+            <AreaChart data={points} margin={{ top: 4, right: 12, bottom: 0, left: 12 }}>
+              <defs>
+                <linearGradient id="home-revenue-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-value)" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="var(--color-value)" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                vertical={false}
+                stroke="var(--border)"
+                strokeOpacity={0.5}
+                strokeDasharray="3 3"
+              />
+              <XAxis
+                dataKey="hour"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={6}
+                interval={tickInterval}
+                tick={{ fontSize: 10 }}
+              />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area
                 dataKey="value"
                 type="monotone"
                 stroke="var(--color-value)"
-                fill="var(--color-value)"
-                fillOpacity={0.15}
-                strokeWidth={2}
+                fill="url(#home-revenue-fill)"
+                strokeWidth={1.5}
               />
             </AreaChart>
           </ChartContainer>

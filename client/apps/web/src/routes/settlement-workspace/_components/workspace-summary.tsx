@@ -1,15 +1,12 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { cn } from "@trenova/shared/lib/utils";
+import { StatTile } from "@/components/stat-tile";
 import type { SettlementWorkspaceSummary } from "@/lib/graphql/driver-settlement";
 import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix);
 }
 
 export function WorkspaceSummaryStrip({
@@ -113,46 +110,5 @@ export function WorkspaceSummaryStrip({
         />
       </div>
     </div>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  sub,
-  hint,
-  tone,
-  clickable,
-  onClick,
-}: {
-  label: string;
-  value: ReactNode;
-  sub: ReactNode;
-  hint: string;
-  tone?: "warn" | "info";
-  clickable?: boolean;
-  onClick?: () => void;
-}) {
-  const Comp = clickable ? "button" : "div";
-  return (
-    <Comp
-      type={clickable ? "button" : undefined}
-      onClick={onClick}
-      title={hint}
-      className={cn(
-        "rounded-lg border p-3 text-left",
-        tone === "warn" &&
-          "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30",
-        tone === "info" && "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30",
-        !tone && "bg-muted/30",
-        clickable && "cursor-pointer transition-colors hover:bg-muted/60",
-      )}
-    >
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-        {label}
-      </p>
-      <div className="mt-1 text-sm font-semibold">{value}</div>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p>
-    </Comp>
   );
 }

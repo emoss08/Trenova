@@ -77,9 +77,11 @@ func billingLayout() *Layout {
 		widget(WidgetKPIRow, 12, 2, WidgetConfig{
 			Metrics: []string{"arTotalOpen", "arOverdue", "arDaysSalesOutstanding", "revenueToday"},
 		}),
-		widget(WidgetBillingQueue, 4, 5, WidgetConfig{Limit: 10}),
-		widget(WidgetMyApprovals, 4, 5, WidgetConfig{Limit: 10}),
-		widget(WidgetAttention, 4, 5, WidgetConfig{}),
+		// The queue and approvals tiles are a single number with a destination;
+		// three rows fit them, and five leaves a tile that is mostly air.
+		widget(WidgetBillingQueue, 4, 3, WidgetConfig{Limit: 10}),
+		widget(WidgetMyApprovals, 4, 3, WidgetConfig{Limit: 10}),
+		widget(WidgetAttention, 4, 3, WidgetConfig{}),
 		widget(WidgetARSnapshot, 6, 3, WidgetConfig{}),
 		widget(WidgetReport, 6, 5, WidgetConfig{
 			CannedKey: cannedUnbilledDelivered,

@@ -44,6 +44,16 @@ type DispatchCandidate {
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!
   projectedTimeAvailable: Int!
+  """
+  Rest strategy that makes this trip legal: currentClocks, splitSleeper,
+  tenHourReset, or restart34. Empty when no projection ran.
+  """
+  hosStrategy: String!
+  "Latest unix time the required pre-departure rest must start; 0 when none is needed."
+  hosRestStartDeadline: Int!
+  hosProjectedDriveMs: Int!
+  hosProjectedShiftMs: Int!
+  hosProjectedCycleMs: Int!
   findings: [DispatchFinding!]!
   factors: [DispatchScoreFactor!]!
 }

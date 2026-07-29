@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -26,12 +27,14 @@ type DeleteHomeLayoutPresetRequest struct {
 	PresetID   pulid.ID
 }
 
-// ClearHomeLayoutOrgDefaultRequest drops the org-default flag from every preset
-// except the one taking it over, which is how the single-default invariant is
-// kept without a race between two administrators saving at once.
-type ClearHomeLayoutOrgDefaultRequest struct {
-	TenantInfo pagination.TenantInfo
-	ExceptID   pulid.ID
+// HomeRoleUserAssignment is one live role membership together with the role's
+// core responsibility, which is everything preset audience math needs: a preset
+// reaches a user through an explicit role ID or through the responsibility the
+// role carries.
+type HomeRoleUserAssignment struct {
+	RoleID             pulid.ID
+	UserID             pulid.ID
+	CoreResponsibility permission.CoreResponsibility
 }
 
 type HomeLayoutRepository interface {
@@ -59,10 +62,8 @@ type HomeLayoutRepository interface {
 	CreatePreset(ctx context.Context, entity *homelayout.Preset) (*homelayout.Preset, error)
 	UpdatePreset(ctx context.Context, entity *homelayout.Preset) (*homelayout.Preset, error)
 	DeletePreset(ctx context.Context, req *DeleteHomeLayoutPresetRequest) error
-	ClearOrgDefault(ctx context.Context, req *ClearHomeLayoutOrgDefaultRequest) error
-	CountUsersForRoles(
+	ListRoleUserAssignments(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		roleIDs []pulid.ID,
-	) (int, error)
+	) ([]HomeRoleUserAssignment, error)
 }

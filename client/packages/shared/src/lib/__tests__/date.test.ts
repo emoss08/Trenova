@@ -1,5 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  daysUntil,
+  formatUnixDate,
+  formatUnixDateMedium,
+  formatUnixDateTime,
+  formatUnixDateTimeMedium,
+  formatUnixDateTimeOrDash,
+  formatUnixDateTimeShort,
+  formatUnixTime,
+  formatUnixTimeWithSeconds,
+  fromUserWallClock,
+  getTodayDate,
+  getUserDatePreferences,
+  resolveUserTimeFormat,
+  resolveUserTimezone,
+  setUserDatePreferences,
+  toUserWallClock,
   dateToUnixTimestamp,
   toDate,
   toUnixTimeStamp,
@@ -12,6 +28,7 @@ import {
   formatToUserTimezone,
   formatCurrentUserTime,
   formatDurationFromSeconds,
+  formatSecondsAgo,
   inclusiveDays,
   formatRange,
   getStartOfDay,
@@ -20,6 +37,105 @@ import {
   getEndOfMonth,
   getCommonDatePresets,
 } from "@trenova/shared/lib/date";
+
+const JAN_15_2024_UTC = 1705276800;
+
+afterEach(() => {
+  setUserDatePreferences({});
+});
+
+describe("user date preferences", () => {
+  it("falls back to the browser zone and a 12-hour clock", () => {
+    expect(getUserDatePreferences()).toEqual({ timezone: "auto", timeFormat: "12-hour" });
+    expect(resolveUserTimezone()).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    expect(resolveUserTimeFormat()).toBe("12-hour");
+  });
+
+  it("resolves the stored preference, and lets an explicit argument win", () => {
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "24-hour" });
+    expect(resolveUserTimezone()).toBe("America/Denver");
+    expect(resolveUserTimezone("America/New_York")).toBe("America/New_York");
+    expect(resolveUserTimeFormat()).toBe("24-hour");
+    expect(resolveUserTimeFormat("12-hour")).toBe("12-hour");
+  });
+
+  it("treats a partial update as a reset to the fallback", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    expect(getUserDatePreferences()).toEqual({
+      timezone: "America/Denver",
+      timeFormat: "12-hour",
+    });
+  });
+
+  it("renders stored timestamps in the preferred zone without a call-site argument", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    expect(formatUnixDateTime(JAN_15_2024_UTC)).toBe("1/14/2024, 5:00 PM");
+    expect(formatToUserTimezone(JAN_15_2024_UTC)).toContain("MST");
+    expect(formatToUserTimezone(JAN_15_2024_UTC)).toContain("01/14/2024");
+  });
+});
+
+describe("unix display helpers", () => {
+  it("formats each shape in the preferred zone", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    expect(formatUnixDate(JAN_15_2024_UTC)).toBe("1/14/2024");
+    expect(formatUnixDateMedium(JAN_15_2024_UTC)).toBe("Jan 14, 2024");
+    expect(formatUnixDateTimeMedium(JAN_15_2024_UTC)).toBe("Jan 14, 2024, 5:00 PM");
+    expect(formatUnixDateTimeShort(JAN_15_2024_UTC)).toBe("Jan 14, 5:00 PM");
+    expect(formatUnixTime(JAN_15_2024_UTC)).toBe("5:00 PM");
+  });
+
+  it("honours the clock preference", () => {
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "24-hour" });
+    expect(formatUnixTime(JAN_15_2024_UTC)).toBe("17:00");
+    expect(formatUnixTimeWithSeconds(JAN_15_2024_UTC)).toBe("17:00:00");
+  });
+
+  it("treats unset timestamps as unset", () => {
+    expect(formatUnixDate(null)).toBe("N/A");
+    expect(formatUnixDate(0)).toBe("N/A");
+    expect(formatUnixDateTimeOrDash(undefined)).toBe("-");
+    expect(formatUnixDateTimeOrDash(JAN_15_2024_UTC)).not.toBe("-");
+    expect(formatUnixDateMedium(null, { fallback: "—" })).toBe("—");
+    expect(formatUnixDateTimeOrDash(null, { fallback: "Not recorded" })).toBe("Not recorded");
+  });
+});
+
+describe("toUserWallClock / fromUserWallClock", () => {
+  it("round-trips an instant through the user's wall clock", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    const wallClock = toUserWallClock(JAN_15_2024_UTC)!;
+    expect(wallClock.getFullYear()).toBe(2024);
+    expect(wallClock.getMonth()).toBe(0);
+    expect(wallClock.getDate()).toBe(14);
+    expect(wallClock.getHours()).toBe(17);
+    expect(fromUserWallClock(wallClock)).toBe(JAN_15_2024_UTC);
+  });
+
+  it("returns undefined for unset values", () => {
+    expect(toUserWallClock(undefined)).toBeUndefined();
+    expect(fromUserWallClock(undefined)).toBeUndefined();
+    expect(fromUserWallClock(new Date("invalid"))).toBeUndefined();
+  });
+});
+
+describe("daysUntil", () => {
+  it("counts calendar days in the user's zone", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    const now = Math.floor(Date.now() / 1000);
+    expect(daysUntil(now)).toBe(0);
+    expect(daysUntil(now + 86400)).toBe(1);
+    expect(daysUntil(now - 86400)).toBe(-1);
+  });
+});
+
+describe("getTodayDate", () => {
+  it("anchors to midnight in the user's zone", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    expect(getTodayDate()).toBe(getStartOfDay(new Date(), "America/Denver"));
+    expect(getTodayDate("UTC")).toBe(getStartOfDay(new Date(), "UTC"));
+  });
+});
 
 describe("dateToUnixTimestamp", () => {
   it("converts known date to known timestamp", () => {
@@ -172,10 +288,13 @@ describe("isValidDateOnlyFormat", () => {
 describe("generateDateTimeString", () => {
   const date = new Date("2024-01-15T14:30:45Z");
 
-  it("defaults to 24-hour format", () => {
+  it("defaults to the user's clock preference", () => {
+    setUserDatePreferences({ timeFormat: "24-hour" });
     const result = generateDateTimeString(date);
     expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/);
     expect(result).not.toMatch(/AM|PM/);
+    setUserDatePreferences({});
+    expect(generateDateTimeString(date)).toMatch(/AM|PM/);
   });
 
   it("uses 12-hour format when specified", () => {
@@ -414,5 +533,22 @@ describe("getCommonDatePresets", () => {
       const { startDate, endDate } = preset.getValue();
       expect(endDate).toBeGreaterThanOrEqual(startDate);
     }
+  });
+});
+
+describe("formatSecondsAgo", () => {
+  it("reads anything under five seconds as just now", () => {
+    expect(formatSecondsAgo(0)).toBe("just now");
+    expect(formatSecondsAgo(4)).toBe("just now");
+  });
+
+  it("reports seconds, then minutes, then hours", () => {
+    expect(formatSecondsAgo(31)).toBe("31s ago");
+    expect(formatSecondsAgo(90)).toBe("1m ago");
+    expect(formatSecondsAgo(7200)).toBe("2h ago");
+  });
+
+  it("falls back to just now for a non-finite input", () => {
+    expect(formatSecondsAgo(Number.NaN)).toBe("just now");
   });
 });

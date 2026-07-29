@@ -1044,6 +1044,7 @@ type ComplexityRoot struct {
 	}
 
 	DetentionDisputePacket struct {
+		ChainVerified  func(childComplexity int) int
 		Collectability func(childComplexity int) int
 		Evidence       func(childComplexity int) int
 		GeneratedAt    func(childComplexity int) int
@@ -1422,6 +1423,11 @@ type ComplexityRoot struct {
 		EstimatedDriveMs       func(childComplexity int) int
 		Factors                func(childComplexity int) int
 		Findings               func(childComplexity int) int
+		HosProjectedCycleMs    func(childComplexity int) int
+		HosProjectedDriveMs    func(childComplexity int) int
+		HosProjectedShiftMs    func(childComplexity int) int
+		HosRestStartDeadline   func(childComplexity int) int
+		HosStrategy            func(childComplexity int) int
 		MinutesOfSlack         func(childComplexity int) int
 		MoveID                 func(childComplexity int) int
 		ProjectedArrival       func(childComplexity int) int
@@ -3133,6 +3139,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AcknowledgeShipmentComment            func(childComplexity int, shipmentID string, commentID string) int
 		AddDriverSettlementAdjustment         func(childComplexity int, input gqlmodel.AddSettlementAdjustmentInput) int
 		AddFuelIndexPrice                     func(childComplexity int, input gqlmodel.FuelIndexPriceInput) int
 		AddOrderCharge                        func(childComplexity int, orderID string, description string, amount string) int
@@ -3234,6 +3241,7 @@ type ComplexityRoot struct {
 		PatchTrailer                          func(childComplexity int, id string, input gqlmodel.TrailerPatchInput) int
 		PatchWorker                           func(childComplexity int, id string, input gqlmodel.WorkerPatchInput) int
 		PayWorkerNow                          func(childComplexity int, input gqlmodel.PayWorkerNowInput) int
+		PinShipmentComment                    func(childComplexity int, shipmentID string, commentID string) int
 		PostAndApplyCustomerPayment           func(childComplexity int, input gqlmodel.PostCustomerPaymentInput) int
 		PostDriverSettlement                  func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		RecalculateDriverSettlement           func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -3249,6 +3257,7 @@ type ComplexityRoot struct {
 		ResetHomeLayout                       func(childComplexity int) int
 		ResolveAgentException                 func(childComplexity int, id string, input gqlmodel.AgentExceptionResolveInput) int
 		ResolveSettlementDispute              func(childComplexity int, input gqlmodel.ResolveSettlementDisputeInput) int
+		ResolveShipmentComment                func(childComplexity int, shipmentID string, commentID string) int
 		RespondToMyAssignment                 func(childComplexity int, input gqlmodel.RespondToMyAssignmentInput) int
 		RestoreMyNotifications                func(childComplexity int, ids []string) int
 		RestoreNotifications                  func(childComplexity int, ids []string) int
@@ -3266,6 +3275,8 @@ type ComplexityRoot struct {
 		TransferShipmentOwnership             func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
 		TransferShipmentToBilling             func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
 		UncancelShipment                      func(childComplexity int, id string) int
+		UnpinShipmentComment                  func(childComplexity int, shipmentID string, commentID string) int
+		UnresolveShipmentComment              func(childComplexity int, shipmentID string, commentID string) int
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
 		UpdateBillingQueueStatus              func(childComplexity int, id string, input gqlmodel.BillingQueueUpdateStatusInput) int
 		UpdateCostCategory                    func(childComplexity int, input gqlmodel.CostCategoryUpdateInput) int
@@ -3923,7 +3934,8 @@ type ComplexityRoot struct {
 		ShipmentAnalytics            func(childComplexity int, input gqlmodel.ShipmentAnalyticsInput) int
 		ShipmentBillingReadiness     func(childComplexity int, shipmentID string) int
 		ShipmentCommentCount         func(childComplexity int, shipmentID string) int
-		ShipmentComments             func(childComplexity int, shipmentID string, first *int, after *string) int
+		ShipmentCommentReplies       func(childComplexity int, shipmentID string, commentID string, first *int, after *string) int
+		ShipmentComments             func(childComplexity int, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) int
 		ShipmentDetention            func(childComplexity int, shipmentID string) int
 		ShipmentDriverFeasibility    func(childComplexity int, shipmentID string) int
 		ShipmentEvents               func(childComplexity int, input gqlmodel.ShipmentEventsInput) int
@@ -4768,6 +4780,7 @@ type ComplexityRoot struct {
 		Amount                 func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
+		DetentionOccurrenceID  func(childComplexity int) int
 		FuelSurchargeDetail    func(childComplexity int) int
 		FuelSurchargeProgramID func(childComplexity int) int
 		ID                     func(childComplexity int) int
@@ -4902,24 +4915,56 @@ type ComplexityRoot struct {
 	}
 
 	ShipmentComment struct {
-		BusinessUnitID   func(childComplexity int) int
-		Comment          func(childComplexity int) int
-		CreatedAt        func(childComplexity int) int
-		EditedAt         func(childComplexity int) int
-		ID               func(childComplexity int) int
-		MentionedUserIds func(childComplexity int) int
-		MentionedUsers   func(childComplexity int) int
-		Metadata         func(childComplexity int) int
-		OrganizationID   func(childComplexity int) int
-		Priority         func(childComplexity int) int
-		ShipmentID       func(childComplexity int) int
-		Source           func(childComplexity int) int
-		Type             func(childComplexity int) int
-		UpdatedAt        func(childComplexity int) int
-		User             func(childComplexity int) int
-		UserID           func(childComplexity int) int
-		Version          func(childComplexity int) int
-		Visibility       func(childComplexity int) int
+		Acknowledgments        func(childComplexity int) int
+		Attachments            func(childComplexity int) int
+		Body                   func(childComplexity int) int
+		BusinessUnitID         func(childComplexity int) int
+		Comment                func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		DeletedAt              func(childComplexity int) int
+		EditedAt               func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		MentionedUserIds       func(childComplexity int) int
+		MentionedUsers         func(childComplexity int) int
+		Metadata               func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		ParentCommentID        func(childComplexity int) int
+		PinnedAt               func(childComplexity int) int
+		PinnedBy               func(childComplexity int) int
+		PinnedByID             func(childComplexity int) int
+		Priority               func(childComplexity int) int
+		ReplyCount             func(childComplexity int) int
+		RequiresAcknowledgment func(childComplexity int) int
+		ResolvedAt             func(childComplexity int) int
+		ResolvedBy             func(childComplexity int) int
+		ResolvedByID           func(childComplexity int) int
+		ShipmentID             func(childComplexity int) int
+		Source                 func(childComplexity int) int
+		Type                   func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+		User                   func(childComplexity int) int
+		UserID                 func(childComplexity int) int
+		Version                func(childComplexity int) int
+		Visibility             func(childComplexity int) int
+	}
+
+	ShipmentCommentAcknowledgment struct {
+		AcknowledgedAt func(childComplexity int) int
+		CommentID      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		User           func(childComplexity int) int
+		UserID         func(childComplexity int) int
+	}
+
+	ShipmentCommentAttachment struct {
+		CreatedAt    func(childComplexity int) int
+		DocumentID   func(childComplexity int) int
+		DownloadURL  func(childComplexity int) int
+		FileName     func(childComplexity int) int
+		FileSize     func(childComplexity int) int
+		MimeType     func(childComplexity int) int
+		OriginalName func(childComplexity int) int
+		PreviewURL   func(childComplexity int) int
 	}
 
 	ShipmentCommentConnection struct {
@@ -6365,6 +6410,11 @@ type MutationResolver interface {
 	CreateShipmentComment(ctx context.Context, shipmentID string, input gqlmodel.ShipmentCommentInput) (*gqlmodel.ShipmentComment, error)
 	UpdateShipmentComment(ctx context.Context, shipmentID string, commentID string, input gqlmodel.ShipmentCommentUpdateInput) (*gqlmodel.ShipmentComment, error)
 	DeleteShipmentComment(ctx context.Context, shipmentID string, commentID string) (bool, error)
+	PinShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
+	UnpinShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
+	ResolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
+	UnresolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
+	AcknowledgeShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error)
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
@@ -6630,7 +6680,8 @@ type QueryResolver interface {
 	Shipments(ctx context.Context, input gqlmodel.ShipmentsInput) (*gqlmodel.ShipmentConnection, error)
 	Shipment(ctx context.Context, id string, expandShipmentDetails *bool, status *string) (*gqlmodel.Shipment, error)
 	UnassignedShipments(ctx context.Context, first *int, after *string) (*gqlmodel.ShipmentConnection, error)
-	ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string) (*gqlmodel.ShipmentCommentConnection, error)
+	ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) (*gqlmodel.ShipmentCommentConnection, error)
+	ShipmentCommentReplies(ctx context.Context, shipmentID string, commentID string, first *int, after *string) (*gqlmodel.ShipmentCommentConnection, error)
 	ShipmentCommentCount(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentCommentCountResponse, error)
 	ShipmentUIPolicy(ctx context.Context) (*gqlmodel.ShipmentUIPolicy, error)
 	ShipmentBillingReadiness(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentBillingReadiness, error)
@@ -10869,6 +10920,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.DetentionDeskEntry.Urgency(childComplexity), true
 
+	case "DetentionDisputePacket.chainVerified":
+		if e.ComplexityRoot.DetentionDisputePacket.ChainVerified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionDisputePacket.ChainVerified(childComplexity), true
 	case "DetentionDisputePacket.collectability":
 		if e.ComplexityRoot.DetentionDisputePacket.Collectability == nil {
 			break
@@ -12814,6 +12871,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchCandidate.Findings(childComplexity), true
+	case "DispatchCandidate.hosProjectedCycleMs":
+		if e.ComplexityRoot.DispatchCandidate.HosProjectedCycleMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.HosProjectedCycleMs(childComplexity), true
+	case "DispatchCandidate.hosProjectedDriveMs":
+		if e.ComplexityRoot.DispatchCandidate.HosProjectedDriveMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.HosProjectedDriveMs(childComplexity), true
+	case "DispatchCandidate.hosProjectedShiftMs":
+		if e.ComplexityRoot.DispatchCandidate.HosProjectedShiftMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.HosProjectedShiftMs(childComplexity), true
+	case "DispatchCandidate.hosRestStartDeadline":
+		if e.ComplexityRoot.DispatchCandidate.HosRestStartDeadline == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.HosRestStartDeadline(childComplexity), true
+	case "DispatchCandidate.hosStrategy":
+		if e.ComplexityRoot.DispatchCandidate.HosStrategy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCandidate.HosStrategy(childComplexity), true
 	case "DispatchCandidate.minutesOfSlack":
 		if e.ComplexityRoot.DispatchCandidate.MinutesOfSlack == nil {
 			break
@@ -20513,6 +20600,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ManualJournalEdge.Node(childComplexity), true
 
+	case "Mutation.acknowledgeShipmentComment":
+		if e.ComplexityRoot.Mutation.AcknowledgeShipmentComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acknowledgeShipmentComment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AcknowledgeShipmentComment(childComplexity, args["shipmentId"].(string), args["commentId"].(string)), true
 	case "Mutation.addDriverSettlementAdjustment":
 		if e.ComplexityRoot.Mutation.AddDriverSettlementAdjustment == nil {
 			break
@@ -21614,6 +21712,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PayWorkerNow(childComplexity, args["input"].(gqlmodel.PayWorkerNowInput)), true
+	case "Mutation.pinShipmentComment":
+		if e.ComplexityRoot.Mutation.PinShipmentComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_pinShipmentComment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.PinShipmentComment(childComplexity, args["shipmentId"].(string), args["commentId"].(string)), true
 	case "Mutation.postAndApplyCustomerPayment":
 		if e.ComplexityRoot.Mutation.PostAndApplyCustomerPayment == nil {
 			break
@@ -21774,6 +21883,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResolveSettlementDispute(childComplexity, args["input"].(gqlmodel.ResolveSettlementDisputeInput)), true
+	case "Mutation.resolveShipmentComment":
+		if e.ComplexityRoot.Mutation.ResolveShipmentComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resolveShipmentComment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ResolveShipmentComment(childComplexity, args["shipmentId"].(string), args["commentId"].(string)), true
 	case "Mutation.respondToMyAssignment":
 		if e.ComplexityRoot.Mutation.RespondToMyAssignment == nil {
 			break
@@ -21961,6 +22081,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UncancelShipment(childComplexity, args["id"].(string)), true
+	case "Mutation.unpinShipmentComment":
+		if e.ComplexityRoot.Mutation.UnpinShipmentComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unpinShipmentComment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UnpinShipmentComment(childComplexity, args["shipmentId"].(string), args["commentId"].(string)), true
+	case "Mutation.unresolveShipmentComment":
+		if e.ComplexityRoot.Mutation.UnresolveShipmentComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unresolveShipmentComment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UnresolveShipmentComment(childComplexity, args["shipmentId"].(string), args["commentId"].(string)), true
 	case "Mutation.updateAgentControl":
 		if e.ComplexityRoot.Mutation.UpdateAgentControl == nil {
 			break
@@ -26355,6 +26497,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ShipmentCommentCount(childComplexity, args["shipmentId"].(string)), true
+	case "Query.shipmentCommentReplies":
+		if e.ComplexityRoot.Query.ShipmentCommentReplies == nil {
+			break
+		}
+
+		args, err := ec.field_Query_shipmentCommentReplies_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ShipmentCommentReplies(childComplexity, args["shipmentId"].(string), args["commentId"].(string), args["first"].(*int), args["after"].(*string)), true
 	case "Query.shipmentComments":
 		if e.ComplexityRoot.Query.ShipmentComments == nil {
 			break
@@ -26365,7 +26518,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.ShipmentComments(childComplexity, args["shipmentId"].(string), args["first"].(*int), args["after"].(*string)), true
+		return e.ComplexityRoot.Query.ShipmentComments(childComplexity, args["shipmentId"].(string), args["first"].(*int), args["after"].(*string), args["filter"].(*gqlmodel.ShipmentCommentsFilterInput)), true
 	case "Query.shipmentDetention":
 		if e.ComplexityRoot.Query.ShipmentDetention == nil {
 			break
@@ -30428,6 +30581,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentAdditionalCharge.CreatedAt(childComplexity), true
+	case "ShipmentAdditionalCharge.detentionOccurrenceId":
+		if e.ComplexityRoot.ShipmentAdditionalCharge.DetentionOccurrenceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentAdditionalCharge.DetentionOccurrenceID(childComplexity), true
 	case "ShipmentAdditionalCharge.fuelSurchargeDetail":
 		if e.ComplexityRoot.ShipmentAdditionalCharge.FuelSurchargeDetail == nil {
 			break
@@ -31011,6 +31170,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.Success(childComplexity), true
 
+	case "ShipmentComment.acknowledgments":
+		if e.ComplexityRoot.ShipmentComment.Acknowledgments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.Acknowledgments(childComplexity), true
+	case "ShipmentComment.attachments":
+		if e.ComplexityRoot.ShipmentComment.Attachments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.Attachments(childComplexity), true
+	case "ShipmentComment.body":
+		if e.ComplexityRoot.ShipmentComment.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.Body(childComplexity), true
 	case "ShipmentComment.businessUnitId":
 		if e.ComplexityRoot.ShipmentComment.BusinessUnitID == nil {
 			break
@@ -31029,6 +31206,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentComment.CreatedAt(childComplexity), true
+	case "ShipmentComment.deletedAt":
+		if e.ComplexityRoot.ShipmentComment.DeletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.DeletedAt(childComplexity), true
 	case "ShipmentComment.editedAt":
 		if e.ComplexityRoot.ShipmentComment.EditedAt == nil {
 			break
@@ -31065,12 +31248,66 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentComment.OrganizationID(childComplexity), true
+	case "ShipmentComment.parentCommentId":
+		if e.ComplexityRoot.ShipmentComment.ParentCommentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.ParentCommentID(childComplexity), true
+	case "ShipmentComment.pinnedAt":
+		if e.ComplexityRoot.ShipmentComment.PinnedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.PinnedAt(childComplexity), true
+	case "ShipmentComment.pinnedBy":
+		if e.ComplexityRoot.ShipmentComment.PinnedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.PinnedBy(childComplexity), true
+	case "ShipmentComment.pinnedById":
+		if e.ComplexityRoot.ShipmentComment.PinnedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.PinnedByID(childComplexity), true
 	case "ShipmentComment.priority":
 		if e.ComplexityRoot.ShipmentComment.Priority == nil {
 			break
 		}
 
 		return e.ComplexityRoot.ShipmentComment.Priority(childComplexity), true
+	case "ShipmentComment.replyCount":
+		if e.ComplexityRoot.ShipmentComment.ReplyCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.ReplyCount(childComplexity), true
+	case "ShipmentComment.requiresAcknowledgment":
+		if e.ComplexityRoot.ShipmentComment.RequiresAcknowledgment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.RequiresAcknowledgment(childComplexity), true
+	case "ShipmentComment.resolvedAt":
+		if e.ComplexityRoot.ShipmentComment.ResolvedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.ResolvedAt(childComplexity), true
+	case "ShipmentComment.resolvedBy":
+		if e.ComplexityRoot.ShipmentComment.ResolvedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.ResolvedBy(childComplexity), true
+	case "ShipmentComment.resolvedById":
+		if e.ComplexityRoot.ShipmentComment.ResolvedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentComment.ResolvedByID(childComplexity), true
 	case "ShipmentComment.shipmentId":
 		if e.ComplexityRoot.ShipmentComment.ShipmentID == nil {
 			break
@@ -31119,6 +31356,86 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentComment.Visibility(childComplexity), true
+
+	case "ShipmentCommentAcknowledgment.acknowledgedAt":
+		if e.ComplexityRoot.ShipmentCommentAcknowledgment.AcknowledgedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAcknowledgment.AcknowledgedAt(childComplexity), true
+	case "ShipmentCommentAcknowledgment.commentId":
+		if e.ComplexityRoot.ShipmentCommentAcknowledgment.CommentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAcknowledgment.CommentID(childComplexity), true
+	case "ShipmentCommentAcknowledgment.id":
+		if e.ComplexityRoot.ShipmentCommentAcknowledgment.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAcknowledgment.ID(childComplexity), true
+	case "ShipmentCommentAcknowledgment.user":
+		if e.ComplexityRoot.ShipmentCommentAcknowledgment.User == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAcknowledgment.User(childComplexity), true
+	case "ShipmentCommentAcknowledgment.userId":
+		if e.ComplexityRoot.ShipmentCommentAcknowledgment.UserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAcknowledgment.UserID(childComplexity), true
+
+	case "ShipmentCommentAttachment.createdAt":
+		if e.ComplexityRoot.ShipmentCommentAttachment.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.CreatedAt(childComplexity), true
+	case "ShipmentCommentAttachment.documentId":
+		if e.ComplexityRoot.ShipmentCommentAttachment.DocumentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.DocumentID(childComplexity), true
+	case "ShipmentCommentAttachment.downloadUrl":
+		if e.ComplexityRoot.ShipmentCommentAttachment.DownloadURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.DownloadURL(childComplexity), true
+	case "ShipmentCommentAttachment.fileName":
+		if e.ComplexityRoot.ShipmentCommentAttachment.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.FileName(childComplexity), true
+	case "ShipmentCommentAttachment.fileSize":
+		if e.ComplexityRoot.ShipmentCommentAttachment.FileSize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.FileSize(childComplexity), true
+	case "ShipmentCommentAttachment.mimeType":
+		if e.ComplexityRoot.ShipmentCommentAttachment.MimeType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.MimeType(childComplexity), true
+	case "ShipmentCommentAttachment.originalName":
+		if e.ComplexityRoot.ShipmentCommentAttachment.OriginalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.OriginalName(childComplexity), true
+	case "ShipmentCommentAttachment.previewUrl":
+		if e.ComplexityRoot.ShipmentCommentAttachment.PreviewURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommentAttachment.PreviewURL(childComplexity), true
 
 	case "ShipmentCommentConnection.edges":
 		if e.ComplexityRoot.ShipmentCommentConnection.Edges == nil {
@@ -36569,6 +36886,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputShipmentCancelInput,
 		ec.unmarshalInputShipmentCommentInput,
 		ec.unmarshalInputShipmentCommentUpdateInput,
+		ec.unmarshalInputShipmentCommentsFilterInput,
 		ec.unmarshalInputShipmentCommodityInput,
 		ec.unmarshalInputShipmentDuplicateBolInput,
 		ec.unmarshalInputShipmentDuplicateInput,
@@ -38113,10 +38431,10 @@ type DetentionPolicy {
   specificityScore: Int!
   customerId: ID
   locationId: ID
-  shipmentTypeIds: [ID!]
-  serviceTypeIds: [ID!]
-  commodityIds: [ID!]
-  stopTypes: [StopType!]
+  shipmentTypeIds: [ID!]!
+  serviceTypeIds: [ID!]!
+  commodityIds: [ID!]!
+  stopTypes: [StopType!]!
   appointmentStopsOnly: Boolean!
   effectiveStartDate: Int
   effectiveEndDate: Int
@@ -38132,7 +38450,7 @@ type DetentionPolicy {
   roundingMode: DetentionRoundingMode!
   rateSource: DetentionRateSource!
   accessorialChargeId: ID!
-  tiers: [DetentionPolicyTier!]
+  tiers: [DetentionPolicyTier!]!
   maxBillableMinutesPerStop: Int
   maxChargePerStop: String
   maxChargePerDay: String
@@ -38368,6 +38686,7 @@ type DetentionDisputePacket {
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
   collectability: DetentionCollectability!
+  chainVerified: Boolean!
   generatedAt: Int!
 }
 
@@ -38567,6 +38886,16 @@ type DispatchCandidate {
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!
   projectedTimeAvailable: Int!
+  """
+  Rest strategy that makes this trip legal: currentClocks, splitSleeper,
+  tenHourReset, or restart34. Empty when no projection ran.
+  """
+  hosStrategy: String!
+  "Latest unix time the required pre-departure rest must start; 0 when none is needed."
+  hosRestStartDeadline: Int!
+  hosProjectedDriveMs: Int!
+  hosProjectedShiftMs: Int!
+  hosProjectedCycleMs: Int!
   findings: [DispatchFinding!]!
   factors: [DispatchScoreFactor!]!
 }
@@ -44419,6 +44748,7 @@ type ShipmentAdditionalCharge {
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
+  detentionOccurrenceId: ID
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -44680,13 +45010,36 @@ type ShipmentCommentMention {
   mentionedUser: User
 }
 
+type ShipmentCommentAttachment {
+  documentId: ID!
+  fileName: String!
+  originalName: String
+  fileSize: Int!
+  mimeType: String!
+  previewUrl: String
+  downloadUrl: String!
+  createdAt: Int!
+}
+
+type ShipmentCommentAcknowledgment {
+  id: ID!
+  commentId: ID!
+  userId: ID!
+  acknowledgedAt: Int!
+  user: User
+}
+
 type ShipmentComment {
   id: ID!
   businessUnitId: ID
   organizationId: ID
   shipmentId: ID!
   userId: ID
+  parentCommentId: ID
+  replyCount: Int!
   comment: String!
+  "Structured comment body (comment body v1). Null for legacy plain-text comments."
+  body: JSON
   type: ShipmentCommentType!
   visibility: ShipmentCommentVisibility!
   priority: ShipmentCommentPriority!
@@ -44694,12 +45047,22 @@ type ShipmentComment {
   "Comment metadata is written by users, integrations, and system workflows, so keys vary by source."
   metadata: JSON
   editedAt: Int
+  pinnedAt: Int
+  pinnedById: ID
+  resolvedAt: Int
+  resolvedById: ID
+  requiresAcknowledgment: Boolean!
+  deletedAt: Int
   version: Int!
   createdAt: Int!
   updatedAt: Int!
   mentionedUserIds: [ID!]!
   user: User
+  pinnedBy: User
+  resolvedBy: User
   mentionedUsers: [ShipmentCommentMention!]
+  acknowledgments: [ShipmentCommentAcknowledgment!]
+  attachments: [ShipmentCommentAttachment!]
 }
 
 type ShipmentSavedViewCounts {
@@ -45113,6 +45476,7 @@ input ShipmentAdditionalChargeInput {
   amount: String = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
+  detentionOccurrenceId: ID
   version: Int
 }
 
@@ -45187,20 +45551,41 @@ input ShipmentBulkTransferToBillingInput {
 
 input ShipmentCommentInput {
   comment: String!
+  "Structured comment body (comment body v1). When present, the plain-text comment is derived server-side."
+  body: JSON
+  parentCommentId: ID
   mentionedUserIds: [ID!] = []
+  attachmentDocumentIds: [ID!] = []
   type: ShipmentCommentType = Internal
   visibility: ShipmentCommentVisibility = Internal
   priority: ShipmentCommentPriority = Normal
+  requiresAcknowledgment: Boolean
+  "Client-generated reference echoed on the created entity for optimistic-update reconciliation."
+  clientRef: String
 }
 
 input ShipmentCommentUpdateInput {
   id: ID!
   comment: String!
+  "Structured comment body (comment body v1). When present, the plain-text comment is derived server-side."
+  body: JSON
   mentionedUserIds: [ID!] = []
+  attachmentDocumentIds: [ID!] = []
   type: ShipmentCommentType = Internal
   visibility: ShipmentCommentVisibility = Internal
   priority: ShipmentCommentPriority = Normal
+  requiresAcknowledgment: Boolean
   version: Int!
+}
+
+input ShipmentCommentsFilterInput {
+  types: [ShipmentCommentType!]
+  priorities: [ShipmentCommentPriority!]
+  authorIds: [ID!]
+  mentionsUserId: ID
+  pinnedOnly: Boolean = false
+  unresolvedOnly: Boolean = false
+  search: String
 }
 
 input ShipmentsInput {
@@ -45237,7 +45622,8 @@ extend type Query {
   shipments(input: ShipmentsInput!): ShipmentConnection!
   shipment(id: ID!, expandShipmentDetails: Boolean = false, status: String): Shipment
   unassignedShipments(first: Int = 20, after: String): ShipmentConnection!
-  shipmentComments(shipmentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
+  shipmentComments(shipmentId: ID!, first: Int = 20, after: String, filter: ShipmentCommentsFilterInput): ShipmentCommentConnection!
+  shipmentCommentReplies(shipmentId: ID!, commentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -45264,6 +45650,11 @@ extend type Mutation {
   createShipmentComment(shipmentId: ID!, input: ShipmentCommentInput!): ShipmentComment!
   updateShipmentComment(shipmentId: ID!, commentId: ID!, input: ShipmentCommentUpdateInput!): ShipmentComment!
   deleteShipmentComment(shipmentId: ID!, commentId: ID!): Boolean!
+  pinShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  unpinShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  resolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  unresolveShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
+  acknowledgeShipmentComment(shipmentId: ID!, commentId: ID!): ShipmentComment!
 }
 `, BuiltIn: false},
 	{Name: "../schema/shipment_type.graphqls", Input: `type ShipmentType {
@@ -48175,6 +48566,8 @@ func (ec *executionContext) childFields_DetentionDisputePacket(ctx context.Conte
 		return ec.fieldContext_DetentionDisputePacket_notices(ctx, field)
 	case "collectability":
 		return ec.fieldContext_DetentionDisputePacket_collectability(ctx, field)
+	case "chainVerified":
+		return ec.fieldContext_DetentionDisputePacket_chainVerified(ctx, field)
 	case "generatedAt":
 		return ec.fieldContext_DetentionDisputePacket_generatedAt(ctx, field)
 	}
@@ -48937,6 +49330,16 @@ func (ec *executionContext) childFields_DispatchCandidate(ctx context.Context, f
 		return ec.fieldContext_DispatchCandidate_cycleRemainingMs(ctx, field)
 	case "projectedTimeAvailable":
 		return ec.fieldContext_DispatchCandidate_projectedTimeAvailable(ctx, field)
+	case "hosStrategy":
+		return ec.fieldContext_DispatchCandidate_hosStrategy(ctx, field)
+	case "hosRestStartDeadline":
+		return ec.fieldContext_DispatchCandidate_hosRestStartDeadline(ctx, field)
+	case "hosProjectedDriveMs":
+		return ec.fieldContext_DispatchCandidate_hosProjectedDriveMs(ctx, field)
+	case "hosProjectedShiftMs":
+		return ec.fieldContext_DispatchCandidate_hosProjectedShiftMs(ctx, field)
+	case "hosProjectedCycleMs":
+		return ec.fieldContext_DispatchCandidate_hosProjectedCycleMs(ctx, field)
 	case "findings":
 		return ec.fieldContext_DispatchCandidate_findings(ctx, field)
 	case "factors":
@@ -54755,6 +55158,8 @@ func (ec *executionContext) childFields_ShipmentAdditionalCharge(ctx context.Con
 		return ec.fieldContext_ShipmentAdditionalCharge_fuelSurchargeProgramId(ctx, field)
 	case "fuelSurchargeDetail":
 		return ec.fieldContext_ShipmentAdditionalCharge_fuelSurchargeDetail(ctx, field)
+	case "detentionOccurrenceId":
+		return ec.fieldContext_ShipmentAdditionalCharge_detentionOccurrenceId(ctx, field)
 	case "version":
 		return ec.fieldContext_ShipmentAdditionalCharge_version(ctx, field)
 	case "createdAt":
@@ -55021,8 +55426,14 @@ func (ec *executionContext) childFields_ShipmentComment(ctx context.Context, fie
 		return ec.fieldContext_ShipmentComment_shipmentId(ctx, field)
 	case "userId":
 		return ec.fieldContext_ShipmentComment_userId(ctx, field)
+	case "parentCommentId":
+		return ec.fieldContext_ShipmentComment_parentCommentId(ctx, field)
+	case "replyCount":
+		return ec.fieldContext_ShipmentComment_replyCount(ctx, field)
 	case "comment":
 		return ec.fieldContext_ShipmentComment_comment(ctx, field)
+	case "body":
+		return ec.fieldContext_ShipmentComment_body(ctx, field)
 	case "type":
 		return ec.fieldContext_ShipmentComment_type(ctx, field)
 	case "visibility":
@@ -55035,6 +55446,18 @@ func (ec *executionContext) childFields_ShipmentComment(ctx context.Context, fie
 		return ec.fieldContext_ShipmentComment_metadata(ctx, field)
 	case "editedAt":
 		return ec.fieldContext_ShipmentComment_editedAt(ctx, field)
+	case "pinnedAt":
+		return ec.fieldContext_ShipmentComment_pinnedAt(ctx, field)
+	case "pinnedById":
+		return ec.fieldContext_ShipmentComment_pinnedById(ctx, field)
+	case "resolvedAt":
+		return ec.fieldContext_ShipmentComment_resolvedAt(ctx, field)
+	case "resolvedById":
+		return ec.fieldContext_ShipmentComment_resolvedById(ctx, field)
+	case "requiresAcknowledgment":
+		return ec.fieldContext_ShipmentComment_requiresAcknowledgment(ctx, field)
+	case "deletedAt":
+		return ec.fieldContext_ShipmentComment_deletedAt(ctx, field)
 	case "version":
 		return ec.fieldContext_ShipmentComment_version(ctx, field)
 	case "createdAt":
@@ -55045,10 +55468,56 @@ func (ec *executionContext) childFields_ShipmentComment(ctx context.Context, fie
 		return ec.fieldContext_ShipmentComment_mentionedUserIds(ctx, field)
 	case "user":
 		return ec.fieldContext_ShipmentComment_user(ctx, field)
+	case "pinnedBy":
+		return ec.fieldContext_ShipmentComment_pinnedBy(ctx, field)
+	case "resolvedBy":
+		return ec.fieldContext_ShipmentComment_resolvedBy(ctx, field)
 	case "mentionedUsers":
 		return ec.fieldContext_ShipmentComment_mentionedUsers(ctx, field)
+	case "acknowledgments":
+		return ec.fieldContext_ShipmentComment_acknowledgments(ctx, field)
+	case "attachments":
+		return ec.fieldContext_ShipmentComment_attachments(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentComment", field.Name)
+}
+
+func (ec *executionContext) childFields_ShipmentCommentAcknowledgment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ShipmentCommentAcknowledgment_id(ctx, field)
+	case "commentId":
+		return ec.fieldContext_ShipmentCommentAcknowledgment_commentId(ctx, field)
+	case "userId":
+		return ec.fieldContext_ShipmentCommentAcknowledgment_userId(ctx, field)
+	case "acknowledgedAt":
+		return ec.fieldContext_ShipmentCommentAcknowledgment_acknowledgedAt(ctx, field)
+	case "user":
+		return ec.fieldContext_ShipmentCommentAcknowledgment_user(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentCommentAcknowledgment", field.Name)
+}
+
+func (ec *executionContext) childFields_ShipmentCommentAttachment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "documentId":
+		return ec.fieldContext_ShipmentCommentAttachment_documentId(ctx, field)
+	case "fileName":
+		return ec.fieldContext_ShipmentCommentAttachment_fileName(ctx, field)
+	case "originalName":
+		return ec.fieldContext_ShipmentCommentAttachment_originalName(ctx, field)
+	case "fileSize":
+		return ec.fieldContext_ShipmentCommentAttachment_fileSize(ctx, field)
+	case "mimeType":
+		return ec.fieldContext_ShipmentCommentAttachment_mimeType(ctx, field)
+	case "previewUrl":
+		return ec.fieldContext_ShipmentCommentAttachment_previewUrl(ctx, field)
+	case "downloadUrl":
+		return ec.fieldContext_ShipmentCommentAttachment_downloadUrl(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_ShipmentCommentAttachment_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentCommentAttachment", field.Name)
 }
 
 func (ec *executionContext) childFields_ShipmentCommentConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -57525,6 +57994,28 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_acknowledgeShipmentComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addDriverSettlementAdjustment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -59039,6 +59530,28 @@ func (ec *executionContext) field_Mutation_payWorkerNow_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_pinShipmentComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_postAndApplyCustomerPayment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -59248,6 +59761,28 @@ func (ec *executionContext) field_Mutation_resolveSettlementDispute_args(ctx con
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_resolveShipmentComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
 	return args, nil
 }
 
@@ -59502,6 +60037,50 @@ func (ec *executionContext) field_Mutation_uncancelShipment_args(ctx context.Con
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unpinShipmentComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unresolveShipmentComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
 	return args, nil
 }
 
@@ -62985,6 +63564,44 @@ func (ec *executionContext) field_Query_shipmentCommentCount_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_shipmentCommentReplies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "commentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["commentId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_shipmentComments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -63012,6 +63629,14 @@ func (ec *executionContext) field_Query_shipmentComments_args(ctx context.Contex
 		return nil, err
 	}
 	args["after"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "filter",
+		func(ctx context.Context, v any) (*gqlmodel.ShipmentCommentsFilterInput, error) {
+			return ec.unmarshalOShipmentCommentsFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentsFilterInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg3
 	return args, nil
 }
 
@@ -80153,6 +80778,29 @@ func (ec *executionContext) fieldContext_DetentionDisputePacket_collectability(_
 	return fc, nil
 }
 
+func (ec *executionContext) _DetentionDisputePacket_chainVerified(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionDisputePacket_chainVerified(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChainVerified, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionDisputePacket_chainVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionDisputePacket", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _DetentionDisputePacket_generatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionDisputePacket) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -82778,10 +83426,10 @@ func (ec *executionContext) _DetentionPolicy_shipmentTypeIds(ctx context.Context
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
-			return ec.marshalOID2ᚕstringᚄ(ctx, selections, v)
+			return ec.marshalNID2ᚕstringᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_DetentionPolicy_shipmentTypeIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -82801,10 +83449,10 @@ func (ec *executionContext) _DetentionPolicy_serviceTypeIds(ctx context.Context,
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
-			return ec.marshalOID2ᚕstringᚄ(ctx, selections, v)
+			return ec.marshalNID2ᚕstringᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_DetentionPolicy_serviceTypeIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -82824,10 +83472,10 @@ func (ec *executionContext) _DetentionPolicy_commodityIds(ctx context.Context, f
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
-			return ec.marshalOID2ᚕstringᚄ(ctx, selections, v)
+			return ec.marshalNID2ᚕstringᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_DetentionPolicy_commodityIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -82847,10 +83495,10 @@ func (ec *executionContext) _DetentionPolicy_stopTypes(ctx context.Context, fiel
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []gqlmodel.StopType) graphql.Marshaler {
-			return ec.marshalOStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx, selections, v)
+			return ec.marshalNStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_DetentionPolicy_stopTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -83215,10 +83863,10 @@ func (ec *executionContext) _DetentionPolicy_tiers(ctx context.Context, field gr
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DetentionPolicyTier) graphql.Marshaler {
-			return ec.marshalODetentionPolicyTier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTierᚄ(ctx, selections, v)
+			return ec.marshalNDetentionPolicyTier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTierᚄ(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_DetentionPolicy_tiers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -87755,6 +88403,121 @@ func (ec *executionContext) _DispatchCandidate_projectedTimeAvailable(ctx contex
 	)
 }
 func (ec *executionContext) fieldContext_DispatchCandidate_projectedTimeAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_hosStrategy(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_hosStrategy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosStrategy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_hosStrategy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_hosRestStartDeadline(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_hosRestStartDeadline(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosRestStartDeadline, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_hosRestStartDeadline(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_hosProjectedDriveMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_hosProjectedDriveMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosProjectedDriveMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_hosProjectedDriveMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_hosProjectedShiftMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_hosProjectedShiftMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosProjectedShiftMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_hosProjectedShiftMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCandidate_hosProjectedCycleMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCandidate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCandidate_hosProjectedCycleMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HosProjectedCycleMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCandidate_hosProjectedCycleMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DispatchCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
@@ -124856,6 +125619,226 @@ func (ec *executionContext) fieldContext_Mutation_deleteShipmentComment(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_pinShipmentComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_pinShipmentComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().PinShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentComment) graphql.Marshaler {
+			return ec.marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_pinShipmentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentComment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_pinShipmentComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unpinShipmentComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_unpinShipmentComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UnpinShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentComment) graphql.Marshaler {
+			return ec.marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_unpinShipmentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentComment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unpinShipmentComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resolveShipmentComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_resolveShipmentComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ResolveShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentComment) graphql.Marshaler {
+			return ec.marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_resolveShipmentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentComment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_resolveShipmentComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unresolveShipmentComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_unresolveShipmentComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UnresolveShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentComment) graphql.Marshaler {
+			return ec.marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_unresolveShipmentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentComment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unresolveShipmentComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_acknowledgeShipmentComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_acknowledgeShipmentComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AcknowledgeShipmentComment(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentComment) graphql.Marshaler {
+			return ec.marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentComment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_acknowledgeShipmentComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentComment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_acknowledgeShipmentComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_updateSidebarPreferences(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -141928,7 +142911,7 @@ func (ec *executionContext) _Query_shipmentComments(ctx context.Context, field g
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().ShipmentComments(ctx, fc.Args["shipmentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
+			return ec.Resolvers.Query().ShipmentComments(ctx, fc.Args["shipmentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*gqlmodel.ShipmentCommentsFilterInput))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentCommentConnection) graphql.Marshaler {
@@ -141956,6 +142939,50 @@ func (ec *executionContext) fieldContext_Query_shipmentComments(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_shipmentComments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_shipmentCommentReplies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_shipmentCommentReplies(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ShipmentCommentReplies(ctx, fc.Args["shipmentId"].(string), fc.Args["commentId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentCommentConnection) graphql.Marshaler {
+			return ec.marshalNShipmentCommentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_shipmentCommentReplies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentCommentConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_shipmentCommentReplies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -158132,6 +159159,29 @@ func (ec *executionContext) fieldContext_ShipmentAdditionalCharge_fuelSurchargeD
 	return graphql.NewScalarFieldContext("ShipmentAdditionalCharge", field, false, false, errors.New("field of type JSON does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentAdditionalCharge_detentionOccurrenceId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentAdditionalCharge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentAdditionalCharge_detentionOccurrenceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DetentionOccurrenceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentAdditionalCharge_detentionOccurrenceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentAdditionalCharge", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentAdditionalCharge_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentAdditionalCharge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -160528,6 +161578,52 @@ func (ec *executionContext) fieldContext_ShipmentComment_userId(_ context.Contex
 	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentComment_parentCommentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_parentCommentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ParentCommentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_parentCommentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_replyCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_replyCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReplyCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_replyCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentComment_comment(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -160549,6 +161645,29 @@ func (ec *executionContext) _ShipmentComment_comment(ctx context.Context, field 
 }
 func (ec *executionContext) fieldContext_ShipmentComment_comment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_body(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type JSON does not have child fields"))
 }
 
 func (ec *executionContext) _ShipmentComment_type(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
@@ -160689,6 +161808,144 @@ func (ec *executionContext) fieldContext_ShipmentComment_editedAt(_ context.Cont
 	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentComment_pinnedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_pinnedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PinnedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_pinnedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_pinnedById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_pinnedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PinnedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_pinnedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_resolvedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_resolvedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ResolvedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_resolvedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_resolvedById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_resolvedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ResolvedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_resolvedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_requiresAcknowledgment(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_requiresAcknowledgment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiresAcknowledgment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_requiresAcknowledgment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentComment_deletedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_deletedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentComment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentComment_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -160813,6 +162070,70 @@ func (ec *executionContext) fieldContext_ShipmentComment_user(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _ShipmentComment_pinnedBy(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_pinnedBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PinnedBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_pinnedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentComment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentComment_resolvedBy(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_resolvedBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ResolvedBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_resolvedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentComment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ShipmentComment_mentionedUsers(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -160843,6 +162164,378 @@ func (ec *executionContext) fieldContext_ShipmentComment_mentionedUsers(_ contex
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentComment_acknowledgments(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_acknowledgments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Acknowledgments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.ShipmentCommentAcknowledgment) graphql.Marshaler {
+			return ec.marshalOShipmentCommentAcknowledgment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAcknowledgmentᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_acknowledgments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentComment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentCommentAcknowledgment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentComment_attachments(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentComment_attachments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Attachments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.ShipmentCommentAttachment) graphql.Marshaler {
+			return ec.marshalOShipmentCommentAttachment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAttachmentᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentComment_attachments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentComment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentCommentAttachment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentCommentAcknowledgment_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAcknowledgment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAcknowledgment_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAcknowledgment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAcknowledgment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAcknowledgment_commentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAcknowledgment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAcknowledgment_commentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CommentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAcknowledgment_commentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAcknowledgment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAcknowledgment_userId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAcknowledgment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAcknowledgment_userId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UserID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAcknowledgment_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAcknowledgment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAcknowledgment_acknowledgedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAcknowledgment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAcknowledgment_acknowledgedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AcknowledgedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAcknowledgment_acknowledgedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAcknowledgment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAcknowledgment_user(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAcknowledgment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAcknowledgment_user(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAcknowledgment_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentCommentAcknowledgment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_documentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_documentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_documentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_fileName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_fileName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FileName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_fileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_originalName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_originalName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginalName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_originalName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_fileSize(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_fileSize(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FileSize, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_fileSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_mimeType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_mimeType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MimeType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_mimeType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_previewUrl(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_previewUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreviewURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_previewUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_downloadUrl(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_downloadUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DownloadURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_downloadUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommentAttachment_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentAttachment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommentAttachment_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommentAttachment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommentAttachment", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _ShipmentCommentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommentConnection) (ret graphql.Marshaler) {
@@ -189977,7 +191670,7 @@ func (ec *executionContext) unmarshalInputShipmentAdditionalChargeInput(ctx cont
 		asMap["unit"] = 1
 	}
 
-	fieldsInOrder := [...]string{"id", "shipmentId", "accessorialChargeId", "isSystemGenerated", "method", "amount", "unit", "fuelSurchargeProgramId", "version"}
+	fieldsInOrder := [...]string{"id", "shipmentId", "accessorialChargeId", "isSystemGenerated", "method", "amount", "unit", "fuelSurchargeProgramId", "detentionOccurrenceId", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -190040,6 +191733,13 @@ func (ec *executionContext) unmarshalInputShipmentAdditionalChargeInput(ctx cont
 				return it, err
 			}
 			it.FuelSurchargeProgramID = data
+		case "detentionOccurrenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("detentionOccurrenceId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DetentionOccurrenceID = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -190209,6 +191909,9 @@ func (ec *executionContext) unmarshalInputShipmentCommentInput(ctx context.Conte
 	if _, present := asMap["mentionedUserIds"]; !present {
 		asMap["mentionedUserIds"] = []any{}
 	}
+	if _, present := asMap["attachmentDocumentIds"]; !present {
+		asMap["attachmentDocumentIds"] = []any{}
+	}
 	if _, present := asMap["type"]; !present {
 		asMap["type"] = "Internal"
 	}
@@ -190219,7 +191922,7 @@ func (ec *executionContext) unmarshalInputShipmentCommentInput(ctx context.Conte
 		asMap["priority"] = "Normal"
 	}
 
-	fieldsInOrder := [...]string{"comment", "mentionedUserIds", "type", "visibility", "priority"}
+	fieldsInOrder := [...]string{"comment", "body", "parentCommentId", "mentionedUserIds", "attachmentDocumentIds", "type", "visibility", "priority", "requiresAcknowledgment", "clientRef"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -190233,6 +191936,20 @@ func (ec *executionContext) unmarshalInputShipmentCommentInput(ctx context.Conte
 				return it, err
 			}
 			it.Comment = data
+		case "body":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Body = data
+		case "parentCommentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentCommentId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ParentCommentID = data
 		case "mentionedUserIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mentionedUserIds"))
 			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
@@ -190240,6 +191957,13 @@ func (ec *executionContext) unmarshalInputShipmentCommentInput(ctx context.Conte
 				return it, err
 			}
 			it.MentionedUserIds = data
+		case "attachmentDocumentIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachmentDocumentIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AttachmentDocumentIds = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalOShipmentCommentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentType(ctx, v)
@@ -190261,6 +191985,20 @@ func (ec *executionContext) unmarshalInputShipmentCommentInput(ctx context.Conte
 				return it, err
 			}
 			it.Priority = data
+		case "requiresAcknowledgment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiresAcknowledgment"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequiresAcknowledgment = data
+		case "clientRef":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientRef"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientRef = data
 		}
 	}
 	return it, nil
@@ -190280,6 +192018,9 @@ func (ec *executionContext) unmarshalInputShipmentCommentUpdateInput(ctx context
 	if _, present := asMap["mentionedUserIds"]; !present {
 		asMap["mentionedUserIds"] = []any{}
 	}
+	if _, present := asMap["attachmentDocumentIds"]; !present {
+		asMap["attachmentDocumentIds"] = []any{}
+	}
 	if _, present := asMap["type"]; !present {
 		asMap["type"] = "Internal"
 	}
@@ -190290,7 +192031,7 @@ func (ec *executionContext) unmarshalInputShipmentCommentUpdateInput(ctx context
 		asMap["priority"] = "Normal"
 	}
 
-	fieldsInOrder := [...]string{"id", "comment", "mentionedUserIds", "type", "visibility", "priority", "version"}
+	fieldsInOrder := [...]string{"id", "comment", "body", "mentionedUserIds", "attachmentDocumentIds", "type", "visibility", "priority", "requiresAcknowledgment", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -190311,6 +192052,13 @@ func (ec *executionContext) unmarshalInputShipmentCommentUpdateInput(ctx context
 				return it, err
 			}
 			it.Comment = data
+		case "body":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Body = data
 		case "mentionedUserIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mentionedUserIds"))
 			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
@@ -190318,6 +192066,13 @@ func (ec *executionContext) unmarshalInputShipmentCommentUpdateInput(ctx context
 				return it, err
 			}
 			it.MentionedUserIds = data
+		case "attachmentDocumentIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachmentDocumentIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AttachmentDocumentIds = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalOShipmentCommentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentType(ctx, v)
@@ -190339,6 +192094,13 @@ func (ec *executionContext) unmarshalInputShipmentCommentUpdateInput(ctx context
 				return it, err
 			}
 			it.Priority = data
+		case "requiresAcknowledgment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiresAcknowledgment"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequiresAcknowledgment = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
@@ -190346,6 +192108,85 @@ func (ec *executionContext) unmarshalInputShipmentCommentUpdateInput(ctx context
 				return it, err
 			}
 			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputShipmentCommentsFilterInput(ctx context.Context, obj any) (gqlmodel.ShipmentCommentsFilterInput, error) {
+	var it gqlmodel.ShipmentCommentsFilterInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["pinnedOnly"]; !present {
+		asMap["pinnedOnly"] = false
+	}
+	if _, present := asMap["unresolvedOnly"]; !present {
+		asMap["unresolvedOnly"] = false
+	}
+
+	fieldsInOrder := [...]string{"types", "priorities", "authorIds", "mentionsUserId", "pinnedOnly", "unresolvedOnly", "search"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "types":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("types"))
+			data, err := ec.unmarshalOShipmentCommentType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Types = data
+		case "priorities":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priorities"))
+			data, err := ec.unmarshalOShipmentCommentPriority2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentPriorityᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priorities = data
+		case "authorIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authorIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AuthorIds = data
+		case "mentionsUserId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mentionsUserId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MentionsUserID = data
+		case "pinnedOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pinnedOnly"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PinnedOnly = data
+		case "unresolvedOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unresolvedOnly"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UnresolvedOnly = data
+		case "search":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Search = data
 		}
 	}
 	return it, nil
@@ -200894,6 +202735,11 @@ func (ec *executionContext) _DetentionDisputePacket(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "chainVerified":
+			out.Values[i] = ec._DetentionDisputePacket_chainVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "generatedAt":
 			out.Values[i] = ec._DetentionDisputePacket_generatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -201621,22 +203467,22 @@ func (ec *executionContext) _DetentionPolicy(ctx context.Context, sel ast.Select
 			}
 		case "shipmentTypeIds":
 			out.Values[i] = ec._DetentionPolicy_shipmentTypeIds(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "serviceTypeIds":
 			out.Values[i] = ec._DetentionPolicy_serviceTypeIds(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "commodityIds":
 			out.Values[i] = ec._DetentionPolicy_commodityIds(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "stopTypes":
 			out.Values[i] = ec._DetentionPolicy_stopTypes(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "appointmentStopsOnly":
@@ -201716,7 +203562,7 @@ func (ec *executionContext) _DetentionPolicy(ctx context.Context, sel ast.Select
 			}
 		case "tiers":
 			out.Values[i] = ec._DetentionPolicy_tiers(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "maxBillableMinutesPerStop":
@@ -203138,6 +204984,31 @@ func (ec *executionContext) _DispatchCandidate(ctx context.Context, sel ast.Sele
 			}
 		case "projectedTimeAvailable":
 			out.Values[i] = ec._DispatchCandidate_projectedTimeAvailable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosStrategy":
+			out.Values[i] = ec._DispatchCandidate_hosStrategy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosRestStartDeadline":
+			out.Values[i] = ec._DispatchCandidate_hosRestStartDeadline(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosProjectedDriveMs":
+			out.Values[i] = ec._DispatchCandidate_hosProjectedDriveMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosProjectedShiftMs":
+			out.Values[i] = ec._DispatchCandidate_hosProjectedShiftMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hosProjectedCycleMs":
+			out.Values[i] = ec._DispatchCandidate_hosProjectedCycleMs(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -216398,6 +218269,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "pinShipmentComment":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_pinShipmentComment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unpinShipmentComment":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unpinShipmentComment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resolveShipmentComment":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resolveShipmentComment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unresolveShipmentComment":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unresolveShipmentComment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "acknowledgeShipmentComment":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acknowledgeShipmentComment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "updateSidebarPreferences":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSidebarPreferences(ctx, field)
@@ -224435,6 +226341,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "shipmentCommentReplies":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_shipmentCommentReplies(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "shipmentCommentCount":
 			field := field
 
@@ -231023,6 +232951,11 @@ func (ec *executionContext) _ShipmentAdditionalCharge(ctx context.Context, sel a
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "detentionOccurrenceId":
+			out.Values[i] = ec._ShipmentAdditionalCharge_detentionOccurrenceId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._ShipmentAdditionalCharge_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -231922,9 +233855,24 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "parentCommentId":
+			out.Values[i] = ec._ShipmentComment_parentCommentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "replyCount":
+			out.Values[i] = ec._ShipmentComment_replyCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "comment":
 			out.Values[i] = ec._ShipmentComment_comment(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._ShipmentComment_body(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		case "type":
@@ -231957,6 +233905,36 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "pinnedAt":
+			out.Values[i] = ec._ShipmentComment_pinnedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "pinnedById":
+			out.Values[i] = ec._ShipmentComment_pinnedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "resolvedAt":
+			out.Values[i] = ec._ShipmentComment_resolvedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "resolvedById":
+			out.Values[i] = ec._ShipmentComment_resolvedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "requiresAcknowledgment":
+			out.Values[i] = ec._ShipmentComment_requiresAcknowledgment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deletedAt":
+			out.Values[i] = ec._ShipmentComment_deletedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._ShipmentComment_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -231982,9 +233960,160 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "pinnedBy":
+			out.Values[i] = ec._ShipmentComment_pinnedBy(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "resolvedBy":
+			out.Values[i] = ec._ShipmentComment_resolvedBy(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "mentionedUsers":
 			out.Values[i] = ec._ShipmentComment_mentionedUsers(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "acknowledgments":
+			out.Values[i] = ec._ShipmentComment_acknowledgments(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "attachments":
+			out.Values[i] = ec._ShipmentComment_attachments(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var shipmentCommentAcknowledgmentImplementors = []string{"ShipmentCommentAcknowledgment"}
+
+func (ec *executionContext) _ShipmentCommentAcknowledgment(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentCommentAcknowledgment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentAcknowledgmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShipmentCommentAcknowledgment")
+		case "id":
+			out.Values[i] = ec._ShipmentCommentAcknowledgment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "commentId":
+			out.Values[i] = ec._ShipmentCommentAcknowledgment_commentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "userId":
+			out.Values[i] = ec._ShipmentCommentAcknowledgment_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "acknowledgedAt":
+			out.Values[i] = ec._ShipmentCommentAcknowledgment_acknowledgedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user":
+			out.Values[i] = ec._ShipmentCommentAcknowledgment_user(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var shipmentCommentAttachmentImplementors = []string{"ShipmentCommentAttachment"}
+
+func (ec *executionContext) _ShipmentCommentAttachment(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentCommentAttachment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentAttachmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShipmentCommentAttachment")
+		case "documentId":
+			out.Values[i] = ec._ShipmentCommentAttachment_documentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fileName":
+			out.Values[i] = ec._ShipmentCommentAttachment_fileName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originalName":
+			out.Values[i] = ec._ShipmentCommentAttachment_originalName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "fileSize":
+			out.Values[i] = ec._ShipmentCommentAttachment_fileSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mimeType":
+			out.Values[i] = ec._ShipmentCommentAttachment_mimeType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "previewUrl":
+			out.Values[i] = ec._ShipmentCommentAttachment_previewUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "downloadUrl":
+			out.Values[i] = ec._ShipmentCommentAttachment_downloadUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._ShipmentCommentAttachment_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -243299,6 +245428,22 @@ func (ec *executionContext) marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08
 	return res
 }
 
+func (ec *executionContext) marshalNDetentionPolicyTier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTierᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionPolicyTier) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDetentionPolicyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTier(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNDetentionPolicyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTier(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DetentionPolicyTier) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -250629,6 +252774,26 @@ func (ec *executionContext) marshalNShipmentComment2ᚖgithubᚗcomᚋemoss08ᚋ
 	return ec._ShipmentComment(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNShipmentCommentAcknowledgment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAcknowledgment(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentCommentAcknowledgment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ShipmentCommentAcknowledgment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNShipmentCommentAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAttachment(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentCommentAttachment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ShipmentCommentAttachment(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNShipmentCommentConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.ShipmentCommentConnection) graphql.Marshaler {
 	return ec._ShipmentCommentConnection(ctx, sel, &v)
 }
@@ -251718,6 +253883,36 @@ func (ec *executionContext) unmarshalNStopType2githubᚗcomᚋemoss08ᚋtrenova�
 
 func (ec *executionContext) marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx context.Context, sel ast.SelectionSet, v gqlmodel.StopType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx context.Context, v any) ([]gqlmodel.StopType, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]gqlmodel.StopType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNStopType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []gqlmodel.StopType) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNStopType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNStoredMileage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋstoredmileageᚐStoredMileage(ctx context.Context, sel ast.SelectionSet, v *storedmileage.StoredMileage) graphql.Marshaler {
@@ -253350,25 +255545,6 @@ func (ec *executionContext) marshalODetentionPolicyStatus2ᚖgithubᚗcomᚋemos
 	_ = ctx
 	res := graphql.MarshalString(string(*v))
 	return res
-}
-
-func (ec *executionContext) marshalODetentionPolicyTier2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTierᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DetentionPolicyTier) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
-		fc := graphql.GetFieldContext(ctx)
-		fc.Result = &v[i]
-		return ec.marshalNDetentionPolicyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyTier(ctx, sel, v[i])
-	})
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalODetentionRateSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdetentionᚐRateSource(ctx context.Context, v any) (*detention.RateSource, error) {
@@ -255432,6 +257608,44 @@ func (ec *executionContext) unmarshalOShipmentCancelInput2ᚖgithubᚗcomᚋemos
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOShipmentCommentAcknowledgment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAcknowledgmentᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.ShipmentCommentAcknowledgment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNShipmentCommentAcknowledgment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAcknowledgment(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOShipmentCommentAttachment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAttachmentᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.ShipmentCommentAttachment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNShipmentCommentAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentAttachment(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOShipmentCommentMention2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentMentionᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.ShipmentCommentMention) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -255440,6 +257654,42 @@ func (ec *executionContext) marshalOShipmentCommentMention2ᚕᚖgithubᚗcomᚋ
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
 		return ec.marshalNShipmentCommentMention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentMention(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOShipmentCommentPriority2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentPriorityᚄ(ctx context.Context, v any) ([]gqlmodel.ShipmentCommentPriority, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]gqlmodel.ShipmentCommentPriority, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNShipmentCommentPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentPriority(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOShipmentCommentPriority2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentPriorityᚄ(ctx context.Context, sel ast.SelectionSet, v []gqlmodel.ShipmentCommentPriority) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNShipmentCommentPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentPriority(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -255465,6 +257715,42 @@ func (ec *executionContext) marshalOShipmentCommentPriority2ᚖgithubᚗcomᚋem
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOShipmentCommentType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentTypeᚄ(ctx context.Context, v any) ([]gqlmodel.ShipmentCommentType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]gqlmodel.ShipmentCommentType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNShipmentCommentType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOShipmentCommentType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []gqlmodel.ShipmentCommentType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNShipmentCommentType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentType(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOShipmentCommentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentType(ctx context.Context, v any) (*gqlmodel.ShipmentCommentType, error) {
@@ -255497,6 +257783,14 @@ func (ec *executionContext) marshalOShipmentCommentVisibility2ᚖgithubᚗcomᚋ
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOShipmentCommentsFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommentsFilterInput(ctx context.Context, v any) (*gqlmodel.ShipmentCommentsFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputShipmentCommentsFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOShipmentCommodityDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCommodityDetail(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentCommodityDetail) graphql.Marshaler {

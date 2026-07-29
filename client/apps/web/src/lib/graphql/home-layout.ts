@@ -12,6 +12,7 @@ import {
   type HomeLayoutPresetFieldsFragment,
   type HomeWidgetCatalogQuery,
   type HomeWidgetFieldsFragment,
+  type HomeWidgetInput,
   type SaveHomeLayoutPresetInput,
   type UpdateHomeLayoutPresetInput,
 } from "@trenova/graphql/generated/graphql";
@@ -74,6 +75,33 @@ export const DEFAULT_HOME_LAYOUT: HomeLayout = {
   density: "comfortable",
   widgets: [],
 };
+
+/**
+ * Strips a rendered widget down to the fields the mutation accepts. The
+ * fragment carries `__typename`s the input type rejects, so the mapping is
+ * explicit rather than a spread.
+ */
+export function toWidgetInput(widget: HomeWidget): HomeWidgetInput {
+  return {
+    id: widget.id,
+    key: widget.key,
+    title: widget.title,
+    w: widget.w,
+    h: widget.h,
+    config: {
+      metric: widget.config.metric,
+      metrics: widget.config.metrics,
+      definitionId: widget.config.definitionId,
+      cannedKey: widget.config.cannedKey,
+      chartId: widget.config.chartId,
+      columnId: widget.config.columnId,
+      dashboardId: widget.config.dashboardId,
+      text: widget.config.text,
+      limit: widget.config.limit,
+      windowDays: widget.config.windowDays,
+    },
+  };
+}
 
 export async function updateHomeLayout(input: HomeLayoutInput): Promise<HomeLayout> {
   const data = await requestGraphQL({

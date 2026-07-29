@@ -8,8 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// UrgencyBucket groups moves the way a dispatcher triages them, so the board can lead
-// with what is already broken rather than with whatever sorted first.
 type UrgencyBucket string
 
 const (
@@ -20,7 +18,6 @@ const (
 	UrgencyPlanned  = UrgencyBucket("Planned")
 )
 
-// BoardMove is a move card enriched with the derived facts the console renders.
 type BoardMove struct {
 	*repositories.BoardMove
 
@@ -30,7 +27,6 @@ type BoardMove struct {
 	TotalStopCount  int           `json:"totalStopCount"`
 }
 
-// DriverAvailability is the derived capacity state shown on a capacity-rail row.
 type DriverAvailability string
 
 const (
@@ -41,8 +37,6 @@ const (
 	AvailabilityTimeOff   = DriverAvailability("TimeOff")
 )
 
-// BoardDriver is a capacity-rail row: who they are, their live clocks, when they free
-// up, and what they are already committed to over the horizon.
 type BoardDriver struct {
 	*repositories.BoardDriver
 
@@ -68,7 +62,6 @@ type BoardDriver struct {
 	CommittedRevenue       float64                          `json:"committedRevenue"`
 }
 
-// Board is everything one console render needs, in one response.
 type Board struct {
 	Moves       []*BoardMove               `json:"moves"`
 	Drivers     []*BoardDriver             `json:"drivers"`
@@ -99,9 +92,6 @@ type MoveCandidatesRequest struct {
 	IncludeBlocked bool
 }
 
-// DriverMoveMatch is the reverse view: for one driver, which open moves suit them. It
-// carries the same score object so both directions of matching explain themselves
-// identically.
 type DriverMoveMatch struct {
 	Move  *BoardMove                               `json:"move"`
 	Score *dispatchcandidateservice.CandidateScore `json:"score"`
@@ -115,17 +105,14 @@ type DriverMovesRequest struct {
 	Limit       int
 }
 
-// AssignmentPreview is the pre-flight a dispatcher sees before a drop commits.
 type AssignmentPreview struct {
-	MoveID    pulid.ID                                 `json:"moveId"`
-	WorkerID  pulid.ID                                 `json:"workerId"`
-	TractorID pulid.ID                                 `json:"tractorId"`
-	TrailerID pulid.ID                                 `json:"trailerId"`
-	Score     *dispatchcandidateservice.CandidateScore `json:"score"`
-	Blocked   bool                                     `json:"blocked"`
-	// RequiresOverride is true when the organization enforces compliance as a hard block
-	// and the pairing trips one, so the console can label the confirm action honestly.
-	RequiresOverride bool `json:"requiresOverride"`
+	MoveID           pulid.ID                                 `json:"moveId"`
+	WorkerID         pulid.ID                                 `json:"workerId"`
+	TractorID        pulid.ID                                 `json:"tractorId"`
+	TrailerID        pulid.ID                                 `json:"trailerId"`
+	Score            *dispatchcandidateservice.CandidateScore `json:"score"`
+	Blocked          bool                                     `json:"blocked"`
+	RequiresOverride bool                                     `json:"requiresOverride"`
 }
 
 type PreviewAssignmentRequest struct {

@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 interface DocumentIntelligenceDialogProps {
   open: boolean;
@@ -75,8 +76,7 @@ function formatConfidence(confidence?: number | null) {
 }
 
 function formatUnixTimestamp(value?: number | null) {
-  if (!value) return "Not recorded";
-  return new Date(value * 1000).toLocaleString();
+  return formatUnixDateTime(value, { fallback: "Not recorded" });
 }
 
 function normalizeDraftFields(

@@ -7,7 +7,7 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { getTodayDate, toDate } from "@trenova/shared/lib/date";
+import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
 import type { FiscalYear } from "@/types/fiscal-year";
 import { useQueryClient } from "@tanstack/react-query";
@@ -104,7 +104,7 @@ export function FiscalYearCloseAlertDialogContent({
                   <div className="flex flex-row gap-0.5">
                     <p>
                       This fiscal year does not end until{" "}
-                      {toDate(record.endDate)?.toLocaleDateString()}
+                      {formatUnixDate(record.endDate)}
                     </p>
                     <p className="font-semibold">
                       ({Math.ceil((record.endDate - today) / 86400)} days

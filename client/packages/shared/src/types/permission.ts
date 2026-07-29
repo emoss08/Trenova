@@ -23,6 +23,10 @@ export const Operation = {
   Unlock: 1 << 19,
   Activate: 1 << 20,
   Reopen: 1 << 21,
+  Pin: 1 << 22,
+  Unpin: 1 << 23,
+  Resolve: 1 << 24,
+  Manage: 1 << 25,
 } as const;
 
 export type OperationType = (typeof Operation)[keyof typeof Operation];

@@ -22,7 +22,7 @@ describe("ScoreBreakdown", () => {
     render(<ScoreBreakdown score={88} factors={[factor({})]} />);
 
     expect(screen.getByText("88")).toBeInTheDocument();
-    expect(screen.getByText("of 100")).toBeInTheDocument();
+    expect(screen.getByText("/ 100")).toBeInTheDocument();
   });
 
   // The whole point of the breakdown is that a dispatcher can audit the ranking. Every

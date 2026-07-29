@@ -218,9 +218,15 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentexceptionservice.New,
 	agentdecisionservice.New,
 	assignmentservice.New,
-	dispatchautoassignservice.New,
+	fx.Annotate(
+		dispatchautoassignservice.New,
+		fx.As(new(services.DispatchAutoAssignService)),
+	),
 	dispatchcandidateservice.New,
-	dispatchconsoleservice.New,
+	fx.Annotate(
+		dispatchconsoleservice.New,
+		fx.As(new(services.DispatchConsoleService)),
+	),
 	fx.Annotate(
 		bankreceiptbatchservice.New,
 		fx.As(new(services.BankReceiptBatchService)),

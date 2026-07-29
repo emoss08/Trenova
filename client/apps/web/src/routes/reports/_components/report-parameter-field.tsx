@@ -10,8 +10,8 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import type { ReportParameterDef } from "@/types/report";
-import { format } from "date-fns";
 import { ReportRefAutocomplete, ReportRefMultiAutocomplete } from "./report-ref-autocomplete";
+import { fromUserWallClock, toISODateString, toUserWallClock } from "@trenova/shared/lib/date";
 
 export function defaultParamValues(parameters: ReportParameterDef[]): Record<string, unknown> {
   const values: Record<string, unknown> = {};
@@ -38,7 +38,7 @@ export function coerceParamValue(param: ReportParameterDef, raw: string): unknow
     case "epoch": {
       if (!raw) return undefined;
       const parsed = new Date(`${raw}T00:00:00`);
-      return Number.isNaN(parsed.getTime()) ? undefined : Math.floor(parsed.getTime() / 1000);
+      return fromUserWallClock(parsed);
     }
     default:
       return raw === "" ? undefined : raw;
@@ -48,7 +48,8 @@ export function coerceParamValue(param: ReportParameterDef, raw: string): unknow
 export function paramInputValue(param: ReportParameterDef, value: unknown): string {
   if (value === undefined || value === null) return "";
   if (param.type === "epoch" && typeof value === "number") {
-    return format(new Date(value * 1000), "yyyy-MM-dd");
+    const wallClock = toUserWallClock(value);
+    return wallClock ? toISODateString(wallClock) : "";
   }
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);

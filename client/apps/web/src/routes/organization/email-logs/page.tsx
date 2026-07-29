@@ -1,5 +1,6 @@
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 export function EmailLogsPage() {
   const logsQuery = useQuery(queries.email.logs());
@@ -36,7 +37,7 @@ export function EmailLogsPage() {
                   <span className="rounded border px-2 py-1 text-xs">{log.status}</span>
                 </td>
                 <td className="px-3 py-2">{log.attempts}</td>
-                <td className="px-3 py-2">{new Date(log.createdAt * 1000).toLocaleString()}</td>
+                <td className="px-3 py-2">{formatUnixDateTime(log.createdAt)}</td>
               </tr>
             ))}
             {logs.length === 0 && (

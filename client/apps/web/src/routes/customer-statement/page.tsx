@@ -21,13 +21,10 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix);
 }
 
 function AgingBadge({ daysPastDue }: { daysPastDue: number }) {

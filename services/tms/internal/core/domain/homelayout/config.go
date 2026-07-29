@@ -3,6 +3,7 @@ package homelayout
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +60,7 @@ func validateWidgetConfig(
 func validateLimit(multiErr *errortypes.MultiError, limit int, fieldPath string) {
 	if limit < 0 || limit > MaxWidgetLimit {
 		multiErr.Add(fieldPath+".config.limit", errortypes.ErrInvalid,
-			fmt.Sprintf("Row limit must be between 1 and %d", MaxWidgetLimit))
+			fmt.Sprintf("Row limit must be between 0 and %d", MaxWidgetLimit))
 	}
 }
 
@@ -106,7 +107,7 @@ func validateMetricRow(multiErr *errortypes.MultiError, metrics []string, fieldP
 func validateWindowDays(multiErr *errortypes.MultiError, windowDays int, fieldPath string) {
 	if windowDays < 0 || windowDays > MaxWindowDays {
 		multiErr.Add(fieldPath+".config.windowDays", errortypes.ErrInvalid,
-			fmt.Sprintf("Window must be between 1 and %d days", MaxWindowDays))
+			fmt.Sprintf("Window must be between 0 and %d days", MaxWindowDays))
 	}
 }
 
@@ -136,7 +137,7 @@ func validateText(multiErr *errortypes.MultiError, text, fieldPath string) {
 	switch {
 	case strings.TrimSpace(text) == "":
 		multiErr.Add(fieldPath, errortypes.ErrRequired, "Write the announcement")
-	case len(text) > MaxAnnouncementLength:
+	case utf8.RuneCountInString(text) > MaxAnnouncementLength:
 		multiErr.Add(fieldPath, errortypes.ErrInvalidLength,
 			fmt.Sprintf("An announcement is at most %d characters", MaxAnnouncementLength))
 	}

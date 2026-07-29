@@ -6,7 +6,6 @@ import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { MoveStatus, Shipment, ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon } from "lucide-react";
@@ -147,7 +146,6 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
 }
 
 function MoveCard({ move }: { move: ShipmentMove }) {
-  const user = useAuthStore((s) => s.user);
   const config = moveStatusConfig[move.status];
   const sortedStops = [...move.stops].sort((a, b) => a.sequence - b.sequence);
 
@@ -171,11 +169,11 @@ function MoveCard({ move }: { move: ShipmentMove }) {
           const dotColor = stopDotColor[move.status];
           const isLast = idx === sortedStops.length - 1;
           const windowStart = stop.scheduledWindowStart
-            ? formatSplitDateTime(stop.scheduledWindowStart, user?.timeFormat, user?.timezone)
+            ? formatSplitDateTime(stop.scheduledWindowStart)
             : null;
           const windowEnd =
             stop.scheduledWindowEnd != null && stop.scheduledWindowEnd > 0
-              ? formatSplitDateTime(stop.scheduledWindowEnd, user?.timeFormat, user?.timezone)
+              ? formatSplitDateTime(stop.scheduledWindowEnd)
               : null;
 
           return (

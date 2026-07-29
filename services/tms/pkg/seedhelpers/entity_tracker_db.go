@@ -3,11 +3,15 @@ package seedhelpers
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
+
+// trackBatchSize keeps a tracking insert inside Postgres's bind-parameter cap.
+const trackBatchSize = 2000
 
 type SeedCreatedEntity struct {
 	bun.BaseModel `bun:"table:seed_created_entities,alias:sce"`
@@ -19,11 +23,15 @@ type SeedCreatedEntity struct {
 	CreatedAt int64    `bun:"created_at,notnull"`
 }
 
+// PersistentEntityTracker records what a seed created so a later rollback can
+// find it. It takes a bun.IDB rather than a *bun.DB because seeds run inside a
+// transaction: writing the tracking rows on the same handle is what makes them
+// roll back with the data they describe.
 type PersistentEntityTracker struct {
-	db *bun.DB
+	db bun.IDB
 }
 
-func NewPersistentEntityTracker(db *bun.DB) *PersistentEntityTracker {
+func NewPersistentEntityTracker(db bun.IDB) *PersistentEntityTracker {
 	return &PersistentEntityTracker{db: db}
 }
 
@@ -33,19 +41,41 @@ func (t *PersistentEntityTracker) Track(
 	id pulid.ID,
 	seedName string,
 ) error {
-	entity := &SeedCreatedEntity{
-		SeedName:  seedName,
-		TableName: table,
-		EntityID:  id,
-		CreatedAt: timeutils.NowUnix(),
+	return t.TrackBatch(ctx, []TrackedEntity{{Table: table, ID: id, SeedName: seedName}})
+}
+
+// TrackBatch writes a whole seed's tracking rows in one statement. Seeds create
+// thousands of entities, and a round trip apiece would dominate their runtime.
+func (t *PersistentEntityTracker) TrackBatch(
+	ctx context.Context,
+	tracked []TrackedEntity,
+) error {
+	if len(tracked) == 0 {
+		return nil
 	}
 
-	_, err := t.db.NewInsert().
-		Model(entity).
-		On("CONFLICT (seed_name, table_name, entity_id) DO NOTHING").
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("insert seed created entity: %w", err)
+	now := timeutils.NowUnix()
+
+	// Chunked because every row costs four bind parameters and Postgres caps a
+	// statement at 65535 of them.
+	for chunk := range slices.Chunk(tracked, trackBatchSize) {
+		entities := make([]SeedCreatedEntity, 0, len(chunk))
+		for _, entity := range chunk {
+			entities = append(entities, SeedCreatedEntity{
+				SeedName:  entity.SeedName,
+				TableName: entity.Table,
+				EntityID:  entity.ID,
+				CreatedAt: now,
+			})
+		}
+
+		_, err := t.db.NewInsert().
+			Model(&entities).
+			On("CONFLICT (seed_name, table_name, entity_id) DO NOTHING").
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("insert seed created entities: %w", err)
+		}
 	}
 
 	return nil

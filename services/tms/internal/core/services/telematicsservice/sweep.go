@@ -22,6 +22,7 @@ type TenantSweepResult struct {
 	RulesetsUpdated    int `json:"rulesetsUpdated"`
 	DVIRsUpserted      int `json:"dvirsUpserted"`
 	FormsUpserted      int `json:"formsUpserted"`
+	HOSLogsUpserted    int `json:"hosLogsUpserted"`
 }
 
 func (s *Service) SweepTenant(
@@ -38,6 +39,7 @@ func (s *Service) SweepTenant(
 	trailerErr := s.syncTrailerMappings(ctx, tenantInfo, provider, result)
 	rulesetErr := s.syncDriverRulesets(ctx, tenantInfo, provider, result)
 	violationErr := s.pollHOSViolations(ctx, tenantInfo, provider, result)
+	logErr := s.syncHOSLogs(ctx, tenantInfo, provider, result)
 	dvirErr := s.syncDVIRs(ctx, tenantInfo, provider, result)
 	formErr := s.syncForms(ctx, tenantInfo, provider, result)
 	return result, errors.Join(
@@ -45,6 +47,7 @@ func (s *Service) SweepTenant(
 		trailerErr,
 		rulesetErr,
 		violationErr,
+		logErr,
 		dvirErr,
 		formErr,
 	)

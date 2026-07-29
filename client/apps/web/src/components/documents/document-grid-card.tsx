@@ -21,6 +21,7 @@ import {
 import { useEffect, useState } from "react";
 import { LazyImage } from "../image";
 import { DocumentFileTypeIcon } from "./document-file-type-icon";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 interface DocumentGridCardProps {
   document: Document;
@@ -42,14 +43,6 @@ function formatFileSize(bytes: number): string {
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
-}
-
-function formatDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function supportsThumbnail(fileType: string): boolean {
@@ -151,7 +144,7 @@ export function DocumentGridCard({
           {document.originalName}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {formatFileSize(document.fileSize)} · {formatDate(document.createdAt)}
+          {formatFileSize(document.fileSize)} · {formatUnixDateMedium(document.createdAt)}
         </p>
         {documentTypeName && (
           <p className="truncate text-xs text-muted-foreground">{documentTypeName}</p>

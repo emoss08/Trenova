@@ -13,15 +13,6 @@ const (
 	SeverityInfo  = Severity("Info")
 )
 
-func (s Severity) IsValid() bool {
-	switch s {
-	case SeverityBlock, SeverityWarn, SeverityInfo:
-		return true
-	default:
-		return false
-	}
-}
-
 const (
 	CodeDriverUnderage           = "driver.underage"
 	CodeLicenseExpired           = "driver.license_expired"
@@ -71,10 +62,6 @@ const (
 	CodeDriverTypeMismatch = "move.driver_type_mismatch"
 )
 
-// Finding is a single eligibility observation about pairing a worker (and optional
-// equipment) with a shipment move. Findings are the shared currency between the
-// assignment write path, which maps them onto a MultiError, and the dispatcher
-// console, which renders them as badges and feeds them into candidate scoring.
 type Finding struct {
 	Code       string   `json:"code"`
 	Severity   Severity `json:"severity"`
@@ -114,30 +101,6 @@ func (e *Evaluation) Blocked() bool {
 	return false
 }
 
-func (e *Evaluation) HasFindings() bool {
-	return e != nil && len(e.Findings) > 0
-}
-
-func (e *Evaluation) Count(severity Severity) int {
-	if e == nil {
-		return 0
-	}
-	count := 0
-	for i := range e.Findings {
-		if e.Findings[i].Severity == severity {
-			count++
-		}
-	}
-	return count
-}
-
-// AppendToMultiError writes the findings onto an existing MultiError under the given
-// prefix. Callers on the assignment write path use this so the structured findings and
-// the legacy field-level validation errors never drift apart.
-//
-// Info findings are deliberately skipped: they carry context the dispatcher console
-// renders (stale telematics, missing HOS feed) but which has never been, and must not
-// become, a validation error on the assignment write path.
 func (e *Evaluation) AppendToMultiError(multiErr *errortypes.MultiError, prefix string) {
 	if e == nil || multiErr == nil || len(e.Findings) == 0 {
 		return
@@ -176,9 +139,6 @@ func severityErrorCode(severity Severity) errortypes.ErrorCode {
 	return errortypes.ErrInvalid
 }
 
-// SeverityForEnforcement maps an organization's configured enforcement level onto the
-// severity carried by regulatory findings: Block makes a finding a hard stop,
-// Warning and Audit leave it advisory.
 func SeverityForEnforcement(level dispatchcontrol.ComplianceEnforcementLevel) Severity {
 	if level.ShouldBlock() {
 		return SeverityBlock
@@ -186,9 +146,6 @@ func SeverityForEnforcement(level dispatchcontrol.ComplianceEnforcementLevel) Se
 	return SeverityWarn
 }
 
-// ComplianceErrorCode is the single source of truth for turning an enforcement level
-// into the error code a compliance violation reports with. Both the assignment and
-// worker services route through it so the two surfaces cannot drift.
 func ComplianceErrorCode(level dispatchcontrol.ComplianceEnforcementLevel) errortypes.ErrorCode {
 	return severityErrorCode(SeverityForEnforcement(level))
 }

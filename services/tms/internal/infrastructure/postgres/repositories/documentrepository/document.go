@@ -226,6 +226,41 @@ func (r *repository) GetByResourceID(
 	return entities, nil
 }
 
+func (r *repository) GetByResourceIDs(
+	ctx context.Context,
+	req *repositories.GetDocumentsByResourceIDsRequest,
+) ([]*document.Document, error) {
+	if len(req.ResourceIDs) == 0 {
+		return []*document.Document{}, nil
+	}
+
+	log := r.l.With(
+		zap.String("operation", "GetByResourceIDs"),
+		zap.String("resourceType", req.ResourceType),
+		zap.Int("resourceCount", len(req.ResourceIDs)),
+	)
+
+	entities := make([]*document.Document, 0, len(req.ResourceIDs))
+	cols := buncolgen.DocumentColumns
+	err := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(cols.ResourceID.In(), bun.List(req.ResourceIDs)).
+				Where(cols.ResourceType.Eq(), req.ResourceType).
+				Where(cols.IsCurrentVersion.Eq(), true)
+		}).
+		Order(cols.CreatedAt.OrderDesc()).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to get documents by resource ids", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) ListPendingPreviewReconciliation(
 	ctx context.Context,
 	req *repositories.ListPendingPreviewReconciliationRequest,

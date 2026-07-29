@@ -21,6 +21,10 @@ const (
 	FactorHomeTime          = ScoringFactor("homeTime")
 	FactorLoadBalance       = ScoringFactor("loadBalance")
 	FactorLaneExperience    = ScoringFactor("laneExperience")
+	FactorOnTimeHistory     = ScoringFactor("onTimeHistory")
+	FactorSafetyHistory     = ScoringFactor("safetyHistory")
+	FactorAcceptance        = ScoringFactor("acceptance")
+	FactorPTOProximity      = ScoringFactor("ptoProximity")
 )
 
 var ErrInvalidScoringFactor = errors.New("invalid scoring factor")
@@ -37,7 +41,11 @@ func (f ScoringFactor) IsValid() bool {
 		FactorDriverTypeFit,
 		FactorHomeTime,
 		FactorLoadBalance,
-		FactorLaneExperience:
+		FactorLaneExperience,
+		FactorOnTimeHistory,
+		FactorSafetyHistory,
+		FactorAcceptance,
+		FactorPTOProximity:
 		return true
 	default:
 		return false
@@ -57,6 +65,10 @@ func AllScoringFactors() []ScoringFactor {
 		FactorHomeTime,
 		FactorLoadBalance,
 		FactorLaneExperience,
+		FactorOnTimeHistory,
+		FactorSafetyHistory,
+		FactorAcceptance,
+		FactorPTOProximity,
 	}
 }
 
@@ -103,7 +115,8 @@ func (w ScoringWeights) Validate() error {
 
 // PresetWeights expresses each built-in strategy as a starting weighting. Proximity
 // chases the shortest empty miles, Availability favors drivers with the most room left
-// on their clocks, and LoadBalancing spreads work across the fleet.
+// on their clocks, LoadBalancing spreads work across the fleet, and Performance leans
+// on each driver's service history.
 func PresetWeights(strategy AutoAssignmentStrategy) map[ScoringFactor]float64 {
 	switch strategy {
 	case AutoAssignmentStrategyAvailability:
@@ -117,6 +130,10 @@ func PresetWeights(strategy AutoAssignmentStrategy) map[ScoringFactor]float64 {
 			FactorHomeTime:          1.0,
 			FactorLoadBalance:       0.5,
 			FactorLaneExperience:    0.5,
+			FactorOnTimeHistory:     1.0,
+			FactorSafetyHistory:     1.0,
+			FactorAcceptance:        1.0,
+			FactorPTOProximity:      1.5,
 		}
 	case AutoAssignmentStrategyLoadBalancing:
 		return map[ScoringFactor]float64{
@@ -129,6 +146,26 @@ func PresetWeights(strategy AutoAssignmentStrategy) map[ScoringFactor]float64 {
 			FactorHomeTime:          2.0,
 			FactorLoadBalance:       3.0,
 			FactorLaneExperience:    0.5,
+			FactorOnTimeHistory:     0.5,
+			FactorSafetyHistory:     0.5,
+			FactorAcceptance:        1.0,
+			FactorPTOProximity:      1.5,
+		}
+	case AutoAssignmentStrategyPerformance:
+		return map[ScoringFactor]float64{
+			FactorDeadhead:          1.0,
+			FactorHOSMargin:         1.0,
+			FactorOnTime:            2.0,
+			FactorTrailerContinuity: 0.5,
+			FactorFleetMatch:        0.5,
+			FactorDriverTypeFit:     1.0,
+			FactorHomeTime:          0.5,
+			FactorLoadBalance:       0.5,
+			FactorLaneExperience:    1.5,
+			FactorOnTimeHistory:     3.0,
+			FactorSafetyHistory:     2.0,
+			FactorAcceptance:        2.0,
+			FactorPTOProximity:      1.0,
 		}
 	case AutoAssignmentStrategyProximity:
 		return proximityWeights()
@@ -148,5 +185,9 @@ func proximityWeights() map[ScoringFactor]float64 {
 		FactorHomeTime:          0.5,
 		FactorLoadBalance:       0.5,
 		FactorLaneExperience:    0.5,
+		FactorOnTimeHistory:     1.0,
+		FactorSafetyHistory:     0.5,
+		FactorAcceptance:        0.5,
+		FactorPTOProximity:      0.5,
 	}
 }

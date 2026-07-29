@@ -1,5 +1,4 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { format } from "date-fns";
 import {
   DAY_LABEL_HEIGHT_PX,
   HOUR_TICK_HEIGHT_PX,
@@ -7,6 +6,7 @@ import {
 } from "./constants";
 import { secondsToX, type DayColumn, type HourTick, type TimeRange } from "./time-scale";
 import type { TimelineZoom } from "../url-state";
+import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 type TimelineHeaderProps = {
   range: TimeRange;
@@ -72,7 +72,7 @@ export function TimelineHeader({
             className="absolute bottom-0 z-10 -translate-x-1/2 rounded-t bg-brand px-1 py-px font-table text-[8.5px] font-semibold text-brand-foreground tabular-nums"
             style={{ left: nowX }}
           >
-            {format(new Date(now * 1000), "HH:mm")}
+            {formatUnixInUserTimezone(now, { hour: "2-digit", minute: "2-digit", hour12: false })}
           </span>
         )}
       </div>

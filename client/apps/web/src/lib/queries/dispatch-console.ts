@@ -10,23 +10,32 @@ import type {
   DispatchDriverMovesInput,
   DispatchMoveCandidatesInput,
 } from "@trenova/graphql/generated/graphql";
-import { createQueryKeys } from "@lukemorales/query-key-factory";
 
-export const dispatchConsole = createQueryKeys("dispatchConsole", {
+/**
+ * Dispatch console queries use flat string-prefixed keys instead of the merged
+ * query-key factory: the CDC realtime-patching map invalidates the "dispatch-board"
+ * prefix directly, and post-mutation invalidation relies on the same prefixes.
+ */
+export const DISPATCH_BOARD_KEY = "dispatch-board";
+export const DISPATCH_MOVE_CANDIDATES_KEY = "dispatch-move-candidates";
+export const DISPATCH_DRIVER_MOVES_KEY = "dispatch-driver-moves";
+export const DISPATCH_ASSIGNMENT_PREVIEW_KEY = "dispatch-assignment-preview";
+
+export const dispatchConsoleQueries = {
   board: (input: DispatchBoardInput) => ({
-    queryKey: ["dispatch-board", input],
+    queryKey: [DISPATCH_BOARD_KEY, input] as const,
     queryFn: () => getDispatchBoardGraphQL(input),
   }),
   moveCandidates: (input: DispatchMoveCandidatesInput) => ({
-    queryKey: ["dispatch-move-candidates", input],
+    queryKey: [DISPATCH_MOVE_CANDIDATES_KEY, input] as const,
     queryFn: () => getDispatchMoveCandidatesGraphQL(input),
   }),
   driverMoves: (input: DispatchDriverMovesInput) => ({
-    queryKey: ["dispatch-driver-moves", input],
+    queryKey: [DISPATCH_DRIVER_MOVES_KEY, input] as const,
     queryFn: () => getDispatchDriverMovesGraphQL(input),
   }),
   assignmentPreview: (input: DispatchAssignmentPreviewInput) => ({
-    queryKey: ["dispatch-assignment-preview", input],
+    queryKey: [DISPATCH_ASSIGNMENT_PREVIEW_KEY, input] as const,
     queryFn: () => getDispatchAssignmentPreviewGraphQL(input),
   }),
-});
+};

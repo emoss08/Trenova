@@ -17,7 +17,6 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ShipmentMove, SplitMovePayload, SplitMoveResponse, StopType } from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfoIcon } from "lucide-react";
@@ -130,20 +129,17 @@ function MiniStopRow({
 }
 
 function CurrentMovePreview({ move }: { move: ShipmentMove }) {
-  const user = useAuthStore((state) => state.user);
-  const userTimezone = user?.timezone || "auto";
-  const userTimeFormat = user?.timeFormat || "12-hour";
   const pickup = move.stops[0];
   const delivery = move.stops[1];
   if (!pickup || !delivery) return null;
 
   const pickupTime =
     pickup.scheduledWindowStart && pickup.scheduledWindowStart > 0
-      ? formatSplitDateTime(pickup.scheduledWindowStart, userTimeFormat, userTimezone)
+      ? formatSplitDateTime(pickup.scheduledWindowStart)
       : null;
   const deliveryTime =
     delivery.scheduledWindowStart && delivery.scheduledWindowStart > 0
-      ? formatSplitDateTime(delivery.scheduledWindowStart, userTimeFormat, userTimezone)
+      ? formatSplitDateTime(delivery.scheduledWindowStart)
       : null;
 
   return (
@@ -175,26 +171,23 @@ function AfterSplitPreview({
   move: ShipmentMove;
   formValues: SplitMoveFormValues;
 }) {
-  const user = useAuthStore((state) => state.user);
-  const userTimezone = user?.timezone || "auto";
-  const userTimeFormat = user?.timeFormat || "12-hour";
   const pickup = move.stops[0];
   const delivery = move.stops[1];
   if (!pickup || !delivery) return null;
 
   const pickupTime =
     pickup.scheduledWindowStart && pickup.scheduledWindowStart > 0
-      ? formatSplitDateTime(pickup.scheduledWindowStart, userTimeFormat, userTimezone)
+      ? formatSplitDateTime(pickup.scheduledWindowStart)
       : null;
 
   const splitPickupTime =
     formValues.splitPickupScheduledWindowStart > 0
-      ? formatSplitDateTime(formValues.splitPickupScheduledWindowStart, userTimeFormat, userTimezone)
+      ? formatSplitDateTime(formValues.splitPickupScheduledWindowStart)
       : null;
 
   const newDeliveryTime =
     formValues.newDeliveryScheduledWindowStart > 0
-      ? formatSplitDateTime(formValues.newDeliveryScheduledWindowStart, userTimeFormat, userTimezone)
+      ? formatSplitDateTime(formValues.newDeliveryScheduledWindowStart)
       : null;
 
   const hasAssignment = !!move.assignment?.id;

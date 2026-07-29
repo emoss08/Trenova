@@ -22,7 +22,7 @@ import {
   getOperatorsForVariant,
   operatorRequiresValue,
 } from "@/lib/data-table";
-import { dateToUnixTimestamp, toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { formatUnixDate, fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn, truncateText } from "@trenova/shared/lib/utils";
 import type {
   FilterConnector,
@@ -647,7 +647,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
                 <CalendarIcon className="size-4" />
                 {dateValue.from && dateValue.to
                   ? truncateText(
-                      `${toDate(dateValue.from)?.toLocaleDateString()} - ${toDate(dateValue.to)?.toLocaleDateString()}`,
+                      `${formatUnixDate(dateValue.from)} - ${formatUnixDate(dateValue.to)}`,
                       13,
                     )
                   : "Pick date range"}
@@ -659,15 +659,15 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               mode="range"
               className="w-[250px]"
               selected={{
-                from: dateValue.from ? toDate(dateValue.from) : undefined,
-                to: dateValue.to ? toDate(dateValue.to) : undefined,
+                from: toUserWallClock(dateValue.from),
+                to: toUserWallClock(dateValue.to),
               }}
               onSelect={(date) => {
                 onChange(
                   date && (date.from || date.to)
                     ? {
-                        from: toUnixTimeStamp(date.from),
-                        to: toUnixTimeStamp(date.to),
+                        from: fromUserWallClock(date.from),
+                        to: fromUserWallClock(date.to),
                       }
                     : { from: undefined, to: undefined },
                 );
@@ -678,7 +678,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
       );
     }
 
-    const dateValue = typeof value === "number" ? toDate(value) : undefined;
+    const dateValue = typeof value === "number" ? toUserWallClock(value) : undefined;
     return (
       <Popover>
         <PopoverTrigger
@@ -691,7 +691,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               )}
             >
               <CalendarIcon className="mr-2 size-4" />
-              {dateValue ? dateValue.toLocaleDateString() : "Pick date"}
+              {typeof value === "number" ? formatUnixDate(value) : "Pick date"}
             </Button>
           }
         />
@@ -699,7 +699,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
           <Calendar
             mode="single"
             selected={dateValue}
-            onSelect={(date) => onChange(date ? dateToUnixTimestamp(date) : null)}
+            onSelect={(date) => onChange(fromUserWallClock(date) ?? null)}
           />
         </PopoverContent>
       </Popover>

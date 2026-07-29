@@ -152,6 +152,9 @@ func (r *repository) updateCharge(
 	charge.Version = ov + 1
 	charge.UpdatedAt = timeutils.NowUnix()
 
+	// detention_occurrence_id is deliberately absent: the link is written once
+	// when the engine creates the charge and released only by deleting the row,
+	// so a payload that never carried it cannot orphan the occurrence.
 	cols := buncolgen.AdditionalChargeColumns
 	results, err := tx.NewUpdate().
 		Model(charge).

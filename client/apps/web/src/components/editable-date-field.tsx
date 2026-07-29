@@ -1,5 +1,9 @@
 "use no memo";
-import { generateDateOnlyString, toDate, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import {
+  fromUserWallClock,
+  generateDateOnlyString,
+  toUserWallClock,
+} from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -34,7 +38,7 @@ export function EditableDateField({
     [onDateChange],
   );
 
-  const formattedDate = toDate(date ?? undefined);
+  const formattedDate = toUserWallClock(date);
 
   const displayDate = formattedDate
     ? generateDateOnlyString(formattedDate)
@@ -44,7 +48,7 @@ export function EditableDateField({
 
   const handleDateSelect = useCallback(
     (newDate: Date | undefined) => {
-      void handleDateChange(toUnixTimeStamp(newDate) ?? 0);
+      void handleDateChange(fromUserWallClock(newDate) ?? 0);
     },
     [handleDateChange],
   );

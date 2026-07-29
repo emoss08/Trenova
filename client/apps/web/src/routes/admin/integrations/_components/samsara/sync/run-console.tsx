@@ -6,6 +6,7 @@ import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import type { WorkerSyncLogLevel } from "@/types/samsara";
 import { CopyIcon, TerminalIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
 
 function getLogLevelStyles(level: WorkerSyncLogLevel): string {
   switch (level) {
@@ -23,8 +24,8 @@ function getLogLevelStyles(level: WorkerSyncLogLevel): string {
       return "text-foreground";
   }
 }
-function formatTerminalTimestamp(unixTimestamp: number): string {
-  return new Date(unixTimestamp).toLocaleTimeString([], {
+function formatTerminalTimestamp(msTimestamp: number): string {
+  return formatDateInUserTimezone(new Date(msTimestamp), {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",

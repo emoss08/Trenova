@@ -49,7 +49,7 @@ func (f *Factory) ProviderFor(
 		if record.Category != integration.CategoryTelematics || !record.Enabled {
 			continue
 		}
-		if !f.supported(record.Type) {
+		if !record.Type.SupportsTelematics() {
 			continue
 		}
 		return f.ProviderOfType(ctx, tenantInfo, record.Type)
@@ -77,8 +77,4 @@ func (f *Factory) ProviderOfType(
 			string(typ) + " is not a supported telematics provider",
 		)
 	}
-}
-
-func (f *Factory) supported(typ integration.Type) bool {
-	return typ == integration.TypeSamsara
 }

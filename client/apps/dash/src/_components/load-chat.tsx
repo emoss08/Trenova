@@ -22,6 +22,7 @@ import { MessageSquareTextIcon, SendIcon } from "lucide-react";
 import { useDashFeatures } from "./use-dash-features";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { daysUntil, formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 
 const commentTypeLabels: Record<string, string> = {
   Internal: "Note",
@@ -39,17 +40,8 @@ const commentTypeLabels: Record<string, string> = {
 };
 
 function messageTime(unix: number): string {
-  const date = new Date(unix * 1000);
-  const sameDay = new Date().toDateString() === date.toDateString();
-  const time = new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-  if (sameDay) {
-    return time;
-  }
-  const day = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
-  return `${day}, ${time}`;
+  const time = formatUnixTime(unix);
+  return daysUntil(unix) === 0 ? time : `${formatUnixMonthDay(unix)}, ${time}`;
 }
 
 function ChatMessage({ comment }: { comment: PortalLoadComment }) {

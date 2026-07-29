@@ -11,15 +11,8 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import type { Document } from "@trenova/shared/types/document";
 import { Loader2Icon, RotateCcwIcon } from "lucide-react";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatFileSize } from "./document-upload-zone";
-
-function formatShortDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 interface RestoreVersionDialogProps {
   open: boolean;
@@ -82,9 +75,9 @@ export function RestoreVersionDialog({
               </tr>
               <tr>
                 <td className="py-1.5 pr-3 text-muted-foreground">Uploaded</td>
-                <td className="py-1.5 pr-3">{formatShortDate(versionToRestore.createdAt)}</td>
+                <td className="py-1.5 pr-3">{formatUnixDateMedium(versionToRestore.createdAt)}</td>
                 <td className="py-1.5 text-muted-foreground">
-                  {formatShortDate(currentVersion.createdAt)}
+                  {formatUnixDateMedium(currentVersion.createdAt)}
                 </td>
               </tr>
             </tbody>

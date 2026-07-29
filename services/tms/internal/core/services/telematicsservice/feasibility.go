@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	FeasibilityVerdictFeasible   = "feasible"
-	FeasibilityVerdictTight      = "tight"
-	FeasibilityVerdictInfeasible = "infeasible"
-	FeasibilityVerdictUnknown    = "unknown"
+	FeasibilityVerdictFeasible   = telematics.FeasibilityVerdictFeasible
+	FeasibilityVerdictTight      = telematics.FeasibilityVerdictTight
+	FeasibilityVerdictInfeasible = telematics.FeasibilityVerdictInfeasible
+	FeasibilityVerdictUnknown    = telematics.FeasibilityVerdictUnknown
 
 	averageLinehaulMph        = float64(50)
 	feasibilityBufferMs       = int64(30 * 60 * 1000)

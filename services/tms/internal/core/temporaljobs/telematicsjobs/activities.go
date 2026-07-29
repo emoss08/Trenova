@@ -17,6 +17,7 @@ import (
 const (
 	eventRetentionSeconds     = int64(90 * 86400)
 	violationRetentionSeconds = int64(365 * 86400)
+	hosLogRetentionSeconds    = int64(9 * 86400)
 )
 
 type ListTelematicsTenantsPayload struct {
@@ -78,6 +79,7 @@ func (a *Activities) CleanupTelematicsActivity(
 		ctx,
 		now-eventRetentionSeconds,
 		now-violationRetentionSeconds,
+		now-hosLogRetentionSeconds,
 	)
 	if err != nil {
 		return nil, err

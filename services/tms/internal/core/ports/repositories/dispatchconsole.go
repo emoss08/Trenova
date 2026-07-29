@@ -11,12 +11,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// DispatchBoardFilter narrows what the dispatcher console loads. Everything is
-// optional; an empty filter means "the whole tenant over the default horizon".
 type DispatchBoardFilter struct {
 	TenantInfo     pagination.TenantInfo
 	WindowStart    int64
 	WindowEnd      int64
+	DayStartUnix   int64
 	FleetCodeIDs   []pulid.ID
 	CustomerIDs    []pulid.ID
 	ServiceTypeIDs []pulid.ID
@@ -28,9 +27,6 @@ type DispatchBoardFilter struct {
 	Limit          int
 }
 
-// BoardMove is the flattened projection the console renders as a move card. It carries
-// the origin and destination a dispatcher needs to judge coverage without a second
-// round trip into stops or locations.
 type BoardMove struct {
 	MoveID                pulid.ID            `bun:"move_id"           json:"moveId"`
 	ShipmentID            pulid.ID            `bun:"shipment_id"       json:"shipmentId"`
@@ -86,8 +82,6 @@ type BoardMove struct {
 	PreviousMoveTrailerID pulid.ID               `bun:"previous_trailer_id"   json:"previousMoveTrailerId"`
 }
 
-// BoardDriver is one row in the capacity rail: who the driver is, what they drive, and
-// what the telematics feed last said about them.
 type BoardDriver struct {
 	WorkerID             pulid.ID          `bun:"worker_id"              json:"workerId"`
 	FirstName            string            `bun:"first_name"             json:"firstName"`
@@ -112,9 +106,6 @@ type BoardDriver struct {
 	OpenAssignments int `bun:"open_assignments" json:"openAssignments"`
 }
 
-// WorkerCommitment is an assignment a driver already holds inside the planning horizon.
-// It doubles as the timeline's committed block and as the overlap check that stops a
-// driver being double-booked.
 type WorkerCommitment struct {
 	WorkerID       pulid.ID            `bun:"worker_id"        json:"workerId"`
 	MoveID         pulid.ID            `bun:"move_id"          json:"moveId"`
@@ -131,7 +122,6 @@ type WorkerCommitment struct {
 	TrailerID      pulid.ID            `bun:"trailer_id"       json:"trailerId"`
 }
 
-// WorkerTimeOff is an approved PTO block overlapping the planning horizon.
 type WorkerTimeOff struct {
 	WorkerID  pulid.ID       `bun:"worker_id"  json:"workerId"`
 	StartDate int64          `bun:"start_date" json:"startDate"`
@@ -139,8 +129,6 @@ type WorkerTimeOff struct {
 	Type      worker.PTOType `bun:"pto_type"   json:"type"`
 }
 
-// WorkerWorkload is the rolling utilization used by the load-balancing factor, so the
-// optimizer can spread work instead of repeatedly picking the same strong candidate.
 type WorkerWorkload struct {
 	WorkerID     pulid.ID `bun:"worker_id"     json:"workerId"`
 	MoveCount    int      `bun:"move_count"    json:"moveCount"`
@@ -149,15 +137,26 @@ type WorkerWorkload struct {
 	LastEndedAt  int64    `bun:"last_ended_at" json:"lastEndedAt"`
 }
 
-// WorkerLaneExperience counts how often a driver has already run a customer's freight,
-// which dispatchers weigh heavily and which no other signal in the system captures.
 type WorkerLaneExperience struct {
 	WorkerID   pulid.ID `bun:"worker_id"   json:"workerId"`
 	CustomerID pulid.ID `bun:"customer_id" json:"customerId"`
 	MoveCount  int      `bun:"move_count"  json:"moveCount"`
 }
 
-// BoardSummary is the metrics strip at the top of the console.
+type WorkerOnTimeStats struct {
+	WorkerID            pulid.ID `bun:"worker_id"             json:"workerId"`
+	CompletedStops      int      `bun:"completed_stops"       json:"completedStops"`
+	OnTimeStops         int      `bun:"on_time_stops"         json:"onTimeStops"`
+	DriverFaultFailures int      `bun:"driver_fault_failures" json:"driverFaultFailures"`
+}
+
+type WorkerAcceptanceStats struct {
+	WorkerID             pulid.ID `bun:"worker_id"               json:"workerId"`
+	Accepted             int      `bun:"accepted"                json:"accepted"`
+	Declined             int      `bun:"declined"                json:"declined"`
+	AvgAckLatencySeconds float64  `bun:"avg_ack_latency_seconds" json:"avgAckLatencySeconds"`
+}
+
 type BoardSummary struct {
 	UncoveredMoves   int     `bun:"uncovered_moves"   json:"uncoveredMoves"`
 	CoveredMoves     int     `bun:"covered_moves"     json:"coveredMoves"`
@@ -166,7 +165,7 @@ type BoardSummary struct {
 	UnseatedDrivers  int     `bun:"unseated_drivers"  json:"unseatedDrivers"`
 	AvailableDrivers int     `bun:"available_drivers" json:"availableDrivers"`
 	AssignedToday    int     `bun:"assigned_today"    json:"assignedToday"`
-	AverageDeadhead  float64 `bun:"-"                 json:"averageDeadheadMiles"`
+	AverageDeadhead  float64 `bun:"average_deadhead"  json:"averageDeadheadMiles"`
 	UtilizationPct   float64 `bun:"-"                 json:"utilizationPercent"`
 }
 
@@ -196,9 +195,6 @@ type ListEquipmentByIDsRequest struct {
 	TrailerIDs []pulid.ID
 }
 
-// DispatchConsoleRepository serves the dispatcher console's read model. Every method is
-// batch-shaped on purpose: the console renders a whole fleet against a whole board, so
-// per-driver or per-move queries would turn one screen into thousands of round trips.
 type DispatchConsoleRepository interface {
 	ListBoardMoves(ctx context.Context, filter *DispatchBoardFilter) ([]*BoardMove, error)
 	ListBoardDrivers(ctx context.Context, filter *DispatchBoardFilter) ([]*BoardDriver, error)
@@ -212,6 +208,11 @@ type DispatchConsoleRepository interface {
 		ctx context.Context,
 		req *ListLaneExperienceRequest,
 	) ([]*WorkerLaneExperience, error)
+	ListWorkerOnTimeStats(ctx context.Context, req *ListWorkloadRequest) ([]*WorkerOnTimeStats, error)
+	ListWorkerAcceptanceStats(
+		ctx context.Context,
+		req *ListWorkloadRequest,
+	) ([]*WorkerAcceptanceStats, error)
 	GetBoardSummary(ctx context.Context, filter *DispatchBoardFilter) (*BoardSummary, error)
 	ListWorkersByIDs(
 		ctx context.Context,

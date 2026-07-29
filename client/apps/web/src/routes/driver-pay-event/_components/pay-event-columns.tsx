@@ -21,6 +21,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { PauseIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 export function invalidatePayEventQueries(queryClient: ReturnType<typeof useQueryClient>) {
   for (const key of [
@@ -124,12 +125,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
 }
 
 function formatDate(unix: number): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function getColumns(): ColumnDef<DriverPayEventRow>[] {

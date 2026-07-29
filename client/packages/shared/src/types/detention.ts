@@ -175,7 +175,9 @@ export const detentionPolicySchema = z
 
     rateSource: detentionRateSourceSchema.default("Accessorial"),
     accessorialChargeId: z.string().min(1, { error: "Accessorial charge is required" }),
-    tiers: z.array(detentionPolicyTierSchema).default([]),
+    // A policy that does not use a rate ladder carries no tiers, and the server
+    // sends that absence as null. Normalize it so nothing downstream has to.
+    tiers: z.preprocess((value) => value ?? [], z.array(detentionPolicyTierSchema)),
 
     maxBillableMinutesPerStop: z.number().int().min(1).nullish(),
     maxChargePerStop: decimalStringSchema,
@@ -235,7 +237,10 @@ export const tierSnapshotSchema = z.object({
 });
 
 export const policySnapshotSchema = z.object({
-  policyId: z.string(),
+  policyId: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   policyCode: z.string(),
   policyName: z.string(),
   specificityScore: z.number().int(),
@@ -293,7 +298,7 @@ export const traceStepSchema = z.object({
 export type TraceStep = z.infer<typeof traceStepSchema>;
 
 export const calculationTraceSchema = z.object({
-  steps: z.array(traceStepSchema).default([]),
+  steps: z.preprocess((value) => value ?? [], z.array(traceStepSchema)),
   engineVersion: z.string(),
   computedAt: z.number().int(),
   deterministic: z.boolean().default(true),

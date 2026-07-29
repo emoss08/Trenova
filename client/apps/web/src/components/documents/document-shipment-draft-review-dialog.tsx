@@ -25,6 +25,7 @@ import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 interface DocumentShipmentDraftReviewDialogProps {
   open: boolean;
@@ -70,8 +71,7 @@ function parseTimestamp(value?: string): number {
 }
 
 function formatUnixTimestamp(value?: number | null) {
-  if (!value) return "Not recorded";
-  return new Date(value * 1000).toLocaleString();
+  return formatUnixDateTime(value, { fallback: "Not recorded" });
 }
 
 function getFieldValue(draft: DocumentShipmentDraft | null, key: string): unknown {

@@ -7,6 +7,7 @@ import type { JournalEntryLine } from "@/types/journal-entry";
 import { ChevronRightIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 export type PostingEntry = {
   id: string;
@@ -22,12 +23,7 @@ export type PostingEntry = {
 };
 
 export function formatAccountingDate(unix: number | null | undefined): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function JournalEntryPostingCard({

@@ -23,14 +23,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, CopyIcon, SmartphoneIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix?: number | null): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 const invitationStatusVariants: Record<string, React.ComponentProps<typeof Badge>["variant"]> = {

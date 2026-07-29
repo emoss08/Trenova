@@ -129,6 +129,58 @@ func TestSolve_DegenerateInputs(t *testing.T) {
 	assert.Empty(t, ragged.RowAssignment, "a ragged matrix yields nothing rather than panicking")
 }
 
+func TestSolve_InfiniteCostsNeverCorruptTheMatching(t *testing.T) {
+	t.Parallel()
+
+	inf := math.Inf(1)
+
+	result := assignmentsolver.Solve([][]float64{
+		{5, inf},
+		{3, inf},
+	})
+
+	assertValidAssignment(t, result, 2, 2)
+	assert.Equal(t, 0, result.RowAssignment[0], "the first row keeps its finite pairing")
+	assert.Equal(t, assignmentsolver.Unassigned, result.RowAssignment[1],
+		"the stuck row stays unassigned instead of stealing a matched column")
+	assert.InDelta(t, 5.0, result.TotalCost, 0.0001)
+}
+
+func TestSolve_AllInfiniteAssignsNothing(t *testing.T) {
+	t.Parallel()
+
+	inf := math.Inf(1)
+
+	result := assignmentsolver.Solve([][]float64{
+		{inf, inf},
+		{inf, inf},
+	})
+
+	assertValidAssignment(t, result, 2, 2)
+	for _, col := range result.RowAssignment {
+		assert.Equal(t, assignmentsolver.Unassigned, col)
+	}
+	assert.InDelta(t, 0.0, result.TotalCost, 0.0001)
+}
+
+func TestSolve_MixedInfiniteAndFiniteStaysOptimal(t *testing.T) {
+	t.Parallel()
+
+	inf := math.Inf(1)
+
+	result := assignmentsolver.Solve([][]float64{
+		{inf, 2, inf},
+		{4, inf, 6},
+		{inf, inf, 1},
+	})
+
+	assertValidAssignment(t, result, 3, 3)
+	assert.Equal(t, 1, result.RowAssignment[0])
+	assert.Equal(t, 0, result.RowAssignment[1])
+	assert.Equal(t, 2, result.RowAssignment[2])
+	assert.InDelta(t, 7.0, result.TotalCost, 0.0001)
+}
+
 func TestSolve_SingleCell(t *testing.T) {
 	t.Parallel()
 

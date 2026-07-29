@@ -1,4 +1,9 @@
-import { generateDateOnlyString, generateDateTimeString, toUnixTimeStamp } from "@trenova/shared/lib/date";
+import {
+  generateDateOnlyString,
+  generateDateTimeString,
+  setUserDatePreferences,
+  toUnixTimeStamp,
+} from "@trenova/shared/lib/date";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, useWatch } from "react-hook-form";
@@ -55,8 +60,22 @@ function DateTimeFieldHarness({ initialDateTime }: { initialDateTime: Date }) {
   );
 }
 
+function TimestampHarness({ initialTimestamp }: { initialTimestamp: number }) {
+  const form = useForm<TestFormValues>({
+    defaultValues: { date: initialTimestamp, dateTime: null },
+  });
+
+  return (
+    <>
+      <AutoCompleteDateField control={form.control} label="Date" name="date" />
+      <FormValue control={form.control} name="date" />
+    </>
+  );
+}
+
 afterEach(() => {
   cleanup();
+  setUserDatePreferences({});
 });
 
 describe("AutoCompleteDateField", () => {
@@ -197,6 +216,32 @@ describe("AutoCompleteDateTimeField", () => {
     expect(input).toHaveValue(generateDateTimeString(expectedDateTime));
     expect(screen.getByLabelText("dateTime value")).toHaveTextContent(
       String(toUnixTimeStamp(expectedDateTime)),
+    );
+  });
+});
+
+describe("timezone-aware values", () => {
+  // 2024-01-15 23:30 in Denver is already 2024-01-16 in UTC, so a field that
+  // read the browser's clock would show — and store — the wrong day.
+  const LATE_ON_JAN_15_IN_DENVER = Math.floor(Date.UTC(2024, 0, 16, 6, 30) / 1000);
+  const MIDNIGHT_JAN_20_IN_DENVER = Math.floor(Date.UTC(2024, 0, 20, 7, 0) / 1000);
+
+  it("reads and writes the day the user is in, not the day the browser is in", async () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+    const user = userEvent.setup();
+
+    render(<TimestampHarness initialTimestamp={LATE_ON_JAN_15_IN_DENVER} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    expect(input).toHaveValue("01/15/2024");
+
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}01/20/2024");
+    await user.tab();
+
+    expect(input).toHaveValue("01/20/2024");
+    expect(screen.getByLabelText("date value")).toHaveTextContent(
+      String(MIDNIGHT_JAN_20_IN_DENVER),
     );
   });
 });

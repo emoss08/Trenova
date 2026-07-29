@@ -31,6 +31,7 @@ type Params struct {
 	NoticeRepo        repositories.DetentionNoticeRepository
 	AnalyticsRepo     repositories.DetentionAnalyticsRepository
 	CustomerRepo      repositories.CustomerRepository
+	CommentRepo       repositories.ShipmentCommentRepository
 	EmailService      services.EmailService
 	AuditService      services.AuditService
 }
@@ -47,6 +48,7 @@ type Service struct {
 	noticeRepo        repositories.DetentionNoticeRepository
 	analyticsRepo     repositories.DetentionAnalyticsRepository
 	customerRepo      repositories.CustomerRepository
+	commentRepo       repositories.ShipmentCommentRepository
 	emailService      services.EmailService
 	auditService      services.AuditService
 	now               func() int64
@@ -65,6 +67,7 @@ func New(p Params) *Service {
 		noticeRepo:        p.NoticeRepo,
 		analyticsRepo:     p.AnalyticsRepo,
 		customerRepo:      p.CustomerRepo,
+		commentRepo:       p.CommentRepo,
 		emailService:      p.EmailService,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
@@ -278,6 +281,11 @@ func (s *Service) computeStop(
 	}
 
 	s.recordRecalculation(ctx, saved, p.existing)
+	s.recordChargeComment(ctx, chargeCommentParams{
+		occurrence: saved,
+		previous:   p.existing,
+		stop:       p.stop,
+	})
 
 	return saved, nil
 }

@@ -2,9 +2,22 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowRightIcon, InboxIcon, type LucideIcon } from "lucide-react";
+import { createContext, useContext, type ReactNode } from "react";
 import { Link } from "react-router";
+
+/**
+ * True while the canvas is in edit mode. The canvas's edit bar becomes every
+ * tile's header, so the shell drops its own header and footer rather than
+ * stacking two title rows on one card.
+ */
+const WidgetEditingContext = createContext(false);
+
+export const WidgetEditingProvider = WidgetEditingContext.Provider;
+
+export function useWidgetEditing(): boolean {
+  return useContext(WidgetEditingContext);
+}
 
 export type WidgetShellProps = {
   title: string;
@@ -41,18 +54,22 @@ export function WidgetShell({
   bodyClassName,
   children,
 }: WidgetShellProps) {
+  const editing = useWidgetEditing();
+
   const body = (
     <div className={cn("flex min-h-0 flex-1 flex-col p-3", bodyClassName)}>{children}</div>
   );
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-      <div className="flex h-8 shrink-0 items-center gap-1.5 border-b border-border px-2.5">
-        {Icon && <Icon className="size-3 shrink-0 text-muted-foreground" />}
-        <span className="cc-label min-w-0 flex-1 truncate text-foreground">{title}</span>
-        {badge}
-        {actions}
-      </div>
+      {!editing && (
+        <div className="flex h-8 shrink-0 items-center gap-1.5 border-b border-border/60 px-2.5">
+          {Icon && <Icon className="size-3 shrink-0 text-muted-foreground" />}
+          <span className="cc-label min-w-0 flex-1 truncate text-foreground">{title}</span>
+          {badge}
+          {actions}
+        </div>
+      )}
 
       {scroll ? (
         <ScrollArea className="min-h-0 flex-1" maskVariant="card">
@@ -62,13 +79,13 @@ export function WidgetShell({
         body
       )}
 
-      {href && (
+      {href && !editing && (
         <Link
           to={href}
-          className="flex h-7 shrink-0 items-center justify-between border-t border-border px-2.5 text-2xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+          className="group/footer flex h-7 shrink-0 items-center justify-between border-t border-border/60 px-2.5 text-2xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
         >
           <span>{hrefLabel}</span>
-          <ArrowRightIcon className="size-3" />
+          <ArrowRightIcon className="size-3 transition-transform duration-200 group-hover/footer:translate-x-0.5" />
         </Link>
       )}
     </div>
@@ -108,10 +125,19 @@ export function WidgetCount({
  * An empty state that says what the emptiness means. "No unassigned loads" is
  * information; "No data" is an apology.
  */
-export function WidgetEmpty({ children }: { children: ReactNode }) {
+export function WidgetEmpty({
+  icon: Icon = InboxIcon,
+  children,
+}: {
+  icon?: LucideIcon;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-1 py-4 text-center">
-      <p className="text-2xs text-muted-foreground">{children}</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
+      <span className="flex size-7 items-center justify-center rounded-full border border-border/60 bg-muted/50">
+        <Icon className="size-3.5 text-muted-foreground/70" />
+      </span>
+      <p className="max-w-52 text-2xs text-muted-foreground">{children}</p>
     </div>
   );
 }

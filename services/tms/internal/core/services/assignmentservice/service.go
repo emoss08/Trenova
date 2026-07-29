@@ -42,6 +42,7 @@ type Params struct {
 	DispatchControlRepo repositories.DispatchControlRepository
 	WorkerRepo          repositories.WorkerRepository
 	TelematicsRepo      repositories.TelematicsRepository
+	IntegrationRepo     repositories.IntegrationRepository
 	CommodityRepo       repositories.CommodityRepository
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	TrailerRepo         repositories.TrailerRepository
@@ -64,6 +65,7 @@ type service struct {
 	dispatchControlRepo repositories.DispatchControlRepository
 	workerRepo          repositories.WorkerRepository
 	telematicsRepo      repositories.TelematicsRepository
+	integrationRepo     repositories.IntegrationRepository
 	commodityRepo       repositories.CommodityRepository
 	continuityRepo      repositories.EquipmentContinuityRepository
 	trailerRepo         repositories.TrailerRepository
@@ -87,6 +89,7 @@ func New(p Params) portservices.AssignmentService {
 		dispatchControlRepo: p.DispatchControlRepo,
 		workerRepo:          p.WorkerRepo,
 		telematicsRepo:      p.TelematicsRepo,
+		integrationRepo:     p.IntegrationRepo,
 		commodityRepo:       p.CommodityRepo,
 		continuityRepo:      p.ContinuityRepo,
 		trailerRepo:         p.TrailerRepo,

@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@trenova/shared/components/ui/popover";
-import { toUnixTimeStamp } from "@trenova/shared/lib/date";
+import { fromUserWallClock } from "@trenova/shared/lib/date";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useCallback } from "react";
@@ -20,7 +20,7 @@ type DatePickerFieldProps = {
 export function DatePickerField({ date, setDate }: DatePickerFieldProps) {
   const handleDateSelect = useCallback(
     (newDate: Date | undefined) => {
-      setDate(toUnixTimeStamp(newDate));
+      setDate(fromUserWallClock(newDate));
     },
     [setDate],
   );

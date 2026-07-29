@@ -1,21 +1,8 @@
 package telematicsservice
 
-import (
-	"regexp"
-	"strconv"
-)
+import "github.com/emoss08/trenova/internal/core/services/hosprojection"
 
-const (
-	hourMs                = int64(3_600_000)
-	defaultDriveLimitMs   = 11 * hourMs
-	defaultShiftLimitMs   = 14 * hourMs
-	defaultCycleLimitMs   = 70 * hourMs
-	defaultBreakLimitMs   = 8 * hourMs
-	canadaSouthJurisdicCS = "CS"
-	canadaNorthJurisdicCN = "CN"
-)
-
-var cycleHoursPattern = regexp.MustCompile(`(\d+)\s*hour`)
+const hourMs = int64(3_600_000)
 
 type HOSLimits struct {
 	DriveMs int64 `json:"driveMs"`
@@ -25,32 +12,11 @@ type HOSLimits struct {
 }
 
 func LimitsForRuleset(cycle, shift, jurisdiction string) HOSLimits {
-	limits := HOSLimits{
-		DriveMs: defaultDriveLimitMs,
-		ShiftMs: defaultShiftLimitMs,
-		CycleMs: defaultCycleLimitMs,
-		BreakMs: defaultBreakLimitMs,
+	limits := hosprojection.LimitsForRuleset(cycle, shift, jurisdiction)
+	return HOSLimits{
+		DriveMs: limits.DriveMs,
+		ShiftMs: limits.ShiftMs,
+		CycleMs: limits.CycleMs,
+		BreakMs: limits.BreakMs,
 	}
-
-	if match := cycleHoursPattern.FindStringSubmatch(cycle); len(match) == 2 {
-		if hours, err := strconv.ParseInt(match[1], 10, 64); err == nil && hours > 0 {
-			limits.CycleMs = hours * hourMs
-		}
-	}
-
-	switch shift {
-	case "US Interstate Passenger":
-		limits.DriveMs = 10 * hourMs
-		limits.ShiftMs = 15 * hourMs
-	case "Texas Intrastate":
-		limits.DriveMs = 12 * hourMs
-		limits.ShiftMs = 15 * hourMs
-	}
-
-	if jurisdiction == canadaSouthJurisdicCS || jurisdiction == canadaNorthJurisdicCN {
-		limits.DriveMs = 13 * hourMs
-		limits.ShiftMs = 16 * hourMs
-	}
-
-	return limits
 }

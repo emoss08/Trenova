@@ -17,18 +17,14 @@ import type { CashApplicationRow } from "@trenova/shared/types/customer-payment"
 import { WandSparklesIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 type CashApplicationFormShape = {
   applications: CashApplicationRow[];
 };
 
 function formatDate(unix: number): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function CashApplicationEditor({

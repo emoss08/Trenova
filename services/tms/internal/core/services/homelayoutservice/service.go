@@ -172,10 +172,12 @@ func (s *Service) Update(ctx context.Context, req *UpdateRequest) (*EffectiveLay
 		return nil, multiErr
 	}
 
-	assigned, err := s.assignedPreset(ctx, &req.Request)
+	roles, presets, err := s.loadPresetContext(ctx, &req.Request)
 	if err != nil {
 		return nil, err
 	}
+
+	assigned, _ := pickPreset(presets, roles)
 	if assigned != nil && assigned.Locked {
 		return nil, errortypes.NewAuthorizationError(
 			"Your administrator manages this home screen",
@@ -193,7 +195,7 @@ func (s *Service) Update(ctx context.Context, req *UpdateRequest) (*EffectiveLay
 		return nil, err
 	}
 
-	resolved, err := s.resolve(ctx, &req.Request, saved.Preferences.Normalize())
+	resolved, err := s.resolveWith(ctx, &req.Request, saved.Preferences.Normalize(), roles, presets)
 	if err != nil {
 		return nil, err
 	}

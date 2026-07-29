@@ -386,6 +386,18 @@ func (r *mutationResolver) CreateShipmentComment(ctx context.Context, shipmentID
 	if err != nil {
 		return nil, err
 	}
+	attachmentDocumentIDs, err := parseIDs(input.AttachmentDocumentIds)
+	if err != nil {
+		return nil, err
+	}
+	var parentCommentID *pulid.ID
+	if input.ParentCommentID != nil && *input.ParentCommentID != "" {
+		parsedParentID, parseErr := pulid.MustParse(*input.ParentCommentID)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		parentCommentID = &parsedParentID
+	}
 	commentType := shipmentdomain.CommentTypeInternal
 	if input.Type != nil {
 		commentType = shipmentdomain.CommentType(*input.Type)
@@ -398,16 +410,30 @@ func (r *mutationResolver) CreateShipmentComment(ctx context.Context, shipmentID
 	if input.Priority != nil {
 		priority = shipmentdomain.CommentPriority(*input.Priority)
 	}
+	requiresAcknowledgment := priority == shipmentdomain.CommentPriorityUrgent &&
+		parentCommentID == nil
+	if input.RequiresAcknowledgment != nil {
+		requiresAcknowledgment = *input.RequiresAcknowledgment
+	}
+	var metadata map[string]any
+	if input.ClientRef != nil && *input.ClientRef != "" {
+		metadata = map[string]any{"clientRef": *input.ClientRef}
+	}
 	entity, err := r.shipmentCommentService.Create(ctx, &shipmentdomain.ShipmentComment{
-		BusinessUnitID:   authCtx.BusinessUnitID,
-		OrganizationID:   authCtx.OrganizationID,
-		ShipmentID:       parsedShipmentID,
-		UserID:           authCtx.UserID,
-		Comment:          input.Comment,
-		Type:             commentType,
-		Visibility:       visibility,
-		Priority:         priority,
-		MentionedUserIDs: mentionedUserIDs,
+		BusinessUnitID:         authCtx.BusinessUnitID,
+		OrganizationID:         authCtx.OrganizationID,
+		ShipmentID:             parsedShipmentID,
+		UserID:                 authCtx.UserID,
+		ParentCommentID:        parentCommentID,
+		Comment:                input.Comment,
+		Body:                   input.Body,
+		Type:                   commentType,
+		Visibility:             visibility,
+		Priority:               priority,
+		RequiresAcknowledgment: requiresAcknowledgment,
+		Metadata:               metadata,
+		MentionedUserIDs:       mentionedUserIDs,
+		AttachmentDocumentIDs:  attachmentDocumentIDs,
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
@@ -435,6 +461,10 @@ func (r *mutationResolver) UpdateShipmentComment(ctx context.Context, shipmentID
 	if err != nil {
 		return nil, err
 	}
+	attachmentDocumentIDs, err := parseIDs(input.AttachmentDocumentIds)
+	if err != nil {
+		return nil, err
+	}
 	commentType := shipmentdomain.CommentTypeInternal
 	if input.Type != nil {
 		commentType = shipmentdomain.CommentType(*input.Type)
@@ -447,18 +477,33 @@ func (r *mutationResolver) UpdateShipmentComment(ctx context.Context, shipmentID
 	if input.Priority != nil {
 		priority = shipmentdomain.CommentPriority(*input.Priority)
 	}
-	entity, err := r.shipmentCommentService.Update(ctx, &shipmentdomain.ShipmentComment{
-		ID:               parsedCommentID,
-		BusinessUnitID:   authCtx.BusinessUnitID,
-		OrganizationID:   authCtx.OrganizationID,
-		ShipmentID:       parsedShipmentID,
-		UserID:           authCtx.UserID,
-		Comment:          input.Comment,
-		Type:             commentType,
-		Visibility:       visibility,
-		Priority:         priority,
-		Version:          int64(input.Version),
-		MentionedUserIDs: mentionedUserIDs,
+	requiresAcknowledgment := priority == shipmentdomain.CommentPriorityUrgent
+	if input.RequiresAcknowledgment != nil {
+		requiresAcknowledgment = *input.RequiresAcknowledgment
+	}
+	entity, err := r.shipmentCommentService.Update(ctx, &services.UpdateShipmentCommentRequest{
+		Entity: &shipmentdomain.ShipmentComment{
+			ID:                     parsedCommentID,
+			BusinessUnitID:         authCtx.BusinessUnitID,
+			OrganizationID:         authCtx.OrganizationID,
+			ShipmentID:             parsedShipmentID,
+			UserID:                 authCtx.UserID,
+			Comment:                input.Comment,
+			Body:                   input.Body,
+			Type:                   commentType,
+			Visibility:             visibility,
+			Priority:               priority,
+			RequiresAcknowledgment: requiresAcknowledgment,
+			Version:                int64(input.Version),
+			MentionedUserIDs:       mentionedUserIDs,
+			AttachmentDocumentIDs:  attachmentDocumentIDs,
+		},
+		AsModerator: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceShipmentComment,
+			permission.OpManage,
+		),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
@@ -482,15 +527,76 @@ func (r *mutationResolver) DeleteShipmentComment(ctx context.Context, shipmentID
 	if err != nil {
 		return false, err
 	}
-	if err = r.shipmentCommentService.Delete(ctx, &repositories.DeleteShipmentCommentRequest{
+	if err = r.shipmentCommentService.Delete(ctx, &services.DeleteShipmentCommentRequest{
 		ShipmentID: parsedShipmentID,
 		CommentID:  parsedCommentID,
 		TenantInfo: tenantInfo(authCtx),
+		AsModerator: r.hasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceShipmentComment,
+			permission.OpManage,
+		),
 	}, actorutil.FromAuthContext(authCtx)); err != nil {
 		return false, err
 	}
 
 	return true, nil
+}
+
+// PinShipmentComment is the resolver for the pinShipmentComment field.
+func (r *mutationResolver) PinShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error) {
+	return r.toggleShipmentComment(
+		ctx,
+		shipmentID,
+		commentID,
+		permission.OpPin,
+		r.shipmentCommentService.Pin,
+	)
+}
+
+// UnpinShipmentComment is the resolver for the unpinShipmentComment field.
+func (r *mutationResolver) UnpinShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error) {
+	return r.toggleShipmentComment(
+		ctx,
+		shipmentID,
+		commentID,
+		permission.OpUnpin,
+		r.shipmentCommentService.Unpin,
+	)
+}
+
+// ResolveShipmentComment is the resolver for the resolveShipmentComment field.
+func (r *mutationResolver) ResolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error) {
+	return r.toggleShipmentComment(
+		ctx,
+		shipmentID,
+		commentID,
+		permission.OpResolve,
+		r.shipmentCommentService.Resolve,
+	)
+}
+
+// UnresolveShipmentComment is the resolver for the unresolveShipmentComment field.
+func (r *mutationResolver) UnresolveShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error) {
+	return r.toggleShipmentComment(
+		ctx,
+		shipmentID,
+		commentID,
+		permission.OpResolve,
+		r.shipmentCommentService.Unresolve,
+	)
+}
+
+// AcknowledgeShipmentComment is the resolver for the acknowledgeShipmentComment field.
+func (r *mutationResolver) AcknowledgeShipmentComment(ctx context.Context, shipmentID string, commentID string) (*gqlmodel.ShipmentComment, error) {
+	return r.toggleShipmentComment(
+		ctx,
+		shipmentID,
+		commentID,
+		permission.OpRead,
+		r.shipmentCommentService.Acknowledge,
+	)
 }
 
 // Shipments is the resolver for the shipments field.
@@ -592,7 +698,7 @@ func (r *queryResolver) UnassignedShipments(ctx context.Context, first *int, aft
 }
 
 // ShipmentComments is the resolver for the shipmentComments field.
-func (r *queryResolver) ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string) (*gqlmodel.ShipmentCommentConnection, error) {
+func (r *queryResolver) ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) (*gqlmodel.ShipmentCommentConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -609,14 +715,58 @@ func (r *queryResolver) ShipmentComments(ctx context.Context, shipmentID string,
 	if err != nil {
 		return nil, err
 	}
-	filter := queryOptionsFromGraphQL(gqlListOptions{
+	listFilters, err := shipmentCommentFiltersFromGraphQL(filter)
+	if err != nil {
+		return nil, err
+	}
+	queryOptions := queryOptionsFromGraphQL(gqlListOptions{
 		TenantInfo: tenantInfo(authCtx),
 		Limit:      page.Cursor.Limit,
 	})
 	result, err := r.shipmentCommentService.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
 		ShipmentID: parsedShipmentID,
-		Filter:     filter,
+		Filter:     queryOptions,
 		Cursor:     page.Cursor,
+		Filters:    listFilters,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return shipmentCommentConnectionToModel(result)
+}
+
+// ShipmentCommentReplies is the resolver for the shipmentCommentReplies field.
+func (r *queryResolver) ShipmentCommentReplies(ctx context.Context, shipmentID string, commentID string, first *int, after *string) (*gqlmodel.ShipmentCommentConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedShipmentID, err := pulid.MustParse(shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	parsedCommentID, err := pulid.MustParse(commentID)
+	if err != nil {
+		return nil, err
+	}
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
+	})
+	if err != nil {
+		return nil, err
+	}
+	queryOptions := queryOptionsFromGraphQL(gqlListOptions{
+		TenantInfo: tenantInfo(authCtx),
+		Limit:      page.Cursor.Limit,
+	})
+	result, err := r.shipmentCommentService.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
+		ShipmentID:      parsedShipmentID,
+		ParentCommentID: &parsedCommentID,
+		Filter:          queryOptions,
+		Cursor:          page.Cursor,
 	})
 	if err != nil {
 		return nil, err

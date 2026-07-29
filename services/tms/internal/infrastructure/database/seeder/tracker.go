@@ -22,6 +22,7 @@ type SeedTracker interface {
 		duration time.Duration,
 	) error
 	RecordFailure(ctx context.Context, seed Seed, env common.Environment, seedErr error) error
+	RecordRollback(ctx context.Context, seed Seed, env common.Environment) error
 	GetStatus(ctx context.Context) ([]*common.SeedStatus, error)
 }
 
@@ -164,15 +165,43 @@ func (t *Tracker) RecordFailure(
 		Error:       seedErr.Error(),
 	}
 
+	// A seed runs in its own transaction, so a failed re-run of an already
+	// applied seed changed nothing: the recorded failure must not demote the
+	// earlier successful application, or the next run will try to apply it again.
 	_, err := t.db.NewInsert().
 		Model(record).
 		On("CONFLICT (name, version, environment) DO UPDATE").
 		Set("applied_at = EXCLUDED.applied_at").
-		Set("status = EXCLUDED.status").
+		Set("status = CASE WHEN seed_history.status = 'Active' " +
+			"THEN seed_history.status ELSE EXCLUDED.status END").
 		Set("error = EXCLUDED.error").
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to record seed failure: %w", err)
+	}
+
+	return nil
+}
+
+// RecordRollback marks a seed as no longer applied so a later run re-applies it.
+// Without this a rolled-back seed keeps its Active row and the data it created
+// can never come back.
+func (t *Tracker) RecordRollback(
+	ctx context.Context,
+	seed Seed,
+	env common.Environment,
+) error {
+	_, err := t.db.NewUpdate().
+		Model((*SeedRecord)(nil)).
+		Set("status = ?", SeedStatusInactive).
+		Set("error = NULL").
+		Set("notes = ?", "Rolled back").
+		Where("name = ?", seed.Name()).
+		Where("version = ?", seed.Version()).
+		Where("environment = ?", env).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to record seed rollback: %w", err)
 	}
 
 	return nil

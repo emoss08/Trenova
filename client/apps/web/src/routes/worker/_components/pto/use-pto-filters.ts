@@ -1,4 +1,4 @@
-import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
+import { getEndOfMonth, getStartOfMonth } from "@trenova/shared/lib/date";
 import type { PTOType } from "@trenova/shared/types/worker";
 import { useMemo } from "react";
 
@@ -18,12 +18,8 @@ export function usePTOFilters() {
 
   const defaultValues = useMemo(
     () => ({
-      startDate: dateToUnixTimestamp(
-        new Date(now.getFullYear(), now.getMonth(), 1),
-      ),
-      endDate: dateToUnixTimestamp(
-        new Date(now.getFullYear(), now.getMonth() + 1, 0),
-      ),
+      startDate: getStartOfMonth(now),
+      endDate: getEndOfMonth(now),
       type: undefined as PTOType | undefined,
       workerId: undefined as string | undefined,
     }),

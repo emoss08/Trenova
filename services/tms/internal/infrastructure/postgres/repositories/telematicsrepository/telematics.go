@@ -244,6 +244,116 @@ func (r *repository) ListWorkerHOSViolations(
 	return entities, nil
 }
 
+func (r *repository) ListWorkerHOSViolationStats(
+	ctx context.Context,
+	req *repositories.ListWorkerHOSViolationStatsRequest,
+) ([]*repositories.WorkerHOSViolationStats, error) {
+	cols := buncolgen.WorkerHOSViolationColumns
+
+	rows := make([]*repositories.WorkerHOSViolationStats, 0, len(req.WorkerIDs))
+	err := r.db.DB().NewSelect().
+		TableExpr(buncolgen.WorkerHOSViolationTable.Name+" AS "+buncolgen.WorkerHOSViolationTable.Alias).
+		ColumnExpr(cols.WorkerID.As("worker_id")).
+		ColumnExpr(buncolgen.Count("violation_count")).
+		ColumnExpr(buncolgen.Max(cols.ViolationStartAt, "last_violation_at")).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = sq.
+				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+			if len(req.WorkerIDs) > 0 {
+				sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
+			}
+			if req.Since > 0 {
+				sq = sq.Where(cols.ViolationStartAt.Gte(), req.Since)
+			}
+			return sq
+		}).
+		GroupExpr(cols.WorkerID.Qualified()).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, fmt.Errorf("list worker hos violation stats: %w", err)
+	}
+	return rows, nil
+}
+
+func (r *repository) SyncWorkerHOSLogs(
+	ctx context.Context,
+	req *repositories.SyncWorkerHOSLogsRequest,
+) (int, error) {
+	if len(req.WorkerIDs) == 0 {
+		return 0, nil
+	}
+
+	cols := buncolgen.WorkerHOSLogColumns
+	synced := 0
+	err := r.db.DB().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, execErr := tx.NewDelete().
+			Model((*telematics.WorkerHOSLog)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.WorkerHOSLogScopeTenantDelete(dq, req.TenantInfo).
+					Where(cols.WorkerID.In(), bun.List(req.WorkerIDs)).
+					Where(cols.LogStartAt.Gte(), req.WindowStart)
+			}).
+			Exec(ctx)
+		if execErr != nil {
+			return execErr
+		}
+
+		if len(req.Logs) == 0 {
+			return nil
+		}
+
+		result, execErr := tx.NewInsert().
+			Model(&req.Logs).
+			On("CONFLICT (organization_id, business_unit_id, worker_id, log_start_at) DO UPDATE").
+			Set(cols.DutyStatus.SetExcluded()).
+			Set(cols.LogEndAt.SetExcluded()).
+			Set(cols.Remark.SetExcluded()).
+			Set(cols.Provider.SetExcluded()).
+			Set(cols.ProviderVehicleID.SetExcluded()).
+			Set(cols.ReceivedAt.SetExcluded()).
+			Exec(ctx)
+		if execErr != nil {
+			return execErr
+		}
+		if rows, raErr := result.RowsAffected(); raErr == nil {
+			synced = int(rows)
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, fmt.Errorf("sync worker hos logs: %w", err)
+	}
+	return synced, nil
+}
+
+func (r *repository) ListWorkerHOSLogs(
+	ctx context.Context,
+	req *repositories.ListWorkerHOSLogsRequest,
+) ([]*telematics.WorkerHOSLog, error) {
+	cols := buncolgen.WorkerHOSLogColumns
+
+	entities := make([]*telematics.WorkerHOSLog, 0)
+	q := r.db.DB().NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.WorkerHOSLogScopeTenant(sq, req.TenantInfo)
+			if len(req.WorkerIDs) > 0 {
+				sq = sq.Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
+			}
+			if req.Since > 0 {
+				sq = sq.Where(cols.LogStartAt.Gte(), req.Since)
+			}
+			return sq
+		}).
+		Order(cols.WorkerID.OrderAsc(), cols.LogStartAt.OrderAsc())
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list worker hos logs: %w", err)
+	}
+	return entities, nil
+}
+
 func (r *repository) UpsertVehicleInspections(
 	ctx context.Context,
 	inspections []*telematics.VehicleInspection,
@@ -613,6 +723,7 @@ func (r *repository) CleanupExpired(
 	ctx context.Context,
 	eventsOlderThan int64,
 	violationsOlderThan int64,
+	hosLogsOlderThan int64,
 ) (int64, error) {
 	total := int64(0)
 
@@ -635,6 +746,17 @@ func (r *repository) CleanupExpired(
 		return 0, fmt.Errorf("cleanup hos violations: %w", err)
 	}
 	if rows, raErr := violationsResult.RowsAffected(); raErr == nil {
+		total += rows
+	}
+
+	logsResult, err := r.db.DB().NewDelete().
+		Model((*telematics.WorkerHOSLog)(nil)).
+		Where(buncolgen.WorkerHOSLogColumns.LogStartAt.Lt(), hosLogsOlderThan).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("cleanup hos logs: %w", err)
+	}
+	if rows, raErr := logsResult.RowsAffected(); raErr == nil {
 		total += rows
 	}
 

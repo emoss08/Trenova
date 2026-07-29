@@ -4,6 +4,7 @@ package shipmentcommentservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,10 +31,20 @@ import (
 
 const (
 	mentionEventType     = "shipment_comment_mention"
+	replyEventType       = "shipment_comment_reply"
 	mentionExcerptLength = 240
 
 	dataKeyShipmentID = "shipmentId"
 	dataKeyCommentID  = "commentId"
+
+	actionCreated      = "created"
+	actionUpdated      = "updated"
+	actionDeleted      = "deleted"
+	actionPinned       = "pinned"
+	actionUnpinned     = "unpinned"
+	actionResolved     = "resolved"
+	actionUnresolved   = "unresolved"
+	actionAcknowledged = "acknowledged"
 )
 
 type Params struct {
@@ -42,6 +54,8 @@ type Params struct {
 	Repo                repositories.ShipmentCommentRepository
 	ShipmentRepo        repositories.ShipmentRepository
 	UserRepo            repositories.UserRepository
+	DocumentRepo        repositories.DocumentRepository
+	DocumentService     *documentservice.Service
 	AuditService        services.AuditService
 	EventService        services.ShipmentEventService
 	Realtime            services.RealtimeService
@@ -53,6 +67,8 @@ type service struct {
 	repo                repositories.ShipmentCommentRepository
 	shipmentRepo        repositories.ShipmentRepository
 	userRepo            repositories.UserRepository
+	documentRepo        repositories.DocumentRepository
+	documentService     *documentservice.Service
 	auditService        services.AuditService
 	eventService        services.ShipmentEventService
 	realtime            services.RealtimeService
@@ -65,6 +81,8 @@ func New(p Params) services.ShipmentCommentService {
 		repo:                p.Repo,
 		shipmentRepo:        p.ShipmentRepo,
 		userRepo:            p.UserRepo,
+		documentRepo:        p.DocumentRepo,
+		documentService:     p.DocumentService,
 		auditService:        p.AuditService,
 		eventService:        p.EventService,
 		realtime:            p.Realtime,
@@ -103,6 +121,9 @@ func (s *service) ListByShipmentID(
 	for _, comment := range comments.Items {
 		normalizeCommentView(comment)
 	}
+	if err = s.loadAttachments(ctx, req.Filter.TenantInfo, comments.Items...); err != nil {
+		return nil, err
+	}
 
 	return comments, nil
 }
@@ -129,7 +150,6 @@ func (s *service) GetCountByShipmentID(
 	return s.repo.GetCountByShipmentID(ctx, req)
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *service) Create(
 	ctx context.Context,
 	entity *shipment.ShipmentComment,
@@ -149,21 +169,36 @@ func (s *service) Create(
 	}
 
 	entity.UserID = userID
+	if multiErr := s.applyBody(entity); multiErr != nil {
+		return nil, multiErr
+	}
 	entity.Comment = strings.TrimSpace(entity.Comment)
 
 	if multiErr := s.validateComment(entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	shp, err := s.getShipment(ctx, entity.ShipmentID, pagination.TenantInfo{
+	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
-	})
+	}
+
+	parent, err := s.resolveParentComment(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.populateMentions(ctx, entity); err != nil {
+	shp, err := s.getShipment(ctx, entity.ShipmentID, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.populateMentions(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	attachmentDocs, err := s.validateAttachmentDocuments(ctx, entity, pulid.Nil)
+	if err != nil {
 		return nil, err
 	}
 
@@ -172,7 +207,15 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	if err = s.attachDocuments(ctx, created, attachmentDocs); err != nil {
+		return nil, err
+	}
+
 	normalizeCommentView(created)
+	if err = s.loadAttachments(ctx, tenantInfo, created); err != nil {
+		return nil, err
+	}
+
 	auditActor := actor.AuditActor()
 	s.logCommentAction(
 		created,
@@ -182,7 +225,7 @@ func (s *service) Create(
 		created,
 		"Shipment comment created",
 	)
-	s.publishCommentInvalidation(ctx, created, auditActor, "created", created)
+	s.publishCommentInvalidation(ctx, created, auditActor, actionCreated, created)
 	s.recordCommentEvent(ctx, shipmenteventservice.BuildCommentPosted(
 		shipmenteventservice.TenantRef{
 			OrganizationID: created.OrganizationID,
@@ -192,8 +235,46 @@ func (s *service) Create(
 		auditActor,
 	))
 	s.notifyMentions(ctx, created, shp, userID, created.MentionedUserIDs)
+	s.notifyReply(ctx, created, parent, shp, userID)
 
 	return created, nil
+}
+
+func (s *service) resolveParentComment(
+	ctx context.Context,
+	entity *shipment.ShipmentComment,
+) (*shipment.ShipmentComment, error) {
+	if !entity.IsReply() {
+		return nil, nil //nolint:nilnil // top-level comments have no parent
+	}
+
+	parent, err := s.repo.GetByID(ctx, &repositories.GetShipmentCommentByIDRequest{
+		CommentID:  *entity.ParentCommentID,
+		ShipmentID: entity.ShipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"parentCommentId",
+			errortypes.ErrInvalid,
+			"Parent comment does not exist on this shipment",
+		)
+	}
+
+	if parent.IsReply() {
+		return nil, errortypes.NewValidationError(
+			"parentCommentId",
+			errortypes.ErrInvalid,
+			"Replies cannot be nested more than one level deep",
+		)
+	}
+
+	entity.RequiresAcknowledgment = false
+
+	return parent, nil
 }
 
 func (s *service) CreateSystem(
@@ -249,7 +330,7 @@ func (s *service) CreateSystem(
 		created,
 		"System shipment comment created",
 	)
-	s.publishCommentInvalidation(ctx, created, auditActor, "created", created)
+	s.publishCommentInvalidation(ctx, created, auditActor, actionCreated, created)
 	s.recordCommentEvent(ctx, shipmenteventservice.BuildCommentPosted(
 		shipmenteventservice.TenantRef{
 			OrganizationID: created.OrganizationID,
@@ -262,19 +343,19 @@ func (s *service) CreateSystem(
 	return created, nil
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *service) Update(
 	ctx context.Context,
-	entity *shipment.ShipmentComment,
+	req *services.UpdateShipmentCommentRequest,
 	actor *services.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	if entity == nil {
+	if req == nil || req.Entity == nil {
 		return nil, errortypes.NewValidationError(
 			"comment",
 			errortypes.ErrRequired,
 			"Shipment comment is required",
 		)
 	}
+	entity := req.Entity
 
 	userID, err := requireCommentUser(actor)
 	if err != nil {
@@ -289,44 +370,44 @@ func (s *service) Update(
 		)
 	}
 
-	entity.UserID = userID
-	entity.Comment = strings.TrimSpace(entity.Comment)
+	tenantInfo := pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}
 
-	if multiErr := s.validateComment(entity); multiErr != nil {
+	original, err := s.getEditableComment(ctx, &repositories.GetShipmentCommentByIDRequest{
+		CommentID:  entity.ID,
+		ShipmentID: entity.ShipmentID,
+		TenantInfo: tenantInfo,
+	}, userID, req.AsModerator)
+	if err != nil {
+		return nil, err
+	}
+
+	if original.IsDeleted() {
+		return nil, errortypes.NewValidationError(
+			"commentId",
+			errortypes.ErrInvalid,
+			"Deleted comments cannot be edited",
+		)
+	}
+
+	if multiErr := s.prepareCommentUpdate(entity, original); multiErr != nil {
 		return nil, multiErr
 	}
 
-	original, err := s.getOwnedComment(ctx, &repositories.GetShipmentCommentByIDRequest{
-		CommentID:  entity.ID,
-		ShipmentID: entity.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	}, userID)
+	shp, err := s.getShipment(ctx, entity.ShipmentID, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	shp, err := s.getShipment(ctx, entity.ShipmentID, pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	})
+	if err = s.populateMentions(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	attachmentDocs, err := s.validateAttachmentDocuments(ctx, entity, entity.ID)
 	if err != nil {
 		return nil, err
-	}
-
-	if err := s.populateMentions(ctx, entity); err != nil {
-		return nil, err
-	}
-
-	entity.Version = original.Version
-	entity.CreatedAt = original.CreatedAt
-	if original.Comment != entity.Comment {
-		now := timeutils.NowUnix()
-		entity.EditedAt = &now
-	} else {
-		entity.EditedAt = original.EditedAt
 	}
 
 	updated, err := s.repo.Update(ctx, entity)
@@ -334,27 +415,38 @@ func (s *service) Update(
 		return nil, err
 	}
 
+	if err = s.reconcileAttachments(ctx, updated, attachmentDocs); err != nil {
+		return nil, err
+	}
+
 	normalizeCommentView(updated)
+	if err = s.loadAttachments(ctx, tenantInfo, updated); err != nil {
+		return nil, err
+	}
+
 	auditActor := actor.AuditActor()
+	auditComment := "Shipment comment updated"
+	if req.AsModerator && original.UserID != userID {
+		auditComment = "Shipment comment updated by moderator"
+	}
 	s.logCommentAction(
 		updated,
 		auditActor,
 		permission.OpUpdate,
 		original,
 		updated,
-		"Shipment comment updated",
+		auditComment,
 	)
-	s.publishCommentInvalidation(ctx, updated, auditActor, "updated", updated)
+	s.publishCommentInvalidation(ctx, updated, auditActor, actionUpdated, updated)
 	s.notifyMentions(ctx, updated, shp, userID,
 		sliceutils.Difference(updated.MentionedUserIDs, original.MentionedUserIDs))
 
 	return updated, nil
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *service) Delete(
 	ctx context.Context,
-	req *repositories.DeleteShipmentCommentRequest,
+	req *services.DeleteShipmentCommentRequest,
 	actor *services.RequestActor,
 ) error {
 	if req == nil {
@@ -364,7 +456,13 @@ func (s *service) Delete(
 			"Delete comment request is required",
 		)
 	}
-	if multiErr := req.Validate(); multiErr != nil {
+
+	repoReq := &repositories.DeleteShipmentCommentRequest{
+		TenantInfo: req.TenantInfo,
+		ShipmentID: req.ShipmentID,
+		CommentID:  req.CommentID,
+	}
+	if multiErr := repoReq.Validate(); multiErr != nil {
 		return multiErr
 	}
 
@@ -373,33 +471,126 @@ func (s *service) Delete(
 		return err
 	}
 
-	original, err := s.getOwnedComment(ctx, &repositories.GetShipmentCommentByIDRequest{
+	original, err := s.getEditableComment(ctx, &repositories.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-	}, userID)
+	}, userID, req.AsModerator)
 	if err != nil {
 		return err
 	}
 
-	if err := s.ensureShipmentExists(ctx, req.ShipmentID, req.TenantInfo); err != nil {
+	if original.IsDeleted() {
+		return errortypes.NewValidationError(
+			"commentId",
+			errortypes.ErrInvalid,
+			"This comment has already been deleted",
+		)
+	}
+
+	if err = s.ensureShipmentExists(ctx, req.ShipmentID, req.TenantInfo); err != nil {
 		return err
 	}
 
-	if err := s.repo.Delete(ctx, req); err != nil {
+	replyCount, err := s.repo.CountReplies(ctx, &repositories.GetShipmentCommentByIDRequest{
+		CommentID:  req.CommentID,
+		ShipmentID: req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = s.deleteAllAttachments(ctx, req.TenantInfo, original, userID); err != nil {
 		return err
 	}
 
 	auditActor := actor.AuditActor()
+	auditComment := "Shipment comment deleted"
+	if req.AsModerator && original.UserID != userID {
+		auditComment = "Shipment comment deleted by moderator"
+	}
+
+	if replyCount > 0 {
+		return s.tombstoneComment(ctx, req, original, userID, auditActor, auditComment)
+	}
+
+	if err = s.repo.Delete(ctx, repoReq); err != nil {
+		return err
+	}
+
 	s.logCommentAction(
 		original,
 		auditActor,
 		permission.OpDelete,
 		original,
 		nil,
-		"Shipment comment deleted",
+		auditComment,
 	)
-	s.publishCommentInvalidation(ctx, original, auditActor, "deleted", original)
+	s.publishCommentInvalidation(ctx, original, auditActor, actionDeleted, original)
+
+	return nil
+}
+
+func (s *service) prepareCommentUpdate(
+	entity *shipment.ShipmentComment,
+	original *shipment.ShipmentComment,
+) *errortypes.MultiError {
+	entity.UserID = original.UserID
+	entity.ParentCommentID = original.ParentCommentID
+	entity.Source = original.Source
+	if original.IsReply() {
+		entity.RequiresAcknowledgment = false
+	}
+
+	if multiErr := s.applyBody(entity); multiErr != nil {
+		return multiErr
+	}
+	entity.Comment = strings.TrimSpace(entity.Comment)
+
+	if multiErr := s.validateComment(entity); multiErr != nil {
+		return multiErr
+	}
+
+	entity.CreatedAt = original.CreatedAt
+	if original.Comment != entity.Comment {
+		now := timeutils.NowUnix()
+		entity.EditedAt = &now
+	} else {
+		entity.EditedAt = original.EditedAt
+	}
+
+	return nil
+}
+
+func (s *service) tombstoneComment(
+	ctx context.Context,
+	req *services.DeleteShipmentCommentRequest,
+	original *shipment.ShipmentComment,
+	userID pulid.ID,
+	auditActor services.AuditActor,
+	auditComment string,
+) error {
+	tombstone, err := s.repo.SoftDelete(ctx, &repositories.SoftDeleteShipmentCommentRequest{
+		TenantInfo: req.TenantInfo,
+		ShipmentID: req.ShipmentID,
+		CommentID:  req.CommentID,
+		ActorID:    userID,
+	})
+	if err != nil {
+		return err
+	}
+
+	normalizeCommentView(tombstone)
+	s.logCommentAction(
+		original,
+		auditActor,
+		permission.OpDelete,
+		original,
+		tombstone,
+		auditComment+" (tombstoned, has replies)",
+	)
+	s.publishCommentInvalidation(ctx, tombstone, auditActor, actionUpdated, tombstone)
 
 	return nil
 }
@@ -496,6 +687,66 @@ func (s *service) notifyMentions(
 	}
 }
 
+func (s *service) notifyReply(
+	ctx context.Context,
+	reply *shipment.ShipmentComment,
+	parent *shipment.ShipmentComment,
+	shp *shipment.Shipment,
+	authorID pulid.ID,
+) {
+	if s.notificationService == nil || parent == nil {
+		return
+	}
+	if parent.UserID.IsNil() || parent.UserID == authorID {
+		return
+	}
+	if slices.Contains(reply.MentionedUserIDs, parent.UserID) {
+		return
+	}
+
+	authorName := "A teammate"
+	if author, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  reply.OrganizationID,
+			BuID:   reply.BusinessUnitID,
+			UserID: authorID,
+		},
+		LookupUserID: authorID,
+	}); err == nil && author.Name != "" {
+		authorName = author.Name
+	}
+
+	targetUserID := parent.UserID
+	if _, err := s.notificationService.Create(ctx, &notification.Notification{
+		OrganizationID: reply.OrganizationID,
+		BusinessUnitID: &reply.BusinessUnitID,
+		TargetUserID:   &targetUserID,
+		Channel:        notification.ChannelUser,
+		EventType:      replyEventType,
+		Priority:       notification.PriorityMedium,
+		Title:          fmt.Sprintf("%s replied to your comment on %s", authorName, shp.ProNumber),
+		Message:        stringutils.Ellipsize(reply.Comment, mentionExcerptLength),
+		Data: map[string]any{
+			dataKeyShipmentID: reply.ShipmentID.String(),
+			dataKeyCommentID:  reply.ID.String(),
+			"parentCommentId": parent.ID.String(),
+			"authorId":        authorID.String(),
+			"authorName":      authorName,
+			"proNumber":       shp.ProNumber,
+		},
+		RelatedEntities: map[string]any{
+			dataKeyShipmentID: reply.ShipmentID.String(),
+			dataKeyCommentID:  reply.ID.String(),
+		},
+		Source: "shipmentcommentservice",
+	}); err != nil {
+		s.l.Warn("failed to create reply notification",
+			zap.String("commentId", reply.ID.String()),
+			zap.String("userId", parent.UserID.String()),
+			zap.Error(err))
+	}
+}
+
 func (s *service) populateMentions(
 	ctx context.Context,
 	entity *shipment.ShipmentComment,
@@ -549,10 +800,11 @@ func (s *service) populateMentions(
 	return nil
 }
 
-func (s *service) getOwnedComment(
+func (s *service) getEditableComment(
 	ctx context.Context,
 	req *repositories.GetShipmentCommentByIDRequest,
 	userID pulid.ID,
+	asModerator bool,
 ) (*shipment.ShipmentComment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -563,7 +815,7 @@ func (s *service) getOwnedComment(
 		return nil, err
 	}
 
-	if comment.UserID != userID {
+	if comment.UserID != userID && !asModerator {
 		return nil, errortypes.NewAuthorizationError(
 			"You are not the owner of this shipment comment",
 		)

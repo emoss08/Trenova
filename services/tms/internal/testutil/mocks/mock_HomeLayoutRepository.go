@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -41,103 +40,47 @@ func (_m *MockHomeLayoutRepository) EXPECT() *MockHomeLayoutRepository_Expecter 
 	return &MockHomeLayoutRepository_Expecter{mock: &_m.Mock}
 }
 
-// ClearOrgDefault provides a mock function for the type MockHomeLayoutRepository
-func (_mock *MockHomeLayoutRepository) ClearOrgDefault(ctx context.Context, req *repositories.ClearHomeLayoutOrgDefaultRequest) error {
-	ret := _mock.Called(ctx, req)
+// ListRoleUserAssignments provides a mock function for the type MockHomeLayoutRepository
+func (_mock *MockHomeLayoutRepository) ListRoleUserAssignments(ctx context.Context, tenantInfo pagination.TenantInfo) ([]repositories.HomeRoleUserAssignment, error) {
+	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ClearOrgDefault")
+		panic("no return value specified for ListRoleUserAssignments")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ClearHomeLayoutOrgDefaultRequest) error); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockHomeLayoutRepository_ClearOrgDefault_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearOrgDefault'
-type MockHomeLayoutRepository_ClearOrgDefault_Call struct {
-	*mock.Call
-}
-
-// ClearOrgDefault is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ClearHomeLayoutOrgDefaultRequest
-func (_e *MockHomeLayoutRepository_Expecter) ClearOrgDefault(ctx any, req any) *MockHomeLayoutRepository_ClearOrgDefault_Call {
-	return &MockHomeLayoutRepository_ClearOrgDefault_Call{Call: _e.mock.On("ClearOrgDefault", ctx, req)}
-}
-
-func (_c *MockHomeLayoutRepository_ClearOrgDefault_Call) Run(run func(ctx context.Context, req *repositories.ClearHomeLayoutOrgDefaultRequest)) *MockHomeLayoutRepository_ClearOrgDefault_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ClearHomeLayoutOrgDefaultRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ClearHomeLayoutOrgDefaultRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockHomeLayoutRepository_ClearOrgDefault_Call) Return(err error) *MockHomeLayoutRepository_ClearOrgDefault_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockHomeLayoutRepository_ClearOrgDefault_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ClearHomeLayoutOrgDefaultRequest) error) *MockHomeLayoutRepository_ClearOrgDefault_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CountUsersForRoles provides a mock function for the type MockHomeLayoutRepository
-func (_mock *MockHomeLayoutRepository) CountUsersForRoles(ctx context.Context, tenantInfo pagination.TenantInfo, roleIDs []pulid.ID) (int, error) {
-	ret := _mock.Called(ctx, tenantInfo, roleIDs)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CountUsersForRoles")
-	}
-
-	var r0 int
+	var r0 []repositories.HomeRoleUserAssignment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, []pulid.ID) (int, error)); ok {
-		return returnFunc(ctx, tenantInfo, roleIDs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]repositories.HomeRoleUserAssignment, error)); ok {
+		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, []pulid.ID) int); ok {
-		r0 = returnFunc(ctx, tenantInfo, roleIDs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []repositories.HomeRoleUserAssignment); ok {
+		r0 = returnFunc(ctx, tenantInfo)
 	} else {
-		r0 = ret.Get(0).(int)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]repositories.HomeRoleUserAssignment)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, []pulid.ID) error); ok {
-		r1 = returnFunc(ctx, tenantInfo, roleIDs)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenantInfo)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockHomeLayoutRepository_CountUsersForRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUsersForRoles'
-type MockHomeLayoutRepository_CountUsersForRoles_Call struct {
+// MockHomeLayoutRepository_ListRoleUserAssignments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRoleUserAssignments'
+type MockHomeLayoutRepository_ListRoleUserAssignments_Call struct {
 	*mock.Call
 }
 
-// CountUsersForRoles is a helper method to define mock.On call
+// ListRoleUserAssignments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-//   - roleIDs []pulid.ID
-func (_e *MockHomeLayoutRepository_Expecter) CountUsersForRoles(ctx any, tenantInfo any, roleIDs any) *MockHomeLayoutRepository_CountUsersForRoles_Call {
-	return &MockHomeLayoutRepository_CountUsersForRoles_Call{Call: _e.mock.On("CountUsersForRoles", ctx, tenantInfo, roleIDs)}
+func (_e *MockHomeLayoutRepository_Expecter) ListRoleUserAssignments(ctx any, tenantInfo any) *MockHomeLayoutRepository_ListRoleUserAssignments_Call {
+	return &MockHomeLayoutRepository_ListRoleUserAssignments_Call{Call: _e.mock.On("ListRoleUserAssignments", ctx, tenantInfo)}
 }
 
-func (_c *MockHomeLayoutRepository_CountUsersForRoles_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, roleIDs []pulid.ID)) *MockHomeLayoutRepository_CountUsersForRoles_Call {
+func (_c *MockHomeLayoutRepository_ListRoleUserAssignments_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockHomeLayoutRepository_ListRoleUserAssignments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -147,25 +90,20 @@ func (_c *MockHomeLayoutRepository_CountUsersForRoles_Call) Run(run func(ctx con
 		if args[1] != nil {
 			arg1 = args[1].(pagination.TenantInfo)
 		}
-		var arg2 []pulid.ID
-		if args[2] != nil {
-			arg2 = args[2].([]pulid.ID)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *MockHomeLayoutRepository_CountUsersForRoles_Call) Return(n int, err error) *MockHomeLayoutRepository_CountUsersForRoles_Call {
-	_c.Call.Return(n, err)
+func (_c *MockHomeLayoutRepository_ListRoleUserAssignments_Call) Return(assignments []repositories.HomeRoleUserAssignment, err error) *MockHomeLayoutRepository_ListRoleUserAssignments_Call {
+	_c.Call.Return(assignments, err)
 	return _c
 }
 
-func (_c *MockHomeLayoutRepository_CountUsersForRoles_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, roleIDs []pulid.ID) (int, error)) *MockHomeLayoutRepository_CountUsersForRoles_Call {
+func (_c *MockHomeLayoutRepository_ListRoleUserAssignments_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]repositories.HomeRoleUserAssignment, error)) *MockHomeLayoutRepository_ListRoleUserAssignments_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -19,6 +19,7 @@ import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { Link } from "react-router";
 import { invoiceAdjustmentBatchSearchParamsParser } from "./use-invoice-adjustment-batch-state";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const statusChoices = [
   { label: "Queued", value: "Queued" },
@@ -303,8 +304,5 @@ function LinkButton({ to, children }: { to: string; children: ReactNode }) {
 }
 
 function formatTimestamp(value: number | null | undefined) {
-  if (!value) {
-    return "Not recorded";
-  }
-  return new Date(value * 1000).toLocaleString();
+  return formatUnixDateTime(value, { fallback: "Not recorded" });
 }

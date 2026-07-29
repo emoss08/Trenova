@@ -7,13 +7,15 @@ ALTER TYPE "agent_type_enum" ADD VALUE IF NOT EXISTS 'DispatchAssignment';
 ALTER TYPE "agent_subject_type_enum" ADD VALUE IF NOT EXISTS 'ShipmentMove';
 
 --bun:split
--- The board scans uncovered moves for a tenant on every render. Without this the scan
--- degrades to a sequential pass over every move the organization has ever created.
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_shipment_moves_console_coverage" ON "shipment_moves"("organization_id", "business_unit_id", "status", "sequence") INCLUDE ("shipment_id");
+-- The board scans open moves for a tenant on every render. The sort key is a lateral
+-- stop window that cannot be indexed, so the index only narrows the scan by tenant and
+-- status.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_shipment_moves_console_coverage" ON "shipment_moves"("organization_id", "business_unit_id", "status");
 
 --bun:split
--- Move windows are derived from the earliest and latest stop on each move.
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_stops_move_window" ON "stops"("organization_id", "business_unit_id", "shipment_move_id", "scheduled_window_start");
+-- The stop-edge and move-window laterals probe stops by move within the tenant and walk
+-- them in sequence order; the INCLUDE columns let the window aggregates stay index-only.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_stops_move_window" ON "stops"("organization_id", "business_unit_id", "shipment_move_id", "sequence") INCLUDE ("status", "scheduled_window_start", "scheduled_window_end");
 
 --bun:split
 -- Approved time off is checked for every candidate on every board render.
@@ -22,9 +24,16 @@ WHERE
     "status" = 'Approved';
 
 --bun:split
--- Capacity lookups narrow the roster to drivers who can actually take work.
+-- The capacity rail deliberately includes drivers flagged unavailable for dispatch, so
+-- the partial predicate only covers the columns every console query filters on.
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_workers_dispatch_capacity" ON "workers"("organization_id", "business_unit_id", "fleet_code_id")
 WHERE
     "status" = 'Active'
-    AND "can_be_assigned" = TRUE
-    AND "available_for_dispatch" = TRUE;
+    AND "can_be_assigned" = TRUE;
+
+--bun:split
+-- Open-assignment counts, commitments, workload, and lane experience all probe
+-- assignments by primary worker within the tenant, always excluding archived rows.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_assignments_primary_worker_active" ON "assignments"("primary_worker_id", "organization_id", "business_unit_id")
+WHERE
+    "archived_at" IS NULL;

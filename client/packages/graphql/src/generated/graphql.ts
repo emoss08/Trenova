@@ -1969,6 +1969,7 @@ export type SettlementPayTrigger =
 export type ShipmentAdditionalChargeInput = {
   accessorialChargeId: string | number;
   amount?: string | null | undefined;
+  detentionOccurrenceId?: string | number | null | undefined;
   fuelSurchargeProgramId?: string | number | null | undefined;
   id?: string | number | null | undefined;
   isSystemGenerated?: boolean | null | undefined;
@@ -1998,9 +1999,16 @@ export type ShipmentCancelInput = {
 };
 
 export type ShipmentCommentInput = {
+  attachmentDocumentIds?: Array<string | number> | null | undefined;
+  /** Structured comment body (comment body v1). When present, the plain-text comment is derived server-side. */
+  body?: unknown;
+  /** Client-generated reference echoed on the created entity for optimistic-update reconciliation. */
+  clientRef?: string | null | undefined;
   comment: string;
   mentionedUserIds?: Array<string | number> | null | undefined;
+  parentCommentId?: string | number | null | undefined;
   priority?: ShipmentCommentPriority | null | undefined;
+  requiresAcknowledgment?: boolean | null | undefined;
   type?: ShipmentCommentType | null | undefined;
   visibility?: ShipmentCommentVisibility | null | undefined;
 };
@@ -2032,10 +2040,14 @@ export type ShipmentCommentType =
   | 'StatusUpdate';
 
 export type ShipmentCommentUpdateInput = {
+  attachmentDocumentIds?: Array<string | number> | null | undefined;
+  /** Structured comment body (comment body v1). When present, the plain-text comment is derived server-side. */
+  body?: unknown;
   comment: string;
   id: string | number;
   mentionedUserIds?: Array<string | number> | null | undefined;
   priority?: ShipmentCommentPriority | null | undefined;
+  requiresAcknowledgment?: boolean | null | undefined;
   type?: ShipmentCommentType | null | undefined;
   version: number;
   visibility?: ShipmentCommentVisibility | null | undefined;
@@ -2047,6 +2059,16 @@ export type ShipmentCommentVisibility =
   | 'Driver'
   | 'Internal'
   | 'Operations';
+
+export type ShipmentCommentsFilterInput = {
+  authorIds?: Array<string | number> | null | undefined;
+  mentionsUserId?: string | number | null | undefined;
+  pinnedOnly?: boolean | null | undefined;
+  priorities?: Array<ShipmentCommentPriority> | null | undefined;
+  search?: string | null | undefined;
+  types?: Array<ShipmentCommentType> | null | undefined;
+  unresolvedOnly?: boolean | null | undefined;
+};
 
 export type ShipmentCommodityInput = {
   commodityId: string | number;
@@ -2992,7 +3014,7 @@ export type DetentionDisputePacketQueryVariables = Exact<{
 }>;
 
 
-export type DetentionDisputePacketQuery = { detentionDisputePacket: { policySnapshot: unknown, receipt: string, generatedAt: number, occurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } }, evidence: Array<{ ' $fragmentRefs'?: { 'DetentionEvidenceFieldsFragment': DetentionEvidenceFieldsFragment } }> | null, notices: Array<{ ' $fragmentRefs'?: { 'DetentionNoticeFieldsFragment': DetentionNoticeFieldsFragment } }> | null, collectability: { ' $fragmentRefs'?: { 'DetentionCollectabilityFieldsFragment': DetentionCollectabilityFieldsFragment } } } };
+export type DetentionDisputePacketQuery = { detentionDisputePacket: { policySnapshot: unknown, receipt: string, chainVerified: boolean, generatedAt: number, occurrence: { ' $fragmentRefs'?: { 'DetentionOccurrenceFieldsFragment': DetentionOccurrenceFieldsFragment } }, evidence: Array<{ ' $fragmentRefs'?: { 'DetentionEvidenceFieldsFragment': DetentionEvidenceFieldsFragment } }> | null, notices: Array<{ ' $fragmentRefs'?: { 'DetentionNoticeFieldsFragment': DetentionNoticeFieldsFragment } }> | null, collectability: { ' $fragmentRefs'?: { 'DetentionCollectabilityFieldsFragment': DetentionCollectabilityFieldsFragment } } } };
 
 export type WaiveDetentionOccurrenceMutationVariables = Exact<{
   input: DetentionWaiveInput;
@@ -3024,7 +3046,7 @@ export type SendDetentionNoticeMutation = { sendDetentionNotice: { ' $fragmentRe
 
 export type DetentionPolicyTierFieldsFragment = { id: string | null, fromMinute: number, toMinute: number | null, rate: string, rateUnit: DetentionTierRateUnit, label: string, sortOrder: number } & { ' $fragmentName'?: 'DetentionPolicyTierFieldsFragment' };
 
-export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrgDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string> | null, serviceTypeIds: Array<string> | null, commodityIds: Array<string> | null, stopTypes: Array<StopType> | null, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> | null } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
+export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrgDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string>, serviceTypeIds: Array<string>, commodityIds: Array<string>, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
 
 export type DetentionPolicyTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -3074,21 +3096,21 @@ export type DispatchMoveCandidatesQueryVariables = Exact<{
 }>;
 
 
-export type DispatchMoveCandidatesQuery = { dispatchMoveCandidates: Array<{ workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> }> };
+export type DispatchMoveCandidatesQuery = { dispatchMoveCandidates: Array<{ workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> }> };
 
 export type DispatchDriverMovesQueryVariables = Exact<{
   input: DispatchDriverMovesInput;
 }>;
 
 
-export type DispatchDriverMovesQuery = { dispatchDriverMoves: Array<{ move: { moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null }, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }> };
+export type DispatchDriverMovesQuery = { dispatchDriverMoves: Array<{ move: { moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null }, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }> };
 
 export type DispatchAssignmentPreviewQueryVariables = Exact<{
   input: DispatchAssignmentPreviewInput;
 }>;
 
 
-export type DispatchAssignmentPreviewQuery = { dispatchAssignmentPreview: { moveId: string, workerId: string, tractorId: string | null, trailerId: string | null, blocked: boolean, requiresOverride: boolean, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } } };
+export type DispatchAssignmentPreviewQuery = { dispatchAssignmentPreview: { moveId: string, workerId: string, tractorId: string | null, trailerId: string | null, blocked: boolean, requiresOverride: boolean, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } } };
 
 export type DispatchAssignMovesMutationVariables = Exact<{
   input: Array<DispatchAssignMoveInput> | DispatchAssignMoveInput;
@@ -3109,7 +3131,7 @@ export type DispatchPlanAutoAssignMutationVariables = Exact<{
 }>;
 
 
-export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, totalScore: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }>, uncovered: Array<{ moveId: string, proNumber: string, reason: string, bestBlockedFindings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, totalScore: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }>, uncovered: Array<{ moveId: string, proNumber: string, reason: string, bestBlockedFindings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
 
 export type DistanceOverrideLocationFieldsFragment = { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'DistanceOverrideLocationFieldsFragment' };
 
@@ -4897,7 +4919,7 @@ export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: st
 
 export type ShipmentMoveFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string | null, status: MoveStatus, loaded: boolean, sequence: number, distance: number | null, distanceSource: string | null, distanceProvider: string | null, distanceCalculatedAt: number | null, distanceRouteSignature: string | null, distanceDataVersion: string | null, distanceRoutingType: string | null, distanceUnits: string | null, distanceMetadata: unknown, version: number, createdAt: number, updatedAt: number, stops: Array<{ ' $fragmentRefs'?: { 'ShipmentStopFieldsFragment': ShipmentStopFieldsFragment } }>, assignment: { ' $fragmentRefs'?: { 'ShipmentAssignmentFieldsFragment': ShipmentAssignmentFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentMoveFieldsFragment' };
 
-export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, amount: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
+export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown, detentionOccurrenceId: string | null, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, amount: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
 
 export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
 
@@ -4909,7 +4931,11 @@ export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: 
 
 export type ShipmentCommentMentionFieldsFragment = { id: string, commentId: string, mentionedUserId: string, organizationId: string | null, businessUnitId: string | null, shipmentId: string | null, createdAt: number, mentionedUser: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentCommentMentionFieldsFragment' };
 
-export type ShipmentCommentFieldsFragment = { id: string, businessUnitId: string | null, organizationId: string | null, shipmentId: string, userId: string | null, comment: string, type: ShipmentCommentType, visibility: ShipmentCommentVisibility, priority: ShipmentCommentPriority, source: ShipmentCommentSource, metadata: unknown, editedAt: number | null, version: number, createdAt: number, updatedAt: number, mentionedUserIds: Array<string>, user: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, mentionedUsers: Array<{ ' $fragmentRefs'?: { 'ShipmentCommentMentionFieldsFragment': ShipmentCommentMentionFieldsFragment } }> | null } & { ' $fragmentName'?: 'ShipmentCommentFieldsFragment' };
+export type ShipmentCommentAttachmentFieldsFragment = { documentId: string, fileName: string, originalName: string | null, fileSize: number, mimeType: string, previewUrl: string | null, downloadUrl: string, createdAt: number } & { ' $fragmentName'?: 'ShipmentCommentAttachmentFieldsFragment' };
+
+export type ShipmentCommentAcknowledgmentFieldsFragment = { id: string, commentId: string, userId: string, acknowledgedAt: number, user: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentCommentAcknowledgmentFieldsFragment' };
+
+export type ShipmentCommentFieldsFragment = { id: string, businessUnitId: string | null, organizationId: string | null, shipmentId: string, userId: string | null, parentCommentId: string | null, replyCount: number, comment: string, body: unknown, type: ShipmentCommentType, visibility: ShipmentCommentVisibility, priority: ShipmentCommentPriority, source: ShipmentCommentSource, metadata: unknown, editedAt: number | null, pinnedAt: number | null, pinnedById: string | null, resolvedAt: number | null, resolvedById: string | null, requiresAcknowledgment: boolean, deletedAt: number | null, version: number, createdAt: number, updatedAt: number, mentionedUserIds: Array<string>, user: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, pinnedBy: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, resolvedBy: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, mentionedUsers: Array<{ ' $fragmentRefs'?: { 'ShipmentCommentMentionFieldsFragment': ShipmentCommentMentionFieldsFragment } }> | null, acknowledgments: Array<{ ' $fragmentRefs'?: { 'ShipmentCommentAcknowledgmentFieldsFragment': ShipmentCommentAcknowledgmentFieldsFragment } }> | null, attachments: Array<{ ' $fragmentRefs'?: { 'ShipmentCommentAttachmentFieldsFragment': ShipmentCommentAttachmentFieldsFragment } }> | null } & { ' $fragmentName'?: 'ShipmentCommentFieldsFragment' };
 
 export type ShipmentEventFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string, moveId: string | null, stopId: string | null, assignmentId: string | null, commentId: string | null, holdId: string | null, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, proNumber: string | null, previousStatus: string | null, newStatus: string | null, reason: string | null, previousOwnerId: string | null, newOwnerId: string | null, primaryWorkerId: string | null, secondaryWorkerId: string | null, tractorId: string | null, trailerId: string | null, driverName: string | null, holdType: string | null, holdSeverity: string | null, holdSource: string | null, commentBody: string | null, commentType: string | null, commentVisibility: string | null, commentPriority: string | null, mentionedUserIds: Array<string>, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFieldsFragment' };
 
@@ -4977,10 +5003,21 @@ export type ShipmentCommentsQueryVariables = Exact<{
   shipmentId: string | number;
   first: number;
   after?: string | null | undefined;
+  filter?: ShipmentCommentsFilterInput | null | undefined;
 }>;
 
 
 export type ShipmentCommentsQuery = { shipmentComments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+
+export type ShipmentCommentRepliesQueryVariables = Exact<{
+  shipmentId: string | number;
+  commentId: string | number;
+  first: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type ShipmentCommentRepliesQuery = { shipmentCommentReplies: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentCommentCountQueryVariables = Exact<{
   shipmentId: string | number;
@@ -5140,6 +5177,46 @@ export type DeleteShipmentCommentMutationVariables = Exact<{
 
 
 export type DeleteShipmentCommentMutation = { deleteShipmentComment: boolean };
+
+export type PinShipmentCommentMutationVariables = Exact<{
+  shipmentId: string | number;
+  commentId: string | number;
+}>;
+
+
+export type PinShipmentCommentMutation = { pinShipmentComment: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } };
+
+export type UnpinShipmentCommentMutationVariables = Exact<{
+  shipmentId: string | number;
+  commentId: string | number;
+}>;
+
+
+export type UnpinShipmentCommentMutation = { unpinShipmentComment: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } };
+
+export type ResolveShipmentCommentMutationVariables = Exact<{
+  shipmentId: string | number;
+  commentId: string | number;
+}>;
+
+
+export type ResolveShipmentCommentMutation = { resolveShipmentComment: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } };
+
+export type UnresolveShipmentCommentMutationVariables = Exact<{
+  shipmentId: string | number;
+  commentId: string | number;
+}>;
+
+
+export type UnresolveShipmentCommentMutation = { unresolveShipmentComment: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } };
+
+export type AcknowledgeShipmentCommentMutationVariables = Exact<{
+  shipmentId: string | number;
+  commentId: string | number;
+}>;
+
+
+export type AcknowledgeShipmentCommentMutation = { acknowledgeShipmentComment: { ' $fragmentRefs'?: { 'ShipmentCommentFieldsFragment': ShipmentCommentFieldsFragment } } };
 
 export type ShipmentProfitabilityQueryVariables = Exact<{
   shipmentId: string | number;
@@ -7875,6 +7952,7 @@ export const ShipmentAdditionalChargeFieldsFragmentDoc = new TypedDocumentString
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -8197,6 +8275,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -8285,6 +8364,38 @@ export const ShipmentCommentMentionFieldsFragmentDoc = new TypedDocumentString(`
   profilePicUrl
   thumbnailUrl
 }`, {"fragmentName":"ShipmentCommentMentionFields"}) as unknown as TypedDocumentString<ShipmentCommentMentionFieldsFragment, unknown>;
+export const ShipmentCommentAcknowledgmentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}`, {"fragmentName":"ShipmentCommentAcknowledgmentFields"}) as unknown as TypedDocumentString<ShipmentCommentAcknowledgmentFieldsFragment, unknown>;
+export const ShipmentCommentAttachmentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+    `, {"fragmentName":"ShipmentCommentAttachmentFields"}) as unknown as TypedDocumentString<ShipmentCommentAttachmentFieldsFragment, unknown>;
 export const ShipmentCommentFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentCommentFields on ShipmentComment {
   id
@@ -8292,13 +8403,22 @@ export const ShipmentCommentFieldsFragmentDoc = new TypedDocumentString(`
   organizationId
   shipmentId
   userId
+  parentCommentId
+  replyCount
   comment
+  body
   type
   visibility
   priority
   source
   metadata
   editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
   version
   createdAt
   updatedAt
@@ -8306,8 +8426,20 @@ export const ShipmentCommentFieldsFragmentDoc = new TypedDocumentString(`
   user {
     ...ShipmentUserFields
   }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
   mentionedUsers {
     ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
   }
 }
     fragment ShipmentUserFields on User {
@@ -8329,6 +8461,25 @@ fragment ShipmentCommentMentionFields on ShipmentCommentMention {
   shipmentId
   createdAt
   mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
     ...ShipmentUserFields
   }
 }`, {"fragmentName":"ShipmentCommentFields"}) as unknown as TypedDocumentString<ShipmentCommentFieldsFragment, unknown>;
@@ -10360,6 +10511,7 @@ export const DetentionDisputePacketDocument = new TypedDocumentString(`
     collectability {
       ...DetentionCollectabilityFields
     }
+    chainVerified
     generatedAt
   }
 }
@@ -10476,7 +10628,7 @@ fragment DetentionCollectabilityFields on DetentionCollectability {
     detail
     remedy
   }
-}`, {"hash":"sha256:c66f0633fd956fd1d9ecd07f415c5806a819751d023081314f6bf80890e9a041"}) as unknown as TypedDocumentString<DetentionDisputePacketQuery, DetentionDisputePacketQueryVariables>;
+}`, {"hash":"sha256:0dadc48c79e19edf845ee5b5d468fae9a80a12ccbe5e84016fc736075299b293"}) as unknown as TypedDocumentString<DetentionDisputePacketQuery, DetentionDisputePacketQueryVariables>;
 export const WaiveDetentionOccurrenceDocument = new TypedDocumentString(`
     mutation WaiveDetentionOccurrence($input: DetentionWaiveInput!) {
   waiveDetentionOccurrence(input: $input) {
@@ -11195,6 +11347,11 @@ export const DispatchMoveCandidatesDocument = new TypedDocumentString(`
     shiftRemainingMs
     cycleRemainingMs
     projectedTimeAvailable
+    hosStrategy
+    hosRestStartDeadline
+    hosProjectedDriveMs
+    hosProjectedShiftMs
+    hosProjectedCycleMs
     findings {
       code
       severity
@@ -11212,7 +11369,7 @@ export const DispatchMoveCandidatesDocument = new TypedDocumentString(`
     }
   }
 }
-    `, {"hash":"sha256:ac1f24fd4e006f3ebbffe72c7fa8dd5681f70096bce1ce4fd8c3e492e256351c"}) as unknown as TypedDocumentString<DispatchMoveCandidatesQuery, DispatchMoveCandidatesQueryVariables>;
+    `, {"hash":"sha256:d4079e5cb8e89f1fc42cc1139ce50534affbc526e20802fb0795b1188cef69f3"}) as unknown as TypedDocumentString<DispatchMoveCandidatesQuery, DispatchMoveCandidatesQueryVariables>;
 export const DispatchDriverMovesDocument = new TypedDocumentString(`
     query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
   dispatchDriverMoves(input: $input) {
@@ -11287,6 +11444,11 @@ export const DispatchDriverMovesDocument = new TypedDocumentString(`
       shiftRemainingMs
       cycleRemainingMs
       projectedTimeAvailable
+      hosStrategy
+      hosRestStartDeadline
+      hosProjectedDriveMs
+      hosProjectedShiftMs
+      hosProjectedCycleMs
       findings {
         code
         severity
@@ -11305,7 +11467,7 @@ export const DispatchDriverMovesDocument = new TypedDocumentString(`
     }
   }
 }
-    `, {"hash":"sha256:c56503d211aa26d5315098d60556f1e8c779e205d2191d3affc4855641adeb57"}) as unknown as TypedDocumentString<DispatchDriverMovesQuery, DispatchDriverMovesQueryVariables>;
+    `, {"hash":"sha256:5ae755fae5bc2bcf672dccb49b72964e73e7a5a4b6c00c4ae9c6de606e1d792a"}) as unknown as TypedDocumentString<DispatchDriverMovesQuery, DispatchDriverMovesQueryVariables>;
 export const DispatchAssignmentPreviewDocument = new TypedDocumentString(`
     query DispatchAssignmentPreview($input: DispatchAssignmentPreviewInput!) {
   dispatchAssignmentPreview(input: $input) {
@@ -11332,6 +11494,11 @@ export const DispatchAssignmentPreviewDocument = new TypedDocumentString(`
       shiftRemainingMs
       cycleRemainingMs
       projectedTimeAvailable
+      hosStrategy
+      hosRestStartDeadline
+      hosProjectedDriveMs
+      hosProjectedShiftMs
+      hosProjectedCycleMs
       findings {
         code
         severity
@@ -11350,7 +11517,7 @@ export const DispatchAssignmentPreviewDocument = new TypedDocumentString(`
     }
   }
 }
-    `, {"hash":"sha256:3e022be5bb770c34dd2371495b95dd98d102c3c01508c8bd478297f7591e07fb"}) as unknown as TypedDocumentString<DispatchAssignmentPreviewQuery, DispatchAssignmentPreviewQueryVariables>;
+    `, {"hash":"sha256:0ef23657908b270b5e8b0364d038b26a3d1b953f2d37de39dffc2696e4cd1361"}) as unknown as TypedDocumentString<DispatchAssignmentPreviewQuery, DispatchAssignmentPreviewQueryVariables>;
 export const DispatchAssignMovesDocument = new TypedDocumentString(`
     mutation DispatchAssignMoves($input: [DispatchAssignMoveInput!]!) {
   dispatchAssignMoves(input: $input) {
@@ -11429,6 +11596,11 @@ export const DispatchPlanAutoAssignDocument = new TypedDocumentString(`
         shiftRemainingMs
         cycleRemainingMs
         projectedTimeAvailable
+        hosStrategy
+        hosRestStartDeadline
+        hosProjectedDriveMs
+        hosProjectedShiftMs
+        hosProjectedCycleMs
         findings {
           code
           severity
@@ -11460,7 +11632,7 @@ export const DispatchPlanAutoAssignDocument = new TypedDocumentString(`
     }
   }
 }
-    `, {"hash":"sha256:06b43cad3bd05f4d4b879b84d9a30393bf7bc8de404b968d0c4cc33951fc0362"}) as unknown as TypedDocumentString<DispatchPlanAutoAssignMutation, DispatchPlanAutoAssignMutationVariables>;
+    `, {"hash":"sha256:cf7f6fb258631ab19ef6b06110fede4dbb790462eca8c29f3842f316227ff2e4"}) as unknown as TypedDocumentString<DispatchPlanAutoAssignMutation, DispatchPlanAutoAssignMutationVariables>;
 export const DistanceOverrideTableDocument = new TypedDocumentString(`
     query DistanceOverrideTable($input: DataTableConnectionInput!) {
   distanceOverrides(input: $input) {
@@ -17205,6 +17377,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -17390,7 +17563,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:4d28a793afb960f68dd010b19099e1f7bc0dfd278fb78ab01139d854554e379b"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:59bfe86e62175404bd60314a7317e67a6b7f07f43742fb67187a54cfcb131d70"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -17529,6 +17702,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -17710,7 +17884,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:df20d9c13e8b8d79f81f2fe031f751730fbcb1c787ba643b75c2f331104a5750"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:51e2c2179e99d91f1c1e9de79229b6e3550bed2a92d9224cdf792fd5a2f20760"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -18016,6 +18190,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -18201,7 +18376,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:23ad07cfa42399cad844ccc2f57f993ffaa92d817a2b839116236fb8aeb1a388"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:5c9880c9baf55e64722a7fb9a56fed580e5d31a3e9856495c687a86c3101b0d4"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -18348,6 +18523,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -18533,7 +18709,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:dee39a3d7c719d04e89edbb797b19d1e25ab78b29f4f5c0be7126011eabb80b7"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:36b1bf6ce560774596858923f019c7f694f81dc9b5eea846d255b83481d10a29"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -18680,6 +18856,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -18865,10 +19042,15 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:7db4c4d1b677282ede5ee206ac55d615348347ad352ee1f3c90a25d0bb9a36e5"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:14de8133615ed138003b95e51357db6394d2ec800f66300bfc8685ea5efe0d2d"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
-    query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
-  shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
+    query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String, $filter: ShipmentCommentsFilterInput) {
+  shipmentComments(
+    shipmentId: $shipmentId
+    first: $first
+    after: $after
+    filter: $filter
+  ) {
     edges {
       node {
         ...ShipmentCommentFields
@@ -18906,19 +19088,47 @@ fragment ShipmentCommentMentionFields on ShipmentCommentMention {
     ...ShipmentUserFields
   }
 }
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
 fragment ShipmentCommentFields on ShipmentComment {
   id
   businessUnitId
   organizationId
   shipmentId
   userId
+  parentCommentId
+  replyCount
   comment
+  body
   type
   visibility
   priority
   source
   metadata
   editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
   version
   createdAt
   updatedAt
@@ -18926,10 +19136,131 @@ fragment ShipmentCommentFields on ShipmentComment {
   user {
     ...ShipmentUserFields
   }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
   mentionedUsers {
     ...ShipmentCommentMentionFields
   }
-}`, {"hash":"sha256:cbec14ccc64595c5a8c99e7ff5824e326ff6933a0cf76f4277a1fc9abe0b4a23"}) as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:e8ded6c042536cd06b3552020cc7245d5d5585ebae1cee2cdf5d4369b07b33a7"}) as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
+export const ShipmentCommentRepliesDocument = new TypedDocumentString(`
+    query ShipmentCommentReplies($shipmentId: ID!, $commentId: ID!, $first: Int!, $after: String) {
+  shipmentCommentReplies(
+    shipmentId: $shipmentId
+    commentId: $commentId
+    first: $first
+    after: $after
+  ) {
+    edges {
+      node {
+        ...ShipmentCommentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentPageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  parentCommentId
+  replyCount
+  comment
+  body
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:c3d7d09953b6ceb3ea38fbc547d409fea336121d2b3bcacefce4b894f29bd3c6"}) as unknown as TypedDocumentString<ShipmentCommentRepliesQuery, ShipmentCommentRepliesQueryVariables>;
 export const ShipmentCommentCountDocument = new TypedDocumentString(`
     query ShipmentCommentCount($shipmentId: ID!) {
   shipmentCommentCount(shipmentId: $shipmentId) {
@@ -19222,6 +19553,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -19403,7 +19735,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:326291ba8669217819cfd1c4af15079ce55b7da617c47bc50de2a9c369f71385"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:ce6149eaa251c8e455920f900158c6ca741a52c56bb6dc0841afa1d79c9d513c"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -19542,6 +19874,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -19723,7 +20056,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:18c59e6b19b7aac3db3baf9965db1d32bf5f0b18de0f44697db50572377188d3"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:f19669c27ca7d8e11754fb17d7f5bd37d1c8d041b5b3bb44bcc871c2a4e16d6e"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -19862,6 +20195,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -20043,7 +20377,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:c4aab7651a8aada657e62050b5050a42b0147ea3f5a0857ccf4630718d549e89"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:58482134bbc2014328ad79e19d613e1f570106c71d7e0a9f264b7e17afa89d27"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -20182,6 +20516,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -20363,7 +20698,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:6344073680c40eb23265bad1341c0ea6dfafd5663ec4449e2309c5fe14b6d754"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:7f825382d3b5efda3c25bc8668a23b13497236649ac73b5aba10eea0a52acfb9"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -20513,6 +20848,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
+  detentionOccurrenceId
   version
   createdAt
   updatedAt
@@ -20694,7 +21030,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:ee216ef9ed7f98ccdceb2c1293cebe603782238fe351089d291d1ebeed6f1deb"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:ca5f038713500e50a69318ae1419d33216e25714600ce726864e14603d1c3c47"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {
@@ -20916,19 +21252,47 @@ fragment ShipmentCommentMentionFields on ShipmentCommentMention {
     ...ShipmentUserFields
   }
 }
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
 fragment ShipmentCommentFields on ShipmentComment {
   id
   businessUnitId
   organizationId
   shipmentId
   userId
+  parentCommentId
+  replyCount
   comment
+  body
   type
   visibility
   priority
   source
   metadata
   editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
   version
   createdAt
   updatedAt
@@ -20936,10 +21300,22 @@ fragment ShipmentCommentFields on ShipmentComment {
   user {
     ...ShipmentUserFields
   }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
   mentionedUsers {
     ...ShipmentCommentMentionFields
   }
-}`, {"hash":"sha256:ba68a1443da7ccf0d3e78c144632560501ed854de5f5caf63349a8748218cf6b"}) as unknown as TypedDocumentString<CreateShipmentCommentMutation, CreateShipmentCommentMutationVariables>;
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:170709ad4ba931f717d70c9688af8f8b3849e6ead4f054f05126967f35335c41"}) as unknown as TypedDocumentString<CreateShipmentCommentMutation, CreateShipmentCommentMutationVariables>;
 export const UpdateShipmentCommentDocument = new TypedDocumentString(`
     mutation UpdateShipmentComment($shipmentId: ID!, $commentId: ID!, $input: ShipmentCommentUpdateInput!) {
   updateShipmentComment(
@@ -20972,19 +21348,47 @@ fragment ShipmentCommentMentionFields on ShipmentCommentMention {
     ...ShipmentUserFields
   }
 }
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
 fragment ShipmentCommentFields on ShipmentComment {
   id
   businessUnitId
   organizationId
   shipmentId
   userId
+  parentCommentId
+  replyCount
   comment
+  body
   type
   visibility
   priority
   source
   metadata
   editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
   version
   createdAt
   updatedAt
@@ -20992,15 +21396,487 @@ fragment ShipmentCommentFields on ShipmentComment {
   user {
     ...ShipmentUserFields
   }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
   mentionedUsers {
     ...ShipmentCommentMentionFields
   }
-}`, {"hash":"sha256:968a90a90453a3933f1a6a452652e577dfe90c1974ccd83311e102b50c4e0906"}) as unknown as TypedDocumentString<UpdateShipmentCommentMutation, UpdateShipmentCommentMutationVariables>;
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:4a2ffc78c7fadd6a7382d1feb950e2396675b1e15759f429a52a25d374a94e60"}) as unknown as TypedDocumentString<UpdateShipmentCommentMutation, UpdateShipmentCommentMutationVariables>;
 export const DeleteShipmentCommentDocument = new TypedDocumentString(`
     mutation DeleteShipmentComment($shipmentId: ID!, $commentId: ID!) {
   deleteShipmentComment(shipmentId: $shipmentId, commentId: $commentId)
 }
     `, {"hash":"sha256:a20dcdea6225911dd4742c1e415a5f1e2b04d0111fbaf5ecbda1e8136b3dfa14"}) as unknown as TypedDocumentString<DeleteShipmentCommentMutation, DeleteShipmentCommentMutationVariables>;
+export const PinShipmentCommentDocument = new TypedDocumentString(`
+    mutation PinShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  pinShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  parentCommentId
+  replyCount
+  comment
+  body
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:d2b2515bb8f7ad0f27a906f1b8c247ab3e3940a09ea0cbcb373c89d874b6ce1a"}) as unknown as TypedDocumentString<PinShipmentCommentMutation, PinShipmentCommentMutationVariables>;
+export const UnpinShipmentCommentDocument = new TypedDocumentString(`
+    mutation UnpinShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  unpinShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  parentCommentId
+  replyCount
+  comment
+  body
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:c61d890d2ec45e52d93b3c2d3e9fe855d5ff6132c8710fead259c1287fe38117"}) as unknown as TypedDocumentString<UnpinShipmentCommentMutation, UnpinShipmentCommentMutationVariables>;
+export const ResolveShipmentCommentDocument = new TypedDocumentString(`
+    mutation ResolveShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  resolveShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  parentCommentId
+  replyCount
+  comment
+  body
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:267ac8318e557775cbb53e7534ca53ba43c55eea99288a29493b247eb767b259"}) as unknown as TypedDocumentString<ResolveShipmentCommentMutation, ResolveShipmentCommentMutationVariables>;
+export const UnresolveShipmentCommentDocument = new TypedDocumentString(`
+    mutation UnresolveShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  unresolveShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  parentCommentId
+  replyCount
+  comment
+  body
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:71471eb23afe1984ba946b9d6455a7f5a2d1ae63c87d3dfdd8b6091d000a8dac"}) as unknown as TypedDocumentString<UnresolveShipmentCommentMutation, UnresolveShipmentCommentMutationVariables>;
+export const AcknowledgeShipmentCommentDocument = new TypedDocumentString(`
+    mutation AcknowledgeShipmentComment($shipmentId: ID!, $commentId: ID!) {
+  acknowledgeShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {
+    ...ShipmentCommentFields
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentCommentMentionFields on ShipmentCommentMention {
+  id
+  commentId
+  mentionedUserId
+  organizationId
+  businessUnitId
+  shipmentId
+  createdAt
+  mentionedUser {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {
+  documentId
+  fileName
+  originalName
+  fileSize
+  mimeType
+  previewUrl
+  downloadUrl
+  createdAt
+}
+fragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {
+  id
+  commentId
+  userId
+  acknowledgedAt
+  user {
+    ...ShipmentUserFields
+  }
+}
+fragment ShipmentCommentFields on ShipmentComment {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  userId
+  parentCommentId
+  replyCount
+  comment
+  body
+  type
+  visibility
+  priority
+  source
+  metadata
+  editedAt
+  pinnedAt
+  pinnedById
+  resolvedAt
+  resolvedById
+  requiresAcknowledgment
+  deletedAt
+  version
+  createdAt
+  updatedAt
+  mentionedUserIds
+  user {
+    ...ShipmentUserFields
+  }
+  pinnedBy {
+    ...ShipmentUserFields
+  }
+  resolvedBy {
+    ...ShipmentUserFields
+  }
+  mentionedUsers {
+    ...ShipmentCommentMentionFields
+  }
+  acknowledgments {
+    ...ShipmentCommentAcknowledgmentFields
+  }
+  attachments {
+    ...ShipmentCommentAttachmentFields
+  }
+}`, {"hash":"sha256:bf20a040f4fdcf8f104457c01182123d1f077daa36e7e4df5b3ff04f28f9081f"}) as unknown as TypedDocumentString<AcknowledgeShipmentCommentMutation, AcknowledgeShipmentCommentMutationVariables>;
 export const ShipmentProfitabilityDocument = new TypedDocumentString(`
     query ShipmentProfitability($shipmentId: ID!) {
   shipmentProfitability(shipmentId: $shipmentId) {

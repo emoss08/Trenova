@@ -596,6 +596,7 @@ type DetentionDisputePacket struct {
 	Evidence       []*DetentionEvidence     `json:"evidence,omitempty"`
 	Notices        []*DetentionNotice       `json:"notices,omitempty"`
 	Collectability *DetentionCollectability `json:"collectability"`
+	ChainVerified  bool                     `json:"chainVerified"`
 	GeneratedAt    int                      `json:"generatedAt"`
 }
 
@@ -723,10 +724,10 @@ type DetentionPolicy struct {
 	SpecificityScore            int                               `json:"specificityScore"`
 	CustomerID                  *string                           `json:"customerId,omitempty"`
 	LocationID                  *string                           `json:"locationId,omitempty"`
-	ShipmentTypeIds             []string                          `json:"shipmentTypeIds,omitempty"`
-	ServiceTypeIds              []string                          `json:"serviceTypeIds,omitempty"`
-	CommodityIds                []string                          `json:"commodityIds,omitempty"`
-	StopTypes                   []StopType                        `json:"stopTypes,omitempty"`
+	ShipmentTypeIds             []string                          `json:"shipmentTypeIds"`
+	ServiceTypeIds              []string                          `json:"serviceTypeIds"`
+	CommodityIds                []string                          `json:"commodityIds"`
+	StopTypes                   []StopType                        `json:"stopTypes"`
 	AppointmentStopsOnly        bool                              `json:"appointmentStopsOnly"`
 	EffectiveStartDate          *int                              `json:"effectiveStartDate,omitempty"`
 	EffectiveEndDate            *int                              `json:"effectiveEndDate,omitempty"`
@@ -742,7 +743,7 @@ type DetentionPolicy struct {
 	RoundingMode                detention.RoundingMode            `json:"roundingMode"`
 	RateSource                  detention.RateSource              `json:"rateSource"`
 	AccessorialChargeID         string                            `json:"accessorialChargeId"`
-	Tiers                       []*DetentionPolicyTier            `json:"tiers,omitempty"`
+	Tiers                       []*DetentionPolicyTier            `json:"tiers"`
 	MaxBillableMinutesPerStop   *int                              `json:"maxBillableMinutesPerStop,omitempty"`
 	MaxChargePerStop            *string                           `json:"maxChargePerStop,omitempty"`
 	MaxChargePerDay             *string                           `json:"maxChargePerDay,omitempty"`
@@ -1079,24 +1080,32 @@ type DispatchBulkAssignResult struct {
 
 // A driver-and-equipment pairing judged against one move.
 type DispatchCandidate struct {
-	WorkerID               string                 `json:"workerId"`
-	WorkerName             string                 `json:"workerName"`
-	TractorID              *string                `json:"tractorId,omitempty"`
-	TrailerID              *string                `json:"trailerId,omitempty"`
-	MoveID                 string                 `json:"moveId"`
-	Score                  int                    `json:"score"`
-	Verdict                string                 `json:"verdict"`
-	Blocked                bool                   `json:"blocked"`
-	DeadheadMiles          *float64               `json:"deadheadMiles,omitempty"`
-	EstimatedDriveMs       int                    `json:"estimatedDriveMs"`
-	ProjectedArrival       int                    `json:"projectedArrival"`
-	MinutesOfSlack         int                    `json:"minutesOfSlack"`
-	DriveRemainingMs       int                    `json:"driveRemainingMs"`
-	ShiftRemainingMs       int                    `json:"shiftRemainingMs"`
-	CycleRemainingMs       int                    `json:"cycleRemainingMs"`
-	ProjectedTimeAvailable int                    `json:"projectedTimeAvailable"`
-	Findings               []*DispatchFinding     `json:"findings"`
-	Factors                []*DispatchScoreFactor `json:"factors"`
+	WorkerID               string   `json:"workerId"`
+	WorkerName             string   `json:"workerName"`
+	TractorID              *string  `json:"tractorId,omitempty"`
+	TrailerID              *string  `json:"trailerId,omitempty"`
+	MoveID                 string   `json:"moveId"`
+	Score                  int      `json:"score"`
+	Verdict                string   `json:"verdict"`
+	Blocked                bool     `json:"blocked"`
+	DeadheadMiles          *float64 `json:"deadheadMiles,omitempty"`
+	EstimatedDriveMs       int      `json:"estimatedDriveMs"`
+	ProjectedArrival       int      `json:"projectedArrival"`
+	MinutesOfSlack         int      `json:"minutesOfSlack"`
+	DriveRemainingMs       int      `json:"driveRemainingMs"`
+	ShiftRemainingMs       int      `json:"shiftRemainingMs"`
+	CycleRemainingMs       int      `json:"cycleRemainingMs"`
+	ProjectedTimeAvailable int      `json:"projectedTimeAvailable"`
+	// Rest strategy that makes this trip legal: currentClocks, splitSleeper,
+	// tenHourReset, or restart34. Empty when no projection ran.
+	HosStrategy string `json:"hosStrategy"`
+	// Latest unix time the required pre-departure rest must start; 0 when none is needed.
+	HosRestStartDeadline int                    `json:"hosRestStartDeadline"`
+	HosProjectedDriveMs  int                    `json:"hosProjectedDriveMs"`
+	HosProjectedShiftMs  int                    `json:"hosProjectedShiftMs"`
+	HosProjectedCycleMs  int                    `json:"hosProjectedCycleMs"`
+	Findings             []*DispatchFinding     `json:"findings"`
+	Factors              []*DispatchScoreFactor `json:"factors"`
 }
 
 // An assignment a driver already holds inside the planning horizon. The console draws these
@@ -3103,6 +3112,7 @@ type ShipmentAdditionalCharge struct {
 	Unit                   int                        `json:"unit"`
 	FuelSurchargeProgramID *string                    `json:"fuelSurchargeProgramId,omitempty"`
 	FuelSurchargeDetail    map[string]any             `json:"fuelSurchargeDetail,omitempty"`
+	DetentionOccurrenceID  *string                    `json:"detentionOccurrenceId,omitempty"`
 	Version                int                        `json:"version"`
 	CreatedAt              int                        `json:"createdAt"`
 	UpdatedAt              int                        `json:"updatedAt"`
@@ -3118,6 +3128,7 @@ type ShipmentAdditionalChargeInput struct {
 	Amount                 *string `json:"amount,omitempty"`
 	Unit                   *int    `json:"unit,omitempty"`
 	FuelSurchargeProgramID *string `json:"fuelSurchargeProgramId,omitempty"`
+	DetentionOccurrenceID  *string `json:"detentionOccurrenceId,omitempty"`
 	Version                *int    `json:"version,omitempty"`
 }
 
@@ -3262,25 +3273,58 @@ type ShipmentCancelInput struct {
 }
 
 type ShipmentComment struct {
-	ID             string                    `json:"id"`
-	BusinessUnitID *string                   `json:"businessUnitId,omitempty"`
-	OrganizationID *string                   `json:"organizationId,omitempty"`
-	ShipmentID     string                    `json:"shipmentId"`
-	UserID         *string                   `json:"userId,omitempty"`
-	Comment        string                    `json:"comment"`
-	Type           ShipmentCommentType       `json:"type"`
-	Visibility     ShipmentCommentVisibility `json:"visibility"`
-	Priority       ShipmentCommentPriority   `json:"priority"`
-	Source         ShipmentCommentSource     `json:"source"`
+	ID              string  `json:"id"`
+	BusinessUnitID  *string `json:"businessUnitId,omitempty"`
+	OrganizationID  *string `json:"organizationId,omitempty"`
+	ShipmentID      string  `json:"shipmentId"`
+	UserID          *string `json:"userId,omitempty"`
+	ParentCommentID *string `json:"parentCommentId,omitempty"`
+	ReplyCount      int     `json:"replyCount"`
+	Comment         string  `json:"comment"`
+	// Structured comment body (comment body v1). Null for legacy plain-text comments.
+	Body       map[string]any            `json:"body,omitempty"`
+	Type       ShipmentCommentType       `json:"type"`
+	Visibility ShipmentCommentVisibility `json:"visibility"`
+	Priority   ShipmentCommentPriority   `json:"priority"`
+	Source     ShipmentCommentSource     `json:"source"`
 	// Comment metadata is written by users, integrations, and system workflows, so keys vary by source.
-	Metadata         map[string]any            `json:"metadata,omitempty"`
-	EditedAt         *int                      `json:"editedAt,omitempty"`
-	Version          int                       `json:"version"`
-	CreatedAt        int                       `json:"createdAt"`
-	UpdatedAt        int                       `json:"updatedAt"`
-	MentionedUserIds []string                  `json:"mentionedUserIds"`
-	User             *tenant.User              `json:"user,omitempty"`
-	MentionedUsers   []*ShipmentCommentMention `json:"mentionedUsers,omitempty"`
+	Metadata               map[string]any                   `json:"metadata,omitempty"`
+	EditedAt               *int                             `json:"editedAt,omitempty"`
+	PinnedAt               *int                             `json:"pinnedAt,omitempty"`
+	PinnedByID             *string                          `json:"pinnedById,omitempty"`
+	ResolvedAt             *int                             `json:"resolvedAt,omitempty"`
+	ResolvedByID           *string                          `json:"resolvedById,omitempty"`
+	RequiresAcknowledgment bool                             `json:"requiresAcknowledgment"`
+	DeletedAt              *int                             `json:"deletedAt,omitempty"`
+	Version                int                              `json:"version"`
+	CreatedAt              int                              `json:"createdAt"`
+	UpdatedAt              int                              `json:"updatedAt"`
+	MentionedUserIds       []string                         `json:"mentionedUserIds"`
+	User                   *tenant.User                     `json:"user,omitempty"`
+	PinnedBy               *tenant.User                     `json:"pinnedBy,omitempty"`
+	ResolvedBy             *tenant.User                     `json:"resolvedBy,omitempty"`
+	MentionedUsers         []*ShipmentCommentMention        `json:"mentionedUsers,omitempty"`
+	Acknowledgments        []*ShipmentCommentAcknowledgment `json:"acknowledgments,omitempty"`
+	Attachments            []*ShipmentCommentAttachment     `json:"attachments,omitempty"`
+}
+
+type ShipmentCommentAcknowledgment struct {
+	ID             string       `json:"id"`
+	CommentID      string       `json:"commentId"`
+	UserID         string       `json:"userId"`
+	AcknowledgedAt int          `json:"acknowledgedAt"`
+	User           *tenant.User `json:"user,omitempty"`
+}
+
+type ShipmentCommentAttachment struct {
+	DocumentID   string  `json:"documentId"`
+	FileName     string  `json:"fileName"`
+	OriginalName *string `json:"originalName,omitempty"`
+	FileSize     int     `json:"fileSize"`
+	MimeType     string  `json:"mimeType"`
+	PreviewURL   *string `json:"previewUrl,omitempty"`
+	DownloadURL  string  `json:"downloadUrl"`
+	CreatedAt    int     `json:"createdAt"`
 }
 
 type ShipmentCommentConnection struct {
@@ -3299,11 +3343,18 @@ type ShipmentCommentEdge struct {
 }
 
 type ShipmentCommentInput struct {
-	Comment          string                     `json:"comment"`
-	MentionedUserIds []string                   `json:"mentionedUserIds,omitempty"`
-	Type             *ShipmentCommentType       `json:"type,omitempty"`
-	Visibility       *ShipmentCommentVisibility `json:"visibility,omitempty"`
-	Priority         *ShipmentCommentPriority   `json:"priority,omitempty"`
+	Comment string `json:"comment"`
+	// Structured comment body (comment body v1). When present, the plain-text comment is derived server-side.
+	Body                   map[string]any             `json:"body,omitempty"`
+	ParentCommentID        *string                    `json:"parentCommentId,omitempty"`
+	MentionedUserIds       []string                   `json:"mentionedUserIds,omitempty"`
+	AttachmentDocumentIds  []string                   `json:"attachmentDocumentIds,omitempty"`
+	Type                   *ShipmentCommentType       `json:"type,omitempty"`
+	Visibility             *ShipmentCommentVisibility `json:"visibility,omitempty"`
+	Priority               *ShipmentCommentPriority   `json:"priority,omitempty"`
+	RequiresAcknowledgment *bool                      `json:"requiresAcknowledgment,omitempty"`
+	// Client-generated reference echoed on the created entity for optimistic-update reconciliation.
+	ClientRef *string `json:"clientRef,omitempty"`
 }
 
 type ShipmentCommentMention struct {
@@ -3318,13 +3369,27 @@ type ShipmentCommentMention struct {
 }
 
 type ShipmentCommentUpdateInput struct {
-	ID               string                     `json:"id"`
-	Comment          string                     `json:"comment"`
-	MentionedUserIds []string                   `json:"mentionedUserIds,omitempty"`
-	Type             *ShipmentCommentType       `json:"type,omitempty"`
-	Visibility       *ShipmentCommentVisibility `json:"visibility,omitempty"`
-	Priority         *ShipmentCommentPriority   `json:"priority,omitempty"`
-	Version          int                        `json:"version"`
+	ID      string `json:"id"`
+	Comment string `json:"comment"`
+	// Structured comment body (comment body v1). When present, the plain-text comment is derived server-side.
+	Body                   map[string]any             `json:"body,omitempty"`
+	MentionedUserIds       []string                   `json:"mentionedUserIds,omitempty"`
+	AttachmentDocumentIds  []string                   `json:"attachmentDocumentIds,omitempty"`
+	Type                   *ShipmentCommentType       `json:"type,omitempty"`
+	Visibility             *ShipmentCommentVisibility `json:"visibility,omitempty"`
+	Priority               *ShipmentCommentPriority   `json:"priority,omitempty"`
+	RequiresAcknowledgment *bool                      `json:"requiresAcknowledgment,omitempty"`
+	Version                int                        `json:"version"`
+}
+
+type ShipmentCommentsFilterInput struct {
+	Types          []ShipmentCommentType     `json:"types,omitempty"`
+	Priorities     []ShipmentCommentPriority `json:"priorities,omitempty"`
+	AuthorIds      []string                  `json:"authorIds,omitempty"`
+	MentionsUserID *string                   `json:"mentionsUserId,omitempty"`
+	PinnedOnly     *bool                     `json:"pinnedOnly,omitempty"`
+	UnresolvedOnly *bool                     `json:"unresolvedOnly,omitempty"`
+	Search         *string                   `json:"search,omitempty"`
 }
 
 type ShipmentCommodity struct {

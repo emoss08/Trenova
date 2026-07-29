@@ -10,6 +10,7 @@ import type { EdiVolumeSeriesDocument } from "@trenova/graphql/generated/graphql
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { formatUnixInUserTimezone, formatUnixMonthDay } from "@trenova/shared/lib/date";
 
 type EDIVolumePoint = ResultOf<typeof EdiVolumeSeriesDocument>["ediVolumeSeries"][number];
 
@@ -36,15 +37,14 @@ const successRateChartConfig = {
 } satisfies ChartConfig;
 
 function bucketLabel(point: EDIVolumePoint) {
-  const date = new Date(point.bucketStart * 1000);
   if (point.bucketSeconds < 24 * 3600) {
-    return date.toLocaleString(undefined, {
+    return formatUnixInUserTimezone(point.bucketStart, {
       month: "short",
       day: "numeric",
       hour: "numeric",
     });
   }
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return formatUnixMonthDay(point.bucketStart);
 }
 
 export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {

@@ -18,15 +18,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
 import { RangeToggle } from "./range-toggle";
+import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 
 type AgingView = "snapshot" | "trend";
-
-function shortDate(unixSeconds: number) {
-  return new Date(unixSeconds * 1000).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export function AgingCard() {
   const [view, setView] = useState<AgingView>("snapshot");
@@ -142,7 +136,7 @@ function AgingTrend() {
   const chartData = useMemo(
     () =>
       (trend ?? []).map((point) => ({
-        label: shortDate(point.periodEnd),
+        label: formatUnixMonthDay(point.periodEnd),
         current: point.buckets.currentMinor / 100,
         days1To30: point.buckets.days1To30Minor / 100,
         days31To60: point.buckets.days31To60Minor / 100,

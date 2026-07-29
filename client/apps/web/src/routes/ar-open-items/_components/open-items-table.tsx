@@ -27,14 +27,10 @@ import {
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function OpenItemsTable({

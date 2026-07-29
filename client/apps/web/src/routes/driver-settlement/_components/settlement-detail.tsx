@@ -54,6 +54,7 @@ import {
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 type ReasonAction = "reject" | "void";
 
@@ -80,12 +81,7 @@ const lineCategoryOrder = [
 ];
 
 function formatDate(unix?: number | null): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function SettlementDetail({

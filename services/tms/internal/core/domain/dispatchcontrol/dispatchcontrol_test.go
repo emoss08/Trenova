@@ -773,3 +773,57 @@ func TestComplianceEnforcementLevel_IsAuditOnly(t *testing.T) {
 		})
 	}
 }
+
+func TestPresetWeights_EveryStrategyCoversAllFactors(t *testing.T) {
+	strategies := []AutoAssignmentStrategy{
+		AutoAssignmentStrategyProximity,
+		AutoAssignmentStrategyAvailability,
+		AutoAssignmentStrategyLoadBalancing,
+		AutoAssignmentStrategyPerformance,
+	}
+
+	for _, strategy := range strategies {
+		weights := PresetWeights(strategy)
+		assert.Len(t, weights, len(AllScoringFactors()),
+			"strategy %s must weight every factor", strategy)
+		for _, factor := range AllScoringFactors() {
+			weight, ok := weights[factor]
+			assert.True(t, ok, "strategy %s is missing factor %s", strategy, factor)
+			assert.Greater(t, weight, 0.0)
+			assert.LessOrEqual(t, weight, 10.0)
+		}
+	}
+}
+
+func TestScoringFactor_NewFactorsAreValid(t *testing.T) {
+	for _, factor := range []ScoringFactor{
+		FactorOnTimeHistory,
+		FactorSafetyHistory,
+		FactorAcceptance,
+		FactorPTOProximity,
+	} {
+		assert.True(t, factor.IsValid(), "%s must be a valid scoring factor", factor)
+	}
+	assert.False(t, ScoringFactor("bogus").IsValid())
+}
+
+func TestAutoAssignmentStrategy_Performance(t *testing.T) {
+	assert.True(t, AutoAssignmentStrategyPerformance.IsValid())
+
+	parsed, err := AutoAssignmentStrategyFromString("Performance")
+	require.NoError(t, err)
+	assert.Equal(t, AutoAssignmentStrategyPerformance, parsed)
+}
+
+func TestResolve_OverridesNewFactors(t *testing.T) {
+	weights := ScoringWeights{
+		"onTimeHistory": 7.5,
+		"acceptance":    0,
+	}
+
+	resolved := weights.Resolve(AutoAssignmentStrategyPerformance)
+	assert.InDelta(t, 7.5, resolved[FactorOnTimeHistory], 0.001)
+	assert.InDelta(t, 0.0, resolved[FactorAcceptance], 0.001)
+	assert.InDelta(t, 2.0, resolved[FactorSafetyHistory], 0.001,
+		"untouched factors keep the preset value")
+}

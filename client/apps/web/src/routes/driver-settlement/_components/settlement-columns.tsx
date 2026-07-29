@@ -4,14 +4,10 @@ import type { DriverSettlementRow } from "@/lib/graphql/driver-settlement";
 import type { DriverSettlementStatus, PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { type ColumnDef } from "@tanstack/react-table";
 import { TriangleAlert } from "lucide-react";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 function workerName(row: DriverSettlementRow): string {

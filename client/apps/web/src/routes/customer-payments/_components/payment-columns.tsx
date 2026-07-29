@@ -3,14 +3,10 @@ import { PlainCustomerPaymentStatusBadge } from "@trenova/shared/components/stat
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
 import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payment";
 import { type ColumnDef } from "@tanstack/react-table";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
-  if (!unix) return "—";
-  return new Date(unix * 1000).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
 export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
