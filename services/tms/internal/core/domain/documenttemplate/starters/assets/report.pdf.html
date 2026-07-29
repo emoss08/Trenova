@@ -1,0 +1,24 @@
+<h1>{{ .Title }}</h1>
+{{ if .Description }}<p class="description">{{ .Description }}</p>{{ end }}
+
+<div class="meta">
+  {{ if .GeneratedAt }}<span>Generated {{ .GeneratedAt }}</span>{{ end }}
+  {{ if .RequestedBy }}<span>Requested by {{ .RequestedBy }}</span>{{ end }}
+  {{ range .Params }}<span>{{ .Label }}: {{ .Value }}</span>{{ end }}
+</div>
+
+<table>
+  <thead>
+    <tr>{{ range .Headers }}<th>{{ . }}</th>{{ end }}</tr>
+  </thead>
+  <tbody>
+    {{ range .Rows }}<tr>{{ range .Cells }}<td{{ if .Tone }} class="tone-{{ .Tone }}"{{ end }}>{{ .Text }}</td>{{ end }}</tr>
+    {{ end }}
+  </tbody>
+  {{ if .Totals }}<tfoot>
+    <tr>{{ range .Totals }}<td>{{ . }}</td>{{ end }}</tr>
+  </tfoot>{{ end }}
+</table>
+
+<div class="count">{{ .RowCount }} rows</div>
+{{ if .Truncated }}<div class="notice">{{ .Notice }}</div>{{ end }}

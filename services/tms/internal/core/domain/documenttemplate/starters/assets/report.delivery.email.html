@@ -1,0 +1,37 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:680px">
+  <p style="margin:0 0 4px;font-size:16px;font-weight:700">{{ .Title }}</p>
+  {{ if .Description }}<p style="margin:0 0 16px;color:#4b5563;font-size:13px">{{ .Description }}</p>{{ end }}
+
+  <p style="margin:0 0 16px;color:#4b5563;font-size:13px">
+    {{ .RowCount }} rows{{ if .Format }} &middot; {{ upper .Format }}{{ end }}{{ if .FileSize }} &middot; {{ .FileSize }}{{ end }}{{ if .CompletedAt }} &middot; completed {{ .CompletedAt }}{{ end }}
+  </p>
+
+  {{ if .Truncated }}
+  <p style="margin:0 0 16px;padding:10px 12px;background:#fef3c7;border-left:3px solid #b45309;color:#78350f;font-size:13px">
+    These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.
+  </p>
+  {{ end }}
+
+  {{ if .Digest.Rows }}
+  <table style="border-collapse:collapse;margin:0 0 12px;font-size:12px">
+    <tr>
+      {{ range .Digest.Headers }}<th style="padding:5px 10px;border-bottom:2px solid #111827;color:#374151;text-align:left">{{ . }}</th>{{ end }}
+    </tr>
+    {{ range .Digest.Rows }}<tr>
+      {{ range .Cells }}<td style="padding:5px 10px;border-bottom:1px solid #e5e7eb">{{ .Text }}</td>{{ end }}
+    </tr>{{ end }}
+    {{ if .Digest.Totals }}<tr>
+      {{ range .Digest.Totals }}<td style="padding:5px 10px;border-top:2px solid #111827;font-weight:700">{{ . }}</td>{{ end }}
+    </tr>{{ end }}
+  </table>
+  {{ if .Digest.Note }}<p style="margin:0 0 16px;color:#6b7280;font-size:12px">{{ .Digest.Note }}</p>{{ end }}
+  {{ end }}
+
+  <p style="margin:0 0 16px;font-size:13px">
+    {{ if .Attached }}{{ .AttachedNote }}
+    {{ else }}{{ .AttachedNote }}{{ if .DownloadURL }} <a href="{{ .DownloadURL }}" style="color:#1d4ed8">Download the report</a>.{{ end }}
+    {{ end }}
+  </p>
+
+  {{ if .ExpiresAt }}<p style="margin:0;color:#6b7280;font-size:12px">The download expires {{ .ExpiresAt }}.</p>{{ end }}
+</div>

@@ -1,0 +1,10 @@
+Hi{{ if .FirstName }} {{ .FirstName }}{{ end }},
+
+{{ .CompanyName }} has set up a Dash account for you. Dash is where you will see your
+assigned loads, submit expenses, and check your pay.
+
+Set up your account:
+{{ .InviteURL }}
+
+{{ if .ExpiresInDays }}This link expires in {{ .ExpiresInDays }} days{{ if .ExpiresAt }}, on {{ .ExpiresAt }}{{ end }}.
+{{ end }}If you were not expecting this, you can ignore it.

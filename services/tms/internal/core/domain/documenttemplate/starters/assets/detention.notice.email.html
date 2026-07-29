@@ -1,0 +1,66 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:600px">
+  <p style="margin:0 0 16px">
+    {{ if eq .Kind "Warning" }}Our driver on shipment {{ .ShipmentProNumber }} is approaching the end of contracted free time at {{ .FacilityName }}.
+    {{ else if eq .Kind "Started" }}Contracted free time on shipment {{ .ShipmentProNumber }} at {{ .FacilityName }} has been exhausted and detention is now accruing.
+    {{ else if eq .Kind "Update" }}Our driver on shipment {{ .ShipmentProNumber }} remains at {{ .FacilityName }} and detention continues to accrue.
+    {{ else if eq .Kind "Final" }}Our driver has departed {{ .FacilityName }} on shipment {{ .ShipmentProNumber }}. Final detention is summarized below.
+    {{ else }}Detention notice for shipment {{ .ShipmentProNumber }} at {{ .FacilityName }}.
+    {{ end }}
+  </p>
+
+  <table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">
+    {{ if .ArrivedAt }}<tr>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">Arrived</td>
+      <td style="padding:3px 0">{{ .ArrivedAt }}{{ if .ArrivalSource }} <span style="color:#6b7280">({{ .ArrivalSource }})</span>{{ end }}</td>
+    </tr>{{ end }}
+    {{ if .FreeTime }}<tr>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">Contracted free time</td>
+      <td style="padding:3px 0">{{ .FreeTime }}</td>
+    </tr>{{ end }}
+    {{ if .FreeTimeExpiresAt }}<tr>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">Free time expires</td>
+      <td style="padding:3px 0">{{ .FreeTimeExpiresAt }}</td>
+    </tr>{{ end }}
+    {{ if .RateLabel }}<tr>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">Rate after free time</td>
+      <td style="padding:3px 0">{{ .RateLabel }}</td>
+    </tr>{{ end }}
+    {{ if eq .Kind "Final" }}
+      {{ if .DepartedAt }}<tr>
+        <td style="padding:3px 16px 3px 0;color:#6b7280">Departed</td>
+        <td style="padding:3px 0">{{ .DepartedAt }}</td>
+      </tr>{{ end }}
+      <tr>
+        <td style="padding:3px 16px 3px 0;color:#6b7280">Total time on site</td>
+        <td style="padding:3px 0">{{ .TotalTimeOnSite }}</td>
+      </tr>
+    {{ end }}
+    {{ if .BillableTime }}<tr>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">Billable detention</td>
+      <td style="padding:3px 0">{{ .BillableTime }}</td>
+    </tr>{{ end }}
+    {{ if .BillableAmount }}<tr>
+      <td style="padding:3px 16px 3px 0;color:#6b7280">Detention charge</td>
+      <td style="padding:3px 0;font-weight:700">{{ moneyString .Currency .BillableAmount }}</td>
+    </tr>{{ end }}
+  </table>
+
+  {{ if .Tiers }}
+  <table style="border-collapse:collapse;margin:0 0 16px;font-size:13px">
+    <tr>
+      <th style="padding:4px 12px 4px 0;border-bottom:1px solid #111827;color:#374151;text-align:left">Band</th>
+      <th style="padding:4px 0;border-bottom:1px solid #111827;color:#374151;text-align:left">Rate</th>
+    </tr>
+    {{ range .Tiers }}<tr>
+      <td style="padding:4px 12px 4px 0;border-bottom:1px solid #e5e7eb">{{ .Band }}{{ if .Label }} <span style="color:#6b7280">{{ .Label }}</span>{{ end }}</td>
+      <td style="padding:4px 0;border-bottom:1px solid #e5e7eb">{{ .Rate }}</td>
+    </tr>{{ end }}
+  </table>
+  {{ end }}
+
+  <p style="margin:0;color:#6b7280;font-size:13px">
+    {{ if eq .Kind "Final" }}This charge will appear on the invoice for this shipment. Reply to this message if any detail needs review.
+    {{ else }}Please expedite loading or unloading to avoid further charges. Reply to this message if any detail needs review.
+    {{ end }}<br>{{ .CompanyName }}
+  </p>
+</div>

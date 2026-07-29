@@ -1,0 +1,21 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:600px">
+  {{ if .LogoDataURI }}<img src="{{ .LogoDataURI }}" alt="{{ .CompanyName }}" style="display:block;max-height:36px;margin:0 0 18px">{{ end }}
+
+  <p style="margin:0 0 16px">Hello{{ if .CustomerName }} {{ .CustomerName }}{{ end }},</p>
+
+  <p style="margin:0 0 16px">{{ nl2br .AgentBody }}</p>
+
+  {{ if .RequestedDocuments }}
+  <ul style="margin:0 0 16px;padding-left:20px">
+    {{ range .RequestedDocuments }}<li style="margin:0 0 4px">{{ . }}</li>{{ end }}
+  </ul>
+  {{ end }}
+
+  {{ if .ShipmentProNumber }}
+  <p style="margin:0 0 16px;color:#4b5563;font-size:13px">Shipment {{ .ShipmentProNumber }}</p>
+  {{ end }}
+
+  <p style="margin:0;color:#6b7280;font-size:13px">
+    Reply to this message with the documents attached.<br>{{ .CompanyName }}
+  </p>
+</div>

@@ -1,0 +1,142 @@
+<header class="masthead">
+  <div class="issuer">
+    {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .Organization.Name }}">{{ end }}
+    <div class="issuer-name">{{ .Organization.Name }}</div>
+    {{ range .Organization.Lines }}<div class="issuer-line">{{ . }}</div>{{ end }}
+    {{ range .Organization.Details }}<div class="issuer-line">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="invoice-id">
+    <div class="doc-type">Invoice</div>
+    <div class="invoice-number">{{ .InvoiceNumber }}</div>
+    <dl class="meta">
+      {{ if .InvoiceDate }}<dt>Issued</dt><dd>{{ .InvoiceDate }}</dd>{{ end }}
+      {{ if .DueDate }}<dt>Due</dt><dd>{{ .DueDate }}</dd>{{ end }}
+      {{ if .PaymentTerm }}<dt>Terms</dt><dd>{{ .PaymentTerm }}</dd>{{ end }}
+      {{ range .HeaderRows }}<dt>{{ .Label }}</dt><dd>{{ .Value }}</dd>{{ end }}
+    </dl>
+  </div>
+</header>
+
+<section class="parties">
+  <div class="party">
+    <h2>Bill To</h2>
+    <div class="party-name">{{ .BillTo.Name }}</div>
+    {{ range .BillTo.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .BillTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="party">
+    <h2>Remit To</h2>
+    <div class="party-name">{{ .RemitTo.Name }}</div>
+    {{ range .RemitTo.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .RemitTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+</section>
+
+<section class="parties">
+  <div class="party">
+    <h2>Shipper</h2>
+    <div class="party-name">{{ .Shipper.Name }}</div>
+    {{ range .Shipper.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .Shipper.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+
+  <div class="party">
+    <h2>Consignee</h2>
+    <div class="party-name">{{ .Consignee.Name }}</div>
+    {{ range .Consignee.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .Consignee.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
+  </div>
+</section>
+
+{{ if .CommodityRows }}
+<section class="block">
+  <h2>Freight</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th class="num">Qty</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th class="num">Weight</th>
+        <th class="num">NMFC</th>
+        <th class="num">Class</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .CommodityRows }}
+      <tr>
+        <td class="num">{{ .Quantity }}</td>
+        <td>{{ .Type }}</td>
+        <td>{{ range .DescriptionLines }}<div>{{ . }}</div>{{ end }}</td>
+        <td class="num">{{ .Weight }}</td>
+        <td class="num">{{ .NMFC }}</td>
+        <td class="num">{{ .Class }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}
+
+<section class="block">
+  <h2>Charges</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th class="line-col">#</th>
+        <th>Description</th>
+        <th class="num">Quantity</th>
+        <th class="num">Rate</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .ChargeRows }}
+      <tr>
+        <td class="line-col">{{ .Line }}</td>
+        <td>{{ .Description }}</td>
+        <td class="num">{{ .Quantity }}</td>
+        <td class="num">{{ .UnitPrice }}</td>
+        <td class="num">{{ .Amount }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <dl>
+      <dt>Subtotal</dt><dd>{{ .Subtotal }}</dd>
+      {{ if .Other }}<dt>Other</dt><dd>{{ .Other }}</dd>{{ end }}
+      <dt class="grand">Total</dt><dd class="grand">{{ .Total }}</dd>
+      {{ if .BalanceDue }}<dt class="due">Balance Due</dt><dd class="due">{{ .BalanceDue }}</dd>{{ end }}
+    </dl>
+  </div>
+</section>
+
+{{ if .Notes }}
+<section class="block notes">
+  <h2>Notes</h2>
+  {{ range .Notes }}<p>{{ . }}</p>{{ end }}
+</section>
+{{ end }}
+
+{{ if .Attachments }}
+<section class="block">
+  <h2>Enclosed</h2>
+  <ul class="enclosed">{{ range .Attachments }}<li>{{ . }}</li>{{ end }}</ul>
+</section>
+{{ end }}
+
+{{ if or .Terms .InvoiceTerms }}
+<section class="block terms">
+  <h2>Terms</h2>
+  {{ range .InvoiceTerms }}<p>{{ . }}</p>{{ end }}
+  {{ range .Terms }}<p>{{ . }}</p>{{ end }}
+</section>
+{{ end }}
+
+{{ if .InvoiceFooter }}
+<footer class="closing">{{ .InvoiceFooter }}</footer>
+{{ end }}

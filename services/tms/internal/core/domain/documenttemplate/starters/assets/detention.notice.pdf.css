@@ -1,0 +1,153 @@
+/* This document is evidence. Every figure a charge rests on — the arrival time, how
+   it was determined, the contracted free time, and the rate — is given its own row
+   and its own label, so a customer disputing the charge is disputing a specific
+   line rather than a paragraph. */
+
+body {
+  font-size: 10pt;
+  line-height: 1.5;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.masthead {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #111827;
+}
+
+.logo {
+  display: block;
+  max-height: 40px;
+  margin-bottom: 6px;
+}
+
+.issuer-name {
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.doc-id {
+  text-align: right;
+}
+
+.doc-type {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.doc-stage {
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lede p {
+  margin: 14px 0 0;
+  font-size: 10.5pt;
+}
+
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.party {
+  break-inside: avoid;
+}
+
+.party-name {
+  font-weight: 700;
+}
+
+.block {
+  margin-top: 16px;
+  break-inside: avoid;
+}
+
+.grid {
+  width: 100%;
+  font-size: 9.5pt;
+}
+
+.grid thead th {
+  padding: 5px 8px;
+  border-bottom: 1.5px solid #111827;
+  color: #374151;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.grid tbody td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.grid .label {
+  width: 190px;
+  color: #4b5563;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+/* The amount is set apart because it is the one number the recipient will look for
+   first, and burying it in a table row invites a follow-up asking what is owed. */
+.charge {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #111827;
+  break-inside: avoid;
+}
+
+.charge-label {
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+.charge-amount {
+  font-size: 16pt;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.closing {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 8.5pt;
+}

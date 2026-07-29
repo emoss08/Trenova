@@ -1,0 +1,22 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:560px">
+  <p style="margin:0 0 16px">Hi{{ if .FirstName }} {{ .FirstName }}{{ end }},</p>
+
+  <p style="margin:0 0 20px">
+    {{ .CompanyName }} has set up a Dash account for you. Dash is where you will see your
+    assigned loads, submit expenses, and check your pay.
+  </p>
+
+  <p style="margin:0 0 20px">
+    <a href="{{ .InviteURL }}" style="display:inline-block;padding:11px 20px;background:#111827;color:#ffffff;font-weight:600;text-decoration:none;border-radius:6px">Set up your account</a>
+  </p>
+
+  <p style="margin:0 0 20px;color:#4b5563;font-size:13px">
+    Or paste this link into your browser:<br>
+    <span style="word-break:break-all">{{ .InviteURL }}</span>
+  </p>
+
+  <p style="margin:0;color:#6b7280;font-size:13px">
+    {{ if .ExpiresInDays }}This link expires in {{ .ExpiresInDays }} days{{ if .ExpiresAt }}, on {{ .ExpiresAt }}{{ end }}.{{ end }}
+    If you were not expecting this, you can ignore it.
+  </p>
+</div>

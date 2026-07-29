@@ -1,0 +1,244 @@
+/* Layout uses CSS Grid and real table semantics rather than absolute positions, so
+   a long address block or a fifth charge line reflows instead of overlapping the
+   section beneath it. The coordinate-based renderer this replaces could not do that:
+   every element sat at a fixed millimetre offset. */
+
+body {
+  font-size: 9.5pt;
+  line-height: 1.45;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+/* Masthead */
+
+.masthead {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #111827;
+}
+
+.logo {
+  display: block;
+  max-height: 44px;
+  margin-bottom: 8px;
+}
+
+.issuer-name {
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.issuer-line {
+  color: #4b5563;
+  font-size: 8.5pt;
+}
+
+.invoice-id {
+  min-width: 220px;
+  text-align: right;
+}
+
+.doc-type {
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.invoice-number {
+  margin-bottom: 6px;
+  font-size: 16pt;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  /* Lining, fixed-width digits so an invoice number never renders with the
+     proportional figures some fonts default to. */
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Definition lists carry the label/value pairs, which keeps a missing value from
+   collapsing the row above it. */
+.meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 1px 10px;
+  margin: 0;
+  justify-content: end;
+}
+
+.meta dt {
+  color: #6b7280;
+  font-size: 8pt;
+  text-align: right;
+}
+
+.meta dd {
+  margin: 0;
+  font-size: 8.5pt;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Parties */
+
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+/* An address block must not be split across a page boundary: half a remit-to
+   address is worse than pushing the whole block to the next page. */
+.party {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.party-name {
+  font-weight: 700;
+}
+
+.party-detail {
+  margin-top: 2px;
+  color: #4b5563;
+  font-size: 8.5pt;
+}
+
+/* Tables */
+
+.block {
+  margin-top: 16px;
+}
+
+.grid {
+  width: 100%;
+  font-size: 8.5pt;
+}
+
+.grid thead th {
+  padding: 5px 8px;
+  border-bottom: 1.5px solid #111827;
+  color: #374151;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.grid tbody td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.grid tbody tr:nth-child(even) td {
+  background: #f9fafb;
+}
+
+/* A row must not straddle a page break, and the header must repeat on every page a
+   multi-page charge table spills onto. thead repetition is the browser default for
+   real table markup, which is a reason to use it rather than styled divs. */
+.grid tbody tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.num {
+  text-align: right;
+  /* Money columns line up digit for digit, so a reader can scan the column and
+     compare magnitudes without re-reading each figure. */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.line-col {
+  width: 28px;
+  color: #6b7280;
+  text-align: right;
+}
+
+/* Totals */
+
+.totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  break-inside: avoid;
+}
+
+.totals dl {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 3px 16px;
+  min-width: 240px;
+  margin: 0;
+}
+
+.totals dt {
+  color: #4b5563;
+  text-align: right;
+}
+
+.totals dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totals .grand {
+  padding-top: 5px;
+  border-top: 1.5px solid #111827;
+  color: #111827;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.totals .due {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* Closing sections */
+
+.notes p,
+.terms p {
+  margin: 0 0 4px;
+}
+
+.terms {
+  break-inside: avoid;
+  color: #4b5563;
+  font-size: 8pt;
+}
+
+.enclosed {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 8.5pt;
+}
+
+.closing {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 8.5pt;
+  text-align: center;
+}

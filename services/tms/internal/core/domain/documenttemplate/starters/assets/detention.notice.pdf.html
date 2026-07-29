@@ -1,0 +1,77 @@
+<header class="masthead">
+  <div class="issuer">
+    {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .CompanyName }}">{{ end }}
+    <div class="issuer-name">{{ .CompanyName }}</div>
+  </div>
+  <div class="doc-id">
+    <div class="doc-type">Detention Notice</div>
+    <div class="doc-stage">{{ .Kind }}</div>
+  </div>
+</header>
+
+<section class="lede">
+  <p>
+    {{ if eq .Kind "Warning" }}Our driver on shipment {{ .ShipmentProNumber }} is approaching the end of contracted free time at {{ .FacilityName }}.
+    {{ else if eq .Kind "Started" }}Contracted free time on shipment {{ .ShipmentProNumber }} at {{ .FacilityName }} has been exhausted and detention is now accruing.
+    {{ else if eq .Kind "Update" }}Our driver on shipment {{ .ShipmentProNumber }} remains at {{ .FacilityName }} and detention continues to accrue.
+    {{ else if eq .Kind "Final" }}Our driver has departed {{ .FacilityName }} on shipment {{ .ShipmentProNumber }}. Final detention is summarized below.
+    {{ else }}Detention notice for shipment {{ .ShipmentProNumber }} at {{ .FacilityName }}.
+    {{ end }}
+  </p>
+</section>
+
+<section class="parties">
+  <div class="party">
+    <h2>Shipment</h2>
+    <div class="party-name">{{ .ShipmentProNumber }}</div>
+    <div>{{ .FacilityName }}</div>
+  </div>
+  <div class="party">
+    <h2>Customer</h2>
+    <div class="party-name">{{ .CustomerName }}</div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Detention Record</h2>
+  <table class="grid">
+    <tbody>
+      {{ if .ArrivedAt }}<tr><td class="label">Arrived</td><td>{{ .ArrivedAt }}{{ if .ArrivalSource }} <span class="muted">({{ .ArrivalSource }})</span>{{ end }}</td></tr>{{ end }}
+      {{ if .FreeTime }}<tr><td class="label">Contracted free time</td><td>{{ .FreeTime }}</td></tr>{{ end }}
+      {{ if .FreeTimeExpiresAt }}<tr><td class="label">Free time expires</td><td>{{ .FreeTimeExpiresAt }}</td></tr>{{ end }}
+      {{ if .RateLabel }}<tr><td class="label">Rate after free time</td><td>{{ .RateLabel }}</td></tr>{{ end }}
+      {{ if .DepartedAt }}<tr><td class="label">Departed</td><td>{{ .DepartedAt }}</td></tr>{{ end }}
+      {{ if .TotalTimeOnSite }}<tr><td class="label">Total time on site</td><td>{{ .TotalTimeOnSite }}</td></tr>{{ end }}
+      {{ if .BillableTime }}<tr><td class="label">Billable detention</td><td>{{ .BillableTime }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+</section>
+
+{{ if .Tiers }}
+<section class="block">
+  <h2>Rate Schedule</h2>
+  <table class="grid">
+    <thead><tr><th>Band</th><th>Tier</th><th class="num">Rate</th></tr></thead>
+    <tbody>
+      {{ range .Tiers }}<tr>
+        <td>{{ .Band }}</td>
+        <td class="muted">{{ .Label }}</td>
+        <td class="num">{{ .Rate }}</td>
+      </tr>{{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}
+
+{{ if .BillableAmount }}
+<section class="charge">
+  <div class="charge-label">Detention Charge</div>
+  <div class="charge-amount">{{ moneyString .Currency .BillableAmount }}</div>
+</section>
+{{ end }}
+
+<footer class="closing">
+  {{ if eq .Kind "Final" }}This charge will appear on the invoice for this shipment. Reply to the accompanying message if any detail needs review.
+  {{ else }}Please expedite loading or unloading to avoid further charges.
+  {{ end }}
+</footer>

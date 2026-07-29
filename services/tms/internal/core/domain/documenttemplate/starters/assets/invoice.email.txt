@@ -1,0 +1,18 @@
+Hello{{ if .CustomerName }} {{ .CustomerName }}{{ end }},
+
+Invoice {{ .InvoiceNumber }} is attached{{ if .PartLabel }} ({{ .PartLabel }}){{ end }}.
+
+Invoice: {{ .InvoiceNumber }}
+{{ if .InvoiceDate }}Issued: {{ .InvoiceDate }}
+{{ end }}{{ if .DueDate }}Due: {{ .DueDate }}
+{{ end }}{{ if .PaymentTerm }}Terms: {{ .PaymentTerm }}
+{{ end }}{{ if .Total }}Total: {{ .Total }}
+{{ end }}{{ if .ShipmentProNumber }}
+Shipment {{ .ShipmentProNumber }}{{ if .ShipmentBOL }} / BOL {{ .ShipmentBOL }}{{ end }}
+{{ end }}{{ if .Memo }}
+{{ .Memo }}
+{{ end }}{{ if .RemittanceInstructions }}
+{{ .RemittanceInstructions }}
+{{ end }}
+Reply to this message if any detail needs review.
+{{ .CompanyName }}

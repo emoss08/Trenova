@@ -1,0 +1,82 @@
+/* One template serves every report definition, so nothing here can assume a column
+   count or a column meaning. Emphasis comes from the Tone the report definition
+   assigned, not from anything this stylesheet decides. */
+
+body {
+  margin: 0;
+  font-size: 10px;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.description {
+  margin: 0 0 12px;
+  color: #555;
+  font-size: 12px;
+}
+
+.meta {
+  margin-bottom: 16px;
+  color: #777;
+  font-size: 10px;
+}
+
+.meta span {
+  margin-right: 16px;
+}
+
+table {
+  width: 100%;
+  font-size: 10px;
+}
+
+th {
+  padding: 4px 8px;
+  border-bottom: 2px solid #111;
+  font-weight: 600;
+  text-align: left;
+}
+
+td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+/* A row must not straddle a page break, and thead repeats on every page a long
+   report spills onto — the reason this uses real table markup. */
+tbody tr {
+  break-inside: avoid;
+}
+
+tfoot td {
+  border-top: 2px solid #111;
+  border-bottom: none;
+  background: #fff;
+  font-weight: 600;
+}
+
+td.tone-positive { color: #15803d; font-weight: 600; }
+td.tone-warning  { color: #b45309; font-weight: 600; }
+td.tone-negative { color: #b91c1c; font-weight: 600; }
+td.tone-neutral  { color: #3f3f46; font-weight: 600; }
+
+.count {
+  margin-top: 8px;
+  color: #777;
+  font-size: 10px;
+}
+
+/* Truncation is called out in red because a partial answer read as a complete one
+   is the most expensive way this document can be misread. */
+.notice {
+  margin-top: 12px;
+  color: #a00;
+  font-size: 10px;
+}

@@ -1,0 +1,1 @@
+Scheduled report: {{ .Title }}{{ if .Format }} ({{ upper .Format }}){{ end }}

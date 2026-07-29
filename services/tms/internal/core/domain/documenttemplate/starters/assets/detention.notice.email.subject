@@ -1,0 +1,1 @@
+{{ if eq .Kind "Warning" }}Free time expiring soon{{ else if eq .Kind "Started" }}Detention has started{{ else if eq .Kind "Update" }}Detention update{{ else if eq .Kind "Final" }}Detention summary{{ else }}Detention notice{{ end }} — shipment {{ .ShipmentProNumber }} at {{ .FacilityName }}
