@@ -166,6 +166,27 @@ reporting:
   deliveryLinkBaseUrl: "" # Public app URL used in scheduled-report emails, e.g. https://app.example.com
   emailMaxAttachmentBytes: 10485760 # Max artifact size attached to scheduled-report emails (10 MiB)
 
+# HTML-to-PDF rendering. Points at a Gotenberg sidecar that owns the browser.
+# Leave gotenbergUrl empty to disable PDF generation; documents then surface a
+# clear "renderer unavailable" error instead of failing startup.
+#
+# The sidecar renders organization-authored markup, so it must never be exposed:
+# no published port, no reverse-proxy route, and an internal-only network. See
+# docker-compose-local.yml for the hardened service definition.
+renderer:
+    gotenbergUrl: http://gotenberg:3000
+    requestTimeout: 45s # HTTP timeout for one convert call
+    renderTimeout: 2s # Budget for executing a template before rendering
+    maxConcurrent: 4 # In-process render slots; excess callers queue
+    maxRetries: 3 # Attempts on transport errors and 429/502/503/504 only
+    maxSourceBytes: 262144 # Largest template a user may save (256 KiB)
+    maxHtmlBytes: 2097152 # Largest rendered HTML document (2 MiB)
+    maxTextBytes: 65536 # Largest rendered plain-text body (64 KiB)
+    maxAssetBytes: 1048576 # Largest single inlined image (1 MiB)
+    maxAssets: 10 # Images inlined per document
+    maxAssetBudget: 4194304 # Total inlined image bytes per document (4 MiB)
+    maxPdfBytes: 20971520 # Largest PDF accepted back from the renderer (20 MiB)
+
 # Driver portal (Dash) settings
 portal:
     # Absolute base URL of the client app; used to build portal invitation links in emails

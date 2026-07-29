@@ -9,8 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chromedp/cdproto/page"
-	"github.com/chromedp/chromedp"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -23,19 +22,22 @@ var _ services.ReportRenderer = (*PDFRenderer)(nil)
 type PDFParams struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	Config   *config.Config
+	Renderer services.PDFRenderer
+	Logger   *zap.Logger
 }
 
 type PDFRenderer struct {
-	maxRows int64
-	l       *zap.Logger
+	renderer services.PDFRenderer
+	l        *zap.Logger
+	maxRows  int64
 }
 
 func NewPDF(p PDFParams) *PDFRenderer {
 	return &PDFRenderer{
-		maxRows: p.Config.GetReportingConfig().GetPDFMaxRows(),
-		l:       p.Logger.Named("reporting.pdf-renderer"),
+		maxRows:  p.Config.GetReportingConfig().GetPDFMaxRows(),
+		renderer: p.Renderer,
+		l:        p.Logger.Named("reporting.pdf-renderer"),
 	}
 }
 
@@ -175,7 +177,13 @@ func (r *PDFRenderer) Render(
 		return nil, fmt.Errorf("render PDF template: %w", err)
 	}
 
-	pdf, err := r.printToPDF(ctx, html.String())
+	pdf, err := r.renderer.Render(ctx, &services.PDFRenderRequest{
+		HTML:        html.String(),
+		Title:       req.Meta.Title,
+		PageSize:    documenttemplate.PageSizeLetter,
+		Orientation: documenttemplate.OrientationLandscape,
+		Margins:     reportPDFMargins,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -190,61 +198,11 @@ func (r *PDFRenderer) Render(
 	}, nil
 }
 
-// browserStartTimeout bounds how long the renderer waits for headless chromium
-// to publish its DevTools websocket URL.
-const browserStartTimeout = 90 * time.Second
-
-func (r *PDFRenderer) printToPDF(ctx context.Context, html string) ([]byte, error) {
-	allocCtx, cancelAlloc := chromedp.NewExecAllocator(ctx,
-		append(chromedp.DefaultExecAllocatorOptions[:],
-			chromedp.Flag("headless", "new"),
-			chromedp.Flag("disable-gpu", true),
-			chromedp.Flag("no-sandbox", true),
-			chromedp.Flag("disable-dev-shm-usage", true),
-			chromedp.Flag("disable-extensions", true),
-			chromedp.Flag("disable-background-networking", true),
-			// The default 20s is not enough for a cold browser start on a busy
-			// worker, and the failure surfaces as an opaque websocket timeout.
-			chromedp.WSURLReadTimeout(browserStartTimeout),
-		)...,
-	)
-	defer cancelAlloc()
-
-	browserCtx, cancelBrowser := chromedp.NewContext(allocCtx)
-	defer cancelBrowser()
-
-	renderCtx, cancelRender := context.WithTimeout(browserCtx, 2*time.Minute)
-	defer cancelRender()
-
-	var pdf []byte
-	err := chromedp.Run(renderCtx,
-		chromedp.Navigate("about:blank"),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			frameTree, ftErr := page.GetFrameTree().Do(ctx)
-			if ftErr != nil {
-				return ftErr
-			}
-			return page.SetDocumentContent(frameTree.Frame.ID, html).Do(ctx)
-		}),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			var pErr error
-			pdf, _, pErr = page.PrintToPDF().
-				WithPrintBackground(true).
-				WithLandscape(true).
-				WithMarginTop(0.4).
-				WithMarginBottom(0.4).
-				WithMarginLeft(0.4).
-				WithMarginRight(0.4).
-				Do(ctx)
-			return pErr
-		}),
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"render PDF via headless chromium (is a chromium binary installed in the reporting worker image?): %w",
-			err,
-		)
-	}
-
-	return pdf, nil
+// reportPDFMargins is the 0.4in page box the report layout has always used,
+// expressed in the millimeters the renderer takes.
+var reportPDFMargins = documenttemplate.Margins{
+	Top:    10.16,
+	Bottom: 10.16,
+	Left:   10.16,
+	Right:  10.16,
 }

@@ -5,8 +5,6 @@ go 1.26
 require (
 	github.com/Foony-Limited/realtime-go v0.1.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
-	github.com/chromedp/cdproto v0.0.0-20260719223732-95f6af754cfe
-	github.com/chromedp/chromedp v0.16.0
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/xuri/excelize/v2 v2.11.0
@@ -96,12 +94,7 @@ require (
 	cloud.google.com/go/iam v1.12.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
-	github.com/chromedp/sysutil v1.1.0 // indirect
-	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
 	github.com/go-openapi/swag/pools v0.27.3 // indirect
-	github.com/gobwas/httphead v0.1.0 // indirect
-	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.19 // indirect
@@ -115,6 +108,7 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0 // indirect
+	go.uber.org/goleak v1.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20260723215102-3fe39f3c1018 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 )
@@ -130,7 +124,7 @@ require (
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic/loader v0.5.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
+	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.7 // indirect
 	github.com/coder/websocket v1.8.15 // indirect
@@ -258,7 +252,7 @@ require (
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/mod v0.38.0
 	golang.org/x/net v0.57.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sync v0.22.0
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/time v0.15.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260723215102-3fe39f3c1018 // indirect

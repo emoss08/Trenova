@@ -122,6 +122,69 @@ services:
             timeout: 10s
             retries: 5
 
+    # Owns the browser that turns organization-authored HTML into PDFs.
+    #
+    # It renders untrusted markup, so it is locked down rather than trusted:
+    #   - JavaScript is off at the process level, so template script never runs.
+    #   - The allow-list permits only data: URIs and the /tmp files Gotenberg
+    #     stages the upload into. That denies http(s) outright, so a template
+    #     cannot reach the internal network or exfiltrate by URL. Every image is
+    #     inlined as a data: URI before it gets here.
+    #   - Only the Chromium HTML route is enabled; LibreOffice and the PDF
+    #     engines are large parsers we never call.
+    #
+    # Do not add a --chromium-deny-list: the default is `^file:(?!//\/tmp/).*`,
+    # which already denies file:// outside the staging directory. Overriding it
+    # blocks the staged index.html and every conversion returns 403.
+    #
+    # The published port exists only because the API runs on the host under
+    # `air` in local development. In production this service belongs on an
+    # internal-only network with no published port and no reverse-proxy route.
+    gotenberg:
+        image: gotenberg/gotenberg:8
+        container_name: gotenberg
+        command:
+            - gotenberg
+            - --chromium-disable-javascript=true
+            - "--chromium-allow-list=^(data:|file:///tmp/).*"
+            # Deliberately NOT --chromium-auto-start. A pre-warmed long-lived browser
+            # was observed to stop accepting conversions after roughly ten minutes
+            # while /health still reported chromium up, so the healthcheck could not
+            # see it. Starting a browser per conversion costs little at these sizes
+            # (renders land around 200ms either way) and leaves no long-lived state to
+            # rot. If this is ever re-enabled, add a probe that actually converts —
+            # /health is not sufficient to detect the failure.
+            - --chromium-max-queue-size=16
+            - --libreoffice-disable-routes=true
+            - --pdfengines-disable-routes=true
+            - --api-timeout=30s
+            - --api-disable-health-check-logging=true
+        ports:
+            - "3009:3000"
+        read_only: true
+        tmpfs:
+            # Chromium needs writable scratch and a writable home: its crashpad
+            # handler refuses to start without a database directory. tmpfs keeps
+            # the filesystem immutable while still giving it somewhere to write.
+            - /tmp
+            - /home/gotenberg
+        cap_drop:
+            - ALL
+        security_opt:
+            - "no-new-privileges:true"
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+                    cpus: "2"
+                    pids: 256
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
     samsara-sim:
         build:
             context: ./services/samsara-sim

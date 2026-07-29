@@ -72,3 +72,8 @@ monitoring:
     endpoint: localhost:4317
     serviceName: trenova
     samplingRate: 1.0
+
+# No renderer in tests: PDF paths use the hand-written mock, and an empty URL
+# makes an accidental real render fail loudly instead of reaching out.
+renderer:
+  gotenbergUrl: ""

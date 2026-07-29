@@ -123,6 +123,7 @@ func APIOptions() fx.Option {
 		api.ServiceModule,
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,
+		modulesinfra.PDFRenderModule,
 		modulesinfra.FoonyClientModule,
 		modulesinfra.MeilisearchClientModule,
 	)
@@ -134,6 +135,7 @@ func WorkerOptions() fx.Option {
 		modulesinfra.FoonyClientModule,
 		modulesinfra.MeilisearchClientModule,
 		modulesinfra.SMSModule,
+		modulesinfra.PDFRenderModule,
 		api.ServiceModule,
 		temporaljobs.WorkerModule,
 	)

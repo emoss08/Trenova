@@ -89,3 +89,8 @@ monitoring:
     endpoint: localhost:4317
     serviceName: trenova
     samplingRate: 1.0
+
+# HTML-to-PDF rendering sidecar. Must be reachable only from this process:
+# internal network, no published port, never proxied.
+renderer:
+  gotenbergUrl: http://gotenberg:3000

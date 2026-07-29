@@ -5,12 +5,12 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os/exec"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -304,13 +304,43 @@ func TestStreamingMemoryBound(t *testing.T) {
 	}
 }
 
+// capturingPDFRenderer records the render request instead of printing it, so the
+// report layout can be asserted without a browser in the loop.
+type capturingPDFRenderer struct {
+	got *services.PDFRenderRequest
+	pdf []byte
+	err error
+}
+
+func (c *capturingPDFRenderer) Render(
+	_ context.Context,
+	req *services.PDFRenderRequest,
+) ([]byte, error) {
+	c.got = req
+	if c.err != nil {
+		return nil, c.err
+	}
+	if c.pdf == nil {
+		return []byte("%PDF-1.7 stub"), nil
+	}
+	return c.pdf, nil
+}
+
+func (c *capturingPDFRenderer) Healthy(_ context.Context) error { return nil }
+
+func (c *capturingPDFRenderer) Enabled() bool { return true }
+
 func TestPDFRendererRowCap(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Reporting.PDFMaxRows = 2
-	renderer := NewPDF(PDFParams{Config: cfg, Logger: zapNop()})
+	renderer := NewPDF(PDFParams{
+		Config:   cfg,
+		Renderer: &capturingPDFRenderer{},
+		Logger:   zapNop(),
+	})
 
 	var buf bytes.Buffer
-	_, err := renderer.Render(context.Background(), &services.ReportRenderRequest{
+	_, err := renderer.Render(t.Context(), &services.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
@@ -319,34 +349,54 @@ func TestPDFRendererRowCap(t *testing.T) {
 	assert.Contains(t, err.Error(), "CSV or XLSX")
 }
 
-func TestPDFRendererEndToEnd(t *testing.T) {
-	if !chromiumAvailable() {
-		t.Skip("no chromium binary available in this environment")
-	}
+func TestPDFRendererSubmitsReportPageSetup(t *testing.T) {
+	backend := &capturingPDFRenderer{pdf: []byte("%PDF-1.7 body")}
+	renderer := NewPDF(PDFParams{
+		Config:   testConfig(),
+		Renderer: backend,
+		Logger:   zapNop(),
+	})
 
-	renderer := NewPDF(PDFParams{Config: testConfig(), Logger: zapNop()})
 	var buf bytes.Buffer
-
-	stats, err := renderer.Render(context.Background(), &services.ReportRenderRequest{
+	stats, err := renderer.Render(t.Context(), &services.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
 		Sink:    &buf,
 		Meta:    testMeta(),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), stats.Rows)
-	assert.True(t, bytes.HasPrefix(buf.Bytes(), []byte("%PDF")),
-		"output must be a PDF document")
+	assert.Equal(t, "%PDF-1.7 body", buf.String())
+
+	require.NotNil(t, backend.got)
+	// Reports are wide, so landscape Letter with the historical 0.4in box.
+	assert.Equal(t, documenttemplate.PageSizeLetter, backend.got.PageSize)
+	assert.Equal(t, documenttemplate.OrientationLandscape, backend.got.Orientation)
+	assert.Equal(t, reportPDFMargins, backend.got.Margins)
+	assert.Equal(t, testMeta().Title, backend.got.Title)
+
+	assert.Contains(t, backend.got.HTML, "<!DOCTYPE html>")
+	assert.Contains(t, backend.got.HTML, testMeta().Title)
+	for _, column := range testSchema() {
+		assert.Contains(t, backend.got.HTML, column.Label)
+	}
 }
 
-func chromiumAvailable() bool {
-	for _, name := range []string{
-		"google-chrome", "chromium", "chromium-browser", "chrome", "headless-shell",
-	} {
-		if _, err := execLookPath(name); err == nil {
-			return true
-		}
-	}
-	return false
+func TestPDFRendererPropagatesBackendFailure(t *testing.T) {
+	backend := &capturingPDFRenderer{err: services.ErrPDFRendererUnavailable}
+	renderer := NewPDF(PDFParams{
+		Config:   testConfig(),
+		Renderer: backend,
+		Logger:   zapNop(),
+	})
+
+	var buf bytes.Buffer
+	_, err := renderer.Render(t.Context(), &services.ReportRenderRequest{
+		Dataset: &fakeReader{schema: testSchema(), rows: testRows()},
+		Sink:    &buf,
+		Meta:    testMeta(),
+	})
+	require.ErrorIs(t, err, services.ErrPDFRendererUnavailable)
+	assert.Empty(t, buf.Bytes(), "a failed render must not write a partial artifact")
 }
 
 func TestRegistryResolvesRenderers(t *testing.T) {
@@ -386,4 +436,3 @@ func TestFormatCellEdgeCases(t *testing.T) {
 
 func zapNop() *zap.Logger { return zap.NewNop() }
 
-func execLookPath(name string) (string, error) { return exec.LookPath(name) }
