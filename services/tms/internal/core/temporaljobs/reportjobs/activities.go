@@ -46,7 +46,8 @@ type ActivitiesParams struct {
 	ReportingDB         *postgres.ReportingConnection
 	Storage             storage.Client
 	NotificationService *notificationservice.Service
-	EmailService        services.EmailService      `optional:"true"`
+	EmailService        services.EmailService `optional:"true"`
+	Templates           services.DocumentTemplateResolver
 	RealtimeService     services.RealtimeService   `optional:"true"`
 	ResultCache         services.ReportResultCache `optional:"true"`
 	AuditService        services.AuditService
@@ -69,6 +70,7 @@ type Activities struct {
 	storage      storage.Client
 	notification *notificationservice.Service
 	email        services.EmailService
+	templates    services.DocumentTemplateResolver
 	realtime     services.RealtimeService
 	resultCache  services.ReportResultCache
 	audit        services.AuditService
@@ -93,6 +95,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		reportingDB:  p.ReportingDB,
 		storage:      p.Storage,
 		notification: p.NotificationService,
+		templates:    p.Templates,
 		email:        p.EmailService,
 		realtime:     p.RealtimeService,
 		resultCache:  p.ResultCache,

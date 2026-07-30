@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"html/template"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -305,4 +306,35 @@ type AssetInliner interface {
 	// A reference that cannot be resolved returns an empty string and no error:
 	// a missing logo must not stop an invoice going out.
 	ResolveImageDataURI(ctx context.Context, src string) (string, error)
+}
+
+// ResolveLogoDataURI turns an organization's configured logo reference into the
+// template.URL a document context carries.
+//
+// It exists so exactly one place in the system types an inliner result as a
+// template.URL. That typing is what makes a data: URI survive html/template at
+// all, and it is only safe because the value is base64 of bytes the inliner
+// decoded and validated — never text anyone typed. Every context that shows a
+// logo goes through here rather than repeating that reasoning.
+//
+// A reference that cannot be resolved yields an empty string and no error: the
+// template's {{ if }} drops the image, and no document is worth losing over a
+// logo.
+func ResolveLogoDataURI(
+	ctx context.Context,
+	inliner AssetInliner,
+	src string,
+) (template.URL, error) {
+	if inliner == nil || src == "" {
+		return "", nil
+	}
+
+	dataURI, err := inliner.ResolveImageDataURI(ctx, src)
+	if err != nil {
+		return "", err
+	}
+
+	//nolint:gosec // G203: base64 the inliner produced from bytes it decoded and
+	// validated. See this function's doc comment.
+	return template.URL(dataURI), nil
 }

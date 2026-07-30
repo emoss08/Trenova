@@ -143,9 +143,9 @@ func TestDigestCopiesRowsItKeeps(t *testing.T) {
 	assert.Equal(t, "ACME", digest.Rows[0][0])
 }
 
-// Every cell renders through its column's display, so the email agrees with the
-// grid and the exports — including the conditional-format tones.
-func TestDigestHTMLFormatsThroughTheDisplayContract(t *testing.T) {
+// Every cell renders through its column's display contract, so the email agrees
+// with the grid and the exports — including the conditional-format tones.
+func TestDigestContextFormatsThroughTheDisplayContract(t *testing.T) {
 	digest := &services.ReportDigest{
 		Columns: []services.ReportResultColumn{
 			textColumn("Customer"),
@@ -160,47 +160,49 @@ func TestDigestHTMLFormatsThroughTheDisplayContract(t *testing.T) {
 		Totals: services.ReportRow{nil, decimal.NewFromInt(2500)},
 	}
 
-	out := renderDigestHTML(digest, nil)
+	out := digestContext(digest, nil, 2)
 
-	assert.Contains(t, out, "$2,000.00")
-	assert.Contains(t, out, "$500.00")
-	assert.Contains(t, out, "Customer")
-	// The toned cell is coloured; the one under the threshold is not.
-	assert.Contains(t, out, digestToneColors[reportfmt.ToneNegative])
-	assert.Equal(t, 1, strings.Count(out, digestToneColors[reportfmt.ToneNegative]))
-	// Numbers right-align, text left-aligns.
-	assert.Contains(t, out, "text-align:right;")
-	assert.Contains(t, out, "text-align:left;")
+	assert.Equal(t, []string{"Customer", "Revenue"}, out.Headers)
+	require.Len(t, out.Rows, 2)
+	assert.Equal(t, "$2,000.00", out.Rows[0].Cells[1].Text)
+	assert.Equal(t, "$500.00", out.Rows[1].Cells[1].Text)
+
+	// The tone travels as a name, not a colour: the template decides how an
+	// exception looks, the report definition decides what counts as one.
+	assert.Equal(t, string(reportfmt.ToneNegative), out.Rows[0].Cells[1].Tone)
+	assert.Empty(t, out.Rows[1].Cells[1].Tone, "the value under the threshold is not toned")
+
 	// Totals row, with the leading dimension labelled rather than blank.
-	assert.Contains(t, out, "$2,500.00")
-	assert.Contains(t, out, "Total")
+	assert.Equal(t, []string{digestTotalsLabel, "$2,500.00"}, out.Totals)
 }
 
-// An email body is untrusted output: a customer named with markup must not
-// become markup.
-func TestDigestHTMLEscapesValues(t *testing.T) {
+// A short row must not read as a row with a value in the wrong column, and a
+// missing cell is not a panic.
+func TestDigestContextPadsShortRows(t *testing.T) {
 	digest := &services.ReportDigest{
-		Columns: []services.ReportResultColumn{textColumn("Customer")},
-		Rows:    []services.ReportRow{{"<script>alert(1)</script>"}},
+		Columns: []services.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
+		Rows:    []services.ReportRow{{"ACME"}},
 	}
 
-	out := renderDigestHTML(digest, nil)
+	out := digestContext(digest, nil, 1)
 
-	assert.NotContains(t, out, "<script>")
-	assert.Contains(t, out, "&lt;script&gt;")
+	require.Len(t, out.Rows, 1)
+	require.Len(t, out.Rows[0].Cells, 2)
+	assert.Equal(t, "ACME", out.Rows[0].Cells[0].Text)
 }
 
-func TestDigestRendersNothingWhenEmpty(t *testing.T) {
-	assert.Empty(t, renderDigestHTML(nil, nil))
-	assert.Empty(t, renderDigestText(nil, nil))
-	assert.Empty(t, renderDigestHTML(&services.ReportDigest{}, nil))
+func TestDigestContextIsEmptyWhenThereIsNothingToShow(t *testing.T) {
+	assert.Empty(t, digestContext(nil, nil, 0).Rows)
+	assert.Empty(t, digestContext(&services.ReportDigest{}, nil, 0).Rows)
 
 	// Columns but no rows is a real case — an alert that fired on an empty
 	// result should not draw a headers-only table.
 	headersOnly := &services.ReportDigest{
 		Columns: []services.ReportResultColumn{textColumn("Customer")},
 	}
-	assert.Empty(t, renderDigestHTML(headersOnly, nil))
+	out := digestContext(headersOnly, nil, 0)
+	assert.Empty(t, out.Rows)
+	assert.Empty(t, out.Headers, "no rows means no table, so no headers either")
 }
 
 // Nobody should reconcile against a sample believing it is the whole result.
@@ -217,16 +219,4 @@ func TestDigestNoteOnlyAppearsWhenRowsWereDropped(t *testing.T) {
 		Truncated: true,
 	}
 	assert.Contains(t, digestNote(sampled, 4000), "first 1 of 4000 rows")
-}
-
-func TestDigestTextIsLabelledRatherThanColumnar(t *testing.T) {
-	digest := &services.ReportDigest{
-		Columns: []services.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		Rows:    []services.ReportRow{{"ACME", decimal.NewFromInt(1000)}},
-	}
-
-	out := renderDigestText(digest, nil)
-
-	assert.Contains(t, out, "Customer: ACME")
-	assert.Contains(t, out, "Revenue: $1,000.00")
 }

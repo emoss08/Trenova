@@ -34,6 +34,7 @@ type Params struct {
 	DocumentTypeRepo    repositories.DocumentTypeRepository
 	PTORepo             repositories.WorkerPTORepository
 	EmailService        serviceports.EmailService
+	Templates           serviceports.DocumentTemplateResolver
 	CommentService      serviceports.ShipmentCommentService
 	MoveService         serviceports.ShipmentMoveService
 	WorkerService       *workerservice.Service
@@ -57,6 +58,7 @@ type Service struct {
 	documentTypeRepo    repositories.DocumentTypeRepository
 	ptoRepo             repositories.WorkerPTORepository
 	emailService        serviceports.EmailService
+	templates           serviceports.DocumentTemplateResolver
 	commentService      serviceports.ShipmentCommentService
 	moveService         serviceports.ShipmentMoveService
 	workerService       *workerservice.Service
@@ -81,6 +83,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		documentTypeRepo:    p.DocumentTypeRepo,
 		ptoRepo:             p.PTORepo,
 		emailService:        p.EmailService,
+		templates:           p.Templates,
 		commentService:      p.CommentService,
 		moveService:         p.MoveService,
 		workerService:       p.WorkerService,

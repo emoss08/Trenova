@@ -3,7 +3,6 @@ package detentionservice
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
@@ -186,18 +185,11 @@ func (b *ContextBuilder) applyBranding(
 
 	out.CompanyName = org.Name
 
-	if b.inliner == nil || org.LogoURL == "" {
-		return nil
-	}
-
-	dataURI, err := b.inliner.ResolveImageDataURI(ctx, org.LogoURL)
+	dataURI, err := services.ResolveLogoDataURI(ctx, b.inliner, org.LogoURL)
 	if err != nil {
 		return err
 	}
-
-	//nolint:gosec // G203: base64 the inliner produced from validated bytes, and
-	// html/template rejects a data: URI supplied as a plain string.
-	out.LogoDataURI = template.URL(dataURI)
+	out.LogoDataURI = dataURI
 
 	return nil
 }

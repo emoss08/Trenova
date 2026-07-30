@@ -1,6 +1,7 @@
 package reportjobs
 
 import (
+	"html/template"
 	"strings"
 	"testing"
 
@@ -89,8 +90,11 @@ func TestDeliveryFileNameSanitizesTitle(t *testing.T) {
 	assert.True(t, strings.HasSuffix(name, ".xlsx"))
 }
 
-func TestDeliveryEmailBody(t *testing.T) {
-	t.Run("with link and attachment", func(t *testing.T) {
+// The message the recipient acts on is now the template's, so what this asserts
+// is the context: every fact the wording depends on has to be there and be right,
+// because a template author cannot compute the ones that are missing.
+func TestDeliveryEmailContext(t *testing.T) {
+	t.Run("attached, with a download link", func(t *testing.T) {
 		a := deliveryTestActivities(&config.ReportingConfig{
 			DeliveryLinkBaseURL: "https://app.example.com/",
 		})
@@ -99,35 +103,67 @@ func TestDeliveryEmailBody(t *testing.T) {
 			EmailAttach:     true,
 		})
 
-		text, htmlBody := a.deliveryEmailBody(&deliveryEmailContent{run: deliveryTestRun(), schedule: schedule, title: "Fleet <Utilization>", attached: true, attachTooLarge: false})
+		out := a.deliveryEmailContext(&deliveryEmailContent{
+			run:      deliveryTestRun(),
+			schedule: schedule,
+			title:    "Fleet <Utilization>",
+			attached: true,
+		})
 
-		assert.Contains(t, text, `"Fleet <Utilization>" is ready`)
-		assert.Contains(t, text, "Format: XLSX")
-		assert.Contains(t, text, "Rows: 1200")
-		assert.Contains(t, text, "attached to this email")
-		assert.Contains(t, text, "https://app.example.com/reports/runs")
-
-		assert.Contains(t, htmlBody, "Fleet &lt;Utilization&gt;")
-		assert.NotContains(t, htmlBody, "Fleet <Utilization>")
-		assert.Contains(t, htmlBody, `href="https://app.example.com/reports/runs"`)
+		// The title is carried verbatim; escaping it here would double-escape it
+		// once html/template does its job.
+		assert.Equal(t, "Fleet <Utilization>", out.Title)
+		assert.Equal(t, "xlsx", out.Format)
+		assert.Equal(t, int64(1200), out.RowCount)
+		assert.NotEmpty(t, out.FileSize)
+		assert.Contains(t, out.CompletedAt, "MDT", "the schedule's zone, not UTC")
+		assert.True(t, out.Attached)
+		assert.Contains(t, out.AttachedNote, "attached to this email")
+		assert.Equal(
+			t,
+			template.URL("https://app.example.com/reports/runs"),
+			out.DownloadURL,
+		)
+		assert.Contains(t, out.ExpiresAt, "MDT")
 	})
 
-	t.Run("attachment too large without link", func(t *testing.T) {
-		a := deliveryTestActivities(&config.ReportingConfig{})
+	t.Run("too large to attach, and nowhere to link to", func(t *testing.T) {
+		a := deliveryTestActivities(&config.ReportingConfig{EmailMaxAttachmentBytes: 8192})
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
 			EmailRecipients: []string{"ops@example.com"},
 			EmailAttach:     true,
 		})
 
-		text, htmlBody := a.deliveryEmailBody(&deliveryEmailContent{run: deliveryTestRun(), schedule: schedule, title: "Fleet Utilization", attached: false, attachTooLarge: true})
+		out := a.deliveryEmailContext(&deliveryEmailContent{
+			run:            deliveryTestRun(),
+			schedule:       schedule,
+			title:          "Fleet Utilization",
+			attachTooLarge: true,
+		})
 
-		assert.Contains(t, text, "exceeds the")
-		assert.Contains(t, text, "attachment limit")
-		assert.Contains(t, text, "Reports → Run history")
-		assert.NotContains(t, htmlBody, "href=")
+		assert.False(t, out.Attached)
+		assert.Contains(t, out.AttachedNote, "exceeds the")
+		assert.Contains(t, out.AttachedNote, "attachment limit")
+		assert.Empty(t, out.DownloadURL,
+			"an unconfigured base URL must not become a link to nowhere")
 	})
 
-	t.Run("truncated run carries a warning", func(t *testing.T) {
+	t.Run("neither attached nor too large says where the file is", func(t *testing.T) {
+		a := deliveryTestActivities(&config.ReportingConfig{})
+		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
+			EmailRecipients: []string{"ops@example.com"},
+		})
+
+		out := a.deliveryEmailContext(&deliveryEmailContent{
+			run:      deliveryTestRun(),
+			schedule: schedule,
+			title:    "Fleet Utilization",
+		})
+
+		assert.Contains(t, out.AttachedNote, "run history")
+	})
+
+	t.Run("a truncated run says so", func(t *testing.T) {
 		a := deliveryTestActivities(&config.ReportingConfig{})
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
 			EmailRecipients: []string{"ops@example.com"},
@@ -135,8 +171,14 @@ func TestDeliveryEmailBody(t *testing.T) {
 		run := deliveryTestRun()
 		run.Truncated = true
 
-		text, _ := a.deliveryEmailBody(&deliveryEmailContent{run: run, schedule: schedule, title: "Fleet Utilization", attached: false, attachTooLarge: false})
-		assert.Contains(t, text, "truncated")
+		out := a.deliveryEmailContext(&deliveryEmailContent{
+			run:      run,
+			schedule: schedule,
+			title:    "Fleet Utilization",
+		})
+
+		assert.True(t, out.Truncated,
+			"the template warns on this flag; losing it hides that rows were dropped")
 	})
 }
 

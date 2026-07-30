@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -128,7 +129,14 @@ func (s *Service) InviteWorker(
 	}
 
 	inviteURL := s.inviteURL(token)
-	emailSent := s.sendInvitationEmail(ctx, req.TenantInfo, wrk, inviteEmail, inviteURL)
+	emailSent := s.sendInvitationEmail(ctx, &invitationEmailParams{
+		TenantInfo: req.TenantInfo,
+		Worker:     wrk,
+		To:         inviteEmail,
+		InviteURL:  inviteURL,
+		ExpiresAt:  created.ExpiresAt,
+		Now:        now,
+	})
 
 	s.logPortalAudit(
 		created.ID,
@@ -377,69 +385,72 @@ func (s *Service) inviteURL(token string) string {
 	return base + "/dash/accept?token=" + token
 }
 
+// invitationEmailParams is one invitation on its way out.
+type invitationEmailParams struct {
+	TenantInfo pagination.TenantInfo
+	Worker     *worker.Worker
+	To         string
+	InviteURL  string
+	ExpiresAt  int64
+	Now        int64
+}
+
+// sendInvitationEmail renders the invitation through the organization's template
+// and mails it.
+//
+// The wording and the layout used to be a fmt.Sprintf in this file, which meant a
+// carrier could not change a word of the first thing their drivers ever receive
+// from them. It also interpolated the invite link into the HTML raw while
+// hand-escaping four characters of the driver's name beside it; html/template
+// escapes both correctly and by position.
+//
+// A render failure falls back to the shipped default rather than abandoning the
+// invitation: the driver cannot onboard without this email, and the caller is
+// told whether it went so an admin can share the link by hand.
 func (s *Service) sendInvitationEmail(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	wrk *worker.Worker,
-	to string,
-	inviteURL string,
+	p *invitationEmailParams,
 ) bool {
-	orgName := "your carrier"
-	if wrk.Organization != nil && wrk.Organization.Name != "" {
-		orgName = wrk.Organization.Name
+	log := s.l.With(zap.String("workerId", p.Worker.ID.String()))
+
+	if s.templates == nil {
+		log.Warn("template rendering is not configured; share the invite link manually")
+		return false
 	}
 
-	subject := fmt.Sprintf("%s invited you to Dash", orgName)
-	html := invitationEmailHTML(wrk.FirstName, orgName, inviteURL)
-	text := fmt.Sprintf(
-		"Hi %s,\n\n%s has invited you to Dash, your driver portal. "+
-			"See your loads, settlements, and pay history, and raise questions about your pay.\n\n"+
-			"Set up your account: %s\n\nThis link expires in 7 days.",
-		wrk.FirstName, orgName, inviteURL,
-	)
-
-	_, err := s.emailService.Send(ctx, &serviceports.SendEmailRequest{
-		TenantInfo:     tenantInfo,
-		Purpose:        email.PurposeGeneral,
-		To:             []string{to},
-		Subject:        subject,
-		HTML:           html,
-		Text:           text,
-		IdempotencyKey: "portal-invite-" + hashInvitationToken(inviteURL),
+	rendered, err := s.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
+		TenantInfo: p.TenantInfo,
+		Kind:       documenttemplate.KindDriverPortalInvitationEmail,
+		Data: invitationContext(
+			p.Worker,
+			p.InviteURL,
+			p.ExpiresAt,
+			p.Now,
+		),
+		ReferenceID:       p.Worker.ID,
+		FallbackToBuiltIn: true,
 	})
 	if err != nil {
-		s.l.Warn("failed to send portal invitation email; share the invite link manually",
-			zap.String("workerId", wrk.ID.String()),
+		log.Warn("failed to render the portal invitation email; share the invite link manually",
 			zap.Error(err))
 		return false
 	}
+
+	if _, err = s.emailService.Send(ctx, &serviceports.SendEmailRequest{
+		TenantInfo:     p.TenantInfo,
+		Purpose:        email.PurposeGeneral,
+		To:             []string{p.To},
+		Subject:        rendered.Subject,
+		HTML:           rendered.HTML,
+		Text:           rendered.Text,
+		IdempotencyKey: "portal-invite-" + hashInvitationToken(p.InviteURL),
+	}); err != nil {
+		log.Warn("failed to send portal invitation email; share the invite link manually",
+			zap.Error(err))
+		return false
+	}
+
 	return true
-}
-
-func invitationEmailHTML(firstName, orgName, inviteURL string) string {
-	return fmt.Sprintf(
-		`<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#18181b;">
-  <h1 style="font-size:20px;margin:0 0 16px;">You're invited to Dash</h1>
-  <p style="font-size:15px;line-height:1.6;margin:0 0 12px;">Hi %s,</p>
-  <p style="font-size:15px;line-height:1.6;margin:0 0 20px;">%s has invited you to <strong>Dash</strong>, your driver portal. See your loads, settlement statements, and pay history &mdash; and raise a question about your pay right from your phone.</p>
-  <p style="margin:0 0 24px;"><a href="%s" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600;">Set up your account</a></p>
-  <p style="font-size:13px;line-height:1.6;color:#71717a;margin:0;">This link expires in 7 days. If the button doesn't work, copy this link into your browser:<br>%s</p>
-</div>`,
-		htmlEscape(firstName),
-		htmlEscape(orgName),
-		inviteURL,
-		inviteURL,
-	)
-}
-
-func htmlEscape(s string) string {
-	replacer := strings.NewReplacer(
-		"&", "&amp;",
-		"<", "&lt;",
-		">", "&gt;",
-		`"`, "&quot;",
-	)
-	return replacer.Replace(s)
 }
 
 func newInvitationToken() (token, tokenHash string, err error) {

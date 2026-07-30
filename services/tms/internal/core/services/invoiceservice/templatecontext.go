@@ -120,28 +120,11 @@ func (b *ContextBuilder) resolveLogo(
 	ctx context.Context,
 	deliveryProfile *invoiceDeliveryProfile,
 ) (template.URL, error) {
-	if b.inliner == nil || deliveryProfile == nil || deliveryProfile.Organization == nil {
+	if deliveryProfile == nil || deliveryProfile.Organization == nil {
 		return "", nil
 	}
 
-	src := deliveryProfile.Organization.LogoURL
-	if src == "" {
-		return "", nil
-	}
-
-	dataURI, err := b.inliner.ResolveImageDataURI(ctx, src)
-	if err != nil {
-		return "", err
-	}
-
-	// Typing this as template.URL is only safe because it is base64 of bytes the
-	// inliner decoded and validated. A logo that could not be resolved comes back
-	// empty and the template's {{ if }} drops the image rather than printing a
-	// broken one.
-	//nolint:gosec // G203: intentionally unescaped. The value is base64 the
-	// inliner produced from bytes it decoded and validated, never user text,
-	// and html/template would reject a data: URI supplied as a plain string.
-	return template.URL(dataURI), nil
+	return services.ResolveLogoDataURI(ctx, b.inliner, deliveryProfile.Organization.LogoURL)
 }
 
 // invoiceContextFromPDFData is the whole mapping between the surviving data

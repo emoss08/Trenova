@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -213,36 +213,53 @@ func (a *Activities) deliverRunEmail(
 	}
 
 	attach, attachTooLarge := a.attachmentPlan(run, schedule, title)
-	subject := fmt.Sprintf(
-		"Scheduled report: %s (%s)", title, strings.ToUpper(string(run.Format)),
-	)
-	text, htmlBody := a.deliveryEmailBody(&deliveryEmailContent{
-		run:            run,
-		schedule:       schedule,
-		title:          title,
-		digest:         digest,
-		attached:       attach != nil,
-		attachTooLarge: attachTooLarge,
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  run.OrganizationID,
+		BuID:   run.BusinessUnitID,
+		UserID: schedule.RunAsID,
+	}
+
+	// A styling problem must not cost a scheduled delivery, so a failed render
+	// falls back to the shipped default. If even that fails the schedule owner is
+	// told, because the alternative is a report nobody knows never arrived.
+	rendered, err := a.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+		TenantInfo: tenantInfo,
+		Kind:       documenttemplate.KindReportDeliveryEmail,
+		Data: a.deliveryEmailContext(&deliveryEmailContent{
+			run:            run,
+			schedule:       schedule,
+			title:          title,
+			digest:         digest,
+			attached:       attach != nil,
+			attachTooLarge: attachTooLarge,
+		}),
+		ReferenceID:       run.ID,
+		UserID:            schedule.RunAsID,
+		FallbackToBuiltIn: true,
 	})
+	if err != nil {
+		// Deliberately not returned: a template that does not compile fails
+		// identically on every attempt, so retrying only delays the failure
+		// reaching the owner who has to fix it.
+		a.recordEmailFailure(ctx, run, schedule, title, result,
+			"The report delivery email template could not be rendered: "+err.Error())
+		return nil //nolint:nilerr // recorded for the schedule owner; retrying cannot help
+	}
 
 	req := &services.SendEmailRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  run.OrganizationID,
-			BuID:   run.BusinessUnitID,
-			UserID: schedule.RunAsID,
-		},
+		TenantInfo:     tenantInfo,
 		Purpose:        email.PurposeReporting,
 		To:             schedule.Delivery.EmailRecipients,
-		Subject:        subject,
-		HTML:           htmlBody,
-		Text:           text,
+		Subject:        rendered.Subject,
+		HTML:           rendered.HTML,
+		Text:           rendered.Text,
 		IdempotencyKey: "report-run-" + run.ID.String(),
 	}
 	if attach != nil {
 		req.Attachments = []services.EmailAttachment{*attach}
 	}
 
-	if _, err := a.email.Send(ctx, req); err != nil {
+	if _, err = a.email.Send(ctx, req); err != nil {
 		if a.isRetryableEmailError(ctx, err) {
 			return err
 		}
@@ -499,117 +516,6 @@ func (a *Activities) auditDelivery(
 		a.l.Warn("failed to audit scheduled report delivery",
 			zap.String("runId", run.ID.String()), zap.Error(err))
 	}
-}
-
-// deliveryEmailContent groups what the body needs; the parameter list had
-// outgrown a readable signature.
-type deliveryEmailContent struct {
-	run            *report.ReportRun
-	schedule       *report.ReportSchedule
-	title          string
-	digest         *services.ReportDigest
-	attached       bool
-	attachTooLarge bool
-}
-
-func (a *Activities) deliveryEmailBody(
-	content *deliveryEmailContent,
-) (text, htmlBody string) {
-	run, schedule, title := content.run, content.schedule, content.title
-	attached, attachTooLarge := content.attached, content.attachTooLarge
-	generatedAt := formatInTimezone(run.CompletedAt, schedule.Timezone)
-	linkURL := a.cfg.GetDeliveryLinkBaseURL()
-	if linkURL != "" {
-		linkURL += "/reports/runs"
-	}
-
-	facts := []string{
-		"Format: " + strings.ToUpper(string(run.Format)),
-		fmt.Sprintf("Rows: %d", run.RowCount),
-		"Size: " + fileutils.HumanizeBytes(run.ByteSize),
-		"Generated: " + generatedAt,
-	}
-	if run.ArtifactExpiresAt > 0 {
-		facts = append(facts,
-			"Available until: "+formatInTimezone(run.ArtifactExpiresAt, schedule.Timezone))
-	}
-
-	var notes []string
-	if run.Truncated {
-		notes = append(
-			notes,
-			"The result exceeded the row limit and was truncated — narrow the report's filters to capture everything.",
-		)
-	}
-	switch {
-	case attached:
-		notes = append(notes, "The report file is attached to this email.")
-	case attachTooLarge:
-		notes = append(notes, fmt.Sprintf(
-			"The report file exceeds the %s attachment limit, so it was not attached.",
-			fileutils.HumanizeBytes(a.cfg.GetEmailMaxAttachmentBytes())))
-	}
-	if linkURL != "" {
-		notes = append(notes, "Download it any time from the report run history: "+linkURL)
-	} else {
-		notes = append(notes,
-			"Download it any time from Reports → Run history in Trenova.")
-	}
-
-	loc := timezoneOrUTC(schedule.Timezone)
-	if note := digestNote(content.digest, run.RowCount); note != "" {
-		notes = append(notes, note)
-	}
-
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "Your scheduled report %q is ready.\n\n", title)
-	if table := renderDigestText(content.digest, loc); table != "" {
-		sb.WriteString(table)
-		sb.WriteString("\n")
-	}
-	sb.WriteString(strings.Join(facts, "\n"))
-	sb.WriteString("\n\n")
-	sb.WriteString(strings.Join(notes, "\n"))
-	text = sb.String()
-
-	var hb strings.Builder
-	hb.WriteString(
-		`<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;">`,
-	)
-	fmt.Fprintf(&hb,
-		`<h2 style="font-size:18px;font-weight:600;margin:24px 0 4px;">%s</h2>`,
-		html.EscapeString(title))
-	hb.WriteString(`<p style="margin:0 0 16px;color:#666;font-size:13px;">Scheduled report</p>`)
-	// The result itself leads: someone opening this on a phone should see the
-	// answer before the metadata about the file that also contains it.
-	hb.WriteString(renderDigestHTML(content.digest, loc))
-	hb.WriteString(`<table style="border-collapse:collapse;font-size:13px;margin:0 0 16px;">`)
-	for _, fact := range facts {
-		label, value, _ := strings.Cut(fact, ": ")
-		fmt.Fprintf(
-			&hb,
-			`<tr><td style="padding:4px 16px 4px 0;color:#666;">%s</td><td style="padding:4px 0;">%s</td></tr>`,
-			html.EscapeString(label),
-			html.EscapeString(value),
-		)
-	}
-	hb.WriteString(`</table>`)
-	for _, note := range notes {
-		fmt.Fprintf(&hb,
-			`<p style="margin:0 0 8px;font-size:13px;color:#444;">%s</p>`,
-			html.EscapeString(note))
-	}
-	if linkURL != "" {
-		fmt.Fprintf(
-			&hb,
-			`<p style="margin:24px 0;"><a href="%s" style="background:#1a1a1a;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:500;display:inline-block;">Open run history</a></p>`,
-			html.EscapeString(linkURL),
-		)
-	}
-	hb.WriteString(`</div>`)
-	htmlBody = hb.String()
-
-	return text, htmlBody
 }
 
 func formatInTimezone(unix int64, timezone string) string {
