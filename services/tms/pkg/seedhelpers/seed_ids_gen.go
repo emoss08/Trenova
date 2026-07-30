@@ -13,6 +13,7 @@ const (
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
 	SeedDetention SeedID = "Detention" // from 13_detention.go
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
+	SeedDocumentTemplateStarters SeedID = "DocumentTemplateStarters" // from 10_document_template_starters.go
 	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
 	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
 	SeedDriverPay SeedID = "DriverPay" // from 11_driverpay.go
@@ -40,6 +41,7 @@ var AllSeedIDs = []SeedID{
 	SeedAdminAccount,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
+	SeedDocumentTemplateStarters,
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedDriverPay,
@@ -65,6 +67,7 @@ var AllSeedIDs = []SeedID{
 
 var BaseSeedIDs = []SeedID{
 	SeedAdminAccount,
+	SeedDocumentTemplateStarters,
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedGLAccount,

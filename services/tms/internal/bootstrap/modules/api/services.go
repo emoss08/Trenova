@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documentparsingruleservice"
 	"github.com/emoss08/trenova/internal/core/services/documentsearchprojectionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
@@ -346,6 +347,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *documentparsingruleservice.Service) services.DocumentParsingRuleRuntime { return s },
 	func(s *documentparsingruleservice.Service) services.DocumentParsingRuleAdminService { return s },
 	documentpacketruleservice.New,
+	documenttemplateservice.New,
+	func(s *documenttemplateservice.Service) services.DocumentTemplateResolver { return s },
 	workerptoservice.New,
 	distancecalculationservice.New,
 	distancecontrolservice.New,

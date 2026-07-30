@@ -16,8 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
@@ -124,6 +124,7 @@ func APIOptions() fx.Option {
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,
+		modulesinfra.TemplatingModule,
 		modulesinfra.FoonyClientModule,
 		modulesinfra.MeilisearchClientModule,
 	)
@@ -136,6 +137,7 @@ func WorkerOptions() fx.Option {
 		modulesinfra.MeilisearchClientModule,
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,
+		modulesinfra.TemplatingModule,
 		api.ServiceModule,
 		temporaljobs.WorkerModule,
 	)

@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentsearchprojectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentshipmentdraftrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentuploadrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dothazmatreferencerepository"
@@ -188,6 +189,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documentcontrolrepository.New,
 	documentparsingrulerepository.New,
 	documentpacketrulerepository.New,
+	documenttemplaterepository.NewTemplateRepository,
+	documenttemplaterepository.NewVersionRepository,
+	documenttemplaterepository.NewAssignmentRepository,
+	documenttemplaterepository.NewGeneratedRepository,
 	rbacrepository.New,
 	rolerepository.New,
 	roleassignmentrepository.New,

@@ -945,6 +945,30 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 		DisplayName: "Document Parsing Rules",
 		Category:    "Organization",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/document-templates",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDocumentTemplate, Operation: OpRead},
+		},
+		DisplayName: "Document Templates",
+		Category:    "Organization",
+	})
+
+	// The prefix covers the detail, version, and assignment surfaces, which are
+	// reachable directly by link and must not be readable by someone who cannot
+	// read the list they hang off.
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/document-templates/",
+		MatchType: RouteMatchPrefix,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDocumentTemplate, Operation: OpRead},
+		},
+		DisplayName: "Document Template Detail",
+		Category:    "Organization",
+		ParentRoute: "/admin/document-templates",
+	})
 }
 
 func (rr *RouteRegistry) registerReportingRoutes() {

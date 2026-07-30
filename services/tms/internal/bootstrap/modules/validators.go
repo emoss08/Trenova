@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/core/services/documentparsingruleservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
@@ -166,6 +167,7 @@ var ValidatorModule = fx.Module("validators",
 		documentcontrolservice.NewValidator,
 		documentparsingruleservice.NewValidator,
 		documentpacketruleservice.NewValidator,
+		documenttemplateservice.NewValidator,
 		billingqueueservice.NewValidator,
 	),
 	fx.Options(

@@ -562,6 +562,39 @@ func (r *Registry) registerAdministrationResources() {
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	// Publishing is separated from editing because they carry different risk: a
+	// draft changes nothing a customer sees, and activating one changes every
+	// invoice and notice the organization sends from that moment on.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDocumentTemplate.String(),
+		DisplayName: "Document & Message Template",
+		Description: "Templates for customer documents, emails, and notifications",
+		Category:    "Administration",
+		Operations: append(slices.Clone(standardOpsWithDelete),
+			OperationDefinition{
+				Operation:   OpActivate,
+				DisplayName: "Publish",
+				Description: "Publish a version, making it what customers receive",
+			},
+			OperationDefinition{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Retire a template version",
+			},
+			OperationDefinition{
+				Operation:   OpAssign,
+				DisplayName: "Assign",
+				Description: "Assign a template to a specific customer",
+			},
+			OperationDefinition{
+				Operation:   OpUnassign,
+				DisplayName: "Unassign",
+				Description: "Remove a customer's template override",
+			},
+		),
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerEquipmentResources() {

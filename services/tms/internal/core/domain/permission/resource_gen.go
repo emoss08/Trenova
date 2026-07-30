@@ -32,6 +32,7 @@ const (
 	ResourceMFAAuthenticator      Resource = "mfa_authenticator"
 	ResourceTableChangeAlert      Resource = "table_change_alert"
 	ResourceHomeLayoutPreset      Resource = "home_layout_preset"
+	ResourceDocumentTemplate      Resource = "document_template"
 
 	// Equipment
 	ResourceEquipmentType         Resource = "equipment_type"

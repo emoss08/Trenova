@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
@@ -33,6 +34,10 @@ func RegisterEntities() []any {
 		&tenant.BusinessUnit{},
 		&formulatemplate.FormulaTemplate{},
 		&tenant.DocumentControl{},
+		&documenttemplate.DocumentTemplate{},
+		&documenttemplate.DocumentTemplateVersion{},
+		&documenttemplate.DocumentTemplateAssignment{},
+		&documenttemplate.GeneratedDocument{},
 		&ailog.Log{},
 		&dispatchcontrol.DispatchControl{},
 		&tenant.BillingControl{},

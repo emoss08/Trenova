@@ -20,6 +20,7 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(base.NewTCAAllowlistedTablesSeed())
 	r.MustRegister(base.NewOrganizationRolePermissionsSyncSeed())
 	r.MustRegister(base.NewServiceFailureReasonCodeSeed())
+	r.MustRegister(base.NewDocumentTemplateStartersSeed())
 	r.MustRegister(development.NewTestOrganizationsSeed())
 	r.MustRegister(development.NewFormulaTemplateSeed())
 	r.MustRegister(development.NewNormalAccountSeed())
