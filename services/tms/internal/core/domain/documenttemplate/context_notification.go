@@ -339,6 +339,44 @@ func reportNotificationVariables() []VariableDefinition {
 	}
 }
 
+// CommentNotificationContext is what a user is told when a teammate writes
+// something they need to see.
+//
+// The excerpt is the substance: a notification that says only "you were
+// mentioned" makes the reader open the shipment to find out whether it mattered.
+type CommentNotificationContext struct {
+	AuthorName        string
+	ShipmentProNumber string
+
+	// Excerpt is the comment, already truncated to a notification-sized length.
+	Excerpt string
+}
+
+func newCommentNotificationSampleContext() any {
+	return CommentNotificationContext{
+		AuthorName:        "Dana Whitfield",
+		ShipmentProNumber: sampleProNumber,
+		Excerpt:           "Receiver moved the appointment to 14:00 — can we still make it?",
+	}
+}
+
+// commentNotificationVariables is the comment family's shared catalog.
+func commentNotificationVariables() []VariableDefinition {
+	return []VariableDefinition{
+		{
+			Path:        "AuthorName",
+			Type:        VariableString,
+			Description: "Who wrote it. A notification from nobody is one the reader cannot judge the urgency of.",
+		},
+		proNumberVariable(false, "The shipment the comment is on."),
+		{
+			Path:        "Excerpt",
+			Type:        VariableString,
+			Description: "The comment itself, already shortened. Print it: without it the reader has to open the shipment to find out whether it mattered.",
+		},
+	}
+}
+
 // notificationKind is one registered event, sharing its family's context.
 type notificationKind struct {
 	kind        Kind
@@ -435,6 +473,19 @@ var reportNotificationKinds = []notificationKind{
 	},
 }
 
+var commentNotificationKinds = []notificationKind{
+	{
+		kind:        KindNotificationCommentMention,
+		displayName: "Mentioned in a Comment",
+		description: "Tells someone a teammate named them in a shipment comment.",
+	},
+	{
+		kind:        KindNotificationCommentReply,
+		displayName: "Reply to Your Comment",
+		description: "Tells someone a teammate replied to their shipment comment.",
+	},
+}
+
 func (r *Registry) registerNotificationKinds() {
 	r.registerNotificationFamily(
 		driverNotificationKinds,
@@ -450,6 +501,11 @@ func (r *Registry) registerNotificationKinds() {
 		reportNotificationKinds,
 		reportNotificationVariables(),
 		newReportNotificationSampleContext,
+	)
+	r.registerNotificationFamily(
+		commentNotificationKinds,
+		commentNotificationVariables(),
+		newCommentNotificationSampleContext,
 	)
 }
 

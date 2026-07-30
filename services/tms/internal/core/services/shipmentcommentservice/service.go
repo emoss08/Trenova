@@ -3,10 +3,10 @@ package shipmentcommentservice
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -56,6 +56,7 @@ type Params struct {
 	UserRepo            repositories.UserRepository
 	DocumentRepo        repositories.DocumentRepository
 	DocumentService     *documentservice.Service
+	Templates           services.DocumentTemplateResolver
 	AuditService        services.AuditService
 	EventService        services.ShipmentEventService
 	Realtime            services.RealtimeService
@@ -69,6 +70,7 @@ type service struct {
 	userRepo            repositories.UserRepository
 	documentRepo        repositories.DocumentRepository
 	documentService     *documentservice.Service
+	templates           services.DocumentTemplateResolver
 	auditService        services.AuditService
 	eventService        services.ShipmentEventService
 	realtime            services.RealtimeService
@@ -83,6 +85,7 @@ func New(p Params) services.ShipmentCommentService {
 		userRepo:            p.UserRepo,
 		documentRepo:        p.DocumentRepo,
 		documentService:     p.DocumentService,
+		templates:           p.Templates,
 		auditService:        p.AuditService,
 		eventService:        p.EventService,
 		realtime:            p.Realtime,
@@ -649,7 +652,22 @@ func (s *service) notifyMentions(
 		authorName = author.Name
 	}
 
-	excerpt := stringutils.Ellipsize(comment.Comment, mentionExcerptLength)
+	// Rendered once for every mention on this comment: same author, same shipment,
+	// same excerpt.
+	mention, ok := s.renderCommentNotification(
+		ctx,
+		tenantInfo,
+		documenttemplate.KindNotificationCommentMention,
+		comment.ID,
+		&documenttemplate.CommentNotificationContext{
+			AuthorName:        authorName,
+			ShipmentProNumber: shp.ProNumber,
+			Excerpt:           stringutils.Ellipsize(comment.Comment, mentionExcerptLength),
+		},
+	)
+	if !ok {
+		return
+	}
 
 	for _, targetID := range targetIDs {
 		if targetID == authorID {
@@ -664,8 +682,8 @@ func (s *service) notifyMentions(
 			Channel:        notification.ChannelUser,
 			EventType:      mentionEventType,
 			Priority:       notification.PriorityMedium,
-			Title:          fmt.Sprintf("%s mentioned you on %s", authorName, shp.ProNumber),
-			Message:        excerpt,
+			Title:          mention.Title,
+			Message:        mention.Message,
 			Data: map[string]any{
 				dataKeyShipmentID: comment.ShipmentID.String(),
 				dataKeyCommentID:  comment.ID.String(),
@@ -716,6 +734,25 @@ func (s *service) notifyReply(
 		authorName = author.Name
 	}
 
+	wording, ok := s.renderCommentNotification(
+		ctx,
+		pagination.TenantInfo{
+			OrgID:  reply.OrganizationID,
+			BuID:   reply.BusinessUnitID,
+			UserID: authorID,
+		},
+		documenttemplate.KindNotificationCommentReply,
+		reply.ID,
+		&documenttemplate.CommentNotificationContext{
+			AuthorName:        authorName,
+			ShipmentProNumber: shp.ProNumber,
+			Excerpt:           stringutils.Ellipsize(reply.Comment, mentionExcerptLength),
+		},
+	)
+	if !ok {
+		return
+	}
+
 	targetUserID := parent.UserID
 	if _, err := s.notificationService.Create(ctx, &notification.Notification{
 		OrganizationID: reply.OrganizationID,
@@ -724,8 +761,8 @@ func (s *service) notifyReply(
 		Channel:        notification.ChannelUser,
 		EventType:      replyEventType,
 		Priority:       notification.PriorityMedium,
-		Title:          fmt.Sprintf("%s replied to your comment on %s", authorName, shp.ProNumber),
-		Message:        stringutils.Ellipsize(reply.Comment, mentionExcerptLength),
+		Title:          wording.Title,
+		Message:        wording.Message,
 		Data: map[string]any{
 			dataKeyShipmentID: reply.ShipmentID.String(),
 			dataKeyCommentID:  reply.ID.String(),
@@ -972,4 +1009,49 @@ func requireCommentUser(actor *services.RequestActor) (pulid.ID, error) {
 	}
 
 	return actor.UserID, nil
+}
+
+// commentNotificationWording is a rendered comment notification.
+type commentNotificationWording struct {
+	Title   string
+	Message string
+}
+
+// renderCommentNotification renders a mention or a reply through the
+// organization's template.
+//
+// Like every notification it falls back to the built-in: someone who is never told
+// they were named on a shipment finds out when the load is already late. A failure
+// past that returns false and the notification is skipped rather than written with
+// an empty title.
+func (s *service) renderCommentNotification(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	kind documenttemplate.Kind,
+	referenceID pulid.ID,
+	data *documenttemplate.CommentNotificationContext,
+) (commentNotificationWording, bool) {
+	if s.templates == nil {
+		s.l.Warn("template rendering is not configured; skipping comment notification",
+			zap.String("kind", string(kind)))
+		return commentNotificationWording{}, false
+	}
+
+	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+		TenantInfo:        tenantInfo,
+		Kind:              kind,
+		Data:              data,
+		ReferenceID:       referenceID,
+		FallbackToBuiltIn: true,
+	})
+	if err != nil {
+		s.l.Warn("failed to render comment notification",
+			zap.String("kind", string(kind)), zap.Error(err))
+		return commentNotificationWording{}, false
+	}
+
+	return commentNotificationWording{
+		Title:   rendered.Subject,
+		Message: rendered.Text,
+	}, true
 }

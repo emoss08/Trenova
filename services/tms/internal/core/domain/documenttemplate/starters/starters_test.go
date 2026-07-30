@@ -518,6 +518,8 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 	registry := documenttemplate.NewRegistry()
 
 	emitted := []string{
+		"shipment_comment_mention",
+		"shipment_comment_reply",
 		"report_run_completed",
 		"report_run_failed",
 		"report_run_canceled",

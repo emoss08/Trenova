@@ -88,6 +88,11 @@ const (
 	KindNotificationReportDeliveryFailed Kind = "notification.report_delivery_email_failed"
 	// KindNotificationReportScheduleSkipped reports a skipped or disabled schedule.
 	KindNotificationReportScheduleSkipped Kind = "notification.report_schedule_skipped"
+
+	// KindNotificationCommentMention tells someone they were named in a comment.
+	KindNotificationCommentMention Kind = "notification.shipment_comment_mention"
+	// KindNotificationCommentReply tells someone their comment got a reply.
+	KindNotificationCommentReply Kind = "notification.shipment_comment_reply"
 )
 
 func (k Kind) String() string { return string(k) }
@@ -120,5 +125,7 @@ func AllKinds() []Kind {
 		KindNotificationReportDelivered,
 		KindNotificationReportDeliveryFailed,
 		KindNotificationReportScheduleSkipped,
+		KindNotificationCommentMention,
+		KindNotificationCommentReply,
 	}
 }
