@@ -726,34 +726,60 @@ catalogs are shared, and the reflection catalog test covers 6 types instead of 3
 Draw family boundaries where the *data* differs, not where the event names do — a
 family whose catalog reads "entity name" has been drawn too wide.
 
-### Notifications: survey findings before you write any of it
+### Notifications: four families done, two left
 
-Read these first; they change the shape of the work from what the plan describes.
+**Done: driver, settlement, report, comment — 18 kinds across 18 call sites.**
+26 kinds are registered in total and the seed produces 52 drafts across the two
+dev organizations, still with 0 org defaults and 0 active versions.
 
-- **Most driver notifications share one choke point.** Every `dash.*` event —
-  load assigned, load unassigned, PTO reviewed, settlement posted, settlement
-  paid, expense reviewed, pay held, dispute resolved, credential expiring —
-  goes through `drivernotificationservice.NotifyWithCorrelation`. Rendering there
-  covers ~10 of the ~30 sites with one change, and it is the only place that
-  already knows the worker. Do that before touching individual services.
-- **Some event types are not literals.** Several sites pass a variable or a
-  domain enum (`eventType`, `alert.EventType`, `entry.EventType`,
-  `sourceEvent.String()`). A kind key of `"notification." + EventType` needs
-  every reachable value registered, so enumerate the enum members rather than
-  assuming a literal is at the call site. Truly open sets — a telematics
-  provider's webhook `event_type` — do not create titled notifications, so they
-  are not in scope; verify that before relying on it.
-- **`kind_gen.go` has no generator.** The `_gen` suffix marks it as the flat
-  declaration list that `registry_coverage_test.go` parses by AST: every constant
-  must have a matching `Register` call or the build fails. That makes a partial
-  notification commit impossible, which is protective — land a whole family at a
-  time.
-- **The reflection catalog test cuts both ways with shared contexts.**
-  `registry_context_test.go` asserts catalog ↔ struct in both directions per kind,
-  so a family sharing one struct needs its catalog built by one helper the whole
-  family calls, not copied per kind.
-- Failure policy for the whole phase is settled: notifications render with
-  `FallbackToBuiltIn: true`. A lost notification is worse than an unstyled one.
+| Family | Kinds | Where it renders |
+|---|---|---|
+| driver | load assigned/removed, PTO reviewed, credential expiring, HOS alert | `drivernotificationservice.NotifyWithCorrelation` — one place, ten sites |
+| settlement | posted, paid, pay held, expense reviewed, dispute resolved | same hub |
+| report | run completed/failed/canceled, delivered, delivery email failed, schedule skipped | `reportjobs` (`activities.go`, `dispatch.go`, `delivery.go`) |
+| comment | mention, reply | `shipmentcommentservice` |
+
+**Left: dispatch/ops and recurring.** The remaining sites, all ops-facing and each
+in its own package, so none of them share a choke point the way the driver events
+did: `bankreceiptservice` (reconciliation exception) · `ediservice/alerts.go` and
+`ediinboundservice` (alert event enum — enumerate the members) ·
+`fuelsurchargeservice/eia.go` · `invoiceservice/service.go` (reconciliation
+warning) · `shipmentmoveservice/stopactuals.go` (detention candidate) ·
+`shipmentservice/billing_readiness.go` (billing exception) ·
+`telematicsservice/alerts.go` (the ops HOS alert, distinct from the driver one) ·
+`compliancejobs` (credential expired) · `driverportalservice/actions.go` ·
+`recurringshipmentjobs/activities.go`.
+
+### What the four families taught, for the two that are left
+
+- **Render at the choke point, not the call site.** Every `dash.*` event already
+  funnelled through one hub that had the worker loaded. Look for that before
+  editing services one by one; there was no equivalent for the report or comment
+  families, so those render in their own packages.
+- **A struct value in an interface is not addressable.** The hub fills the
+  recipient block through a pointer-receiver setter. A call site passing a value
+  rather than a pointer would have sent a notification with no name in it and
+  nothing would have failed. `fillRecipient` clones into an addressable value so
+  both spellings work — copy that if a family gains a filled-in block.
+- **The bijection test now flattens anonymous embedded structs**, because that is
+  how html/template resolves a promoted field. A shared block embedded in a family
+  context is documented at the top level, not under the block's name.
+- **Notification kinds have no `.html` asset.** The starter loader reads one only
+  for kinds with a PDF or email-HTML channel. An in-app notification is a title and
+  a body of text.
+- **Notifications are exempt from the required-path rule**, and it follows from
+  sharing a catalog: no field is present for every event in a family, so requiring
+  one would force a credential name into a load-assignment message. The version
+  gate already refuses content-free versions.
+- **One event type can carry two outcomes.** `report_schedule_skipped` covers both
+  a skipped run and a schedule disabled after repeated failures; `Disabled` plus
+  `ConsecutiveFailures` makes that a branch rather than two event types. Tests pin
+  that both readings differ.
+- **Render once per event, not once per recipient.** The delivered-report and
+  comment-mention paths render before the recipient loop.
+- **`go build ./cmd/cli` before `db seed`.** The seed reads the embedded starters
+  through the CLI binary, so a new kind silently seeds nothing until it is rebuilt.
+  Same class of trap as the go:embed'd persisted-operation manifest.
 
 `notificationservice.Create` (line 48) is **not** changed — templates resolve at the call site
 where the domain data lives, keeping `Create` a dumb writer.
@@ -986,8 +1012,9 @@ needs them.
 1. ~~`DetentionPolicy.AttachNoticePDF`~~ — **done**, see §7. Phase 6 is closed.
 2. ~~**Phase 7 emails**~~ — **done**, all six senders. See §8.2 for what each one
    turned up.
-3. **Phase 7 notifications** (§8.2). ~30 sites, grouped into ~6 context families
-   (decided — see §8.2).
+3. **Phase 7 notifications** (§8.2). Four families done (driver, settlement,
+   report, comment — 18 sites). Two left: dispatch/ops and recurring, listed in
+   §8.2 with the findings from the first four.
 4. **`report.pdf`** (§8.2). The kind, the starter, and the catalog exist and
    nothing renders through them. Needs the tenant on `ReportRunMeta` first.
 5. **Phase 8 admin UI** (§8.3). Everything the server needs is in place; no
