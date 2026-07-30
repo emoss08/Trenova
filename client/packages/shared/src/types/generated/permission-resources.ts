@@ -35,6 +35,7 @@ export const Resource = {
   MFAAuthenticator: "mfa_authenticator",
   TableChangeAlert: "table_change_alert",
   HomeLayoutPreset: "home_layout_preset",
+  DocumentTemplate: "document_template",
 
   // Equipment
   EquipmentType: "equipment_type",
