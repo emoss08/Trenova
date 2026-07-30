@@ -3,6 +3,7 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { rememberPristineDefaults } from "@/lib/form-defaults";
 import {
   useCreatePanelActionPreference,
   type CreatePanelSaveAction,
@@ -75,15 +76,21 @@ export function FormCreatePanel<
     reset,
   } = form;
 
+  // Reset to the route's own defaults rather than whatever the form currently calls its
+  // defaults. The edit panel shares this form and replaces defaultValues with the record it
+  // loads, so a bare reset() here would open the create panel pre-filled with the last
+  // record edited.
+  const pristineDefaults = rememberPristineDefaults<TFieldValues>(form);
+
   useEffect(() => {
     if (open) {
-      reset();
+      reset(pristineDefaults);
     }
-  }, [open, reset]);
+  }, [open, reset, pristineDefaults]);
 
   const handleClose = () => {
     onOpenChange(false);
-    reset();
+    reset(pristineDefaults);
   };
 
   const { mutateAsync } = useApiMutation<TMutationData, CreateSubmitPayload, unknown, TFieldValues>(
@@ -113,9 +120,9 @@ export function FormCreatePanel<
         const action = variables.action;
         if (action === "save-close") {
           onOpenChange(false);
-          reset();
+          reset(pristineDefaults);
         } else if (action === "save-add-another") {
-          reset();
+          reset(pristineDefaults);
         }
       },
       form,
@@ -138,7 +145,7 @@ export function FormCreatePanel<
 
   const handlePanelOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      reset();
+      reset(pristineDefaults);
     }
     onOpenChange(nextOpen);
   };

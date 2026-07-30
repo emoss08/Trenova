@@ -3,6 +3,7 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { rememberPristineDefaults } from "@/lib/form-defaults";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
@@ -80,6 +81,10 @@ export function FormEditPanel<
     handleSubmit,
     reset,
   } = form;
+
+  // Registers the route's defaults before the reset below overwrites them, so the create
+  // panel sharing this form has a blank state to return to.
+  rememberPristineDefaults<TFieldValues>(form);
 
   const handleClose = () => {
     onOpenChange(false);
