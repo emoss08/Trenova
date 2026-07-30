@@ -122,6 +122,7 @@ export function toDetentionPolicyInput(data: DetentionPolicy): DetentionPolicyIn
     notificationDeadlineMinutes: data.notificationDeadlineMinutes,
     unnotifiedBehavior: data.unnotifiedBehavior,
     autoSendNotice: data.autoSendNotice,
+    attachNoticePdf: data.attachNoticePdf,
     sendDepartureSummary: data.sendDepartureSummary,
     requireApprovalOverAmount: decimalInput(data.requireApprovalOverAmount),
     autoApproveUnderAmount: decimalInput(data.autoApproveUnderAmount),

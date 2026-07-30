@@ -53,6 +53,7 @@ const DEFAULT_POLICY: Partial<DetentionPolicy> = {
   notificationDeadlineMinutes: 0,
   unnotifiedBehavior: "Bill",
   autoSendNotice: false,
+  attachNoticePdf: false,
   sendDepartureSummary: false,
   requireApprovalOverAmount: null,
   autoApproveUnderAmount: null,

@@ -209,6 +209,7 @@ type DetentionPolicy {
   notificationDeadlineMinutes: Int!
   unnotifiedBehavior: DetentionUnnotifiedBehavior!
   autoSendNotice: Boolean!
+  attachNoticePdf: Boolean!
   sendDepartureSummary: Boolean!
   requireApprovalOverAmount: String
   autoApproveUnderAmount: String
@@ -280,6 +281,7 @@ input DetentionPolicyInput {
   notificationDeadlineMinutes: Int = 0
   unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill
   autoSendNotice: Boolean = false
+  attachNoticePdf: Boolean = false
   sendDepartureSummary: Boolean = false
   requireApprovalOverAmount: String
   autoApproveUnderAmount: String

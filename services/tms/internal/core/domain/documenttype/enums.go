@@ -13,6 +13,14 @@ func (dc DocumentClassification) String() string {
 	return string(dc)
 }
 
+// CodeDetentionNotice files a rendered detention notice against its shipment.
+//
+// It is a constant because three places have to agree on it — the seed that
+// creates it for a new organization, the migration that backfills it for existing
+// ones, and the send path that looks it up. The column is varchar(10), so the
+// name is abbreviated rather than spelled out.
+const CodeDetentionNotice = "DETNOTICE"
+
 type DocumentCategory string
 
 const (

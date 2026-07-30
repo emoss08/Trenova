@@ -1172,6 +1172,7 @@ type ComplexityRoot struct {
 	DetentionPolicy struct {
 		AccessorialChargeID         func(childComplexity int) int
 		AppointmentStopsOnly        func(childComplexity int) int
+		AttachNoticePDF             func(childComplexity int) int
 		AutoApproveUnderAmount      func(childComplexity int) int
 		AutoSendNotice              func(childComplexity int) int
 		BillingFreeMinutes          func(childComplexity int) int
@@ -11762,6 +11763,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DetentionPolicy.AppointmentStopsOnly(childComplexity), true
+	case "DetentionPolicy.attachNoticePdf":
+		if e.ComplexityRoot.DetentionPolicy.AttachNoticePDF == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DetentionPolicy.AttachNoticePDF(childComplexity), true
 	case "DetentionPolicy.autoApproveUnderAmount":
 		if e.ComplexityRoot.DetentionPolicy.AutoApproveUnderAmount == nil {
 			break
@@ -39461,6 +39468,7 @@ type DetentionPolicy {
   notificationDeadlineMinutes: Int!
   unnotifiedBehavior: DetentionUnnotifiedBehavior!
   autoSendNotice: Boolean!
+  attachNoticePdf: Boolean!
   sendDepartureSummary: Boolean!
   requireApprovalOverAmount: String
   autoApproveUnderAmount: String
@@ -39532,6 +39540,7 @@ input DetentionPolicyInput {
   notificationDeadlineMinutes: Int = 0
   unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill
   autoSendNotice: Boolean = false
+  attachNoticePdf: Boolean = false
   sendDepartureSummary: Boolean = false
   requireApprovalOverAmount: String
   autoApproveUnderAmount: String
@@ -50228,6 +50237,8 @@ func (ec *executionContext) childFields_DetentionPolicy(ctx context.Context, fie
 		return ec.fieldContext_DetentionPolicy_unnotifiedBehavior(ctx, field)
 	case "autoSendNotice":
 		return ec.fieldContext_DetentionPolicy_autoSendNotice(ctx, field)
+	case "attachNoticePdf":
+		return ec.fieldContext_DetentionPolicy_attachNoticePdf(ctx, field)
 	case "sendDepartureSummary":
 		return ec.fieldContext_DetentionPolicy_sendDepartureSummary(ctx, field)
 	case "requireApprovalOverAmount":
@@ -86055,6 +86066,29 @@ func (ec *executionContext) _DetentionPolicy_autoSendNotice(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_DetentionPolicy_autoSendNotice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DetentionPolicy_attachNoticePdf(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DetentionPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DetentionPolicy_attachNoticePdf(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AttachNoticePDF, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DetentionPolicy_attachNoticePdf(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DetentionPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
@@ -191565,6 +191599,9 @@ func (ec *executionContext) unmarshalInputDetentionPolicyInput(ctx context.Conte
 	if _, present := asMap["autoSendNotice"]; !present {
 		asMap["autoSendNotice"] = false
 	}
+	if _, present := asMap["attachNoticePdf"]; !present {
+		asMap["attachNoticePdf"] = false
+	}
 	if _, present := asMap["sendDepartureSummary"]; !present {
 		asMap["sendDepartureSummary"] = false
 	}
@@ -191572,7 +191609,7 @@ func (ec *executionContext) unmarshalInputDetentionPolicyInput(ctx context.Conte
 		asMap["currency"] = "USD"
 	}
 
-	fieldsInOrder := [...]string{"name", "code", "description", "status", "isOrgDefault", "priority", "customerId", "locationId", "shipmentTypeIds", "serviceTypeIds", "commodityIds", "stopTypes", "appointmentStopsOnly", "effectiveStartDate", "effectiveEndDate", "clockStartBasis", "lateArrivalRule", "lateArrivalGraceMinutes", "billingFreeMinutes", "pickupFreeMinutes", "deliveryFreeMinutes", "payFreeMinutes", "minimumBillableMinutes", "billingIncrementMinutes", "roundingMode", "rateSource", "accessorialChargeId", "tiers", "maxBillableMinutesPerStop", "maxChargePerStop", "maxChargePerDay", "maxChargePerShipment", "dayBoundaryMode", "convertToLayoverAtMinutes", "layoverAccessorialChargeId", "notificationRequirement", "notificationLeadMinutes", "notificationDeadlineMinutes", "unnotifiedBehavior", "autoSendNotice", "sendDepartureSummary", "requireApprovalOverAmount", "autoApproveUnderAmount", "currency", "comments", "version"}
+	fieldsInOrder := [...]string{"name", "code", "description", "status", "isOrgDefault", "priority", "customerId", "locationId", "shipmentTypeIds", "serviceTypeIds", "commodityIds", "stopTypes", "appointmentStopsOnly", "effectiveStartDate", "effectiveEndDate", "clockStartBasis", "lateArrivalRule", "lateArrivalGraceMinutes", "billingFreeMinutes", "pickupFreeMinutes", "deliveryFreeMinutes", "payFreeMinutes", "minimumBillableMinutes", "billingIncrementMinutes", "roundingMode", "rateSource", "accessorialChargeId", "tiers", "maxBillableMinutesPerStop", "maxChargePerStop", "maxChargePerDay", "maxChargePerShipment", "dayBoundaryMode", "convertToLayoverAtMinutes", "layoverAccessorialChargeId", "notificationRequirement", "notificationLeadMinutes", "notificationDeadlineMinutes", "unnotifiedBehavior", "autoSendNotice", "attachNoticePdf", "sendDepartureSummary", "requireApprovalOverAmount", "autoApproveUnderAmount", "currency", "comments", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -191859,6 +191896,13 @@ func (ec *executionContext) unmarshalInputDetentionPolicyInput(ctx context.Conte
 				return it, err
 			}
 			it.AutoSendNotice = data
+		case "attachNoticePdf":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachNoticePdf"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AttachNoticePDF = data
 		case "sendDepartureSummary":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sendDepartureSummary"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -209141,6 +209185,11 @@ func (ec *executionContext) _DetentionPolicy(ctx context.Context, sel ast.Select
 			}
 		case "autoSendNotice":
 			out.Values[i] = ec._DetentionPolicy_autoSendNotice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attachNoticePdf":
+			out.Values[i] = ec._DetentionPolicy_attachNoticePdf(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

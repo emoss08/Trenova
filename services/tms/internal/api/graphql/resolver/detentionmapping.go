@@ -102,6 +102,7 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 		NotificationDeadlineMinutes: int(entity.NotificationDeadlineMinutes),
 		UnnotifiedBehavior:          entity.UnnotifiedBehavior,
 		AutoSendNotice:              entity.AutoSendNotice,
+		AttachNoticePDF:             entity.AttachNoticePDF,
 		SendDepartureSummary:        entity.SendDepartureSummary,
 		RequireApprovalOverAmount:   nullDecimalToStringPtr(entity.RequireApprovalOverAmount),
 		AutoApproveUnderAmount:      nullDecimalToStringPtr(entity.AutoApproveUnderAmount),
@@ -312,6 +313,9 @@ func detentionPolicyFromInput(
 	}
 	if input.AutoSendNotice != nil {
 		entity.AutoSendNotice = *input.AutoSendNotice
+	}
+	if input.AttachNoticePDF != nil {
+		entity.AttachNoticePDF = *input.AttachNoticePDF
 	}
 	if input.SendDepartureSummary != nil {
 		entity.SendDepartureSummary = *input.SendDepartureSummary

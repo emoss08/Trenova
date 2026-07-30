@@ -55,6 +55,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   notificationDeadlineMinutes
   unnotifiedBehavior
   autoSendNotice
+  attachNoticePdf
   sendDepartureSummary
   requireApprovalOverAmount
   autoApproveUnderAmount

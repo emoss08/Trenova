@@ -32,7 +32,10 @@ type Params struct {
 	AnalyticsRepo     repositories.DetentionAnalyticsRepository
 	CustomerRepo      repositories.CustomerRepository
 	CommentRepo       repositories.ShipmentCommentRepository
+	DocumentTypeRepo  repositories.DocumentTypeRepository
 	EmailService      services.EmailService
+	UploadService     services.DocumentUploadService
+	WorkflowStarter   services.WorkflowStarter
 	Templates         services.DocumentTemplateResolver
 	ContextBuilder    *ContextBuilder
 	AuditService      services.AuditService
@@ -51,12 +54,17 @@ type Service struct {
 	analyticsRepo     repositories.DetentionAnalyticsRepository
 	customerRepo      repositories.CustomerRepository
 	commentRepo       repositories.ShipmentCommentRepository
+	documentTypeRepo  repositories.DocumentTypeRepository
 	emailService      services.EmailService
+	uploadService     services.DocumentUploadService
+	workflowStarter   services.WorkflowStarter
 	templates         services.DocumentTemplateResolver
 	contextBuilder    *ContextBuilder
 	auditService      services.AuditService
 	now               func() int64
 }
+
+var _ services.DetentionNoticeService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -72,7 +80,10 @@ func New(p Params) *Service {
 		analyticsRepo:     p.AnalyticsRepo,
 		customerRepo:      p.CustomerRepo,
 		commentRepo:       p.CommentRepo,
+		documentTypeRepo:  p.DocumentTypeRepo,
 		emailService:      p.EmailService,
+		uploadService:     p.UploadService,
+		workflowStarter:   p.WorkflowStarter,
 		templates:         p.Templates,
 		contextBuilder:    p.ContextBuilder,
 		auditService:      p.AuditService,

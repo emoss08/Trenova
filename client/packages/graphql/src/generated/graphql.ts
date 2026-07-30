@@ -552,6 +552,7 @@ export type DetentionOccurrenceStatus =
 export type DetentionPolicyInput = {
   accessorialChargeId: string | number;
   appointmentStopsOnly?: boolean | null | undefined;
+  attachNoticePdf?: boolean | null | undefined;
   autoApproveUnderAmount?: string | null | undefined;
   autoSendNotice?: boolean | null | undefined;
   billingFreeMinutes?: number | null | undefined;
@@ -3046,7 +3047,7 @@ export type SendDetentionNoticeMutation = { sendDetentionNotice: { ' $fragmentRe
 
 export type DetentionPolicyTierFieldsFragment = { id: string | null, fromMinute: number, toMinute: number | null, rate: string, rateUnit: DetentionTierRateUnit, label: string, sortOrder: number } & { ' $fragmentName'?: 'DetentionPolicyTierFieldsFragment' };
 
-export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrgDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string>, serviceTypeIds: Array<string>, commodityIds: Array<string>, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
+export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrgDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string>, serviceTypeIds: Array<string>, commodityIds: Array<string>, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, attachNoticePdf: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
 
 export type DetentionPolicyTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -6184,6 +6185,7 @@ export const DetentionPolicyRowFieldsFragmentDoc = new TypedDocumentString(`
   notificationDeadlineMinutes
   unnotifiedBehavior
   autoSendNotice
+  attachNoticePdf
   sendDepartureSummary
   requireApprovalOverAmount
   autoApproveUnderAmount
@@ -10963,6 +10965,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   notificationDeadlineMinutes
   unnotifiedBehavior
   autoSendNotice
+  attachNoticePdf
   sendDepartureSummary
   requireApprovalOverAmount
   autoApproveUnderAmount
@@ -10975,7 +10978,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
 fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:ab27332f86ad547b1db6894802f6634cdc8ebd33e00cb991e8d1d8dbc5baaabd"}) as unknown as TypedDocumentString<DetentionPolicyTableQuery, DetentionPolicyTableQueryVariables>;
+}`, {"hash":"sha256:531beae49bf3befc60307be25cd2cb1e995308b67784562eb833f368cbdf418d"}) as unknown as TypedDocumentString<DetentionPolicyTableQuery, DetentionPolicyTableQueryVariables>;
 export const DetentionPolicyDocument = new TypedDocumentString(`
     query DetentionPolicy($id: ID!) {
   detentionPolicy(id: $id) {
@@ -11038,6 +11041,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   notificationDeadlineMinutes
   unnotifiedBehavior
   autoSendNotice
+  attachNoticePdf
   sendDepartureSummary
   requireApprovalOverAmount
   autoApproveUnderAmount
@@ -11046,7 +11050,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:c4e1d0cdc23b3fa4460502975ffecd05a957dc80041cae8f73da5639a268e192"}) as unknown as TypedDocumentString<DetentionPolicyQuery, DetentionPolicyQueryVariables>;
+}`, {"hash":"sha256:74adcb143195478e6f8c1ee0a8fa6f1df478a06423b437885f6da18e69581560"}) as unknown as TypedDocumentString<DetentionPolicyQuery, DetentionPolicyQueryVariables>;
 export const CreateDetentionPolicyDocument = new TypedDocumentString(`
     mutation CreateDetentionPolicy($input: DetentionPolicyInput!) {
   createDetentionPolicy(input: $input) {
@@ -11109,6 +11113,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   notificationDeadlineMinutes
   unnotifiedBehavior
   autoSendNotice
+  attachNoticePdf
   sendDepartureSummary
   requireApprovalOverAmount
   autoApproveUnderAmount
@@ -11117,7 +11122,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:d9582cec413151d9c018204c856f2117efcf06f70e18137289e898471a107148"}) as unknown as TypedDocumentString<CreateDetentionPolicyMutation, CreateDetentionPolicyMutationVariables>;
+}`, {"hash":"sha256:2d5cbd988b8197f0ef9057001a7eab554153e7fe0c54148326540bf3ae4ba416"}) as unknown as TypedDocumentString<CreateDetentionPolicyMutation, CreateDetentionPolicyMutationVariables>;
 export const UpdateDetentionPolicyDocument = new TypedDocumentString(`
     mutation UpdateDetentionPolicy($id: ID!, $input: DetentionPolicyInput!) {
   updateDetentionPolicy(id: $id, input: $input) {
@@ -11180,6 +11185,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   notificationDeadlineMinutes
   unnotifiedBehavior
   autoSendNotice
+  attachNoticePdf
   sendDepartureSummary
   requireApprovalOverAmount
   autoApproveUnderAmount
@@ -11188,7 +11194,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:eafadf4f61a8519e3b5557178be198ed54ea17b2c1c40db7ac1a8717038ba8ac"}) as unknown as TypedDocumentString<UpdateDetentionPolicyMutation, UpdateDetentionPolicyMutationVariables>;
+}`, {"hash":"sha256:ec5c989dff8b8c35e44583c673bab420544afcae506928ee1115b69b2a4a2032"}) as unknown as TypedDocumentString<UpdateDetentionPolicyMutation, UpdateDetentionPolicyMutationVariables>;
 export const DeleteDetentionPolicyDocument = new TypedDocumentString(`
     mutation DeleteDetentionPolicy($id: ID!) {
   deleteDetentionPolicy(id: $id)

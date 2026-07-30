@@ -770,6 +770,7 @@ type DetentionPolicy struct {
 	NotificationDeadlineMinutes int                               `json:"notificationDeadlineMinutes"`
 	UnnotifiedBehavior          detention.UnnotifiedBehavior      `json:"unnotifiedBehavior"`
 	AutoSendNotice              bool                              `json:"autoSendNotice"`
+	AttachNoticePDF             bool                              `json:"attachNoticePdf"`
 	SendDepartureSummary        bool                              `json:"sendDepartureSummary"`
 	RequireApprovalOverAmount   *string                           `json:"requireApprovalOverAmount,omitempty"`
 	AutoApproveUnderAmount      *string                           `json:"autoApproveUnderAmount,omitempty"`
@@ -832,6 +833,7 @@ type DetentionPolicyInput struct {
 	NotificationDeadlineMinutes *int                               `json:"notificationDeadlineMinutes,omitempty"`
 	UnnotifiedBehavior          *detention.UnnotifiedBehavior      `json:"unnotifiedBehavior,omitempty"`
 	AutoSendNotice              *bool                              `json:"autoSendNotice,omitempty"`
+	AttachNoticePDF             *bool                              `json:"attachNoticePdf,omitempty"`
 	SendDepartureSummary        *bool                              `json:"sendDepartureSummary,omitempty"`
 	RequireApprovalOverAmount   *string                            `json:"requireApprovalOverAmount,omitempty"`
 	AutoApproveUnderAmount      *string                            `json:"autoApproveUnderAmount,omitempty"`

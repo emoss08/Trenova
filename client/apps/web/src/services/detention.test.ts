@@ -49,6 +49,7 @@ function policy(overrides: Partial<DetentionPolicy> = {}): DetentionPolicy {
     notificationDeadlineMinutes: 0,
     unnotifiedBehavior: "Bill",
     autoSendNotice: false,
+    attachNoticePdf: false,
     sendDepartureSummary: true,
     requireApprovalOverAmount: null,
     autoApproveUnderAmount: null,

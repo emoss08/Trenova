@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -14,13 +17,13 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	DetentionService    *detentionservice.Service
+	DetentionService    services.DetentionNoticeService
 	ShipmentControlRepo repositories.ShipmentControlRepository
 	Logger              *zap.Logger
 }
 
 type Activities struct {
-	detentionService    *detentionservice.Service
+	detentionService    services.DetentionNoticeService
 	shipmentControlRepo repositories.ShipmentControlRepository
 	logger              *zap.Logger
 }
@@ -70,6 +73,50 @@ func (a *Activities) SweepTenantNoticesActivity(
 		Sent:    result.Sent,
 		Skipped: result.Skipped,
 		Failed:  result.Failed,
+	}, nil
+}
+
+// AttachNoticePDFDocumentActivity points a notice at the document its PDF became
+// and logs the render against the template version behind it.
+//
+// The document id arrives from the finalize child workflow rather than being
+// looked up, so this activity cannot file the wrong document if a newer version of
+// the same notice is uploaded while it retries.
+func (a *Activities) AttachNoticePDFDocumentActivity(
+	ctx context.Context,
+	payload *StoreNoticePDFPayload,
+	documentID pulid.ID,
+) (*StoreNoticePDFResult, error) {
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  payload.OrganizationID,
+		BuID:   payload.BusinessUnitID,
+		UserID: payload.UserID,
+	}
+
+	if err := a.detentionService.AttachNoticePDFDocument(
+		ctx,
+		&services.AttachNoticePDFDocumentParams{
+			TenantInfo:   tenantInfo,
+			NoticeID:     payload.NoticeID,
+			OccurrenceID: payload.OccurrenceID,
+			DocumentID:   documentID,
+			FileName:     payload.FileName,
+			FileSize:     payload.FileSize,
+			Provenance:   payload.Provenance,
+			UserID:       payload.UserID,
+		},
+	); err != nil {
+		a.logger.Error("failed to file detention notice PDF",
+			zap.String("noticeId", payload.NoticeID.String()),
+			zap.String("documentId", documentID.String()),
+			zap.Error(err))
+		return nil, err
+	}
+
+	return &StoreNoticePDFResult{
+		NoticeID:    payload.NoticeID,
+		DocumentID:  &documentID,
+		CompletedAt: timeutils.NowUnix(),
 	}, nil
 }
 

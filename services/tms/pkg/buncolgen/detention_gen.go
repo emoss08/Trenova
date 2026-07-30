@@ -1234,6 +1234,7 @@ var DetentionPolicyColumns = struct {
 	NotificationDeadlineMinutes Column // "notification_deadline_minutes" → qualified: "dtp.notification_deadline_minutes"
 	UnnotifiedBehavior          Column // "unnotified_behavior" → qualified: "dtp.unnotified_behavior"
 	AutoSendNotice              Column // "auto_send_notice" → qualified: "dtp.auto_send_notice"
+	AttachNoticePDF             Column // "attach_notice_pdf" → qualified: "dtp.attach_notice_pdf"
 	SendDepartureSummary        Column // "send_departure_summary" → qualified: "dtp.send_departure_summary"
 	RequireApprovalOverAmount   Column // "require_approval_over_amount" → qualified: "dtp.require_approval_over_amount"
 	AutoApproveUnderAmount      Column // "auto_approve_under_amount" → qualified: "dtp.auto_approve_under_amount"
@@ -1288,6 +1289,7 @@ var DetentionPolicyColumns = struct {
 	NotificationDeadlineMinutes: NewColumn("notification_deadline_minutes", "dtp"),
 	UnnotifiedBehavior:          NewColumn("unnotified_behavior", "dtp"),
 	AutoSendNotice:              NewColumn("auto_send_notice", "dtp"),
+	AttachNoticePDF:             NewColumn("attach_notice_pdf", "dtp"),
 	SendDepartureSummary:        NewColumn("send_departure_summary", "dtp"),
 	RequireApprovalOverAmount:   NewColumn("require_approval_over_amount", "dtp"),
 	AutoApproveUnderAmount:      NewColumn("auto_approve_under_amount", "dtp"),
@@ -1348,6 +1350,7 @@ var DetentionPolicyFieldMap = map[string]string{
 	"notificationDeadlineMinutes": "notification_deadline_minutes",
 	"unnotifiedBehavior":          "unnotified_behavior",
 	"autoSendNotice":              "auto_send_notice",
+	"attachNoticePdf":             "attach_notice_pdf",
 	"sendDepartureSummary":        "send_departure_summary",
 	"requireApprovalOverAmount":   "require_approval_over_amount",
 	"autoApproveUnderAmount":      "auto_approve_under_amount",
@@ -1404,6 +1407,7 @@ var DetentionPolicyInsertableColumns = []string{
 	"notification_deadline_minutes",
 	"unnotified_behavior",
 	"auto_send_notice",
+	"attach_notice_pdf",
 	"send_departure_summary",
 	"require_approval_over_amount",
 	"auto_approve_under_amount",
@@ -1524,6 +1528,7 @@ var DetentionPolicyFilter = struct {
 	NotificationDeadlineMinutes func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notificationDeadlineMinutes" → DB: "notification_deadline_minutes"
 	UnnotifiedBehavior          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unnotifiedBehavior" → DB: "unnotified_behavior"
 	AutoSendNotice              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendNotice" → DB: "auto_send_notice"
+	AttachNoticePDF             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachNoticePdf" → DB: "attach_notice_pdf"
 	SendDepartureSummary        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendDepartureSummary" → DB: "send_departure_summary"
 	RequireApprovalOverAmount   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireApprovalOverAmount" → DB: "require_approval_over_amount"
 	AutoApproveUnderAmount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApproveUnderAmount" → DB: "auto_approve_under_amount"
@@ -1661,6 +1666,9 @@ var DetentionPolicyFilter = struct {
 	},
 	AutoSendNotice: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoSendNotice", op, value)
+	},
+	AttachNoticePDF: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attachNoticePdf", op, value)
 	},
 	SendDepartureSummary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sendDepartureSummary", op, value)

@@ -357,6 +357,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		func(b *invoiceservice.ContextBuilder) services.ContextBuilder { return b },
 		fx.ResultTags(services.ContextBuilderGroup),
 	),
+	// The detention service starts the workflow that files a notice PDF, so it
+	// imports the jobs package; the activities depend on this port rather than on
+	// the service so the import does not close a cycle.
+	func(s *detentionservice.Service) services.DetentionNoticeService { return s },
 	detentionservice.NewContextBuilder,
 	fx.Annotate(
 		func(b *detentionservice.ContextBuilder) services.ContextBuilder { return b },

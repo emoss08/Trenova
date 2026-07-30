@@ -60,13 +60,14 @@ func (s *DocumentTypeSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return nil
 			}
 
-			if err = s.createSystemDocumentTypes(ctx, tx, sc, org.ID, org.BusinessUnitID); err != nil {
+			created, err := s.createSystemDocumentTypes(ctx, tx, sc, org.ID, org.BusinessUnitID)
+			if err != nil {
 				return fmt.Errorf("create system document types: %w", err)
 			}
 
 			seedhelpers.LogSuccess(
 				"Created system document type fixtures",
-				"- Created 5 system document types",
+				fmt.Sprintf("- Created %d system document types", created),
 			)
 
 			return nil
@@ -79,7 +80,7 @@ func (s *DocumentTypeSeed) createSystemDocumentTypes(
 	tx bun.Tx,
 	sc *seedhelpers.SeedContext,
 	orgID, buID pulid.ID,
-) error {
+) (int, error) {
 	docTypes := []documenttype.DocumentType{
 		{
 			ID:                     pulid.MustNew("dt_"),
@@ -147,22 +148,34 @@ func (s *DocumentTypeSeed) createSystemDocumentTypes(
 			Color:                  "#0f766e",
 			IsSystem:               true,
 		},
+		{
+			ID:                     pulid.MustNew("dt_"),
+			BusinessUnitID:         buID,
+			OrganizationID:         orgID,
+			Code:                   documenttype.CodeDetentionNotice,
+			Name:                   "Detention Notice",
+			Description:            "Customer detention notice rendered as a PDF and filed against the shipment",
+			DocumentClassification: documenttype.ClassificationPublic,
+			DocumentCategory:       documenttype.CategoryShipment,
+			Color:                  "#f97316",
+			IsSystem:               true,
+		},
 	}
 
 	_, err := tx.NewInsert().
 		Model(&docTypes).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("insert system document types: %w", err)
+		return 0, fmt.Errorf("insert system document types: %w", err)
 	}
 
 	for i := range docTypes {
 		if err = sc.TrackCreated(ctx, "document_types", docTypes[i].ID, s.Name()); err != nil {
-			return fmt.Errorf("track document type: %w", err)
+			return 0, fmt.Errorf("track document type: %w", err)
 		}
 	}
 
-	return nil
+	return len(docTypes), nil
 }
 
 func (s *DocumentTypeSeed) Down(ctx context.Context, tx bun.Tx) error {

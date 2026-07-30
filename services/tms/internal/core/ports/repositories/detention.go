@@ -227,11 +227,28 @@ type ListDetentionNoticesRequest struct {
 	TenantInfo   pagination.TenantInfo
 }
 
+// AttachNoticePDFDocumentRequest files a stored document against a notice.
+//
+// It updates the one column rather than saving the entity, because the document
+// is filed after the notice was already persisted and a provider webhook may be
+// recording delivery on the same row at the same time. A read-modify-write would
+// make those two updates race for the same optimistic version.
+type AttachNoticePDFDocumentRequest struct {
+	TenantInfo pagination.TenantInfo
+	NoticeID   pulid.ID
+	DocumentID pulid.ID
+}
+
 type DetentionNoticeRepository interface {
 	Create(
 		ctx context.Context,
 		entity *detention.DetentionNotice,
 	) (*detention.DetentionNotice, error)
+
+	AttachPDFDocument(
+		ctx context.Context,
+		req *AttachNoticePDFDocumentRequest,
+	) error
 
 	Update(
 		ctx context.Context,

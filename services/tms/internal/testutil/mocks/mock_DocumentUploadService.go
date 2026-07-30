@@ -107,6 +107,74 @@ func (_c *MockDocumentUploadService_CreateSession_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// Complete provides a mock function for the type MockDocumentUploadService
+func (_mock *MockDocumentUploadService) Complete(ctx context.Context, req *services.CompletionRequest) (*documentupload.DocumentUploadSession, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Complete")
+	}
+
+	var r0 *documentupload.DocumentUploadSession
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CompletionRequest) (*documentupload.DocumentUploadSession, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CompletionRequest) *documentupload.DocumentUploadSession); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*documentupload.DocumentUploadSession)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CompletionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentUploadService_Complete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Complete'
+type MockDocumentUploadService_Complete_Call struct {
+	*mock.Call
+}
+
+// Complete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CompletionRequest
+func (_e *MockDocumentUploadService_Expecter) Complete(ctx any, req any) *MockDocumentUploadService_Complete_Call {
+	return &MockDocumentUploadService_Complete_Call{Call: _e.mock.On("Complete", ctx, req)}
+}
+
+func (_c *MockDocumentUploadService_Complete_Call) Run(run func(ctx context.Context, req *services.CompletionRequest)) *MockDocumentUploadService_Complete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CompletionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CompletionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentUploadService_Complete_Call) Return(documentUploadSession *documentupload.DocumentUploadSession, err error) *MockDocumentUploadService_Complete_Call {
+	_c.Call.Return(documentUploadSession, err)
+	return _c
+}
+
+func (_c *MockDocumentUploadService_Complete_Call) RunAndReturn(run func(ctx context.Context, req *services.CompletionRequest) (*documentupload.DocumentUploadSession, error)) *MockDocumentUploadService_Complete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UploadPart provides a mock function for the type MockDocumentUploadService
 func (_mock *MockDocumentUploadService) UploadPart(ctx context.Context, req *services.UploadPartRequest) (*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, req)

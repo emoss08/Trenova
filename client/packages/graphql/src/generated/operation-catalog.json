@@ -1220,7 +1220,7 @@
       "kind": "mutation",
       "domain": "detention",
       "sourceFile": "src/operations/detention/table.graphql",
-      "hash": "sha256:d9582cec413151d9c018204c856f2117efcf06f70e18137289e898471a107148",
+      "hash": "sha256:2d5cbd988b8197f0ef9057001a7eab554153e7fe0c54148326540bf3ae4ba416",
       "rootFields": [
         "createDetentionPolicy"
       ],
@@ -1236,7 +1236,7 @@
         "DetentionPolicyTierFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateDetentionPolicy($input: DetentionPolicyInput!) {\n  createDetentionPolicy(input: $input) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+      "sdl": "mutation CreateDetentionPolicy($input: DetentionPolicyInput!) {\n  createDetentionPolicy(input: $input) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  attachNoticePdf\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
     },
     {
       "name": "CreateEquipmentType",
@@ -2245,7 +2245,7 @@
       "kind": "query",
       "domain": "detention",
       "sourceFile": "src/operations/detention/table.graphql",
-      "hash": "sha256:c4e1d0cdc23b3fa4460502975ffecd05a957dc80041cae8f73da5639a268e192",
+      "hash": "sha256:74adcb143195478e6f8c1ee0a8fa6f1df478a06423b437885f6da18e69581560",
       "rootFields": [
         "detentionPolicy"
       ],
@@ -2261,7 +2261,7 @@
         "DetentionPolicyTierFields"
       ],
       "usages": [],
-      "sdl": "query DetentionPolicy($id: ID!) {\n  detentionPolicy(id: $id) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+      "sdl": "query DetentionPolicy($id: ID!) {\n  detentionPolicy(id: $id) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  attachNoticePdf\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
     },
     {
       "name": "DetentionPolicyPreview",
@@ -2293,7 +2293,7 @@
       "kind": "query",
       "domain": "detention",
       "sourceFile": "src/operations/detention/table.graphql",
-      "hash": "sha256:ab27332f86ad547b1db6894802f6634cdc8ebd33e00cb991e8d1d8dbc5baaabd",
+      "hash": "sha256:531beae49bf3befc60307be25cd2cb1e995308b67784562eb833f368cbdf418d",
       "rootFields": [
         "detentionPolicies"
       ],
@@ -2310,7 +2310,7 @@
         "DetentionPolicyTierFields"
       ],
       "usages": [],
-      "sdl": "query DetentionPolicyTable($input: DataTableConnectionInput!) {\n  detentionPolicies(input: $input) {\n    edges {\n      node {\n        ...DetentionPolicyRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+      "sdl": "query DetentionPolicyTable($input: DataTableConnectionInput!) {\n  detentionPolicies(input: $input) {\n    edges {\n      node {\n        ...DetentionPolicyRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  attachNoticePdf\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
     },
     {
       "name": "DetentionWaiverStats",
@@ -7347,7 +7347,7 @@
       "kind": "mutation",
       "domain": "detention",
       "sourceFile": "src/operations/detention/table.graphql",
-      "hash": "sha256:eafadf4f61a8519e3b5557178be198ed54ea17b2c1c40db7ac1a8717038ba8ac",
+      "hash": "sha256:ec5c989dff8b8c35e44583c673bab420544afcae506928ee1115b69b2a4a2032",
       "rootFields": [
         "updateDetentionPolicy"
       ],
@@ -7368,7 +7368,7 @@
         "DetentionPolicyTierFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateDetentionPolicy($id: ID!, $input: DetentionPolicyInput!) {\n  updateDetentionPolicy(id: $id, input: $input) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+      "sdl": "mutation UpdateDetentionPolicy($id: ID!, $input: DetentionPolicyInput!) {\n  updateDetentionPolicy(id: $id, input: $input) {\n    ...DetentionPolicyRowFields\n  }\n}\n\nfragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  attachNoticePdf\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
     },
     {
       "name": "UpdateEquipmentType",
@@ -8785,7 +8785,7 @@
         "UpdateDetentionPolicy"
       ],
       "usages": [],
-      "sdl": "fragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
+      "sdl": "fragment DetentionPolicyRowFields on DetentionPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isOrgDefault\n  priority\n  specificityScore\n  customerId\n  locationId\n  shipmentTypeIds\n  serviceTypeIds\n  commodityIds\n  stopTypes\n  appointmentStopsOnly\n  effectiveStartDate\n  effectiveEndDate\n  clockStartBasis\n  lateArrivalRule\n  lateArrivalGraceMinutes\n  billingFreeMinutes\n  pickupFreeMinutes\n  deliveryFreeMinutes\n  payFreeMinutes\n  minimumBillableMinutes\n  billingIncrementMinutes\n  roundingMode\n  rateSource\n  accessorialChargeId\n  tiers {\n    ...DetentionPolicyTierFields\n  }\n  maxBillableMinutesPerStop\n  maxChargePerStop\n  maxChargePerDay\n  maxChargePerShipment\n  dayBoundaryMode\n  convertToLayoverAtMinutes\n  layoverAccessorialChargeId\n  notificationRequirement\n  notificationLeadMinutes\n  notificationDeadlineMinutes\n  unnotifiedBehavior\n  autoSendNotice\n  attachNoticePdf\n  sendDepartureSummary\n  requireApprovalOverAmount\n  autoApproveUnderAmount\n  currency\n  comments\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DetentionPolicyTierFields on DetentionPolicyTier {\n  id\n  fromMinute\n  toMinute\n  rate\n  rateUnit\n  label\n  sortOrder\n}"
     },
     {
       "name": "DetentionPolicyTierFields",
@@ -11016,6 +11016,12 @@
           "defaultJson": false
         },
         {
+          "name": "attachNoticePdf",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
           "name": "autoApproveUnderAmount",
           "type": "String",
           "defaultValue": null
@@ -11255,7 +11261,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input DetentionPolicyInput {\n  accessorialChargeId: ID!\n  appointmentStopsOnly: Boolean = false\n  autoApproveUnderAmount: String\n  autoSendNotice: Boolean = false\n  billingFreeMinutes: Int = 120\n  billingIncrementMinutes: Int = 15\n  clockStartBasis: DetentionClockStartBasis = LaterOfArrivalOrAppointment\n  code: String!\n  comments: String\n  commodityIds: [ID!]\n  convertToLayoverAtMinutes: Int\n  currency: String = \"USD\"\n  customerId: ID\n  dayBoundaryMode: DetentionCapScope = PerStop\n  deliveryFreeMinutes: Int\n  description: String\n  effectiveEndDate: Int\n  effectiveStartDate: Int\n  isOrgDefault: Boolean = false\n  lateArrivalGraceMinutes: Int = 0\n  lateArrivalRule: DetentionLateArrivalRule = NoEffect\n  layoverAccessorialChargeId: ID\n  locationId: ID\n  maxBillableMinutesPerStop: Int\n  maxChargePerDay: String\n  maxChargePerShipment: String\n  maxChargePerStop: String\n  minimumBillableMinutes: Int = 0\n  name: String!\n  notificationDeadlineMinutes: Int = 0\n  notificationLeadMinutes: Int = 30\n  notificationRequirement: DetentionNotificationRequirement = None\n  payFreeMinutes: Int\n  pickupFreeMinutes: Int\n  priority: Int = 0\n  rateSource: DetentionRateSource = Accessorial\n  requireApprovalOverAmount: String\n  roundingMode: DetentionRoundingMode = Up\n  sendDepartureSummary: Boolean = false\n  serviceTypeIds: [ID!]\n  shipmentTypeIds: [ID!]\n  status: DetentionPolicyStatus = Draft\n  stopTypes: [StopType!]\n  tiers: [DetentionTierInput!]\n  unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill\n  version: Int\n}"
+      "sdl": "input DetentionPolicyInput {\n  accessorialChargeId: ID!\n  appointmentStopsOnly: Boolean = false\n  attachNoticePdf: Boolean = false\n  autoApproveUnderAmount: String\n  autoSendNotice: Boolean = false\n  billingFreeMinutes: Int = 120\n  billingIncrementMinutes: Int = 15\n  clockStartBasis: DetentionClockStartBasis = LaterOfArrivalOrAppointment\n  code: String!\n  comments: String\n  commodityIds: [ID!]\n  convertToLayoverAtMinutes: Int\n  currency: String = \"USD\"\n  customerId: ID\n  dayBoundaryMode: DetentionCapScope = PerStop\n  deliveryFreeMinutes: Int\n  description: String\n  effectiveEndDate: Int\n  effectiveStartDate: Int\n  isOrgDefault: Boolean = false\n  lateArrivalGraceMinutes: Int = 0\n  lateArrivalRule: DetentionLateArrivalRule = NoEffect\n  layoverAccessorialChargeId: ID\n  locationId: ID\n  maxBillableMinutesPerStop: Int\n  maxChargePerDay: String\n  maxChargePerShipment: String\n  maxChargePerStop: String\n  minimumBillableMinutes: Int = 0\n  name: String!\n  notificationDeadlineMinutes: Int = 0\n  notificationLeadMinutes: Int = 30\n  notificationRequirement: DetentionNotificationRequirement = None\n  payFreeMinutes: Int\n  pickupFreeMinutes: Int\n  priority: Int = 0\n  rateSource: DetentionRateSource = Accessorial\n  requireApprovalOverAmount: String\n  roundingMode: DetentionRoundingMode = Up\n  sendDepartureSummary: Boolean = false\n  serviceTypeIds: [ID!]\n  shipmentTypeIds: [ID!]\n  status: DetentionPolicyStatus = Draft\n  stopTypes: [StopType!]\n  tiers: [DetentionTierInput!]\n  unnotifiedBehavior: DetentionUnnotifiedBehavior = Bill\n  version: Int\n}"
     },
     "DetentionPreviewScenarioInput": {
       "kind": "input",

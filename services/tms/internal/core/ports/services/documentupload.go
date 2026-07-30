@@ -72,4 +72,17 @@ type DocumentUploadService interface {
 		ctx context.Context,
 		req *UploadPartRequest,
 	) (*documentupload.DocumentUploadSession, error)
+
+	// Complete finalizes an upload. With workflow processing enabled it hands
+	// finalization to the upload workflow and the returned session has no
+	// document yet; without it, finalization runs inline and the session carries
+	// the document it became.
+	//
+	// A server-generated document therefore needs this only on deployments with
+	// no Temporal worker — everywhere else the finalize workflow reports the
+	// document id to whoever started it.
+	Complete(
+		ctx context.Context,
+		req *CompletionRequest,
+	) (*documentupload.DocumentUploadSession, error)
 }

@@ -31,6 +31,9 @@ type NoticeContent struct {
 	// disputed charge can be traced to the exact notice text that was sent. It
 	// is nil when the built-in rendered.
 	VersionID *pulid.ID
+	// PDF is the same notice on paper, rendered from the same context. It is nil
+	// unless the governing policy attaches one.
+	PDF *NoticePDF
 }
 
 // BuildNoticeParams carries everything the notice cites. Every number in the
@@ -46,6 +49,10 @@ type BuildNoticeParams struct {
 	CustomerName  string
 	// CustomerID lets a customer with an assigned notice template receive it.
 	CustomerID *pulid.ID
+	// AttachPDF asks for the notice on paper as well. The caller resolves it from
+	// the governing policy rather than the service reading the policy again,
+	// because the send path has already loaded it.
+	AttachPDF bool
 }
 
 // BuildNotice renders a detention notice through the organization's template.
@@ -113,12 +120,29 @@ func (s *Service) BuildNotice(
 		return NoticeContent{}, err
 	}
 
-	return NoticeContent{
+	content := NoticeContent{
 		Subject:   rendered.Subject,
 		Text:      rendered.Text,
 		HTML:      rendered.HTML,
 		VersionID: rendered.VersionID,
-	}, nil
+	}
+
+	if p.AttachPDF {
+		// The PDF is rendered from the same context object the email was, so the
+		// attachment cannot quote a figure the body does not. A failure here
+		// drops the attachment and keeps the notice: the email is the evidence
+		// the charge rests on, and a renderer outage must not cost it.
+		pdf, pdfErr := s.renderNoticePDF(ctx, tenantInfo, occ, customerID, data)
+		if pdfErr != nil {
+			s.l.Warn("could not render the detention notice PDF; sending without it",
+				zap.String("occurrenceId", occ.ID.String()),
+				zap.Error(pdfErr))
+		} else {
+			content.PDF = pdf
+		}
+	}
+
+	return content, nil
 }
 
 func noticeRateLabel(snap *detention.PolicySnapshot) string {
@@ -148,6 +172,17 @@ type ScheduleNoticeParams struct {
 	SentByID     *pulid.ID
 	FacilityName string
 	ShipmentRef  string
+	AttachPDF    bool
+}
+
+// ScheduledNotice is a queued notice plus the artifact the row cannot hold.
+//
+// The PDF travels in memory from the render to the send rather than being
+// re-rendered there, because the notice body is a snapshot and an attachment
+// rendered later could quote figures the snapshot does not.
+type ScheduledNotice struct {
+	Notice *detention.DetentionNotice
+	PDF    *NoticePDF
 }
 
 // ScheduleNotice queues a notice without sending it. Scheduling and sending are
@@ -156,7 +191,7 @@ type ScheduleNoticeParams struct {
 func (s *Service) ScheduleNotice(
 	ctx context.Context,
 	p ScheduleNoticeParams,
-) (*detention.DetentionNotice, error) {
+) (*ScheduledNotice, error) {
 	if p.Occurrence == nil {
 		return nil, errortypes.NewValidationError(
 			"occurrence", errortypes.ErrRequired, "Detention occurrence is required")
@@ -171,6 +206,7 @@ func (s *Service) ScheduleNotice(
 		FacilityName: p.FacilityName,
 		ShipmentRef:  p.ShipmentRef,
 		Location:     loc,
+		AttachPDF:    p.AttachPDF,
 	})
 	if err != nil {
 		return nil, err
@@ -207,7 +243,20 @@ func (s *Service) ScheduleNotice(
 		return nil, multiErr
 	}
 
-	return s.noticeRepo.Create(ctx, notice)
+	saved, err := s.noticeRepo.Create(ctx, notice)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ScheduledNotice{Notice: saved, PDF: content.PDF}, nil
+}
+
+// SendNoticeParams is a queued notice, the occurrence it belongs to, and the
+// optional PDF rendered alongside its body.
+type SendNoticeParams struct {
+	Notice     *detention.DetentionNotice
+	Occurrence *detention.DetentionOccurrence
+	PDF        *NoticePDF
 }
 
 // SendNotice delivers a queued notice and records the outcome on both the
@@ -216,13 +265,14 @@ func (s *Service) ScheduleNotice(
 // billing gate keys on.
 func (s *Service) SendNotice(
 	ctx context.Context,
-	notice *detention.DetentionNotice,
-	occurrence *detention.DetentionOccurrence,
+	p *SendNoticeParams,
 ) (*detention.DetentionNotice, error) {
-	if notice == nil || occurrence == nil {
+	if p == nil || p.Notice == nil || p.Occurrence == nil {
 		return nil, errortypes.NewValidationError(
 			"notice", errortypes.ErrRequired, "Notice and occurrence are required")
 	}
+
+	notice, occurrence := p.Notice, p.Occurrence
 
 	log := s.l.With(
 		zap.String("operation", "SendNotice"),
@@ -248,6 +298,7 @@ func (s *Service) SendNotice(
 		Subject:        notice.Subject,
 		Text:           notice.Body,
 		HTML:           noticeHTML(notice),
+		Attachments:    noticeAttachments(p.PDF),
 		OpenTracking:   true,
 		IdempotencyKey: "detention-notice-" + notice.ID.String(),
 	})
@@ -259,7 +310,37 @@ func (s *Service) SendNotice(
 
 	notice.MarkSent(now, occurrence.NoticeDeadlineAt, "")
 
-	return s.persistNoticeOutcome(ctx, notice, occurrence, now)
+	saved, err := s.persistNoticeOutcome(ctx, notice, occurrence, now)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filing runs after the row exists, so the document has a notice to point
+	// at, and after the send, so a storage problem can never delay the notice
+	// that a charge depends on.
+	if p.PDF != nil {
+		s.fileNoticePDF(ctx, saved, occurrence, p.PDF)
+	}
+
+	return saved, nil
+}
+
+// noticeAttachments hands the rendered PDF to the email service, which stores it
+// and references it by object key rather than carrying bytes through the send
+// workflow.
+func noticeAttachments(pdf *NoticePDF) []services.EmailAttachment {
+	if pdf == nil || len(pdf.Content) == 0 {
+		return nil
+	}
+
+	return []services.EmailAttachment{
+		{
+			FileName:    pdf.FileName,
+			ContentType: "application/pdf",
+			Content:     pdf.Content,
+			SizeBytes:   int64(len(pdf.Content)),
+		},
+	}
 }
 
 func (s *Service) persistNoticeOutcome(
@@ -329,6 +410,11 @@ type SendOccurrenceNoticeParams struct {
 	TenantInfo   pagination.TenantInfo
 	UserID       pulid.ID
 	Automatic    bool
+
+	// Policy is the governing policy when the caller already has it. The sweep
+	// does — it reads the policy to decide whether to send at all — so passing it
+	// here saves re-reading the same row for every occurrence it sends.
+	Policy *detention.DetentionPolicy
 }
 
 // SendOccurrenceNotice schedules and delivers a customer notice for one
@@ -369,7 +455,7 @@ func (s *Service) SendOccurrenceNotice(
 		sentBy = &p.UserID
 	}
 
-	notice, err := s.ScheduleNotice(ctx, ScheduleNoticeParams{
+	scheduled, err := s.ScheduleNotice(ctx, ScheduleNoticeParams{
 		Occurrence:   occurrence,
 		Kind:         noticeKindFor(occurrence, now),
 		ScheduledFor: now,
@@ -378,12 +464,17 @@ func (s *Service) SendOccurrenceNotice(
 		SentByID:     sentBy,
 		FacilityName: occurrence.LocationName,
 		ShipmentRef:  occurrence.ShipmentProNumber,
+		AttachPDF:    s.attachesNoticePDF(ctx, occurrence, p.TenantInfo, p.Policy),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err = s.SendNotice(ctx, notice, occurrence); err != nil {
+	if _, err = s.SendNotice(ctx, &SendNoticeParams{
+		Notice:     scheduled.Notice,
+		Occurrence: occurrence,
+		PDF:        scheduled.PDF,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -444,13 +535,6 @@ func (s *Service) noticeRecipients(
 	return recipients, nil
 }
 
-type NoticeSweepResult struct {
-	Due     int `json:"due"`
-	Sent    int `json:"sent"`
-	Skipped int `json:"skipped"`
-	Failed  int `json:"failed"`
-}
-
 // SweepNoticesDue delivers every pending notice whose window has opened, for
 // policies that opted into automatic sending. Policies that leave sending to a
 // human stay on the desk with their countdown; the sweep never overrides that
@@ -459,7 +543,7 @@ type NoticeSweepResult struct {
 func (s *Service) SweepNoticesDue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*NoticeSweepResult, error) {
+) (*services.NoticeSweepResult, error) {
 	now := s.now()
 
 	occurrences, err := s.occurrenceRepo.ListNoticesDue(ctx, &repositories.ListNoticesDueRequest{
@@ -470,15 +554,16 @@ func (s *Service) SweepNoticesDue(
 		return nil, err
 	}
 
-	result := &NoticeSweepResult{Due: len(occurrences)}
-	autoSendByPolicy := make(map[pulid.ID]bool, 4)
+	result := &services.NoticeSweepResult{Due: len(occurrences)}
+	policyCache := make(map[pulid.ID]*detention.DetentionPolicy, 4)
 
 	for _, occurrence := range occurrences {
 		if occurrence == nil {
 			continue
 		}
 
-		if !s.policyAutoSends(ctx, occurrence, tenantInfo, autoSendByPolicy) {
+		policy := s.cachedNoticePolicy(ctx, occurrence, tenantInfo, policyCache)
+		if policy == nil || !policy.AutoSendNotice {
 			result.Skipped++
 			continue
 		}
@@ -487,6 +572,7 @@ func (s *Service) SweepNoticesDue(
 			OccurrenceID: occurrence.ID,
 			TenantInfo:   tenantInfo,
 			Automatic:    true,
+			Policy:       policy,
 		}); sendErr != nil {
 			result.Failed++
 			s.l.Warn("automatic detention notice failed",
@@ -506,35 +592,75 @@ func (s *Service) SweepNoticesDue(
 	return result, nil
 }
 
-func (s *Service) policyAutoSends(
+// attachesNoticePDF reports whether the governing policy wants the notice on
+// paper as well as in the body.
+//
+// A policy that cannot be loaded means no attachment rather than an error: the
+// notice itself is what the charge rests on, and the customer receiving it
+// without a duplicate copy attached is not a failure.
+func (s *Service) attachesNoticePDF(
 	ctx context.Context,
 	occurrence *detention.DetentionOccurrence,
 	tenantInfo pagination.TenantInfo,
-	cache map[pulid.ID]bool,
+	governing *detention.DetentionPolicy,
 ) bool {
+	if governing != nil {
+		return governing.AttachNoticePDF
+	}
+
+	policy := s.noticePolicy(ctx, occurrence, tenantInfo)
+
+	return policy != nil && policy.AttachNoticePDF
+}
+
+// noticePolicy loads the policy governing an occurrence's notices, or nil when
+// there is none to load.
+func (s *Service) noticePolicy(
+	ctx context.Context,
+	occurrence *detention.DetentionOccurrence,
+	tenantInfo pagination.TenantInfo,
+) *detention.DetentionPolicy {
 	if occurrence.DetentionPolicyID == nil || occurrence.DetentionPolicyID.IsNil() {
-		return false
+		return nil
 	}
 
 	policyID := *occurrence.DetentionPolicyID
-	if autoSend, ok := cache[policyID]; ok {
-		return autoSend
-	}
-
 	policy, err := s.policyRepo.GetByID(ctx, &repositories.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
 		TenantInfo:        tenantInfo,
 	})
 	if err != nil {
-		s.l.Warn("failed to load policy for notice sweep",
+		s.l.Warn("failed to load the policy governing a detention notice",
 			zap.String("policyId", policyID.String()),
 			zap.Error(err))
-		cache[policyID] = false
-		return false
+		return nil
 	}
 
-	cache[policyID] = policy.AutoSendNotice
-	return policy.AutoSendNotice
+	return policy
+}
+
+// cachedNoticePolicy is noticePolicy for the sweep, which walks many
+// occurrences that share a handful of policies. A nil entry is cached too, so a
+// policy that cannot be read is not read again for every occurrence under it.
+func (s *Service) cachedNoticePolicy(
+	ctx context.Context,
+	occurrence *detention.DetentionOccurrence,
+	tenantInfo pagination.TenantInfo,
+	cache map[pulid.ID]*detention.DetentionPolicy,
+) *detention.DetentionPolicy {
+	if occurrence.DetentionPolicyID == nil || occurrence.DetentionPolicyID.IsNil() {
+		return nil
+	}
+
+	policyID := *occurrence.DetentionPolicyID
+	if policy, ok := cache[policyID]; ok {
+		return policy
+	}
+
+	policy := s.noticePolicy(ctx, occurrence, tenantInfo)
+	cache[policyID] = policy
+
+	return policy
 }
 
 func (s *Service) markNoticeUnsendable(

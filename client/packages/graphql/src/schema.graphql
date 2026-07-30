@@ -1685,6 +1685,7 @@ enum DetentionOccurrenceStatus {
 type DetentionPolicy {
   accessorialChargeId: ID!
   appointmentStopsOnly: Boolean!
+  attachNoticePdf: Boolean!
   autoApproveUnderAmount: String
   autoSendNotice: Boolean!
   billingFreeMinutes: Int!
@@ -1751,6 +1752,7 @@ type DetentionPolicyEdge {
 input DetentionPolicyInput {
   accessorialChargeId: ID!
   appointmentStopsOnly: Boolean = false
+  attachNoticePdf: Boolean = false
   autoApproveUnderAmount: String
   autoSendNotice: Boolean = false
   billingFreeMinutes: Int = 120

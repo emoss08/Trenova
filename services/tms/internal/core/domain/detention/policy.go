@@ -89,6 +89,7 @@ type DetentionPolicy struct {
 	NotificationDeadlineMinutes int16                   `json:"notificationDeadlineMinutes" bun:"notification_deadline_minutes,type:SMALLINT,notnull,default:0"`
 	UnnotifiedBehavior          UnnotifiedBehavior      `json:"unnotifiedBehavior"          bun:"unnotified_behavior,type:detention_unnotified_behavior_enum,notnull,default:'Bill'"`
 	AutoSendNotice              bool                    `json:"autoSendNotice"              bun:"auto_send_notice,type:BOOLEAN,notnull,default:false"`
+	AttachNoticePDF             bool                    `json:"attachNoticePdf"             bun:"attach_notice_pdf,type:BOOLEAN,notnull,default:false"`
 	SendDepartureSummary        bool                    `json:"sendDepartureSummary"        bun:"send_departure_summary,type:BOOLEAN,notnull,default:false"`
 	RequireApprovalOverAmount   decimal.NullDecimal     `json:"requireApprovalOverAmount"   bun:"require_approval_over_amount,type:NUMERIC(19,4),nullzero"`
 	AutoApproveUnderAmount      decimal.NullDecimal     `json:"autoApproveUnderAmount"      bun:"auto_approve_under_amount,type:NUMERIC(19,4),nullzero"`

@@ -545,6 +545,16 @@ export function DetentionPolicyForm() {
               <FormControl>
                 <SwitchField
                   control={control}
+                  name="attachNoticePdf"
+                  label="Attach the notice as a PDF"
+                  description="Emails a printable copy alongside the message and files it against the shipment, which is what a customer's claims desk asks for in a dispute."
+                  outlined
+                  position="left"
+                />
+              </FormControl>
+              <FormControl>
+                <SwitchField
+                  control={control}
                   name="sendDepartureSummary"
                   label="Send a summary on departure"
                   description="Customers rarely dispute a number they were told twice while it was happening."

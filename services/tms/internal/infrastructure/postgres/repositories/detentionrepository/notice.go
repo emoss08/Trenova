@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -74,6 +75,36 @@ func (r *noticeRepository) Update(
 	}
 
 	return entity, nil
+}
+
+// AttachPDFDocument records the stored notice PDF against the notice.
+//
+// The document is filed asynchronously, after the email has gone out, so this
+// touches only pdf_document_id and updated_at: the delivery columns belong to
+// whatever webhook lands next and must not be rolled back to the values this
+// caller happened to read.
+func (r *noticeRepository) AttachPDFDocument(
+	ctx context.Context,
+	req *repositories.AttachNoticePDFDocumentRequest,
+) error {
+	cols := buncolgen.DetentionNoticeColumns
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*detention.DetentionNotice)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DetentionNoticeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.NoticeID)
+		}).
+		Set(cols.PDFDocumentID.Set(), req.DocumentID).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to attach detention notice PDF document", zap.Error(err))
+		return err
+	}
+
+	return dberror.CheckRowsAffected(results, "DetentionNotice", req.NoticeID.String())
 }
 
 func (r *noticeRepository) List(

@@ -192,6 +192,7 @@ export const detentionPolicySchema = z
     notificationDeadlineMinutes: z.number().int().min(0).default(0),
     unnotifiedBehavior: unnotifiedBehaviorSchema.default("Bill"),
     autoSendNotice: z.boolean().default(false),
+    attachNoticePdf: z.boolean().default(false),
     sendDepartureSummary: z.boolean().default(false),
     requireApprovalOverAmount: decimalStringSchema,
     autoApproveUnderAmount: decimalStringSchema,
