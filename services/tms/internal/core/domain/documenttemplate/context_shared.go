@@ -5,6 +5,11 @@ package documenttemplate
 // editor shows it verbatim: an administrator authoring an invoice and a detention
 // notice should not be told two different things about the same field.
 
+// sampleReportTitle is the report every reporting sample names, so an
+// administrator comparing a report PDF, its delivery email, and its notification
+// sees one report rather than three.
+const sampleReportTitle = "Revenue by Customer"
+
 func logoVariable() VariableDefinition {
 	return VariableDefinition{
 		Path:        "LogoDataURI",

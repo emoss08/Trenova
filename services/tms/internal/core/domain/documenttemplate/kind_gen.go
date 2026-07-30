@@ -74,6 +74,20 @@ const (
 	KindNotificationExpenseReviewed Kind = "notification.dash.expense_reviewed"
 	// KindNotificationDisputeResolved reports the outcome of a pay dispute.
 	KindNotificationDisputeResolved Kind = "notification.dash.dispute_resolved"
+
+	// KindNotificationReportRunCompleted announces a finished report.
+	KindNotificationReportRunCompleted Kind = "notification.report_run_completed"
+	// KindNotificationReportRunFailed reports a report that could not be built.
+	KindNotificationReportRunFailed Kind = "notification.report_run_failed"
+	// KindNotificationReportRunCanceled reports a canceled run.
+	KindNotificationReportRunCanceled Kind = "notification.report_run_canceled"
+	// KindNotificationReportDelivered announces a delivered scheduled report.
+	KindNotificationReportDelivered Kind = "notification.report_run_delivered"
+	// KindNotificationReportDeliveryFailed reports a scheduled report that was
+	// produced but could not be emailed.
+	KindNotificationReportDeliveryFailed Kind = "notification.report_delivery_email_failed"
+	// KindNotificationReportScheduleSkipped reports a skipped or disabled schedule.
+	KindNotificationReportScheduleSkipped Kind = "notification.report_schedule_skipped"
 )
 
 func (k Kind) String() string { return string(k) }
@@ -100,5 +114,11 @@ func AllKinds() []Kind {
 		KindNotificationPayHeld,
 		KindNotificationExpenseReviewed,
 		KindNotificationDisputeResolved,
+		KindNotificationReportRunCompleted,
+		KindNotificationReportRunFailed,
+		KindNotificationReportRunCanceled,
+		KindNotificationReportDelivered,
+		KindNotificationReportDeliveryFailed,
+		KindNotificationReportScheduleSkipped,
 	}
 }

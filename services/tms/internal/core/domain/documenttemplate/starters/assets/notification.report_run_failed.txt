@@ -1,0 +1,1 @@
+{{ if .ReportName }}“{{ .ReportName }}”{{ else }}Your report{{ end }} could not be generated{{ if .Reason }}: {{ .Reason }}{{ else }}. Try running it again, and tell an administrator if it keeps failing{{ end }}.

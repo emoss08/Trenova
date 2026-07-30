@@ -1,0 +1,1 @@
+Scheduled report ready{{ if .ReportName }}: {{ .ReportName }}{{ end }}

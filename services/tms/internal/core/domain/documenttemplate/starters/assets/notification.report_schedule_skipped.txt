@@ -1,0 +1,1 @@
+{{ if .Reason }}{{ .Reason }}{{ else }}A scheduled run did not happen.{{ end }}{{ if .Disabled }} The schedule failed {{ .ConsecutiveFailures }} times in a row and has been disabled; re-enable it once the cause is fixed.{{ end }}

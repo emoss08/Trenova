@@ -74,7 +74,7 @@ type ReportDigest struct {
 
 func newReportSampleContext() any {
 	return ReportContext{
-		Title:       "Revenue by Customer",
+		Title:       sampleReportTitle,
 		Description: "Total charges grouped by customer for the selected period",
 		GeneratedAt: "2026-07-15 11:00 CDT",
 		RequestedBy: "dispatch@trenova.app",
@@ -112,7 +112,7 @@ func newReportSampleContext() any {
 
 func newReportDeliverySampleContext() any {
 	return ReportDeliveryEmailContext{
-		Title:        "Revenue by Customer",
+		Title:        sampleReportTitle,
 		Description:  "Total charges grouped by customer for the selected period",
 		Format:       "XLSX",
 		CompletedAt:  "2026-07-15 11:00 CDT",

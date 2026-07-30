@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -64,9 +65,10 @@ func (a *Activities) dispatchSchedule(
 	if err != nil {
 		schedule.Enabled = false
 		result.Disabled++
-		a.notifyScheduleOwner(ctx, schedule,
-			"Report schedule disabled",
-			"The schedule's cron expression is invalid and the schedule has been disabled.")
+		a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+			Reason:   "The schedule's cron expression is invalid.",
+			Disabled: true,
+		})
 		_, updateErr := a.scheduleRepo.Update(ctx, schedule)
 		return updateErr
 	}
@@ -194,35 +196,51 @@ func (a *Activities) recordScheduleFailure(
 ) {
 	schedule.ConsecutiveFailures++
 	if schedule.ConsecutiveFailures < maxConsecutiveFailures {
-		a.notifyScheduleOwner(ctx, schedule, "Scheduled report skipped", reason)
+		a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+			Reason: reason,
+		})
 		return
 	}
 
 	schedule.Enabled = false
-	a.notifyScheduleOwner(ctx, schedule,
-		"Report schedule disabled",
-		fmt.Sprintf(
-			"%s The schedule failed %d consecutive times and has been disabled.",
-			reason, schedule.ConsecutiveFailures,
-		))
+	a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+		Reason:              reason,
+		Disabled:            true,
+		ConsecutiveFailures: schedule.ConsecutiveFailures,
+	})
 }
 
 func (a *Activities) notifyScheduleOwner(
 	ctx context.Context,
 	schedule *report.ReportSchedule,
-	title, message string,
+	data *documenttemplate.ReportNotificationContext,
 ) {
-	data := map[string]any{
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  schedule.OrganizationID,
+		BuID:   schedule.BusinessUnitID,
+		UserID: schedule.RunAsID,
+	}
+
+	payload := map[string]any{
 		dataKeyScheduleID: schedule.ID.String(),
 	}
 	if def, err := a.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: schedule.OrganizationID,
-			BuID:  schedule.BusinessUnitID,
-		},
+		TenantInfo:   tenantInfo,
 		DefinitionID: schedule.DefinitionID,
 	}); err == nil {
-		data[dataKeyReportName] = def.Name
+		payload[dataKeyReportName] = def.Name
+		data.ReportName = def.Name
+	}
+
+	wording, ok := a.renderNotification(
+		ctx,
+		tenantInfo,
+		documenttemplate.KindNotificationReportScheduleSkipped,
+		schedule.ID,
+		data,
+	)
+	if !ok {
+		return
 	}
 
 	if _, err := a.notification.Create(ctx, &notification.Notification{
@@ -232,9 +250,9 @@ func (a *Activities) notifyScheduleOwner(
 		Channel:        notification.ChannelUser,
 		EventType:      scheduleSkipNotification,
 		Priority:       notification.PriorityHigh,
-		Title:          title,
-		Message:        message,
-		Data:           data,
+		Title:          wording.Title,
+		Message:        wording.Message,
+		Data:           payload,
 		Source:         "reportjobs.DispatchDueSchedules",
 	}); err != nil {
 		a.l.Warn("failed to notify schedule owner",

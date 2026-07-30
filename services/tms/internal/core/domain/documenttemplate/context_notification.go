@@ -120,9 +120,12 @@ func newSettlementNotificationSampleContext() any {
 // recipientVariables is the catalog for the embedded recipient block. Every
 // family shares it, so the description an administrator reads is identical
 // wherever the field appears.
-// expiresAtPath is named once because the catalog, the struct, and the starter
-// all have to agree on it.
-const expiresAtPath = "ExpiresAt"
+// These paths are named once because the catalog, the struct, and the starter all
+// have to agree on them.
+const (
+	expiresAtPath = "ExpiresAt"
+	reasonPath    = "Reason"
+)
 
 func recipientVariables() []VariableDefinition {
 	return []VariableDefinition{
@@ -159,7 +162,7 @@ func driverNotificationVariables() []VariableDefinition {
 			Description: "Whether the request was approved. Branch on this or a denial will read as an approval.",
 		},
 		VariableDefinition{
-			Path:        "Reason",
+			Path:        reasonPath,
 			Type:        VariableString,
 			Description: "The reviewer's note. Usually present on a denial and absent on an approval.",
 		},
@@ -206,7 +209,7 @@ func settlementNotificationVariables() []VariableDefinition {
 			Description: "Whether the expense or dispute was approved. Branch on this or a denial will read as an approval.",
 		},
 		VariableDefinition{
-			Path:        "Reason",
+			Path:        reasonPath,
 			Type:        VariableString,
 			Description: "The review note, hold reason, or resolution note — the sentence the driver acts on.",
 		},
@@ -250,6 +253,89 @@ func sampleRecipient() NotificationRecipient {
 		FirstName: firstName,
 		LastName:  lastName,
 		FullName:  firstName + " " + lastName,
+	}
+}
+
+// ReportNotificationContext is what the person who asked for a report, or owns
+// the schedule that produced it, is told about it.
+//
+// These notifications go to internal users rather than to drivers, so there is no
+// recipient block: the reader is whoever requested the run, and naming them back
+// to themselves reads oddly.
+type ReportNotificationContext struct {
+	ReportName string
+	Format     string
+
+	RowCount  int64
+	FileSize  string
+	Truncated bool
+
+	// Reason is the failure. It is the sentence the reader needs: a report that
+	// "could not be generated" with no cause is a support ticket.
+	Reason string
+
+	// Disabled marks the schedule that has now been turned off rather than merely
+	// skipped, which is a different message with the same event type.
+	Disabled            bool
+	ConsecutiveFailures int
+
+	ExpiresAt string
+}
+
+func newReportNotificationSampleContext() any {
+	return ReportNotificationContext{
+		ReportName:          sampleReportTitle,
+		Format:              "xlsx",
+		RowCount:            67,
+		FileSize:            "184 KB",
+		Truncated:           false,
+		Reason:              "The email profile has no recipients configured",
+		Disabled:            false,
+		ConsecutiveFailures: 3,
+		ExpiresAt:           "2026-07-22",
+	}
+}
+
+// reportNotificationVariables is the report family's shared catalog.
+func reportNotificationVariables() []VariableDefinition {
+	return []VariableDefinition{
+		{
+			Path:        "ReportName",
+			Type:        VariableString,
+			Description: "The report this is about. A notification that does not name it is one nobody can act on.",
+		},
+		{
+			Path:        "Format",
+			Type:        VariableString,
+			Description: "The export format — xlsx, csv, pdf. Pipe it through upper if you want it shouted.",
+		},
+		rowCountVariable(),
+		{
+			Path:        "FileSize",
+			Type:        VariableString,
+			Description: "The artifact's size, already humanized.",
+		},
+		truncatedVariable(),
+		{
+			Path:        reasonPath,
+			Type:        VariableString,
+			Description: "Why it failed, when it failed. Print it: a failure with no cause becomes a support ticket.",
+		},
+		{
+			Path:        "Disabled",
+			Type:        VariableBool,
+			Description: "Whether the schedule was turned off rather than merely skipped this once.",
+		},
+		{
+			Path:        "ConsecutiveFailures",
+			Type:        VariableInt,
+			Description: "How many runs in a row failed, which is what justified disabling the schedule.",
+		},
+		{
+			Path:        expiresAtPath,
+			Type:        VariableDate,
+			Description: "When the download stops being available.",
+		},
 	}
 }
 
@@ -316,6 +402,39 @@ var settlementNotificationKinds = []notificationKind{
 	},
 }
 
+var reportNotificationKinds = []notificationKind{
+	{
+		kind:        KindNotificationReportRunCompleted,
+		displayName: "Report Ready",
+		description: "Tells whoever asked for a report that it finished and can be downloaded.",
+	},
+	{
+		kind:        KindNotificationReportRunFailed,
+		displayName: "Report Failed",
+		description: "Tells whoever asked for a report that it could not be generated, and why.",
+	},
+	{
+		kind:        KindNotificationReportRunCanceled,
+		displayName: "Report Canceled",
+		description: "Tells whoever asked for a report that the run was canceled.",
+	},
+	{
+		kind:        KindNotificationReportDelivered,
+		displayName: "Scheduled Report Ready",
+		description: "Tells a recipient that a scheduled report has been produced for them.",
+	},
+	{
+		kind:        KindNotificationReportDeliveryFailed,
+		displayName: "Scheduled Report Email Failed",
+		description: "Tells a schedule owner the report was produced but could not be emailed. Reason carries the cause.",
+	},
+	{
+		kind:        KindNotificationReportScheduleSkipped,
+		displayName: "Report Schedule Skipped",
+		description: "Tells a schedule owner a run was skipped. Branch on Disabled: the same event covers a schedule that has now been turned off after repeated failures.",
+	},
+}
+
 func (r *Registry) registerNotificationKinds() {
 	r.registerNotificationFamily(
 		driverNotificationKinds,
@@ -326,6 +445,11 @@ func (r *Registry) registerNotificationKinds() {
 		settlementNotificationKinds,
 		settlementNotificationVariables(),
 		newSettlementNotificationSampleContext,
+	)
+	r.registerNotificationFamily(
+		reportNotificationKinds,
+		reportNotificationVariables(),
+		newReportNotificationSampleContext,
 	)
 }
 

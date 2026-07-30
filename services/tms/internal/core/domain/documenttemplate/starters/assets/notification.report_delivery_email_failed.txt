@@ -1,0 +1,1 @@
+The scheduled report could not be emailed to its recipients{{ if .Reason }}: {{ .Reason }}{{ end }}. The report is still available to download from the run history.

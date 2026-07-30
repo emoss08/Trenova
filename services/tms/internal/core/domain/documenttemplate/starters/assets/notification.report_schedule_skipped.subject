@@ -1,0 +1,1 @@
+Report schedule {{ if .Disabled }}disabled{{ else }}skipped{{ end }}

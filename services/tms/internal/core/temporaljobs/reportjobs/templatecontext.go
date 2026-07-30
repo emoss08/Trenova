@@ -1,6 +1,7 @@
 package reportjobs
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"time"
@@ -8,7 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
 )
 
 // deliveryEmailContent groups what the message needs; the parameter list had
@@ -170,3 +175,86 @@ func digestTotals(digest *services.ReportDigest, loc *time.Location) []string {
 }
 
 const digestTotalsLabel = "Total"
+
+// notificationWording is a rendered notification: a title and a message.
+type notificationWording struct {
+	Title   string
+	Message string
+}
+
+// renderNotification renders one report notification through the organization's
+// template.
+//
+// It falls back to the built-in, like every notification: an owner who is never
+// told their schedule was disabled will find out from a customer instead. A
+// failure that even the built-in cannot survive returns false and the caller skips
+// the notification rather than writing one with an empty title.
+func (a *Activities) renderNotification(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	kind documenttemplate.Kind,
+	referenceID pulid.ID,
+	data *documenttemplate.ReportNotificationContext,
+) (notificationWording, bool) {
+	if a.templates == nil {
+		a.l.Warn("template rendering is not configured; skipping report notification",
+			zap.String("kind", string(kind)))
+		return notificationWording{}, false
+	}
+
+	rendered, err := a.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+		TenantInfo:        tenantInfo,
+		Kind:              kind,
+		Data:              data,
+		ReferenceID:       referenceID,
+		FallbackToBuiltIn: true,
+	})
+	if err != nil {
+		a.l.Warn("failed to render report notification",
+			zap.String("kind", string(kind)), zap.Error(err))
+		return notificationWording{}, false
+	}
+
+	return notificationWording{Title: rendered.Subject, Message: rendered.Text}, true
+}
+
+// runNotificationContext describes a finished run to its notification template.
+func runNotificationContext(
+	run *report.ReportRun,
+	name string,
+) *documenttemplate.ReportNotificationContext {
+	out := &documenttemplate.ReportNotificationContext{
+		ReportName: name,
+		Format:     string(run.Format),
+		RowCount:   run.RowCount,
+		FileSize:   fileutils.HumanizeBytes(run.ByteSize),
+		Truncated:  run.Truncated,
+	}
+	if run.Error != nil {
+		out.Reason = run.Error.Message
+	}
+
+	return out
+}
+
+// deliveredNotificationContext describes a delivered scheduled report.
+//
+// The artifact expiry is included because a recipient who reads the notification
+// a week later needs to know the download is gone rather than broken.
+func deliveredNotificationContext(
+	run *report.ReportRun,
+	title string,
+) *documenttemplate.ReportNotificationContext {
+	out := &documenttemplate.ReportNotificationContext{
+		ReportName: title,
+		Format:     string(run.Format),
+		RowCount:   run.RowCount,
+		FileSize:   fileutils.HumanizeBytes(run.ByteSize),
+		Truncated:  run.Truncated,
+	}
+	if run.ArtifactExpiresAt > 0 {
+		out.ExpiresAt = timeutils.FormatUnixDateIn(run.ArtifactExpiresAt, "")
+	}
+
+	return out
+}

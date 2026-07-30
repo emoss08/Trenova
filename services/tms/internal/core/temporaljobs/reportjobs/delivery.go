@@ -329,6 +329,25 @@ func (a *Activities) recordEmailFailure(
 		return
 	}
 
+	failureWording, ok := a.renderNotification(
+		ctx,
+		pagination.TenantInfo{
+			OrgID:  run.OrganizationID,
+			BuID:   run.BusinessUnitID,
+			UserID: schedule.RunAsID,
+		},
+		documenttemplate.KindNotificationReportDeliveryFailed,
+		run.ID,
+		&documenttemplate.ReportNotificationContext{
+			ReportName: title,
+			Format:     string(run.Format),
+			Reason:     strings.TrimSuffix(strings.TrimSpace(reason), "."),
+		},
+	)
+	if !ok {
+		return
+	}
+
 	if _, err := a.notification.Create(ctx, &notification.Notification{
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: &run.BusinessUnitID,
@@ -336,12 +355,8 @@ func (a *Activities) recordEmailFailure(
 		Channel:        notification.ChannelUser,
 		EventType:      deliveryFailedEvent,
 		Priority:       notification.PriorityHigh,
-		Title:          "Scheduled report email failed",
-		Message: fmt.Sprintf(
-			"The scheduled report could not be emailed to its recipients: %s. "+
-				"The report is still available to download from the run history.",
-			strings.TrimSuffix(strings.TrimSpace(reason), "."),
-		),
+		Title:          failureWording.Title,
+		Message:        failureWording.Message,
 		Data: map[string]any{
 			dataKeyRunID:      run.ID.String(),
 			dataKeyScheduleID: schedule.ID.String(),
@@ -441,6 +456,23 @@ func (a *Activities) deliverRunNotifications(
 		return
 	}
 
+	// One render for the whole recipient list: it is the same run and the same
+	// wording, and rendering per user would resolve the template once per person.
+	wording, ok := a.renderNotification(
+		ctx,
+		pagination.TenantInfo{
+			OrgID:  run.OrganizationID,
+			BuID:   run.BusinessUnitID,
+			UserID: schedule.RunAsID,
+		},
+		documenttemplate.KindNotificationReportDelivered,
+		run.ID,
+		deliveredNotificationContext(run, title),
+	)
+	if !ok {
+		return
+	}
+
 	since := timeutils.NowUnix() - int64(deliveryDedupeWindow.Seconds())
 	for _, user := range users {
 		userID := user.ID
@@ -464,14 +496,11 @@ func (a *Activities) deliverRunNotifications(
 			Channel:        notification.ChannelUser,
 			EventType:      deliveredEventType,
 			Priority:       notification.PriorityMedium,
-			Title:          "Scheduled report ready: " + title,
-			Message: fmt.Sprintf(
-				"The scheduled report %q (%s) is ready to download from the report run history.",
-				title, strings.ToUpper(string(run.Format)),
-			),
-			Data:          deliveryNotificationData(run, schedule, title),
-			CorrelationID: &correlationID,
-			Source:        deliverySource,
+			Title:          wording.Title,
+			Message:        wording.Message,
+			Data:           deliveryNotificationData(run, schedule, title),
+			CorrelationID:  &correlationID,
+			Source:         deliverySource,
 		}); createErr != nil {
 			a.l.Warn("failed to create scheduled report delivery notification",
 				zap.String("runId", run.ID.String()),

@@ -7,6 +7,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -643,26 +644,32 @@ func (a *Activities) emitAudit(run *report.ReportRun) {
 func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun) {
 	name, _ := a.reportTitle(ctx, run)
 
-	title := "Report ready"
-	message := fmt.Sprintf("%q finished generating and is ready to download.", name)
+	kind := documenttemplate.KindNotificationReportRunCompleted
 	priority := notification.PriorityMedium
 	eventType := "report_run_completed"
 
-	//nolint:exhaustive // only terminal failure states change the message
+	//nolint:exhaustive // only terminal failure states change the wording
 	switch run.Status {
 	case report.RunStatusFailed:
-		title = "Report failed"
-		message = fmt.Sprintf("%q could not be generated.", name)
-		if run.Error != nil && run.Error.Message != "" {
-			message = fmt.Sprintf("%q could not be generated: %s", name, run.Error.Message)
-		}
+		kind = documenttemplate.KindNotificationReportRunFailed
 		priority = notification.PriorityHigh
 		eventType = "report_run_failed"
 	case report.RunStatusCanceled:
-		title = "Report canceled"
-		message = fmt.Sprintf("The run for %q was canceled.", name)
+		kind = documenttemplate.KindNotificationReportRunCanceled
 		eventType = "report_run_canceled"
 	default:
+	}
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  run.OrganizationID,
+		BuID:   run.BusinessUnitID,
+		UserID: run.RequestedByID,
+	}
+	wording, ok := a.renderNotification(
+		ctx, tenantInfo, kind, run.ID, runNotificationContext(run, name),
+	)
+	if !ok {
+		return
 	}
 
 	data := map[string]any{
@@ -688,8 +695,8 @@ func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun
 		Channel:        notification.ChannelUser,
 		EventType:      eventType,
 		Priority:       priority,
-		Title:          title,
-		Message:        message,
+		Title:          wording.Title,
+		Message:        wording.Message,
 		Data:           data,
 		Source:         "reportjobs.FinalizeRun",
 	}); err != nil {

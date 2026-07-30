@@ -1,0 +1,1 @@
+{{ if .ReportName }}“{{ .ReportName }}”{{ else }}Your report{{ end }} finished generating and is ready to download{{ if .RowCount }} — {{ .RowCount }} rows{{ if .FileSize }}, {{ .FileSize }}{{ end }}{{ end }}.{{ if .Truncated }} It hit the row limit, so narrow the filters to capture everything.{{ end }}{{ if .ExpiresAt }} The download expires {{ .ExpiresAt }}.{{ end }}

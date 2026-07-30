@@ -518,6 +518,12 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 	registry := documenttemplate.NewRegistry()
 
 	emitted := []string{
+		"report_run_completed",
+		"report_run_failed",
+		"report_run_canceled",
+		"report_run_delivered",
+		"report_delivery_email_failed",
+		"report_schedule_skipped",
 		"dash.load_assigned",
 		"dash.load_unassigned",
 		"dash.pto_reviewed",
@@ -544,4 +550,39 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 		assert.Empty(t, starter.BodyHTML,
 			"a notification renders as text; markup would show up as characters")
 	}
+}
+
+// One event carries two outcomes: a schedule skipped this once, and a schedule
+// disabled after failing repeatedly. An owner who reads "skipped" when the
+// schedule is off will wait for a report that is never coming.
+func TestScheduleSkippedSaysWhenTheScheduleWasDisabled(t *testing.T) {
+	engine := newEngine(t)
+	registry := documenttemplate.NewRegistry()
+
+	starter, err := For(documenttemplate.KindNotificationReportScheduleSkipped)
+	require.NoError(t, err)
+
+	render := func(disabled bool) (title, body string) {
+		data := documenttemplate.ReportNotificationContext{
+			ReportName:          "Revenue by Customer",
+			Reason:              "The report timed out.",
+			Disabled:            disabled,
+			ConsecutiveFailures: 3,
+		}
+
+		return renderChannel(t, engine, registry, starter,
+				documenttemplate.ChannelNotificationTitle, data),
+			renderChannel(t, engine, registry, starter,
+				documenttemplate.ChannelNotificationBody, data)
+	}
+
+	skippedTitle, skippedBody := render(false)
+	disabledTitle, disabledBody := render(true)
+
+	assert.Contains(t, skippedTitle, "skipped")
+	assert.Contains(t, disabledTitle, "disabled")
+	assert.NotContains(t, skippedBody, "disabled")
+	assert.Contains(t, disabledBody, "3 times in a row")
+	assert.Contains(t, skippedBody, "The report timed out.",
+		"the cause is the sentence the owner acts on")
 }
